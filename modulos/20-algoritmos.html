@@ -53,6 +53,7 @@
       <li><a href="#recursion">Recursión</a></li>
       <li><a href="#divide">Divide y vencerás</a></li>
       <li><a href="#estrategias">Voraz y dinámica</a></li>
+      <li><a href="#caminos">Caminos</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -1535,6 +1536,375 @@ console.log("Pagar 7 con [2, 4]:", cambioMinimo(7, [2, 4]), "(-1 = imposible)");
   </div>
   <p>El algoritmo hace, para cada cantidad, una vuelta por cada tipo de moneda: <code>O(cantidad × monedas)</code>. Siempre da el óptimo, sea cual sea el sistema de monedas, y detecta los casos imposibles (con monedas de 2 y 4 no se puede pagar un número impar).</p>
   <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>Cómo reconocer un problema de programación dinámica: te piden el mínimo, el máximo o «de cuántas formas», y al intentar la recursión descubres que calculas lo mismo muchas veces. Primero escribe la recursión sencilla. Después añade un <code>Map</code> de apuntes. Si la recursión es muy profunda, pásala a una tabla con un bucle.</p></div></aside>
+</section>
+
+<section id="caminos" data-parada="Caminos">
+  <h2>Caminos en cuadrículas y grafos</h2>
+  <p>En muchos videojuegos, los enemigos te persiguen esquivando paredes, las unidades de un juego de estrategia rodean montañas para llegar al punto que marcaste y el personaje camina solo hasta donde hiciste clic. Todos resuelven el mismo problema: <strong>encontrar el camino más corto</strong> de un punto a otro. Y fuera de los juegos, lo resuelven los mapas del teléfono, las redes que llevan tus mensajes por internet y las apps de reparto.</p>
+  <p>Un mapa de casillas es un <strong>grafo</strong> disfrazado (<a href="19-estructuras-datos.html">Estación 19</a>): cada casilla libre es un vértice, y cada casilla está unida por una arista a sus vecinas de arriba, abajo, izquierda y derecha. Las paredes simplemente no tienen aristas.</p>
+
+  <h3>BFS: explorar por ondas</h3>
+  <p>La <strong>búsqueda en anchura</strong> (en inglés, <em>breadth-first search</em>, <strong>BFS</strong>) explora el mapa como una onda en un estanque: primero todas las casillas a 1 paso de la salida, después todas las que están a 2, después a 3… Para lograr ese orden usa una <strong>cola</strong>: la primera casilla que entra es la primera que se explora. Como la onda avanza de un paso en un paso, la primera vez que toca la meta lo hace por el camino más corto.</p>
+  <figure class="capsula" data-titulo="BFS en un laberinto">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Animación: un laberinto de 7 por 5 casillas con paredes oscuras. Desde la salida S, una onda numera las casillas con su distancia: 1 y 2, luego 3 y 4, y así hasta llegar a la meta M a 10 pasos. Al final se resalta el camino más corto de 10 pasos, reconstruido desde la meta hacia atrás.">
+        <rect class="d-caja" x="30" y="34" width="46" height="46" data-clases="1:d-acento-trazo; 2:d-caja-suave; 7:d-acento"/>
+        <text class="d-rotulo" x="53" y="63" text-anchor="middle" data-clases="7:d-sobre-acento">S</text>
+        <rect class="d-caja" x="76" y="34" width="46" height="46" data-clases="2:d-acento-trazo; 3:d-caja-suave; 7:d-acento"/>
+        <text class="d-mono" x="99" y="63" text-anchor="middle" data-pasos="2-" data-clases="7:d-sobre-acento">1</text>
+        <rect class="d-caja" x="122" y="34" width="46" height="46" data-clases="2:d-acento-trazo; 3:d-caja-suave; 7:d-acento"/>
+        <text class="d-mono" x="145" y="63" text-anchor="middle" data-pasos="2-" data-clases="7:d-sobre-acento">2</text>
+        <rect class="d-caja" x="168" y="34" width="46" height="46" data-clases="3:d-acento-trazo; 4:d-caja-suave; 7:d-acento"/>
+        <text class="d-mono" x="191" y="63" text-anchor="middle" data-pasos="3-" data-clases="7:d-sobre-acento">3</text>
+        <rect class="d-tinta" x="214" y="34" width="46" height="46"/>
+        <rect class="d-caja" x="260" y="34" width="46" height="46" data-clases="6:d-acento-trazo; 7:d-caja-suave"/>
+        <text class="d-mono" x="283" y="63" text-anchor="middle" data-pasos="6-">9</text>
+        <rect class="d-caja" x="306" y="34" width="46" height="46" data-clases="6:d-acento-trazo; 7:d-caja-suave"/>
+        <text class="d-mono" x="329" y="63" text-anchor="middle" data-pasos="6-">10</text>
+        <rect class="d-caja" x="30" y="80" width="46" height="46" data-clases="2:d-acento-trazo; 3:d-caja-suave"/>
+        <text class="d-mono" x="53" y="109" text-anchor="middle" data-pasos="2-">1</text>
+        <rect class="d-tinta" x="76" y="80" width="46" height="46"/>
+        <rect class="d-tinta" x="122" y="80" width="46" height="46"/>
+        <rect class="d-caja" x="168" y="80" width="46" height="46" data-clases="3:d-acento-trazo; 4:d-caja-suave; 7:d-acento"/>
+        <text class="d-mono" x="191" y="109" text-anchor="middle" data-pasos="3-" data-clases="7:d-sobre-acento">4</text>
+        <rect class="d-tinta" x="214" y="80" width="46" height="46"/>
+        <rect class="d-caja" x="260" y="80" width="46" height="46" data-clases="5:d-acento-trazo; 6:d-caja-suave"/>
+        <text class="d-mono" x="283" y="109" text-anchor="middle" data-pasos="5-">8</text>
+        <rect class="d-tinta" x="306" y="80" width="46" height="46"/>
+        <rect class="d-caja" x="30" y="126" width="46" height="46" data-clases="2:d-acento-trazo; 3:d-caja-suave"/>
+        <text class="d-mono" x="53" y="155" text-anchor="middle" data-pasos="2-">2</text>
+        <rect class="d-caja" x="76" y="126" width="46" height="46" data-clases="3:d-acento-trazo; 4:d-caja-suave"/>
+        <text class="d-mono" x="99" y="155" text-anchor="middle" data-pasos="3-">3</text>
+        <rect class="d-tinta" x="122" y="126" width="46" height="46"/>
+        <rect class="d-caja" x="168" y="126" width="46" height="46" data-clases="4:d-acento-trazo; 5:d-caja-suave; 7:d-acento"/>
+        <text class="d-mono" x="191" y="155" text-anchor="middle" data-pasos="4-" data-clases="7:d-sobre-acento">5</text>
+        <rect class="d-caja" x="214" y="126" width="46" height="46" data-clases="4:d-acento-trazo; 5:d-caja-suave; 7:d-acento"/>
+        <text class="d-mono" x="237" y="155" text-anchor="middle" data-pasos="4-" data-clases="7:d-sobre-acento">6</text>
+        <rect class="d-caja" x="260" y="126" width="46" height="46" data-clases="5:d-acento-trazo; 6:d-caja-suave; 7:d-acento"/>
+        <text class="d-mono" x="283" y="155" text-anchor="middle" data-pasos="5-" data-clases="7:d-sobre-acento">7</text>
+        <rect class="d-caja" x="306" y="126" width="46" height="46" data-clases="5:d-acento-trazo; 6:d-caja-suave; 7:d-acento"/>
+        <text class="d-mono" x="329" y="155" text-anchor="middle" data-pasos="5-" data-clases="7:d-sobre-acento">8</text>
+        <rect class="d-tinta" x="30" y="172" width="46" height="46"/>
+        <rect class="d-caja" x="76" y="172" width="46" height="46" data-clases="3:d-acento-trazo; 4:d-caja-suave"/>
+        <text class="d-mono" x="99" y="201" text-anchor="middle" data-pasos="3-">4</text>
+        <rect class="d-tinta" x="122" y="172" width="46" height="46"/>
+        <rect class="d-tinta" x="168" y="172" width="46" height="46"/>
+        <rect class="d-tinta" x="214" y="172" width="46" height="46"/>
+        <rect class="d-tinta" x="260" y="172" width="46" height="46"/>
+        <rect class="d-caja" x="306" y="172" width="46" height="46" data-clases="6:d-acento-trazo; 7:d-acento"/>
+        <text class="d-mono" x="329" y="201" text-anchor="middle" data-pasos="6-" data-clases="7:d-sobre-acento">9</text>
+        <rect class="d-caja" x="30" y="218" width="46" height="46" data-clases="4:d-acento-trazo; 5:d-caja-suave"/>
+        <text class="d-mono" x="53" y="247" text-anchor="middle" data-pasos="4-">6</text>
+        <rect class="d-caja" x="76" y="218" width="46" height="46" data-clases="4:d-acento-trazo; 5:d-caja-suave"/>
+        <text class="d-mono" x="99" y="247" text-anchor="middle" data-pasos="4-">5</text>
+        <rect class="d-caja" x="122" y="218" width="46" height="46" data-clases="4:d-acento-trazo; 5:d-caja-suave"/>
+        <text class="d-mono" x="145" y="247" text-anchor="middle" data-pasos="4-">6</text>
+        <rect class="d-caja" x="168" y="218" width="46" height="46" data-clases="5:d-acento-trazo; 6:d-caja-suave"/>
+        <text class="d-mono" x="191" y="247" text-anchor="middle" data-pasos="5-">7</text>
+        <rect class="d-tinta" x="214" y="218" width="46" height="46"/>
+        <rect class="d-caja" x="260" y="218" width="46" height="46"/>
+        <rect class="d-caja" x="306" y="218" width="46" height="46" data-clases="6:d-acento-trazo; 7:d-acento"/>
+        <text class="d-rotulo" x="329" y="247" text-anchor="middle" data-clases="7:d-sobre-acento">M</text>
+        <text class="d-rotulo" x="390" y="56" data-texto="2:Distancia alcanzada: 2; 3:Distancia alcanzada: 4; 4:Distancia alcanzada: 6; 5:Distancia alcanzada: 8; 6:Distancia alcanzada: 10">Distancia alcanzada: 0</text>
+        <text class="d-rotulo" x="390" y="84" data-texto="2:Casillas exploradas: 5; 3:Casillas exploradas: 9; 4:Casillas exploradas: 14; 5:Casillas exploradas: 18; 6:Casillas exploradas: 22">Casillas exploradas: 1</text>
+        <text class="d-rotulo" x="390" y="112" data-pasos="7">Camino más corto: 10 pasos</text>
+        <text class="d-peq d-tenue" x="390" y="160">El número de cada casilla: pasos desde S</text>
+        <rect class="d-tinta" x="390" y="178" width="20" height="20"/>
+        <text class="d-peq" x="420" y="193">pared</text>
+        <rect class="d-acento-trazo" x="390" y="210" width="20" height="20"/>
+        <text class="d-peq" x="420" y="225">frente de la onda (se explora ahora)</text>
+        <rect class="d-caja-suave" x="390" y="242" width="20" height="20"/>
+        <text class="d-peq" x="420" y="257">ya explorada</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Un laberinto: la salida es S, la meta es M y las casillas oscuras son paredes. Al principio, la cola solo contiene la salida, que está a 0 pasos de sí misma.</li>
+        <li>Se saca S de la cola y se meten sus vecinas libres, apuntando que están a 1 paso. Al sacar esas, se meten las suyas, a 2 pasos. El borde de color es el frente de la onda.</li>
+        <li>La onda avanza por los dos pasillos a la vez: por arriba y por abajo. Cada casilla se visita una sola vez; si ya tiene número, no se vuelve a meter en la cola.</li>
+        <li>A 5 y 6 pasos, la onda rodea las paredes. Abajo a la izquierda llega a un callejón sin salida, pero BFS no lo sabe ni le importa: explora todo lo que está a la misma distancia antes de avanzar.</li>
+        <li>A 7 y 8 pasos, la rama de abajo se ha quedado sin casillas nuevas. La de arriba sigue avanzando hacia la derecha.</li>
+        <li data-duracion="6">A 9 y 10 pasos, la onda toca la meta. Como avanza de un paso en un paso, este es el primer momento posible en que puede llegar: no existe un camino más corto. Una casilla quedó sin explorar, porque la búsqueda se detiene al encontrar la meta.</li>
+        <li data-duracion="7">Para dibujar el camino, cada casilla apuntó desde qué casilla la alcanzó la onda. Siguiendo esas notas desde M hacia atrás hasta S se obtiene el camino más corto: 10 pasos.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>El código sigue exactamente esos pasos. Lee los comentarios y después ejecútalo: dibuja el camino con asteriscos sobre el mapa.</p>
+  <div class="taller" id="taller-bfs" data-titulo="BFS en un mapa de texto">
+    <textarea class="taller-codigo">const mapa = [
+  "S...#..",
+  ".##.#.#",
+  "..#....",
+  "#.####.",
+  "....#.M",
+];
+
+function buscarCamino(mapa) {
+  const filas = mapa.length;
+  const columnas = mapa[0].length;
+
+  // 1. Encontrar la salida (S) y la meta (M)
+  let salida, meta;
+  for (let f = 0; f < filas; f++) {
+    for (let c = 0; c < columnas; c++) {
+      if (mapa[f][c] === "S") salida = f + "," + c;
+      if (mapa[f][c] === "M") meta = f + "," + c;
+    }
+  }
+
+  // 2. BFS: una cola de casillas por explorar y un registro de «desde dónde llegué»
+  const cola = [salida];
+  let cabeza = 0;                                // índice del próximo en salir de la cola
+  const vieneDe = new Map([[salida, null]]);
+  const movimientos = [[-1, 0], [1, 0], [0, -1], [0, 1]];   // arriba, abajo, izquierda, derecha
+
+  while (cabeza < cola.length) {
+    const actual = cola[cabeza++];
+    if (actual === meta) break;                  // ¡llegamos!
+    const [f, c] = actual.split(",").map(Number);
+    for (const [df, dc] of movimientos) {
+      const nf = f + df;
+      const nc = c + dc;
+      const clave = nf + "," + nc;
+      const dentro = nf >= 0 && nf < filas && nc >= 0 && nc < columnas;
+      if (dentro && mapa[nf][nc] !== "#" && !vieneDe.has(clave)) {
+        vieneDe.set(clave, actual);              // apunto de dónde vine
+        cola.push(clave);
+      }
+    }
+  }
+
+  // 3. Reconstruir el camino desde la meta hacia atrás
+  if (!vieneDe.has(meta)) return null;           // no hay camino
+  const camino = [];
+  for (let clave = meta; clave !== null; clave = vieneDe.get(clave)) camino.push(clave);
+  return { camino: camino.reverse(), exploradas: vieneDe.size };
+}
+
+const resultado = buscarCamino(mapa);
+console.log("Pasos:", resultado.camino.length - 1, "· casillas exploradas:", resultado.exploradas);
+
+const dibujo = mapa.map((fila) => fila.split(""));
+for (const clave of resultado.camino) {
+  const [f, c] = clave.split(",").map(Number);
+  if (dibujo[f][c] === ".") dibujo[f][c] = "*";
+}
+for (const fila of dibujo) console.log(fila.join(" "));</textarea>
+  </div>
+  <p>Dos detalles de oficio. Primero, la cola usa un índice <code>cabeza</code> en lugar de <code>shift()</code>: sacar el primero de un array con <code>shift</code> mueve todos los demás (<code>O(n)</code>), mientras que avanzar un índice es <code>O(1)</code>. Segundo, las casillas se guardan como textos <code>"fila,columna"</code> para poder usarlas como claves de un <code>Map</code>: dos arrays <code>[2, 3]</code> distintos nunca son iguales para un <code>Map</code>, aunque tengan los mismos números.</p>
+  <p>BFS visita cada casilla una vez y mira sus 4 vecinas, así que es <code>O(V + E)</code>, donde V son los vértices (casillas) y E las aristas. En una cuadrícula de F filas y C columnas, <code>O(F × C)</code>. Prueba a cambiar el mapa: abre un hueco en una pared, o cierra el paso por completo para ver qué pasa cuando no hay camino (tendrás que manejar el <code>null</code>).</p>
+  <p>Ahora en grande y con animación. En este taller puedes hacer clic en las casillas para poner o quitar paredes, generar un laberinto al azar y ver cómo avanza la onda de BFS (en azul) hasta encontrar el camino (en amarillo):</p>
+  <div class="taller" data-modo="web" data-titulo="Buscador de caminos para tu juego" data-alto="27rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="rejilla"&gt;&lt;/div&gt;
+&lt;p id="info"&gt;&lt;/p&gt;
+&lt;button id="buscar"&gt;Buscar camino&lt;/button&gt;
+&lt;button id="azar"&gt;Paredes al azar&lt;/button&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 10px; }
+#rejilla { display: grid; gap: 2px; max-width: 420px; }
+.celda { aspect-ratio: 1; background: #e6eaf0; border-radius: 3px; cursor: pointer; }
+.pared { background: #2b3440; }
+.visitada { background: #a9c8f0; }
+.camino { background: #f0b43c; }
+.salida { background: #2f9e62; }
+.meta { background: #d9534f; }
+#info { min-height: 1.4em; }
+button { font: inherit; padding: 6px 12px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const FILAS = 10;
+const COLUMNAS = 15;
+const salida = "0,0";
+const meta = `${FILAS - 1},${COLUMNAS - 1}`;
+const rejilla = document.querySelector("#rejilla");
+const info = document.querySelector("#info");
+const celdas = new Map();
+let paredes = new Set();
+let ocupado = false;
+
+function esperar(ms) {
+  return new Promise((resolver) => setTimeout(resolver, ms));
+}
+
+function crearRejilla() {
+  rejilla.style.gridTemplateColumns = `repeat(${COLUMNAS}, 1fr)`;
+  for (let f = 0; f < FILAS; f++) {
+    for (let c = 0; c < COLUMNAS; c++) {
+      const clave = f + "," + c;
+      const div = document.createElement("div");
+      div.addEventListener("click", () => {
+        if (ocupado || clave === salida || clave === meta) return;
+        if (paredes.has(clave)) paredes.delete(clave);
+        else paredes.add(clave);
+        pintar();
+      });
+      celdas.set(clave, div);
+      rejilla.appendChild(div);
+    }
+  }
+}
+
+function pintar() {
+  for (const [clave, div] of celdas) {
+    div.className = paredes.has(clave) ? "celda pared" : "celda";
+  }
+  celdas.get(salida).classList.add("salida");
+  celdas.get(meta).classList.add("meta");
+}
+
+function paredesAlAzar() {
+  if (ocupado) return;
+  paredes = new Set();
+  for (const clave of celdas.keys()) {
+    if (clave !== salida && clave !== meta && Math.random() < 0.28) paredes.add(clave);
+  }
+  pintar();
+  info.textContent = "Haz clic en las casillas para poner o quitar paredes.";
+}
+
+async function buscar() {
+  if (ocupado) return;
+  ocupado = true;
+  pintar();
+  const cola = [salida];
+  let cabeza = 0;
+  const vieneDe = new Map([[salida, null]]);
+  while (cabeza < cola.length) {
+    const actual = cola[cabeza++];
+    if (actual === meta) break;
+    const [f, c] = actual.split(",").map(Number);
+    for (const [df, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+      const nf = f + df;
+      const nc = c + dc;
+      const clave = nf + "," + nc;
+      if (nf < 0 || nf >= FILAS || nc < 0 || nc >= COLUMNAS) continue;
+      if (paredes.has(clave) || vieneDe.has(clave)) continue;
+      vieneDe.set(clave, actual);
+      cola.push(clave);
+      if (clave !== meta) celdas.get(clave).classList.add("visitada");
+    }
+    await esperar(15);
+  }
+  if (!vieneDe.has(meta)) {
+    info.textContent = `No hay camino. Casillas exploradas: ${vieneDe.size}.`;
+  } else {
+    let pasos = 1;
+    for (let clave = vieneDe.get(meta); clave !== salida; clave = vieneDe.get(clave)) {
+      celdas.get(clave).classList.add("camino");
+      pasos++;
+      await esperar(30);
+    }
+    info.textContent = `Camino de ${pasos} pasos. Casillas exploradas: ${vieneDe.size}.`;
+  }
+  ocupado = false;
+}
+
+document.querySelector("#buscar").addEventListener("click", buscar);
+document.querySelector("#azar").addEventListener("click", paredesAlAzar);
+crearRejilla();
+paredesAlAzar();</textarea>
+  </div>
+  <p>Ideas para modificarlo: cambia el orden de <code>movimientos</code> y observa que el camino puede cambiar de forma, pero nunca de longitud; añade las cuatro diagonales (<code>[-1, -1]</code>, <code>[-1, 1]</code>…) y mira cómo se acorta; o sube <code>FILAS</code> y <code>COLUMNAS</code> para ver cuántas casillas explora BFS antes de llegar.</p>
+
+  <h3>Dijkstra: cuando no todos los pasos cuestan lo mismo</h3>
+  <p>BFS encuentra el camino con <em>menos pasos</em>. Pero en muchos juegos cruzar un pantano cuesta más que caminar por un sendero, y en un mapa de carreteras cada tramo tiene su propia longitud. Cuando las aristas tienen <strong>pesos</strong> (costos) distintos, el camino con menos tramos puede no ser el más barato:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 290" role="img" aria-label="Grafo con cuatro lugares: Aldea (A), Bosque (B), Colina (C) y Castillo (D). Los tramos cuestan: A-B 4, A-C 1, C-B 2, B-D 1 y C-D 5. BFS elige A, B, D (2 tramos, costo 5). Dijkstra elige A, C, B, D (3 tramos, costo 4), resaltado.">
+      <path class="d-linea" d="M70 150 L280 62"/>
+      <path class="d-acento-trazo" d="M70 150 L280 238" style="stroke-width:6px"/>
+      <path class="d-acento-trazo" d="M280 238 L280 62" style="stroke-width:6px"/>
+      <path class="d-acento-trazo" d="M280 62 L480 150" style="stroke-width:6px"/>
+      <path class="d-linea" d="M280 238 L480 150"/>
+      <circle class="d-fondo" cx="182" cy="123" r="14"/><text class="d-mono" x="182" y="129" text-anchor="middle" style="font-size:18px">4</text>
+      <circle class="d-fondo" cx="168" cy="211" r="14"/><text class="d-mono" x="168" y="217" text-anchor="middle" style="font-size:18px">1</text>
+      <circle class="d-fondo" cx="298" cy="150" r="14"/><text class="d-mono" x="298" y="156" text-anchor="middle" style="font-size:18px">2</text>
+      <circle class="d-fondo" cx="373" cy="122" r="14"/><text class="d-mono" x="373" y="128" text-anchor="middle" style="font-size:18px">1</text>
+      <circle class="d-fondo" cx="387" cy="210" r="14"/><text class="d-mono" x="387" y="216" text-anchor="middle" style="font-size:18px">5</text>
+      <circle class="d-caja" cx="70" cy="150" r="26"/><text class="d-rotulo" x="70" y="157" text-anchor="middle" style="font-size:20px">A</text>
+      <text class="d-peq d-tenue" x="70" y="198" text-anchor="middle">Aldea</text>
+      <circle class="d-caja" cx="280" cy="62" r="26"/><text class="d-rotulo" x="280" y="69" text-anchor="middle" style="font-size:20px">B</text>
+      <text class="d-peq d-tenue" x="280" y="26" text-anchor="middle">Bosque</text>
+      <circle class="d-caja" cx="280" cy="238" r="26"/><text class="d-rotulo" x="280" y="245" text-anchor="middle" style="font-size:20px">C</text>
+      <text class="d-peq d-tenue" x="280" y="284" text-anchor="middle">Colina</text>
+      <circle class="d-caja" cx="480" cy="150" r="26"/><text class="d-rotulo" x="480" y="157" text-anchor="middle" style="font-size:20px">D</text>
+      <text class="d-peq d-tenue" x="480" y="198" text-anchor="middle">Castillo</text>
+
+      <text class="d-rotulo" x="545" y="86">BFS (menos tramos)</text>
+      <text class="d-mono d-peq" x="545" y="108">A → B → D</text>
+      <text class="d-peq d-tenue" x="545" y="128">2 tramos, costo 4 + 1 = 5</text>
+      <text class="d-rotulo" x="545" y="176">Dijkstra (menor costo)</text>
+      <text class="d-mono d-peq" x="545" y="198">A → C → B → D</text>
+      <text class="d-peq d-tenue" x="545" y="218">3 tramos, costo 1 + 2 + 1 = 4</text>
+      <path class="d-acento-trazo" d="M545 240 H580" style="stroke-width:6px"/>
+      <text class="d-peq" x="590" y="245">el más barato</text>
+    </svg>
+    <figcaption>BFS cuenta tramos; Dijkstra suma costos. Ir de la Aldea al Castillo por la Colina y el Bosque tiene un tramo más, pero cuesta menos.</figcaption>
+  </figure>
+  <p>El <strong>algoritmo de Dijkstra</strong> (lo publicó Edsger Dijkstra en 1959) resuelve esto con una idea voraz. Mantiene, para cada lugar, la mejor distancia conocida desde el origen (al principio, infinito para todos menos el origen). En cada vuelta:</p>
+  <ol class="pasos">
+    <li><div><p>Elige, de entre los lugares que todavía no ha cerrado, el que tiene la distancia conocida más pequeña. Esa distancia ya es definitiva: cualquier otro camino pasaría por lugares más lejanos.</p></div></li>
+    <li><div><p>Desde ese lugar, mira a sus vecinos. Si llegar a un vecino pasando por aquí es más barato que lo que tenía apuntado, actualiza su distancia y apunta de dónde viene.</p></div></li>
+    <li><div><p>Marca el lugar como cerrado y repite hasta cerrar la meta (o todos).</p></div></li>
+  </ol>
+  <div class="taller" id="taller-dijkstra" data-titulo="Dijkstra paso a paso">
+    <textarea class="taller-codigo">const mapa = {
+  Aldea:    { Bosque: 4, Colina: 1 },
+  Bosque:   { Aldea: 4, Colina: 2, Castillo: 1 },
+  Colina:   { Aldea: 1, Bosque: 2, Castillo: 5 },
+  Castillo: { Bosque: 1, Colina: 5 },
+};
+
+function dijkstra(grafo, origen) {
+  const lugares = Object.keys(grafo);
+  const distancia = {};
+  const vieneDe = {};
+  const cerrados = new Set();
+  for (const lugar of lugares) distancia[lugar] = Infinity;
+  distancia[origen] = 0;
+
+  while (cerrados.size < lugares.length) {
+    // 1. El lugar abierto más cercano (la decisión voraz)
+    let actual = null;
+    for (const lugar of lugares) {
+      if (cerrados.has(lugar)) continue;
+      if (actual === null || distancia[lugar] < distancia[actual]) actual = lugar;
+    }
+    if (distancia[actual] === Infinity) break;   // lo que queda es inalcanzable
+    cerrados.add(actual);
+    console.log(`Cierro ${actual} a distancia ${distancia[actual]}`);
+
+    // 2. ¿Mejora algún vecino si paso por aquí?
+    for (const [vecino, costo] of Object.entries(grafo[actual])) {
+      const nueva = distancia[actual] + costo;
+      if (nueva < distancia[vecino]) {
+        distancia[vecino] = nueva;
+        vieneDe[vecino] = actual;
+      }
+    }
+  }
+  return { distancia: distancia, vieneDe: vieneDe };
+}
+
+const { distancia, vieneDe } = dijkstra(mapa, "Aldea");
+const camino = ["Castillo"];
+while (vieneDe[camino[0]]) camino.unshift(vieneDe[camino[0]]);
+console.log("Camino:", camino.join(" → "), "· costo:", distancia.Castillo);</textarea>
+  </div>
+  <p>Fíjate en el orden de cierre: la Colina (1) se cierra antes que el Bosque, y al pasar por ella el Bosque mejora de 4 a 3. Por eso el Castillo termina a distancia 4 y no 5.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuidado</p><p>Dijkstra solo funciona si ningún costo es negativo. Con costos negativos (por ejemplo, una casilla que <em>devuelve</em> energía al pasar), la distancia «definitiva» de un lugar cerrado podría mejorar después, y el algoritmo falla. Para esos casos existen otros algoritmos, como Bellman-Ford. En la mayoría de los juegos y mapas los costos son positivos y no hay problema.</p></div></aside>
+  <p>Nuestra versión busca el lugar más cercano revisándolos todos, lo que la hace <code>O(V²)</code>: perfecta para mapas pequeños. Con mapas grandes se usa una <strong>cola de prioridad</strong> (un montículo, <a href="19-estructuras-datos.html">Estación 19</a>) que entrega siempre el más cercano sin revisar todo, y el costo baja a <code>O((V + E) log V)</code>. Si todos los costos son iguales, Dijkstra explora exactamente como BFS.</p>
+
+  <h3>A*: Dijkstra con brújula</h3>
+  <p>Dijkstra explora en círculos alrededor de la salida, en todas las direcciones, incluso las que se alejan de la meta. <strong>A*</strong> (se lee «A estrella») añade una pista: a la distancia recorrida le suma una <strong>heurística</strong>, una estimación rápida de cuánto falta hasta la meta. En una cuadrícula donde solo te mueves en cuatro direcciones, la heurística típica es la <strong>distancia Manhattan</strong>: <code>Math.abs(fila1 - fila2) + Math.abs(columna1 - columna2)</code>, las casillas que faltarían si no hubiera paredes, como las cuadras que caminas en una ciudad con calles en cuadrícula.</p>
+  <p>Con esa brújula, A* explora primero en dirección a la meta y suele visitar muchas menos casillas que Dijkstra. Si la heurística nunca sobreestima lo que falta, A* sigue garantizando el camino más corto. Por eso es el algoritmo estrella de la búsqueda de caminos en videojuegos.</p>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>En un juego real rara vez programarás A* desde cero: los motores lo traen. Godot 4, por ejemplo, incluye la clase <code>AStarGrid2D</code> para cuadrículas, y Godot, Unity y Unreal ofrecen sistemas de navegación con <em>navmesh</em> (una malla con las zonas caminables) para mundos que no son de casillas. Lo verás en la <a href="34-videojuegos.html">Estación 34</a>. Saber cómo funcionan por dentro te permite elegir bien, configurar los costos del terreno y entender por qué un enemigo se atasca.</p></div></aside>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Algoritmo</th><th scope="col">Encuentra</th><th scope="col">Cuándo usarlo</th><th scope="col">Costo</th></tr></thead>
+      <tbody>
+        <tr><td>BFS</td><td>El camino con menos pasos</td><td>Todos los movimientos cuestan lo mismo</td><td><code>O(V + E)</code></td></tr>
+        <tr><td>Dijkstra</td><td>El camino de menor costo total</td><td>Costos distintos, ninguno negativo</td><td><code>O((V + E) log V)</code> con cola de prioridad</td></tr>
+        <tr><td>A*</td><td>El de menor costo, explorando menos</td><td>Sabes dónde está la meta y puedes estimar la distancia</td><td>Depende de la heurística; suele ser mucho menor</td></tr>
+      </tbody>
+    </table>
+  </div>
 </section>
   </main>
 </div>

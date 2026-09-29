@@ -206,7 +206,7 @@ Página web (HTML/CSS/JS con vista previa):
 </div>
 ```
 
-`data-auto` ejecuta al cargar (útil para demos). En la vista previa la validación nativa de formularios funciona (required, pattern…); al enviar un formulario válido o pulsar un enlace externo se muestra un aviso en la consola en vez de navegar; los enlaces `#id` desplazan dentro de la vista previa. El HTML puede cargar librerías con
+`data-auto` ejecuta al cargar (útil para demos). En la vista previa la validación nativa de formularios funciona (required, pattern…); al enviar un formulario válido o pulsar un enlace externo se muestra un aviso en la consola en vez de navegar; los enlaces `#id` desplazan dentro de la vista previa. `localStorage` y `sessionStorage` funcionan dentro del taller web: los datos de `localStorage` duran entre ejecuciones del mismo taller y «Reiniciar» los borra (no hace falta ningún ayudante propio). Los errores indican la línea contando desde la pestaña JS, y `console.log` de un elemento muestra su etiqueta (`<p id="n">`). El HTML puede cargar librerías con
 `<script src="https://cdnjs.cloudflare.com/ajax/libs/...">` (versiones exactas), por ejemplo React 18.3.1 UMD
 (`react/18.3.1/umd/react.development.js` y `react-dom/18.3.1/umd/react-dom.development.js`) con
 `babel-standalone/7.26.4/babel.min.js` para JSX, o `phaser/3.90.0/phaser.min.js`. Solo cdnjs, solo scripts.

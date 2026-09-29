@@ -585,7 +585,11 @@
       editores.forEach(function (e) { partes[e.nombre === "javascript" ? "js" : e.nombre] = e.editor.valor(); });
       var sinCierre = function (t) { return String(t).replace(/<\/script/gi, "<\\/script"); };
       var idJ = JSON.stringify(idTaller);
-      var puente = "<script>(function(){var P=parent;function f(v){try{if(typeof v==='string')return v;return JSON.stringify(v);}catch(e){return String(v);}}" +
+      var puente = "<script>(function(){var P=parent;function el(v){return '<'+v.tagName.toLowerCase()+(v.id?' id=\"'+v.id+'\"':'')+(typeof v.className==='string'&&v.className?' class=\"'+v.className+'\"':'')+'>';}" +
+        "function f(v){try{if(typeof v==='string')return v;if(v&&v.nodeType===1)return el(v);if(v&&(v instanceof NodeList||v instanceof HTMLCollection))return (v instanceof NodeList?'NodeList':'HTMLCollection')+'('+v.length+') [ '+[].map.call(v,function(x){return x.nodeType===1?el(x):String(x);}).join(', ')+' ]';if(v===undefined)return 'undefined';if(typeof v==='function')return '[Function: '+(v.name||'(anónima)')+']';return JSON.stringify(v);}catch(e){return String(v);}}" +
+        // localStorage de mentira: el iframe aislado no puede usar el real; los datos se guardan en el taller y duran entre ejecuciones.
+        "function almacen(ini,persistir){var d=ini||{};function g(){if(persistir)P.postMessage({terminalTaller:" + JSON.stringify(idTaller) + ",tipo:'almacen',datos:d},'*');}return {getItem:function(k){k=String(k);return Object.prototype.hasOwnProperty.call(d,k)?d[k]:null;},setItem:function(k,v){d[String(k)]=String(v);g();},removeItem:function(k){delete d[String(k)];g();},clear:function(){d={};g();},key:function(i){var ks=Object.keys(d);return i<ks.length?ks[i]:null;},get length(){return Object.keys(d).length;}};}" +
+        "try{Object.defineProperty(window,'localStorage',{value:almacen(" + JSON.stringify(almacenTaller).replace(/</g, "\\u003c") + ",true),configurable:true});Object.defineProperty(window,'sessionStorage',{value:almacen({},false),configurable:true});}catch(e){}" +
         "window.__salida=[];var PY=" + (modo === "python") + ",buf={log:'',error:''};function emitir(k,a){if(PY){if(/error in loaders|handle error|frame obj/.test(a))return;a=a.replace(/File \"[^\"]*principal\"/,'File \"tu_programa.py\"');}if(k==='log'||k==='info')window.__salida.push(a);P.postMessage({terminalTaller:" + idJ + ",tipo:k==='error'?'error':(k==='warn'?'aviso':'log'),datos:a},'*');}" +
         "window.__vaciar=function(){['log','error'].forEach(function(k){if(buf[k]){emitir(k,buf[k]);buf[k]='';}});};" +
         "['log','info','warn','error'].forEach(function(k){var o=console[k];console[k]=function(){var a=[].slice.call(arguments).map(f).join(' ');" +
@@ -611,20 +615,24 @@
           "if(!res.length)console.log('Listo: la instrucción se ejecutó y no devolvió filas.');}catch(e){console.error('Error de SQL: '+e.message);}" +
           "window.__terminar();}).catch(function(e){console.error('No se pudo cargar SQLite: '+e.message);window.__terminar();});<\/script></body></html>";
       } else {
-        html = cabeza + "<style>" + partes.css + "</style></head><body>" + partes.html + "<script>" + sinCierre(partes.js) + "\n<\/script>" +
+        var antesJs = cabeza + "<style>" + partes.css + "</style></head><body>" + partes.html + "<script>";
+        desfaseWeb = (antesJs.match(/\n/g) || []).length;
+        html = antesJs + sinCierre(partes.js) + "\n<\/script>" +
           "<script>window.addEventListener('load',function(){setTimeout(window.__terminar,150);});<\/script></body></html>";
       }
       if (modo !== "web") linea("vacio", modo === "python" ? "Ejecutando Python…" : "Ejecutando SQL…");
       iframe.srcdoc = html;
     }
     var idTaller = "t" + Math.random().toString(36).slice(2, 9);
+    var almacenTaller = {}, desfaseWeb = 0;
     if (enMarco) {
       window.addEventListener("message", function (ev) {
         var m = ev.data;
         if (!m || m.terminalTaller !== idTaller) return;
         var primero = cuerpoSalida.firstChild;
         if (primero && primero.classList.contains("vacio")) cuerpoSalida.innerHTML = "";
-        if (m.tipo === "excepcion") informarError(m.datos);
+        if (m.tipo === "almacen") { almacenTaller = m.datos || {}; return; }
+        if (m.tipo === "excepcion") { var d = m.datos; if (modo === "web" && d.linea) d.linea = d.linea - desfaseWeb > 0 ? d.linea - desfaseWeb : null; else if (modo !== "web") d.linea = null; informarError(d); }
         else if (m.tipo === "fin") {
           if (!cuerpoSalida.firstChild) cuerpoSalida.appendChild(crear("div", { "class": "vacio", texto: "(El programa terminó sin imprimir nada.)" }));
           if (m.datos !== null && m.datos !== undefined) { mostrarVeredicto(m.datos); if (m.datos === true) marcarEjercicio(caja); }
@@ -637,6 +645,7 @@
     bReiniciar.addEventListener("click", function () {
       terminar();
       editores.forEach(function (e) { e.editor.poner(e.inicial); });
+      almacenTaller = {};
       if (clave) almacen.cambiar(function (d) { if (d.talleres) delete d.talleres[clave]; });
       cuerpoSalida.innerHTML = "";
       cuerpoSalida.appendChild(crear("div", { "class": "vacio", texto: "Código restaurado. Pulsa «Ejecutar» para probarlo." }));
