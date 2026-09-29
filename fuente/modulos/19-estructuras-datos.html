@@ -951,3 +951,270 @@ console.log("Intersección a mano:", [...enComun]);</textarea>
     <p>Igual que las claves de un <code>Map</code>, los valores de un <code>Set</code> se comparan por referencia cuando son objetos o arrays. <code>new Set([[1, 2], [1, 2]]).size</code> da 2, no 1: son dos arrays distintos con el mismo contenido. Otra sorpresa: <code>new Set("hola")</code> no guarda la palabra, guarda sus letras (<code>h</code>, <code>o</code>, <code>l</code>, <code>a</code>), porque <code>new Set</code> recorre lo que le das. Para guardar una palabra, pásala dentro de un array: <code>new Set(["hola"])</code>.</p>
   </aside>
 </section>
+
+<section id="arboles" data-parada="Árboles">
+  <h2>Árboles</h2>
+  <p>Hasta ahora todas las estructuras eran planas: una fila de elementos o un montón de pares. Pero muchísimos datos tienen forma de jerarquía. Las carpetas de tu computadora contienen carpetas que contienen archivos. Una página web es un documento con un <code>body</code> que contiene secciones que contienen párrafos (el DOM de la <a href="15-dom.html">Estación 15</a>). Una tienda en línea tiene categorías con subcategorías. Un juego de rol tiene un árbol de habilidades donde desbloquear una abre dos nuevas. Y en Godot, cada escena es un árbol de nodos (<a href="34-videojuegos.html">Estación 34</a>). Para todo eso se usa un <strong>árbol</strong>.</p>
+
+  <h3>El vocabulario de los árboles</h3>
+  <p>Un árbol está hecho de <strong>nodos</strong> unidos por <strong>aristas</strong> (las líneas). En informática los árboles se dibujan al revés que en la naturaleza: la raíz arriba y las ramas hacia abajo.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 320" role="img" aria-label="Un árbol de ocho nodos. A es la raíz, en el nivel 0. B y C son sus hijos, en el nivel 1. D y E son hijos de B, y son hermanos. F es hijo de C. G y H son hijos de F, en el nivel 3. D, E, G y H son hojas porque no tienen hijos. C, F, G y H forman el subárbol de C. La altura del árbol es 3.">
+      <text class="d-peq d-tenue" x="20" y="46">nivel 0</text>
+      <text class="d-peq d-tenue" x="20" y="126">nivel 1</text>
+      <text class="d-peq d-tenue" x="20" y="206">nivel 2</text>
+      <text class="d-peq d-tenue" x="20" y="286">nivel 3</text>
+      <rect class="d-punteada" x="430" y="92" width="196" height="218" rx="16"/>
+      <path class="d-linea" d="M380 40 L240 120 M380 40 L520 120 M240 120 L170 200 M240 120 L310 200 M520 120 L520 200 M520 200 L460 280 M520 200 L580 280"/>
+      <circle class="d-acento" cx="380" cy="40" r="22"/>
+      <circle class="d-caja" cx="240" cy="120" r="22"/>
+      <circle class="d-caja" cx="520" cy="120" r="22"/>
+      <circle class="d-resalte" cx="170" cy="200" r="22"/>
+      <circle class="d-linea" cx="170" cy="200" r="22"/>
+      <circle class="d-resalte" cx="310" cy="200" r="22"/>
+      <circle class="d-linea" cx="310" cy="200" r="22"/>
+      <circle class="d-caja" cx="520" cy="200" r="22"/>
+      <circle class="d-resalte" cx="460" cy="280" r="22"/>
+      <circle class="d-linea" cx="460" cy="280" r="22"/>
+      <circle class="d-resalte" cx="580" cy="280" r="22"/>
+      <circle class="d-linea" cx="580" cy="280" r="22"/>
+      <g class="d-rotulo" text-anchor="middle">
+        <text class="d-sobre-acento" x="380" y="46">A</text>
+        <text x="240" y="126">B</text><text x="520" y="126">C</text>
+        <text x="170" y="206">D</text><text x="310" y="206">E</text><text x="520" y="206">F</text>
+        <text x="460" y="286">G</text><text x="580" y="286">H</text>
+      </g>
+      <text class="d-rotulo" x="412" y="46">raíz</text>
+      <text class="d-peq" x="462" y="72">arista</text>
+      <text class="d-peq" x="212" y="112" text-anchor="end">B es padre de D y E</text>
+      <text class="d-peq" x="240" y="244" text-anchor="middle">D y E son hermanos</text>
+      <text class="d-peq" x="548" y="164">F es hijo de C</text>
+      <text class="d-rotulo" x="636" y="190">subárbol</text>
+      <text class="d-rotulo" x="636" y="210">de C</text>
+      <circle class="d-resalte" cx="582" cy="36" r="9"/>
+      <circle class="d-linea" cx="582" cy="36" r="9"/>
+      <text class="d-peq" x="598" y="41">hoja: sin hijos</text>
+      <text class="d-peq" x="574" y="68">altura del árbol: 3</text>
+    </svg>
+    <figcaption>Las partes de un árbol. Cada nodo tiene un solo padre, excepto la raíz, que no tiene ninguno. Las hojas (resaltadas) no tienen hijos. Cualquier nodo con todos sus descendientes forma un subárbol, que también es un árbol.</figcaption>
+  </figure>
+  <ul>
+    <li>La <strong>raíz</strong> es el único nodo sin padre. Desde ella se llega a todos los demás por un único camino.</li>
+    <li>Si un nodo está justo debajo de otro, es su <strong>hijo</strong>, y el de arriba es su <strong>padre</strong>. Los hijos de un mismo padre son <strong>hermanos</strong>.</li>
+    <li>Una <strong>hoja</strong> es un nodo sin hijos, como un archivo dentro de una carpeta.</li>
+    <li>La <strong>profundidad</strong> o <strong>nivel</strong> de un nodo es cuántas aristas lo separan de la raíz. La <strong>altura</strong> del árbol es la profundidad máxima.</li>
+    <li>Un <strong>subárbol</strong> es un nodo con todos sus descendientes. Esta idea es poderosa: cada subárbol es a su vez un árbol, así que muchas funciones sobre árboles se aplican igual a cada parte.</li>
+  </ul>
+  <p>En JavaScript, un árbol se representa con nodos que son objetos y guardan referencias a sus hijos, igual que la lista enlazada guardaba una referencia al siguiente. Un nodo general tiene un array de hijos: <code>{ nombre: "Espada", hijos: [ … ] }</code>. Un <strong>árbol binario</strong> limita los hijos a dos, que se llaman izquierdo y derecho: <code>{ valor: 50, izq: …, der: … }</code>.</p>
+  <p>El árbol que más usas cada día es el sistema de archivos. Cada carpeta es un nodo; los archivos son hojas; la raíz es <code>/</code>; <code>cd ..</code> sube al padre; y una ruta como <code>/home/tu/juego/niveles</code> es el camino desde la raíz hasta un nodo.</p>
+  <div class="terminal-sim" data-titulo="El sistema de archivos es un árbol" data-inicio="/home/tu">
+    <div class="terminal-instrucciones">
+      <p>Misión: dentro de <code>juego</code>, crea la carpeta <code>niveles</code> con dos hijas, <code>nivel1</code> y <code>nivel2</code>, y la carpeta <code>sonidos</code> con una hoja, el archivo <code>salto.wav</code>. Muévete con <code>cd</code> y sube al padre al menos una vez con <code>cd ..</code>. Usa <code>ls</code> para ver los hijos de cada carpeta.</p>
+    </div>
+    <script type="application/json" class="terminal-sistema">{"juego": {"index.html": "<canvas></canvas>", "imagenes": {"heroe.png": ""}}}</script>
+    <script type="text/plain" class="terminal-mision">
+      var j = sistema.juego;
+      if (!j) return "No encuentro la carpeta juego. ¿La borraste? Pulsa «Reiniciar».";
+      if (!j.niveles || typeof j.niveles !== "object") return "Crea la carpeta niveles dentro de juego: cd juego y después mkdir niveles.";
+      if (typeof j.niveles.nivel1 !== "object" || typeof j.niveles.nivel2 !== "object") return "Dentro de niveles faltan las carpetas nivel1 y nivel2.";
+      if (!j.sonidos || typeof j.sonidos !== "object") return "Falta la carpeta sonidos dentro de juego.";
+      if (typeof j.sonidos["salto.wav"] !== "string") return "Crea el archivo salto.wav dentro de sonidos con touch.";
+      if (!historial.some(function (h) { return /^cd\s+\.\.\/?\s*$/.test(h.trim()); })) return "La estructura está lista. Te falta subir al padre al menos una vez con cd .. (es la arista hacia arriba).";
+      return true;
+    </script>
+  </div>
+
+  <h3>Árbol binario de búsqueda</h3>
+  <p>Un árbol puede servir también para <em>buscar</em> rápido. Un <strong>árbol binario de búsqueda</strong> (en inglés, <em>binary search tree</em> o BST) es un árbol binario con una regla: para cada nodo, todo lo que está en su subárbol izquierdo es menor, y todo lo que está en su subárbol derecho es mayor. Esa regla convierte cada comparación en una decisión: izquierda o derecha. Y cada decisión descarta una rama entera.</p>
+  <figure class="capsula" data-titulo="Buscar e insertar en un árbol binario de búsqueda">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 310" role="img" aria-label="Animación: un árbol binario de búsqueda con 50 en la raíz, 30 y 70 debajo, y 20, 40, 60 y 80 en el último nivel. Para buscar 60 se compara con 50 y se va a la derecha, se compara con 70 y se va a la izquierda, y se encuentra el 60 en tres pasos. Para insertar 65 se sigue el mismo camino y el nuevo nodo queda como hijo derecho del 60.">
+        <text class="d-rotulo" x="20" y="40" data-texto="1:Regla: izquierda menor, derecha mayor; 2:Buscar 60; 5:Insertar 65; 6:Cada paso descarta una rama">Regla: izquierda menor, derecha mayor</text>
+        <text class="d-mono" x="20" y="66" style="font-size:15px" data-texto="1: ; 2:60 &gt; 50: a la derecha; 3:60 &lt; 70: a la izquierda; 4:60 = 60: encontrado; 5:65 &gt; 50, 65 &lt; 70, 65 &gt; 60; 6: "> </text>
+        <path class="d-linea" d="M360 40 L200 115 M360 40 L520 115 M200 115 L120 190 M200 115 L280 190 M520 115 L440 190 M520 115 L600 190"/>
+        <path class="d-linea" d="M440 190 L500 265" data-pasos="5-"/>
+        <circle class="d-caja" cx="360" cy="40" r="24" data-clases="2:d-acento; 3:d-resalte; 6:"/>
+        <circle class="d-caja" cx="200" cy="115" r="24"/>
+        <circle class="d-caja" cx="520" cy="115" r="24" data-clases="3:d-acento; 4:d-resalte; 6:"/>
+        <circle class="d-caja" cx="120" cy="190" r="24"/>
+        <circle class="d-caja" cx="280" cy="190" r="24"/>
+        <circle class="d-caja" cx="440" cy="190" r="24" data-clases="4:d-acento; 5:d-resalte; 6:"/>
+        <circle class="d-caja" cx="600" cy="190" r="24"/>
+        <circle class="d-caja" cx="500" cy="265" r="24" data-pasos="5-" data-clases="5:d-acento; 6:"/>
+        <g class="d-mono" text-anchor="middle" style="font-size:18px">
+          <text x="360" y="46" data-clases="2:d-sobre-acento; 3:">50</text>
+          <text x="200" y="121">30</text>
+          <text x="520" y="121" data-clases="3:d-sobre-acento; 4:">70</text>
+          <text x="120" y="196">20</text>
+          <text x="280" y="196">40</text>
+          <text x="440" y="196" data-clases="4:d-sobre-acento; 5:">60</text>
+          <text x="600" y="196">80</text>
+          <text x="500" y="271" data-pasos="5-" data-clases="5:d-sobre-acento; 6:">65</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Un árbol binario de búsqueda con 7 números. Compruébalo: a la izquierda del 50 solo hay números menores (30, 20, 40) y a la derecha solo mayores (70, 60, 80). La regla se cumple en cada nodo, no solo en la raíz.</li>
+        <li>Buscamos el 60. Empezamos siempre por la raíz: 60 es mayor que 50, así que, si existe, está a la derecha. Toda la rama izquierda (tres nodos) queda descartada sin mirarla.</li>
+        <li>Llegamos al 70. 60 es menor, así que bajamos a la izquierda. El 80 queda descartado.</li>
+        <li>¡El 60! Lo encontramos en 3 comparaciones de 7 nodos. En un árbol equilibrado con un millón de nodos, harían falta unas 20: buscar es <code>O(log n)</code>.</li>
+        <li data-duracion="6">Insertar sigue el mismo camino que buscar. Para el 65: mayor que 50, menor que 70, mayor que 60… y a la derecha del 60 no hay nada. Ahí se engancha el nodo nuevo. La regla sigue cumpliéndose sin mover ningún otro nodo.</li>
+        <li data-duracion="6">Cada comparación baja un nivel y descarta una rama. Por eso el costo depende de la altura del árbol, no de cuántos nodos tiene. Mientras el árbol esté equilibrado, la altura es pequeña.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Este taller construye el árbol de la cápsula e incluye una sorpresa. Predice: ¿cuántos pasos costará buscar el 1000 en un árbol donde los números del 1 al 1000 se insertaron en orden?</p>
+  <div class="taller" id="taller-bst" data-titulo="Predice: un árbol equilibrado y uno torcido">
+    <textarea class="taller-codigo">function crearNodo(valor) {
+  return { valor: valor, izq: null, der: null };
+}
+
+function insertar(raiz, valor) {
+  const nuevo = crearNodo(valor);
+  if (raiz === null) return nuevo;  // árbol vacío: el nuevo nodo es la raíz
+  let actual = raiz;
+  while (true) {
+    if (valor < actual.valor) {
+      if (actual.izq === null) { actual.izq = nuevo; break; } // hueco libre: ahí va
+      actual = actual.izq;
+    } else {
+      if (actual.der === null) { actual.der = nuevo; break; }
+      actual = actual.der;
+    }
+  }
+  return raiz;
+}
+
+function buscar(raiz, valor) {
+  let actual = raiz;
+  let pasos = 0;
+  while (actual !== null) {
+    pasos++;
+    if (valor === actual.valor) return `encontrado en ${pasos} pasos`;
+    actual = valor < actual.valor ? actual.izq : actual.der;
+  }
+  return `no está (${pasos} pasos)`;
+}
+
+// Recorrido «en orden»: izquierda, nodo, derecha. Es recursivo (Estación 10).
+function enOrden(nodo, resultado) {
+  if (nodo === null) return resultado;  // caso base: rama vacía
+  enOrden(nodo.izq, resultado);
+  resultado.push(nodo.valor);
+  enOrden(nodo.der, resultado);
+  return resultado;
+}
+
+let raiz = null;
+for (const v of [50, 30, 70, 20, 40, 60, 80, 65]) raiz = insertar(raiz, v);
+console.log("Buscar 60:", buscar(raiz, 60));
+console.log("Buscar 45:", buscar(raiz, 45));
+console.log("En orden:", enOrden(raiz, []).join(", "));
+
+// 1000 números insertados en un orden mezclado
+let mezclado = null;
+for (let i = 0; i < 1000; i++) mezclado = insertar(mezclado, (i * 761) % 1000 + 1);
+console.log("Mezclado, buscar 1000:", buscar(mezclado, 1000));
+
+// Los mismos 1000 números insertados en orden: 1, 2, 3…
+let torcido = null;
+for (let v = 1; v <= 1000; v++) torcido = insertar(torcido, v);
+console.log("En orden, buscar 1000:", buscar(torcido, 1000));</textarea>
+  </div>
+  <p>Fíjate en dos cosas. Primero, el recorrido <strong>en orden</strong> (izquierda, nodo, derecha) devuelve los valores ordenados de menor a mayor, gratis: es una consecuencia directa de la regla del árbol. Segundo, el árbol torcido: si insertas los números ya ordenados, cada uno va a la derecha del anterior y el «árbol» se convierte en una lista enlazada de 1000 nodos. Buscar el 1000 cuesta 1000 pasos, <code>O(n)</code>, en lugar de los 10 del árbol mezclado.</p>
+  <aside class="senal ojo">
+    <p>El <code>O(log n)</code> de un árbol binario de búsqueda solo está garantizado si el árbol se mantiene <strong>equilibrado</strong>, es decir, con ramas de alturas parecidas. Por eso las bibliotecas no usan el árbol simple de este taller, sino árboles que se reequilibran solos al insertar, como los árboles AVL o los rojinegros. No necesitas programarlos; necesitas saber que existen y por qué.</p>
+  </aside>
+  <p>Los árboles de búsqueda también están dentro de las bases de datos. Cuando creas un <strong>índice</strong> en una tabla, la base de datos construye un árbol (un <em>árbol B</em>, pensado para leer del disco por bloques) ordenado por esa columna. La documentación de SQLite lo dice así: cada tabla y cada índice se guardan en su propio árbol B. No necesitas saber SQL todavía (llega en la <a href="30-bases-datos.html">Estación 30</a>): ejecuta y mira la última columna, <code>detail</code>.</p>
+  <div class="taller" data-modo="sql" id="taller-indice" data-titulo="Ejecuta: una base de datos que usa un árbol">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE jugadores (id INTEGER PRIMARY KEY, nombre TEXT, puntos INTEGER);
+WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 1000)
+INSERT INTO jugadores (nombre, puntos) SELECT 'jugador' || i, (i * 37) % 1000 FROM n;</script>
+    <textarea class="taller-codigo">-- 1. Sin índice: SQLite recorre la tabla fila por fila (SCAN)
+EXPLAIN QUERY PLAN SELECT * FROM jugadores WHERE puntos = 500;
+
+-- 2. Creamos un índice: un árbol B ordenado por la columna puntos
+CREATE INDEX idx_puntos ON jugadores (puntos);
+
+-- 3. La misma búsqueda ahora baja por el árbol (SEARCH ... USING INDEX)
+EXPLAIN QUERY PLAN SELECT * FROM jugadores WHERE puntos = 500;</textarea>
+  </div>
+  <p>La primera consulta dice <code>SCAN jugadores</code>: revisar las 1000 filas, <code>O(n)</code>. La segunda dice <code>SEARCH jugadores USING INDEX idx_puntos</code>: bajar por el árbol, <code>O(log n)</code>. Con 1000 filas no se nota; con 100 millones, es la diferencia entre una respuesta instantánea y una app que no responde.</p>
+
+  <h3>Recorrer un árbol: en profundidad o en anchura</h3>
+  <p>Recorrer un árbol es visitar todos sus nodos. Hay dos grandes estrategias, y la diferencia entre ellas es justamente la estructura auxiliar que usan:</p>
+  <ul>
+    <li><strong>En profundidad</strong> (en inglés, <em>depth-first search</em>, <strong>DFS</strong>): baja por una rama hasta el fondo antes de pasar a la siguiente. Usa una <strong>pila</strong> (o recursión, que usa la pila de llamadas). Es lo que haces al explorar carpetas abriendo siempre la primera subcarpeta.</li>
+    <li><strong>En anchura</strong> (en inglés, <em>breadth-first search</em>, <strong>BFS</strong>): visita todos los nodos de un nivel antes de bajar al siguiente. Usa una <strong>cola</strong>. Es como leer un organigrama piso por piso.</li>
+  </ul>
+  <p>Predice el orden en que se imprimirán las habilidades con cada estrategia. Fíjate en que las dos funciones son casi idénticas: solo cambia <code>pop</code> (pila) por la lectura en <code>cabeza</code> (cola).</p>
+  <div class="taller" id="taller-recorridos" data-titulo="Predice: el mismo árbol, dos órdenes">
+    <textarea class="taller-codigo">// Árbol de habilidades de un juego: cada nodo tiene nombre e hijos
+const habilidades = {
+  nombre: "Guerrera",
+  hijos: [
+    { nombre: "Espada", hijos: [
+      { nombre: "Estocada", hijos: [] },
+      { nombre: "Torbellino", hijos: [] },
+    ] },
+    { nombre: "Escudo", hijos: [
+      { nombre: "Bloqueo", hijos: [] },
+    ] },
+  ],
+};
+
+// En profundidad (DFS), con una PILA
+function enProfundidad(raiz) {
+  const orden = [];
+  const pila = [raiz];
+  while (pila.length > 0) {
+    const nodo = pila.pop();            // sale el último que entró
+    orden.push(nodo.nombre);
+    // apilamos los hijos al revés para que el primero quede arriba
+    for (let i = nodo.hijos.length - 1; i >= 0; i--) pila.push(nodo.hijos[i]);
+  }
+  return orden;
+}
+
+// En anchura (BFS), con una COLA
+function enAnchura(raiz) {
+  const orden = [];
+  const cola = [raiz];
+  let cabeza = 0;
+  while (cabeza < cola.length) {
+    const nodo = cola[cabeza];          // sale el primero que entró
+    cabeza++;
+    orden.push(nodo.nombre);
+    for (const hijo of nodo.hijos) cola.push(hijo);
+  }
+  return orden;
+}
+
+console.log("En profundidad:", enProfundidad(habilidades).join(" → "));
+console.log("En anchura:    ", enAnchura(habilidades).join(" → "));</textarea>
+  </div>
+  <p>En profundidad sale <code>Guerrera → Espada → Estocada → Torbellino → Escudo → Bloqueo</code>: termina toda la rama de la espada antes de tocar el escudo. En anchura sale <code>Guerrera → Espada → Escudo → Estocada → Torbellino → Bloqueo</code>: primero el nivel 1 completo, después el nivel 2.</p>
+  <p>El recorrido en profundidad también se escribe, de forma muy natural, con una función recursiva: la función se ocupa de un nodo y se llama a sí misma para cada hijo. Cada subárbol es un árbol, ¿recuerdas?</p>
+  <pre><code class="language-js">function mostrar(nodo, nivel) {
+  console.log("  ".repeat(nivel) + nodo.nombre); // sangría según la profundidad
+  for (const hijo of nodo.hijos) mostrar(hijo, nivel + 1);
+}
+mostrar(habilidades, 0);
+// Guerrera
+//   Espada
+//     Estocada
+//     Torbellino
+//   Escudo
+//     Bloqueo</code></pre>
+  <p>Aquí el caso base está escondido: una hoja no tiene hijos, así que el <code>for</code> no da ninguna vuelta y la función termina sin volver a llamarse. Hay tres variantes clásicas del recorrido en profundidad según cuándo se visita el nodo respecto de sus hijos: <strong>preorden</strong> (primero el nodo, como <code>mostrar</code>), <strong>inorden</strong> (entre el hijo izquierdo y el derecho, como <code>enOrden</code>) y <strong>postorden</strong> (después de los hijos, útil para calcular el tamaño de una carpeta sumando el de su contenido). La recursión a fondo te espera en la <a href="20-algoritmos.html">Estación 20</a>.</p>
+
+  <h3>Un árbol para autocompletar: el trie</h3>
+  <p>Cuando escribes «sal» en un buscador y te sugiere «salto», «salud» y «salida», probablemente hay un <strong>trie</strong> (o árbol de prefijos) detrás. Es un árbol donde cada arista es una letra: las palabras que empiezan igual comparten el mismo camino desde la raíz, y un nodo marcado indica que ahí termina una palabra. Para sugerir, se baja por las letras escritas y se recorre el subárbol que queda. Buscar una palabra cuesta tantos pasos como letras tiene, sin importar cuántas palabras haya en el diccionario.</p>
+  <pre><code class="language-text">(raíz)
+ └─ s
+    ├─ o ─ l*               sol
+    └─ a ─ l* ─ t ─ o*      sal, salto
+           └─ u ─ d*        salud
+(* = aquí termina una palabra)</code></pre>
+</section>

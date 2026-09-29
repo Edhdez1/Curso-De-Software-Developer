@@ -190,6 +190,8 @@ function paginaModulo(m, i) {
     cuerpo = `<section id="ruta" data-parada="En construcción"><h2>Estación en construcción</h2><p class="entradilla">Este módulo todavía se está escribiendo.</p></section>`;
   }
   cuerpo = nivelEjercicios(expandirVideos(expandirSenales(cuerpo)));
+  // Chrome no aplica white-space:pre al texto SVG: el código dentro de diagramas conserva su sangría con xml:space.
+  cuerpo = cuerpo.replace(/<text(?![^>]*xml:space)([^>]*class="[^"]*\b(?:d-mono|d-codigo-texto|d-codigo-tenue)\b[^"]*"[^>]*)>/g, '<text xml:space="preserve"$1>');
   const secciones = seccionesDe(cuerpo);
   if (existe(ruta)) for (const id of OBLIGATORIAS) if (!secciones.some((s) => s.id === id)) avisos.push(`${m.slug}: falta la sección #${id}`);
   const linea = lineaDe(m.linea);
