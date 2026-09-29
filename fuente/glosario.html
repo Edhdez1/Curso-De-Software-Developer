@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Glosario · Terminal</title>
+<meta name="description" content="Todos los términos del curso Terminal explicados con palabras sencillas, con enlace a la estación donde se enseñan.">
+{{TEMA_TEMPRANO}}
+{{FUENTES}}
+<link rel="stylesheet" href="assets/css/terminal.css">
+</head>
+<body data-linea="1">
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<header class="barra">
+  <a class="marca" href="index.html" aria-label="Terminal: volver al mapa del curso">{{MARCA}}<span class="marca-texto">Terminal</span></a>
+  <nav class="barra-acciones" aria-label="Navegación general">
+    <a class="barra-enlace" href="index.html#red">{{ICO_MAPA}}<span>Mapa</span></a>
+    <button class="boton-icono" type="button" data-accion="tema" aria-label="Cambiar tema claro u oscuro">{{ICO_TEMA}}</button>
+  </nav>
+</header>
+<main class="portada-seccion contenido" id="contenido">
+  <h2 style="font-size:clamp(2.6rem,2rem + 3vw,4.5rem)">Glosario</h2>
+  <p class="entradilla">{{NUM_TERMINOS}} términos del curso explicados con palabras sencillas. Cada uno enlaza con la estación donde se enseña a fondo.</p>
+  <label class="solo-lectores" for="buscar-termino">Buscar un término</label>
+  <input class="glosario-buscar" id="buscar-termino" type="search" placeholder="Buscar un término, por ejemplo «variable»" autocomplete="off">
+  <nav class="glosario-letras" aria-label="Letras">{{LETRAS}}</nav>
+  <div id="terminos">
+{{TERMINOS}}
+  </div>
+</main>
+<footer class="pie"><div class="pie-interior"><span>Terminal · curso libre de desarrollo e ingeniería de software</span></div></footer>
+<script src="assets/js/terminal.js"></script>
+<script>
+(function(){
+  var campo = document.getElementById("buscar-termino");
+  var norm = function(t){ return t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); };
+  campo.addEventListener("input", function(){
+    var q = norm(campo.value.trim());
+    document.querySelectorAll(".glosario-letra").forEach(function(sec){
+      var visibles = 0;
+      sec.querySelectorAll("dt").forEach(function(dt){
+        var dd = dt.nextElementSibling;
+        var ok = !q || norm(dt.textContent + " " + dd.textContent).indexOf(q) !== -1;
+        dt.hidden = !ok; dd.hidden = !ok; if (ok) visibles++;
+      });
+      sec.hidden = visibles === 0;
+    });
+  });
+})();
+</script>
+</body>
+</html>
