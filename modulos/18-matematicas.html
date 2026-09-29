@@ -57,6 +57,11 @@
       <li><a href="#crecimiento">Potencias y logaritmos</a></li>
       <li><a href="#resumen">Resumen</a></li>
       <li><a href="#practica">Práctica</a></li>
+      <li><a href="#proyecto">Proyecto</a></li>
+      <li><a href="#autoevaluacion">Autoevaluación</a></li>
+      <li><a href="#glosario">Glosario</a></li>
+      <li><a href="#videos">Videos</a></li>
+      <li><a href="#profundizar">Para profundizar</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -1891,6 +1896,356 @@ console.log("Hoy te toca:", elegirPonderado(botin, Math.random()));</code></pre>
       <p>Recibir <code>r</code> como parámetro en lugar de llamar a <code>Math.random()</code> dentro hace que la función sea fácil de probar: con el mismo <code>r</code> siempre da lo mismo. Es la misma idea que las semillas, y la aprovecharás en la Estación 26.</p>
     </details>
   </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: la matemática de una nave espacial</h2>
+  <p>Vas a hacer funcionar un pequeño juego al estilo de Asteroids: una nave que gira, acelera, sale por un borde y entra por el opuesto, dispara y destruye rocas que flotan en direcciones al azar. El juego ya está programado, pero depende de siete funciones matemáticas que están vacías. Tu trabajo es escribirlas. Cada función que completes arregla una parte del juego, así que verás el efecto de cada idea de esta estación.</p>
+  <ol class="pasos">
+    <li><div><p>Pulsa «Ejecutar» sin cambiar nada y haz clic sobre el juego. Prueba las flechas y la barra espaciadora. Todo va mal: la nave no gira, siempre acelera hacia la derecha y se escapa de la pantalla, y las rocas salen todas del mismo rincón.</p></div></li>
+    <li><div><p>Completa <code>aRadianes</code>. Con las flechas izquierda y derecha, la nave debería girar 4° por fotograma.</p></div></li>
+    <li><div><p>Completa <code>direccion(angulo)</code> con coseno y seno. Ahora la flecha arriba empuja la nave hacia donde apunta, y las balas salen por la punta.</p></div></li>
+    <li><div><p>Completa <code>envolver(valor, max)</code> con el módulo que funciona con negativos. La nave, las balas y las rocas deberían salir por un borde y aparecer por el opuesto, por los cuatro lados.</p></div></li>
+    <li><div><p>Completa <code>longitud(v)</code> y <code>limitar(v, maximo)</code>. La nave ya no puede acelerar sin límite: su velocidad se queda en 4 píxeles por fotograma como mucho, pero conserva la dirección.</p></div></li>
+    <li><div><p>Completa <code>distancia(a, b)</code>. Ahora funcionan las colisiones: dos círculos chocan cuando la distancia entre sus centros es menor que la suma de sus radios. Las balas destruyen rocas y las rocas te hacen volver al centro.</p></div></li>
+    <li><div><p>Completa <code>azarEntre(min, max)</code>. Las rocas aparecen repartidas por la pantalla, con tamaños, velocidades y direcciones distintas.</p></div></li>
+    <li><div><p>Cuando todo funcione, la verificación del taller probará cada función con valores concretos y te dirá si alguna tiene un error que el juego no deja ver.</p></div></li>
+  </ol>
+  <div class="taller" data-modo="web" id="taller-proyecto" data-titulo="Proyecto: nave espacial" data-alto="26rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas width="480" height="320" tabindex="0"&gt;&lt;/canvas&gt;
+&lt;p&gt;Haz clic en el juego. Flechas izquierda y derecha: girar. Flecha arriba: acelerar. Barra espaciadora: disparar.&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; }
+canvas { display: block; width: 100%; max-width: 480px; border-radius: 8px; outline: none; }
+p { margin: 6px 0 0; font-size: 14px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// ====== TU CAJA DE HERRAMIENTAS: completa estas funciones ======
+function aRadianes(grados) {
+  return 0; // pasa de grados a radianes
+}
+function direccion(angulo) {
+  return { x: 1, y: 0 }; // vector de longitud 1 que apunta según el ángulo (en radianes)
+}
+function envolver(valor, max) {
+  return valor; // resultado entre 0 y max, también con valores negativos
+}
+function longitud(v) {
+  return 0; // magnitud del vector v
+}
+function limitar(v, maximo) {
+  return v; // si v mide más que maximo, acórtalo hasta maximo sin cambiar su dirección
+}
+function distancia(a, b) {
+  return Infinity; // distancia entre los puntos a y b
+}
+function azarEntre(min, max) {
+  return min; // decimal al azar entre min (incluido) y max (sin incluir)
+}
+
+// ====== EL JUEGO: ya está hecho y usa tus funciones ======
+const lienzo = document.querySelector("canvas");
+const ctx = lienzo.getContext("2d");
+const W = lienzo.width, H = lienzo.height;
+const teclas = {};
+lienzo.addEventListener("pointerdown", () => lienzo.focus());
+addEventListener("keydown", (e) => {
+  teclas[e.key] = true;
+  if (e.key.startsWith("Arrow") || e.key === " ") e.preventDefault();
+});
+addEventListener("keyup", (e) => { teclas[e.key] = false; });
+
+const nave = { x: W / 2, y: H / 2, vx: 0, vy: 0, angulo: -Math.PI / 2, r: 12 };
+let balas = [], puntos = 0, choques = 0, espera = 0;
+
+function nuevaRoca() {
+  const d = direccion(azarEntre(0, Math.PI * 2));
+  const rapidez = azarEntre(0.4, 1.4);
+  return { x: azarEntre(0, W), y: azarEntre(0, H), vx: d.x * rapidez, vy: d.y * rapidez, r: azarEntre(14, 28) };
+}
+const rocas = [];
+for (let i = 0; i < 5; i++) rocas.push(nuevaRoca());
+
+function actualizar() {
+  if (teclas["ArrowLeft"]) nave.angulo -= aRadianes(4);
+  if (teclas["ArrowRight"]) nave.angulo += aRadianes(4);
+  if (teclas["ArrowUp"]) {
+    const d = direccion(nave.angulo);
+    nave.vx += d.x * 0.12;
+    nave.vy += d.y * 0.12;
+  }
+  const v = limitar({ x: nave.vx * 0.99, y: nave.vy * 0.99 }, 4); // rozamiento y velocidad máxima
+  nave.vx = v.x;
+  nave.vy = v.y;
+  nave.x = envolver(nave.x + nave.vx, W);
+  nave.y = envolver(nave.y + nave.vy, H);
+
+  espera--;
+  if (teclas[" "] && espera <= 0) {
+    const d = direccion(nave.angulo);
+    balas.push({ x: nave.x + d.x * 14, y: nave.y + d.y * 14, vx: d.x * 6 + nave.vx, vy: d.y * 6 + nave.vy, vida: 60 });
+    espera = 12;
+  }
+  for (const b of balas) { b.x = envolver(b.x + b.vx, W); b.y = envolver(b.y + b.vy, H); b.vida--; }
+  for (const r of rocas) { r.x = envolver(r.x + r.vx, W); r.y = envolver(r.y + r.vy, H); }
+
+  // Colisiones de círculos: chocan si la distancia es menor que la suma de los radios
+  for (let i = 0; i < rocas.length; i++) {
+    for (const b of balas) {
+      if (b.vida > 0 && distancia(b, rocas[i]) < rocas[i].r) {
+        b.vida = 0;
+        rocas[i] = nuevaRoca();
+        puntos++;
+        break;
+      }
+    }
+    if (distancia(nave, rocas[i]) < nave.r + rocas[i].r) {
+      choques++;
+      rocas[i] = nuevaRoca();
+      Object.assign(nave, { x: W / 2, y: H / 2, vx: 0, vy: 0 });
+    }
+  }
+  balas = balas.filter((b) => b.vida > 0);
+}
+
+function dibujar() {
+  ctx.fillStyle = "#0b1020";
+  ctx.fillRect(0, 0, W, H);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#9fb3d9";
+  for (const r of rocas) { ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.fillStyle = "#ffcc4d";
+  for (const b of balas) { ctx.beginPath(); ctx.arc(b.x, b.y, 2.5, 0, Math.PI * 2); ctx.fill(); }
+  ctx.save();
+  ctx.translate(nave.x, nave.y);
+  ctx.rotate(nave.angulo);
+  ctx.strokeStyle = "#e8ecf4";
+  ctx.beginPath(); ctx.moveTo(14, 0); ctx.lineTo(-10, -9); ctx.lineTo(-6, 0); ctx.lineTo(-10, 9); ctx.closePath(); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = "#e8ecf4";
+  ctx.font = "15px monospace";
+  ctx.fillText(`rocas: ${puntos}   choques: ${choques}`, 10, 22);
+}
+
+function bucle() { actualizar(); dibujar(); requestAnimationFrame(bucle); }
+bucle();</textarea>
+    <script type="text/plain" class="taller-verificar">
+var cerca = function (a, b) { return typeof a === "number" && Math.abs(a - b) < 1e-6; };
+if (!cerca(aRadianes(180), Math.PI)) return "aRadianes(180) debería dar π (3.14159…) y da " + aRadianes(180) + ".";
+var d = direccion(Math.PI / 2);
+if (!d || !cerca(d.x, 0) || !cerca(d.y, 1)) return "direccion(Math.PI / 2) debería dar { x: 0, y: 1 }: hacia abajo en pantalla.";
+if (envolver(485, 480) !== 5) return "envolver(485, 480) debería dar 5.";
+if (envolver(-5, 480) !== 475) return "envolver(-5, 480) debería dar 475: revisa el caso de los negativos.";
+if (!cerca(longitud({ x: 3, y: 4 }), 5)) return "longitud({ x: 3, y: 4 }) debería dar 5.";
+var l = limitar({ x: 30, y: 40 }, 5);
+if (!l || !cerca(l.x, 3) || !cerca(l.y, 4)) return "limitar({ x: 30, y: 40 }, 5) debería dar { x: 3, y: 4 }: misma dirección, longitud 5.";
+var l2 = limitar({ x: 1, y: 1 }, 5);
+if (!l2 || !cerca(l2.x, 1) || !cerca(l2.y, 1)) return "limitar no debe cambiar un vector que ya mide menos que el máximo.";
+if (!cerca(distancia({ x: 1, y: 1 }, { x: 4, y: 5 }), 5)) return "distancia({ x: 1, y: 1 }, { x: 4, y: 5 }) debería dar 5.";
+var vistos = {};
+for (var i = 0; i < 300; i++) {
+  var z = azarEntre(10, 20);
+  if (!(z >= 10 && z < 20)) return "azarEntre(10, 20) devolvió " + z + ", fuera del rango.";
+  vistos[Math.floor(z)] = true;
+}
+if (Object.keys(vistos).length < 8) return "azarEntre(10, 20) casi siempre devuelve lo mismo: ¿usaste Math.random()?";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <pre><code class="language-js">function aRadianes(grados) {
+  return grados * Math.PI / 180;
+}
+function direccion(angulo) {
+  return { x: Math.cos(angulo), y: Math.sin(angulo) };
+}
+function envolver(valor, max) {
+  return ((valor % max) + max) % max;
+}
+function longitud(v) {
+  return Math.hypot(v.x, v.y);
+}
+function limitar(v, maximo) {
+  const l = longitud(v);
+  if (l &lt;= maximo) return v;
+  return { x: v.x / l * maximo, y: v.y / l * maximo };
+}
+function distancia(a, b) {
+  return Math.hypot(b.x - a.x, b.y - a.y);
+}
+function azarEntre(min, max) {
+  return min + Math.random() * (max - min);
+}
+// El resto del código del juego no cambia.</code></pre>
+    <p><code>limitar</code> solo divide entre la longitud cuando es mayor que el máximo, así que nunca divide entre cero. <code>distancia</code> es la longitud del vector que va de <code>a</code> a <code>b</code>: una resta seguida de Pitágoras.</p>
+  </details>
+  <p><strong>Para ir más allá:</strong> haz que cada roca grande se parta en dos más pequeñas al recibir un disparo (con direcciones al azar); añade una sacudida de pantalla con <code>lerp</code> al chocar; genera las rocas con un generador con semilla para que todos los jugadores tengan la misma partida del día; o añade un objeto de mejora que aparezca con una probabilidad ponderada. Cuando llegues a la <a href="34-videojuegos.html">Estación 34</a>, podrás convertirlo en un juego completo con menús, sonido y puntuaciones.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Si fallas alguna, lee la explicación de cada opción: equivocarse aquí es la forma más barata de aprender.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Qué condición es equivalente a <code>!(tieneLlave &amp;&amp; enLaPuerta)</code>?</p>
+      <ol class="opciones">
+        <li><code>!tieneLlave &amp;&amp; !enLaPuerta</code><p class="explica">Negaste las piezas pero olvidaste cambiar el conector. Esta versión exige que falten las dos cosas, y basta con que falte una.</p></li>
+        <li><code>!tieneLlave || !enLaPuerta</code><p class="explica">Correcto. Primera ley de De Morgan: al meter el <code>!</code>, cada pieza se niega y <code>&amp;&amp;</code> pasa a ser <code>||</code>.</p></li>
+        <li><code>tieneLlave || enLaPuerta</code><p class="explica">Cambiaste el conector pero no negaste las piezas. Esto es verdadero justo cuando tiene la llave, que es lo contrario de lo que buscas.</p></li>
+        <li><code>!tieneLlave &amp;&amp; enLaPuerta</code><p class="explica">Solo cubre un caso (está en la puerta sin llave). Olvida, por ejemplo, al jugador que tiene la llave pero está lejos.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Cuándo se ejecuta el bloque de <code>if (color !== "rojo" || color !== "azul") { … }</code>?</p>
+      <ol class="opciones">
+        <li>Solo cuando el color no es ni rojo ni azul.<p class="explica">Es lo que probablemente se quería decir, pero para eso hace falta <code>&amp;&amp;</code>.</p></li>
+        <li>Nunca.<p class="explica">Al revés: con <code>||</code> basta con que una comparación sea verdadera, y siempre lo es al menos una.</p></li>
+        <li>Siempre.<p class="explica">Correcto. Ningún color es rojo y azul a la vez, así que siempre es distinto de al menos uno de los dos.</p></li>
+        <li>Solo cuando el color es rojo o azul.<p class="explica">Si es rojo, <code>color !== "azul"</code> es verdadero, pero también lo es con cualquier otro color.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Un objeto tiene un 10 % de probabilidad de salir en cada cofre, de forma independiente. ¿Qué probabilidad hay de conseguirlo al menos una vez abriendo 5 cofres?</p>
+      <ol class="opciones">
+        <li>1 − 0.9⁵, aproximadamente un 41 %.<p class="explica">Correcto. La probabilidad de no conseguirlo en ninguno es 0.9⁵; su complemento es la de conseguirlo al menos una vez.</p></li>
+        <li>5 × 10 % = 50 %.<p class="explica">Las probabilidades de «al menos una vez» no se suman: con 10 cofres esa cuenta daría 100 %, y nunca es seguro.</p></li>
+        <li>10 %, porque cada cofre es independiente.<p class="explica">Ese es el 10 % de cada cofre por separado. Con más intentos, la probabilidad de conseguirlo alguna vez sube.</p></li>
+        <li>0.1⁵, es decir, 0.001 %.<p class="explica">Esa es la probabilidad de que salga en los cinco cofres seguidos, no en al menos uno.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿De qué color es <code>#00FF00</code>?</p>
+      <ol class="opciones">
+        <li>Rojo.<p class="explica">El primer par es el rojo, y aquí vale <code>00</code>: nada de rojo.</p></li>
+        <li>Blanco.<p class="explica">El blanco tiene los tres canales al máximo: <code>#FFFFFF</code>.</p></li>
+        <li>Negro.<p class="explica">El negro tiene los tres canales a cero: <code>#000000</code>.</p></li>
+        <li>Verde puro.<p class="explica">Correcto. Rojo 0, verde 255 (<code>FF</code>) y azul 0.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Si <code>poderes</code> vale <code>0b0110</code> (6), ¿qué devuelve <code>poderes &amp; ~0b0010</code>?</p>
+      <ol class="opciones">
+        <li><code>0b0110</code>: enciende el bit del 2, que ya estaba encendido.<p class="explica">Encender un bit se hace con <code>|</code>. <code>&amp; ~</code> hace lo contrario.</p></li>
+        <li><code>0b0100</code> (4): apaga el bit del 2 y deja los demás.<p class="explica">Correcto. <code>~0b0010</code> tiene todos los bits encendidos menos ese, y el AND solo apaga ese bit.</p></li>
+        <li><code>0b1001</code>: invierte todos los bits de <code>poderes</code>.<p class="explica">El <code>~</code> se aplica solo a la máscara, no a <code>poderes</code>.</p></li>
+        <li><code>true</code>, porque el bit está encendido.<p class="explica"><code>&amp;</code> no devuelve booleanos: devuelve un número. Para preguntar se compara con 0.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Tienes <code>const total = 0.1 + 0.2;</code>. ¿Cuál es la forma correcta de comprobar si <code>total</code> es 0.3?</p>
+      <ol class="opciones">
+        <li><code>total === 0.3</code><p class="explica">Da <code>false</code>: <code>total</code> vale 0.30000000000000004.</p></li>
+        <li><code>total == 0.3</code><p class="explica"><code>==</code> solo cambia cómo se convierten los tipos; los dos son números distintos y sigue dando <code>false</code>.</p></li>
+        <li><code>String(total) === "0.3"</code><p class="explica"><code>String(total)</code> es <code>"0.30000000000000004"</code>: el texto conserva el error.</p></li>
+        <li><code>Math.abs(total - 0.3) &lt; 1e-9</code><p class="explica">Correcto. Con decimales calculados se pregunta si están lo bastante cerca, con una tolerancia adecuada a su tamaño.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Qué imprime <code>console.log(-7 % 3)</code> en JavaScript?</p>
+      <ol class="opciones">
+        <li><code>-1</code><p class="explica">Correcto. El <code>%</code> de JavaScript es el resto, que toma el signo del número dividido.</p></li>
+        <li><code>2</code><p class="explica">Eso daría el módulo matemático (y el <code>%</code> de Python). En JavaScript necesitas <code>((-7 % 3) + 3) % 3</code>.</p></li>
+        <li><code>1</code><p class="explica">El resultado conserva el signo negativo de −7.</p></li>
+        <li><code>-2.333…</code><p class="explica">Eso es la división <code>-7 / 3</code>, no el resto.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Cuánto vale <code>Math.floor(-2.5)</code>?</p>
+      <ol class="opciones">
+        <li><code>-2</code><p class="explica">Eso darían <code>Math.trunc</code> (hacia el cero) o <code>Math.ceil</code> (hacia arriba).</p></li>
+        <li><code>-2.5</code><p class="explica"><code>floor</code> siempre devuelve un entero.</p></li>
+        <li><code>-3</code><p class="explica">Correcto. <code>floor</code> baja siempre, y en los negativos bajar es alejarse del cero.</p></li>
+        <li><code>3</code><p class="explica">El redondeo nunca cambia el signo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">En tu juego, el personaje va más rápido en diagonal que en horizontal. ¿Cuál es la causa y la solución?</p>
+      <ol class="opciones">
+        <li>Se suman dos velocidades; hay que dividir el vector entre 2.<p class="explica">Dividir entre 2 lo dejaría en 0.71: ahora iría más lento en diagonal.</p></li>
+        <li>El vector (1, −1) mide √2 ≈ 1.41; hay que normalizar la dirección antes de multiplicar por la velocidad.<p class="explica">Correcto. Normalizar deja la dirección con longitud 1 en cualquier ángulo.</p></li>
+        <li>Es un error de coma flotante; se arregla con <code>toFixed</code>.<p class="explica">La diferencia es del 41 %, demasiado grande para ser un error de redondeo.</p></li>
+        <li>Hay que redondear la posición con <code>Math.round</code> en cada fotograma.<p class="explica">Redondear no cambia la longitud del vector de movimiento, y además haría el movimiento a saltos.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Tienes la flecha <code>(dx, dy)</code> de una torreta hacia su objetivo. ¿Qué llamada da su ángulo correctamente en los cuatro cuadrantes?</p>
+      <ol class="opciones">
+        <li><code>Math.atan2(dy, dx)</code><p class="explica">Correcto. Primero la y y después la x, y tiene en cuenta el signo de las dos.</p></li>
+        <li><code>Math.atan2(dx, dy)</code><p class="explica">Es el orden intuitivo, pero está al revés: el ángulo sale reflejado.</p></li>
+        <li><code>Math.atan(dy / dx)</code><p class="explica">Al dividir se pierde el signo de cada parte: no distingue izquierda de derecha, y con <code>dx = 0</code> divide entre cero.</p></li>
+        <li><code>Math.sin(dy / dx)</code><p class="explica">El seno va del ángulo a la dirección; aquí necesitas lo contrario.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Qué expresión simula un dado de 6 caras, con todas igual de probables?</p>
+      <ol class="opciones">
+        <li><code>Math.round(Math.random() * 6)</code><p class="explica">Da de 0 a 6: siete valores, y el 0 y el 6 salen la mitad de veces que los demás.</p></li>
+        <li><code>Math.floor(Math.random() * 6)</code><p class="explica">Da de 0 a 5. Le falta sumar 1.</p></li>
+        <li><code>Math.round(Math.random() * 5) + 1</code><p class="explica">Da de 1 a 6, pero el 1 y el 6 salen la mitad de veces: es el dado malo del taller.</p></li>
+        <li><code>Math.floor(Math.random() * 6) + 1</code><p class="explica">Correcto. <code>floor</code> reparte seis tramos iguales (0 a 5) y el <code>+ 1</code> los desplaza a 1 a 6.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Tienes que adivinar un número entre 1 y 1 000 000 y te dicen «mayor» o «menor» tras cada intento. Si siempre dices el número del medio, ¿cuántos intentos necesitas como máximo?</p>
+      <ol class="opciones">
+        <li>1 000 000<p class="explica">Esos serían los intentos probando los números uno por uno.</p></li>
+        <li>500 000<p class="explica">Esa es la media probando uno por uno. Partir por la mitad es muchísimo mejor.</p></li>
+        <li>Unos 20<p class="explica">Correcto. Cada intento descarta la mitad, y log₂(1 000 000) ≈ 20. Es la búsqueda binaria.</p></li>
+        <li>1000<p class="explica">1000 es la raíz cuadrada de un millón, pero partir por la mitad no tiene que ver con raíces.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Lógica proposicional</dt><dd>Parte de las matemáticas que estudia cómo se combinan afirmaciones verdaderas o falsas con conectores como Y, O y NO. En código, son las condiciones.</dd>
+    <dt>O exclusivo (XOR)</dt><dd>Conector que es verdadero cuando exactamente una de dos cosas es verdadera. Con booleanos se escribe <code>a !== b</code>; bit a bit, <code>^</code>.</dd>
+    <dt>Leyes de De Morgan</dt><dd>Equivalencias para negar condiciones compuestas: <code>!(a &amp;&amp; b)</code> es <code>!a || !b</code>, y <code>!(a || b)</code> es <code>!a &amp;&amp; !b</code>.</dd>
+    <dt>Conjunto</dt><dd>Colección de elementos distintos, sin orden. Sus operaciones básicas son la unión, la intersección y la diferencia. En JavaScript, <code>Set</code>.</dd>
+    <dt>Hexadecimal</dt><dd>Sistema numérico de base 16, con los dígitos 0 a 9 y A a F. Cada dígito equivale a 4 bits; se escribe con el prefijo <code>0x</code> o, en colores, con <code>#</code>.</dd>
+    <dt>Máscara de bits</dt><dd>Número que se combina bit a bit con otro para consultar, encender, apagar o invertir solo ciertos bits.</dd>
+    <dt>Complemento a dos</dt><dd>Forma de guardar enteros negativos en binario en la que el bit de más a la izquierda pesa en negativo. Para cambiar el signo se invierten los bits y se suma 1.</dd>
+    <dt>Desbordamiento (overflow)</dt><dd>Lo que ocurre cuando el resultado de una operación no cabe en los bits disponibles: el valor «da la vuelta», como 127 + 1 = −128 con 8 bits.</dd>
+    <dt>Coma flotante</dt><dd>Formato para guardar números con decimales como signo, dígitos significativos y exponente. JavaScript usa el de 64 bits de la norma IEEE 754, que no guarda exactos decimales como 0.1.</dd>
+    <dt>Entero seguro</dt><dd>Entero que JavaScript representa exactamente: los que están entre −(2⁵³ − 1) y 2⁵³ − 1 (<code>Number.MAX_SAFE_INTEGER</code>).</dd>
+    <dt>Módulo matemático</dt><dd>Resto de una división que toma el signo del divisor, así que con un divisor positivo siempre queda entre 0 y el divisor menos 1. En JavaScript: <code>((a % n) + n) % n</code>.</dd>
+    <dt>Vector</dt><dd>Magnitud con dirección y longitud, escrita en 2D como un par (x, y). Representa desplazamientos, velocidades o fuerzas.</dd>
+    <dt>Magnitud</dt><dd>Longitud de un vector, calculada con Pitágoras: √(x² + y²). En JavaScript, <code>Math.hypot(x, y)</code>.</dd>
+    <dt>Normalizar</dt><dd>Dividir un vector entre su magnitud para obtener otro de longitud 1 con la misma dirección.</dd>
+    <dt>Producto punto</dt><dd>Operación entre dos vectores, <code>a.x * b.x + a.y * b.y</code>. Con vectores normalizados indica cuánto se parecen sus direcciones: 1 iguales, 0 perpendiculares, −1 opuestas.</dd>
+    <dt>Radián</dt><dd>Unidad de ángulo que usan las matemáticas y JavaScript: una vuelta completa son 2π radianes, y 180° son π.</dd>
+    <dt>Seno y coseno</dt><dd>Para un ángulo, la altura (seno) y la distancia horizontal (coseno) del punto al que se llega en un círculo de radio 1. Juntos, <code>(cos a, sin a)</code>, dan la dirección de ese ángulo.</dd>
+    <dt>atan2</dt><dd>Función <code>Math.atan2(y, x)</code> que devuelve el ángulo, en radianes, de la flecha (x, y). Se usa para apuntar hacia un punto.</dd>
+    <dt>Interpolación lineal (lerp)</dt><dd>Calcular un valor intermedio entre a y b según una fracción t de 0 a 1: <code>a + (b - a) * t</code>.</dd>
+    <dt>Clamp</dt><dd>Limitar un valor para que quede entre un mínimo y un máximo: <code>Math.min(Math.max(v, min), max)</code>.</dd>
+    <dt>Easing</dt><dd>Función que deforma el avance t de una animación para que acelere o frene, en lugar de ir a velocidad constante.</dd>
+    <dt>Semilla</dt><dd>Número inicial de un generador pseudoaleatorio. Con la misma semilla, el generador produce siempre la misma secuencia.</dd>
+    <dt>Fisher-Yates</dt><dd>Algoritmo para barajar una lista de forma justa: desde el final, intercambia cada posición con otra elegida al azar entre ella y las anteriores.</dd>
+    <dt>Logaritmo</dt><dd>Operación inversa de la potencia. log₂(n) indica cuántas veces se puede partir n por la mitad hasta llegar a 1.</dd>
+    <dt>Sumatoria</dt><dd>Notación con la letra Σ para escribir la suma de muchos términos; en código equivale a un bucle con un acumulador.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer cada parte de la estación, no antes: te servirán para repasar y ver las mismas ideas explicadas por otra persona.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=RVGIXfC4Xeg"><span class="video-pantalla"><img src="https://i.ytimg.com/vi/RVGIXfC4Xeg/mqdefault.jpg" alt="" loading="lazy" decoding="async" onerror="this.remove()"><span class="reproducir"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path class="ico-relleno" d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg></span><span class="canal-inicial">Nate Gentile</span></span><span class="video-titulo">Sistema BINARIO y Puertas Lógicas: La BASE de como funciona tu PC</span><span class="video-meta"><span>Nate Gentile</span><span class="chip">Español</span><span class="chip">Introducción</span></span><span class="nota-margen">Cómo se pasa de interruptores encendidos y apagados al binario y a las puertas lógicas: el puente entre las secciones de lógica y de bits.</span></a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=HcjXH9WGmAU"><span class="video-pantalla"><img src="https://i.ytimg.com/vi/HcjXH9WGmAU/mqdefault.jpg" alt="" loading="lazy" decoding="async" onerror="this.remove()"><span class="reproducir"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path class="ico-relleno" d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg></span><span class="canal-inicial">beUnicoos</span></span><span class="video-titulo">Representación de Información Digital - Números reales en coma flotante IEEE 754</span><span class="video-meta"><span>beUnicoos</span><span class="chip">Español</span><span class="chip">A fondo</span></span><span class="nota-margen">El formato IEEE 754 explicado con ejemplos a mano. Usa la versión de 32 bits; la de JavaScript es igual con 64 bits.</span></a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=Sjmb52qFkJo"><span class="video-pantalla"><img src="https://i.ytimg.com/vi/Sjmb52qFkJo/mqdefault.jpg" alt="" loading="lazy" decoding="async" onerror="this.remove()"><span class="reproducir"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path class="ico-relleno" d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg></span><span class="canal-inicial">Indierama</span></span><span class="video-titulo">VECTORES en el DESARROLLO de VIDEOJUEGOS</span><span class="video-meta"><span>Indierama</span><span class="chip">Español</span><span class="chip">Introducción</span></span><span class="nota-margen">Para qué sirven los vectores en el desarrollo de videojuegos, con ejemplos de motores reales.</span></a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=SC0SmcBgScY"><span class="video-pantalla"><img src="https://i.ytimg.com/vi/SC0SmcBgScY/mqdefault.jpg" alt="" loading="lazy" decoding="async" onerror="this.remove()"><span class="reproducir"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path class="ico-relleno" d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg></span><span class="canal-inicial">Guinxu</span></span><span class="video-titulo">Órbitas con trigonometría | Matemáticas para crear videojuegos #1</span><span class="video-meta"><span>Guinxu</span><span class="chip">Español</span><span class="chip">Introducción</span></span><span class="nota-margen">Seno y coseno aplicados a órbitas en un juego, por un desarrollador de videojuegos independiente.</span></a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Global_Objects/Math">Math (MDN)</a><p>Referencia de todas las funciones matemáticas de JavaScript: redondeo, potencias, logaritmos, trigonometría y <code>random</code>.</p></li>
+    <li><a href="https://es.javascript.info/number">Números (javascript.info)</a><p>Bases, redondeo, cálculos imprecisos y cómo evitarlos, con ejercicios al final.</p></li>
+    <li><a href="https://floating-point-gui.de/">The Floating-Point Guide (en inglés)</a><p>Guía breve y práctica sobre por qué los decimales fallan y qué hacer en cada lenguaje.</p></li>
+    <li><a href="https://es.khanacademy.org/math/trigonometry">Trigonometría (Khan Academy)</a><p>Cursos gratuitos en español con ejercicios, por si quieres reforzar ángulos, radianes, seno y coseno desde cero.</p></li>
+    <li><a href="https://natureofcode.com/vectors/">The Nature of Code: Vectors (en inglés)</a><p>El capítulo de vectores de un libro gratuito que simula movimiento y física con JavaScript.</p></li>
+    <li><a href="https://www.redblobgames.com/articles/probability/damage-rolls.html">Probability and Games: Damage Rolls (Red Blob Games, en inglés)</a><p>Cómo cambian las sensaciones de un juego según cómo combines los dados, con gráficas interactivas.</p></li>
+  </ul>
 </section>
   </main>
 </div>
