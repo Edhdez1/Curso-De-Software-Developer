@@ -52,6 +52,8 @@
       <li><a href="#async-await">async y await</a></li>
       <li><a href="#varias">Promise.all y race</a></li>
       <li><a href="#apis">Qué es una API</a></li>
+      <li><a href="#fetch">Pedir datos con fetch</a></li>
+      <li><a href="#interfaz">Carga, error y vacío</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -966,6 +968,517 @@ for (const resultado of resultados) {
       </tbody>
     </table>
   </div>
+</section>
+
+<section id="fetch" data-parada="Pedir datos con fetch">
+  <h2>Pedir y enviar datos con fetch</h2>
+  <p>Para hablar con una API desde JavaScript, los navegadores (y Node.js desde la versión 18) traen la función <code>fetch</code> («ir a buscar»). Recibe una dirección y devuelve una promesa que se cumple con un objeto <strong>Response</strong> (la respuesta). Leer los datos de esa respuesta es otra operación que tarda, así que lleva su propio <code>await</code>:</p>
+  <pre><code class="language-js">const respuesta = await fetch("https://pokeapi.co/api/v2/pokemon/pikachu");
+const datos = await respuesta.json();
+console.log(datos.name); // "pikachu"</code></pre>
+  <p>¿Por qué dos <code>await</code>? Porque la respuesta llega en dos partes: primero el código de estado y las cabeceras, y después el cuerpo con los datos, que puede ser grande y llegar poco a poco. Míralo en cámara lenta:</p>
+  <figure class="capsula" data-titulo="El viaje de un fetch">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 320" role="img" aria-label="Animación: fetch envía una petición GET al servidor y la función espera; llega la respuesta con estado 200 y la promesa de fetch se cumple con un objeto Response; se comprueba que ok es true; respuesta.json lee el cuerpo, que es texto JSON, y lo convierte en un objeto; al final se muestra que con un 404 la promesa de fetch también se cumple, con ok en false, y tu código debe lanzar el error">
+        <rect class="d-codigo" x="10" y="10" width="410" height="112" rx="8"/>
+        <text class="d-codigo-tenue" x="24" y="30" style="font-size:13px">Tu función async</text>
+        <rect class="d-resalte" x="16" y="38" width="398" height="23" rx="4" data-pasos="1-3"/>
+        <rect class="d-resalte" x="16" y="62" width="398" height="23" rx="4" data-pasos="4,7"/>
+        <rect class="d-resalte" x="16" y="86" width="398" height="23" rx="4" data-pasos="5-6"/>
+        <text class="d-codigo-texto" x="24" y="54" style="font-size:14px">const respuesta = await fetch(url);</text>
+        <text class="d-codigo-texto" x="24" y="78" style="font-size:14px">if (!respuesta.ok) throw new Error(…);</text>
+        <text class="d-codigo-texto" x="24" y="102" style="font-size:14px">const datos = await respuesta.json();</text>
+        <rect class="d-caja-suave" x="440" y="10" width="270" height="112" rx="8"/>
+        <text class="d-peq d-tenue" x="575" y="34" text-anchor="middle">Estado de la espera</text>
+        <text class="d-mono" x="575" y="68" text-anchor="middle" data-texto="1:fetch: pendiente; 3:fetch: cumplida; 5:json(): pendiente; 6:json(): cumplida; 7:fetch: cumplida (404)">fetch: pendiente</text>
+        <text class="d-peq" x="575" y="100" text-anchor="middle" data-texto="1:tu función espera; la página, no; 3:tu función sigue; 5:tu función espera otra vez; 6:tu función sigue; 7:¡fetch no falla con un 404!">tu función espera; la página, no</text>
+        <rect class="d-caja" x="10" y="140" width="160" height="60" rx="8"/>
+        <text class="d-rotulo" x="90" y="166" text-anchor="middle">Tu página</text>
+        <text class="d-peq d-tenue" x="90" y="186" text-anchor="middle">en el navegador</text>
+        <rect class="d-caja" x="550" y="140" width="160" height="60" rx="8"/>
+        <text class="d-rotulo" x="630" y="166" text-anchor="middle">Servidor</text>
+        <text class="d-peq d-tenue" x="630" y="186" text-anchor="middle">pokeapi.co</text>
+        <path class="d-punteada" d="M170 170H550"/>
+        <text class="d-peq d-tenue" x="360" y="208" text-anchor="middle">internet</text>
+        <g data-pasos="1-2" data-mover="2:translate(230px,0px)">
+          <rect class="d-caja" x="180" y="154" width="130" height="32" rx="6"/>
+          <text class="d-mono" x="245" y="175" text-anchor="middle" style="font-size:13px">GET /pikachu</text>
+        </g>
+        <g data-pasos="3-" data-mover="3:translate(-230px,0px)">
+          <rect class="d-caja" x="410" y="154" width="130" height="32" rx="6"/>
+          <text class="d-mono" x="475" y="175" text-anchor="middle" style="font-size:13px" data-texto="3:200 OK; 7:404 Not Found">200 OK</text>
+        </g>
+        <g data-pasos="3-">
+          <rect class="d-caja" x="10" y="222" width="330" height="88" rx="8"/>
+          <rect class="d-resalte" x="18" y="281" width="120" height="22" rx="4" data-pasos="4"/>
+          <text class="d-mono d-tenue" x="24" y="244" style="font-size:13px">respuesta (objeto Response)</text>
+          <text class="d-mono" x="24" y="272" style="font-size:15px" data-texto="3:status: 200; 7:status: 404">status: 200</text>
+          <text class="d-mono" x="24" y="298" style="font-size:15px" data-texto="3:ok: true; 7:ok: false">ok: true</text>
+          <text class="d-mono" x="180" y="272" style="font-size:14px" data-texto="3:cuerpo: llegando…; 5:cuerpo: leído; 7:cuerpo: sin leer">cuerpo: llegando…</text>
+        </g>
+        <rect class="d-mal-trazo" x="5" y="217" width="340" height="98" rx="10" data-pasos="7"/>
+        <rect class="d-caja-suave" x="370" y="222" width="340" height="88" rx="8" data-pasos="5-7"/>
+        <g data-pasos="5">
+          <text class="d-peq d-tenue" x="384" y="244">el cuerpo llega como texto JSON</text>
+          <text class="d-mono" x="384" y="276" style="font-size:13px">'{"name":"pikachu","id":25,…}'</text>
+        </g>
+        <g data-pasos="6">
+          <text class="d-peq d-tenue" x="384" y="244">datos (objeto de JavaScript)</text>
+          <text class="d-mono" x="384" y="272" style="font-size:15px">{ name: 'pikachu', id: 25, … }</text>
+          <text class="d-mono" x="384" y="298" style="font-size:14px">datos.name → "pikachu"</text>
+        </g>
+        <g data-pasos="7">
+          <text class="d-mono" x="384" y="262" style="font-size:14px">throw new Error("HTTP 404")</text>
+          <text class="d-peq" x="384" y="290">y tu catch se encarga del error</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li><code>fetch(url)</code> arma una petición GET y la envía. Enseguida devuelve una promesa pendiente, y <code>await</code> pausa tu función. La página sigue funcionando.</li>
+        <li>La petición viaja por internet hasta el servidor de la API.</li>
+        <li data-duracion="7">El servidor responde. Primero llegan el código de estado y las cabeceras, y con eso basta: la promesa de <code>fetch</code> se cumple con un objeto <strong>Response</strong>, que se guarda en <code>respuesta</code>. El cuerpo con los datos puede seguir llegando.</li>
+        <li><code>respuesta.ok</code> vale <code>true</code> porque el código, 200, está entre 200 y 299. No se lanza ningún error.</li>
+        <li data-duracion="6"><code>respuesta.json()</code> lee el resto del cuerpo, que es texto en formato JSON, y lo convierte en un objeto. Leer también tarda: por eso lleva su propio <code>await</code>.</li>
+        <li><code>datos</code> ya es un objeto normal de JavaScript: <code>datos.name</code> vale <code>"pikachu"</code>.</li>
+        <li data-duracion="8">¿Y si el servidor responde 404? La promesa de <code>fetch</code> se cumple igual, con <code>ok: false</code>. <code>fetch</code> solo se rechaza cuando no hay respuesta (sin conexión, un dominio que no existe, un bloqueo del navegador). Por eso comprobamos <code>ok</code> y lanzamos el error nosotros.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p><code>fetch</code> no considera un error que el servidor responda 404 o 500: para <code>fetch</code>, el servidor respondió y su trabajo terminó bien. Comprueba siempre <code>respuesta.ok</code> (que es <code>true</code> con los códigos del 200 al 299) o <code>respuesta.status</code> antes de usar los datos.</p></div></aside>
+  <p>Como el visor del curso no deja salir peticiones a otros sitios, en los talleres usaremos <code>fetchFalso</code>: una función que imita a <code>fetch</code> con un servidor simulado dentro del propio programa. Devuelve un objeto con <code>status</code>, <code>ok</code> y <code>json()</code>, igual que el de verdad (el real tiene más cosas). Observa los tres casos posibles:</p>
+  <div class="taller" id="taller-fetch-falso" data-titulo="Los tres finales de un fetch">
+    <textarea class="taller-codigo">// ---- Servidor simulado (imita a fetch; no hace falta que lo entiendas todavía) ----
+const POKEMON = {
+  pikachu: { id: 25, name: "pikachu", height: 4, weight: 60, types: [{ slot: 1, type: { name: "electric" } }] },
+  eevee: { id: 133, name: "eevee", height: 3, weight: 65, types: [{ slot: 1, type: { name: "normal" } }] },
+};
+function fetchFalso(url) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const direccion = new URL(url);
+      if (direccion.hostname !== "pokeapi.co") {
+        reject(new TypeError("Failed to fetch")); // no hubo respuesta
+        return;
+      }
+      const datos = POKEMON[direccion.pathname.split("/").pop()];
+      const status = datos ? 200 : 404;
+      resolve({
+        status: status,
+        ok: status >= 200 && status <= 299,
+        json: async () => datos ?? { status: 404, message: "Not Found" },
+      });
+    }, 400);
+  });
+}
+// ---- Fin del servidor simulado ----
+
+async function probar(url) {
+  try {
+    const respuesta = await fetchFalso(url);
+    console.log(url + " → " + respuesta.status + ", ok: " + respuesta.ok);
+    const datos = await respuesta.json();
+    console.log("   cuerpo:", datos);
+  } catch (error) {
+    console.log(url + " → fetch se rechazó: " + error.name + ": " + error.message);
+  }
+}
+
+await probar("https://pokeapi.co/api/v2/pokemon/eevee");
+await probar("https://pokeapi.co/api/v2/pokemon/pikachuu");
+await probar("https://pokeapi.coo/api/v2/pokemon/pikachu");</textarea>
+  </div>
+  <p>El primero sale bien. El segundo tiene un error de escritura en el nombre y el servidor responde 404, pero <code>fetch</code> <em>se cumple</em>: incluso trae un cuerpo que explica el error. El tercero tiene mal el dominio: no hay servidor que responda y <code>fetch</code> se rechaza. <strong>Modifica:</strong> pide <code>pikachu</code> e imprime su tipo con <code>datos.types[0].type.name</code>.</p>
+  <p>Como vas a repetir siempre los mismos pasos (pedir, comprobar <code>ok</code>, leer el JSON), conviene envolverlos en una función. Esta es probablemente la función más copiada de la web:</p>
+  <pre><code class="language-js">async function obtenerJSON(url) {
+  const respuesta = await fetch(url);
+  if (!respuesta.ok) {
+    throw new Error("Error HTTP " + respuesta.status);
+  }
+  const datos = await respuesta.json();
+  return datos;
+}
+
+try {
+  const pikachu = await obtenerJSON("https://pokeapi.co/api/v2/pokemon/pikachu");
+  console.log(pikachu.name);
+} catch (error) {
+  console.log("No se pudo cargar: " + error.message);
+}</code></pre>
+  <p>Con ella, quien la usa solo tiene que preocuparse de un caso de error (el <code>catch</code>), venga de la red o del servidor. Ordena sus líneas:</p>
+  <div class="parsons" data-titulo="Ordena la función obtenerJSON" data-lenguaje="js">
+    <ol>
+      <li>async function obtenerJSON(url) {</li>
+      <li data-sangria="1">const respuesta = await fetch(url);</li>
+      <li data-sangria="1">if (!respuesta.ok) throw new Error("Error HTTP " + respuesta.status);</li>
+      <li data-sangria="1">const datos = await respuesta.json();</li>
+      <li data-sangria="1">return datos;</li>
+      <li>}</li>
+    </ol>
+  </div>
+
+  <h3>Pruébalo de verdad en la consola del navegador</h3>
+  <p>Fuera del curso, <code>fetch</code> funciona con cualquier API que lo permita. Hazlo ahora con la PokeAPI:</p>
+  <ol class="pasos">
+    <li><div><p>Abre una pestaña nueva en <code>https://example.com</code>, una página reservada para ejemplos que no pone restricciones a tu código.</p></div></li>
+    <li><div><p>Abre las herramientas de desarrollo con <kbd>F12</kbd> (o <kbd>Ctrl</kbd> + <kbd>Mayús</kbd> + <kbd>J</kbd>; en Mac, <kbd>Cmd</kbd> + <kbd>Opción</kbd> + <kbd>J</kbd>) y ve a la pestaña «Consola».</p></div></li>
+    <li><div><p>La primera vez que pegues código, Chrome y Firefox te van a frenar con un aviso y te pedirán que escribas una frase para permitir pegar (en inglés es «allow pasting»; en un navegador en español puede aparecer traducida). Lee el aviso y escribe exactamente lo que te pide.</p></div></li>
+    <li><div><p>Pega este código y pulsa <kbd>Intro</kbd>. En la consola del navegador puedes usar <code>await</code> directamente, sin función <code>async</code>:</p>
+      <pre><code class="language-js">const respuesta = await fetch("https://pokeapi.co/api/v2/pokemon/pikachu");
+console.log(respuesta.status, respuesta.ok);
+const pikachu = await respuesta.json();
+console.log(pikachu.name, pikachu.height / 10 + " m", pikachu.weight / 10 + " kg");
+console.log(pikachu.types.map((t) => t.type.name));</code></pre>
+      <p>Deberías ver <code>200 true</code>, <code>pikachu 0.4 m 6 kg</code> y una lista con <code>'electric'</code> (el formato exacto cambia un poco entre navegadores).</p></div></li>
+    <li><div><p>Abre la pestaña «Red» (<em>Network</em>), filtra por «Fetch/XHR» y vuelve a ejecutar el código. Haz clic en la petición: verás el método, el código de estado, las cabeceras y la respuesta, como en la <a href="03-internet.html">Estación 3</a>.</p></div></li>
+    <li><div><p>Cambia <code>pikachu</code> por <code>pikachuu</code> y observa: <code>404 false</code>, sin ningún error rojo. Justo lo que acabas de aprender.</p></div></li>
+  </ol>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Impacto</p><p>El aviso al pegar existe por una estafa real: alguien te pide que pegues un código «para conseguir seguidores» o «desbloquear una función» y ese código roba tu sesión. Pega en la consola solo código que entiendes, como el de este curso, y nunca porque te lo pida un desconocido.</p></div></aside>
+
+  <h3>Enviar datos: POST, cabeceras y cuerpo</h3>
+  <p>Hasta aquí, <code>fetch</code> hacía peticiones GET, que es lo que hace por defecto. Para enviar datos (publicar una puntuación, crear una cuenta, guardar un comentario) se usa normalmente POST, y se le pasa a <code>fetch</code> un segundo argumento con opciones:</p>
+  <ul>
+    <li><code>method</code>: el método HTTP (<code>"POST"</code>, <code>"PUT"</code>, <code>"PATCH"</code>, <code>"DELETE"</code>).</li>
+    <li><code>headers</code>: las <strong>cabeceras</strong>, datos extra sobre la petición. <code>"Content-Type": "application/json"</code> le dice al servidor que el cuerpo es JSON.</li>
+    <li><code>body</code>: el cuerpo. Tiene que ser texto, así que conviertes tu objeto con <code>JSON.stringify</code>.</li>
+  </ul>
+  <p>Pruébalo en la consola con JSONPlaceholder, que acepta publicaciones de práctica:</p>
+  <pre><code class="language-js">const respuesta = await fetch("https://jsonplaceholder.typicode.com/posts", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ title: "Hola", body: "Mi primer POST", userId: 1 }),
+});
+console.log(respuesta.status);       // 201: creado
+console.log(await respuesta.json()); // { title: 'Hola', body: 'Mi primer POST', userId: 1, id: 101 }</code></pre>
+  <p>El servidor responde 201 y te devuelve lo que creó, con un <code>id</code> nuevo. JSONPlaceholder finge que lo guardó (siempre responde con el id 101), pero no guarda nada: es un servidor de práctica. Otras cabeceras frecuentes son <code>Accept: application/json</code> (pides que te respondan en JSON) y <code>Authorization</code> (envías una clave o un token de sesión). Para leer una cabecera de la respuesta: <code>respuesta.headers.get("content-type")</code>.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuidado</p><p>El cuerpo de una respuesta solo se puede leer una vez. Si llamas a <code>respuesta.json()</code> y después a <code>respuesta.text()</code>, la segunda falla con un error que dice que el cuerpo ya se usó (<em>body stream already read</em> o parecido). Guarda el resultado en una variable y úsalo las veces que quieras.</p></div></aside>
+
+  <h3>fetch fuera del navegador: Node.js</h3>
+  <p>Node.js trae <code>fetch</code> desde la versión 18 y lo considera estable desde la 21, así que funciona igual en la versión LTS actual. Crea un archivo <code>pokemon.mjs</code> con el mismo código que usaste en la consola y ejecútalo desde la terminal (<a href="05-herramientas.html">Estación 5</a>). La extensión <code>.mjs</code> le dice a Node que el archivo es un módulo moderno, donde se permite <code>await</code> fuera de funciones; los módulos se explican en la <a href="22-ejecucion.html">Estación 22</a>.</p>
+  <pre class="consola"><code><span class="prompt">$</span> node pokemon.mjs
+<span class="salida">200 true
+pikachu 0.4 m 6 kg
+[ 'electric' ]</span></code></pre>
+
+  <h3>Los errores que vas a ver</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Mensaje</th><th scope="col">Qué pasó</th><th scope="col">Qué hacer</th></tr></thead>
+      <tbody>
+        <tr><td><code>TypeError: Failed to fetch</code> (Chrome), <code>NetworkError when attempting to fetch resource</code> (Firefox), <code>Load failed</code> (Safari), <code>fetch failed</code> (Node.js)</td><td>No llegó ninguna respuesta: sin conexión, dominio mal escrito o petición bloqueada por el navegador.</td><td>Revisa la dirección y tu conexión. Mira la consola por si hay un aviso de CORS.</td></tr>
+        <tr><td><code>… has been blocked by CORS policy …</code></td><td>El servidor no permite que páginas de otros dominios lean sus respuestas.</td><td>No se arregla desde tu código del navegador: lo decide el servidor. Usa APIs que lo permitan; la explicación completa está en la <a href="31-seguridad.html">Estación 31</a>.</td></tr>
+        <tr><td><code>SyntaxError: Unexpected token '&lt;', "&lt;!DOCTYPE "... is not valid JSON</code></td><td>Llamaste a <code>json()</code>, pero el servidor respondió con una página HTML (casi siempre una página de error, o una URL equivocada).</td><td>Comprueba <code>respuesta.ok</code> antes de leer, y revisa la dirección.</td></tr>
+        <tr><td><code>TypeError: fetch(...).json is not a function</code></td><td>Escribiste <code>fetch(url).json()</code>: llamaste a <code>json</code> sobre la promesa, no sobre la respuesta.</td><td>Primero <code>await fetch(url)</code>, después <code>await respuesta.json()</code>.</td></tr>
+        <tr><td>Ves <code>Promise { &lt;pending&gt; }</code> o <code>undefined</code></td><td>Falta un <code>await</code>.</td><td>Añádelo (y <code>async</code> a la función que lo contiene).</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="interfaz" data-parada="Carga, error y vacío">
+  <h2>La interfaz mientras esperas: carga, error, vacío y cancelación</h2>
+  <p>Pulsas «Buscar» y no pasa nada durante dos segundos. ¿Funcionó? ¿Se rompió? Pulsas cinco veces más. O algo falla y la pantalla se queda en blanco, sin explicación. Las dos cosas son de las más frustrantes que puede hacer una app. Cuando tu interfaz depende de una petición, tiene que decir en todo momento qué está pasando. Eso significa diseñar cinco <strong>estados</strong>, no solo el de «todo salió bien»:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 270" role="img" aria-label="Diagrama de estados de una interfaz que pide datos: desde Inicial, al buscar, se pasa a Cargando; desde Cargando se llega a Éxito si llegan datos, a Vacío si llega una lista vacía, o a Error si algo falla; desde cualquiera de esos tres, una nueva búsqueda vuelve a Cargando">
+      <rect class="d-caja" x="10" y="100" width="120" height="50" rx="10"/>
+      <text class="d-rotulo" x="70" y="131" text-anchor="middle">Inicial</text>
+      <rect class="d-acento" x="200" y="100" width="140" height="50" rx="10"/>
+      <text class="d-rotulo d-sobre-acento" x="270" y="131" text-anchor="middle">Cargando</text>
+      <path class="d-flecha" d="M130 125H190"/>
+      <path class="d-tinta" d="M188 118 l12 7 -12 7z"/>
+      <text class="d-peq d-tenue" x="165" y="115" text-anchor="middle">buscar</text>
+      <rect class="d-caja" x="450" y="20" width="260" height="50" rx="10"/>
+      <circle class="d-ok" cx="474" cy="45" r="7"/>
+      <text x="490" y="51">Éxito: se muestra la lista</text>
+      <rect class="d-caja" x="450" y="100" width="260" height="50" rx="10"/>
+      <circle class="d-aviso" cx="474" cy="125" r="7"/>
+      <text x="490" y="131">Vacío: «no hay resultados»</text>
+      <rect class="d-caja" x="450" y="180" width="260" height="50" rx="10"/>
+      <circle class="d-mal" cx="474" cy="205" r="7"/>
+      <text x="490" y="211">Error: mensaje y reintentar</text>
+      <path class="d-flecha" d="M340 115L438 50"/>
+      <path class="d-tinta" d="M430 44 l14 2 -7 12z"/>
+      <path class="d-flecha" d="M340 125H438"/>
+      <path class="d-tinta" d="M438 118 l12 7 -12 7z"/>
+      <path class="d-flecha" d="M340 135L438 200"/>
+      <path class="d-tinta" d="M437 192 l7 12 -14 2z"/>
+      <text class="d-peq d-tenue" x="372" y="72" text-anchor="middle">llegan datos</text>
+      <text class="d-peq d-tenue" x="395" y="117" text-anchor="middle">llega []</text>
+      <text class="d-peq d-tenue" x="372" y="190" text-anchor="middle">algo falla</text>
+      <path class="d-punteada" d="M580 230V252H270V162"/>
+      <path class="d-tinta" d="M263 164 l7 -12 7 12z"/>
+      <text class="d-peq d-tenue" x="425" y="266" text-anchor="middle">otra búsqueda</text>
+    </svg>
+    <figcaption>Los estados de una interfaz que pide datos. «Vacío» no es un error: la petición salió bien, pero no hay nada que mostrar.</figcaption>
+  </figure>
+  <p>En código, el patrón casi siempre es el mismo. <code>try</code>/<code>catch</code>/<code>finally</code> encaja con estos estados como un guante:</p>
+  <ol>
+    <li><strong>Antes de pedir:</strong> muestra «Cargando…» y desactiva el botón para que nadie lance la misma petición cinco veces.</li>
+    <li><strong>Dentro del <code>try</code>:</strong> pide los datos con <code>await</code>. Si llega una lista vacía, muestra el estado vacío; si no, dibuja los datos.</li>
+    <li><strong>En el <code>catch</code>:</strong> muestra un mensaje de error claro, que diga qué pasó y qué puede hacer la persona.</li>
+    <li><strong>En el <code>finally</code>:</strong> reactiva el botón. Pase lo que pase, incluso si hubo un <code>return</code> dentro del <code>try</code>.</li>
+  </ol>
+  <p>El taller tiene un servidor simulado con un selector para elegir qué va a pasar. Prueba los cinco escenarios y mira cómo responde la interfaz a cada uno:</p>
+  <div class="taller" data-modo="web" data-titulo="Cinco escenarios, una interfaz" data-alto="17rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;form id="formulario"&gt;
+  &lt;label for="escenario"&gt;Simular:&lt;/label&gt;
+  &lt;select id="escenario"&gt;
+    &lt;option value="normal"&gt;Respuesta normal&lt;/option&gt;
+    &lt;option value="vacio"&gt;Sin resultados&lt;/option&gt;
+    &lt;option value="error"&gt;Error del servidor (500)&lt;/option&gt;
+    &lt;option value="sin-red"&gt;Sin conexión&lt;/option&gt;
+    &lt;option value="lento"&gt;Servidor muy lento (4 s)&lt;/option&gt;
+  &lt;/select&gt;
+  &lt;button id="boton"&gt;Cargar puntuaciones&lt;/button&gt;
+&lt;/form&gt;
+&lt;p id="estado" aria-live="polite"&gt;Pulsa el botón para cargar las puntuaciones.&lt;/p&gt;
+&lt;ol id="lista"&gt;&lt;/ol&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; padding: 0.25rem 1rem; }
+select, button { font: inherit; padding: 0.35rem 0.5rem; }
+button:disabled { opacity: 0.5; cursor: wait; }
+#estado { font-weight: 600; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// ---- Servidor simulado: imita a fetch y respeta la señal de cancelación ----
+const PUNTUACIONES = [
+  { jugador: "Lyra", puntos: 48200 },
+  { jugador: "Leo", puntos: 39150 },
+  { jugador: "Mía", puntos: 27400 },
+];
+function fetchFalso(url, opciones = {}) {
+  const escenario = document.querySelector("#escenario").value;
+  return new Promise((resolve, reject) => {
+    const demora = escenario === "lento" ? 4000 : 800;
+    const temporizador = setTimeout(() => {
+      if (escenario === "sin-red") return reject(new TypeError("Failed to fetch"));
+      const status = escenario === "error" ? 500 : 200;
+      const datos = escenario === "vacio" ? [] : PUNTUACIONES;
+      resolve({ status: status, ok: status === 200, json: async () => datos });
+    }, demora);
+    const senal = opciones.signal;
+    if (senal) {
+      senal.addEventListener("abort", () => {
+        clearTimeout(temporizador);
+        reject(senal.reason); // como fetch: se rechaza con el motivo de la cancelación
+      });
+    }
+  });
+}
+// ---- Fin del servidor simulado ----
+
+const estado = document.querySelector("#estado");
+const lista = document.querySelector("#lista");
+const boton = document.querySelector("#boton");
+
+async function obtenerJSON(url, opciones) {
+  const respuesta = await fetchFalso(url, opciones);
+  if (!respuesta.ok) throw new Error("Error HTTP " + respuesta.status);
+  return respuesta.json();
+}
+
+document.querySelector("#formulario").addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  lista.replaceChildren(); // vacía la lista anterior
+  estado.textContent = "Cargando…";
+  boton.disabled = true;
+  try {
+    const puntuaciones = await obtenerJSON("https://api.example.com/puntuaciones");
+    if (puntuaciones.length === 0) {
+      estado.textContent = "Todavía no hay puntuaciones. ¡Juega la primera partida!";
+      return; // el finally se ejecuta igual
+    }
+    for (const p of puntuaciones) {
+      const item = document.createElement("li");
+      item.textContent = p.jugador + ": " + p.puntos + " puntos";
+      lista.append(item);
+    }
+    estado.textContent = puntuaciones.length + " puntuaciones cargadas.";
+  } catch (error) {
+    estado.textContent = "No se pudieron cargar las puntuaciones (" + error.message + "). Inténtalo de nuevo.";
+  } finally {
+    boton.disabled = false;
+  }
+});</textarea>
+  </div>
+  <p>Con «Servidor muy lento» la persona espera 4 segundos mirando «Cargando…». Y si el servidor no respondiera nunca, esperaría para siempre: <code>fetch</code> no trae un tiempo límite propio y una petición puede quedarse colgada mucho tiempo. Arreglarlo es la siguiente pieza.</p>
+
+  <h3>Tiempos límite con AbortSignal.timeout</h3>
+  <p><code>fetch</code> acepta una opción <code>signal</code> (señal): un objeto que le puede avisar «abandona esta petición». <code>AbortSignal.timeout(ms)</code> crea una señal que se activa sola pasado ese tiempo. Si salta, <code>fetch</code> se rechaza con un error llamado <code>TimeoutError</code>. Funciona en todos los navegadores actuales desde 2024 y en Node.js.</p>
+  <pre><code class="language-js">try {
+  const respuesta = await fetch(url, { signal: AbortSignal.timeout(5000) });
+  // …
+} catch (error) {
+  if (error.name === "TimeoutError") {
+    estado.textContent = "El servidor tarda demasiado. Inténtalo más tarde.";
+  } else {
+    estado.textContent = "No se pudo cargar.";
+  }
+}</code></pre>
+  <p><strong>Modifica el taller anterior:</strong> en la llamada a <code>obtenerJSON</code>, añade un segundo argumento <code>{ signal: AbortSignal.timeout(2000) }</code>. Elige «Servidor muy lento» y comprueba que a los 2 segundos aparece el error. Después, en el <code>catch</code>, muestra un mensaje distinto cuando <code>error.name === "TimeoutError"</code>.</p>
+
+  <h3>Cancelar con AbortController</h3>
+  <p>A veces eres tú quien quiere cancelar: la persona cerró la ventana, cambió de pestaña o, el caso más común, escribió una búsqueda nueva antes de que llegara la anterior. Para eso existe <code>AbortController</code> («controlador de cancelación»): creas uno, le das su señal a <code>fetch</code> y, cuando quieras cancelar, llamas a <code>abort()</code>. La petición se abandona y <code>fetch</code> se rechaza con un error llamado <code>AbortError</code>.</p>
+  <pre><code class="language-js">const controlador = new AbortController();
+const promesa = fetch(url, { signal: controlador.signal });
+controlador.abort(); // la petición se cancela; promesa se rechaza con AbortError</code></pre>
+  <p>¿Por qué importa tanto cancelar en un buscador? Porque las respuestas no siempre llegan en el orden en que salieron:</p>
+  <figure class="capsula" data-titulo="Respuestas desordenadas">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Línea de tiempo: escribes ma y sale la búsqueda A, que tarda 1,5 segundos; escribes mario y sale la búsqueda B, que tarda 0,3 segundos; B llega primero y la pantalla muestra mario, pero después llega A y la pantalla muestra por error los resultados de ma. Con AbortController, A se cancela al escribir mario y en la pantalla se quedan los resultados de mario">
+        <text class="d-rotulo" x="145" y="46" text-anchor="end">Escribes</text>
+        <text class="d-rotulo" x="145" y="104" text-anchor="end">Búsqueda A</text>
+        <text class="d-rotulo" x="145" y="154" text-anchor="end">Búsqueda B</text>
+        <text class="d-rotulo" x="145" y="218" text-anchor="end">Pantalla</text>
+        <g data-pasos="1-">
+          <rect class="d-caja" x="160" y="26" width="56" height="28" rx="6"/>
+          <text class="d-mono" x="188" y="46" text-anchor="middle">ma</text>
+        </g>
+        <g data-pasos="2-">
+          <rect class="d-caja" x="268" y="26" width="80" height="28" rx="6"/>
+          <text class="d-mono" x="308" y="46" text-anchor="middle">mario</text>
+        </g>
+        <g data-pasos="1-4">
+          <rect class="d-acento" x="160" y="86" width="405" height="24" rx="4"/>
+          <text class="d-sobre-acento d-peq" x="170" y="103">«ma»: tarda 1,5 s</text>
+        </g>
+        <g data-pasos="5-">
+          <rect class="d-acento" x="160" y="86" width="108" height="24" rx="4"/>
+          <text class="d-sobre-acento d-peq" x="170" y="103">«ma»</text>
+          <path class="d-mal-trazo" d="M262 90l14 16M276 90l-14 16"/>
+          <text class="d-peq" x="286" y="103">cancelada al escribir «mario»</text>
+        </g>
+        <g data-pasos="2-">
+          <rect class="d-acento" x="268" y="136" width="81" height="24" rx="4"/>
+          <text class="d-peq" x="357" y="153">«mario»: tarda 0,3 s</text>
+        </g>
+        <rect class="d-caja-suave" x="160" y="198" width="189" height="32" rx="4"/>
+        <text class="d-peq" x="170" y="219">Buscando…</text>
+        <path class="d-punteada" d="M349 162V196" data-pasos="3-"/>
+        <g data-pasos="3-4">
+          <rect class="d-caja" x="349" y="198" width="216" height="32" rx="4"/>
+          <text class="d-peq" x="359" y="219">resultados de «mario»</text>
+        </g>
+        <path class="d-punteada" d="M565 112V196" data-pasos="4"/>
+        <g data-pasos="4">
+          <rect class="d-caja" x="565" y="198" width="135" height="32" rx="4"/>
+          <rect class="d-mal-trazo" x="565" y="198" width="135" height="32" rx="4"/>
+          <text class="d-peq" x="575" y="219">de «ma»: ¡mal!</text>
+        </g>
+        <g data-pasos="6">
+          <rect class="d-caja" x="349" y="198" width="351" height="32" rx="4"/>
+          <rect class="d-ok-trazo" x="349" y="198" width="351" height="32" rx="4"/>
+          <text class="d-peq" x="359" y="219">resultados de «mario», y ahí se quedan</text>
+        </g>
+        <path class="d-linea" d="M160 262H700"/>
+        <path class="d-linea" d="M160 256v12M295 256v12M430 256v12M565 256v12M700 256v12"/>
+        <text class="d-peq d-tenue" x="160" y="285" text-anchor="middle">0 s</text>
+        <text class="d-peq d-tenue" x="295" y="285" text-anchor="middle">0,5 s</text>
+        <text class="d-peq d-tenue" x="430" y="285" text-anchor="middle">1 s</text>
+        <text class="d-peq d-tenue" x="565" y="285" text-anchor="middle">1,5 s</text>
+        <text class="d-peq d-tenue" x="700" y="285" text-anchor="middle">2 s</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Escribes «ma» en un buscador que busca a cada tecla. Sale la búsqueda A. «ma» coincide con muchísimos nombres, así que al servidor le cuesta 1,5 segundos contestar.</li>
+        <li>Un momento después ya escribiste «mario». Sale la búsqueda B. A sigue en camino.</li>
+        <li>B es más fácil de responder y llega primero: la pantalla muestra los resultados de «mario». Todo bien… por ahora.</li>
+        <li data-duracion="7">Llega A, tarde, y el código la dibuja encima. El cuadro de búsqueda dice «mario», pero la lista muestra los resultados de «ma». Es una <strong>condición de carrera</strong>: el resultado depende de qué respuesta gane, y aquí ganó la vieja.</li>
+        <li data-duracion="6">La solución: cada búsqueda nueva cancela la anterior con <code>AbortController</code>. En cuanto escribes «mario», A se abandona.</li>
+        <li data-duracion="6">La búsqueda cancelada se rechaza con un <code>AbortError</code>, que el <code>catch</code> ignora a propósito: no es un error que la persona deba ver. Solo B llega a la pantalla, y ahí se queda.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Compruébalo tú. En este taller cada búsqueda tarda un tiempo al azar entre 0,2 y 1,5 segundos. Escribe «m», «ma», «mar»… con la casilla desmarcada, y mira la consola de la página: verás respuestas que llegan desordenadas y, a veces, una lista que no corresponde a lo que dice el cuadro. Después marca la casilla y repite.</p>
+  <div class="taller" data-modo="web" data-titulo="Carrera de respuestas" data-alto="16rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;label&gt;Busca un personaje: &lt;input id="busqueda" autocomplete="off"&gt;&lt;/label&gt;
+&lt;p&gt;&lt;label&gt;&lt;input type="checkbox" id="cancelar"&gt; Cancelar la búsqueda anterior (AbortController)&lt;/label&gt;&lt;/p&gt;
+&lt;p id="estado" aria-live="polite"&gt;Escribe «m», «ma», «mar»…&lt;/p&gt;
+&lt;ul id="lista"&gt;&lt;/ul&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; padding: 0.25rem 1rem; }
+input { font: inherit; padding: 0.3rem; }
+#estado { font-weight: 600; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// ---- Servidor simulado: cada búsqueda tarda entre 0,2 y 1,5 s, al azar ----
+const PERSONAJES = ["Mario", "Luigi", "Peach", "Toad", "Yoshi", "Bowser", "Daisy", "Wario",
+  "Rosalina", "Link", "Zelda", "Samus", "Kirby", "Marth", "Mega Man", "Mae", "Maya"];
+function fetchFalso(url, opciones = {}) {
+  return new Promise((resolve, reject) => {
+    const q = new URL(url).searchParams.get("q").toLowerCase();
+    const temporizador = setTimeout(() => {
+      const datos = PERSONAJES.filter((nombre) => nombre.toLowerCase().includes(q));
+      resolve({ status: 200, ok: true, json: async () => datos });
+    }, 200 + Math.random() * 1300);
+    const senal = opciones.signal;
+    if (senal) {
+      senal.addEventListener("abort", () => {
+        clearTimeout(temporizador);
+        reject(senal.reason);
+      });
+    }
+  });
+}
+// ---- Fin del servidor simulado ----
+
+const entrada = document.querySelector("#busqueda");
+const estado = document.querySelector("#estado");
+const lista = document.querySelector("#lista");
+let controlador = null; // el AbortController de la búsqueda en curso
+
+entrada.addEventListener("input", async () => {
+  const texto = entrada.value.trim();
+  if (document.querySelector("#cancelar").checked &amp;&amp; controlador) {
+    controlador.abort(); // cancela la búsqueda anterior
+  }
+  controlador = new AbortController();
+  if (texto === "") {
+    lista.replaceChildren();
+    estado.textContent = "Escribe algo para buscar.";
+    return;
+  }
+  estado.textContent = "Buscando «" + texto + "»…";
+  console.log("Sale la búsqueda «" + texto + "»");
+  try {
+    const url = "https://api.example.com/personajes?q=" + encodeURIComponent(texto);
+    const respuesta = await fetchFalso(url, { signal: controlador.signal });
+    const nombres = await respuesta.json();
+    console.log("Llega «" + texto + "»");
+    lista.replaceChildren();
+    for (const nombre of nombres) {
+      const item = document.createElement("li");
+      item.textContent = nombre;
+      lista.append(item);
+    }
+    estado.textContent = nombres.length ? "Resultados de «" + texto + "»" : "Nada con «" + texto + "»";
+  } catch (error) {
+    if (error.name === "AbortError") {
+      console.log("Cancelada «" + texto + "»");
+      return; // una cancelación no es un error para la persona
+    }
+    estado.textContent = "Error: " + error.message;
+  }
+});</textarea>
+  </div>
+  <p>Otra técnica que se combina muy bien con la cancelación es el <strong>debounce</strong> («antirrebote»): en lugar de buscar a cada tecla, esperas a que la persona deje de escribir unos 300 milisegundos. Se hace con el <code>setTimeout</code> y el <code>clearTimeout</code> de la <a href="15-dom.html">Estación 15</a>, y ahorra muchas peticiones, algo que agradecen los límites de uso de las APIs:</p>
+  <pre><code class="language-js">let espera = null;
+entrada.addEventListener("input", () => {
+  clearTimeout(espera);                                  // cancela la espera anterior
+  espera = setTimeout(() => buscar(entrada.value), 300); // y empieza otra
+});</code></pre>
+  <p>Ordena este patrón completo, con su sangría. <code>mostrarCargando</code>, <code>mostrar</code> y <code>mostrarError</code> son funciones que cambian la página:</p>
+  <div class="parsons" data-titulo="Ordena una carga con sus estados" data-lenguaje="js">
+    <ol>
+      <li>async function cargarPokemon(nombre) {</li>
+      <li data-sangria="1">mostrarCargando(true);</li>
+      <li data-sangria="1">try {</li>
+      <li data-sangria="2">const pokemon = await obtenerJSON(URL_BASE + nombre);</li>
+      <li data-sangria="2">mostrar(pokemon);</li>
+      <li data-sangria="1">} catch (error) {</li>
+      <li data-sangria="2">mostrarError(error.message);</li>
+      <li data-sangria="1">} finally { mostrarCargando(false); }</li>
+      <li>}</li>
+    </ol>
+  </div>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>En los equipos profesionales, antes de dar por terminada una pantalla que pide datos, se prueban los estados feos a propósito. Las herramientas de desarrollo te ayudan: en la pestaña «Red» hay un menú de limitación de velocidad (<em>throttling</em>) con opciones como «3G» o «Sin conexión» (<em>Offline</em>). Así ves tu «Cargando…» y tu mensaje de error sin esperar a que falle internet de verdad.</p></div></aside>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Accesibilidad</p><p>Un mensaje que cambia en pantalla no siempre llega a quien usa un lector de pantalla. El atributo <code>aria-live="polite"</code> que viste en los talleres hace que el lector anuncie los cambios de ese elemento («Cargando…», «3 resultados», «Error…»). Y un botón desactivado mientras se carga evita peticiones repetidas. Los estados de carga, error y vacío, y cómo redactar buenos mensajes, se estudian a fondo en la <a href="17-diseno-ux.html">Estación 17</a>.</p></div></aside>
+  <p>Una última idea para errores pasajeros, como un 429 (demasiadas peticiones) o un 503 (servidor saturado): reintentar unas pocas veces, esperando un poco entre intento e intento. Algunas APIs incluso te dicen cuánto esperar en la cabecera <code>Retry-After</code>. Lo vas a programar en uno de los retos de la práctica.</p>
 </section>
   </main>
 </div>

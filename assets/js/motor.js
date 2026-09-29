@@ -71,19 +71,56 @@
       return nombre + "{ " + po.join(", ") + " }";
     }
 
+    var __errores = [];
+    var __sangria = "";
     function __imprimir(tipo, args) {
       var texto = Array.prototype.map.call(args, function (a) { return __formato(a, 0, false); }).join(" ");
-      if (tipo === "log") __lineas.push(texto);
+      if (__sangria) texto = texto.split("\n").map(function (l) { return __sangria + l; }).join("\n");
+      if (tipo === "log") __lineas.push(texto); else __errores.push(texto);
       __enviar(tipo, texto);
     }
-
+    // console.table con el formato de caja de Node.js
+    function __tabla(datos, columnas) {
+      if (datos === null || typeof datos !== "object") { __imprimir("log", [datos]); return; }
+      var filas = Object.keys(datos), cols = [], hayValor = false;
+      filas.forEach(function (k) {
+        var v = datos[k];
+        if (v !== null && typeof v === "object") Object.keys(v).forEach(function (c) { if (cols.indexOf(c) === -1) cols.push(c); });
+        else hayValor = true;
+      });
+      if (columnas) cols = columnas.slice();
+      var cab = ["(index)"].concat(cols); if (hayValor) cab.push("Values");
+      var cuerpo = filas.map(function (k) {
+        var v = datos[k], fila = [k];
+        cols.forEach(function (c) { fila.push(v !== null && typeof v === "object" && c in v ? __formato(v[c], 1, true) : ""); });
+        if (hayValor) fila.push(v !== null && typeof v === "object" ? "" : __formato(v, 1, true));
+        return fila;
+      });
+      var anchos = cab.map(function (c, i) { return Math.max(String(c).length, cuerpo.reduce(function (m, f) { return Math.max(m, String(f[i]).length); }, 0)) + 2; });
+      var linea = function (a, b, c) { return a + anchos.map(function (w) { return Array(w + 1).join("─"); }).join(b) + c; };
+      var fila = function (f) { return "│" + f.map(function (v, i) { v = String(v); return " " + v + Array(anchos[i] - v.length).join(" "); }).join("│") + "│"; };
+      var out = [linea("┌", "┬", "┐"), fila(cab), linea("├", "┼", "┤")].concat(cuerpo.map(fila)).concat([linea("└", "┴", "┘")]);
+      __imprimir("log", [out.join("\n")]);
+    }
+    var __contadores = {}, __tiempos = {};
     var console = {
       log: function () { __imprimir("log", arguments); },
       info: function () { __imprimir("log", arguments); },
       debug: function () { __imprimir("log", arguments); },
+      dir: function (v) { __imprimir("log", [v]); },
       error: function () { __imprimir("error", arguments); },
       warn: function () { __imprimir("aviso", arguments); },
-      table: function (d) { __imprimir("log", [d]); },
+      table: function (d, c) { __tabla(d, c); },
+      group: function () { if (arguments.length) __imprimir("log", arguments); __sangria += "  "; },
+      groupCollapsed: function () { if (arguments.length) __imprimir("log", arguments); __sangria += "  "; },
+      groupEnd: function () { __sangria = __sangria.slice(2); },
+      count: function (e) { e = e === undefined ? "default" : String(e); __contadores[e] = (__contadores[e] || 0) + 1; __imprimir("log", [e + ": " + __contadores[e]]); },
+      countReset: function (e) { __contadores[e === undefined ? "default" : String(e)] = 0; },
+      time: function (e) { __tiempos[e === undefined ? "default" : String(e)] = Date.now(); },
+      timeLog: function (e) { e = e === undefined ? "default" : String(e); __imprimir("log", [e + ": " + (Date.now() - (__tiempos[e] || Date.now())) + "ms"]); },
+      timeEnd: function (e) { e = e === undefined ? "default" : String(e); __imprimir("log", [e + ": " + (Date.now() - (__tiempos[e] || Date.now())) + "ms"]); delete __tiempos[e]; },
+      assert: function (cond) { if (!cond) { var resto = Array.prototype.slice.call(arguments, 1); __imprimir("error", ["Assertion failed" + (resto.length ? ": " + resto.map(function (a) { return __formato(a, 0, false); }).join(" ") : "")]); } },
+      trace: function () { __imprimir("error", ["Trace: " + Array.prototype.map.call(arguments, function (a) { return __formato(a, 0, false); }).join(" ")]); },
       clear: function () { __enviar("limpiar"); }
     };
     self.console = console;
@@ -141,7 +178,7 @@
     cuerpo = cuerpo.slice(cuerpo.indexOf("{") + 1, cuerpo.lastIndexOf("return {"));
     var lineasPreludio = cuerpo.split("\n").length;
     var verif = verificacion && verificacion.trim()
-      ? "function __verificar(){ var __r; try { __r = (function(salida, codigo){\n" + verificacion + "\n})(__lineas.slice(), " + JSON.stringify(codigo) + "); } catch (e) { __r = 'La verificación falló: ' + (e && e.message); } __enviar('veredicto', __r === undefined ? true : __r); __enviar('fin'); }"
+      ? "function __verificar(){ var __r; try { __r = (function(salida, codigo, errores){\n" + verificacion + "\n})(__lineas.slice(), " + JSON.stringify(codigo) + ", __errores.slice()); } catch (e) { __r = 'La verificación falló: ' + (e && e.message); } __enviar('veredicto', __r === undefined ? true : __r); __enviar('fin'); }"
       : "function __verificar(){ __enviar('fin'); }";
     var cabecera = "(function(){\n" + cuerpo + "\n" + verif + "\n(async function(){\n";
     var desfase = cabecera.split("\n").length - 1;

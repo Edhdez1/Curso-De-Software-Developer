@@ -1082,7 +1082,7 @@ console.log("Total:", resultado);</code></pre>
 
 <section id="excepciones" data-parada="try/catch y throw">
   <h2>Capturar errores: try, catch y finally</h2>
-  <p>Hasta ahora, un error de ejecución detenía el programa. Mientras desarrollas, eso está bien: un fallo ruidoso es fácil de encontrar. Pero hay errores que no son descuidos tuyos, sino situaciones que tu programa debe esperar: una partida guardada que se dañó, una persona que escribe letras donde iba su edad, un servidor que no responde. En esos casos el programa no debería cerrarse de golpe. Debería reaccionar: avisar, usar un valor por defecto, intentarlo de nuevo. Para eso existen <code>try</code> y <code>catch</code>.</p>
+  <p>Hasta ahora, un error de ejecución detenía el programa. Mientras desarrollas, eso está bien: un fallo ruidoso se encuentra rápido. Pero hay errores que no son descuidos tuyos, sino situaciones que tu programa debe esperar: una partida guardada que se dañó, una persona que escribe letras donde iba su edad, un servidor que no responde. En esos casos el programa no debería cerrarse de golpe. Debería reaccionar: avisar, usar un valor por defecto, intentarlo de nuevo. Para eso existen <code>try</code> y <code>catch</code>.</p>
   <pre><code class="language-js">try {
   // código que puede fallar
 } catch (error) {
@@ -1184,7 +1184,7 @@ console.log("El juego sigue.");</textarea>
   <div class="taller" id="taller-throw" data-titulo="Predice: lanzar y capturar errores">
     <textarea class="taller-codigo">function crearPersonaje(nombre, nivel) {
   if (typeof nivel !== "number" || nivel < 1 || nivel > 100) {
-    throw new RangeError("El nivel debe ser un número del 1 al 100 y llegó: " + nivel);
+    throw new RangeError("El nivel debe ser un número del 1 al 100 y llegó: " + JSON.stringify(nivel));
   }
   return { nombre: nombre, nivel: nivel };
 }
@@ -1202,7 +1202,7 @@ try {
 const sol = crearPersonaje("Sol", "5");
 console.log("¿Llega aquí?");</textarea>
   </div>
-  <p>Lyra se crea sin problemas. Tom falla, pero su error se captura y el programa sigue. Sol también falla (su nivel es el texto <code>"5"</code>, no un número) y, como nadie captura ese error, el programa se detiene con un <code>RangeError</code> y nunca imprime «¿Llega aquí?». Fíjate en el mensaje: dice qué se esperaba y qué llegó. Con un mensaje así, quien use tu función encuentra su error en segundos.</p>
+  <p>Lyra se crea sin problemas. Tom falla, pero su error se captura y el programa sigue. Sol también falla (su nivel es el texto <code>"5"</code>, no un número) y, como nadie captura ese error, el programa se detiene con un <code>RangeError</code> y nunca imprime «¿Llega aquí?». Fíjate en el mensaje: dice qué se esperaba y qué llegó, y gracias a <code>JSON.stringify</code> el texto aparece entre comillas (<code>llegó: "5"</code>), así que se ve que el problema es el tipo. Con un mensaje así, quien use tu función encuentra su error en segundos.</p>
   <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p>Lanzar un texto en lugar de un error: <code>throw "nivel inválido"</code>. JavaScript lo permite, pero ese valor no tiene <code>name</code> ni <code>stack</code>: pierdes la traza que te diría de dónde vino. Lanza siempre un objeto error: <code>throw new Error("nivel inválido")</code>.</p></div></aside>
 
   <h3>Errores con nombre propio</h3>

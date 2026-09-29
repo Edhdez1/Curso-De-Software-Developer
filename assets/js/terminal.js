@@ -514,7 +514,7 @@
       if (r === true) {
         veredicto.className = "taller-veredicto ok";
         veredicto.innerHTML = ICONOS.ok + "<span></span>";
-        veredicto.lastChild.textContent = caja.getAttribute("data-exito") || "¡Correcto! Tu programa hace lo que se pedía.";
+        veredicto.lastChild.textContent = caja.getAttribute("data-exito") || "¡Correcto! Cumple todo lo que se pedía.";
       } else if (r === null) {
         veredicto.className = "taller-veredicto";
       } else {
@@ -545,6 +545,7 @@
       if (!window.TerminalMotor) { linea("error", "No se pudo cargar el motor de ejecución."); return; }
       var fuente = window.TerminalMotor.construirFuente(codigo, verificacion);
       var hubo = false;
+      var totalLineas = codigo.split("\n").length;
       bEjecutar.disabled = true;
       try {
         var url = URL.createObjectURL(new Blob([fuente.fuente], { type: "text/javascript" }));
@@ -570,8 +571,30 @@
         var msg = String(ev.message || "Error").replace(/^Uncaught\s+/, "");
         var partes = msg.match(/^(\w*Error):\s*([\s\S]*)$/);
         var lin = ev.lineno ? ev.lineno - fuente.desfase : null;
-        informarError({ nombre: partes ? partes[1] : "Error", mensaje: partes ? partes[2] : msg, linea: lin > 0 ? lin : null });
+        var nombre = partes ? partes[1] : "Error", mensaje = partes ? partes[2] : msg;
         terminar();
+        var informar = function (n, mnsj, l) {
+          informarError({ nombre: n, mensaje: mnsj, linea: l > 0 && l <= totalLineas ? l : null });
+          if (verificacion && n === "SyntaxError") mostrarVeredicto("Hay un error de sintaxis y el programa no llegó a ejecutarse. Corrígelo para poder comprobar tu solución.");
+        };
+        if (nombre !== "SyntaxError") return informar(nombre, mensaje, lin);
+        // El envoltorio del motor puede cambiar el mensaje (una llave sin cerrar parece un «)» inesperado):
+        // se compila el código solo, sin envoltorio, para obtener el mensaje y la línea reales.
+        var crudo, fin = false;
+        var usarEnvoltorio = function () { if (fin) return; fin = true; if (crudo) crudo.terminate(); informar(nombre, mensaje, lin); };
+        try {
+          var urlC = URL.createObjectURL(new Blob([codigo], { type: "text/javascript" }));
+          crudo = new Worker(urlC); URL.revokeObjectURL(urlC);
+          crudo.onerror = function (e2) {
+            e2.preventDefault();
+            if (fin) return;
+            var m2 = String(e2.message || "").replace(/^Uncaught\s+/, "").match(/^(\w*Error):\s*([\s\S]*)$/);
+            if (!m2 || m2[1] !== "SyntaxError" || /await/.test(m2[2])) return usarEnvoltorio();
+            fin = true; crudo.terminate();
+            informar("SyntaxError", m2[2], e2.lineno || null);
+          };
+          setTimeout(usarEnvoltorio, 600);
+        } catch (e3) { usarEnvoltorio(); }
       };
       tLimite = setTimeout(function () {
         linea("aviso", "Se detuvo el programa tras " + tiempoMax / 1000 + " s. ¿Hay un bucle que nunca termina, o un setInterval sin clearInterval?");

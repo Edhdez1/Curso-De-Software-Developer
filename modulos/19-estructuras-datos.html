@@ -49,6 +49,8 @@
       <li><a href="#por-que">Por qué importa</a></li>
       <li><a href="#arrays">Arrays y listas</a></li>
       <li><a href="#pilas-colas">Pilas y colas</a></li>
+      <li><a href="#hash">Tablas hash y Map</a></li>
+      <li><a href="#conjuntos">Conjuntos</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -263,7 +265,7 @@ for (const n of [10, 1000, 1000000]) {
   <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Los arrays de JavaScript por dentro</p><p>La cápsula muestra el array clásico, el de lenguajes como C, Java o C#. En JavaScript un array es un objeto especial y el motor (V8 en Chrome y Node.js, SpiderMonkey en Firefox) decide cómo guardarlo. Si tus arrays son «normales» (sin huecos y con índices seguidos), los guarda contiguos, como en la cápsula. Si haces cosas raras como <code>lista[1000000] = 1</code> en un array vacío, el motor cambia a una representación más lenta, parecida a un diccionario. Si necesitas memoria contigua garantizada existen los <em>arrays tipados</em> (<code>Float64Array</code>, <code>Uint8Array</code>…), que se usan en gráficos, audio y juegos.</p></div></aside>
 
   <h3>El problema de sacar por el principio</h3>
-  <p>Mucha gente usa un array como fila de espera: agrega con <code>push</code> y saca al primero con <code>shift</code>. Según la especificación del lenguaje, <code>shift</code> tiene que correr todos los elementos un lugar hacia la izquierda, así que sacar uno cuesta <code>O(n)</code> y vaciar una fila de <code>n</code> elementos cuesta del orden de <code>n²</code>. Los motores tienen atajos: Firefox evita mover los elementos en muchos casos, y Chrome y Node.js también lo hacen con arrays pequeños. Pero con arrays grandes el costo reaparece. No te fíes: mídelo.</p>
+  <p>Mucha gente usa un array como fila de espera: agrega con <code>push</code> y saca al primero con <code>shift</code>. En la <a href="11-colecciones.html">Estación 11</a> viste que <code>shift</code> y <code>unshift</code> tienen que renumerar a todos y se notan lentos con listas enormes; ahora puedes ponerle nombre a ese costo. Según la especificación del lenguaje, <code>shift</code> tiene que correr todos los elementos un lugar hacia la izquierda, así que sacar uno cuesta <code>O(n)</code> y vaciar una fila de <code>n</code> elementos cuesta del orden de <code>n²</code>. Los motores tienen atajos: Firefox evita mover los elementos en muchos casos, y Chrome y Node.js también lo hacen con arrays pequeños. Pero con arrays grandes el costo reaparece. No te fíes: mídelo.</p>
   <p>Predice: si duplicas el tamaño de la fila, ¿cuánto crece el tiempo con <code>shift</code>? ¿Y con la versión que solo avanza un índice?</p>
   <div class="taller" id="taller-shift" data-titulo="Mide: shift contra un índice" data-tiempo="15">
     <textarea class="taller-codigo">// Vaciamos una fila de n elementos de dos maneras y medimos el tiempo.
@@ -547,24 +549,7 @@ console.log(texto);</textarea>
   <p>Deberías ver <code>Hola, mundo!</code>, <code>Hola, mundo</code>, <code>Hola</code> y otra vez <code>Hola, mundo</code>. <strong>Modifica</strong>: justo antes del <code>rehacerUno()</code>, escribe <code>escribir(" y adiós");</code>. ¿Qué imprime ahora la última línea? ¿Por qué el rehacer ya no hace nada?</p>
 
   <h3>La pila más importante: la de llamadas</h3>
-  <p>Hay una pila que usas en cada programa sin saberlo. Cuando una función llama a otra, la computadora tiene que recordar dónde iba para volver después. Lo hace con la <strong>pila de llamadas</strong> (en inglés, <em>call stack</em>): cada llamada apila un registro con sus variables locales y el punto de regreso; cuando la función termina, su registro se desapila y la ejecución sigue donde se había quedado. Lo intuiste en la <a href="10-funciones.html">Estación 10</a>, lo leíste en los mensajes de error en la <a href="12-depuracion.html">Estación 12</a> (la <em>stack trace</em> es una foto de esta pila) y lo estudiarás por dentro en la <a href="22-ejecucion.html">Estación 22</a>.</p>
-  <p>La pila de llamadas tiene un tamaño limitado. Si una función se llama a sí misma sin parar, la pila se llena y el programa se detiene con un error. Este taller lo provoca a propósito y lo atrapa con <code>try...catch</code> para mostrártelo:</p>
-  <div class="taller" id="taller-pila-llamadas" data-titulo="Llena la pila de llamadas">
-    <textarea class="taller-codigo">let profundidad = 0;
-
-function bajar() {
-  profundidad++;
-  bajar(); // se llama a sí misma y nunca termina: cada llamada apila un registro más
-}
-
-try {
-  bajar();
-} catch (e) {
-  console.log(`La pila se llenó tras unas ${profundidad} llamadas.`);
-  console.log(`${e.name}: ${e.message}`);
-}</textarea>
-  </div>
-  <p>En Chrome, Edge y Node.js el mensaje es <code>RangeError: Maximum call stack size exceeded</code>; en Firefox, <code>InternalError: too much recursion</code>. El número de llamadas cambia según el navegador y la memoria disponible. Es el famoso <em>stack overflow</em> (desbordamiento de pila) que da nombre a la web de preguntas de programación. Una función que se llama a sí misma se llama <strong>recursiva</strong>; la verás a fondo, con su condición de parada, en la <a href="20-algoritmos.html">Estación 20</a>.</p>
+  <p>Hay una pila que usas en cada programa sin saberlo: la <strong>pila de llamadas</strong> (en inglés, <em>call stack</em>) que conociste en la <a href="10-funciones.html#pila">Estación 10</a>. Cada vez que una función llama a otra, se apila un registro con sus variables y el punto al que debe volver; cuando termina, se desapila y la ejecución sigue en la función de abajo. Es exactamente la estructura de esta sección, con sus dos operaciones. Ahora entiendes también por qué la <em>stack trace</em> de un error (<a href="12-depuracion.html">Estación 12</a>) muestra primero la función más reciente: es la cima de la pila. Y el famoso <em>stack overflow</em> ocurre cuando una recursión sin caso base apila registros hasta llenar el espacio reservado. En la <a href="22-ejecucion.html">Estación 22</a> verás dónde vive esa pila en la memoria.</p>
 
   <h3>Otro clásico: comprobar paréntesis</h3>
   <p>¿Cómo sabe tu editor que te falta cerrar un paréntesis, o que cerraste un corchete donde tocaba cerrar una llave? Con una pila. Cada vez que aparece un símbolo de apertura, se apila. Cada vez que aparece uno de cierre, se desapila y se comprueba que haga pareja. Si al final la pila está vacía y todas las parejas coincidieron, el texto está equilibrado. Los navegadores hacen algo parecido para emparejar las etiquetas de apertura y cierre del HTML.</p>
@@ -714,6 +699,282 @@ function guardar(mensaje) {
       </tbody>
     </table>
   </div>
+</section>
+
+<section id="hash" data-parada="Tablas hash y Map">
+  <h2>Tablas hash y Map</h2>
+  <p>Un array es rapidísimo cuando sabes la posición: <code>lista[4]</code> es un solo paso. Pero casi nunca buscas por posición. Buscas por nombre: el precio del producto <code>"pan"</code>, el jugador <code>"dragon_azul"</code>, la traducción de la palabra <code>"guardar"</code>. ¿Se podría convertir el nombre en una posición y saltar directo, como con un índice? Esa es la idea de la <strong>tabla hash</strong> (en inglés, <em>hash table</em>), probablemente la estructura más útil de toda la programación.</p>
+
+  <h3>De una clave a una posición</h3>
+  <p>Una tabla hash guarda pares <strong>clave → valor</strong> en un array de casillas llamadas <strong>cubetas</strong> (en inglés, <em>buckets</em>). Para decidir en qué cubeta va cada par, usa una <strong>función hash</strong>: una función que recibe la clave y devuelve un número. Ese número, ajustado al tamaño del array con el resto <code>%</code>, es la cubeta.</p>
+  <p>Una buena función hash cumple tres condiciones: es <strong>determinista</strong> (la misma clave siempre da el mismo número, si no, no podrías volver a encontrarla), es <strong>rápida</strong> y <strong>reparte</strong> las claves por todas las cubetas de forma pareja. En la cápsula usamos una función de juguete: sumar los códigos de las letras. Recuerda de la <a href="02-computadora.html">Estación 2</a> que cada carácter se guarda como un número: la <code>a</code> es 97, la <code>b</code> es 98, y así.</p>
+  <figure class="capsula" data-titulo="Cómo guarda y busca una tabla hash">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 320" role="img" aria-label="Animación: una tabla hash con 8 cubetas numeradas del 0 al 7. La función hash suma los códigos de las letras y calcula el resto entre 8. espada va a la cubeta 6, arco a la 5, escudo a la 3. flecha también da 3: hay una colisión y se encadena detrás de escudo. Al buscar flecha se va directo a la cubeta 3 y bastan 2 comparaciones.">
+        <text class="d-peq d-tenue" x="20" y="40">clave</text>
+        <rect class="d-caja" x="20" y="50" width="200" height="40" rx="20"/>
+        <text class="d-mono" x="120" y="76" text-anchor="middle" style="font-size:18px" data-texto="1:?; 2:&quot;espada&quot;; 3:&quot;arco&quot;; 4:&quot;escudo&quot;; 5:&quot;flecha&quot;; 6:buscar &quot;flecha&quot;">?</text>
+        <path class="d-linea" d="M120 90 V100"/>
+        <path class="d-tinta" d="M112 100 l8 12 8 -12z"/>
+        <rect class="d-acento" x="20" y="114" width="240" height="64" rx="8"/>
+        <text class="d-rotulo d-sobre-acento" x="140" y="140" text-anchor="middle">función hash</text>
+        <text class="d-peq d-sobre-acento" x="140" y="164" text-anchor="middle">suma de códigos % 8</text>
+        <text class="d-mono" x="20" y="214" style="font-size:15px" data-texto="1:cada letra es un número; 2:e+s+p+a+d+a = 622; 3:a+r+c+o = 421; 4:e+s+c+u+d+o = 643; 5:f+l+e+c+h+a = 611">cada letra es un número</text>
+        <text class="d-mono" x="20" y="240" style="font-size:15px" data-texto="1:a = 97, b = 98, c = 99…; 2:622 % 8 = 6; 3:421 % 8 = 5; 4:643 % 8 = 3; 5:611 % 8 = 3">a = 97, b = 98, c = 99…</text>
+        <g data-pasos="2">
+          <path class="d-linea" d="M260 146 H300 V261 H346"/><path class="d-tinta" d="M348 253 l12 8 -12 8z"/>
+        </g>
+        <g data-pasos="3">
+          <path class="d-linea" d="M260 146 H300 V225 H346"/><path class="d-tinta" d="M348 217 l12 8 -12 8z"/>
+        </g>
+        <g data-pasos="4-6">
+          <path class="d-linea" d="M260 146 H300 V153 H346"/><path class="d-tinta" d="M348 145 l12 8 -12 8z"/>
+        </g>
+        <text class="d-peq d-tenue" x="380" y="20" text-anchor="middle">cubetas</text>
+        <text class="d-peq d-tenue" x="480" y="20" text-anchor="middle">clave · valor</text>
+        <rect class="d-caja" x="360" y="30" width="40" height="30"/>
+        <rect class="d-caja" x="360" y="66" width="40" height="30"/>
+        <rect class="d-caja" x="360" y="102" width="40" height="30"/>
+        <rect class="d-caja" x="360" y="138" width="40" height="30"/>
+        <rect class="d-caja" x="360" y="174" width="40" height="30"/>
+        <rect class="d-caja" x="360" y="210" width="40" height="30"/>
+        <rect class="d-caja" x="360" y="246" width="40" height="30"/>
+        <rect class="d-caja" x="360" y="282" width="40" height="30"/>
+        <g class="d-mono" text-anchor="middle">
+          <text x="380" y="51">0</text><text x="380" y="87">1</text><text x="380" y="123">2</text><text x="380" y="159">3</text>
+          <text x="380" y="195">4</text><text x="380" y="231">5</text><text x="380" y="267">6</text><text x="380" y="303">7</text>
+        </g>
+        <g data-pasos="2-">
+          <path class="d-linea" d="M400 261 H420"/>
+          <rect class="d-caja" x="420" y="246" width="120" height="30" rx="4"/>
+          <text class="d-mono" x="480" y="267" text-anchor="middle" style="font-size:15px">espada · 1</text>
+        </g>
+        <g data-pasos="3-">
+          <path class="d-linea" d="M400 225 H420"/>
+          <rect class="d-caja" x="420" y="210" width="120" height="30" rx="4"/>
+          <text class="d-mono" x="480" y="231" text-anchor="middle" style="font-size:15px">arco · 1</text>
+        </g>
+        <g data-pasos="4-">
+          <path class="d-linea" d="M400 153 H420"/>
+          <rect class="d-caja" x="420" y="138" width="120" height="30" rx="4"/>
+          <rect class="d-resalte" x="422" y="140" width="116" height="26" data-pasos="6"/>
+          <text class="d-mono" x="480" y="159" text-anchor="middle" style="font-size:15px">escudo · 2</text>
+        </g>
+        <g data-pasos="5-">
+          <path class="d-linea" d="M540 153 H568"/><path class="d-tinta" d="M566 145 l12 8 -12 8z"/>
+          <rect class="d-caja" x="580" y="138" width="120" height="30" rx="4"/>
+          <rect class="d-resalte" x="582" y="140" width="116" height="26" data-pasos="6"/>
+          <text class="d-mono" x="640" y="159" text-anchor="middle" style="font-size:15px">flecha · 20</text>
+        </g>
+        <text class="d-rotulo" x="580" y="125" data-pasos="5">¡colisión!</text>
+        <text class="d-rotulo" x="580" y="125" data-pasos="6">2 comparaciones</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Una tabla hash vacía con 8 cubetas, numeradas del 0 al 7. A la izquierda, la función hash de juguete: suma los códigos de las letras de la clave y calcula el resto de dividir entre 8, que siempre es un número del 0 al 7.</li>
+        <li data-duracion="6">Guardamos <code>"espada" → 1</code>. Las letras suman 622, y 622 % 8 = 6. El par va a la cubeta 6. No hubo que mirar ninguna otra cubeta.</li>
+        <li>Guardamos <code>"arco" → 1</code>: suma 421, y 421 % 8 = 5. Cubeta 5.</li>
+        <li>Guardamos <code>"escudo" → 2</code>: suma 643, y 643 % 8 = 3. Cubeta 3.</li>
+        <li data-duracion="7">Guardamos <code>"flecha" → 20</code>: suma 611, y 611 % 8 = 3. ¡La cubeta 3 ya está ocupada! Dos claves distintas con la misma cubeta es una <strong>colisión</strong>. Esta tabla la resuelve encadenando: cada cubeta es una pequeña lista de pares.</li>
+        <li data-duracion="7">Buscamos <code>"flecha"</code>: la función hash da 3, vamos directo a esa cubeta y comparamos solo con lo que hay allí: escudo (no) y flecha (sí), valor 20. Dos comparaciones, aunque la tabla tuviera un millón de pares repartidos por otras cubetas.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Colisiones y por qué casi siempre es O(1)</h3>
+  <p>Las colisiones son inevitables: hay infinitas claves posibles y un número limitado de cubetas. Por eso toda tabla hash necesita una estrategia para resolverlas. Las dos clásicas son:</p>
+  <ul>
+    <li><strong>Encadenamiento</strong> (en inglés, <em>chaining</em>): cada cubeta guarda una lista de pares, como en la cápsula.</li>
+    <li><strong>Direccionamiento abierto</strong> (<em>open addressing</em>): si la cubeta está ocupada, se prueba la siguiente libre, según una regla fija.</li>
+  </ul>
+  <p>Mientras las cubetas tengan pocos pares, buscar, insertar y borrar cuestan <code>O(1)</code> en promedio. Para que siga siendo así, la tabla vigila su <strong>factor de carga</strong>: cuántos pares hay por cubeta. Cuando se llena demasiado, crea un array de cubetas más grande y recoloca todos los pares (a eso se le llama <em>rehash</em>). Es una operación cara pero rara, como cuando un array crece. El peor caso sí es malo: si todas las claves cayeran en la misma cubeta, buscar sería <code>O(n)</code>. Por eso las funciones hash reales son mucho más elaboradas que sumar letras (fíjate en que con la nuestra, <code>"amor"</code> y <code>"roma"</code> chocarían siempre, porque tienen las mismas letras).</p>
+  <p>Este taller implementa la tabla de la cápsula con encadenamiento. Predice en qué cubeta cae cada clave y qué devuelve la búsqueda de algo que no existe.</p>
+  <div class="taller" id="taller-tabla-hash" data-titulo="Predice y modifica: una tabla hash de juguete">
+    <textarea class="taller-codigo">const CUBETAS = 8;
+
+function hash(clave) {
+  let suma = 0;
+  for (const letra of clave) suma += letra.charCodeAt(0); // el código numérico de la letra
+  return suma % CUBETAS;
+}
+
+function crearTabla() {
+  const cubetas = [];
+  for (let i = 0; i < CUBETAS; i++) cubetas.push([]); // cada cubeta es una lista de pares
+  return cubetas;
+}
+
+function guardar(tabla, clave, valor) {
+  const cubeta = tabla[hash(clave)];
+  for (const par of cubeta) {
+    if (par[0] === clave) {  // la clave ya estaba: actualizamos su valor
+      par[1] = valor;
+      return;
+    }
+  }
+  cubeta.push([clave, valor]); // clave nueva: la añadimos a su cubeta
+}
+
+function obtener(tabla, clave) {
+  const cubeta = tabla[hash(clave)];
+  for (const par of cubeta) {
+    if (par[0] === clave) return par[1];
+  }
+  return undefined;
+}
+
+const inventario = crearTabla();
+guardar(inventario, "espada", 1);
+guardar(inventario, "arco", 1);
+guardar(inventario, "escudo", 2);
+guardar(inventario, "flecha", 20);
+guardar(inventario, "flecha", 18); // ya existía: se actualiza
+
+console.log("hash de flecha:", hash("flecha"));
+console.log("flechas:", obtener(inventario, "flecha"));
+console.log("pociones:", obtener(inventario, "poción"));
+inventario.forEach((cubeta, i) => console.log(`cubeta ${i}:`, cubeta));</textarea>
+  </div>
+  <p><strong>Modifica</strong>: cambia <code>CUBETAS</code> a 2 y vuelve a ejecutar. Todas las claves se amontonan en dos cubetas y cada búsqueda tiene que recorrer listas más largas. Después prueba con 64: casi nunca hay colisiones, a cambio de gastar más memoria en cubetas vacías. Otra vez el intercambio entre memoria y velocidad.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">El hash está en todas partes</p><p>La misma idea de convertir datos en un número de tamaño fijo aparece fuera de las tablas: para comprobar que un archivo descargado no se corrompió, en Git para identificar cada versión (<a href="24-git.html">Estación 24</a>) y para guardar contraseñas de forma segura (<a href="31-seguridad.html">Estación 31</a>). Esas funciones se llaman <em>hash criptográficas</em> y tienen exigencias mucho más fuertes: que sea prácticamente imposible encontrar dos datos con el mismo resultado.</p></div></aside>
+
+  <h3>Map: la tabla hash de JavaScript</h3>
+  <p>En la práctica nunca vas a programar tu propia tabla hash: el lenguaje ya trae una muy optimizada. En JavaScript se llama <strong>Map</strong>, y ya la viste de pasada en el adelanto de la <a href="11-colecciones.html">Estación 11</a>. La especificación del lenguaje no obliga a usar una tabla hash, pero sí exige que el acceso sea, en promedio, más rápido que recorrer todos los elementos; los motores reales usan tablas hash. Estas son sus operaciones:</p>
+  <pre><code class="language-js">const precios = new Map();
+precios.set("manzana", 0.5);          // guardar (o actualizar) un par
+precios.set("pan", 1.2).set("leche", 0.9); // set devuelve el Map: se puede encadenar
+console.log(precios.get("pan"));      // 1.2        leer por clave: O(1) en promedio
+console.log(precios.get("queso"));    // undefined  la clave no existe
+console.log(precios.has("leche"));    // true       ¿existe la clave?
+precios.delete("leche");              // borrar un par
+console.log(precios.size);            // 2          cuántos pares hay
+
+for (const [producto, precio] of precios) {  // recorre en orden de inserción
+  console.log(`${producto}: ${precio}`);
+}
+
+// Crear un Map a partir de pares, y convertir entre Map y objeto
+const stock = new Map([["espada", 1], ["arco", 3]]);
+const comoObjeto = Object.fromEntries(stock);          // { espada: 1, arco: 3 }
+const otraVez = new Map(Object.entries(comoObjeto));   // de vuelta a Map</code></pre>
+  <p>El patrón más frecuente con un <code>Map</code> es <strong>contar</strong>: cuántas veces aparece cada palabra en un texto, cada producto en los pedidos o cada enemigo derrotado por tipo. La receta es <code>mapa.set(clave, (mapa.get(clave) || 0) + 1)</code>: lee lo que había (o 0 si no había nada), súmale uno y guárdalo.</p>
+
+  <h3>¿Map o un objeto?</h3>
+  <p>Un objeto normal también guarda pares clave → valor, y los motores lo implementan con técnicas parecidas. ¿Cuándo usar cada uno? Esta tabla resume la comparación que hace la documentación de MDN:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Aspecto</th><th scope="col"><code>Map</code></th><th scope="col">Objeto <code>{}</code></th></tr></thead>
+      <tbody>
+        <tr><td>Tipos de clave</td><td>Cualquier valor: textos, números, objetos, funciones</td><td>Solo textos (y símbolos). <code>obj[1]</code> y <code>obj["1"]</code> son la misma clave</td></tr>
+        <tr><td>Claves «de fábrica»</td><td>Ninguna: solo lo que tú guardes</td><td>Hereda propiedades de su prototipo, como <code>constructor</code> o <code>toString</code>, que pueden chocar con tus claves</td></tr>
+        <tr><td>Orden</td><td>Siempre el orden de inserción</td><td>Casi siempre de inserción, pero las claves que parecen números van primero y ordenadas</td></tr>
+        <tr><td>Tamaño</td><td><code>mapa.size</code></td><td><code>Object.keys(obj).length</code> (hay que construir un array)</td></tr>
+        <tr><td>Recorrer</td><td>Directamente con <code>for...of</code></td><td>Con <code>Object.entries</code>, <code>Object.keys</code> o <code>for...in</code></td></tr>
+        <tr><td>Muchas altas y bajas</td><td>Optimizado para eso</td><td>No está optimizado para eso</td></tr>
+        <tr><td>JSON</td><td><code>JSON.stringify</code> no lo entiende (da <code>{}</code>)</td><td>Se convierte a JSON y vuelve sin esfuerzo</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La regla práctica: usa un <strong>objeto</strong> para una <em>ficha</em> con campos fijos que conoces de antemano (un personaje con <code>nombre</code>, <code>vida</code> y <code>nivel</code>; los datos que van y vienen en JSON). Usa un <strong>Map</strong> para un <em>diccionario</em> cuyas claves no conoces de antemano y que crece y cambia: conteos, cachés, índices por id, todo lo que tenga claves escritas por usuarios.</p>
+  <p>El segundo punto de la tabla parece un detalle, pero produce errores reales. Predice qué imprime este contador de palabras hecho de las dos maneras:</p>
+  <div class="taller" id="taller-map-objeto" data-titulo="Predice: un error escondido en los objetos">
+    <textarea class="taller-codigo">const texto = "el valor del constructor es el valor de la casa";
+const conObjeto = {};
+const conMap = new Map();
+
+for (const palabra of texto.split(" ")) {
+  conObjeto[palabra] = (conObjeto[palabra] || 0) + 1;
+  conMap.set(palabra, (conMap.get(palabra) || 0) + 1);
+}
+
+console.log("Objeto, el:", conObjeto["el"]);
+console.log("Objeto, constructor:", conObjeto["constructor"]);
+console.log("Map, el:", conMap.get("el"));
+console.log("Map, constructor:", conMap.get("constructor"));
+console.log("Palabras distintas:", conMap.size);</textarea>
+  </div>
+  <p>Con el objeto, <code>"constructor"</code> no da 1 sino un texto extraño: <code>function Object() { [native code] }1</code>. Todo objeto hereda una propiedad <code>constructor</code>, así que <code>conObjeto["constructor"]</code> ya existía antes de empezar a contar (era una función), y <code>función + 1</code> la convierte en texto y le pega un 1. Con el <code>Map</code> no hay claves de fábrica y todo funciona. Si las claves las escriben usuarios, este tipo de choque puede ser además un agujero de seguridad llamado <em>prototype pollution</em> (<a href="31-seguridad.html">Estación 31</a>).</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p>Dos errores típicos con <code>Map</code>. Primero: escribir <code>mapa["clave"] = valor</code> en lugar de <code>mapa.set("clave", valor)</code>. Parece funcionar, pero crea una propiedad normal del objeto, no un par del Map: después <code>mapa.has("clave")</code> da <code>false</code> y <code>mapa.size</code> no cambia. Segundo: usar un array u objeto como clave y esperar encontrarlo con otro igual. <code>mapa.set([2, 3], "cofre")</code> y luego <code>mapa.get([2, 3])</code> da <code>undefined</code>, porque las claves que son objetos se comparan por <em>referencia</em>, no por contenido: son dos arrays distintos que se parecen. Si necesitas coordenadas como clave, conviértelas en texto: <code>mapa.set("2,3", "cofre")</code>.</p></div></aside>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Novedad de 2026: getOrInsert</p><p>El estándar de 2026 añadió a <code>Map</code> el método <code>getOrInsert(clave, valorPorDefecto)</code>: devuelve el valor de la clave y, si no existía, guarda antes el valor por defecto. Simplifica patrones como agrupar: <code>grupos.getOrInsert("rojo", []).push("manzana")</code>. Según MDN, funciona en los navegadores actuales desde febrero de 2026 (Chrome 145, Firefox 144, Safari 26.2) y en Node.js 26, pero <strong>no</strong> en Node.js 24 LTS ni en navegadores antiguos. Compruébalo antes de usarlo: <code>typeof Map.prototype.getOrInsert</code> debe dar <code>"function"</code>. En esta estación usamos la receta clásica con <code>get</code> y <code>set</code>, que funciona en todas partes.</p></div></aside>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>Las tablas hash están detrás de casi todo lo que va rápido en una app: la caché que evita repetir una petición a un servidor, el índice que encuentra a un usuario por su id sin recorrer la lista, el mapa de sprites por nombre en un juego, los textos traducidos por idioma. Todos los lenguajes tienen la suya: <code>dict</code> en Python, <code>HashMap</code> en Java, <code>Dictionary</code> en C#. Cuando en una entrevista técnica te pregunten cómo acelerar una búsqueda, la primera respuesta a considerar casi siempre es «con una tabla hash».</p></div></aside>
+</section>
+
+<section id="conjuntos" data-parada="Conjuntos">
+  <h2>Conjuntos: Set</h2>
+  <p>A veces no te interesa asociar un valor a cada clave: solo quieres saber si algo <em>está</em> o no. ¿Este usuario ya votó? ¿Esta casilla del mapa ya la visité? ¿Este logro ya lo desbloqueó la jugadora? Para eso existe el <strong>conjunto</strong>: una colección de valores sin repetidos, en la que preguntar «¿está?» es rapidísimo. En JavaScript se llama <strong>Set</strong>, y por dentro es una tabla hash que solo guarda claves.</p>
+  <pre><code class="language-js">const visitadas = new Set();
+visitadas.add("Plaza");
+visitadas.add("Museo");
+visitadas.add("Plaza");                // ya estaba: no pasa nada
+console.log(visitadas.size);           // 2
+console.log(visitadas.has("Museo"));   // true    O(1) en promedio
+visitadas.delete("Museo");
+console.log([...visitadas]);           // [ 'Plaza' ]  de vuelta a array
+
+// El truco más usado: quitar duplicados de un array
+const etiquetas = ["js", "juegos", "js", "web", "juegos"];
+const unicas = [...new Set(etiquetas)]; // [ 'js', 'juegos', 'web' ] en orden de aparición</code></pre>
+  <p>La documentación de MDN lo dice así: <code>has</code> es, en promedio, más rápido que <code>includes</code> de un array del mismo tamaño. <code>includes</code> recorre el array de principio a fin (<code>O(n)</code>); <code>has</code> salta a la cubeta (<code>O(1)</code>). Con un solo uso da igual, pero dentro de un bucle la diferencia se multiplica. Mídelo: este taller busca los números que tienen en común dos listas de 20 000 elementos.</p>
+  <div class="taller" id="taller-includes-set" data-titulo="Mide: includes contra Set" data-tiempo="15">
+    <textarea class="taller-codigo">const n = 20000;
+const a = [];
+const b = [];
+for (let i = 0; i < n; i++) {
+  a.push(i * 2); // pares
+  b.push(i * 3); // múltiplos de 3
+}
+
+let inicio = Date.now();
+const comunesLento = a.filter((x) => b.includes(x)); // por cada x, recorre b
+console.log(`Con includes: ${comunesLento.length} en común, ${Date.now() - inicio} ms`);
+
+inicio = Date.now();
+const conjuntoB = new Set(b);                          // una sola vez: O(n)
+const comunesRapido = a.filter((x) => conjuntoB.has(x)); // por cada x, un salto
+console.log(`Con Set: ${comunesRapido.length} en común, ${Date.now() - inicio} ms`);</textarea>
+  </div>
+  <p>El resultado es el mismo (6667 números en común), pero con <code>includes</code> el programa hace del orden de <code>n × n</code> comparaciones, cientos de milisegundos, y con el <code>Set</code> apenas <code>n</code>, unos pocos. Si duplicas <code>n</code>, la primera versión tarda cuatro veces más; la segunda, el doble.</p>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>Si dentro de un bucle escribes <code>array.includes(...)</code> o <code>array.find(...)</code> sobre una lista grande, detente y pregúntate si un <code>Set</code> o un <code>Map</code> preparado antes del bucle haría ese trabajo en un solo paso. Es una de las optimizaciones más frecuentes y más fáciles que existen.</p></div></aside>
+
+  <h3>Operaciones de conjuntos</h3>
+  <p>En la <a href="18-matematicas.html">Estación 18</a> viste los conjuntos de las matemáticas: unión, intersección, diferencia. Desde 2024, los <code>Set</code> de JavaScript las traen incorporadas (MDN las marca como «Baseline 2024»: Chrome 122, Firefox 127, Safari 17 y Node.js 22 en adelante):</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Método</th><th scope="col">Devuelve</th><th scope="col">En matemáticas</th><th scope="col">Pregunta que responde</th></tr></thead>
+      <tbody>
+        <tr><td><code>a.union(b)</code></td><td>Set</td><td>A ∪ B</td><td>¿Qué hay en alguno de los dos?</td></tr>
+        <tr><td><code>a.intersection(b)</code></td><td>Set</td><td>A ∩ B</td><td>¿Qué hay en los dos a la vez?</td></tr>
+        <tr><td><code>a.difference(b)</code></td><td>Set</td><td>A ∖ B</td><td>¿Qué hay en A que no esté en B?</td></tr>
+        <tr><td><code>a.symmetricDifference(b)</code></td><td>Set</td><td>(A ∖ B) ∪ (B ∖ A)</td><td>¿Qué está en uno solo de los dos?</td></tr>
+        <tr><td><code>a.isSubsetOf(b)</code></td><td>booleano</td><td>A ⊆ B</td><td>¿Todo lo de A está en B?</td></tr>
+        <tr><td><code>a.isSupersetOf(b)</code></td><td>booleano</td><td>A ⊇ B</td><td>¿A contiene todo lo de B?</td></tr>
+        <tr><td><code>a.isDisjointFrom(b)</code></td><td>booleano</td><td>A ∩ B = ∅</td><td>¿No tienen nada en común?</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Predice cada línea antes de ejecutar. El taller comprueba primero si tu navegador tiene estos métodos y, si no, te lo dice en lugar de fallar:</p>
+  <div class="taller" id="taller-operaciones-set" data-titulo="Predice: logros de dos jugadoras">
+    <textarea class="taller-codigo">const lucia = new Set(["primer salto", "sin daño", "cofre secreto", "jefe final"]);
+const marta = new Set(["primer salto", "cofre secreto", "velocista"]);
+const todosLosLogros = new Set(["primer salto", "sin daño", "cofre secreto", "jefe final", "velocista"]);
+
+if (typeof lucia.union !== "function") {
+  console.log("Tu navegador todavía no tiene los métodos de conjuntos: actualízalo.");
+} else {
+  console.log("Entre las dos:", lucia.union(marta).size);
+  console.log("Las dos tienen:", [...lucia.intersection(marta)]);
+  console.log("Solo Lucía:", [...lucia.difference(marta)]);
+  console.log("Solo una de ellas:", [...lucia.symmetricDifference(marta)]);
+  console.log("¿Marta tiene todo?", todosLosLogros.isSubsetOf(marta));
+  console.log("¿Lucía y Marta juntas tienen todo?", todosLosLogros.isSubsetOf(lucia.union(marta)));
+}
+
+// La forma clásica, que funciona en cualquier versión:
+const enComun = new Set([...lucia].filter((logro) => marta.has(logro)));
+console.log("Intersección a mano:", [...enComun]);</textarea>
+  </div>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p>Igual que las claves de un <code>Map</code>, los valores de un <code>Set</code> se comparan por referencia cuando son objetos o arrays. <code>new Set([[1, 2], [1, 2]]).size</code> da 2, no 1: son dos arrays distintos con el mismo contenido. Otra sorpresa: <code>new Set("hola")</code> no guarda la palabra, guarda sus letras (<code>h</code>, <code>o</code>, <code>l</code>, <code>a</code>), porque <code>new Set</code> recorre lo que le das. Para guardar una palabra, pásala dentro de un array: <code>new Set(["hola"])</code>.</p></div></aside>
 </section>
   </main>
 </div>

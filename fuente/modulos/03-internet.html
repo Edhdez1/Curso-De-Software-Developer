@@ -1299,3 +1299,648 @@ console.log(penultima + "." + ultima);</code></pre>
     <p>El phishing es una de las formas de ataque más comunes del mundo, porque engañar a una persona suele ser más fácil que romper un sistema. Como futura persona desarrolladora, tú también tienes responsabilidad: usa siempre el mismo dominio para tu proyecto, no envíes a tus usuarios enlaces acortados ni a dominios desconocidos, y no les pidas datos sensibles por mensaje. Así les enseñas a desconfiar de quien sí lo hace.</p>
   </aside>
 </section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Internet es una red de redes que transporta datos; la web es uno de los servicios que funcionan sobre ella. El Wi-Fi solo es el tramo entre tu dispositivo y tu router.</li>
+    <li>Cada dispositivo tiene una dirección IP: IPv4 (cuatro números de 0 a 255) o IPv6 (grupos hexadecimales separados por <code>:</code>). En casa se usan IP privadas y el router sale a internet con una IP pública (NAT).</li>
+    <li>Los datos viajan en paquetes que los routers reenvían salto a salto; pueden tomar caminos distintos, desordenarse o perderse. TCP los confirma, reordena y reenvía; UDP no, a cambio de menos retraso.</li>
+    <li>El puerto indica a qué programa va cada paquete: 443 para HTTPS, 80 para HTTP, 53 para DNS.</li>
+    <li>El DNS traduce nombres a IP preguntando en cadena: resolvedor, servidor raíz, servidor del nivel superior y servidor autoritativo. Las respuestas se guardan en caché durante su TTL.</li>
+    <li>Una URL tiene protocolo, dominio, puerto opcional, ruta, consulta y fragmento. El fragmento nunca se envía al servidor.</li>
+    <li>HTTP es petición y respuesta: método (<code>GET</code>, <code>POST</code>…), cabeceras y cuerpo; código de estado (2xx éxito, 3xx redirección, 4xx error del cliente, 5xx error del servidor).</li>
+    <li>HTTPS cifra el contenido, detecta cambios y comprueba que el servidor controla el dominio. No garantiza que el dominio sea legítimo ni oculta a quién te conectas: el candado no es un sello de honradez.</li>
+    <li>Del Enter a la página: DNS, conexión, TLS, petición, respuesta, DOM, estilos y pintado. La pestaña Red de DevTools te deja verlo petición por petición.</li>
+    <li>Para detectar phishing, lee el host de derecha a izquierda y quédate con el dominio registrable. Lo de la izquierda, lo que va antes de una <code>@</code> y lo que va en la ruta lo puede escribir cualquiera.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Resuelve los ejercicios en orden. En casi todos no necesitas programar: solo escribir tus respuestas entre las comillas o cambiar un número, y pulsar «Ejecutar» para que el taller las compruebe. Usa las pistas después de intentarlo unos minutos. La solución está para comparar, no para copiar.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-partes">
+    <h3>Las partes de una dirección</h3>
+    <p>Esta es la dirección de la tabla de posiciones de un juego: <code>https://juegos.ejemplo.com:8080/ranking/semanal?nivel=5#top10</code>. Escribe cada una de sus partes entre las comillas correspondientes, tal como aparecen en la dirección.</p>
+    <div class="taller" id="taller-ej-partes" data-titulo="Ejercicio 1">
+      <textarea class="taller-codigo">// https://juegos.ejemplo.com:8080/ranking/semanal?nivel=5#top10
+// Escribe cada parte entre las comillas. La primera ya está hecha.
+const protocolo = "https:";
+const dominio = "";
+const puerto = "";      // solo el número
+const ruta = "";
+const consulta = "";    // incluye el signo ?
+const fragmento = "";   // incluye el signo #
+
+console.log(protocolo, dominio, puerto, ruta, consulta, fragmento);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = { protocolo: "https:", dominio: "juegos.ejemplo.com", puerto: "8080", ruta: "/ranking/semanal", consulta: "?nivel=5", fragmento: "#top10" };
+var pistas = {
+  protocolo: "El protocolo va antes de «//» e incluye los dos puntos.",
+  dominio: "El dominio va entre «//» y los dos puntos del puerto.",
+  puerto: "El puerto es el número que va después de los dos puntos, sin los dos puntos.",
+  ruta: "La ruta empieza en la «/» que sigue al puerto y termina antes del «?».",
+  consulta: "La consulta empieza en «?» (inclúyelo) y termina antes del «#».",
+  fragmento: "El fragmento empieza en «#» (inclúyelo) y va hasta el final."
+};
+for (var k in esperado) {
+  var m = codigo.match(new RegExp("const\\s+" + k + "\\s*=\\s*[\"'`]([^\"'`]*)[\"'`]"));
+  if (!m) return "No encuentro la línea de «" + k + "». No borres las líneas que empiezan con const.";
+  var valor = m[1].trim();
+  if (valor === "") return "Falta completar «" + k + "». " + pistas[k];
+  if (valor !== esperado[k]) return "Revisa «" + k + "»: escribiste «" + valor + "». " + pistas[k];
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Busca los separadores en orden: <code>//</code>, luego <code>:</code>, luego la primera <code>/</code>, luego <code>?</code> y por último <code>#</code>. Cada parte está entre dos de ellos.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El puerto se escribe sin los dos puntos (<code>"8080"</code>), pero la consulta y el fragmento sí incluyen su signo (<code>"?nivel=5"</code>, <code>"#top10"</code>), igual que los muestra <code>new URL</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// https://juegos.ejemplo.com:8080/ranking/semanal?nivel=5#top10
+const protocolo = "https:";
+const dominio = "juegos.ejemplo.com";
+const puerto = "8080";
+const ruta = "/ranking/semanal";
+const consulta = "?nivel=5";
+const fragmento = "#top10";
+
+console.log(protocolo, dominio, puerto, ruta, consulta, fragmento);</code></pre>
+      <p>Puedes comprobarlo en el taller «Desarma una URL» de la sección <a href="#url">Anatomía de una URL</a>: pega allí esta dirección y verás las mismas partes.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-arregla">
+    <h3>Arregla la petición</h3>
+    <p>Quieres ver la receta de flan, pero el servidor responde <code>404 Not Found</code>. La ruta pedida tiene dos diferencias con la ruta que tiene el servidor. Corrígela para que la respuesta sea exactamente:</p>
+    <pre class="consola"><code>GET /recetas/flan.html HTTP/1.1
+HTTP/1.1 200 OK</code></pre>
+    <div class="taller" id="taller-ej-arregla" data-titulo="Ejercicio 2">
+      <textarea class="taller-codigo">const metodo = "GET";
+const ruta = "/Recetas/flan.htm";   // corrige esta línea
+
+// El servidor (no lo cambies): estas son las rutas que tiene
+const rutas = ["/", "/recetas", "/recetas/flan.html", "/recetas/tres-leches.html"];
+const estado = metodo === "GET" && rutas.includes(ruta) ? 200 : 404;
+console.log(`${metodo} ${ruta} HTTP/1.1`);
+console.log(`HTTP/1.1 ${estado} ${estado === 200 ? "OK" : "Not Found"}`);</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (codigo.indexOf('const rutas = ["/", "/recetas", "/recetas/flan.html", "/recetas/tres-leches.html"];') === -1) return "No cambies la lista de rutas del servidor: el error está en la petición.";
+if (salida[1] !== "HTTP/1.1 200 OK") return "El servidor sigue respondiendo «" + (salida[1] || "nada") + "». Compara tu ruta, letra por letra, con las de la lista.";
+if (salida[0] !== "GET /recetas/flan.html HTTP/1.1") return "Ahora recibes un 200, pero no es la receta de flan. Pide la ruta del flan.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Una diferencia está al principio de la ruta: ¿mayúscula o minúscula? En la ruta, a diferencia del dominio, eso importa.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La otra diferencia está al final: mira bien la extensión del archivo.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const metodo = "GET";
+const ruta = "/recetas/flan.html";
+
+const rutas = ["/", "/recetas", "/recetas/flan.html", "/recetas/tres-leches.html"];
+const estado = metodo === "GET" &amp;&amp; rutas.includes(ruta) ? 200 : 404;
+console.log(`${metodo} ${ruta} HTTP/1.1`);
+console.log(`HTTP/1.1 ${estado} ${estado === 200 ? "OK" : "Not Found"}`);</code></pre>
+      <p><code>/Recetas</code> con mayúscula y <code>.htm</code> sin la «l» son rutas distintas para este servidor. Es un error muy real: muchos enlaces rotos de la web son solo una letra cambiada.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-ips">
+    <h3>¿IPv4, IPv6 o ninguna?</h3>
+    <p>Clasifica cada dirección escribiendo <code>"v4"</code>, <code>"v6"</code> o <code>"no"</code> (si no es una dirección válida).</p>
+    <div class="taller" id="taller-ej-ips" data-titulo="Ejercicio 3">
+      <textarea class="taller-codigo">// Escribe "v4", "v6" o "no" en cada una
+const respuestas = {
+  "192.168.1.20": "",
+  "256.10.0.1": "",
+  "2001:db8::1": "",
+  "8.8.8.8": "",
+  "10.0.0.300": "",
+  "::1": "",
+};
+
+for (const [direccion, tipo] of Object.entries(respuestas)) {
+  console.log(`${direccion}: ${tipo || "(sin responder)"}`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = { "192.168.1.20": "v4", "256.10.0.1": "no", "2001:db8::1": "v6", "8.8.8.8": "v4", "10.0.0.300": "no", "::1": "v6" };
+var mapa = {};
+salida.forEach(function (l) { var i = l.lastIndexOf(": "); if (i > 0) mapa[l.slice(0, i)] = l.slice(i + 2).trim().toLowerCase(); });
+var mal = [];
+for (var d in esp) { if (mapa[d] !== esp[d]) mal.push(d); }
+if (!mal.length) return true;
+if (mal.length === 6) return "Escribe \"v4\", \"v6\" o \"no\" entre las comillas de cada dirección.";
+return "Te falta o está mal: " + mal.join(", ") + ". Recuerda: en IPv4 cada uno de los cuatro números va de 0 a 255, y las IPv6 usan «:».";
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Las que tienen puntos son candidatas a IPv4; las que tienen <code>:</code>, a IPv6.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Cada número de una IPv4 ocupa un byte, así que el máximo es 255. Revisa los números de tres cifras.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const respuestas = {
+  "192.168.1.20": "v4",
+  "256.10.0.1": "no",
+  "2001:db8::1": "v6",
+  "8.8.8.8": "v4",
+  "10.0.0.300": "no",
+  "::1": "v6",
+};
+
+for (const [direccion, tipo] of Object.entries(respuestas)) {
+  console.log(`${direccion}: ${tipo || "(sin responder)"}`);
+}</code></pre>
+      <p><code>256</code> y <code>300</code> no caben en un byte. <code>::1</code> es la forma abreviada de IPv6 de «esta máquina» (localhost), y <code>192.168.1.20</code> es válida aunque sea privada.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-dominio">
+    <h3>Encuentra el dominio real</h3>
+    <p>Una tienda ficticia llamada Mercadito tiene su sitio en <code>mercadito.com.mx</code> y su blog en <code>mercadito.com</code>. Para cada enlace, escribe su dominio real: el nombre registrado más su terminación, en minúsculas y sin <code>www</code>.</p>
+    <div class="taller" id="taller-ej-dominio" data-titulo="Ejercicio 4">
+      <textarea class="taller-codigo">// Escribe el dominio real de cada enlace entre las comillas vacías
+const enlaces = [
+  ["https://www.mercadito.com.mx/ofertas", ""],
+  ["https://soporte.mercadito.com.ofertas-flash.shop/login", ""],
+  ["https://mercadito.com.mx@promo-regalos.net/premio", ""],
+  ["https://cuenta-mercadito.com/verificar?sitio=mercadito.com.mx", ""],
+  ["https://blog.mercadito.com/recetas", ""],
+];
+
+for (const [enlace, dominio] of enlaces) {
+  console.log(dominio || "(vacío)");
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["mercadito.com.mx", "ofertas-flash.shop", "promo-regalos.net", "cuenta-mercadito.com", "mercadito.com"];
+var ayuda = [
+  "El primero termina en .com.mx, una terminación de dos niveles: el dominio real incluye un trozo más.",
+  "En el segundo, lee el host de derecha a izquierda: ¿qué terminación y qué nombre hay justo antes de la primera «/»?",
+  "En el tercero hay una arroba: lo que va antes de «@» no es el destino.",
+  "En el cuarto, lo que va después de «?» es la consulta y no cuenta. Mira solo el host.",
+  "El quinto es un subdominio (blog) de un dominio que ya conoces."
+];
+if (salida.every(function (l) { return l === "(vacío)"; })) return "Escribe cada dominio entre las comillas vacías, por ejemplo \"mercadito.com.mx\".";
+for (var i = 0; i < esp.length; i++) {
+  var r = (salida[i] || "").trim().toLowerCase().replace(/^www\./, "");
+  if (r !== esp[i]) return "Revisa el enlace " + (i + 1) + (r && r !== "(vacío)" ? " (escribiste «" + r + "»)" : "") + ". " + ayuda[i];
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Sigue el método de la sección <a href="#phishing">Que no te engañen</a>: aísla el host (entre <code>//</code> y la primera <code>/</code>), descarta lo que esté antes de una <code>@</code> y lee de derecha a izquierda.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Solo dos de los cinco enlaces llevan de verdad a Mercadito.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const enlaces = [
+  ["https://www.mercadito.com.mx/ofertas", "mercadito.com.mx"],
+  ["https://soporte.mercadito.com.ofertas-flash.shop/login", "ofertas-flash.shop"],
+  ["https://mercadito.com.mx@promo-regalos.net/premio", "promo-regalos.net"],
+  ["https://cuenta-mercadito.com/verificar?sitio=mercadito.com.mx", "cuenta-mercadito.com"],
+  ["https://blog.mercadito.com/recetas", "mercadito.com"],
+];
+
+for (const [enlace, dominio] of enlaces) {
+  console.log(dominio || "(vacío)");
+}</code></pre>
+      <p>Los enlaces 2, 3 y 4 son trampas: escriben «mercadito» en un subdominio, antes de una arroba o en la consulta, pero el dominio real es otro. Fíjate también en que <code>cuenta-mercadito.com</code> es un dominio completamente distinto de <code>mercadito.com</code>, aunque se parezca.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-codigos">
+    <h3>¿Qué código responde el servidor?</h3>
+    <p>Escribe, en lugar de cada <code>0</code>, el código de estado HTTP que corresponde a la situación. Todos están en las tablas de la sección <a href="#http">HTTP</a>.</p>
+    <div class="taller" id="taller-ej-codigos" data-titulo="Ejercicio 5">
+      <textarea class="taller-codigo">// Cambia cada 0 por el código de estado correcto
+const situaciones = [
+  ["Pides una página que existe y todo va bien", 0],
+  ["La página que buscas no existe en el servidor", 0],
+  ["La página se mudó para siempre a otra dirección", 0],
+  ["El programa del servidor falló al preparar la respuesta", 0],
+  ["El servidor sabe quién eres, pero no tienes permiso", 0],
+  ["Tu copia en caché sigue vigente: no hace falta descargarla", 0],
+];
+
+for (const [texto, estado] of situaciones) {
+  console.log(`${estado} ${texto}`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["200", "404", "301", "500", "403", "304"];
+var nombres = ["todo bien", "no existe", "se mudó para siempre", "falló el servidor", "sin permiso", "copia en caché vigente"];
+var bien = 0, primeraMal = -1;
+for (var i = 0; i < esp.length; i++) {
+  var n = (salida[i] || "").split(" ")[0];
+  if (n === esp[i]) bien++; else if (primeraMal === -1) primeraMal = i;
+}
+if (bien === esp.length) return true;
+if (bien === 0) return "Cambia cada 0 por un código de tres cifras.";
+return "Llevas " + bien + " de 6. Revisa la situación «" + nombres[primeraMal] + "». Piensa primero en la familia: 2xx, 3xx, 4xx o 5xx.";
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Primero decide la familia: éxito (2xx), redirección o «usa otra cosa» (3xx), culpa del pedido (4xx) o culpa del servidor (5xx). Luego busca el número exacto en la tabla.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Dos de ellos son de la familia 3xx: uno es la mudanza permanente y el otro es «no ha cambiado».</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const situaciones = [
+  ["Pides una página que existe y todo va bien", 200],
+  ["La página que buscas no existe en el servidor", 404],
+  ["La página se mudó para siempre a otra dirección", 301],
+  ["El programa del servidor falló al preparar la respuesta", 500],
+  ["El servidor sabe quién eres, pero no tienes permiso", 403],
+  ["Tu copia en caché sigue vigente: no hace falta descargarla", 304],
+];
+
+for (const [texto, estado] of situaciones) {
+  console.log(`${estado} ${texto}`);
+}</code></pre>
+      <p>Un error típico es confundir <code>403</code> con <code>401</code>: el 401 significa «no sé quién eres, identifícate»; el 403, «sé quién eres y aun así no puedes».</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-peticion">
+    <h3>Escribe la petición a mano</h3>
+    <p>Escribe, entre las comillas invertidas, la petición HTTP/1.1 que enviaría tu navegador al abrir <code>https://tienda.ejemplo.com/buscar?q=zapatillas#resultados</code>. Necesita, como mínimo, la línea de petición y la cabecera <code>Host</code>, cada una en su propia línea.</p>
+    <div class="taller" id="taller-ej-peticion" data-titulo="Ejercicio 6">
+      <textarea class="taller-codigo">// Escribe cada línea de la petición entre las dos comillas invertidas
+const peticion = `
+
+`;
+
+console.log(peticion.trim());</textarea>
+      <script type="text/plain" class="taller-verificar">
+var lineas = salida.join("\n").split("\n").map(function (l) { return l.trim(); }).filter(function (l) { return l !== ""; });
+if (!lineas.length) return "Todavía no escribiste nada entre las comillas invertidas.";
+var primera = lineas[0].replace(/\s+/g, " ");
+if (/#/.test(salida.join("\n"))) return "El fragmento (#resultados) nunca se envía al servidor: quítalo.";
+if (/^https?:|\/\/tienda/i.test(primera.split(" ")[1] || "")) return "En la línea de petición va solo la ruta con su consulta, no la URL completa: el dominio va en la cabecera Host.";
+if (!/^[A-Z]+ /.test(primera)) return "La primera línea empieza por el método, en mayúsculas.";
+if (primera.split(" ")[0] !== "GET") return "Para abrir una página, el método es GET.";
+if (primera.split(" ")[1] !== "/buscar?q=zapatillas") return "Después del método va la ruta con su consulta, exactamente como en la dirección: /buscar?q=zapatillas";
+if (primera.split(" ")[2] !== "HTTP/1.1") return "La línea de petición termina con la versión: HTTP/1.1";
+if (!lineas.some(function (l) { return /^host:\s*tienda\.ejemplo\.com$/i.test(l); })) return "Falta la cabecera Host con el dominio, en su propia línea: Host: tienda.ejemplo.com";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Mira el ejemplo de la sección <a href="#http">HTTP</a>. La primera línea tiene tres partes separadas por espacios: método, ruta con consulta y versión.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El dominio no va en la primera línea: va en la cabecera <code>Host</code>. Y el fragmento no va en ningún lado.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const peticion = `
+GET /buscar?q=zapatillas HTTP/1.1
+Host: tienda.ejemplo.com
+Accept: text/html
+Accept-Language: es
+`;
+
+console.log(peticion.trim());</code></pre>
+      <p>Las cabeceras <code>Accept</code> y <code>Accept-Language</code> son opcionales, pero es lo que un navegador enviaría. Con esta petición, el servidor sabe qué sitio quieres, qué recurso y qué buscas; nunca sabrá que ibas a saltar a <code>#resultados</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-latencia">
+    <h3>Lo que tarda la luz</h3>
+    <p>Entre Buenos Aires y Madrid hay unos 10 000 km, y la luz en la fibra óptica recorre unos 200 000 km por segundo. Calcula el tiempo mínimo, en milisegundos, de: la ida de un paquete; la ida y vuelta (el «ping»); y la espera hasta el primer byte de una página nueva por HTTPS, que necesita al menos tres idas y vueltas (una para el saludo de TCP, otra para el de TLS 1.3 y otra para la petición HTTP y su respuesta). Usa las variables en tus cálculos: el programa debe funcionar si cambias la distancia.</p>
+    <div class="taller" id="taller-ej-latencia" data-titulo="Ejercicio 7">
+      <textarea class="taller-codigo">const distanciaKm = 10000;
+const velocidadKmPorSegundo = 200000;
+
+// Cambia cada 0 por una operación. Usa * para multiplicar y / para dividir.
+// Un segundo son 1000 milisegundos.
+const idaMs = 0;
+const idaYVueltaMs = 0;
+const primerByteMs = 0;
+
+console.log(`Ida: ${idaMs} ms`);
+console.log(`Ida y vuelta: ${idaYVueltaMs} ms`);
+console.log(`Primer byte: ${primerByteMs} ms`);</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/idaMs\s*=[^;\n]*distanciaKm/.test(codigo)) return "Calcula idaMs a partir de distanciaKm y velocidadKmPorSegundo, en lugar de escribir el número a mano.";
+if (!/idaYVueltaMs\s*=[^;\n]*idaMs/.test(codigo)) return "Calcula idaYVueltaMs a partir de idaMs.";
+if (!/primerByteMs\s*=[^;\n]*idaYVueltaMs/.test(codigo)) return "Calcula primerByteMs a partir de idaYVueltaMs.";
+if (salida[0] !== "Ida: 50 ms") return "La ida debería dar 50 ms y da «" + (salida[0] || "nada") + "». Divide la distancia entre la velocidad (eso da segundos) y multiplica por 1000.";
+if (salida[1] !== "Ida y vuelta: 100 ms") return "La ida y vuelta es el doble de la ida.";
+if (salida[2] !== "Primer byte: 300 ms") return "El primer byte llega tras tres idas y vueltas.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Tiempo = distancia ÷ velocidad. <code>distanciaKm / velocidadKmPorSegundo</code> da segundos (0,05); para pasarlo a milisegundos, multiplica por 1000.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>const idaYVueltaMs = idaMs * 2;</code> Y el primer byte, tres veces la ida y vuelta.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const distanciaKm = 10000;
+const velocidadKmPorSegundo = 200000;
+
+const idaMs = distanciaKm / velocidadKmPorSegundo * 1000;
+const idaYVueltaMs = idaMs * 2;
+const primerByteMs = idaYVueltaMs * 3;
+
+console.log(`Ida: ${idaMs} ms`);
+console.log(`Ida y vuelta: ${idaYVueltaMs} ms`);
+console.log(`Primer byte: ${primerByteMs} ms`);</code></pre>
+      <p>Son mínimos teóricos: en la realidad el cable no va en línea recta y cada router añade su espera, así que un ping entre esas ciudades suele superar los 100 ms. Por eso las empresas ponen servidores en muchos países, y por eso existen QUIC y TLS 1.3: cada ida y vuelta que se ahorra se nota.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-enlaces">
+    <h3>¿Legítimo o trampa?</h3>
+    <p>El sitio auténtico del banco ficticio es <code>bancocondor.com</code>, con todos sus subdominios. Escribe <code>"ok"</code> si el enlace lleva al banco o <code>"trampa"</code> si no.</p>
+    <div class="taller" id="taller-ej-enlaces" data-titulo="Ejercicio 8">
+      <textarea class="taller-codigo">// Escribe "ok" o "trampa" en cada enlace
+const enlaces = [
+  ["https://www.bancocondor.com/tarjetas", ""],
+  ["https://bancocondor.com.seguridad-clientes.com/acceso", ""],
+  ["https://app.bancocondor.com/ingresar?origen=correo", ""],
+  ["https://bancocondor.co/ingresar", ""],
+  ["https://www.bancocondor.com@clientes-condor.net/", ""],
+  ["https://ayuda.bancocondor.com/preguntas#bloqueo", ""],
+  ["https://www.xn--bncocondor-zqi.com/", ""],
+  ["https://bancoc0ndor.com/", ""],
+];
+
+for (const [enlace, veredicto] of enlaces) {
+  console.log(`${veredicto || "?"} ${enlace}`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["ok", "trampa", "ok", "trampa", "trampa", "ok", "trampa", "trampa"];
+var porque = [
+  "www es un subdominio del banco.",
+  "Lee de derecha a izquierda: el dominio real es seguridad-clientes.com.",
+  "app es un subdominio del banco, y la consulta no cambia el destino.",
+  "La terminación es .co, no .com: es otro dominio.",
+  "Todo lo que va antes de la @ se descarta: el destino es clientes-condor.net.",
+  "ayuda es un subdominio del banco; el fragmento no cambia el destino.",
+  "xn-- indica punycode: el nombre tiene una letra de otro alfabeto y no es bancocondor.com.",
+  "Hay un cero en lugar de la letra o."
+];
+var bien = 0, primera = -1;
+for (var i = 0; i < esp.length; i++) {
+  var r = (salida[i] || "").split(" ")[0].toLowerCase();
+  if (r === esp[i]) bien++; else if (primera === -1) primera = i;
+}
+if (bien === esp.length) return true;
+if (salida.every(function (l) { return l.charAt(0) === "?"; })) return "Escribe \"ok\" o \"trampa\" en cada enlace.";
+return "Llevas " + bien + " de 8. Revisa el enlace " + (primera + 1) + ". Pista: " + porque[primera].split(":")[0].replace(/\.$/, "") + ".";
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Para cada enlace, aísla el host y quédate con las dos últimas partes (nombre y terminación). Si no es exactamente <code>bancocondor.com</code>, es una trampa.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Hay tres enlaces «ok». Desconfía de la arroba, de <code>xn--</code> y de los números que parecen letras.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const enlaces = [
+  ["https://www.bancocondor.com/tarjetas", "ok"],
+  ["https://bancocondor.com.seguridad-clientes.com/acceso", "trampa"],
+  ["https://app.bancocondor.com/ingresar?origen=correo", "ok"],
+  ["https://bancocondor.co/ingresar", "trampa"],
+  ["https://www.bancocondor.com@clientes-condor.net/", "trampa"],
+  ["https://ayuda.bancocondor.com/preguntas#bloqueo", "ok"],
+  ["https://www.xn--bncocondor-zqi.com/", "trampa"],
+  ["https://bancoc0ndor.com/", "trampa"],
+];
+
+for (const [enlace, veredicto] of enlaces) {
+  console.log(`${veredicto || "?"} ${enlace}`);
+}</code></pre>
+      <p>Los tres legítimos son subdominios del dominio real (<code>www.</code>, <code>app.</code>, <code>ayuda.</code>), y ni la consulta ni el fragmento cambian adónde vas. Las cinco trampas usan los trucos de la tabla: subdominio engañoso, otra terminación, arroba, otro alfabeto y un número que imita una letra.</p>
+    </details>
+  </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: informe de viaje de una página</h2>
+  <p>Vas a investigar, con tus propias herramientas, el viaje real de una página que uses a menudo, y a explicarlo con tus palabras. Es exactamente lo que promete esta estación: contar qué ocurre desde que escribes una dirección hasta que ves la página, pero con datos de verdad. Necesitas una computadora con Chrome, Edge o Firefox.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Elige un sitio</strong>: tu periódico, una tienda, la página de tu universidad o Wikipedia. Abre una página concreta, no solo la portada, y copia su URL completa desde la barra de direcciones.</p></div></li>
+    <li><div><p><strong>Desarma la URL</strong>: pégala en el taller «Desarma una URL» de la sección <a href="#url">Anatomía de una URL</a> y anota el protocolo, el dominio, el dominio real (nombre más terminación) y la ruta.</p></div></li>
+    <li><div><p><strong>Graba la carga</strong>: abre la pestaña Red, marca «Inhabilitar caché» y recarga la página.</p></div></li>
+    <li><div><p><strong>Examina el documento principal</strong> (normalmente la primera fila, de tipo <code>document</code>). En «Encabezados» anota el código de estado, la dirección remota (IP y puerto) y la cabecera <code>content-type</code> de la respuesta. Activa la columna «Protocolo» (clic derecho en los títulos de las columnas) y anota si es <code>h2</code>, <code>h3</code> o <code>http/1.1</code>.</p></div></li>
+    <li><div><p><strong>Mira los tiempos</strong>: en la pestaña «Tiempos» del documento, anota cuánto tardaron la petición de DNS, la conexión inicial, el SSL y la espera de la respuesta del servidor.</p></div></li>
+    <li><div><p><strong>Cuenta</strong>: en el resumen de abajo, anota el número de solicitudes, lo transferido y el tiempo de «Carga». Activa también la columna «Dominio» y cuenta cuántos dominios distintos aparecen: muchas páginas piden cosas a varios servidores.</p></div></li>
+    <li><div><p><strong>Rellena la ficha</strong> en el taller de abajo y ejecútalo: el programa revisa que los datos tengan sentido y arma tu informe.</p></div></li>
+    <li><div><p><strong>Cuéntalo</strong>: escribe entre cinco y ocho frases que expliquen el viaje de esa página, en orden, usando tus datos: el DNS, la conexión, TLS, la petición, la respuesta y las demás peticiones. Si puedes, léeselo a alguien que no sepa de computadoras: si lo entiende, lo entendiste tú.</p></div></li>
+  </ol>
+  <div class="taller" id="taller-proyecto" data-titulo="Proyecto: ficha del viaje">
+    <textarea class="taller-codigo">// Rellena con lo que observaste en la pestaña Red
+const ficha = {
+  url: "",             // la dirección completa que abriste, con https://
+  estado: 0,           // código de estado del documento principal
+  ipServidor: "",      // de «Dirección remota», sin el puerto (y sin corchetes si es IPv6)
+  puerto: 0,           // el número que va después de los últimos dos puntos
+  protocolo: "",       // "h2", "h3" o "http/1.1" (columna Protocolo)
+  tipoContenido: "",   // cabecera content-type del documento
+  solicitudes: 0,      // del resumen de abajo
+  cargaSegundos: 0,    // «Carga» del resumen, en segundos (usa punto decimal: 1.5)
+};
+
+// Esto arma el informe (no hace falta cambiarlo)
+const direccion = ficha.url ? new URL(ficha.url) : null;
+console.log("INFORME DE VIAJE");
+console.log(`Sitio: ${direccion ? direccion.hostname : "?"}   Ruta: ${direccion ? direccion.pathname : "?"}`);
+console.log(`Servidor: ${ficha.ipServidor || "?"} (puerto ${ficha.puerto})   Protocolo: ${ficha.protocolo || "?"}`);
+console.log(`Respuesta: ${ficha.estado}   Tipo: ${ficha.tipoContenido || "?"}`);
+console.log(`${ficha.solicitudes} peticiones en ${ficha.cargaSegundos} s`);</textarea>
+    <script type="text/plain" class="taller-verificar">
+function texto(clave) { var m = codigo.match(new RegExp(clave + "\\s*:\\s*[\"'`]([^\"'`]*)[\"'`]")); return m ? m[1].trim() : ""; }
+function numero(clave) { var m = codigo.match(new RegExp(clave + "\\s*:\\s*([0-9.]+)")); return m ? Number(m[1]) : NaN; }
+var url = texto("url");
+if (!/^https?:\/\/[^\s\/]+\.[^\s\/]+/.test(url)) return "Escribe la URL completa, empezando por https://";
+var estado = numero("estado");
+if (!(estado >= 100 && estado <= 599 && Math.floor(estado) === estado)) return "El código de estado es un número de tres cifras, como 200.";
+var ip = texto("ipServidor").replace(/^\[|\]$/g, "");
+var v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(ip);
+var esV4 = v4 && v4.slice(1).every(function (n) { return Number(n) <= 255; });
+var esV6 = /^[0-9a-f:]+$/i.test(ip) && ip.split(":").length >= 3;
+if (!esV4 && !esV6) return "La IP del servidor no parece una IPv4 ni una IPv6. Cópiala de «Dirección remota», sin el puerto.";
+var puerto = numero("puerto");
+if (!(puerto >= 1 && puerto <= 65535)) return "El puerto es el número que sigue a la IP en «Dirección remota». Para HTTPS suele ser 443.";
+var protocolo = texto("protocolo").toLowerCase();
+if (["h2", "h3", "http/1.1", "http/1.0", "h3-29"].indexOf(protocolo) === -1) return "El protocolo debería ser \"h2\", \"h3\" o \"http/1.1\", como aparece en la columna Protocolo.";
+if (texto("tipoContenido").indexOf("/") === -1) return "El tipo de contenido tiene la forma tipo/subtipo, por ejemplo text/html; charset=utf-8.";
+if (!(numero("solicitudes") >= 1)) return "Anota cuántas solicitudes muestra el resumen de la pestaña Red.";
+if (!(numero("cargaSegundos") > 0)) return "Anota el tiempo de «Carga» en segundos, con punto decimal (por ejemplo 1.5).";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una ficha y un informe de referencia</summary>
+    <pre><code class="language-js">const ficha = {
+  url: "https://es.wikipedia.org/wiki/Internet",
+  estado: 200,
+  ipServidor: "208.80.153.224",
+  puerto: 443,
+  protocolo: "h2",
+  tipoContenido: "text/html; charset=UTF-8",
+  solicitudes: 42,
+  cargaSegundos: 1.5,
+};
+
+const direccion = ficha.url ? new URL(ficha.url) : null;
+console.log("INFORME DE VIAJE");
+console.log(`Sitio: ${direccion ? direccion.hostname : "?"}   Ruta: ${direccion ? direccion.pathname : "?"}`);
+console.log(`Servidor: ${ficha.ipServidor || "?"} (puerto ${ficha.puerto})   Protocolo: ${ficha.protocolo || "?"}`);
+console.log(`Respuesta: ${ficha.estado}   Tipo: ${ficha.tipoContenido || "?"}`);
+console.log(`${ficha.solicitudes} peticiones en ${ficha.cargaSegundos} s`);</code></pre>
+    <p>Son datos de ejemplo; los tuyos serán distintos según el sitio, tu ubicación y el momento. Un informe escrito a partir de ellos podría ser así:</p>
+    <p><em>«Al escribir es.wikipedia.org/wiki/Internet, mi navegador preguntó al DNS la IP de es.wikipedia.org y obtuvo 208.80.153.224, un servidor de la Fundación Wikimedia. Se conectó a esa IP por el puerto 443, negoció el cifrado TLS y comprobó el certificado. Después envió una petición GET con la ruta /wiki/Internet usando HTTP/2. El servidor respondió 200 OK con un documento text/html. Al leer ese HTML, el navegador descubrió hojas de estilos, scripts e imágenes, y las pidió en otras 41 peticiones, varias a otro dominio (upload.wikimedia.org). Con todo eso construyó el DOM, aplicó los estilos y pintó la página: en total, un segundo y medio.»</em></p>
+  </details>
+  <p><strong>Para ir más allá:</strong> repite el informe con la caché activada (desmarca «Inhabilitar caché» y recarga) y compara el número de peticiones y lo transferido; prueba la limitación «3G» y observa cuánto crece la espera; o compara un sitio muy sencillo como <a href="http://info.cern.ch">info.cern.ch</a> con una tienda en línea grande.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Si fallas alguna, lee la explicación: equivocarse aquí es la forma más barata de aprender.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Cuál de estas frases es correcta?</p>
+      <ol class="opciones">
+        <li>Internet y la web son dos nombres para lo mismo.<p class="explica">Es la confusión más común. El correo, las videollamadas y los juegos en línea usan internet sin ser la web.</p></li>
+        <li>Internet es la red de redes que transporta datos; la web es uno de los servicios que funcionan sobre ella.<p class="explica">Correcto. La web (páginas enlazadas que abres con un navegador) es un servicio más sobre la infraestructura de internet.</p></li>
+        <li>La web es la parte de internet que funciona por Wi-Fi.<p class="explica">El Wi-Fi es solo el enlace inalámbrico entre tu dispositivo y tu router; no tiene que ver con qué es la web.</p></li>
+        <li>Internet es un programa que viene instalado con el navegador.<p class="explica">Internet no es un programa: es una infraestructura de cables, routers y protocolos. El navegador es solo un cliente que la usa.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Cuál es una dirección IPv4 válida?</p>
+      <ol class="opciones">
+        <li><code>192.168.1.256</code><p class="explica">Cada número de una IPv4 ocupa un byte, así que va de 0 a 255. El 256 no cabe.</p></li>
+        <li><code>2001:db8::1</code><p class="explica">Es una dirección válida, pero IPv6: usa grupos hexadecimales separados por dos puntos.</p></li>
+        <li><code>10.0.0.1</code><p class="explica">Correcto. Cuatro números entre 0 y 255 separados por puntos. Además es una IP privada, de las que se usan dentro de una red local.</p></li>
+        <li><code>www.ejemplo.com</code><p class="explica">Eso es un nombre de dominio. El DNS lo traduce a una IP, pero no es una IP.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Los paquetes de un mismo mensaje…</p>
+      <ol class="opciones">
+        <li>pueden tomar caminos distintos y llegar desordenados; TCP los reordena y reenvía los que se pierden.<p class="explica">Correcto. Cada router decide el siguiente salto de cada paquete por separado, y TCP se encarga del orden y de las pérdidas.</p></li>
+        <li>viajan siempre juntos por el mismo camino, que se decide al principio.<p class="explica">Ningún router conoce el camino completo ni lo reserva: cada uno decide solo el siguiente salto, paquete a paquete.</p></li>
+        <li>nunca se pierden, porque internet lo garantiza.<p class="explica">IP no garantiza nada: un router saturado puede descartar paquetes. Por eso existe TCP.</p></li>
+        <li>viajan por satélite cuando cruzan un océano.<p class="explica">Más del 99 % del tráfico entre continentes va por cables submarinos de fibra óptica.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Un juego multijugador envía la posición de cada jugador 30 veces por segundo. ¿Qué protocolo de transporte suele elegirse?</p>
+      <ol class="opciones">
+        <li>TCP, porque garantiza que llegue todo.<p class="explica">Reenviar una posición perdida no sirve: cuando llega ya es vieja y hay otra más nueva. Esa espera causa tirones.</p></li>
+        <li>HTTP, porque es el protocolo de internet.<p class="explica">HTTP es el protocolo de la web, no un protocolo de transporte, y no está pensado para mensajes en tiempo real tan frecuentes.</p></li>
+        <li>DNS, porque es el más rápido.<p class="explica">El DNS sirve para traducir nombres a IP, no para enviar datos de un juego.</p></li>
+        <li>UDP, porque no espera confirmaciones y una posición perdida enseguida se reemplaza por otra.<p class="explica">Correcto. En tiempo real importa más el dato de ahora que recuperar el de antes.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Para qué sirve el DNS?</p>
+      <ol class="opciones">
+        <li>Para cifrar la conexión entre el navegador y el servidor.<p class="explica">Eso lo hace TLS, la parte «S» de HTTPS.</p></li>
+        <li>Para traducir nombres de dominio, como <code>es.wikipedia.org</code>, a direcciones IP.<p class="explica">Correcto. Es el primer paso del viaje: sin la IP, el navegador no sabe adónde conectarse.</p></li>
+        <li>Para guardar las páginas web de todos los sitios.<p class="explica">Las páginas están en los servidores de cada sitio. El DNS solo dice dónde están esos servidores.</p></li>
+        <li>Para asignar la IP privada a los dispositivos de tu casa.<p class="explica">Eso lo hace tu router con otro protocolo. El DNS traduce nombres.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Si ninguna caché tiene la respuesta, ¿a quién pregunta primero el resolvedor DNS?</p>
+      <ol class="opciones">
+        <li>Directamente al servidor autoritativo del dominio.<p class="explica">El resolvedor todavía no sabe cuál es: eso se lo dirán los servidores del nivel superior.</p></li>
+        <li>Al servidor web del sitio.<p class="explica">El servidor web no participa en el DNS. Además, para llegar a él primero hace falta su IP.</p></li>
+        <li>A un servidor raíz, que le indica los servidores del nivel superior (<code>.com</code>, <code>.org</code>…).<p class="explica">Correcto. Raíz, nivel superior y autoritativo, en ese orden.</p></li>
+        <li>A tu navegador.<p class="explica">Es al revés: el navegador le pregunta al resolvedor.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">En <code>https://ejemplo.com/guia?nivel=2#paso-3</code>, ¿qué parte no se envía al servidor?</p>
+      <ol class="opciones">
+        <li><code>https:</code><p class="explica">El protocolo decide cómo se conecta el navegador; la conexión se hace con él.</p></li>
+        <li><code>/guia</code><p class="explica">La ruta va en la línea de petición: es lo que se pide.</p></li>
+        <li><code>?nivel=2</code><p class="explica">La consulta viaja junto con la ruta, en la línea de petición.</p></li>
+        <li><code>#paso-3</code><p class="explica">Correcto. El fragmento lo usa solo el navegador, para saltar a esa parte de la página.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Pides una página y recibes <code>404 Not Found</code>. ¿Qué significa?</p>
+      <ol class="opciones">
+        <li>Que el servidor está apagado.<p class="explica">Si estuviera apagado no habría ningún código: nadie respondería y verías un error del navegador.</p></li>
+        <li>Que el servidor funciona y respondió que no tiene ese recurso.<p class="explica">Correcto. Suele deberse a un enlace roto o a una ruta mal escrita.</p></li>
+        <li>Que no tienes conexión a internet.<p class="explica">Sin conexión no te llegaría ninguna respuesta del servidor, tampoco un 404.</p></li>
+        <li>Que no tienes permiso para ver la página.<p class="explica">Eso sería un 403 (o un 401 si falta identificarse).</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Al enviar un formulario de registro con tus datos, ¿qué método HTTP se usa normalmente?</p>
+      <ol class="opciones">
+        <li><code>POST</code><p class="explica">Correcto. POST envía datos nuevos al servidor en el cuerpo de la petición.</p></li>
+        <li><code>GET</code><p class="explica">GET sirve para pedir recursos. Enviar datos personales con GET los dejaría a la vista en la URL.</p></li>
+        <li><code>DELETE</code><p class="explica">DELETE borra un recurso; no se usa para registrarse.</p></li>
+        <li><code>HEAD</code><p class="explica">HEAD pide solo las cabeceras de un recurso, sin enviar datos.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Un sitio usa HTTPS y tu navegador no muestra ningún aviso. ¿Qué puedes asegurar?</p>
+      <ol class="opciones">
+        <li>Que el sitio es de la empresa que aparece en su logo.<p class="explica">Cualquiera puede obtener un certificado válido para su propio dominio, incluidos los estafadores. El logo se copia en segundos.</p></li>
+        <li>Que nadie puede saber qué sitio estás visitando.<p class="explica">La IP y, normalmente, el nombre del sitio siguen siendo visibles para tu red y tu proveedor.</p></li>
+        <li>Que lo que viaja entre tú y ese dominio va cifrado y no se puede alterar sin que se note.<p class="explica">Correcto. Eso es lo que garantiza HTTPS. Si el dominio es el correcto, lo decides tú leyendo la URL.</p></li>
+        <li>Que el sitio no hará nada malo con tus datos.<p class="explica">HTTPS protege el camino, no lo que el sitio haga con tus datos cuando los recibe.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿A qué dominio te lleva <code>https://www.bancocondor.com.validar-datos.net/ingreso</code>?</p>
+      <ol class="opciones">
+        <li><code>bancocondor.com</code><p class="explica">Es la trampa: esa parte está a la izquierda, así que son subdominios que eligió el dueño del dominio real.</p></li>
+        <li><code>www.bancocondor.com</code><p class="explica">Leíste de izquierda a derecha. Los dominios se leen al revés.</p></li>
+        <li><code>com.validar-datos</code><p class="explica">Casi: pero el dominio real es el nombre más la terminación, y la terminación aquí es <code>.net</code>.</p></li>
+        <li><code>validar-datos.net</code><p class="explica">Correcto. Terminación <code>.net</code> y, justo antes, el nombre registrado. El resto es decorado.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Qué hace el navegador justo después de recibir el HTML de una página?</p>
+      <ol class="opciones">
+        <li>Consulta el DNS por primera vez.<p class="explica">El DNS fue lo primero de todo: sin la IP no habría recibido ningún HTML. (Sí puede consultar otros dominios que aparezcan en el HTML.)</p></li>
+        <li>Lo analiza para construir el DOM y pide las hojas de estilos, scripts e imágenes que encuentra.<p class="explica">Correcto. Por eso una sola página genera decenas de peticiones.</p></li>
+        <li>Pinta el texto tal cual, con las etiquetas visibles.<p class="explica">El navegador no muestra las etiquetas: las interpreta para construir el árbol de la página.</p></li>
+        <li>Cierra la conexión, porque ya tiene todo lo necesario.<p class="explica">Todavía le faltan los estilos, los scripts y las imágenes, que suele pedir por la misma conexión.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Red</dt><dd>Grupo de dispositivos conectados que pueden intercambiar datos. La de tu casa es una red local (LAN).</dd>
+    <dt>Internet</dt><dd>La red de redes: millones de redes independientes conectadas entre sí que usan los mismos protocolos para intercambiar datos.</dd>
+    <dt>Web (World Wide Web)</dt><dd>Servicio de páginas enlazadas entre sí que funciona sobre internet y se usa con un navegador mediante HTTP.</dd>
+    <dt>Protocolo</dt><dd>Conjunto de reglas que las partes de una comunicación siguen sobre el formato, el orden de los mensajes y qué hacer si algo falla.</dd>
+    <dt>Router (enrutador)</dt><dd>Dispositivo que conecta redes distintas y decide hacia dónde reenviar cada paquete.</dd>
+    <dt>Proveedor de internet (ISP)</dt><dd>Empresa que conecta tu red a internet a cambio de un pago.</dd>
+    <dt>Dirección IP</dt><dd>Número que identifica a un dispositivo en una red para que los datos sepan adónde ir.</dd>
+    <dt>IPv4 e IPv6</dt><dd>Las dos versiones del protocolo IP. IPv4 usa 32 bits (<code>192.168.1.20</code>); IPv6 usa 128 bits (<code>2001:db8::1</code>).</dd>
+    <dt>IP privada</dt><dd>Dirección reservada para uso dentro de una red local (<code>10.</code>, <code>172.16.</code> a <code>172.31.</code>, <code>192.168.</code>). Sale a internet a través de la IP pública del router (NAT).</dd>
+    <dt>Paquete</dt><dd>Trozo pequeño de datos, con una cabecera (origen, destino y otros datos) y una carga útil, en que se dividen los mensajes para viajar por la red.</dd>
+    <dt>TCP</dt><dd>Protocolo de transporte que establece una conexión y garantiza que los datos lleguen completos y en orden, reenviando lo que se pierde.</dd>
+    <dt>UDP</dt><dd>Protocolo de transporte que envía los datos sin conexión ni confirmaciones: más rápido, pero sin garantías de entrega ni de orden.</dd>
+    <dt>Puerto</dt><dd>Número de 0 a 65 535 que indica a qué programa o servicio de una máquina van los datos (443 para HTTPS, 80 para HTTP).</dd>
+    <dt>Latencia</dt><dd>Tiempo que tarda un dato en llegar de un punto a otro de la red, en milisegundos. Medida de ida y vuelta, se le llama «ping».</dd>
+    <dt>DNS</dt><dd>Sistema de nombres de dominio: traduce nombres como <code>es.wikipedia.org</code> a direcciones IP, consultando servidores organizados por niveles.</dd>
+    <dt>Dominio</dt><dd>Nombre legible que apunta a uno o varios servidores. Se lee de derecha a izquierda: terminación, nombre registrado y subdominios.</dd>
+    <dt>URL</dt><dd>Dirección completa de un recurso en la web: protocolo, dominio, puerto opcional, ruta, consulta y fragmento.</dd>
+    <dt>Cliente y servidor</dt><dd>Los dos papeles de una comunicación: el cliente (por ejemplo, tu navegador) hace peticiones y el servidor las responde.</dd>
+    <dt>HTTP</dt><dd>Protocolo de la web, basado en peticiones del cliente y respuestas del servidor.</dd>
+    <dt>Código de estado</dt><dd>Número de tres cifras con el que un servidor indica cómo fue una petición: 200 (bien), 301 (se mudó), 404 (no existe), 500 (falló el servidor)…</dd>
+    <dt>Cabecera HTTP</dt><dd>Par <code>Nombre: valor</code> con información extra en una petición o respuesta, como <code>Host</code> o <code>Content-Type</code>.</dd>
+    <dt>HTTPS</dt><dd>HTTP dentro de una conexión protegida con TLS: cifrada, protegida contra cambios y con el servidor autenticado por un certificado.</dd>
+    <dt>Certificado digital</dt><dd>Documento electrónico, firmado por una autoridad de certificación, que asocia un dominio con su clave y permite al navegador comprobar con quién habla.</dd>
+    <dt>DOM</dt><dd>Modelo de objetos del documento: el árbol de nodos que el navegador construye a partir del HTML y que luego dibuja en pantalla.</dd>
+    <dt>Phishing</dt><dd>Engaño que imita a una empresa o servicio conocido, normalmente con enlaces a dominios falsos, para robar contraseñas o datos.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación, no antes: te servirán para repasar y para ver las mismas ideas explicadas por otras personas. Los dos de Code.org están en inglés, con subtítulos en español que puedes activar en el reproductor.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=rw41W8crZ_Y" data-canal="Sabin Ingeniería Civil" data-idioma="es" data-nivel="intro" data-duracion="10 min" data-por-que="Animación muy clara del viaje de los datos: centros de datos, IP, paquetes, fibra óptica y cables submarinos.">¿Cómo funciona Internet?</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=QN_hlEUxvHg" data-canal="Programación y más" data-idioma="es" data-nivel="profundo" data-duracion="15 min" data-por-que="Direcciones IP desde cero, con analogías, y cómo ver la IP de tus dispositivos.">Aprende Todo sobre Direcciones IP</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=5o8CwafCxnU" data-canal="CodeAI" data-idioma="en" data-nivel="intro" data-duracion="7 min" data-por-que="Vint Cerf, uno de los creadores de internet, explica las direcciones IP y el DNS.">The Internet: IP Addresses &amp; DNS</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=ZghMPWGXexs" data-canal="CodeAI" data-idioma="en" data-nivel="profundo" data-duracion="7 min" data-por-que="La idea de clave, el cifrado simétrico y de clave pública, y cómo se aplican en HTTPS.">The Internet: Encryption &amp; Public Keys</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Howto/Web_mechanics/How_does_the_Internet_work">¿Cómo funciona Internet? (MDN)</a><p>Routers, módems, proveedores e IP explicados paso a paso, con la diferencia entre internet y la web.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Getting_started/Web_standards/How_the_web_works">Cómo funciona la web (MDN)</a><p>Un resumen breve del viaje de una página: DNS, HTTP, paquetes y archivos que forman un sitio.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Howto/Web_mechanics/What_is_a_URL">¿Qué es una URL? (MDN)</a><p>Todas las partes de una URL, con ejemplos, y las direcciones absolutas y relativas.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/HTTP/Guides/Overview">Generalidades del protocolo HTTP (MDN)</a><p>Peticiones, respuestas, cabeceras y la evolución de HTTP, contado por la referencia más confiable de la web.</p></li>
+    <li><a href="https://aws.amazon.com/es/route53/what-is-dns/">¿Qué es DNS? (AWS)</a><p>La resolución de nombres paso a paso, con los tipos de servidores DNS y de consultas.</p></li>
+    <li><a href="https://developer.chrome.com/docs/devtools/network?hl=es">Cómo inspeccionar la actividad de red (Chrome for Developers)</a><p>Guía oficial de la pestaña Red de Chrome, con ejercicios sobre una página de prueba.</p></li>
+  </ul>
+</section>

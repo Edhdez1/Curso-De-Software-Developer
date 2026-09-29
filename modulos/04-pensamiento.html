@@ -51,6 +51,9 @@
       <li><a href="#pseudocodigo">Pseudocódigo</a></li>
       <li><a href="#diagramas">Diagramas de flujo</a></li>
       <li><a href="#estructuras">Decisión y repetición</a></li>
+      <li><a href="#prueba">Prueba de escritorio</a></li>
+      <li><a href="#eficiencia">Eficiencia</a></li>
+      <li><a href="#metodo">Del problema al programa</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -878,6 +881,444 @@ console.log("¡Despegue!");    // Escribir "¡Despegue!"</textarea>
       <li>FinAlgoritmo</li>
     </ol>
   </div>
+</section>
+
+<section id="prueba" data-parada="Prueba de escritorio">
+  <h2>Prueba de escritorio: ejecutar a mano para encontrar errores</h2>
+  <p>Escribiste un algoritmo. ¿Funciona? Todavía no tienes con qué ejecutarlo, y aunque lo tuvieras, conviene saber si es correcto antes de programarlo. Hay una forma de averiguarlo con papel y lápiz: hacer tú de computadora.</p>
+  <p>Una <strong>prueba de escritorio</strong> (también llamada tabla de seguimiento, en inglés <em>trace table</em>) es ejecutar el algoritmo a mano, instrucción por instrucción, anotando en una tabla el valor de cada variable después de cada paso. Se llama así porque se hace sentado al escritorio, sin computadora.</p>
+
+  <h3>Un ejemplo completo</h3>
+  <p>Este algoritmo suma los precios de una compra. Como no sabe cuántos productos hay, la persona escribe los precios uno por uno y, para terminar, escribe 0. Un valor especial que marca el final de los datos, como ese 0, se llama <strong>valor centinela</strong>. La variable <code>total</code> es un <strong>acumulador</strong>: empieza en 0 y en cada vuelta se le suma algo. <code>cantidad</code> es un contador.</p>
+  <pre><code class="language-text">Algoritmo SumarPrecios
+    Definir precio, total Como Real
+    Definir cantidad Como Entero
+    total &lt;- 0
+    cantidad &lt;- 0
+    Escribir "Precio (0 para terminar):"
+    Leer precio
+    Mientras precio &lt;&gt; 0 Hacer
+        total &lt;- total + precio
+        cantidad &lt;- cantidad + 1
+        Leer precio
+    FinMientras
+    Escribir cantidad, " productos. Total: ", total
+FinAlgoritmo</code></pre>
+  <p>Hagamos la prueba con estos datos de entrada: 12, 8, 5 y 0. La tabla tiene una columna por variable, una para la condición del bucle y otra para lo que aparece en pantalla. Cada fila es una instrucción ejecutada; solo se anota lo que cambia en esa fila.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Línea</th><th scope="col">Instrucción</th><th scope="col">precio</th><th scope="col">total</th><th scope="col">cantidad</th><th scope="col">¿precio &lt;&gt; 0?</th><th scope="col">Pantalla</th></tr></thead>
+      <tbody>
+        <tr><td>4</td><td><code>total &lt;- 0</code></td><td></td><td>0</td><td></td><td></td><td></td></tr>
+        <tr><td>5</td><td><code>cantidad &lt;- 0</code></td><td></td><td></td><td>0</td><td></td><td></td></tr>
+        <tr><td>6</td><td><code>Escribir</code></td><td></td><td></td><td></td><td></td><td>Precio (0 para terminar):</td></tr>
+        <tr><td>7</td><td><code>Leer precio</code></td><td>12</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>8</td><td><code>Mientras</code></td><td></td><td></td><td></td><td>Sí</td><td></td></tr>
+        <tr><td>9</td><td><code>total &lt;- total + precio</code></td><td></td><td>12</td><td></td><td></td><td></td></tr>
+        <tr><td>10</td><td><code>cantidad &lt;- cantidad + 1</code></td><td></td><td></td><td>1</td><td></td><td></td></tr>
+        <tr><td>11</td><td><code>Leer precio</code></td><td>8</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>8</td><td><code>Mientras</code></td><td></td><td></td><td></td><td>Sí</td><td></td></tr>
+        <tr><td>9</td><td><code>total &lt;- total + precio</code></td><td></td><td>20</td><td></td><td></td><td></td></tr>
+        <tr><td>10</td><td><code>cantidad &lt;- cantidad + 1</code></td><td></td><td></td><td>2</td><td></td><td></td></tr>
+        <tr><td>11</td><td><code>Leer precio</code></td><td>5</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>8</td><td><code>Mientras</code></td><td></td><td></td><td></td><td>Sí</td><td></td></tr>
+        <tr><td>9</td><td><code>total &lt;- total + precio</code></td><td></td><td>25</td><td></td><td></td><td></td></tr>
+        <tr><td>10</td><td><code>cantidad &lt;- cantidad + 1</code></td><td></td><td></td><td>3</td><td></td><td></td></tr>
+        <tr><td>11</td><td><code>Leer precio</code></td><td>0</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>8</td><td><code>Mientras</code></td><td></td><td></td><td></td><td>No</td><td></td></tr>
+        <tr><td>13</td><td><code>Escribir</code></td><td></td><td></td><td></td><td></td><td>3 productos. Total: 25</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El resultado es el que esperábamos: tres productos que suman 25. Fíjate en tres detalles que la tabla deja a la vista y que es fácil pasar por alto leyendo el código. El 0 final no se suma ni se cuenta, porque el bucle pregunta antes de sumar. El primer precio se lee <em>antes</em> del bucle y los demás al final de cada vuelta. Y la última línea se ejecuta una sola vez, después de salir del bucle.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Elige datos de entrada concretos</strong> antes de empezar y escríbelos arriba de la tabla.</p></div></li>
+    <li><div><p><strong>Sigue el orden exacto</strong> de ejecución, línea por línea. En los bucles, vuelve al principio cada vez; en las decisiones, anota qué rama se tomó.</p></div></li>
+    <li><div><p><strong>No ejecutes lo que querías escribir, sino lo que escribiste.</strong> Es la regla más difícil: tu cabeza tiende a corregir el algoritmo sin avisarte.</p></div></li>
+    <li><div><p><strong>Compara con el resultado que esperabas</strong>, calculado por otro camino (a mano, con una calculadora). Si no coinciden, la fila donde empezó la diferencia te dice dónde está el error.</p></div></li>
+  </ol>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>PSeInt construye esta tabla solo: en el panel de ejecución paso a paso (tecla <kbd>F5</kbd>) activa la opción <em>Prueba de Escritorio</em> y elige qué variables quieres seguir. Aun así, hazla a mano varias veces al principio: es la forma de entrenar la «máquina» que tienes en la cabeza. Quien programa con experiencia hace pruebas de escritorio mentales todo el tiempo, sobre todo cuando lee código ajeno.</p></div></aside>
+
+  <h3>Casos borde: donde se esconden los errores</h3>
+  <p>El algoritmo de la compra funcionó con 12, 8, 5 y 0. ¿Funciona siempre? Un algoritmo casi nunca falla con datos «normales», porque son los que imaginaste mientras lo escribías. Falla en los extremos. Un <strong>caso borde</strong> (en inglés, <em>edge case</em>) es una entrada que está en el límite de lo posible o de lo previsto. Estos son los que conviene probar siempre:</p>
+  <ul>
+    <li><strong>El cero y los negativos</strong>: 0 minutos, un precio negativo, una deuda.</li>
+    <li><strong>Los límites exactos de cada condición</strong>: 50 en el paraguas, 12 y 65 en el cine. ¿Van con <code>&gt;</code> o con <code>&gt;=</code>?</li>
+    <li><strong>Los empates</strong>: dos o más valores iguales.</li>
+    <li><strong>Ningún dato o uno solo</strong>: que el centinela sea lo primero que se escribe.</li>
+    <li><strong>Textos raros</strong>: mayúsculas, espacios de más, un texto vacío.</li>
+    <li><strong>Valores enormes</strong>: un millón de productos, una edad de 150 años.</li>
+  </ul>
+  <p>Prueba el caso de ningún dato con una variante que calcula el precio promedio. Si la persona escribe 0 de entrada, <code>cantidad</code> vale 0, y el algoritmo intenta dividir <code>total / cantidad</code>, es decir, 0 entre 0. PSeInt se detiene con el mensaje «División por cero». La solución es decidir qué hacer en ese caso, antes de dividir:</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Falla si no hay precios</p>
+      <pre><code class="language-text">promedio &lt;- total / cantidad
+Escribir "Promedio: ", promedio</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Contempla el caso borde</p>
+      <pre><code class="language-text">Si cantidad &gt; 0 Entonces
+    promedio &lt;- total / cantidad
+    Escribir "Promedio: ", promedio
+SiNo
+    Escribir "No ingresaste precios"
+FinSi</code></pre>
+    </div>
+  </div>
+
+  <h3>Un error que solo aparece en el borde</h3>
+  <p>Este algoritmo busca el mayor de tres números. Parece correcto, y funciona con 3, 9 y 4: escribe 9. Haz la prueba de escritorio con 5, 5 y 2 paso a paso, y observa qué pasa en cada decisión:</p>
+  <div class="traza" data-titulo="El mayor de tres (con un error escondido)" data-rotulo-memoria="Variables" data-rotulo-salida="Pantalla">
+    <pre><code class="language-text">Algoritmo MayorDeTres
+    Definir a, b, c, mayor Como Entero
+    Leer a, b, c
+    Si a &gt; b Y a &gt; c Entonces
+        mayor &lt;- a
+    SiNo
+        Si b &gt; a Y b &gt; c Entonces
+            mayor &lt;- b
+        SiNo
+            mayor &lt;- c
+        FinSi
+    FinSi
+    Escribir "El mayor es ", mayor
+FinAlgoritmo</code></pre>
+    <script type="application/json">[
+      {"linea": 2, "vars": {"a": "(sin valor)", "b": "(sin valor)", "c": "(sin valor)", "mayor": "(sin valor)"}, "nota": "Se crean cuatro variables enteras, todavía sin valor."},
+      {"linea": 3, "vars": {"a": "5", "b": "5", "c": "2", "mayor": "(sin valor)"}, "salida": "> 5  5  2", "nota": "La persona escribe 5, 5 y 2. Es un caso borde: hay un empate entre los dos primeros."},
+      {"linea": 4, "vars": {"a": "5", "b": "5", "c": "2", "mayor": "(sin valor)"}, "nota": "¿a > b? ¿5 > 5? No: 5 no es mayor que 5, es igual. Con Y, basta que una parte sea falsa para que todo sea falso. Se salta a la rama SiNo."},
+      {"linea": 7, "vars": {"a": "5", "b": "5", "c": "2", "mayor": "(sin valor)"}, "nota": "¿b > a? Otra vez 5 > 5, que es falso. Se salta al SiNo de dentro."},
+      {"linea": 10, "vars": {"a": "5", "b": "5", "c": "2", "mayor": "2"}, "nota": "Como ninguna de las dos preguntas dijo que sí, el algoritmo concluye que el mayor es c. Guarda 2 en mayor."},
+      {"linea": 13, "vars": {"a": "5", "b": "5", "c": "2", "mayor": "2"}, "salida": "El mayor es 2", "nota": "¡Resultado incorrecto! El mayor es 5. El algoritmo supuso, sin decirlo, que no habría empates. La computadora hizo exactamente lo que decía el pseudocódigo."}
+    ]</script>
+  </div>
+  <p>El error estaba en una suposición: que ningún número se repetiría. Con 3, 9 y 4 jamás lo habrías visto. Una forma de corregirlo es cambiar los <code>&gt;</code> por <code>&gt;=</code>. Otra, más clara, es la técnica del <em>campeón provisional</em>: supón que el primero es el mayor y compáralo con cada uno de los demás, uno por vez.</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Supone que no hay empates</p>
+      <pre><code class="language-text">Si a &gt; b Y a &gt; c Entonces
+    mayor &lt;- a
+SiNo
+    Si b &gt; a Y b &gt; c Entonces
+        mayor &lt;- b
+    SiNo
+        mayor &lt;- c
+    FinSi
+FinSi</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Campeón provisional</p>
+      <pre><code class="language-text">mayor &lt;- a
+Si b &gt; mayor Entonces
+    mayor &lt;- b
+FinSi
+Si c &gt; mayor Entonces
+    mayor &lt;- c
+FinSi</code></pre>
+    </div>
+  </div>
+  <p>La versión de la derecha, además de ser correcta con empates, crece mejor: para buscar el mayor de cien números bastaría repetir la misma comparación en un bucle. Es el reconocimiento de patrones otra vez.</p>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>Un algoritmo no está probado porque funcionó una vez. Pruébalo con un caso normal, con los límites de cada condición y con los casos raros: cero, vacío, empate, negativo. Esta idea es la semilla de las pruebas automáticas que escribirás en la <a href="26-testing.html">Estación 26: Pruebas</a>, donde la computadora repite por ti cientos de casos cada vez que cambias el código.</p></div></aside>
+</section>
+
+<section id="eficiencia" data-parada="Eficiencia">
+  <h2>No todos los algoritmos cuestan lo mismo: buscar en una lista</h2>
+  <p>Hasta ahora preguntamos si un algoritmo es correcto. Hay una segunda pregunta igual de importante: ¿cuánto trabajo le cuesta? Dos algoritmos pueden dar el mismo resultado y uno tardar un segundo mientras el otro tarda una hora. La diferencia casi nunca está en la velocidad de la computadora, sino en la idea del algoritmo.</p>
+  <p>El mejor ejemplo es algo que haces todo el tiempo: buscar. Buscar un contacto en el teléfono, una palabra en el diccionario o un producto en una tienda en línea.</p>
+
+  <h3>Búsqueda lineal: uno por uno</h3>
+  <p>Imagina un mazo de cartas mezcladas y tienes que encontrar el 7 de corazones. No te queda otra que mirar las cartas una por una hasta dar con él. Eso es la <strong>búsqueda lineal</strong> (o secuencial): revisar los elementos en orden, desde el primero, hasta encontrar el buscado o llegar al final.</p>
+  <p>Funciona con cualquier lista, esté ordenada o no. Pero en el peor caso, cuando lo que buscas es el último o no está, revisas todos los elementos. Con 10 elementos son 10 comparaciones; con un millón, un millón.</p>
+
+  <h3>Búsqueda binaria: partir por la mitad</h3>
+  <p>Ahora piensa en un diccionario de papel. Nadie busca «pingüino» leyendo desde la «a». Lo abres por la mitad, ves que caíste en la «m», y sabes que tu palabra está en la segunda mitad. Toda la primera mitad queda descartada de una sola mirada. Repites con la mitad que queda, y en unos pocos pasos llegas a la página.</p>
+  <p>Eso es la <strong>búsqueda binaria</strong>: mirar el elemento del medio, compararlo con el que buscas y descartar la mitad donde no puede estar. Tiene una condición indispensable: <strong>la lista tiene que estar ordenada</strong>. En un mazo mezclado no sirve, porque mirar el del medio no te dice nada sobre los demás.</p>
+  <figure class="capsula" data-titulo="Búsqueda binaria en 15 tarjetas">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 230" role="img" aria-label="Animación: quince tarjetas numeradas y ordenadas; para encontrar el 48 se mira la del medio, 34, y se descarta la mitad izquierda; luego 52 y se descarta la derecha; luego 43; y la última tarjeta es el 48, encontrado en cuatro comparaciones, frente a once de la búsqueda lineal">
+        <text class="d-rotulo" x="18" y="32">Buscamos el 48</text>
+        <text class="d-rotulo" x="702" y="32" text-anchor="end" data-texto="1:Comparaciones: 0; 2:Comparaciones: 1; 3:Comparaciones: 2; 4:Comparaciones: 3; 5:Comparaciones: 4">Comparaciones: 0</text>
+        <g data-pasos="2-5" data-mover="3:translate(184px,0px); 4:translate(92px,0px); 5:translate(138px,0px)">
+          <text class="d-peq d-tenue" x="360" y="62" text-anchor="middle">medio</text>
+          <path class="d-acento" d="M351 70 L369 70 L360 83 Z"/>
+        </g>
+        <rect class="d-caja" x="18" y="90" width="40" height="56" rx="6" data-clases="3:d-caja-suave"/>
+        <text class="d-mono" x="38" y="124" text-anchor="middle" style="font-size:17px" data-clases="3:d-tenue">3</text>
+        <text class="d-peq d-tenue" x="38" y="166" text-anchor="middle">1</text>
+        <rect class="d-caja" x="64" y="90" width="40" height="56" rx="6" data-clases="3:d-caja-suave"/>
+        <text class="d-mono" x="84" y="124" text-anchor="middle" style="font-size:17px" data-clases="3:d-tenue">8</text>
+        <text class="d-peq d-tenue" x="84" y="166" text-anchor="middle">2</text>
+        <rect class="d-caja" x="110" y="90" width="40" height="56" rx="6" data-clases="3:d-caja-suave"/>
+        <text class="d-mono" x="130" y="124" text-anchor="middle" style="font-size:17px" data-clases="3:d-tenue">12</text>
+        <text class="d-peq d-tenue" x="130" y="166" text-anchor="middle">3</text>
+        <rect class="d-caja" x="156" y="90" width="40" height="56" rx="6" data-clases="3:d-caja-suave"/>
+        <text class="d-mono" x="176" y="124" text-anchor="middle" style="font-size:17px" data-clases="3:d-tenue">17</text>
+        <text class="d-peq d-tenue" x="176" y="166" text-anchor="middle">4</text>
+        <rect class="d-caja" x="202" y="90" width="40" height="56" rx="6" data-clases="3:d-caja-suave"/>
+        <text class="d-mono" x="222" y="124" text-anchor="middle" style="font-size:17px" data-clases="3:d-tenue">21</text>
+        <text class="d-peq d-tenue" x="222" y="166" text-anchor="middle">5</text>
+        <rect class="d-caja" x="248" y="90" width="40" height="56" rx="6" data-clases="3:d-caja-suave"/>
+        <text class="d-mono" x="268" y="124" text-anchor="middle" style="font-size:17px" data-clases="3:d-tenue">26</text>
+        <text class="d-peq d-tenue" x="268" y="166" text-anchor="middle">6</text>
+        <rect class="d-caja" x="294" y="90" width="40" height="56" rx="6" data-clases="3:d-caja-suave"/>
+        <text class="d-mono" x="314" y="124" text-anchor="middle" style="font-size:17px" data-clases="3:d-tenue">30</text>
+        <text class="d-peq d-tenue" x="314" y="166" text-anchor="middle">7</text>
+        <rect class="d-caja" x="340" y="90" width="40" height="56" rx="6" data-clases="3:d-caja-suave"/>
+        <text class="d-mono" x="360" y="124" text-anchor="middle" style="font-size:17px" data-clases="3:d-tenue">34</text>
+        <text class="d-peq d-tenue" x="360" y="166" text-anchor="middle">8</text>
+        <rect class="d-caja" x="386" y="90" width="40" height="56" rx="6" data-clases="5:d-caja-suave"/>
+        <text class="d-mono" x="406" y="124" text-anchor="middle" style="font-size:17px" data-clases="5:d-tenue">39</text>
+        <text class="d-peq d-tenue" x="406" y="166" text-anchor="middle">9</text>
+        <rect class="d-caja" x="432" y="90" width="40" height="56" rx="6" data-clases="5:d-caja-suave"/>
+        <text class="d-mono" x="452" y="124" text-anchor="middle" style="font-size:17px" data-clases="5:d-tenue">43</text>
+        <text class="d-peq d-tenue" x="452" y="166" text-anchor="middle">10</text>
+        <rect class="d-caja" x="478" y="90" width="40" height="56" rx="6" data-clases="5:d-acento"/>
+        <text class="d-mono" x="498" y="124" text-anchor="middle" style="font-size:17px" data-clases="5:d-sobre-acento">48</text>
+        <text class="d-peq d-tenue" x="498" y="166" text-anchor="middle">11</text>
+        <rect class="d-caja" x="524" y="90" width="40" height="56" rx="6" data-clases="4:d-caja-suave"/>
+        <text class="d-mono" x="544" y="124" text-anchor="middle" style="font-size:17px" data-clases="4:d-tenue">52</text>
+        <text class="d-peq d-tenue" x="544" y="166" text-anchor="middle">12</text>
+        <rect class="d-caja" x="570" y="90" width="40" height="56" rx="6" data-clases="4:d-caja-suave"/>
+        <text class="d-mono" x="590" y="124" text-anchor="middle" style="font-size:17px" data-clases="4:d-tenue">57</text>
+        <text class="d-peq d-tenue" x="590" y="166" text-anchor="middle">13</text>
+        <rect class="d-caja" x="616" y="90" width="40" height="56" rx="6" data-clases="4:d-caja-suave"/>
+        <text class="d-mono" x="636" y="124" text-anchor="middle" style="font-size:17px" data-clases="4:d-tenue">61</text>
+        <text class="d-peq d-tenue" x="636" y="166" text-anchor="middle">14</text>
+        <rect class="d-caja" x="662" y="90" width="40" height="56" rx="6" data-clases="4:d-caja-suave"/>
+        <text class="d-mono" x="682" y="124" text-anchor="middle" style="font-size:17px" data-clases="4:d-tenue">66</text>
+        <text class="d-peq d-tenue" x="682" y="166" text-anchor="middle">15</text>
+        <path class="d-punteada" d="M18 174 V182 H518 V174" data-pasos="6"/>
+        <text x="360" y="212" text-anchor="middle" data-texto="1:La lista está ordenada de menor a mayor.; 2:¿48 = 34? No. 48 es mayor: descarto el 34 y lo de su izquierda.; 3:¿48 = 52? No. 48 es menor: descarto el 52 y lo de su derecha.; 4:¿48 = 43? No. 48 es mayor: descarto el 43 y el 39.; 5:¿48 = 48? Sí. Encontrado en la posición 11.; 6:Mirando una por una: 11 comparaciones. Partiendo por la mitad: 4.">La lista está ordenada de menor a mayor.</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Quince tarjetas con números, ordenadas de menor a mayor. Buscamos el 48. Mirarlas una por una desde la izquierda funcionaría, pero como la lista está ordenada hay un atajo.</li>
+        <li data-duracion="7">Miramos la tarjeta del medio, la octava: 34. No es el 48. Y como 48 es mayor que 34 y la lista está ordenada, el 48 no puede estar a su izquierda. Con una sola comparación descartamos ocho tarjetas.</li>
+        <li data-duracion="6">Quedan siete. La del medio es 52. El 48 es menor, así que tiene que estar a su izquierda: descartamos el 52 y las tres que le siguen.</li>
+        <li>Quedan tres: 39, 43 y 48. La del medio es 43. El 48 es mayor: descartamos el 39 y el 43.</li>
+        <li>Queda una sola tarjeta, y es el 48. Lo encontramos con 4 comparaciones.</li>
+        <li data-duracion="7">Mirando una por una desde la izquierda habríamos necesitado 11 comparaciones, porque el 48 está en la posición 11. Con 15 tarjetas la diferencia es pequeña. Con un millón, es enorme.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Cuánto crece el trabajo</h3>
+  <p>Cada comparación de la búsqueda binaria descarta la mitad de lo que queda. Por eso, cuando la lista se duplica, solo hace falta <em>una</em> comparación más. La búsqueda lineal, en cambio, necesita el doble. Esta tabla muestra el peor caso de cada método:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Elementos en la lista</th><th scope="col">Búsqueda lineal (peor caso)</th><th scope="col">Búsqueda binaria (peor caso)</th></tr></thead>
+      <tbody>
+        <tr><td>10</td><td>10 comparaciones</td><td>4 comparaciones</td></tr>
+        <tr><td>100</td><td>100</td><td>7</td></tr>
+        <tr><td>1 000</td><td>1 000</td><td>10</td></tr>
+        <tr><td>1 000 000</td><td>1 000 000</td><td>20</td></tr>
+        <tr><td>1 000 000 000</td><td>1 000 000 000</td><td>30</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>¿De dónde salen esos números? Hay una regla práctica: empieza en 1 y duplica (1, 2, 4, 8, 16, 32, 64, 128…) hasta pasarte de la cantidad de elementos. La cantidad de veces que duplicaste es el máximo de comparaciones. Para 100 elementos: 1, 2, 4, 8, 16, 32, 64, 128. Duplicaste 7 veces para pasar de 100, así que bastan 7 comparaciones.</p>
+  <p>Esa regla explica un juego clásico: «Piensa un número del 1 al 100 y yo lo adivino en 7 intentos como máximo, si me dices si es mayor o menor». Este algoritmo hace de adivino con búsqueda binaria. En lugar de una lista guarda solo los límites, <code>minimo</code> y <code>maximo</code>, del rango donde todavía puede estar tu número:</p>
+  <pre><code class="language-text">Algoritmo AdivinoTuNumero
+    Definir minimo, maximo, intento, preguntas Como Entero
+    Definir respuesta Como Caracter
+    minimo &lt;- 1
+    maximo &lt;- 100
+    preguntas &lt;- 0
+    respuesta &lt;- ""
+    Escribir "Piensa un número del 1 al 100."
+    Mientras respuesta &lt;&gt; "=" Hacer
+        intento &lt;- trunc((minimo + maximo) / 2)
+        preguntas &lt;- preguntas + 1
+        Escribir "¿Es ", intento, "? Escribe + si es mayor, - si es menor, = si acerté"
+        Leer respuesta
+        Si respuesta = "+" Entonces
+            minimo &lt;- intento + 1
+        SiNo
+            Si respuesta = "-" Entonces
+                maximo &lt;- intento - 1
+            FinSi
+        FinSi
+    FinMientras
+    Escribir "Lo adiviné en ", preguntas, " preguntas"
+FinAlgoritmo</code></pre>
+  <p>Si pensaste el 73, el algoritmo pregunta 50 (respondes «+»), 75 («-»), 62 («+»), 68 («+»), 71 («+») y 73 («=»): seis preguntas.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuidado</p><p>La búsqueda binaria exige una lista ordenada, y ordenar también cuesta trabajo. Si vas a buscar una sola vez en una lista desordenada, la búsqueda lineal es la opción razonable. Si vas a buscar miles de veces, como hace un diccionario o una base de datos, ordenar una vez y buscar con el método binario sale muchísimo más barato. Los algoritmos de ordenamiento y la forma de medir su costo, con la notación llamada O grande, están en la <a href="20-algoritmos.html">Estación 20: Algoritmos y complejidad</a>.</p></div></aside>
+
+  <h3>Pruébalo: cuenta las comparaciones</h3>
+  <p>Este taller busca un número en la lista 1, 2, 3… hasta el valor de <code>cantidad</code>, con los dos métodos, y cuenta cuántas comparaciones hace cada uno. Antes de ejecutar, predice: con 1000 elementos y buscando el 737, ¿cuántas comparaciones hará la búsqueda lineal? ¿Y la binaria, más o menos? Después cambia los números. Puedes subir <code>cantidad</code> hasta cien millones; más que eso haría esperar demasiado a la búsqueda lineal.</p>
+  <div class="taller" id="taller-busqueda" data-titulo="Lineal contra binaria">
+    <textarea class="taller-codigo">// Cambia estos dos números y pulsa «Ejecutar».
+const cantidad = 1000; // la lista tiene los números del 1 al valor de cantidad, en orden
+const buscado = 737;   // el número que queremos encontrar
+
+// Búsqueda lineal: mirar los números uno por uno, desde el principio.
+let pasosLineal = 0;
+for (let numero = 1; numero <= cantidad; numero++) {
+  pasosLineal = pasosLineal + 1;
+  if (numero === buscado) break;
+}
+
+// Búsqueda binaria: mirar el del medio y descartar la mitad donde no puede estar.
+let pasosBinaria = 0;
+let minimo = 1;
+let maximo = cantidad;
+while (minimo <= maximo) {
+  const medio = Math.floor((minimo + maximo) / 2);
+  pasosBinaria = pasosBinaria + 1;
+  if (medio === buscado) break;
+  if (medio < buscado) minimo = medio + 1;
+  else maximo = medio - 1;
+}
+
+console.log("Lista del 1 al " + cantidad + ". Buscamos el " + buscado + ".");
+if (buscado < 1 || buscado > cantidad) console.log("(Ese número no está en la lista: los dos métodos trabajan hasta descartarlo todo.)");
+console.log("Búsqueda lineal: " + pasosLineal + " comparaciones");
+console.log("Búsqueda binaria: " + pasosBinaria + " comparaciones");</textarea>
+  </div>
+  <p><strong>Reto rápido:</strong> ¿cuántas comparaciones necesita cada método para encontrar el último número de una lista de un millón? Cambia los dos valores y compruébalo.</p>
+  <details class="solucion"><summary>Ver la respuesta</summary>
+    <pre><code class="language-js">const cantidad = 1000000;
+const buscado = 1000000;
+
+let pasosLineal = 0;
+for (let numero = 1; numero &lt;= cantidad; numero++) {
+  pasosLineal = pasosLineal + 1;
+  if (numero === buscado) break;
+}
+
+let pasosBinaria = 0;
+let minimo = 1;
+let maximo = cantidad;
+while (minimo &lt;= maximo) {
+  const medio = Math.floor((minimo + maximo) / 2);
+  pasosBinaria = pasosBinaria + 1;
+  if (medio === buscado) break;
+  if (medio &lt; buscado) minimo = medio + 1;
+  else maximo = medio - 1;
+}
+
+console.log("Búsqueda lineal: " + pasosLineal + " comparaciones");
+console.log("Búsqueda binaria: " + pasosBinaria + " comparaciones");</code></pre>
+    <p>Un millón de comparaciones contra 20. Es el peor caso de la búsqueda lineal (el buscado está al final) y coincide con la tabla de arriba para la binaria.</p>
+  </details>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>Primero, que el algoritmo sea correcto. Después, pregúntate cómo crece su trabajo cuando crecen los datos. Con diez elementos cualquier método sirve; con millones, la idea del algoritmo importa más que tener una computadora más rápida.</p></div></aside>
+</section>
+
+<section id="metodo" data-parada="Del problema al programa">
+  <h2>Del problema al programa: un método que puedes repetir</h2>
+  <p>Ya tienes todas las piezas: descomponer, ver patrones, abstraer, escribir pseudocódigo o diagramas, y probar a mano. Falta un orden para usarlas cuando te enfrentes a un problema nuevo y la página esté en blanco.</p>
+  <p>En 1945, el matemático George Pólya publicó <em>Cómo plantear y resolver problemas</em>, un libro que propone cuatro fases para cualquier problema: comprenderlo, concebir un plan, ejecutarlo y examinar la solución. Adaptadas a la programación, quedan así:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 200" role="img" aria-label="Método en cinco pasos: entender el problema, descomponer y planear, escribir pseudocódigo o diagrama, prueba de escritorio y programar; si la prueba de escritorio falla, se vuelve a planear">
+      <rect class="d-acento" x="10" y="40" width="124" height="70" rx="8"/>
+      <text class="d-sobre-acento d-rotulo" x="72" y="70" text-anchor="middle">1. Entender</text>
+      <text class="d-sobre-acento d-peq" x="72" y="92" text-anchor="middle">el problema</text>
+      <rect class="d-caja" x="154" y="40" width="124" height="70" rx="8"/>
+      <text class="d-rotulo" x="216" y="70" text-anchor="middle">2. Descomponer</text>
+      <text class="d-peq" x="216" y="92" text-anchor="middle">y planear</text>
+      <rect class="d-caja" x="298" y="40" width="124" height="70" rx="8"/>
+      <text class="d-rotulo" x="360" y="70" text-anchor="middle">3. Escribir</text>
+      <text class="d-peq" x="360" y="92" text-anchor="middle">pseudocódigo</text>
+      <rect class="d-caja" x="442" y="40" width="124" height="70" rx="8"/>
+      <text class="d-rotulo" x="504" y="70" text-anchor="middle">4. Probar</text>
+      <text class="d-peq" x="504" y="92" text-anchor="middle">a mano</text>
+      <rect class="d-caja-suave" x="586" y="40" width="124" height="70" rx="8"/>
+      <text class="d-rotulo" x="648" y="70" text-anchor="middle">5. Programar</text>
+      <text class="d-peq d-tenue" x="648" y="92" text-anchor="middle">desde la Línea 2</text>
+      <path class="d-linea" d="M134 75 H144 M278 75 H288 M422 75 H432 M566 75 H576"/>
+      <path class="d-tinta" d="M143 69 L154 75 L143 81 Z"/>
+      <path class="d-tinta" d="M287 69 L298 75 L287 81 Z"/>
+      <path class="d-tinta" d="M431 69 L442 75 L431 81 Z"/>
+      <path class="d-tinta" d="M575 69 L586 75 L575 81 Z"/>
+      <path class="d-linea" d="M504 110 V150 H216 V122"/>
+      <path class="d-tinta" d="M210 123 L216 111 L222 123 Z"/>
+      <text class="d-peq d-tenue" x="360" y="172" text-anchor="middle">¿La prueba falla? Corrige el plan antes de programar.</text>
+    </svg>
+    <figcaption>El método de esta estación. La flecha de vuelta es la parte más importante: corregir un plan en papel cuesta minutos; corregir un programa terminado puede costar días.</figcaption>
+  </figure>
+  <ol class="pasos">
+    <li><div><p><strong>Entender el problema.</strong> ¿Qué datos entran? ¿Qué resultado tiene que salir? Resuelve dos o tres ejemplos a mano, sin algoritmo, para saber qué respuesta esperar. Si no sabes resolver un ejemplo a mano, todavía no puedes escribir el algoritmo.</p></div></li>
+    <li><div><p><strong>Descomponer y planear.</strong> Parte el problema en piezas. Busca patrones: ¿algo se repite? (bucle). ¿Hay casos distintos? (decisión). Decide qué datos necesitas guardar (abstracción).</p></div></li>
+    <li><div><p><strong>Escribir el algoritmo</strong> en pseudocódigo o en un diagrama de flujo.</p></div></li>
+    <li><div><p><strong>Probarlo a mano</strong> con una prueba de escritorio: primero con tus ejemplos del paso 1, después con los casos borde. Si falla, vuelve al paso 2.</p></div></li>
+    <li><div><p><strong>Programarlo</strong> en un lenguaje real. Ahora es casi una traducción, y eso empezarás a hacer en la Línea 2.</p></div></li>
+  </ol>
+
+  <h3>El método en acción: ¿cuántos golpes aguanta?</h3>
+  <p>En un videojuego, un personaje tiene cierta cantidad de vida y cada golpe le quita siempre el mismo daño. Queremos saber cuántos golpes aguanta antes de caer, es decir, antes de que su vida llegue a 0 o menos.</p>
+  <p><strong>1. Entender.</strong> Entran dos números: la vida inicial y el daño de cada golpe. Sale uno: la cantidad de golpes. Algunos ejemplos resueltos a mano:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Vida</th><th scope="col">Daño</th><th scope="col">Golpes</th><th scope="col">Por qué</th></tr></thead>
+      <tbody>
+        <tr><td>100</td><td>25</td><td>4</td><td>100, 75, 50, 25, 0: al cuarto golpe llega justo a 0.</td></tr>
+        <tr><td>100</td><td>15</td><td>7</td><td>Tras 6 golpes le quedan 10; el séptimo lo deja en -5.</td></tr>
+        <tr><td>100</td><td>150</td><td>1</td><td>Un solo golpe basta.</td></tr>
+        <tr><td>100</td><td>0</td><td>¿?</td><td>Nunca cae. ¡El algoritmo tiene que contemplarlo!</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El último ejemplo apareció al pensar casos antes de escribir nada. Ese es el valor del paso 1.</p>
+  <p><strong>2. Descomponer y planear.</strong> Hay un patrón claro: «restar el daño a la vida» se repite mientras la vida sea mayor que 0, y hay que contar cuántas veces pasa. Eso es un bucle <code>Mientras</code> con un contador. Además hay un caso aparte, el daño de 0 o menos, que se resuelve con una decisión <em>antes</em> del bucle.</p>
+  <p><strong>3. Escribir el algoritmo.</strong> Fíjate en que la variable se llama <code>danio</code> y no <code>daño</code>: algunos perfiles de PSeInt no aceptan la ñ ni las tildes en los nombres, y en la mayoría de los proyectos profesionales se evitan.</p>
+  <pre><code class="language-text">Algoritmo GolpesQueAguanta
+    Definir vida, danio, golpes Como Entero
+    Escribir "Vida inicial del personaje:"
+    Leer vida
+    Escribir "Daño de cada golpe:"
+    Leer danio
+    Si danio &lt;= 0 Entonces
+        Escribir "Con ese daño el personaje nunca cae"
+    SiNo
+        golpes &lt;- 0
+        Mientras vida &gt; 0 Hacer
+            vida &lt;- vida - danio
+            golpes &lt;- golpes + 1
+        FinMientras
+        Escribir "Aguanta ", golpes, " golpes"
+    FinSi
+FinAlgoritmo</code></pre>
+  <p><strong>4. Probar a mano.</strong> Con vida 100 y daño 25, la prueba de escritorio da: <code>vida</code> pasa por 75, 50, 25 y 0, y <code>golpes</code> por 1, 2, 3 y 4. Al preguntar «¿0 &gt; 0?» la respuesta es no, y se escribe «Aguanta 4 golpes». Coincide con el ejemplo. Los casos borde descubren dos detalles más:</p>
+  <ul>
+    <li>Con vida 100 y daño 150, el algoritmo escribe «Aguanta 1 golpes». Funciona, pero el mensaje está mal escrito. Otro caso borde, esta vez en el texto.</li>
+    <li>Con vida 0, el bucle no da ninguna vuelta y escribe «Aguanta 0 golpes». ¿Tiene sentido? Depende del juego: quizá habría que avisar que el personaje ya estaba fuera de combate. Decidirlo es parte de entender el problema.</li>
+  </ul>
+  <p><strong>5. Programar.</strong> Cuando llegues a la Línea 2, traducir este algoritmo a JavaScript será casi mecánico, porque cada estructura del pseudocódigo tiene su equivalente:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Pseudocódigo (PSeInt)</th><th scope="col">JavaScript</th><th scope="col">Lo aprendes en…</th></tr></thead>
+      <tbody>
+        <tr><td><code>Escribir "Hola"</code></td><td><code>console.log("Hola");</code></td><td><a href="06-primeros-pasos.html">Estación 6</a></td></tr>
+        <tr><td><code>Definir vida Como Entero</code> y <code>vida &lt;- 100</code></td><td><code>let vida = 100;</code></td><td><a href="07-variables.html">Estación 7</a></td></tr>
+        <tr><td><code>a MOD b</code></td><td><code>a % b</code></td><td><a href="07-variables.html">Estación 7</a></td></tr>
+        <tr><td><code>Si … Entonces … SiNo … FinSi</code></td><td><code>if (…) { … } else { … }</code></td><td><a href="08-decisiones.html">Estación 8</a></td></tr>
+        <tr><td><code>a = b</code>, <code>a &lt;&gt; b</code></td><td><code>a === b</code>, <code>a !== b</code></td><td><a href="08-decisiones.html">Estación 8</a></td></tr>
+        <tr><td><code>Y</code>, <code>O</code>, <code>NO</code></td><td><code>&amp;&amp;</code>, <code>||</code>, <code>!</code></td><td><a href="08-decisiones.html">Estación 8</a></td></tr>
+        <tr><td><code>Segun … Hacer … FinSegun</code></td><td><code>switch (…) { … }</code></td><td><a href="08-decisiones.html">Estación 8</a></td></tr>
+        <tr><td><code>Mientras … Hacer … FinMientras</code></td><td><code>while (…) { … }</code></td><td><a href="09-bucles.html">Estación 9</a></td></tr>
+        <tr><td><code>Para i &lt;- 1 Hasta 10 Hacer … FinPara</code></td><td><code>for (let i = 1; i &lt;= 10; i++) { … }</code></td><td><a href="09-bucles.html">Estación 9</a></td></tr>
+        <tr><td><code>Repetir … Hasta Que …</code></td><td><code>do { … } while (…);</code> (con la condición al revés)</td><td><a href="09-bucles.html">Estación 9</a></td></tr>
+        <tr><td><code>Leer vida</code></td><td>En la web, un formulario o un botón</td><td><a href="15-dom.html">Estación 15</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Y así se verá el mismo algoritmo en JavaScript. No hace falta que lo entiendas ahora; solo compara su forma con el pseudocódigo. Donde el pseudocódigo lee datos, aquí los escribimos a mano:</p>
+  <pre><code class="language-js">let vida = 100;
+const danio = 15;
+
+if (danio &lt;= 0) {
+  console.log("Con ese daño el personaje nunca cae");
+} else {
+  let golpes = 0;
+  while (vida &gt; 0) {
+    vida = vida - danio;
+    golpes = golpes + 1;
+  }
+  console.log("Aguanta " + golpes + " golpes");
+}</code></pre>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">¿Y la inteligencia artificial?</p><p>En 2026, los asistentes de inteligencia artificial escriben código a partir de una descripción en lenguaje natural. Eso no hace inútil esta estación: la vuelve más importante. Para pedirle algo útil a una IA tienes que saber descomponer el problema y decir con precisión qué quieres, incluidos los casos borde. Y para saber si su código es correcto tienes que poder hacer una prueba de escritorio. Si no entiendes el algoritmo, no puedes revisarlo. En la <a href="37-ia.html">Estación 37: Programar con IA</a> verás cómo trabajar con estas herramientas con criterio.</p></div></aside>
 </section>
   </main>
 </div>

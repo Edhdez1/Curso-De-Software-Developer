@@ -142,7 +142,7 @@ Geometría precisa, nada de dibujos «a mano alzada» ni figuras humanas.
 </figure>
 ```
 
-Reglas: 3–8 pasos. No pongas `opacity` en el atributo `style` de un elemento animado: usa `fill-opacity` o `stroke-opacity`. Cada `li` explica lo que cambia en ese paso. El paso 1 debe entenderse solo (es lo que se ve
+Reglas: 3–8 pasos. Si un elemento rotado (`transform="rotate(…)"`) también se anima o cambia de texto, envuélvelo en un `<g>` y pon las marcas en el `<g>`. No pongas `opacity` en el atributo `style` de un elemento animado: usa `fill-opacity` o `stroke-opacity`. Cada `li` explica lo que cambia en ese paso. El paso 1 debe entenderse solo (es lo que se ve
 en reposo). `data-mover`, `data-clases` y `data-texto` aplican el último valor cuyo número de paso sea ≤ al actual.
 Usa `px` en `translate`. Para contenido HTML (no SVG) la escena puede tener `div`s con las mismas marcas.
 
@@ -163,7 +163,7 @@ console.log(b);</code></pre>
 
 `linea` es la línea que se acaba de ejecutar; `vars` es la memoria completa **después** de ejecutarla (valores como
 texto; los strings con comillas: `"\"Ana\""`); `salida` es lo que esa línea imprime. Para bucles, repite pasos por
-cada vuelta. `data-rotulo-memoria` cambia el título «Memoria (variables)». `data-rotulo-salida` cambia el título «Consola» (por ejemplo, «Pantalla»). Si el primer paso tiene `"linea": 0`, se usa como estado inicial (por ejemplo, variables que ya existían).
+cada vuelta. `data-rotulo-memoria` cambia el título «Memoria (variables)». `data-sin-salida` oculta el panel de consola (útil en trazas de HTML o CSS); `data-rotulo-salida` cambia el título «Consola» (por ejemplo, «Pantalla»). Si el primer paso tiene `"linea": 0`, se usa como estado inicial (por ejemplo, variables que ya existían).
 
 ### Taller (editor que ejecuta código de verdad)
 
@@ -173,7 +173,7 @@ JavaScript (se ejecuta en un Web Worker, sin DOM):
 <div class="taller" id="taller-unico" data-titulo="Pruébalo">
   <textarea class="taller-codigo">console.log("hola");</textarea>
   <script type="text/plain" class="taller-verificar">
-    // salida: array con cada línea impresa por console.log; codigo: texto del editor
+    // salida: líneas de console.log; codigo: texto del editor; errores: líneas de console.error/warn
     if (!codigo.includes("let")) return "Usa let para…";
     return salida[0] === "hola" || "La primera línea debería ser «hola».";
   </script>
@@ -185,7 +185,7 @@ JavaScript (se ejecuta en un Web Worker, sin DOM):
 - Formato de la consola (igual que Node.js): strings tal cual; arrays `[ 1, 2 ]`; objetos `{ a: 1, b: 'x' }`;
   Map `Map(1) { 'a' => 1 }`. Prefiere verificar valores simples.
 - Opcionales: `data-tiempo="10"` (segundos máximos, por defecto 5), `data-exito="mensaje"`.
-- Hay `setTimeout`, promesas y `await` de nivel superior. No hay `document`, `prompt` ni `alert` útiles.
+- Hay `console.log/info/dir/error/warn/table/group/groupEnd/count/time/timeEnd/assert/trace`, `setTimeout`, promesas y `await` de nivel superior. No hay `document`, `prompt` ni `alert` útiles.
 - `fetch` a otros sitios **no funciona en la versión publicada** del curso (el visor bloquea las peticiones
   externas). En talleres, simula la red con una función que devuelve una promesa (`setTimeout` + datos de ejemplo)
   y muestra el `fetch` real como bloque de código para probar en la consola del navegador o en Node.
@@ -326,7 +326,7 @@ la gente.
   Solo se incluyen videos cuya respuesta es JSON; el título y el canal se copian de esa respuesta
   (puedes quitar emojis del título). Nunca inventes un ID.
 - Prioriza español y canales educativos reconocidos; marca `data-idioma="en"` si es en inglés.
-- Cada enlace de `recursos` se verifica con `curl -sIL -o /dev/null -w "%{http_code}"` (200).
+- Cada enlace de `recursos` se verifica con `curl -sL -o /dev/null -w "%{http_code}"` (200; con GET, porque algunos sitios responden 404 a HEAD).
   Prioriza MDN en español, documentación oficial y javascript.info en español.
 
 ## 7. Comprobaciones antes de terminar
