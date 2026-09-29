@@ -1,0 +1,339 @@
+<section id="ruta" data-parada="Lo que vas a lograr">
+  <h2>Lo que vas a lograr</h2>
+  <p class="entradilla">Un juego de verdad tiene cientos de enemigos, objetos y misiones. Una tienda en línea tiene productos, carritos, pagos y descuentos. Si todo eso vive en variables sueltas y en funciones que cambian cualquier cosa desde cualquier lugar, el programa se vuelve imposible de entender. En esta estación vas a aprender las dos grandes formas de poner orden que usa la industria: la programación orientada a objetos, que agrupa datos y comportamiento en objetos que cuidan su propio estado, y la programación funcional, que construye programas con funciones puras y datos que no cambian. JavaScript permite las dos, y los buenos programas las combinan.</p>
+  <ul class="objetivos">
+    <li>Distinguir el código imperativo del declarativo y reconocer los paradigmas principales.</li>
+    <li>Crear clases con <code>constructor</code>, propiedades y métodos, e instanciar objetos con <code>new</code>.</li>
+    <li>Saber qué vale <code>this</code> en cada momento y evitar los errores típicos cuando se pierde.</li>
+    <li>Proteger el estado de un objeto con campos privados (<code>#</code>), getters y setters, y usar miembros <code>static</code>.</li>
+    <li>Reutilizar comportamiento con herencia (<code>extends</code> y <code>super</code>) y aprovechar el polimorfismo.</li>
+    <li>Explicar cómo funcionan las clases por debajo: los prototipos y la cadena de prototipos.</li>
+    <li>Elegir la composición cuando la herencia se vuelve rígida.</li>
+    <li>Escribir funciones puras, separar los efectos secundarios y trabajar con datos inmutables.</li>
+    <li>Crear funciones de orden superior, componer funciones y usar currying sencillo.</li>
+    <li>Decidir qué enfoque conviene en cada parte de un juego o de una tienda, y combinarlos.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="Antes de empezar">
+    <p>Necesitas manejar funciones, funciones flecha, closures y callbacks (<a href="10-funciones.html">Estación 10: Funciones</a>) y arrays y objetos, incluidos <code>map</code>, <code>filter</code>, <code>reduce</code>, el operador spread (<code>...</code>) y la diferencia entre una referencia y una copia (<a href="11-colecciones.html">Estación 11: Colecciones</a>). También usarás <code>try</code>/<code>catch</code> (<a href="12-depuracion.html">Estación 12: Depuración</a>). Si en la <a href="19-estructuras-datos.html">Estación 19: Estructuras de datos</a> viste alguna <code>class</code>, aquí vas a entender todo lo que hay detrás.</p>
+  </aside>
+</section>
+
+<section id="paradigmas" data-parada="Qué es un paradigma">
+  <h2>Qué es un paradigma</h2>
+  <p>Cuando un programa tiene 50 líneas, cualquier organización funciona. Cuando tiene 50 000 y lo tocan cinco personas, la organización lo es todo. Un <strong>paradigma de programación</strong> es una forma de pensar y de organizar un programa: qué piezas usas para construirlo y cómo se comunican entre sí. No es un lenguaje ni algo que se instala: es un estilo. La palabra viene del griego y significa «modelo» o «ejemplo».</p>
+
+  <h3>Imperativo y declarativo: el cómo y el qué</h3>
+  <p>Los paradigmas se agrupan en dos grandes familias:</p>
+  <ul>
+    <li>En la <strong>programación imperativa</strong> le dices a la computadora <em>cómo</em> hacer algo, paso a paso, cambiando variables por el camino. Es lo que haces desde la Estación 7: crear un contador, recorrer una lista con <code>for</code>, sumar en cada vuelta.</li>
+    <li>En la <strong>programación declarativa</strong> describes <em>qué</em> resultado quieres y dejas que otra pieza (una función, el navegador, una base de datos) decida cómo conseguirlo.</li>
+  </ul>
+  <aside class="senal analogia">
+    <p>Imperativo es darle indicaciones a un taxista: «dobla a la derecha, sigue tres cuadras, para en la esquina». Declarativo es darle la dirección: «al Museo de Arte, por favor». En los dos casos llegas, pero en el segundo confías en que el taxista sabe el camino. La analogía tiene un límite: en programación lo declarativo no es magia. Alguien escribió el código imperativo que hace el trabajo (el navegador, el motor de la base de datos o la función <code>filter</code>); tú simplemente no tienes que repetirlo.</p>
+  </aside>
+  <p>Mira la misma tarea resuelta de las dos maneras: obtener los nombres de los productos que cuestan menos de 20.</p>
+  <pre><code class="language-js">const productos = [
+  { nombre: "Café", precio: 4.5 },
+  { nombre: "Audífonos", precio: 35 },
+  { nombre: "Libreta", precio: 12 },
+  { nombre: "Mochila", precio: 48 },
+];
+
+// Imperativo: cómo recorrer, cuándo guardar, dónde acumular
+const baratos = [];
+for (let i = 0; i &lt; productos.length; i++) {
+  if (productos[i].precio &lt; 20) {
+    baratos.push(productos[i].nombre);
+  }
+}
+
+// Declarativo: qué quiero (los que cuestan menos de 20, solo su nombre)
+const baratos2 = productos
+  .filter((p) =&gt; p.precio &lt; 20)
+  .map((p) =&gt; p.nombre);</code></pre>
+  <p><strong>Predice</strong> qué imprime cada versión y si coinciden. Después ejecuta:</p>
+  <div class="taller" id="taller-imperativo-declarativo" data-titulo="Predice: dos caminos, un resultado">
+    <textarea class="taller-codigo">const productos = [
+  { nombre: "Café", precio: 4.5 },
+  { nombre: "Audífonos", precio: 35 },
+  { nombre: "Libreta", precio: 12 },
+  { nombre: "Mochila", precio: 48 },
+];
+
+// Imperativo
+const baratos = [];
+for (let i = 0; i < productos.length; i++) {
+  if (productos[i].precio < 20) {
+    baratos.push(productos[i].nombre);
+  }
+}
+console.log(baratos);
+
+// Declarativo
+const baratos2 = productos
+  .filter((p) => p.precio < 20)
+  .map((p) => p.nombre);
+console.log(baratos2);</textarea>
+  </div>
+  <p>Las dos imprimen <code>[ 'Café', 'Libreta' ]</code>. Fíjate en lo que desaparece en la versión declarativa: no hay índice <code>i</code>, no hay un array vacío que se va llenando, no hay <code>push</code>. Hay menos lugares donde equivocarse (¿era <code>&lt;</code> o <code>&lt;=</code>?, ¿empezaba en 0 o en 1?). A cambio, necesitas saber qué hacen <code>filter</code> y <code>map</code>. <strong>Modifica</strong> el taller: haz que las dos versiones devuelvan los productos que cuestan <em>más</em> de 20. ¿En cuál tuviste que cambiar más cosas?</p>
+
+  <h3>Ya usas lenguajes declarativos</h3>
+  <p>Aunque no lo llamaras así, ya escribiste código declarativo. En HTML escribes <code>&lt;button&gt;Comprar&lt;/button&gt;</code> y el navegador decide cómo dibujar cada píxel. En CSS escribes <code>display: grid</code> y el navegador calcula dónde va cada caja. El ejemplo clásico es <strong>SQL</strong>, el lenguaje de las bases de datos: pides los datos que quieres y la base de datos decide cómo buscarlos. Ejecuta esta consulta sobre una tabla de productos:</p>
+  <div class="taller" data-modo="sql" id="taller-sql-declarativo" data-titulo="SQL: pedir sin decir cómo">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE productos (nombre TEXT, precio REAL);
+INSERT INTO productos VALUES ('Café', 4.5), ('Audífonos', 35), ('Libreta', 12), ('Mochila', 48), ('Taza', 8);</script>
+    <textarea class="taller-codigo">SELECT nombre, precio
+FROM productos
+WHERE precio < 20
+ORDER BY precio;</textarea>
+  </div>
+  <p>La consulta se lee casi como una frase: «dame el nombre y el precio, de la tabla productos, donde el precio sea menor que 20, ordenado por precio». No hay bucles ni variables que cambian. Prueba a cambiar <code>&lt; 20</code> por <code>&gt;= 20</code> o a escribir <code>ORDER BY precio DESC</code> para ordenar de mayor a menor. SQL tiene su propia estación: la <a href="30-bases-datos.html">Estación 30: Bases de datos</a>.</p>
+
+  <h3>Los grandes paradigmas</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Paradigma</th><th scope="col">Idea central</th><th scope="col">Piezas principales</th><th scope="col">Dónde lo verás</th></tr></thead>
+      <tbody>
+        <tr><td>Imperativo (o procedural)</td><td>Una secuencia de órdenes que cambian el estado del programa, agrupadas en procedimientos o funciones</td><td>Variables, bucles, condicionales, funciones</td><td>C, scripts de automatización, casi cualquier lenguaje</td></tr>
+        <tr><td>Orientado a objetos</td><td>El programa es un conjunto de objetos que guardan sus datos y ofrecen acciones</td><td>Clases, objetos, métodos</td><td>Java, C#, C++, Python, GDScript (Godot), JavaScript</td></tr>
+        <tr><td>Funcional</td><td>El programa combina funciones puras que transforman datos sin modificarlos</td><td>Funciones puras, datos inmutables, funciones de orden superior</td><td>Haskell, Elixir, Clojure, F#, y mucho JavaScript moderno (React)</td></tr>
+        <tr><td>Declarativo en general</td><td>Describir el resultado, no los pasos</td><td>Consultas, reglas, etiquetas</td><td>SQL, HTML, CSS</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Las familias se cruzan. La orientación a objetos suele ser imperativa por dentro: sus métodos cambian el estado del objeto paso a paso. La programación funcional es una forma de programación declarativa. Existen más paradigmas (el lógico, como Prolog; el orientado a eventos, que usaste en la <a href="15-dom.html">Estación 15</a> con <code>addEventListener</code>), pero estos son la base de casi todo lo que vas a leer.</p>
+  <aside class="senal clave">
+    <p>JavaScript es un lenguaje <strong>multiparadigma</strong>: la documentación de MDN lo describe como un lenguaje que admite estilos orientado a objetos, imperativo y declarativo, como la programación funcional. En una misma app vas a mezclar clases, bucles y <code>map</code>/<code>filter</code>. La pregunta útil no es «¿cuál es el mejor paradigma?», sino «¿cuál encaja en esta parte del programa?».</p>
+  </aside>
+  <aside class="senal nota" data-titulo="Un poco de historia">
+    <p>Las ideas no son nuevas. Lisp (1958) ya trataba las funciones como datos, la base de la programación funcional. Simula (Noruega, década de 1960) inventó las clases y los objetos para simular sistemas como las filas de un banco, y Smalltalk (década de 1970) popularizó el término «orientado a objetos». JavaScript nació en 1995 tomando ideas de los dos mundos: funciones como valores, de Scheme (un pariente de Lisp), y objetos basados en prototipos, del lenguaje Self.</p>
+  </aside>
+  <aside class="senal oficio">
+    <p>En los equipos profesionales casi nadie es «puramente» orientado a objetos ni «puramente» funcional. Lo que se valora es saber qué herramienta encaja en cada parte del sistema y respetar el estilo que ya usa el proyecto. Al final de esta estación verás criterios concretos para decidir.</p>
+  </aside>
+</section>
+
+<section id="clases" data-parada="Clases y objetos">
+  <h2>Clases y objetos</h2>
+  <p>En la Estación 11 creaste objetos con llaves: <code>{ nombre: "Slime", vida: 30 }</code>. Funciona para uno. Ahora imagina que tu juego necesita 40 enemigos, cada uno con nombre, vida y la capacidad de recibir daño. Copiar y pegar el objeto 40 veces es lento y peligroso: basta un error de tipeo (<code>vdia</code> en lugar de <code>vida</code>) en uno solo para que falle ese enemigo, y es muy difícil de encontrar.</p>
+  <p>Una primera solución ya la conoces: una función que fabrica objetos.</p>
+  <pre><code class="language-js">function crearEnemigo(nombre, vida) {
+  return {
+    nombre: nombre,
+    vida: vida,
+    recibirDanio(cantidad) {
+      this.vida = Math.max(0, this.vida - cantidad);
+    },
+  };
+}
+
+const slime = crearEnemigo("Slime", 30);
+const lobo = crearEnemigo("Lobo", 45);</code></pre>
+  <p>Funciona, y tiene nombre: <em>función fábrica</em>. La programación orientada a objetos ofrece una herramienta pensada exactamente para esto: la clase.</p>
+
+  <h3>Clase, instancia, propiedades y métodos</h3>
+  <p>La <strong>programación orientada a objetos</strong> (POO; en inglés, <em>object-oriented programming</em> u OOP) organiza el programa en objetos que juntan dos cosas: sus datos y las acciones que pueden hacer con esos datos. Una <strong>clase</strong> (<em>class</em>) es la plantilla que describe cómo son y qué saben hacer los objetos de un tipo. Cada objeto concreto creado con esa plantilla se llama <strong>instancia</strong>.</p>
+  <aside class="senal analogia">
+    <p>Una clase es como el plano de una casa, y las instancias son las casas construidas con ese plano. Todas tienen las mismas habitaciones, pero en cada una vive gente distinta y los muebles cambian. El límite de la analogía: en JavaScript el plano no se guarda en un cajón después de construir. Cada casa queda conectada a él (lo verás en la sección <a href="#prototipos">Prototipos</a>), y si le agregas algo al plano, todas las casas lo reciben.</p>
+  </aside>
+  <p>Así se escribe una clase para los personajes del juego:</p>
+  <pre><code class="language-js">class Personaje {
+  constructor(nombre, vidaMaxima) {
+    this.nombre = nombre;
+    this.vidaMaxima = vidaMaxima;
+    this.vida = vidaMaxima;
+  }
+
+  recibirDanio(cantidad) {
+    this.vida = Math.max(0, this.vida - cantidad);
+  }
+
+  estaVivo() {
+    return this.vida &gt; 0;
+  }
+
+  describir() {
+    return `${this.nombre}: ${this.vida}/${this.vidaMaxima} de vida`;
+  }
+}
+
+const lyra = new Personaje("Lyra", 120);
+const bruno = new Personaje("Bruno", 90);
+lyra.recibirDanio(30);
+console.log(lyra.describir());   // Lyra: 90/120 de vida
+console.log(bruno.describir());  // Bruno: 90/90 de vida</code></pre>
+  <p>Pieza por pieza:</p>
+  <ul>
+    <li><code>class Personaje { … }</code> declara la clase. Por convención, el nombre de una clase empieza con mayúscula (<em>PascalCase</em>): <code>Personaje</code>, <code>Producto</code>, <code>CarritoDeCompras</code>. Así distingues de un vistazo la plantilla de sus instancias, que van en minúscula (<code>lyra</code>, <code>bruno</code>).</li>
+    <li>El <strong>constructor</strong> es un método especial que se ejecuta automáticamente cada vez que creas una instancia. Sus parámetros son los datos iniciales del objeto.</li>
+    <li><strong>this</strong> significa, dentro de la clase, «el objeto con el que estoy trabajando ahora». <code>this.vida = vidaMaxima</code> crea en el objeto nuevo una <strong>propiedad</strong> llamada <code>vida</code>.</li>
+    <li>Los <strong>métodos</strong> son las funciones que pertenecen a la clase: <code>recibirDanio</code>, <code>estaVivo</code> y <code>describir</code>. Se escriben sin la palabra <code>function</code> y sin comas entre ellos. Sus nombres son verbos, como aprendiste en la Estación 10.</li>
+    <li><code>new Personaje("Lyra", 120)</code> crea una instancia nueva usando la clase.</li>
+  </ul>
+  <p>Todo objeto tiene <strong>estado</strong> (los valores de sus propiedades en un momento dado: Lyra tiene 90 de vida) y <strong>comportamiento</strong> (lo que sabe hacer: recibir daño, describirse). Juntar las dos cosas en un mismo lugar es la idea central de la POO.</p>
+
+  <h3>Qué pasa exactamente con new</h3>
+  <p><code>new</code> parece una sola palabra, pero hace cuatro trabajos. Míralos uno por uno:</p>
+  <figure class="capsula" data-titulo="Qué hace new">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: new crea un objeto vacío, lo enlaza con Personaje.prototype donde están los métodos, ejecuta el constructor con this apuntando al objeto nuevo para crear sus propiedades, lo devuelve a la constante lyra y luego repite el proceso con bruno, que comparte los mismos métodos">
+        <rect class="d-codigo" x="10" y="10" width="460" height="44" rx="8"/>
+        <text class="d-codigo-texto" x="26" y="38" style="font-size:16px" data-texto="6:const bruno = new Personaje(&quot;Bruno&quot;, 90)">const lyra = new Personaje("Lyra", 120)</text>
+
+        <rect class="d-caja" x="10" y="80" width="210" height="100" rx="8"/>
+        <text class="d-rotulo" x="24" y="106">class Personaje</text>
+        <text class="d-mono d-peq" x="24" y="134">constructor(nombre,</text>
+        <text class="d-mono d-peq" x="40" y="154">vidaMaxima) {…}</text>
+        <text class="d-peq d-tenue" x="24" y="200">la plantilla</text>
+
+        <text class="d-peq d-tenue" x="504" y="70">los métodos, compartidos</text>
+        <rect class="d-caja" x="490" y="80" width="220" height="110" rx="8"/>
+        <text class="d-rotulo" x="504" y="106">Personaje.prototype</text>
+        <text class="d-mono d-peq" x="504" y="134">recibirDanio(cantidad)</text>
+        <text class="d-mono d-peq" x="504" y="154">estaVivo()</text>
+        <text class="d-mono d-peq" x="504" y="174">describir()</text>
+
+        <g data-pasos="2-">
+          <rect class="d-caja" x="240" y="96" width="180" height="104" rx="8"/>
+          <text class="d-peq d-tenue" x="252" y="114">objeto nuevo</text>
+        </g>
+        <text class="d-mono" x="330" y="160" text-anchor="middle" style="font-size:22px" data-pasos="2-3">{ }</text>
+        <g data-pasos="4-">
+          <text class="d-mono" x="252" y="140" style="font-size:15px">nombre: "Lyra"</text>
+          <text class="d-mono" x="252" y="162" style="font-size:15px">vidaMaxima: 120</text>
+          <text class="d-mono" x="252" y="184" style="font-size:15px">vida: 120</text>
+        </g>
+        <rect class="d-acento-trazo" x="235" y="91" width="190" height="114" rx="11" data-pasos="4"/>
+
+        <g data-pasos="3-">
+          <path class="d-punteada" d="M422 140H476"/>
+          <path class="d-tinta" d="M490 140l-12 -7v14z"/>
+          <text class="d-peq d-tenue" x="456" y="128" text-anchor="middle">enlace</text>
+        </g>
+
+        <g data-pasos="4">
+          <rect class="d-acento" x="290" y="60" width="80" height="26" rx="13"/>
+          <text class="d-sobre-acento d-mono" x="330" y="78" text-anchor="middle">this</text>
+          <path class="d-linea" d="M330 86v10"/>
+        </g>
+        <g data-pasos="5-">
+          <rect class="d-acento" x="290" y="60" width="80" height="26" rx="13"/>
+          <text class="d-sobre-acento d-mono" x="330" y="78" text-anchor="middle">lyra</text>
+          <path class="d-linea" d="M330 86v10"/>
+        </g>
+
+        <g data-pasos="6">
+          <rect class="d-caja" x="240" y="210" width="180" height="86" rx="8"/>
+          <text class="d-mono" x="252" y="233" style="font-size:14px">nombre: "Bruno"</text>
+          <text class="d-mono" x="252" y="255" style="font-size:14px">vidaMaxima: 90</text>
+          <text class="d-mono" x="252" y="277" style="font-size:14px">vida: 90</text>
+          <rect class="d-acento" x="146" y="239" width="84" height="28" rx="14"/>
+          <text class="d-sobre-acento d-mono" x="188" y="258" text-anchor="middle">bruno</text>
+          <path class="d-linea" d="M230 253h10"/>
+          <path class="d-punteada" d="M422 253H600V204"/>
+          <path class="d-tinta" d="M600 191l-7 12h14z"/>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>La clase <code>Personaje</code> es solo la plantilla: todavía no existe ningún personaje. La línea de arriba va a crear uno con <code>new</code>. A la derecha está <code>Personaje.prototype</code>, el lugar donde la clase guardó sus métodos.</li>
+        <li>Primero, <code>new</code> crea un objeto nuevo y vacío en la memoria.</li>
+        <li>Después lo enlaza con <code>Personaje.prototype</code>. Gracias a ese enlace, el objeto podrá usar <code>recibirDanio</code> o <code>describir</code> sin tener su propia copia de cada método. Lo verás a fondo en la sección «Prototipos».</li>
+        <li data-duracion="7">Luego ejecuta el <code>constructor</code> con <code>this</code> apuntando al objeto nuevo. Cada <code>this.algo = valor</code> le crea una propiedad: <code>nombre</code>, <code>vidaMaxima</code> y <code>vida</code>.</li>
+        <li>Al terminar, <code>new</code> devuelve el objeto y queda guardado en la constante <code>lyra</code>. <code>this</code> ya no apunta a nada: solo tiene sentido mientras se ejecuta un método.</li>
+        <li data-duracion="7">Si usas <code>new</code> otra vez, se repite todo con otro objeto. <code>bruno</code> tiene sus propios datos, pero comparte los mismos métodos: los dos objetos están enlazados al mismo <code>Personaje.prototype</code>.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>this: el objeto a la izquierda del punto</h3>
+  <p>La regla práctica para saber qué vale <code>this</code>: cuando llamas a un método con <code>objeto.metodo()</code>, dentro del método <code>this</code> es el objeto que está a la izquierda del punto. En <code>lyra.describir()</code>, <code>this</code> es <code>lyra</code>. En <code>bruno.describir()</code>, <code>this</code> es <code>bruno</code>. Un único método sirve para todas las instancias precisamente porque <code>this</code> cambia según quién lo llame. Sigue este programa paso a paso y observa cómo <code>this</code> apunta a un cofre distinto en cada llamada:</p>
+  <div class="traza" data-titulo="Dos cofres, un solo método" data-rotulo-memoria="Memoria (variables y objetos)">
+    <pre><code class="language-js">class Cofre {
+  constructor(monedas) {
+    this.monedas = monedas;
+  }
+  abrir() {
+    const botin = this.monedas;
+    this.monedas = 0;
+    return botin;
+  }
+}
+
+const cofreA = new Cofre(50);
+const cofreB = new Cofre(20);
+const bolsa = cofreA.abrir();
+console.log(bolsa, cofreA.monedas, cofreB.monedas);</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"Cofre": "[class Cofre]"}, "nota": "Se define la clase Cofre. Es solo la plantilla: todavía no existe ningún cofre."},
+      {"linea": 3, "vars": {"Cofre": "[class Cofre]", "this": "Cofre { monedas: 50 }"}, "nota": "La línea 12 llamó a new Cofre(50). new creó un objeto vacío y ejecutó el constructor con this apuntando a él. this.monedas = 50 le crea la propiedad monedas."},
+      {"linea": 12, "vars": {"Cofre": "[class Cofre]", "cofreA": "Cofre { monedas: 50 }"}, "nota": "El constructor terminó: new devuelve el objeto, que queda guardado en cofreA. Fuera de los métodos, this ya no aparece."},
+      {"linea": 3, "vars": {"Cofre": "[class Cofre]", "cofreA": "Cofre { monedas: 50 }", "this": "Cofre { monedas: 20 }"}, "nota": "new Cofre(20) repite el proceso con otro objeto nuevo. Ahora this es el segundo cofre, no el primero."},
+      {"linea": 13, "vars": {"Cofre": "[class Cofre]", "cofreA": "Cofre { monedas: 50 }", "cofreB": "Cofre { monedas: 20 }"}, "nota": "El segundo cofre queda en cofreB. Son dos objetos independientes, cada uno con sus monedas."},
+      {"linea": 6, "vars": {"Cofre": "[class Cofre]", "cofreA": "Cofre { monedas: 50 }", "cofreB": "Cofre { monedas: 20 }", "this": "(el mismo objeto que cofreA)", "botin": "50"}, "nota": "cofreA.abrir(): lo que está a la izquierda del punto, cofreA, se convierte en this. botin guarda las 50 monedas."},
+      {"linea": 7, "vars": {"Cofre": "[class Cofre]", "cofreA": "Cofre { monedas: 0 }", "cofreB": "Cofre { monedas: 20 }", "this": "(el mismo objeto que cofreA)", "botin": "50"}, "nota": "this.monedas = 0 vacía el cofre. Como this y cofreA son el mismo objeto, cofreA cambia. cofreB no se entera."},
+      {"linea": 14, "vars": {"Cofre": "[class Cofre]", "cofreA": "Cofre { monedas: 0 }", "cofreB": "Cofre { monedas: 20 }", "bolsa": "50"}, "nota": "return botin devuelve 50, que se guarda en bolsa. El método terminó: botin y this desaparecen."},
+      {"linea": 15, "vars": {"Cofre": "[class Cofre]", "cofreA": "Cofre { monedas: 0 }", "cofreB": "Cofre { monedas: 20 }", "bolsa": "50"}, "salida": "50 0 20", "nota": "Se imprime el botín, el cofre A vacío y el cofre B intacto."}
+    ]</script>
+  </div>
+  <aside class="senal error" data-titulo="Error común: olvidar this">
+    <p>Dentro de un método, escribir <code>vida</code> a secas busca una <em>variable</em> llamada <code>vida</code>, no la propiedad del objeto. <code>vida = vida - cantidad;</code> da <code>ReferenceError: vida is not defined</code>. Para hablar de las propiedades del objeto, escribe siempre <code>this.vida</code>.</p>
+  </aside>
+  <aside class="senal error" data-titulo="Error común: olvidar new">
+    <p><code>const lyra = Personaje("Lyra", 120);</code> da <code>TypeError: Class constructor Personaje cannot be invoked without 'new'</code>: «el constructor de la clase no se puede llamar sin new». Una clase no es una función normal: para crear instancias siempre va <code>new</code> delante.</p>
+  </aside>
+  <aside class="senal ojo" data-titulo="Las clases no se «elevan»">
+    <p>En la Estación 10 viste que puedes llamar a una función declarada con <code>function</code> antes de la línea donde la escribes. Con las clases no pasa: igual que con <code>let</code> y <code>const</code>, usar una clase antes de su declaración da <code>ReferenceError: Cannot access 'Personaje' before initialization</code>. Declara tus clases arriba, antes de usarlas.</p>
+  </aside>
+
+  <h3>Campos: propiedades declaradas en la clase</h3>
+  <p>Desde 2022, JavaScript permite declarar propiedades directamente en el cuerpo de la clase, fuera del constructor. Se llaman <strong>campos</strong> (<em>fields</em>) y son cómodos para valores iniciales que no dependen de los parámetros:</p>
+  <pre><code class="language-js">class Enemigo {
+  nivel = 1;      // campo: toda instancia empieza en nivel 1
+  botin = [];     // cada instancia recibe su PROPIO array vacío
+
+  constructor(nombre, vida) {
+    this.nombre = nombre;
+    this.vida = vida;
+  }
+
+  subirNivel() {
+    this.nivel++;
+    this.vida += 10;
+  }
+}</code></pre>
+  <p>El valor de un campo se calcula de nuevo en cada <code>new</code>, así que dos enemigos nunca comparten el mismo array <code>botin</code>. Los campos se crean justo antes de que se ejecute el cuerpo del constructor.</p>
+  <p>Ahora te toca. <strong>Predice</strong> las cinco líneas que imprime este programa antes de ejecutarlo. Presta atención a la última:</p>
+  <div class="taller" id="taller-mascotas" data-titulo="Predice: dos mascotas">
+    <textarea class="taller-codigo">class Mascota {
+  hambre = 5;
+
+  constructor(nombre) {
+    this.nombre = nombre;
+  }
+
+  comer() {
+    this.hambre = Math.max(0, this.hambre - 3);
+    return `${this.nombre} come. Hambre: ${this.hambre}`;
+  }
+
+  jugar() {
+    this.hambre += 2;
+    return `${this.nombre} juega. Hambre: ${this.hambre}`;
+  }
+}
+
+const michi = new Mascota("Michi");
+const rex = new Mascota("Rex");
+console.log(michi.comer());
+console.log(michi.comer());
+console.log(rex.jugar());
+console.log(michi.hambre, rex.hambre);
+console.log(rex);</textarea>
+  </div>
+  <p>Michi come dos veces (5 → 2 → 0, porque <code>Math.max</code> no deja bajar de cero) y Rex juega una vez (5 → 7). Cada mascota tiene su propia <code>hambre</code>. La última línea muestra <code>Mascota { hambre: 7, nombre: 'Rex' }</code>: la consola escribe el nombre de la clase delante del objeto y enseña solo las propiedades, no los métodos. ¿Dónde están <code>comer</code> y <code>jugar</code>? Lo descubrirás en la sección de prototipos. <strong>Modifica</strong>: agrega un método <code>dormir()</code> que suba el hambre en 1 y devuelva un mensaje, y úsalo con las dos mascotas.</p>
+
+  <h3>¿Clase u objeto literal?</h3>
+  <p>No todo necesita una clase. Si solo existe un objeto de ese tipo (la configuración del juego) o si son datos sin comportamiento (un producto que llega de un servidor en formato JSON), un objeto literal con llaves es más sencillo. Usa una clase cuando vas a crear muchos objetos con la misma forma y el mismo comportamiento, o cuando el objeto tiene reglas que proteger, que es justo el tema de la siguiente sección.</p>
+</section>
