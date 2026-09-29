@@ -370,6 +370,19 @@ ${suyas.map((m) => `    <li><a href="modulos/${archivoModulo(m)}" data-slug="${m
   }).join("\n");
 }
 
+function notasTiempo() {
+  if (!tiempo) return "";
+  const lista = (xs) => (xs || []).map((x) => `<li>${esc(x)}</li>`).join("");
+  const fuentes = (tiempo.fuentes || []).map((f) => `<li><a href="${esc(f.url)}">${esc(f.titulo)}</a><p>${esc(f.dato)}</p></li>`).join("");
+  return `<div class="horarios-notas">
+  <h3>Cómo se calculó</h3>
+  <ul>${lista(tiempo.supuestos)}</ul>
+  <h3>Consejos para sostener el ritmo</h3>
+  <ul>${lista(tiempo.consejos)}</ul>
+  <details class="pista"><summary>Fuentes consultadas (${(tiempo.fuentes || []).length})</summary><ul class="recursos">${fuentes}</ul></details>
+</div>`;
+}
+
 function portada() {
   const totalHoras = modulos.reduce((a, m) => a + m.horas, 0);
   const consolidacion = tiempo?.consolidacion ?? 300;
@@ -394,6 +407,7 @@ function portada() {
     .replaceAll("{{NUM_MODULOS}}", String(modulos.length))
     .replaceAll("{{PRIMER_MODULO}}", `modulos/${archivoModulo(modulos[0])}`)
     .replaceAll("{{DATOS_CURSO}}", JSON.stringify(datos).replace(/</g, "\\u003c"))
+    .replaceAll("{{TIEMPO_NOTAS}}", notasTiempo())
     .replaceAll("{{PRISM}}", scriptsPrism(new Set(["js"])));
 }
 

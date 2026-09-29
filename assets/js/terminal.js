@@ -154,7 +154,7 @@
         var cont = $(".contenido");
         var ini = cont.offsetTop, fin = cont.offsetTop + cont.offsetHeight - window.innerHeight;
         var p = Math.max(0, Math.min(1, (window.scrollY - ini) / Math.max(1, fin - ini)));
-        barra.style.width = (p * 100).toFixed(2) + "%";
+        barra.style.transform = "scaleX(" + p.toFixed(4) + ")";
       }
     }
     var pendiente = false;

@@ -40,6 +40,7 @@
   --s-ojo: oklch(0.84 0.16 88);    --s-ojo-fondo: oklch(0.965 0.045 95);   --s-ojo-glifo: oklch(0.22 0.03 80);
   --s-error: oklch(0.55 0.2 27);   --s-error-fondo: oklch(0.96 0.022 27);
   --s-ok: oklch(0.52 0.13 155);    --s-ok-fondo: oklch(0.955 0.03 155);
+  --s-ok-ink: oklch(0.45 0.12 155); --s-error-ink: oklch(0.5 0.19 27);
   --s-conexion: oklch(0.3 0.022 262); --s-conexion-fondo: oklch(0.945 0.008 262);
 
   /* Código: panel oscuro en ambos temas */
@@ -105,6 +106,7 @@
     --s-ojo-fondo: oklch(0.285 0.05 85);
     --s-error-fondo: oklch(0.27 0.055 27);
     --s-ok-fondo: oklch(0.27 0.045 155);
+    --s-ok-ink: oklch(0.8 0.13 155); --s-error-ink: oklch(0.78 0.13 27);
     --s-conexion: oklch(0.86 0.01 255);
     --s-conexion-fondo: oklch(0.24 0.016 262);
     --codigo-fondo: oklch(0.155 0.014 262);
@@ -133,6 +135,7 @@
   --s-ojo-fondo: oklch(0.285 0.05 85);
   --s-error-fondo: oklch(0.27 0.055 27);
   --s-ok-fondo: oklch(0.27 0.045 155);
+  --s-ok-ink: oklch(0.8 0.13 155); --s-error-ink: oklch(0.78 0.13 27);
   --s-conexion: oklch(0.86 0.01 255);
   --s-conexion-fondo: oklch(0.24 0.016 262);
   --codigo-fondo: oklch(0.155 0.014 262);
@@ -165,7 +168,6 @@ body {
   line-height: 1.62;
   font-kerning: normal;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
 }
 ::selection { background: color-mix(in oklch, var(--lc) 38%, transparent); color: var(--tinta); }
 :focus-visible { outline: 3px solid var(--lc-ink); outline-offset: 2px; border-radius: 2px; }
@@ -201,8 +203,8 @@ code, kbd, samp, pre { font-family: var(--f-codigo); font-variant-ligatures: non
 }
 kbd, .tecla {
   display: inline-block; font-size: 0.82em; line-height: 1.2; padding: 0.15em 0.45em 0.2em;
-  border: 1px solid var(--linea-fuerte); border-bottom-width: 3px; border-radius: 5px;
-  background: var(--suelo); color: var(--tinta); white-space: nowrap;
+  border: 1px solid var(--linea-fuerte); border-radius: 5px;
+  background: var(--suelo-2); color: var(--tinta); white-space: nowrap;
 }
 
 .solo-lectores {
@@ -253,7 +255,7 @@ kbd, .tecla {
 }
 .boton-icono:hover { background: var(--suelo-3); }
 .barra-progreso { position: absolute; left: 0; bottom: -1px; height: 3px; width: 100%; background: transparent; pointer-events: none; }
-.barra-progreso span { display: block; height: 100%; width: 0; background: var(--lc); transition: width .2s linear; }
+.barra-progreso span { display: block; height: 100%; width: 100%; background: var(--lc); transform: scaleX(0); transform-origin: left; transition: transform .2s linear; }
 @media (max-width: 640px) {
   .barra-lugar { display: none; }
   .barra-enlace span { display: none; }
@@ -313,6 +315,7 @@ kbd, .tecla {
 }
 .cartel-datos { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; font-family: var(--f-rotulo); font-weight: 600; font-size: var(--t-peq); }
 .cartel-datos > span { display: inline-flex; align-items: center; gap: .4rem; }
+.cartel a, .tira a { color: var(--lc-on); }
 .cartel-datos .roundel { background: var(--lc-on); color: var(--lc); width: 1.6rem; height: 1.6rem; font-size: .95rem; }
 .cartel-datos .ico { stroke-width: 2.25; }
 .nivel-barras { display: inline-flex; gap: 3px; align-items: flex-end; height: .95em; }
@@ -419,7 +422,7 @@ kbd, .tecla {
 .senal-placa svg { width: 1.6rem; height: 1.6rem; }
 .senal-cuerpo { min-width: 0; }
 .senal-cuerpo > * + * { margin-top: .55rem; }
-.senal-titulo { font-family: var(--f-rotulo); font-weight: 700; font-size: 1.15rem; line-height: 1.2; }
+.senal-titulo { font-family: var(--f-rotulo); font-weight: 700; font-size: 1.15rem; line-height: 1.3; }
 .senal p, .senal li { max-width: none; }
 .senal.ojo { --s: var(--s-ojo); --s-fondo: var(--s-ojo-fondo); --s-glifo: var(--s-ojo-glifo); }
 .senal.error { --s: var(--s-error); --s-fondo: var(--s-error-fondo); }
@@ -739,7 +742,7 @@ details.solucion > summary { color: var(--lc-ink); }
 .comparar { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; }
 .comparar > * { min-width: 0; }
 .comparar-rotulo { font-family: var(--f-rotulo); font-weight: 700; margin-bottom: .4rem; display: flex; align-items: center; gap: .4rem; }
-.comparar-rotulo.bien { color: var(--s-ok); } .comparar-rotulo.mal { color: var(--s-error); }
+.comparar-rotulo.bien { color: var(--s-ok-ink); } .comparar-rotulo.mal { color: var(--s-error-ink); }
 
 /* Pasos de un procedimiento (secuencia real: el orden importa) */
 .pasos { list-style: none !important; padding: 0 !important; counter-reset: paso; display: grid; gap: 1.1rem; }
@@ -954,7 +957,7 @@ details.solucion > summary { color: var(--lc-ink); }
   display: flex; align-items: center; gap: .5rem; margin: 0 !important; max-width: none !important;
   margin-inline-start: calc(var(--sangria, 0) * 1.6rem) !important;
   padding: .45rem .5rem .45rem .8rem; border-radius: 5px; border: 1.5px solid var(--linea-fuerte);
-  background: var(--codigo-fondo); color: var(--codigo-texto); cursor: grab; transition: border-color .2s, background-color .2s, margin .2s var(--curva);
+  background: var(--codigo-fondo); color: var(--codigo-texto); cursor: grab; transition: border-color .2s, background-color .2s;
 }
 .parsons-linea code { flex: 1; min-width: 0; font-size: .92rem; background: none !important; color: inherit !important; padding: 0 !important; white-space: pre-wrap; }
 .parsons-linea.arrastrando { opacity: .5; }
@@ -967,7 +970,7 @@ details.solucion > summary { color: var(--lc-ink); }
 .parsons-botones button:hover:not(:disabled) { border-color: var(--lc); }
 .parsons-pie { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; padding: .75rem 1rem; border-top: 1px solid var(--linea); background: var(--suelo); }
 .parsons-veredicto { display: inline-flex; align-items: center; gap: .4rem; font-weight: 700; }
-.parsons-veredicto.ok { color: var(--s-ok); } .parsons-veredicto.mal { color: var(--s-error); }
+.parsons-veredicto.ok { color: var(--s-ok-ink); } .parsons-veredicto.mal { color: var(--s-error-ink); }
 
 /* ==========================================================================
    Terminal simulada
@@ -990,3 +993,8 @@ details.solucion > summary { color: var(--lc-ink); }
 .terminal-entrada { flex: 1; min-width: 4rem; border: 0; outline: none; background: transparent; color: var(--codigo-texto); font: inherit; caret-color: var(--sx-texto); padding: 0; }
 .terminal-entrada:focus-visible { outline: none; box-shadow: 0 2px 0 0 var(--lc); }
 .taller-veredicto.pendiente { display: flex; background: var(--panel); color: var(--panel-tinta-2); font-size: .95rem; }
+.horarios-notas { margin-top: var(--e6); display: grid; gap: .75rem; }
+.horarios-notas h3 { margin-top: var(--e4); }
+.horarios-notas ul:not(.recursos) { padding-inline-start: 1.2rem; display: grid; gap: .4rem; }
+.horarios-notas ul:not(.recursos) li::marker { color: var(--lc-ink); content: "■  "; font-size: .7em; }
+.horarios-notas li, .horarios-notas p { max-width: 70ch; }
