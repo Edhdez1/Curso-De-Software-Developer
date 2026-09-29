@@ -114,7 +114,7 @@ Nunca uses colores literales: usa clases (respetan el tema claro/oscuro):
 de la línea), `d-acento-trazo`, `d-sobre-acento` (texto sobre el acento), `d-tenue` (texto secundario),
 `d-fondo`, `d-fondo-2`, `d-tinta`, `d-mono`, `d-rotulo`, `d-titulo`, `d-peq`, `d-ok`/`d-mal`/`d-aviso` (rellenos
 semánticos), `d-ok-trazo`/`d-mal-trazo`, `d-l1`…`d-l8` (rellenos de color de cada línea), `d-t1`…`d-t8` (trazos),
-`d-codigo` (fondo de código), `d-solido`/`d-solido-trazo` (oscuro en los dos temas: muros, bloques sólidos), `d-codigo-texto`, `d-codigo-tenue`, `d-resalte` (resaltado de línea).
+`d-codigo` (fondo de código), `d-solido`/`d-solido-trazo` (oscuro en los dos temas: muros, bloques sólidos), `d-codigo-texto`, `d-codigo-tenue`, `d-resalte` (resaltado de línea; es translúcido: si hay líneas detrás, pon debajo una forma `d-fondo`).
 El `<svg>` pone color de tinta, tipografía y 16px por herencia: una clase en un `<g>` (por ejemplo `d-peq` o `d-ok`) afecta a todos sus textos. En `data-texto`, `data-clases` y `data-mover` las entradas se separan con `;` seguido del número de paso, así que un texto puede contener `;` siempre que no vaya seguido de «número:». Deja margen en el `viewBox` para etiquetas.
 Puntas de flecha: dibújalas como `<path class="d-tinta" d="M… l12 8 -12 8z"/>` (sin `marker`).
 Geometría precisa, nada de dibujos «a mano alzada» ni figuras humanas.

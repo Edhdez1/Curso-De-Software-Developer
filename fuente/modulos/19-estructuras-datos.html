@@ -246,7 +246,7 @@ for (const n of [20000, 40000, 80000]) {
   console.log(`n = ${n}: con shift ${vaciarConShift(n)} ms, con índice ${vaciarConIndice(n)} ms`);
 }</textarea>
   </div>
-  <p>En Chrome o en Node.js verás algo así: con 20 000 elementos, <code>shift</code> tarda unas decenas de milisegundos; al duplicar, el tiempo se multiplica por cuatro o más. Es la huella de <code>O(n²)</code>. La versión con índice se queda en 0 o 1 ms. En Firefox la diferencia puede ser mucho menor gracias a su optimización. Los números exactos dependen de tu equipo; lo importante es cómo crecen. En la sección de colas vas a convertir la idea del índice en una cola completa.</p>
+  <p>En Chrome o en Node.js verás que, cada vez que duplicas el tamaño, el tiempo con <code>shift</code> se multiplica por cuatro o más (por ejemplo, de 7 a 70 y a 280 ms). Es la huella de <code>O(n²)</code>. La versión con índice se queda en 0 o 1 ms. En Firefox la diferencia puede ser mucho menor gracias a su optimización. Los números exactos dependen de tu equipo; lo importante es cómo crecen. En la sección de colas vas a convertir la idea del índice en una cola completa.</p>
 
   <h3>Listas enlazadas: nodos que se señalan</h3>
   <p>¿Y si no hiciera falta mover a nadie para insertar al principio? Esa es la idea de la <strong>lista enlazada</strong> (en inglés, <em>linked list</em>). En lugar de un bloque de casillas seguidas, cada elemento vive en su propio <strong>nodo</strong>: un pequeño objeto que guarda un valor y una <strong>referencia</strong> al siguiente nodo. Una referencia es la forma que tiene JavaScript de «apuntar» a otro objeto sin copiarlo (lo viste en la <a href="11-colecciones.html">Estación 11</a>, en referencias contra copias). En otros lenguajes, como C, a esto se le llama <strong>puntero</strong>.</p>
@@ -523,7 +523,8 @@ for (const c of "([])") {
     bien = false;
   }
 }
-console.log(bien &amp;&amp; pila.length === 0 ? "Equilibrado" : "Mal cerrado");</code></pre>
+const ok = bien &amp;&amp; pila.length === 0;
+console.log(ok ? "Equilibrado" : "Mal cerrado");</code></pre>
     <script type="application/json">[
       {"linea": 1, "vars": {"pareja": "{ ')': '(', ']': '[' }"}, "nota": "Un objeto que dice, para cada cierre, cuál es su apertura."},
       {"linea": 2, "vars": {"pareja": "{ ')': '(', ']': '[' }", "pila": "[]"}, "nota": "La pila empieza vacía."},
@@ -540,7 +541,8 @@ console.log(bien &amp;&amp; pila.length === 0 ? "Equilibrado" : "Mal cerrado");<
       {"linea": 4, "vars": {"pareja": "{ ')': '(', ']': '[' }", "pila": "[ '(' ]", "bien": "true", "c": "\")\""}, "nota": "Último carácter: un cierre de paréntesis."},
       {"linea": 5, "vars": {"pareja": "{ ')': '(', ']': '[' }", "pila": "[ '(' ]", "bien": "true", "c": "\")\""}, "nota": "No es apertura."},
       {"linea": 7, "vars": {"pareja": "{ ')': '(', ']': '[' }", "pila": "[]", "bien": "true", "c": "\")\""}, "nota": "Sale '(', que es justo la pareja de ')'. Todo cuadra."},
-      {"linea": 11, "vars": {"pareja": "{ ')': '(', ']': '[' }", "pila": "[]", "bien": "true"}, "salida": "Equilibrado", "nota": "bien sigue en true y la pila quedó vacía: no hay aperturas sin cerrar."}
+      {"linea": 11, "vars": {"pareja": "{ ')': '(', ']': '[' }", "pila": "[]", "bien": "true", "ok": "true"}, "nota": "bien sigue en true y la pila quedó vacía: no hay aperturas sin cerrar. Las dos condiciones se cumplen."},
+      {"linea": 12, "vars": {"pareja": "{ ')': '(', ']': '[' }", "pila": "[]", "bien": "true", "ok": "true"}, "salida": "Equilibrado", "nota": "Como ok es true, se imprime «Equilibrado»."}
     ]</script>
   </div>
   <p>Cambia mentalmente el texto por <code>"([)]"</code>: al llegar el <code>)</code>, la cima es <code>[</code>, que no es su pareja, y <code>bien</code> pasa a <code>false</code>. Lo programarás completo, con llaves incluidas, en la práctica.</p>
@@ -905,7 +907,7 @@ const conjuntoB = new Set(b);                          // una sola vez: O(n)
 const comunesRapido = a.filter((x) => conjuntoB.has(x)); // por cada x, un salto
 console.log(`Con Set: ${comunesRapido.length} en común, ${Date.now() - inicio} ms`);</textarea>
   </div>
-  <p>El resultado es el mismo (6667 números en común), pero con <code>includes</code> el programa hace del orden de <code>n × n</code> comparaciones, cientos de milisegundos, y con el <code>Set</code> apenas <code>n</code>, unos pocos. Si duplicas <code>n</code>, la primera versión tarda cuatro veces más; la segunda, el doble.</p>
+  <p>El resultado es el mismo (6667 números en común), pero con <code>includes</code> el programa hace del orden de <code>n × n</code> comparaciones y con el <code>Set</code> apenas <code>n</code>. Según tu equipo verás decenas o cientos de milisegundos contra unos pocos. Prueba a duplicar <code>n</code>: la primera versión tarda unas cuatro veces más; la segunda, solo el doble.</p>
   <aside class="senal clave">
     <p>Si dentro de un bucle escribes <code>array.includes(...)</code> o <code>array.find(...)</code> sobre una lista grande, detente y pregúntate si un <code>Set</code> o un <code>Map</code> preparado antes del bucle haría ese trabajo en un solo paso. Es una de las optimizaciones más frecuentes y más fáciles que existen.</p>
   </aside>
@@ -992,7 +994,7 @@ console.log("Intersección a mano:", [...enComun]);</textarea>
       <text class="d-peq" x="462" y="72">arista</text>
       <text class="d-peq" x="212" y="112" text-anchor="end">B es padre de D y E</text>
       <text class="d-peq" x="240" y="244" text-anchor="middle">D y E son hermanos</text>
-      <text class="d-peq" x="508" y="164" text-anchor="end">F es hijo de C</text>
+      <text class="d-peq" x="532" y="164">F: hijo de C</text>
       <text class="d-rotulo" x="636" y="190">subárbol</text>
       <text class="d-rotulo" x="636" y="210">de C</text>
       <circle class="d-fondo" cx="582" cy="36" r="9"/>
@@ -2099,7 +2101,7 @@ impresora.encolar("entradas.pdf");
 console.log("En espera:", impresora.tamano());
 console.log("Imprimiendo", impresora.desencolar());
 impresora.encolar("mapa.png");
-while (impresora.tamano() > 0) {
+while (impresora.tamano() &gt; 0) {
   console.log("Imprimiendo", impresora.desencolar());
 }
 console.log("¿Algo más?", impresora.desencolar());</code></pre>
@@ -2538,4 +2540,164 @@ console.log(`Inventario: ${partes.join(", ")}`);</code></pre>
     <p>Fíjate en el <code>includes</code> del paso 4: normalmente conviene evitarlo en bucles, pero aquí recorre las vecinas de una sola sala (dos o tres), así que un <code>Set</code> no aportaría nada. Elegir estructura también es saber cuándo no hace falta optimizar.</p>
   </details>
   <p><strong>Para ir más allá:</strong> reconstruye el camino completo hasta la Salida guardando, para cada sala descubierta por el BFS, desde qué sala llegaste (lo verás con detalle en la <a href="20-algoritmos.html">Estación 20</a>); añade un botón Adelante con una segunda pila; o convierte los eventos en una cola de prioridad donde los mensajes de peligro salgan antes que los demás.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Cada opción tiene su explicación: léelas también cuando aciertes, porque los errores que describen son los que más se cometen.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Qué estructura usarías para el botón «Deshacer» de un editor?</p>
+      <ol class="opciones">
+        <li>Una cola, porque las acciones se guardan en el orden en que se hicieron.<p class="explica">Deshacer revierte primero la última acción. Una cola sacaría la primera que hiciste, la más antigua.</p></li>
+        <li>Una pila, porque se deshace primero la última acción.<p class="explica">Correcto. Cada acción se apila y deshacer desapila la cima: el último en entrar es el primero en salir.</p></li>
+        <li>Un <code>Set</code>, para que no se repitan acciones.<p class="explica">Un conjunto no sirve para sacar «la última», y además eliminaría acciones repetidas que son legítimas, como escribir dos veces la misma letra.</p></li>
+        <li>Un árbol binario de búsqueda ordenado por el nombre de la acción.<p class="explica">Ordenaría las acciones alfabéticamente, no por el momento en que ocurrieron, que es lo que importa al deshacer.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Después de <code>pila.push(1); pila.push(2); pila.push(3); pila.pop();</code>, ¿qué devuelve el siguiente <code>pila.pop()</code>?</p>
+      <ol class="opciones">
+        <li><code>1</code><p class="explica">Eso devolvería una cola, que saca al primero que entró. Una pila saca al último.</p></li>
+        <li><code>3</code><p class="explica">El 3 ya salió con el primer <code>pop</code>.</p></li>
+        <li><code>2</code><p class="explica">Correcto. Tras sacar el 3, la cima es el 2.</p></li>
+        <li><code>undefined</code><p class="explica">Todavía quedan dos elementos, 1 y 2. <code>pop</code> devuelve <code>undefined</code> solo con la pila vacía.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">En Chrome, vacías una fila de 100 000 pedidos sacándolos uno a uno con <code>shift</code>. ¿Qué ocurre?</p>
+      <ol class="opciones">
+        <li>Cada <code>shift</code> puede tener que correr los elementos restantes, así que vaciar la fila tiende a <code>O(n²)</code> y se nota lento.<p class="explica">Correcto. Con arrays grandes el costo de correr a todos reaparece. Un índice de cabeza evita moverlos.</p></li>
+        <li>Nada especial: <code>shift</code> es <code>O(1)</code> en todos los navegadores.<p class="explica">Los motores tienen atajos en algunos casos (Firefox, o arrays pequeños en Chrome), pero no está garantizado. Con 100 000 elementos, en Chrome y Node.js el costo se nota.</p></li>
+        <li>Da error porque un array no puede tener más de 65 536 elementos.<p class="explica">Un array de JavaScript puede tener muchísimos más elementos; el límite está en miles de millones.</p></li>
+        <li>Es más rápido que un índice de cabeza, porque <code>shift</code> está programado dentro del motor.<p class="explica">Estar programado en el motor no evita el trabajo de correr los elementos. El índice solo suma 1: no mueve nada.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Cuentas las palabras que escriben los usuarios con un objeto: <code>conteo[palabra] = (conteo[palabra] || 0) + 1</code>. Alguien escribe «constructor». ¿Qué pasa?</p>
+      <ol class="opciones">
+        <li>Nada raro: un objeto vacío no tiene ninguna clave.<p class="explica">Un objeto hereda propiedades de su prototipo, como <code>constructor</code> o <code>toString</code>, aunque parezca vacío.</p></li>
+        <li>Da un error de sintaxis porque <code>constructor</code> es una palabra reservada.<p class="explica">No es palabra reservada y, entre corchetes, cualquier texto es una clave válida. El problema es otro.</p></li>
+        <li>La palabra se cuenta dos veces.<p class="explica">No se cuenta dos veces: el valor inicial no es un número.</p></li>
+        <li><code>conteo["constructor"]</code> ya existía (era una función heredada) y el resultado acaba siendo un texto extraño. Con un <code>Map</code> no ocurre.<p class="explica">Correcto. Un <code>Map</code> no tiene claves de fábrica: solo lo que tú guardas. Por eso es la opción segura para claves que escriben los usuarios.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Qué imprime <code>console.log(new Set([[1, 2], [1, 2]]).size)</code>?</p>
+      <ol class="opciones">
+        <li><code>1</code><p class="explica">Sería 1 si el <code>Set</code> comparara los arrays por su contenido, pero los compara por referencia.</p></li>
+        <li><code>2</code><p class="explica">Correcto. Son dos arrays distintos que se parecen. Para coordenadas, usa textos como <code>"1,2"</code>.</p></li>
+        <li><code>4</code><p class="explica">El <code>Set</code> no desarma los arrays que recibe dentro de otro array: guarda cada array como un valor.</p></li>
+        <li>Un error.<p class="explica">Es código válido: un <code>Set</code> puede guardar cualquier valor, incluidos arrays.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">En una tabla hash, ¿qué es una colisión?</p>
+      <ol class="opciones">
+        <li>Guardar dos veces la misma clave.<p class="explica">Guardar una clave que ya existe solo actualiza su valor.</p></li>
+        <li>Que la tabla se quede sin memoria.<p class="explica">Cuando se llena demasiado, la tabla crece y recoloca los pares, pero eso no es una colisión.</p></li>
+        <li>Que dos claves distintas caigan en la misma cubeta.<p class="explica">Correcto. Es inevitable y se resuelve encadenando los pares en la cubeta o buscando otra libre.</p></li>
+        <li>Que la función hash devuelva un número negativo.<p class="explica">El resultado se ajusta al tamaño de la tabla; no tiene que ver con las colisiones.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Un árbol binario de búsqueda <em>equilibrado</em> tiene un millón de nodos. ¿Cuántas comparaciones cuesta, aproximadamente, buscar un valor?</p>
+      <ol class="opciones">
+        <li>Unas 20.<p class="explica">Correcto. Cada comparación descarta la mitad: 2 elevado a 20 es algo más de un millón. Es <code>O(log n)</code>.</p></li>
+        <li>Unas 1000.<p class="explica">Eso es la raíz cuadrada de un millón, que no tiene que ver con cómo se busca en el árbol.</p></li>
+        <li>Unas 500 000.<p class="explica">Eso sería revisar la mitad de los nodos, como en una búsqueda lineal. El árbol descarta ramas enteras.</p></li>
+        <li>Una sola, como en un <code>Map</code>.<p class="explica">El acceso casi directo es propio de la tabla hash, no del árbol. El árbol, a cambio, mantiene los datos ordenados.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Insertas en un árbol binario de búsqueda simple los números 1, 2, 3… hasta 10 000, en ese orden. ¿Qué ocurre?</p>
+      <ol class="opciones">
+        <li>El árbol queda perfectamente equilibrado.<p class="explica">Al contrario: los datos ordenados son el peor caso para un árbol que no se reequilibra.</p></li>
+        <li>El árbol detecta que están ordenados y los guarda en un array.<p class="explica">El árbol del taller no hace nada especial: sigue su regla con cada número.</p></li>
+        <li>Da error porque el árbol no admite números seguidos.<p class="explica">Los admite. El problema no es un error, sino el rendimiento.</p></li>
+        <li>Cada número va a la derecha del anterior, el árbol se convierte en una especie de lista y buscar pasa a costar <code>O(n)</code>.<p class="explica">Correcto. Por eso las bibliotecas usan árboles que se reequilibran solos, como los AVL o los rojinegros.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Qué estructura auxiliar usa el recorrido en anchura (BFS) y cuál el recorrido en profundidad (DFS)?</p>
+      <ol class="opciones">
+        <li>BFS usa una pila y DFS una cola.<p class="explica">Es justo al revés. Recuerda la cubeta de pintura: la cola pinta en ondas; la pila, como una serpiente.</p></li>
+        <li>Los dos usan solo un <code>Set</code>.<p class="explica">El <code>Set</code> recuerda los visitados, pero el orden del recorrido lo decide la cola o la pila.</p></li>
+        <li>BFS usa una cola y DFS una pila (o recursión, que usa la pila de llamadas).<p class="explica">Correcto. Cambiar una estructura por la otra cambia el orden en que se visitan los nodos.</p></li>
+        <li>Los dos usan un montículo.<p class="explica">El montículo aparece en algoritmos como Dijkstra, que tiene en cuenta pesos (Estación 20), no en BFS ni en DFS.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Una red social tiene 10 millones de personas y cada una tiene unas 200 amistades. ¿Cómo guardarías el grafo?</p>
+      <ol class="opciones">
+        <li>Con una matriz de adyacencia, porque consultar una amistad cuesta <code>O(1)</code>.<p class="explica">Necesitaría 10 millones × 10 millones de casillas (10<sup>14</sup>), casi todas con 0. No cabe en ninguna memoria razonable.</p></li>
+        <li>Con una lista de adyacencia, por ejemplo un <code>Map</code> de cada persona a sus amistades.<p class="explica">Correcto. La memoria crece con personas + amistades, y el grafo es muy disperso.</p></li>
+        <li>Con un único array con todos los nombres.<p class="explica">Un array de nombres no guarda quién es amigo de quién, que es lo importante.</p></li>
+        <li>Con un árbol binario de búsqueda.<p class="explica">Un árbol no puede representar ciclos ni amistades cruzadas: cada nodo tendría un solo padre.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Un montículo mínimo está guardado como el array <code>[3, 8, 5, 12, 9, 7]</code>. ¿Qué se puede asegurar?</p>
+      <ol class="opciones">
+        <li>Que el array está ordenado de menor a mayor.<p class="explica">No lo está: el 8 va antes que el 5. Un montículo no es un array ordenado.</p></li>
+        <li>Que el segundo más pequeño está en la posición 1.<p class="explica">Puede estar en la 1 o en la 2. Aquí es el 5, en la posición 2.</p></li>
+        <li>Que el mayor está en la última posición.<p class="explica">No está garantizado: aquí el mayor, 12, está en la posición 3.</p></li>
+        <li>Que el menor está en la posición 0, y que cada elemento es menor o igual que los de las posiciones 2i + 1 y 2i + 2.<p class="explica">Correcto. Esa es toda la garantía del montículo, y basta para sacar siempre el mínimo en <code>O(log n)</code>.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Estructura de datos</dt><dd>Forma de organizar datos en la memoria para que ciertas operaciones (acceder, buscar, insertar, eliminar) sean rápidas.</dd>
+    <dt>Tipo abstracto de datos</dt><dd>Descripción de una estructura por sus operaciones, sin decir cómo se guarda por dentro. Por ejemplo, «pila: apilar, desapilar, mirar la cima».</dd>
+    <dt>Notación O grande (Big-O)</dt><dd>Forma de describir cómo crece el trabajo de una operación cuando crece la cantidad de datos: <code>O(1)</code>, <code>O(log n)</code>, <code>O(n)</code>, <code>O(n²)</code>…</dd>
+    <dt>Array (arreglo)</dt><dd>Colección de elementos en posiciones numeradas, guardados en memoria contigua. Acceder por índice cuesta <code>O(1)</code>.</dd>
+    <dt>Lista enlazada</dt><dd>Secuencia de nodos en la que cada uno guarda un valor y una referencia al siguiente. Inserta al principio en <code>O(1)</code>, pero no permite saltar a una posición.</dd>
+    <dt>Nodo</dt><dd>Cada pieza de una lista enlazada, un árbol o un grafo: guarda un valor y referencias a otros nodos.</dd>
+    <dt>Referencia (puntero)</dt><dd>Valor que señala a un objeto sin copiarlo. En lenguajes como C se llama puntero.</dd>
+    <dt>Pila (stack)</dt><dd>Colección en la que sale primero el último elemento que entró (LIFO). Operaciones: <code>push</code>, <code>pop</code> y mirar la cima.</dd>
+    <dt>Cola (queue)</dt><dd>Colección en la que sale primero el primer elemento que entró (FIFO). Operaciones: encolar al final y desencolar del principio.</dd>
+    <dt>Deque</dt><dd>Cola de doble extremo: permite agregar y quitar elementos por los dos lados.</dd>
+    <dt>Pila de llamadas</dt><dd>Pila en la que el motor anota cada llamada a función en curso y adónde debe volver al terminar.</dd>
+    <dt>Tabla hash</dt><dd>Estructura que guarda pares clave → valor y usa una función hash para decidir en qué cubeta va cada par. Busca, inserta y borra en <code>O(1)</code> en promedio.</dd>
+    <dt>Función hash</dt><dd>Función que convierte una clave en un número de forma determinista. En una tabla hash, ese número indica la cubeta.</dd>
+    <dt>Colisión</dt><dd>Situación en la que dos claves distintas corresponden a la misma cubeta de una tabla hash.</dd>
+    <dt>Map</dt><dd>Tabla hash de JavaScript: guarda pares clave → valor con claves de cualquier tipo, en orden de inserción, y sabe su tamaño con <code>size</code>.</dd>
+    <dt>Set (conjunto)</dt><dd>Colección de valores sin repetidos que responde en <code>O(1)</code> si un valor está (<code>has</code>).</dd>
+    <dt>Árbol</dt><dd>Estructura jerárquica de nodos: una raíz sin padre y nodos que tienen un padre y cero o más hijos.</dd>
+    <dt>Hoja</dt><dd>Nodo de un árbol que no tiene hijos.</dd>
+    <dt>Árbol binario de búsqueda</dt><dd>Árbol en el que cada nodo tiene como mucho dos hijos, con los menores a la izquierda y los mayores a la derecha. Busca en <code>O(log n)</code> si está equilibrado.</dd>
+    <dt>Montículo (heap)</dt><dd>Árbol binario completo, guardado en un array, en el que cada padre es menor o igual que sus hijos (montículo mínimo). Da el mínimo en <code>O(1)</code> e inserta y extrae en <code>O(log n)</code>.</dd>
+    <dt>Cola de prioridad</dt><dd>Colección en la que siempre sale el elemento más urgente, no el más antiguo. Se implementa normalmente con un montículo.</dd>
+    <dt>Grafo</dt><dd>Conjunto de vértices unidos por aristas, que pueden ser dirigidas o no y tener peso. Representa redes, mapas y conexiones.</dd>
+    <dt>Lista de adyacencia</dt><dd>Forma de guardar un grafo en la que cada vértice apunta a la lista de sus vecinos.</dd>
+    <dt>BFS (recorrido en anchura)</dt><dd>Recorrido que visita los nodos por capas de distancia al origen, usando una cola.</dd>
+    <dt>DFS (recorrido en profundidad)</dt><dd>Recorrido que avanza por un camino hasta el fondo antes de retroceder, usando una pila o recursión.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación. Te servirán para repasar con otra voz y otros dibujos; si en algún momento usan otro lenguaje, fíjate en la idea, que es la misma.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=cwRQHcaef5c" data-canal="Programación y más" data-idioma="es" data-nivel="intro" data-duracion="8 min" data-por-que="Repaso rápido y visual de arrays, listas enlazadas, tablas hash, pilas, colas, árboles y grafos.">7 Estructuras de Datos (en menos de 10 min)</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=x8pLMgtRXY0" data-canal="Chio Code" data-idioma="es" data-nivel="intro" data-duracion="13 min" data-por-que="Pilas y colas con ejemplos de uso, implementaciones y ejercicios.">Aprende a usar Pilas y Colas | Estructuras de Datos</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=CrXDTPE4DQI" data-canal="Chio Code" data-idioma="es" data-nivel="profundo" data-duracion="16 min" data-por-que="Funciones hash, colisiones y cómo funciona una tabla hash por dentro.">Entiende por fin el Hashing y las Tablas Hash | Estructuras de Datos</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=_Yf8tneauJ8" data-canal="BettaTech" data-idioma="es" data-nivel="profundo" data-duracion="10 min" data-por-que="Los recorridos en anchura y en profundidad explicados paso a paso sobre grafos.">Algoritmos BFS y DFS (Recorridos en Grafos)</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://developer.mozilla.org/es/docs/Web/JavaScript/Guide/Keyed_collections">Colecciones con clave (MDN)</a><p>La guía oficial de <code>Map</code>, <code>Set</code>, <code>WeakMap</code> y <code>WeakSet</code>, con la comparación entre <code>Map</code> y objeto.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Global_Objects/Map">Map (MDN)</a><p>Referencia completa de <code>Map</code>: todos sus métodos, cómo compara las claves y ejemplos.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Global_Objects/Set">Set (MDN)</a><p>Referencia de <code>Set</code>, incluidas las operaciones de conjuntos y su compatibilidad con cada navegador.</p></li>
+    <li><a href="https://es.javascript.info/map-set">Map y Set (javascript.info)</a><p>Explicación detallada en español, con tareas resueltas al final.</p></li>
+    <li><a href="https://visualgo.net/es">VisuAlgo</a><p>Animaciones interactivas de listas enlazadas, tablas hash, árboles, montículos y grafos: puedes insertar tus propios valores y ver cada paso. Parte de la web está en inglés.</p></li>
+    <li><a href="https://www.redblobgames.com/pathfinding/grids/graphs.html">Grids and Graphs (Red Blob Games)</a><p>En inglés. Cómo representar los mapas de casillas de un juego como grafos, con diagramas interactivos. El punto de partida ideal antes de la Estación 20.</p></li>
+  </ul>
 </section>

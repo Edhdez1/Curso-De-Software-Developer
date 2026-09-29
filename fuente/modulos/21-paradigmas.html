@@ -29,7 +29,7 @@
     <li>En la <strong>programación declarativa</strong> describes <em>qué</em> resultado quieres y dejas que otra pieza (una función, el navegador, una base de datos) decida cómo conseguirlo.</li>
   </ul>
   <aside class="senal analogia">
-    <p>Imperativo es darle indicaciones a un taxista: «dobla a la derecha, sigue tres cuadras, para en la esquina». Declarativo es darle la dirección: «al Museo de Arte, por favor». En los dos casos llegas, pero en el segundo confías en que el taxista sabe el camino. La analogía tiene un límite: en programación lo declarativo no es magia. Alguien escribió el código imperativo que hace el trabajo (el navegador, el motor de la base de datos o la función <code>filter</code>); tú simplemente no tienes que repetirlo.</p>
+    <p>Imperativo es darle indicaciones a un taxista: «dobla a la derecha, sigue tres cuadras, para en la esquina». Declarativo es darle la dirección: «al Museo de Arte, por favor». En los dos casos llegas, pero en el segundo confías en que el taxista sabe el camino. La analogía tiene un límite: en programación lo declarativo no es magia. Alguien escribió el código imperativo que hace el trabajo (el navegador, el motor de la base de datos o la función <code>filter</code>); tú no tienes que repetirlo.</p>
   </aside>
   <p>Mira la misma tarea resuelta de las dos maneras: obtener los nombres de los productos que cuestan menos de 20.</p>
   <pre><code class="language-js">const productos = [
@@ -264,7 +264,8 @@ console.log(bruno.describir());  // Bruno: 90/90 de vida</code></pre>
 const cofreA = new Cofre(50);
 const cofreB = new Cofre(20);
 const bolsa = cofreA.abrir();
-console.log(bolsa, cofreA.monedas, cofreB.monedas);</code></pre>
+console.log(bolsa, cofreA.monedas);
+console.log(cofreB.monedas);</code></pre>
     <script type="application/json">[
       {"linea": 1, "vars": {"Cofre": "[class Cofre]"}, "nota": "Se define la clase Cofre. Es solo la plantilla: todavía no existe ningún cofre."},
       {"linea": 3, "vars": {"Cofre": "[class Cofre]", "this": "Cofre { monedas: 50 }"}, "nota": "La línea 12 llamó a new Cofre(50). new creó un objeto vacío y ejecutó el constructor con this apuntando a él. this.monedas = 50 le crea la propiedad monedas."},
@@ -274,7 +275,8 @@ console.log(bolsa, cofreA.monedas, cofreB.monedas);</code></pre>
       {"linea": 6, "vars": {"Cofre": "[class Cofre]", "cofreA": "Cofre { monedas: 50 }", "cofreB": "Cofre { monedas: 20 }", "this": "(el mismo objeto que cofreA)", "botin": "50"}, "nota": "cofreA.abrir(): lo que está a la izquierda del punto, cofreA, se convierte en this. botin guarda las 50 monedas."},
       {"linea": 7, "vars": {"Cofre": "[class Cofre]", "cofreA": "Cofre { monedas: 0 }", "cofreB": "Cofre { monedas: 20 }", "this": "(el mismo objeto que cofreA)", "botin": "50"}, "nota": "this.monedas = 0 vacía el cofre. Como this y cofreA son el mismo objeto, cofreA cambia. cofreB no se entera."},
       {"linea": 14, "vars": {"Cofre": "[class Cofre]", "cofreA": "Cofre { monedas: 0 }", "cofreB": "Cofre { monedas: 20 }", "bolsa": "50"}, "nota": "return botin devuelve 50, que se guarda en bolsa. El método terminó: botin y this desaparecen."},
-      {"linea": 15, "vars": {"Cofre": "[class Cofre]", "cofreA": "Cofre { monedas: 0 }", "cofreB": "Cofre { monedas: 20 }", "bolsa": "50"}, "salida": "50 0 20", "nota": "Se imprime el botín, el cofre A vacío y el cofre B intacto."}
+      {"linea": 15, "vars": {"Cofre": "[class Cofre]", "cofreA": "Cofre { monedas: 0 }", "cofreB": "Cofre { monedas: 20 }", "bolsa": "50"}, "salida": "50 0", "nota": "Se imprime el botín y el cofre A, ya vacío."},
+      {"linea": 16, "vars": {"Cofre": "[class Cofre]", "cofreA": "Cofre { monedas: 0 }", "cofreB": "Cofre { monedas: 20 }", "bolsa": "50"}, "salida": "20", "nota": "El cofre B sigue intacto: abrir() solo tocó el objeto que estaba a la izquierda del punto."}
     ]</script>
   </div>
   <aside class="senal error" data-titulo="Error común: olvidar this">
@@ -564,7 +566,7 @@ console.log(e1.total);        // undefined: las instancias no lo tienen</code></
 const carrito = new Carrito();
 carrito.agregar(cafe, 2);
 carrito.agregar(taza);
-console.log(carrito.unidades, carrito.total);</code></pre>
+console.log(carrito.unidades, carrito.total);   // 3 32 (café a 12, taza a 8)</code></pre>
   <p>Quien usa <code>Carrito</code> solo conoce tres cosas: <code>agregar</code>, <code>unidades</code> y <code>total</code>. No sabe si por dentro hay un array o un <code>Map</code>, ni cómo se suman los precios. Por eso, si mañana cambias el array por un <code>Map</code> para que sea más rápido (<a href="19-estructuras-datos.html">Estación 19</a>), ninguna otra parte del programa se rompe.</p>
   <aside class="senal analogia">
     <p>Para conducir usas volante, pedales y palanca. No necesitas saber cómo inyecta combustible el motor, y el fabricante puede cambiar el motor entero sin que tengas que aprender a conducir otra vez. La interfaz (volante y pedales) es la abstracción; el motor, el detalle escondido.</p>
@@ -628,7 +630,7 @@ console.log(carrito.unidades, carrito.total);</code></pre>
       <path class="d-tinta" d="M461 248l13 -7v14z"/>
       <text class="d-peq d-tenue" x="360" y="142" text-anchor="middle">subclases de Personaje</text>
       <text class="d-peq d-tenue" x="486" y="238" text-anchor="middle">es un</text>
-      <text class="d-peq d-tenue" x="248" y="160" text-anchor="end">es un</text>
+      <text class="d-peq d-tenue" x="244" y="184">es un</text>
     </svg>
     <figcaption>Cada flecha apunta a la clase de la que se hereda y se lee «es un»: un Heroe es un Personaje, un Jefe es un Enemigo. Arriba de la línea punteada de cada caja van las propiedades; abajo, los métodos que esa clase añade o cambia. Jefe no repite <code>nombre</code> ni <code>describir</code>: los recibe por herencia.</figcaption>
   </figure>
@@ -944,7 +946,7 @@ console.log(lyra.describir());                  // y funciona</code></pre>
         <path class="d-linea" d="M370 344v4"/><path class="d-tinta" d="M370 358l-6 -10h12z"/>
         <text class="d-peq d-tenue" x="382" y="78">enlace al prototipo</text>
 
-        <g data-pasos="2-" data-mover="3:translate(0px,210px); 4:translate(0px,70px); 5:translate(0px,280px); 6:translate(0px,335px)">
+        <g data-pasos="2-" data-mover="3:translate(0px,210px); 4:translate(0px,70px); 5:translate(0px,280px); 6:translate(130px,335px)">
           <rect class="d-acento" x="10" y="21" width="172" height="34" rx="17"/>
           <text class="d-sobre-acento d-mono" x="96" y="43" text-anchor="middle" style="font-size:14px" data-texto="2:jefe.fase; 3:jefe.describir(); 4:jefe.atacar(); 5:jefe.toString(); 6:jefe.volar()">jefe.fase</text>
           <path class="d-linea" d="M182 38h6"/>
@@ -1642,7 +1644,7 @@ document.querySelector("#vaciar").addEventListener("click", () => {
   dibujar();
 });</textarea>
   </div>
-  <p>Compra un molinillo y cinco cafés: el total bruto es 105 y el descuento por volumen (10 % desde 100) lo deja en 94.5. <strong>Modifica</strong>: añade una función pura <code>quitarLinea(lineas, id)</code> que devuelva las líneas sin la del producto indicado, un método <code>quitar(id)</code> en <code>Tienda</code> que la use, y un botón para quitar el café. Fíjate en que ninguna función del núcleo cambió al añadir botones: por eso es fácil probarlas.</p>
+  <p>Compra un molinillo y cinco cafés: el total bruto es 105 y el descuento por volumen (10 % desde 100) lo deja en 94.5. <strong>Modifica</strong>: añade una función pura <code>quitarLinea(lineas, id)</code> que devuelva las líneas sin la del producto indicado, un método <code>quitar(id)</code> en <code>Tienda</code> que la use, y un botón para quitar el café. Fíjate en que ninguna función del núcleo sabe que existen los botones: por eso se pueden probar sin abrir la página.</p>
 
   <h3>Cómo se ve en carpetas</h3>
   <p>En un proyecto real, esta separación también se nota en los archivos: cada clase importante vive en su propio archivo, y las funciones puras de un mismo tema se agrupan en otro. Cómo se conectan los archivos entre sí (<code>import</code> y <code>export</code>) lo verás en la <a href="22-ejecucion.html">Estación 22</a>. Practica la estructura en la terminal (repasa los comandos en la <a href="05-herramientas.html">Estación 5</a>). Crea esto dentro de tu carpeta personal:</p>
@@ -2278,4 +2280,350 @@ console.log(e4.inventario.join(", "));</code></pre>
       <p>Cada estado es una foto: <code>inicial</code>, <code>e1</code> y <code>e2</code> siguen existiendo y no cambian, así que podrías mostrar un historial o deshacer. Devolver el mismo estado cuando no hay nada que hacer (<code>e3 === e2</code>) es una costumbre útil: quien lo recibe sabe, con una comparación rápida, que nada cambió. Es lo que hace React para decidir si redibuja una pantalla.</p>
     </details>
   </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: arena de combate por turnos</h2>
+  <p>Vas a construir el motor de combate de un juego de rol, combinando las dos grandes ideas de la estación. Los luchadores son objetos que protegen su vida con campos privados y se especializan con herencia y polimorfismo. Las reglas (cuánto daño hace un golpe, quién ganó, cuánto daño hizo cada uno) son funciones puras. Y el registro del combate es una lista de estados que nunca se modifican.</p>
+  <ol class="pasos">
+    <li><div><p><strong>El luchador.</strong> Crea la clase <code>Luchador</code> con <code>nombre</code>, <code>ataque</code> y <code>defensa</code> públicos, y la vida en un campo privado <code>#vida</code>. Añade un getter <code>vida</code>, un getter <code>estaVivo</code>, un método <code>recibirDanio(cantidad)</code> que nunca deje la vida por debajo de 0, y un contador <code>static total</code> que cuente cuántos luchadores se crearon.</p></div></li>
+    <li><div><p><strong>La regla del daño, pura.</strong> Escribe <code>calcularDanio(ataque, defensa, tirada)</code>, que devuelva <code>ataque + tirada - defensa</code>, pero nunca menos de 1. No debe leer ni cambiar nada de fuera. Añade a <code>Luchador</code> un método <code>danioContra(rival, tirada)</code> que la use con su ataque y la defensa del rival.</p></div></li>
+    <li><div><p><strong>Especialidades con herencia y polimorfismo.</strong> Crea <code>Guerrero</code> (60 de vida, 8 de ataque, 4 de defensa), cuyo escudo frena 2 puntos de cada golpe que recibe (sobrescribe <code>recibirDanio</code> y usa <code>super</code>), y <code>Maga</code> (48 de vida, 12 de ataque, 1 de defensa), cuya magia atraviesa la mitad de la defensa del rival (sobrescribe <code>danioContra</code>).</p></div></li>
+    <li><div><p><strong>Un dado reproducible.</strong> Con <code>Math.random()</code> cada combate saldría distinto y sería imposible comprobar si tus reglas funcionan. Usa <code>crearDado(secuencia)</code>, que ya está hecha: devuelve una función que entrega los números de la secuencia uno tras otro. El dado no es puro (cada llamada da otro número), pero queda aislado: las reglas reciben la tirada como argumento.</p></div></li>
+    <li><div><p><strong>Un turno.</strong> Escribe <code>turno(ronda, atacante, defensor, tirada)</code>: aplica el daño al defensor y devuelve un registro congelado con <code>Object.freeze</code>: <code>{ ronda, atacante, defensor, danio, vidaRestante }</code>, donde <code>danio</code> es el daño que de verdad perdió el defensor (el escudo cuenta).</p></div></li>
+    <li><div><p><strong>El combate.</strong> Mientras los dos sigan vivos, alterna los papeles de atacante y defensor. Añade cada registro con <code>registro = [...registro, nuevo]</code>, sin mutar el array anterior, e imprime una línea por ronda que empiece con <code>Ronda N:</code>.</p></div></li>
+    <li><div><p><strong>El resumen, con funciones puras.</strong> Escribe <code>danioTotalDe(registro, nombre)</code> con <code>filter</code> y <code>reduce</code>. Imprime una línea que empiece con <code>Ganador:</code>, el daño total de cada luchador y <code>Luchador.total</code>.</p></div></li>
+  </ol>
+  <div class="taller" id="taller-proyecto" data-titulo="Proyecto: arena de combate" data-tiempo="8">
+    <textarea class="taller-codigo">// Paso 4: un dado reproducible (ya está hecho)
+function crearDado(secuencia) {
+  let i = 0;
+  return () => {
+    const valor = secuencia[i % secuencia.length];
+    i++;
+    return valor;
+  };
+}
+
+// Paso 2: la regla del daño (función pura)
+
+
+// Paso 1: la clase Luchador
+
+
+// Paso 3: Guerrero y Maga
+
+
+// Paso 5: un turno que devuelve un registro congelado
+
+
+// Paso 6: el combate
+const dado = crearDado([3, 5, 1, 6, 2, 4]);
+
+
+// Paso 7: el resumen
+</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (!/class\s+Luchador\b/.test(codigo)) return "Crea la clase Luchador (paso 1).";
+if (!/#vida/.test(codigo)) return "Guarda la vida en un campo privado #vida (paso 1).";
+if (!/static\s+total/.test(codigo)) return "Añade a Luchador el contador static total (paso 1).";
+if (!/calcularDanio/.test(codigo)) return "Escribe la función pura calcularDanio (paso 2).";
+if (!/extends\s+Luchador/.test(codigo)) return "Crea las subclases con extends Luchador (paso 3).";
+if (!/Object\.freeze/.test(codigo)) return "Congela cada registro del turno con Object.freeze (paso 5).";
+var rondas = salida.filter(function (l) { return /^Ronda \d+/.test(l); });
+if (rondas.length < 3) return "El combate debería imprimir al menos tres líneas que empiecen con «Ronda» (paso 6).";
+if (!salida.some(function (l) { return /^Ganador: /.test(l); })) return "Al final, imprime una línea que empiece con «Ganador: » (paso 7).";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <pre><code class="language-js">// ---------- Núcleo funcional: reglas puras ----------
+const calcularDanio = (ataque, defensa, tirada) =&gt; Math.max(1, ataque + tirada - defensa);
+
+// El dado recuerda en qué posición va (un closure)
+function crearDado(secuencia) {
+  let i = 0;
+  return () =&gt; {
+    const valor = secuencia[i % secuencia.length];
+    i++;
+    return valor;
+  };
+}
+
+// ---------- Objetos: luchadores con su estado protegido ----------
+class Luchador {
+  static total = 0;
+  #vida;
+
+  constructor(nombre, vida, ataque, defensa) {
+    this.nombre = nombre;
+    this.#vida = vida;
+    this.ataque = ataque;
+    this.defensa = defensa;
+    Luchador.total++;
+  }
+
+  get vida() {
+    return this.#vida;
+  }
+
+  get estaVivo() {
+    return this.#vida &gt; 0;
+  }
+
+  recibirDanio(cantidad) {
+    this.#vida = Math.max(0, this.#vida - cantidad);
+  }
+
+  danioContra(rival, tirada) {
+    return calcularDanio(this.ataque, rival.defensa, tirada);
+  }
+}
+
+class Guerrero extends Luchador {
+  constructor(nombre) {
+    super(nombre, 60, 8, 4);
+  }
+
+  recibirDanio(cantidad) {
+    super.recibirDanio(Math.max(1, cantidad - 2)); // su escudo frena 2 de cada golpe
+  }
+}
+
+class Maga extends Luchador {
+  constructor(nombre) {
+    super(nombre, 48, 12, 1);
+  }
+
+  danioContra(rival, tirada) {
+    // su magia atraviesa la mitad de la defensa del rival
+    return calcularDanio(this.ataque, Math.floor(rival.defensa / 2), tirada);
+  }
+}
+
+// ---------- Un turno: aplica el daño y devuelve un registro nuevo ----------
+function turno(ronda, atacante, defensor, tirada) {
+  const antes = defensor.vida;
+  defensor.recibirDanio(atacante.danioContra(defensor, tirada));
+  return Object.freeze({
+    ronda,
+    atacante: atacante.nombre,
+    defensor: defensor.nombre,
+    danio: antes - defensor.vida,
+    vidaRestante: defensor.vida,
+  });
+}
+
+// ---------- La cáscara: el bucle del combate y la consola ----------
+const dado = crearDado([3, 5, 1, 6, 2, 4]);
+const bruna = new Guerrero("Bruna");
+const lyra = new Maga("Lyra");
+
+let registro = [];
+let ronda = 1;
+let atacante = lyra;
+let defensor = bruna;
+
+while (bruna.estaVivo &amp;&amp; lyra.estaVivo) {
+  const r = turno(ronda, atacante, defensor, dado());
+  registro = [...registro, r];
+  console.log(`Ronda ${r.ronda}: ${r.atacante} golpea a ${r.defensor} (-${r.danio}). Le queda ${r.vidaRestante}.`);
+  [atacante, defensor] = [defensor, atacante]; // intercambia los papeles
+  ronda++;
+}
+
+// ---------- Resumen con funciones puras ----------
+const danioTotalDe = (registro, nombre) =&gt;
+  registro.filter((r) =&gt; r.atacante === nombre).reduce((suma, r) =&gt; suma + r.danio, 0);
+const ganador = bruna.estaVivo ? bruna : lyra;
+
+console.log(`Ganador: ${ganador.nombre} con ${ganador.vida} de vida`);
+console.log(`Daño total de Bruna: ${danioTotalDe(registro, "Bruna")}`);
+console.log(`Daño total de Lyra: ${danioTotalDe(registro, "Lyra")}`);
+console.log(`Luchadores creados: ${Luchador.total}`);</code></pre>
+    <p>Con la secuencia <code>[3, 5, 1, 6, 2, 4]</code>, el combate dura 8 rondas y gana Bruna con 19 de vida. La línea <code>[atacante, defensor] = [defensor, atacante]</code> usa la desestructuración de la Estación 11 para intercambiar dos variables en un solo paso. Fíjate en el reparto: todo lo que decide (daño, ganador, totales) está en funciones puras o en métodos pequeños; solo el bucle final imprime.</p>
+  </details>
+  <p><strong>Para ir más allá:</strong> cambia la secuencia del dado o las estadísticas y busca una combinación en la que gane Lyra; añade un <code>Sanador</code> que en su turno se cure en lugar de atacar (polimorfismo: sobrescribe un método <code>actuar(rival, tirada)</code>); da a los luchadores habilidades como piezas (composición), por ejemplo un <code>Veneno</code> que resta 2 de vida al final de cada ronda; o escribe <code>rondaDelGolpeMasFuerte(registro)</code> como función pura. Cuando llegues a la <a href="26-testing.html">Estación 26</a>, escribe pruebas para <code>calcularDanio</code> y <code>danioTotalDe</code>: al ser puras, no necesitan preparar nada.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Si fallas alguna, lee la explicación de cada opción: equivocarse aquí es la forma más barata de aprender.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Cuál de estos fragmentos es más declarativo?</p>
+      <ol class="opciones">
+        <li><code>for (let i = 0; i &lt; personas.length; i++) { if (personas[i].edad &gt;= 18) adultos.push(personas[i]); }</code><p class="explica">Es imperativo: describe cómo recorrer (índice, condición, <code>push</code>) paso a paso.</p></li>
+        <li><code>const adultos = personas.filter((p) =&gt; p.edad &gt;= 18);</code><p class="explica">Correcto. Dice qué quieres (las personas mayores de edad) y deja a <code>filter</code> el cómo.</p></li>
+        <li><code>let i = 0; while (i &lt; personas.length) { … i++; }</code><p class="explica">Es imperativo: tú manejas el contador y el avance del bucle.</p></li>
+        <li><code>for (const p of personas) { if (p.edad &gt;= 18) adultos.push(p); }</code><p class="explica">Más cómodo que el <code>for</code> clásico, pero sigue diciendo cómo: recorres y vas llenando el array a mano.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Qué hace <code>new Personaje("Lyra", 120)</code>?</p>
+      <ol class="opciones">
+        <li>Llama a la función <code>Personaje</code> como a cualquier otra.<p class="explica">Sin <code>new</code>, llamar a una clase da <code>TypeError</code>. <code>new</code> hace bastante más que una llamada normal.</p></li>
+        <li>Copia todos los métodos de la clase dentro del objeto nuevo.<p class="explica">Los métodos no se copian: se quedan en <code>Personaje.prototype</code> y el objeto se enlaza con él. Por eso todas las instancias comparten una sola copia.</p></li>
+        <li>Modifica la clase <code>Personaje</code> para que se llame Lyra.<p class="explica">La clase no cambia; es la plantilla. Lo que se crea es un objeto nuevo.</p></li>
+        <li>Crea un objeto vacío, lo enlaza con <code>Personaje.prototype</code>, ejecuta el constructor con <code>this</code> apuntando a él y lo devuelve.<p class="explica">Correcto: esos son los cuatro trabajos de <code>new</code>.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Qué imprime este programa?</p>
+      <pre><code class="language-js">class Contador {
+  valor = 0;
+  sumar() {
+    this.valor++;
+  }
+}
+const a = new Contador();
+const b = new Contador();
+a.sumar();
+a.sumar();
+b.sumar();
+console.log(a.valor, b.valor);</code></pre>
+      <ol class="opciones">
+        <li><code>2 1</code><p class="explica">Correcto. Cada instancia tiene su propio campo <code>valor</code>, y <code>this</code> es, en cada llamada, el objeto antes del punto.</p></li>
+        <li><code>3 3</code><p class="explica">Sería así si compartieran el dato, pero cada <code>new</code> crea su propio <code>valor</code>. Lo que comparten son los métodos, no los datos.</p></li>
+        <li><code>2 2</code><p class="explica"><code>b</code> solo llamó a <code>sumar</code> una vez.</p></li>
+        <li><code>0 0</code><p class="explica"><code>sumar</code> sí cambia <code>this.valor</code> del objeto que lo llama.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Una clase <code>Cuenta</code> declara <code>#saldo = 0;</code>. Fuera de la clase escribes <code>console.log(cuenta.#saldo);</code>. ¿Qué pasa?</p>
+      <ol class="opciones">
+        <li>Imprime <code>0</code>.<p class="explica">Los campos con <code>#</code> solo se pueden usar dentro del cuerpo de la clase.</p></li>
+        <li>Imprime <code>undefined</code>.<p class="explica">Eso pasaría con una propiedad normal que no existe, como <code>cuenta.saldo</code>. Con <code>#</code>, JavaScript es mucho más estricto.</p></li>
+        <li>El programa no llega a arrancar: <code>SyntaxError</code>, porque <code>#saldo</code> solo puede usarse dentro de la clase.<p class="explica">Correcto. JavaScript revisa los nombres privados antes de ejecutar, así que es imposible leerlos desde fuera por accidente.</p></li>
+        <li>Imprime el saldo, pero muestra un aviso en la consola.<p class="explica">No hay avisos: el acceso está prohibido y el error impide ejecutar el programa.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Crear un jefe con esta clase da error. ¿Por qué?</p>
+      <pre><code class="language-js">class Jefe extends Enemigo {
+  constructor(nombre, vida) {
+    this.fase = 1;
+    super(nombre, vida);
+  }
+}</code></pre>
+      <ol class="opciones">
+        <li>Falta la palabra <code>function</code> antes de <code>constructor</code>.<p class="explica">Los métodos de una clase, incluido el constructor, se escriben sin <code>function</code>.</p></li>
+        <li>Usa <code>this</code> antes de llamar a <code>super</code>: en una subclase, <code>super(...)</code> debe ir primero.<p class="explica">Correcto. Hasta que la superclase prepara el objeto, <code>this</code> no está listo y JavaScript lanza un <code>ReferenceError</code>.</p></li>
+        <li>Una subclase no puede tener constructor propio.<p class="explica">Sí puede. Si no lo escribe, JavaScript usa uno automático que llama a <code>super</code> con todos los argumentos.</p></li>
+        <li>Hay que escribir <code>super.constructor(nombre, vida)</code>.<p class="explica">En el constructor se llama a <code>super(...)</code> directamente. <code>super.metodo()</code> es para llamar a otros métodos de la superclase.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado"><code>formas</code> contiene un <code>Circulo</code> y un <code>Cuadrado</code>, cada uno con su propio método <code>area()</code>. El bucle <code>for (const f of formas) console.log(f.area());</code> funciona sin preguntar de qué clase es cada forma. ¿Cómo se llama esa idea?</p>
+      <ol class="opciones">
+        <li>Encapsulamiento.<p class="explica">El encapsulamiento trata de esconder y proteger el estado interno, no de que objetos distintos respondan al mismo método.</p></li>
+        <li>Herencia.<p class="explica">Las formas podrían heredar de una clase <code>Forma</code>, pero el bucle ni siquiera lo necesita: basta con que todas tengan <code>area()</code>.</p></li>
+        <li>Currying.<p class="explica">El currying transforma una función de varios argumentos en funciones de un argumento. No tiene que ver con este bucle.</p></li>
+        <li>Polimorfismo.<p class="explica">Correcto: el mismo mensaje (<code>area()</code>) produce respuestas distintas según el objeto que lo recibe.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Con <code>const lyra = new Personaje("Lyra", 120);</code>, ¿qué devuelve <code>Object.hasOwn(lyra, "describir")</code>?</p>
+      <ol class="opciones">
+        <li><code>true</code>, porque <code>lyra.describir()</code> funciona.<p class="explica">Que funcione no significa que sea propio. Eso es lo que responde <code>"describir" in lyra</code>, que sí da <code>true</code>.</p></li>
+        <li>Un error, porque <code>describir</code> es un método.<p class="explica"><code>Object.hasOwn</code> funciona con cualquier nombre de propiedad, sea un dato o un método.</p></li>
+        <li><code>false</code>: <code>describir</code> vive en <code>Personaje.prototype</code> y <code>lyra</code> lo alcanza a través de la cadena de prototipos.<p class="explica">Correcto. Las propiedades propias de <code>lyra</code> son sus datos; los métodos están en el prototipo, compartidos.</p></li>
+        <li><code>undefined</code>.<p class="explica"><code>Object.hasOwn</code> siempre devuelve un booleano: <code>true</code> o <code>false</code>.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Tu juego necesita criaturas que combinan volar, nadar y excavar en cualquier combinación, y algunas ganan habilidades durante la partida. ¿Qué diseño encaja mejor?</p>
+      <ol class="opciones">
+        <li>Composición: cada habilidad es una pieza y cada criatura tiene una lista de piezas.<p class="explica">Correcto. Las piezas se combinan libremente y se pueden añadir o cambiar mientras el juego corre.</p></li>
+        <li>Una subclase para cada combinación: <code>Volador</code>, <code>VoladorNadador</code>, <code>VoladorNadadorExcavador</code>…<p class="explica">Con tres habilidades ya hay siete combinaciones, y una criatura no puede cambiar de clase en plena partida.</p></li>
+        <li>Una sola clase con un <code>if</code> por cada tipo de criatura.<p class="explica">Cada criatura o habilidad nueva obliga a tocar todos esos <code>if</code>. Es justo lo que el polimorfismo y la composición evitan.</p></li>
+        <li>Herencia múltiple: <code>class Pato extends Volador, Nadador</code>.<p class="explica">JavaScript no lo permite: una clase solo puede extender a una.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Cuál de estas funciones es pura?</p>
+      <ol class="opciones">
+        <li><code>(lista) =&gt; lista.sort((a, b) =&gt; a - b)</code><p class="explica">Parece inocente, pero <code>sort</code> ordena el array original: muta su argumento, y eso es un efecto secundario.</p></li>
+        <li><code>(lista) =&gt; lista.toSorted((a, b) =&gt; a - b)</code><p class="explica">Correcto. <code>toSorted</code> devuelve un array nuevo y deja el original intacto; con la misma lista, siempre el mismo resultado.</p></li>
+        <li><code>(lista) =&gt; { lista.push(0); return lista.length; }</code><p class="explica"><code>push</code> modifica el array que recibió: quien la llamó verá un 0 de más.</p></li>
+        <li><code>(lista) =&gt; lista.map((x) =&gt; x * Math.random())</code><p class="explica">No muta nada, pero con la misma lista da resultados distintos en cada llamada.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Qué imprime este programa?</p>
+      <pre><code class="language-js">"use strict";
+const juego = Object.freeze({ nivel: 1, jugador: { vida: 100 } });
+juego.jugador.vida = 50;
+console.log(juego.jugador.vida);</code></pre>
+      <ol class="opciones">
+        <li><code>100</code>, porque el objeto está congelado.<p class="explica"><code>freeze</code> es superficial: congela <code>juego</code>, pero no el objeto <code>jugador</code> que hay dentro.</p></li>
+        <li>Un <code>TypeError</code>.<p class="explica">Lanzaría un error si cambiaras <code>juego.nivel</code>. <code>jugador</code> es otro objeto, y ese no está congelado.</p></li>
+        <li><code>undefined</code>.<p class="explica">La propiedad existe y tiene un valor: no hay motivo para <code>undefined</code>.</p></li>
+        <li><code>50</code>: <code>Object.freeze</code> solo congela el primer nivel.<p class="explica">Correcto. Para congelar a fondo hay que recorrer los objetos de dentro, como la función <code>congelar</code> del ejercicio 9.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Con <code>const multiplicar = (a) =&gt; (b) =&gt; a * b;</code>, ¿qué imprime <code>console.log([1, 2, 3].map(multiplicar(10)));</code>?</p>
+      <ol class="opciones">
+        <li><code>[ [Function (anonymous)], [Function (anonymous)], [Function (anonymous)] ]</code><p class="explica">Eso pasaría con <code>map(multiplicar)</code>, pasando la fábrica. Aquí <code>multiplicar(10)</code> ya devolvió la función que multiplica por 10.</p></li>
+        <li><code>[ NaN, NaN, NaN ]</code><p class="explica">No hay ninguna operación imposible: cada elemento se multiplica por 10.</p></li>
+        <li><code>[ 10, 20, 30 ]</code><p class="explica">Correcto. <code>multiplicar(10)</code> fija el primer argumento y devuelve <code>(b) =&gt; 10 * b</code>, que <code>map</code> aplica a cada elemento.</p></li>
+        <li>Un error, porque <code>multiplicar</code> necesita dos argumentos.<p class="explica">Con currying, los argumentos llegan de uno en uno: <code>multiplicar(10)</code> es una llamada válida que devuelve otra función.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Paradigma de programación</dt><dd>Forma de pensar y organizar un programa: qué piezas lo forman y cómo se comunican. Por ejemplo, el orientado a objetos o el funcional.</dd>
+    <dt>Programación imperativa</dt><dd>Estilo en el que describes cómo hacer algo, paso a paso, cambiando variables por el camino.</dd>
+    <dt>Programación declarativa</dt><dd>Estilo en el que describes qué resultado quieres y dejas que otra pieza decida cómo conseguirlo, como en SQL o con <code>filter</code>.</dd>
+    <dt>Programación orientada a objetos (POO)</dt><dd>Paradigma que organiza el programa en objetos que agrupan sus datos y el comportamiento que actúa sobre ellos. En inglés, <em>object-oriented programming</em>.</dd>
+    <dt>Clase</dt><dd>Plantilla que describe las propiedades y los métodos de un tipo de objeto. En JavaScript se declara con <code>class</code>.</dd>
+    <dt>Instancia</dt><dd>Cada objeto concreto creado a partir de una clase con <code>new</code>.</dd>
+    <dt>Constructor</dt><dd>Método especial de una clase que se ejecuta al crear cada instancia y prepara sus propiedades iniciales.</dd>
+    <dt>Campo privado</dt><dd>Propiedad de una clase cuyo nombre empieza con <code>#</code>; solo el código escrito dentro de la clase puede leerla o cambiarla.</dd>
+    <dt>Getter y setter</dt><dd>Métodos que se usan como si fueran propiedades: el getter (<code>get</code>) se ejecuta al leer y el setter (<code>set</code>) al asignar con <code>=</code>. Sirven para calcular y validar.</dd>
+    <dt>Miembro estático</dt><dd>Propiedad o método declarado con <code>static</code>: pertenece a la clase, no a cada instancia, y se usa con el nombre de la clase, como <code>Math.max</code>.</dd>
+    <dt>Invariante</dt><dd>Regla que el estado de un objeto debe cumplir siempre, como «la vida está entre 0 y la vida máxima».</dd>
+    <dt>Encapsulamiento</dt><dd>Esconder el estado interno de un objeto y permitir cambiarlo solo a través de sus métodos, que protegen sus reglas.</dd>
+    <dt>Abstracción</dt><dd>Ofrecer una forma sencilla de usar algo complejo, mostrando lo esencial y escondiendo los detalles.</dd>
+    <dt>Herencia</dt><dd>Mecanismo por el que una subclase recibe las propiedades y los métodos de su superclase. En JavaScript se escribe con <code>extends</code>; expresa una relación «es un».</dd>
+    <dt>super</dt><dd>Palabra para usar la superclase desde una subclase: <code>super(...)</code> llama a su constructor y <code>super.metodo()</code> a uno de sus métodos.</dd>
+    <dt>Sobrescribir un método</dt><dd>Definir en una subclase un método con el mismo nombre que uno heredado, para reemplazar su comportamiento. En inglés, <em>override</em>.</dd>
+    <dt>Polimorfismo</dt><dd>Capacidad de objetos distintos de responder al mismo método, cada uno a su manera, sin que quien los usa necesite saber su clase.</dd>
+    <dt>Prototipo</dt><dd>Objeto al que otro objeto está enlazado y al que le pide las propiedades que no tiene. Los métodos de una clase viven en <code>Clase.prototype</code>.</dd>
+    <dt>Cadena de prototipos</dt><dd>Serie de prototipos enlazados que JavaScript recorre para buscar una propiedad, hasta llegar a <code>null</code>.</dd>
+    <dt>Composición</dt><dd>Construir objetos juntando piezas pequeñas e independientes en lugar de heredar. Expresa una relación «tiene un».</dd>
+    <dt>Programación funcional</dt><dd>Paradigma que construye programas combinando funciones puras y datos que no se modifican.</dd>
+    <dt>Inmutabilidad</dt><dd>Práctica de no modificar nunca un dato existente: para obtener una versión distinta, se crea una copia nueva con el cambio.</dd>
+    <dt>Transparencia referencial</dt><dd>Propiedad de una expresión que puede reemplazarse por su resultado sin cambiar el programa. Las llamadas a funciones puras la cumplen.</dd>
+    <dt>Currying</dt><dd>Transformar una función de varios argumentos en una cadena de funciones de un argumento cada una: <code>f(a)(b)</code> en lugar de <code>f(a, b)</code>. También se dice «currificación».</dd>
+    <dt>Composición de funciones</dt><dd>Combinar funciones de modo que la salida de una sea la entrada de la siguiente, como en una tubería (<code>pipe</code>).</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación, no antes: te servirán para repasar y para escuchar las mismas ideas explicadas por otras personas. Algunos usan otros lenguajes en los ejemplos; fíjate en los conceptos, que son los mismos.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=DlphYPc_HKk" data-canal="EDteam" data-idioma="es" data-nivel="intro" data-duracion="20 min" data-por-que="Qué problema resuelve la orientación a objetos, con ejemplos cotidianos y sin atarse a un lenguaje.">¿Qué es la programacion orientada a objetos? - La mejor explicación en español</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=SI7O81GMG2A" data-canal="BitBoss" data-idioma="es" data-nivel="intro" data-duracion="10 min" data-por-que="Repaso rápido de los cuatro pilares: abstracción, encapsulamiento, herencia y polimorfismo.">Programación Orientada a Objetos (POO): Abstracción, Encapsulamiento, Herencia, Polimorfismo</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=M0FfjG4mhZg" data-canal="Desarrollo Útil" data-idioma="es" data-nivel="profundo" data-duracion="33 min" data-por-que="Clases de JavaScript en la práctica: constructor, métodos, getters y setters, de la misma serie que ya conoces.">Las CLASES y sus MÉTODOS · CONSTRUCTOR · GETTERS y SETTERS · Curso de JAVASCRIPT desde CERO #12</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=Ga3XXNAIPt0" data-canal="Fazt" data-idioma="es" data-nivel="intro" data-duracion="19 min" data-por-que="Las ideas de la programación funcional aplicadas a JavaScript. Es de 2017: la sintaxis ha evolucionado, pero los conceptos siguen vigentes.">Introducción a la Programación Funcional en Javascript</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Extensions/Advanced_JavaScript_objects/Classes_in_JavaScript">Clases en JavaScript (MDN)</a><p>El tutorial de Mozilla: clases, constructores, herencia y encapsulamiento, con ejercicios.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Classes">Clases: referencia (MDN)</a><p>Toda la sintaxis de <code>class</code>: campos, privados, <code>static</code>, <code>extends</code> y <code>super</code>.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/JavaScript/Guide/Inheritance_and_the_prototype_chain">Herencia y la cadena de prototipos (MDN)</a><p>Cómo funcionan los prototipos por dentro, con diagramas de la cadena.</p></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_classes">Using classes (MDN, en inglés)</a><p>La guía más completa sobre cuándo conviene usar clases y cuándo no; incluye una discusión honesta de sus límites.</p></li>
+    <li><a href="https://es.javascript.info/classes">Clases (javascript.info)</a><p>Una serie de capítulos en español sobre clases, herencia, miembros estáticos y privados, con tareas.</p></li>
+    <li><a href="https://es.javascript.info/currying-partials">Currificación (javascript.info)</a><p>El currying explicado con más detalle, incluida una función que currifica cualquier otra.</p></li>
+  </ul>
 </section>

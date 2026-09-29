@@ -1405,7 +1405,7 @@ for (const objetos of [10, 100, 1000]) {
       <thead><tr><th scope="col">n</th><th scope="col">log₂ n</th><th scope="col">n</th><th scope="col">n²</th><th scope="col">2ⁿ</th></tr></thead>
       <tbody>
         <tr><td>10</td><td>3.3</td><td>10</td><td>100</td><td>1024</td></tr>
-        <tr><td>100</td><td>6.6</td><td>100</td><td>10 000</td><td>un 1 seguido de 30 cifras</td></tr>
+        <tr><td>100</td><td>6.6</td><td>100</td><td>10 000</td><td>un número de 31 cifras</td></tr>
         <tr><td>1000</td><td>10</td><td>1000</td><td>1 000 000</td><td>más que átomos en el universo observable</td></tr>
         <tr><td>1 000 000</td><td>20</td><td>1 000 000</td><td>1 000 000 000 000</td><td>imposible de calcular</td></tr>
       </tbody>
@@ -1414,4 +1414,489 @@ for (const objetos of [10, 100, 1000]) {
   <aside class="senal clave">
     <p>Cuando alguien diga que un algoritmo es «logarítmico», piensa en «parte el problema por la mitad en cada paso» (casi gratis). «Lineal» es «mira cada dato una vez». «Cuadrático» es «compara cada dato con todos los demás» (dos bucles anidados). Y «exponencial» es «prueba todas las combinaciones» (inviable salvo con muy pocos datos).</p>
   </aside>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Una tabla de verdad prueba todas las combinaciones de una condición. Las leyes de De Morgan dicen que <code>!(a &amp;&amp; b)</code> es <code>!a || !b</code> y que <code>!(a || b)</code> es <code>!a &amp;&amp; !b</code>: al meter el <code>!</code>, cada pieza se niega y el conector cambia. Los conjuntos (unión, intersección, diferencia) son la misma lógica aplicada a colecciones.</li>
+    <li>En una base, cada posición vale una potencia de la base. Un dígito hexadecimal son 4 bits y un byte son dos dígitos hexadecimales; un dígito octal son 3 bits. Convierte con <code>toString(base)</code> y <code>parseInt(texto, base)</code>, siempre con la base. <code>#RRGGBB</code> son tres bytes de color.</li>
+    <li>Los operadores <code>&amp; | ^ ~ &lt;&lt; &gt;&gt;</code> trabajan bit a bit con enteros de 32 bits. Con máscaras: consultar <code>(p &amp; F) !== 0</code>, activar <code>p | F</code>, quitar <code>p &amp; ~F</code>, alternar <code>p ^ F</code>. Los negativos se guardan en complemento a dos, y lo que no cabe se desborda.</li>
+    <li>Los números de JavaScript son coma flotante IEEE 754 de 64 bits: 0.1 no se puede guardar exacto. Compara decimales con tolerancia, trabaja el dinero en centavos y recuerda que los enteros solo son exactos hasta <code>Number.MAX_SAFE_INTEGER</code> (para más, <code>BigInt</code>).</li>
+    <li><code>floor</code> siempre baja, <code>ceil</code> siempre sube, <code>trunc</code> va hacia el 0 y <code>round</code> va al más cercano (con .5, hacia +∞). Redondea solo al mostrar.</li>
+    <li><code>%</code> sirve para ciclos y para envolver posiciones, pero con negativos da negativos: el módulo que siempre funciona es <code>((a % n) + n) % n</code>. Fila y columna salen de <code>Math.floor(i / ancho)</code> e <code>i % ancho</code>.</li>
+    <li>Los porcentajes se encadenan multiplicando, no sumando. La regla de tres, <code>lerp</code>, el lerp inverso y <code>clamp</code> resuelven casi todas las proporciones de una interfaz o un juego.</li>
+    <li>En pantalla, y crece hacia abajo. Un vector es un desplazamiento: sumar mueve, restar da la flecha de un punto a otro, la magnitud es Pitágoras, normalizar deja solo la dirección y el producto punto dice si dos direcciones se parecen.</li>
+    <li><code>Math</code> trabaja en radianes (180° = π). <code>(cos a, sin a)</code> convierte un ángulo en dirección, y <code>Math.atan2(dy, dx)</code> convierte una dirección en ángulo. El easing deforma el <code>t</code> de <code>lerp</code> para que el movimiento acelere y frene.</li>
+    <li>Para el azar: <code>Math.floor(Math.random() * (max - min + 1)) + min</code> para enteros, Fisher-Yates para barajar, límites acumulados para probabilidades ponderadas y un generador con semilla cuando necesites repetir resultados. Los logaritmos cuentan mitades y las sumatorias cuentan el trabajo de los bucles: las dos ideas detrás de Big-O.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Nueve ejercicios de dificultad creciente. Cada uno comprueba tu solución al pulsar «Ejecutar». Intenta cada uno unos minutos antes de abrir las pistas: el esfuerzo de recordar es lo que fija lo aprendido. Si te atascas en uno de juego, vuelve a la cápsula de su sección.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-condicion">
+    <h3>Arregla la condición que siempre se cumple</h3>
+    <p>La función <code>noEsLateral</code> debe devolver <code>true</code> solo si la tecla <em>no</em> es «a» ni «d». Ahora devuelve <code>true</code> siempre. Corrígela usando una de las leyes de De Morgan, de forma que imprima <code>false</code>, <code>false</code>, <code>true</code> y <code>true</code>.</p>
+    <div class="taller" id="taller-ej-condicion" data-titulo="Ejercicio 1">
+      <textarea class="taller-codigo">// Debe devolver true solo si la tecla NO es "a" ni "d"
+function noEsLateral(tecla) {
+  return tecla !== "a" || tecla !== "d";
+}
+
+console.log(noEsLateral("a")); // debería ser false
+console.log(noEsLateral("d")); // debería ser false
+console.log(noEsLateral("w")); // debería ser true
+console.log(noEsLateral("s")); // debería ser true</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (salida.join("\n") !== "false\nfalse\ntrue\ntrue") return "Las cuatro líneas deberían ser false, false, true y true. Ahora salen: " + salida.join(", ") + ".";
+if (!/&&|!\s*\(/.test(codigo)) return "Funciona, pero hazlo con De Morgan: cambia el || por && o escribe la condición como !( … ).";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Traduce a palabras lo que quieres: «no es a <em>y</em> no es d». ¿Qué conector corresponde a esa «y»?</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>También puedes partir de lo contrario, «es a o es d» (<code>tecla === "a" || tecla === "d"</code>), y negarlo entero con <code>!( … )</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function noEsLateral(tecla) {
+  return tecla !== "a" &amp;&amp; tecla !== "d";
+}
+
+console.log(noEsLateral("a"));
+console.log(noEsLateral("d"));
+console.log(noEsLateral("w"));
+console.log(noEsLateral("s"));</code></pre>
+      <p>La otra forma, <code>return !(tecla === "a" || tecla === "d");</code>, es equivalente por la segunda ley de De Morgan. Elige la que se lea mejor en tu código.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-color">
+    <h3>Del código hexadecimal a rgb()</h3>
+    <p>Completa <code>hexARgb</code> para que convierta un color <code>"#RRGGBB"</code> en el texto <code>"rgb(R, G, B)"</code> con los tres canales en decimal. Debe imprimir exactamente:</p>
+    <pre class="consola"><code>rgb(255, 136, 0)
+rgb(30, 144, 255)
+rgb(0, 0, 0)
+rgb(192, 255, 238)</code></pre>
+    <div class="taller" id="taller-ej-color" data-titulo="Ejercicio 2">
+      <textarea class="taller-codigo">function hexARgb(hex) {
+  // hex tiene la forma "#RRGGBB"
+  const r = 0; // usa hex.slice(1, 3) y parseInt(…, 16)
+  const g = 0;
+  const b = 0;
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+console.log(hexARgb("#FF8800"));
+console.log(hexARgb("#1E90FF"));
+console.log(hexARgb("#000000"));
+console.log(hexARgb("#C0FFEE"));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["rgb(255, 136, 0)", "rgb(30, 144, 255)", "rgb(0, 0, 0)", "rgb(192, 255, 238)"];
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] || "(nada)") + "».";
+}
+if (!/parseInt/.test(codigo) || !/,\s*16\s*\)/.test(codigo)) return "Convierte cada par con parseInt(texto, 16), indicando la base 16.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El carácter 0 es la almohadilla. El rojo son los caracteres 1 y 2: <code>hex.slice(1, 3)</code> (el final no se incluye). El verde, <code>slice(3, 5)</code>; el azul, <code>slice(5, 7)</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>parseInt("FF", 16)</code> da 255 y <code>parseInt("88", 16)</code> da 136. Da igual que las letras estén en mayúscula o minúscula.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function hexARgb(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+console.log(hexARgb("#FF8800"));
+console.log(hexARgb("#1E90FF"));
+console.log(hexARgb("#000000"));
+console.log(hexARgb("#C0FFEE"));</code></pre>
+      <p>Para ir más allá: haz que también acepte la forma corta <code>"#F80"</code>, duplicando cada dígito antes de convertir.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-envolver">
+    <h3>Una pista sin bordes</h3>
+    <p>La función <code>envolver(valor, n)</code> debe devolver siempre un número entre 0 y <code>n - 1</code>, también con valores negativos. Ahora usa solo <code>%</code> y falla al retroceder. Corrígela para que imprima <code>2</code>, <code>9</code>, <code>7</code>, <code>5</code> y <code>vie</code>.</p>
+    <div class="taller" id="taller-ej-envolver" data-titulo="Ejercicio 3" data-esperado="2&#10;9&#10;7&#10;5&#10;vie">
+      <textarea class="taller-codigo">function envolver(valor, n) {
+  return valor % n; // falla con los negativos
+}
+
+console.log(envolver(12, 10));  // 2
+console.log(envolver(-1, 10));  // 9
+console.log(envolver(-13, 10)); // 7
+console.log(envolver(5, 10));   // 5
+
+const dias = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"];
+const hoy = 0; // lunes
+console.log(dias[envolver(hoy - 3, 7)]); // hace 3 días: vie</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>-1 % 10</code> da −1. Si a ese resultado le sumas 10, queda 9, que es lo que buscas. Pero con <code>valor = 12</code> sumar 10 da 12: ¿qué operación lo devuelve al rango?</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La receta completa está en la sección de módulo: resto, más el tamaño, y otra vez resto.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function envolver(valor, n) {
+  return ((valor % n) + n) % n;
+}
+
+console.log(envolver(12, 10));
+console.log(envolver(-1, 10));
+console.log(envolver(-13, 10));
+console.log(envolver(5, 10));
+
+const dias = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"];
+const hoy = 0;
+console.log(dias[envolver(hoy - 3, 7)]);</code></pre>
+      <p>Otra versión equivalente: <code>return valor - n * Math.floor(valor / n);</code>. Las dos calculan el módulo matemático, que siempre cae entre 0 y <code>n - 1</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-poderes">
+    <h3>Poderes en un solo número</h3>
+    <p>Completa las cuatro funciones usando operadores de bits (sin <code>if</code> ni sumas ni restas): <code>tiene</code> devuelve <code>true</code> o <code>false</code>; <code>activar</code>, <code>quitar</code> y <code>alternar</code> devuelven el número nuevo. Las líneas deben ser <code>9 true false</code>, <code>8 false</code>, <code>12</code>, <code>4</code>, <code>4</code> y <code>9</code>.</p>
+    <div class="taller" id="taller-ej-poderes" data-titulo="Ejercicio 4">
+      <textarea class="taller-codigo">const ESCUDO = 1, SALTO = 2, IMAN = 4, TURBO = 8;
+
+function tiene(poderes, poder) {
+  // true si el bit de «poder» está encendido
+}
+function activar(poderes, poder) {
+  // enciende el bit de «poder»
+}
+function quitar(poderes, poder) {
+  // apaga el bit de «poder»
+}
+function alternar(poderes, poder) {
+  // invierte el bit de «poder»
+}
+
+let p = 0;
+p = activar(p, ESCUDO);
+p = activar(p, TURBO);
+console.log(p, tiene(p, ESCUDO), tiene(p, IMAN)); // 9 true false
+p = quitar(p, ESCUDO);
+console.log(p, tiene(p, ESCUDO));                 // 8 false
+p = alternar(p, IMAN);
+console.log(p);                                    // 12
+p = alternar(p, TURBO);
+console.log(p);                                    // 4
+console.log(quitar(4, SALTO));                     // 4: quitar algo que no estaba no cambia nada
+console.log(activar(9, ESCUDO));                   // 9: activar algo que ya estaba tampoco</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["9 true false", "8 false", "12", "4", "4", "9"];
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] || "(nada)") + "».";
+}
+if (!/~/.test(codigo)) return "Para quitar un bit usa & con la máscara invertida (~poder).";
+if (!/\^/.test(codigo)) return "Para alternar un bit usa ^ (XOR).";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Repasa la tabla de la sección de máscaras: consultar con <code>&amp;</code>, activar con <code>|</code>, quitar con <code>&amp; ~</code> y alternar con <code>^</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>tiene</code> debe devolver un booleano, no un número: compara el resultado de <code>&amp;</code> con 0, y no olvides los paréntesis.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const ESCUDO = 1, SALTO = 2, IMAN = 4, TURBO = 8;
+
+function tiene(poderes, poder) {
+  return (poderes &amp; poder) !== 0;
+}
+function activar(poderes, poder) {
+  return poderes | poder;
+}
+function quitar(poderes, poder) {
+  return poderes &amp; ~poder;
+}
+function alternar(poderes, poder) {
+  return poderes ^ poder;
+}
+
+let p = 0;
+p = activar(p, ESCUDO);
+p = activar(p, TURBO);
+console.log(p, tiene(p, ESCUDO), tiene(p, IMAN));
+p = quitar(p, ESCUDO);
+console.log(p, tiene(p, ESCUDO));
+p = alternar(p, IMAN);
+console.log(p);
+p = alternar(p, TURBO);
+console.log(p);
+console.log(quitar(4, SALTO));
+console.log(activar(9, ESCUDO));</code></pre>
+      <p>Las dos últimas líneas explican por qué no sirven las sumas y restas: <code>4 - SALTO</code> daría 2 y <code>9 + ESCUDO</code> daría 10, activando o quitando bits que no tocaban.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-barra">
+    <h3>Una barra de vida que no se sale</h3>
+    <p>La función calcula el porcentaje de vida y el ancho en píxeles de una barra de 200 px. Funciona con valores normales, pero con un golpe mayor que la vida da números negativos, y con una curación de más se sale del marco. Limita la fracción de vida entre 0 y 1 con <code>clamp</code> (o con <code>Math.min</code> y <code>Math.max</code>) para que imprima:</p>
+    <pre class="consola"><code>75 % → 150 px
+33 % → 67 px
+0 % → 0 px
+100 % → 200 px</code></pre>
+    <div class="taller" id="taller-ej-barra" data-titulo="Ejercicio 5">
+      <textarea class="taller-codigo">const ANCHO = 200; // píxeles de la barra llena
+
+function barraDeVida(vida, vidaMax) {
+  const porcentaje = Math.round(vida / vidaMax * 100);
+  const pixeles = Math.round(vida / vidaMax * ANCHO);
+  return `${porcentaje} % → ${pixeles} px`;
+}
+
+console.log(barraDeVida(75, 100));   // 75 % → 150 px
+console.log(barraDeVida(1, 3));      // 33 % → 67 px
+console.log(barraDeVida(-20, 100));  // 0 % → 0 px
+console.log(barraDeVida(130, 100));  // 100 % → 200 px</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["75 % → 150 px", "33 % → 67 px", "0 % → 0 px", "100 % → 200 px"];
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] || "(nada)") + "».";
+}
+if (!/Math\.(min|max)|clamp/.test(codigo)) return "Resuélvelo limitando la fracción con clamp o con Math.min y Math.max, no con casos especiales.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Calcula primero la fracción, <code>vida / vidaMax</code>, guárdala en una constante y limítala entre 0 y 1. Después usa esa fracción en las dos cuentas.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>const clamp = (v, min, max) =&gt; Math.min(Math.max(v, min), max);</code></p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const ANCHO = 200;
+const clamp = (v, min, max) =&gt; Math.min(Math.max(v, min), max);
+
+function barraDeVida(vida, vidaMax) {
+  const fraccion = clamp(vida / vidaMax, 0, 1);
+  const porcentaje = Math.round(fraccion * 100);
+  const pixeles = Math.round(fraccion * ANCHO);
+  return `${porcentaje} % → ${pixeles} px`;
+}
+
+console.log(barraDeVida(75, 100));
+console.log(barraDeVida(1, 3));
+console.log(barraDeVida(-20, 100));
+console.log(barraDeVida(130, 100));</code></pre>
+      <p>Guardar la fracción limitada en una constante evita repetir la cuenta y garantiza que el texto y la barra nunca se contradigan.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-critico">
+    <h3>¿Al menos un golpe crítico?</h3>
+    <p>Cada golpe tiene un 10 % de probabilidad de ser crítico, independiente de los demás. Completa <code>alMenosUno(p, intentos)</code> para que devuelva la probabilidad (de 0 a 1) de conseguir al menos un crítico. Debe imprimir:</p>
+    <pre class="consola"><code>golpes = 1: 10.00 %
+golpes = 5: 40.95 %
+golpes = 20: 87.84 %</code></pre>
+    <div class="taller" id="taller-ej-critico" data-titulo="Ejercicio 6">
+      <textarea class="taller-codigo">const probCritico = 0.1;
+
+function alMenosUno(p, intentos) {
+  // probabilidad de que ocurra al menos una vez en «intentos» intentos independientes
+}
+
+for (const golpes of [1, 5, 20]) {
+  console.log(`golpes = ${golpes}: ${(alMenosUno(probCritico, golpes) * 100).toFixed(2)} %`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["golpes = 1: 10.00 %", "golpes = 5: 40.95 %", "golpes = 20: 87.84 %"];
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] || "(nada)") + "». Si te sale 50.00 % con 5 golpes, estás sumando probabilidades.";
+}
+if (/40\.95|87\.84|0\.4095|0\.8784/.test(codigo)) return "No escribas los resultados a mano: calcúlalos con p e intentos.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Piensa en lo contrario: ¿cuál es la probabilidad de que <em>ningún</em> golpe sea crítico? Un golpe no crítico es <code>1 - p</code>, y como son independientes, se multiplica una vez por cada golpe.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Multiplicar un número por sí mismo <code>intentos</code> veces es una potencia: <code>(1 - p) ** intentos</code>. Después aplica el complemento.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const probCritico = 0.1;
+
+function alMenosUno(p, intentos) {
+  return 1 - (1 - p) ** intentos;
+}
+
+for (const golpes of [1, 5, 20]) {
+  console.log(`golpes = ${golpes}: ${(alMenosUno(probCritico, golpes) * 100).toFixed(2)} %`);
+}</code></pre>
+      <p>Aunque cada golpe tiene un 10 %, en 20 golpes hay un 12 % de probabilidad de no ver ningún crítico. Si diseñas un juego, a veces conviene «ayudar a la suerte» (por ejemplo, subir la probabilidad tras varios fallos) para que nadie tenga rachas frustrantes.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-perseguir">
+    <h3>Persigue sin pasarte</h3>
+    <p>Escribe <code>paso(pos, objetivo, velocidad)</code>: devuelve la nueva posición tras avanzar desde <code>pos</code> hacia <code>objetivo</code> exactamente <code>velocidad</code> unidades. Si el objetivo está a esa distancia o menos, devuelve una copia del objetivo (así nunca se pasa ni tiembla alrededor). Debe imprimir:</p>
+    <pre class="consola"><code>paso 1: (1.20, 1.60)
+paso 2: (2.40, 3.20)
+paso 3: (3.00, 4.00)
+paso 4: (3.00, 4.00)
+10</code></pre>
+    <div class="taller" id="taller-ej-perseguir" data-titulo="Ejercicio 7">
+      <textarea class="taller-codigo">function paso(pos, objetivo, velocidad) {
+  return pos; // tu código aquí
+}
+
+let p = { x: 0, y: 0 };
+const meta = { x: 3, y: 4 };
+for (let i = 1; i <= 4; i++) {
+  p = paso(p, meta, 2);
+  console.log(`paso ${i}: (${p.x.toFixed(2)}, ${p.y.toFixed(2)})`);
+}
+// Si ya está encima del objetivo, no debe dar NaN
+console.log(paso({ x: 10, y: 10 }, { x: 10, y: 10 }, 5).x);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["paso 1: (1.20, 1.60)", "paso 2: (2.40, 3.20)", "paso 3: (3.00, 4.00)", "paso 4: (3.00, 4.00)", "10"];
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] || "(nada)") + "».";
+}
+if (!/hypot|sqrt/.test(codigo)) return "Calcula la distancia con Math.hypot (o con Math.sqrt y Pitágoras).";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Tres pasos: resta para obtener la flecha hacia el objetivo, mide su longitud y, si es mayor que <code>velocidad</code>, avanza en la dirección normalizada multiplicada por <code>velocidad</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Comprueba primero <code>if (distancia &lt;= velocidad) return { x: objetivo.x, y: objetivo.y };</code>. Ese <code>if</code> también evita dividir entre cero cuando la distancia es 0.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function paso(pos, objetivo, velocidad) {
+  const dx = objetivo.x - pos.x;
+  const dy = objetivo.y - pos.y;
+  const distancia = Math.hypot(dx, dy);
+  if (distancia &lt;= velocidad) return { x: objetivo.x, y: objetivo.y };
+  return {
+    x: pos.x + (dx / distancia) * velocidad,
+    y: pos.y + (dy / distancia) * velocidad,
+  };
+}
+
+let p = { x: 0, y: 0 };
+const meta = { x: 3, y: 4 };
+for (let i = 1; i &lt;= 4; i++) {
+  p = paso(p, meta, 2);
+  console.log(`paso ${i}: (${p.x.toFixed(2)}, ${p.y.toFixed(2)})`);
+}
+console.log(paso({ x: 10, y: 10 }, { x: 10, y: 10 }, 5).x);</code></pre>
+      <p>Muchos motores traen esta función con el nombre <code>moveTowards</code> o <code>move_toward</code>. Devolver una copia en lugar del propio objeto <code>objetivo</code> evita que, al mover después el personaje, se mueva también la meta sin querer (referencias, Estación 11).</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-apuntar">
+    <h3>Apunta y dispara</h3>
+    <p>Completa dos funciones. <code>anguloHacia(desde, hacia)</code> devuelve el ángulo en <em>grados</em>, redondeado a entero, de la flecha que va de un punto al otro, en coordenadas de pantalla. <code>velocidadBala(grados, rapidez)</code> devuelve el vector velocidad <code>{ x, y }</code> de una bala que sale con ese ángulo. Debe imprimir:</p>
+    <pre class="consola"><code>ángulo -45°, velocidad (3.54, -3.54)
+ángulo 90°, velocidad (0.00, 5.00)
+ángulo 180°, velocidad (-5.00, 0.00)</code></pre>
+    <div class="taller" id="taller-ej-apuntar" data-titulo="Ejercicio 8">
+      <textarea class="taller-codigo">const aRadianes = (grados) => grados * Math.PI / 180;
+const aGrados = (radianes) => radianes * 180 / Math.PI;
+
+function anguloHacia(desde, hacia) {
+  return 0; // ángulo en grados, redondeado
+}
+
+function velocidadBala(grados, rapidez) {
+  return { x: 0, y: 0 };
+}
+
+const torreta = { x: 100, y: 100 };
+for (const objetivo of [{ x: 160, y: 40 }, { x: 100, y: 180 }, { x: 40, y: 100 }]) {
+  const a = anguloHacia(torreta, objetivo);
+  const v = velocidadBala(a, 5);
+  console.log(`ángulo ${a}°, velocidad (${v.x.toFixed(2)}, ${v.y.toFixed(2)})`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["ángulo -45°, velocidad (3.54, -3.54)", "ángulo 90°, velocidad (0.00, 5.00)", "ángulo 180°, velocidad (-5.00, 0.00)"];
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] || "(nada)") + "».";
+}
+if (!/atan2/.test(codigo)) return "Calcula el ángulo con Math.atan2(dy, dx).";
+if (!/Math\.cos/.test(codigo) || !/Math\.sin/.test(codigo)) return "Calcula la velocidad con Math.cos y Math.sin.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Para el ángulo: resta las posiciones, usa <code>Math.atan2(dy, dx)</code> (primero la y), pasa a grados con <code>aGrados</code> y redondea con <code>Math.round</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para la velocidad: pasa los grados a radianes; la dirección es <code>(Math.cos(rad), Math.sin(rad))</code>, y la velocidad es esa dirección multiplicada por la rapidez.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const aRadianes = (grados) =&gt; grados * Math.PI / 180;
+const aGrados = (radianes) =&gt; radianes * 180 / Math.PI;
+
+function anguloHacia(desde, hacia) {
+  return Math.round(aGrados(Math.atan2(hacia.y - desde.y, hacia.x - desde.x)));
+}
+
+function velocidadBala(grados, rapidez) {
+  const rad = aRadianes(grados);
+  return { x: Math.cos(rad) * rapidez, y: Math.sin(rad) * rapidez };
+}
+
+const torreta = { x: 100, y: 100 };
+for (const objetivo of [{ x: 160, y: 40 }, { x: 100, y: 180 }, { x: 40, y: 100 }]) {
+  const a = anguloHacia(torreta, objetivo);
+  const v = velocidadBala(a, 5);
+  console.log(`ángulo ${a}°, velocidad (${v.x.toFixed(2)}, ${v.y.toFixed(2)})`);
+}</code></pre>
+      <p>Fíjate en el primer objetivo: está arriba a la derecha y el ángulo sale negativo, porque en pantalla «arriba» es y negativa. Con <code>Math.atan(dy / dx)</code> el tercer objetivo, que está a la izquierda, daría 0° en vez de 180°.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-botin">
+    <h3>Una tabla de botín ponderada</h3>
+    <p>Escribe <code>elegirPonderado(tabla, r)</code>. Recibe una lista de objetos con <code>nombre</code> y <code>peso</code> (los pesos no tienen por qué sumar 100 ni 1) y un número <code>r</code> entre 0 y 1, como los de <code>Math.random()</code>. Devuelve el nombre del objeto en cuyo tramo cae <code>r</code>. Debe funcionar con cualquier tabla, así que nada de <code>if</code> con los nombres: recorre la lista acumulando pesos. Las ocho primeras líneas deben ser:</p>
+    <pre class="consola"><code>0 → poción
+0.49 → poción
+0.5 → espada
+0.79 → espada
+0.8 → escudo
+0.949 → escudo
+0.95 → dragón de peluche
+0.999 → dragón de peluche</code></pre>
+    <div class="taller" id="taller-ej-botin" data-titulo="Ejercicio 9">
+      <textarea class="taller-codigo">const botin = [
+  { nombre: "poción", peso: 50 },
+  { nombre: "espada", peso: 30 },
+  { nombre: "escudo", peso: 15 },
+  { nombre: "dragón de peluche", peso: 5 },
+];
+
+function elegirPonderado(tabla, r) {
+  // tu código aquí
+}
+
+for (const r of [0, 0.49, 0.5, 0.79, 0.8, 0.949, 0.95, 0.999]) {
+  console.log(r, "→", elegirPonderado(botin, r));
+}
+console.log("Hoy te toca:", elegirPonderado(botin, Math.random()));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["0 → poción", "0.49 → poción", "0.5 → espada", "0.79 → espada", "0.8 → escudo", "0.949 → escudo", "0.95 → dragón de peluche", "0.999 → dragón de peluche"];
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] || "(nada)") + "».";
+}
+if (!/^Hoy te toca: (poción|espada|escudo|dragón de peluche)$/.test(salida[8] || "")) return "La última línea debería mostrar un objeto de la tabla elegido con Math.random().";
+if (!/\.peso/.test(codigo) || !/for\s*\(|forEach|reduce/.test(codigo)) return "Recorre la tabla con un bucle y usa el peso de cada objeto, para que funcione con cualquier tabla.";
+if (/"(poción|espada|escudo)"[^\n]*[<>]|[<>][^\n]*"(poción|espada|escudo)"/.test(codigo.split("function elegirPonderado")[1] || "")) return "No compares con los nombres: la función debe servir para cualquier tabla.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Primero suma todos los pesos (aquí, 100). Multiplica <code>r</code> por ese total: así <code>r</code> pasa a ser un punto de la barra de 0 a 100.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Recorre la tabla con un acumulador que empieza en 0. Suma el peso de cada objeto y, en cuanto el punto sea menor que lo acumulado, devuelve ese nombre. Es la cadena de <code>if</code> de la sección, pero generada por un bucle.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const botin = [
+  { nombre: "poción", peso: 50 },
+  { nombre: "espada", peso: 30 },
+  { nombre: "escudo", peso: 15 },
+  { nombre: "dragón de peluche", peso: 5 },
+];
+
+function elegirPonderado(tabla, r) {
+  const total = tabla.reduce((suma, objeto) =&gt; suma + objeto.peso, 0);
+  const punto = r * total;
+  let acumulado = 0;
+  for (const objeto of tabla) {
+    acumulado += objeto.peso;
+    if (punto &lt; acumulado) return objeto.nombre;
+  }
+  return tabla[tabla.length - 1].nombre; // por si r valiera 1 por algún redondeo
+}
+
+for (const r of [0, 0.49, 0.5, 0.79, 0.8, 0.949, 0.95, 0.999]) {
+  console.log(r, "→", elegirPonderado(botin, r));
+}
+console.log("Hoy te toca:", elegirPonderado(botin, Math.random()));</code></pre>
+      <p>Recibir <code>r</code> como parámetro en lugar de llamar a <code>Math.random()</code> dentro hace que la función sea fácil de probar: con el mismo <code>r</code> siempre da lo mismo. Es la misma idea que las semillas, y la aprovecharás en la Estación 26.</p>
+    </details>
+  </article>
 </section>
