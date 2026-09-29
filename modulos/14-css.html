@@ -51,6 +51,7 @@
       <li><a href="#cascada">Cascada y herencia</a></li>
       <li><a href="#valores">Colores y unidades</a></li>
       <li><a href="#caja">Modelo de caja</a></li>
+      <li><a href="#flexbox">Flexbox</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -439,7 +440,7 @@ input::placeholder {
         <text class="d-codigo-texto" x="26" y="110" style="font-size:16px">.boton { background: blue; }</text>
         <text class="d-codigo-texto" x="26" y="148" style="font-size:16px">#comprar { background: green; }</text>
         <text class="d-codigo-texto" x="26" y="186" style="font-size:16px">.boton { background: red; }</text>
-        <path class="d-mal-trazo" d="M22 143h318" data-pasos="4-"/>
+        <path class="d-mal-trazo" d="M22 143h342" data-pasos="4-"/>
         <g data-pasos="2-">
           <rect class="d-caja" x="402" y="53" width="68" height="26" rx="13"/>
           <text class="d-mono" x="436" y="71" text-anchor="middle" style="font-size:14px">0-0-1</text>
@@ -456,7 +457,7 @@ input::placeholder {
         <rect class="d-linea" x="520" y="64" width="170" height="64" rx="12"/>
         <text class="d-codigo-texto" x="546" y="103" style="font-size:20px">Comprar</text>
         <text class="d-codigo-texto" x="642" y="103" style="font-size:20px">ya</text>
-        <rect class="d-punteada" x="634" y="80" width="42" height="32" rx="4" data-pasos="5"/>
+        <rect class="d-punteada" x="638" y="80" width="38" height="32" rx="4" data-pasos="5"/>
         <text class="d-mono" x="605" y="162" text-anchor="middle" style="font-size:15px" data-texto="3:background: green; 4:background: red">background: ¿?</text>
         <g data-pasos="5">
           <text class="d-peq" x="605" y="192" text-anchor="middle">span: color heredado del botón</text>
@@ -683,9 +684,9 @@ p {
 .nota { font-size: 0.875rem; }</code></pre>
     <script type="application/json">[
       {"linea": 1, "vars": {"html": "16px", "ul.menu": "1.25 × 16 = 20px"}, "nota": "En font-size, em se mide con el tamaño del padre. El padre de .menu mide 16px, así que .menu mide 20px."},
-      {"linea": 2, "vars": {"html": "16px", "ul.menu": "20px", "li exterior": "1.25 × 20 = 25px"}, "nota": "El primer li está dentro de .menu (20px): 1.25 × 20 = 25px."},
-      {"linea": 2, "vars": {"html": "16px", "ul.menu": "20px", "li exterior": "25px", "ul interior": "25px (heredado)", "li interior": "1.25 × 25 = 31.25px"}, "nota": "La misma regla elige también al li de la lista interior. Su padre mide 25px, así que él mide 31.25px. Cada nivel crece un 25% más: em se multiplica."},
-      {"linea": 3, "vars": {"html": "16px", "ul.menu": "20px", "li exterior": "25px", "ul interior": "25px (heredado)", "li interior": "31.25px", "span.nota": "0.875 × 16 = 14px"}, "nota": "rem siempre mira al html (16px), esté donde esté el elemento. La nota mide 14px aunque esté dentro de un li de 31.25px."}
+      {"linea": 2, "vars": {"html": "16px", "ul.menu": "1.25 × 16 = 20px", "li exterior": "1.25 × 20 = 25px"}, "nota": "El primer li está dentro de .menu (20px): 1.25 × 20 = 25px."},
+      {"linea": 2, "vars": {"html": "16px", "ul.menu": "1.25 × 16 = 20px", "li exterior": "1.25 × 20 = 25px", "ul interior": "25px (heredado)", "li interior": "1.25 × 25 = 31.25px"}, "nota": "La misma regla elige también al li de la lista interior. Su padre mide 25px, así que él mide 31.25px. Cada nivel crece un 25% más: em se multiplica."},
+      {"linea": 3, "vars": {"html": "16px", "ul.menu": "1.25 × 16 = 20px", "li exterior": "1.25 × 20 = 25px", "ul interior": "25px (heredado)", "li interior": "1.25 × 25 = 31.25px", "span.nota": "0.875 × 16 = 14px"}, "nota": "rem siempre mira al html (16px), esté donde esté el elemento. La nota mide 14px aunque esté dentro de un li de 31.25px."}
     ]</script>
   </div>
   <p>Ahora mide unidades de verdad. El pequeño programa de la pestaña JS mide el ancho de cada barra en píxeles e imprime el resultado en la consola; entenderás cómo funciona en la <a href="15-dom.html">Estación 15</a>. Antes de ejecutar, predice qué barras medirán lo mismo.</p>
@@ -969,6 +970,185 @@ p  { margin-top: 20px; }
   <h3>Cuando el contenido no cabe: overflow</h3>
   <p>Si le fijas una altura a una caja y el texto no cabe, el texto se sale por abajo y se monta sobre lo que viene después. La propiedad <code>overflow</code> decide qué hacer con lo que sobra: <code>visible</code> (se sale, es el valor por defecto), <code>hidden</code> (se corta), <code>auto</code> (aparece una barra de desplazamiento solo si hace falta) o <code>scroll</code> (barra siempre).</p>
   <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>Evita fijar la altura de las cajas con texto. El texto cambia: una traducción al alemán es más larga, una persona agranda la letra, un nombre de producto no cabe. Usa <code>min-height</code> si necesitas una altura mínima y deja que la caja crezca. En DevTools, la pestaña Calculado muestra el dibujo del modelo de caja del elemento seleccionado, con sus cuatro medidas. Al pasar el ratón por encima, el navegador pinta cada capa sobre la página.</p></div></aside>
+</section>
+
+<section id="flexbox" data-parada="Flexbox">
+  <h2>Flexbox: filas y columnas flexibles</h2>
+  <p>Poner un logo a la izquierda y un menú a la derecha. Centrar un texto en vertical dentro de una caja. Repartir tres botones con el mismo espacio entre ellos. Durante años, estas tareas necesitaban trucos incómodos con tablas o con la propiedad <code>float</code>. <strong>Flexbox</strong> (<em>Flexible Box Layout</em>) se creó para resolverlas: coloca elementos en una fila o en una columna y reparte el espacio entre ellos.</p>
+
+  <h3>Contenedor y elementos flexibles</h3>
+  <p>Flexbox se activa en el padre con <code>display: flex</code>. Ese padre pasa a ser el <strong>contenedor flex</strong>, y sus hijos directos, los <strong>elementos flex</strong> (<em>flex items</em>). Las propiedades se reparten así: unas se escriben en el contenedor y deciden cómo se colocan todos; otras se escriben en un elemento y solo le afectan a él.</p>
+  <figure class="capsula" data-titulo="Los dos ejes de flexbox">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 310" role="img" aria-label="Animación: tres cajas A, B y C apiladas pasan a estar en fila con display: flex; aparecen el eje principal horizontal y el cruzado vertical; justify-content: space-between las reparte a lo ancho; align-items: center las centra en vertical; flex-direction: column gira los ejes y las reparte de arriba abajo, centradas en horizontal.">
+        <text class="d-rotulo" x="14" y="26">CSS del contenedor</text>
+        <text class="d-rotulo" x="525" y="26" text-anchor="middle">Vista</text>
+        <rect class="d-codigo" x="10" y="40" width="290" height="220" rx="8"/>
+        <rect class="d-resalte" x="16" y="80" width="278" height="26" rx="4" data-pasos="2-" data-mover="3:translate(0px,28px); 4:translate(0px,56px); 5:translate(0px,84px); 6:translate(0px,28px)"/>
+        <text class="d-codigo-texto" x="26" y="70" style="font-size:13px">.fila {</text>
+        <text class="d-codigo-texto" x="46" y="98" style="font-size:13px" data-texto="2:display: flex;">display: block;</text>
+        <text class="d-codigo-texto" x="46" y="126" style="font-size:13px" data-pasos="3-" data-texto="6:flex-direction: column;">flex-direction: row;</text>
+        <text class="d-codigo-texto" x="46" y="154" style="font-size:13px" data-pasos="4-">justify-content: space-between;</text>
+        <text class="d-codigo-tenue" x="46" y="182" style="font-size:13px" data-pasos="2-4">/* por defecto: stretch */</text>
+        <text class="d-codigo-texto" x="46" y="182" style="font-size:13px" data-pasos="5-">align-items: center;</text>
+        <text class="d-codigo-texto" x="26" y="210" style="font-size:13px">}</text>
+        <rect class="d-caja" x="350" y="40" width="350" height="220" rx="6"/>
+        <g data-pasos="1">
+          <rect class="d-acento" x="360" y="50" width="330" height="44" rx="4"/>
+          <text class="d-sobre-acento d-rotulo" x="525" y="78" text-anchor="middle">A</text>
+          <rect class="d-acento" x="360" y="102" width="330" height="44" rx="4"/>
+          <text class="d-sobre-acento d-rotulo" x="525" y="130" text-anchor="middle">B</text>
+          <rect class="d-acento" x="360" y="154" width="330" height="44" rx="4"/>
+          <text class="d-sobre-acento d-rotulo" x="525" y="182" text-anchor="middle">C</text>
+        </g>
+        <g data-pasos="2-4">
+          <g>
+            <rect class="d-acento" x="360" y="50" width="70" height="200" rx="4"/>
+            <text class="d-sobre-acento d-rotulo" x="395" y="156" text-anchor="middle">A</text>
+          </g>
+          <g data-mover="4:translate(52px,0px)">
+            <rect class="d-acento" x="438" y="50" width="70" height="200" rx="4"/>
+            <text class="d-sobre-acento d-rotulo" x="473" y="156" text-anchor="middle">B</text>
+          </g>
+          <g data-mover="4:translate(104px,0px)">
+            <rect class="d-acento" x="516" y="50" width="70" height="200" rx="4"/>
+            <text class="d-sobre-acento d-rotulo" x="551" y="156" text-anchor="middle">C</text>
+          </g>
+        </g>
+        <g data-pasos="5-">
+          <g data-mover="6:translate(130px,-70px)">
+            <rect class="d-acento" x="360" y="120" width="70" height="60" rx="4"/>
+            <text class="d-sobre-acento d-rotulo" x="395" y="156" text-anchor="middle">A</text>
+          </g>
+          <g>
+            <rect class="d-acento" x="490" y="120" width="70" height="60" rx="4"/>
+            <text class="d-sobre-acento d-rotulo" x="525" y="156" text-anchor="middle">B</text>
+          </g>
+          <g data-mover="6:translate(-130px,70px)">
+            <rect class="d-acento" x="620" y="120" width="70" height="60" rx="4"/>
+            <text class="d-sobre-acento d-rotulo" x="655" y="156" text-anchor="middle">C</text>
+          </g>
+        </g>
+        <g data-pasos="3-">
+          <path class="d-acento-trazo" d="M360 280h316"/>
+          <path class="d-acento" d="M676 272l14 8-14 8z"/>
+          <text class="d-peq" x="525" y="302" text-anchor="middle" data-texto="6:eje cruzado (align-items)">eje principal (justify-content)</text>
+          <path class="d-punteada" d="M334 50v186"/>
+          <path class="d-tinta" d="M326 236l8 14 8-14z"/>
+          <text class="d-peq" x="320" y="150" text-anchor="middle" transform="rotate(-90 320 150)" data-texto="6:eje principal">eje cruzado</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Tres <code>div</code> dentro de otro <code>div</code>. Como son elementos de bloque, cada uno ocupa una fila entera y se apilan de arriba abajo.</li>
+        <li><code>display: flex</code> en el padre, el contenedor. Sus hijos directos se colocan en fila, pegados al principio. Por defecto se estiran para ocupar todo el alto del contenedor.</li>
+        <li>Flexbox trabaja con dos ejes. El <strong>eje principal</strong> sigue la dirección de <code>flex-direction</code>; su valor por defecto, <code>row</code>, lo hace horizontal. El <strong>eje cruzado</strong> es el perpendicular.</li>
+        <li><code>justify-content</code> reparte los elementos a lo largo del eje principal. Con <code>space-between</code>, el primero va al inicio, el último al final y el espacio que sobra se reparte entre ellos.</li>
+        <li><code>align-items</code> los coloca en el eje cruzado. Con <code>center</code> dejan de estirarse, recuperan su altura natural y quedan centrados en vertical.</li>
+        <li data-duracion="7"><code>flex-direction: column</code> gira los ejes. Ahora el principal es vertical: <code>justify-content</code> reparte de arriba abajo y <code>align-items: center</code> centra en horizontal. Las propiedades son las mismas; lo que cambia es la dirección.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p>Flexbox solo afecta a los <strong>hijos directos</strong> del contenedor. Si pones <code>display: flex</code> en un <code>&lt;ul&gt;</code>, los <code>&lt;li&gt;</code> se ponen en fila, pero los enlaces que hay dentro de cada <code>&lt;li&gt;</code> no se enteran. Otro clásico: poner <code>justify-content</code> en los elementos en lugar de en el contenedor. No hace nada.</p></div></aside>
+
+  <h3>Las propiedades del contenedor</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Propiedad</th><th scope="col">Valores frecuentes</th><th scope="col">Qué decide</th></tr></thead>
+      <tbody>
+        <tr><td><code>flex-direction</code></td><td><code>row</code> (defecto), <code>column</code>, <code>row-reverse</code>, <code>column-reverse</code></td><td>La dirección del eje principal.</td></tr>
+        <tr><td><code>justify-content</code></td><td><code>flex-start</code> (defecto), <code>center</code>, <code>flex-end</code>, <code>space-between</code>, <code>space-around</code>, <code>space-evenly</code></td><td>Cómo se reparten los elementos y el espacio libre en el eje principal.</td></tr>
+        <tr><td><code>align-items</code></td><td><code>stretch</code> (comportamiento por defecto), <code>flex-start</code>, <code>center</code>, <code>flex-end</code>, <code>baseline</code></td><td>Cómo se colocan en el eje cruzado. <code>baseline</code> alinea la línea base del texto.</td></tr>
+        <tr><td><code>flex-wrap</code></td><td><code>nowrap</code> (defecto), <code>wrap</code></td><td>Si los elementos pueden bajar a una línea nueva cuando no caben.</td></tr>
+        <tr><td><code>gap</code></td><td><code>1rem</code>, <code>12px 24px</code></td><td>El hueco entre elementos. Mucho más limpio que poner márgenes a cada uno.</td></tr>
+        <tr><td><code>align-content</code></td><td>Los mismos que <code>justify-content</code></td><td>Cómo se reparten las líneas cuando hay varias (con <code>wrap</code>).</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p><code>justify-content</code> siempre trabaja en el eje principal y <code>align-items</code> siempre en el cruzado. Si cambias <code>flex-direction</code> a <code>column</code>, «justificar» pasa a ser vertical. Cuando dudes, pregúntate primero: ¿cuál es mi eje principal?</p></div></aside>
+  <p>Este es tu laboratorio. Cambia los valores de <code>justify-content</code>, <code>align-items</code> y <code>flex-direction</code> uno por uno y ejecuta cada vez. Antes de cada cambio, predice dónde van a quedar A, B y C.</p>
+  <div class="taller" id="taller-flex-lab" data-modo="web" data-titulo="Laboratorio de flexbox" data-alto="15rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div class="fila"&gt;
+  &lt;div class="item"&gt;A&lt;/div&gt;
+  &lt;div class="item alto"&gt;B&lt;/div&gt;
+  &lt;div class="item"&gt;C&lt;/div&gt;
+&lt;/div&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">.fila {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 8px;
+  height: 200px;
+  background: #edf2f4;
+  border: 2px dashed #8d99ae;
+}
+
+.item {
+  background: #2a9d8f;
+  color: white;
+  font: bold 1.5rem system-ui, sans-serif;
+  padding: 12px 20px;
+}
+
+.alto {
+  padding-block: 32px;
+}</textarea>
+  </div>
+  <p>Algunas combinaciones para probar: <code>justify-content: space-evenly</code>; <code>align-items: center</code> y después <code>flex-end</code> (fíjate en que B es más alto); <code>justify-content: center</code> con <code>align-items: center</code>, la receta clásica para centrar en los dos ejes; y <code>flex-direction: column</code> con <code>align-items: flex-start</code>.</p>
+
+  <h3>Las propiedades de cada elemento</h3>
+  <p>Cada elemento flex puede decidir cuánto crece, cuánto encoge y de qué tamaño parte:</p>
+  <ul>
+    <li><code>flex-grow</code>: qué parte del espacio sobrante se lleva. Con 0 (el valor por defecto) no crece; si uno tiene 2 y otro 1, el primero se lleva el doble del sobrante.</li>
+    <li><code>flex-shrink</code>: cuánto encoge si falta espacio. Por defecto 1: todos encogen por igual. Con 0 no encoge.</li>
+    <li><code>flex-basis</code>: el tamaño de partida antes de repartir. Por defecto <code>auto</code>, que usa su <code>width</code> o el tamaño de su contenido.</li>
+    <li><code>flex</code> es el atajo que las junta, en ese orden: <code>flex: 1 1 200px</code>. Tres formas muy usadas: <code>flex: 1</code> (todos iguales, se reparten el espacio a partes iguales), <code>flex: 0 0 250px</code> (mide 250 y no se mueve de ahí) y <code>flex: 1 1 250px</code> (parte de 250 y crece o encoge según haga falta).</li>
+    <li><code>align-self</code>: cambia la alineación en el eje cruzado solo para ese elemento.</li>
+    <li><code>order</code>: cambia su posición visual. Úsalo con cuidado: quien navega con teclado o con lector de pantalla sigue el orden del HTML, no el visual.</li>
+  </ul>
+  <div class="taller" id="taller-flex-tarjetas" data-modo="web" data-titulo="Modifica: tarjetas que crecen y saltan de línea" data-alto="18rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div class="tarjetas"&gt;
+  &lt;article class="tarjeta"&gt;&lt;h3&gt;Principiante&lt;/h3&gt;&lt;p&gt;Diez niveles para aprender los controles.&lt;/p&gt;&lt;/article&gt;
+  &lt;article class="tarjeta"&gt;&lt;h3&gt;Aventura&lt;/h3&gt;&lt;p&gt;La historia completa, con jefes finales.&lt;/p&gt;&lt;/article&gt;
+  &lt;article class="tarjeta"&gt;&lt;h3&gt;Contrarreloj&lt;/h3&gt;&lt;p&gt;Compite contra tus propios récords.&lt;/p&gt;&lt;/article&gt;
+&lt;/div&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">.tarjetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-family: system-ui, sans-serif;
+}
+
+.tarjeta {
+  flex: 1 1 150px;
+  background: #fff3d6;
+  border: 2px solid #e9c46a;
+  border-radius: 8px;
+  padding: 0 12px;
+}</textarea>
+  </div>
+  <p><strong>Modifica</strong> y observa: cambia <code>150px</code> por <code>300px</code> (ya no caben tres por fila y saltan a la siguiente línea, donde vuelven a crecer); cambia <code>flex: 1 1 150px</code> por <code>flex: 0 0 150px</code> (dejan de crecer); vuelve al original y añade <code>.tarjeta:first-child { flex-grow: 3; }</code>.</p>
+
+  <h3>Recetas que vas a usar mil veces</h3>
+  <pre><code class="language-css">/* 1. Centrar algo en los dos ejes */
+.portada {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100svh;
+}
+
+/* 2. Barra de navegación: logo a la izquierda, lo demás a la derecha */
+.barra { display: flex; align-items: center; gap: 1rem; }
+.barra .logo { margin-right: auto; }   /* el margen automático se come el espacio libre */
+
+/* 3. Tarjeta con el botón siempre abajo, aunque el texto sea corto */
+.tarjeta { display: flex; flex-direction: column; }
+.tarjeta .boton { margin-top: auto; }</code></pre>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">El texto que desborda</p><p>Por defecto, un elemento flex no encoge por debajo del ancho de su contenido más largo, como una dirección web o una palabra larguísima. El resultado: la fila se sale del contenedor. La solución es poner <code>min-width: 0</code> en ese elemento (o <code>overflow-wrap: anywhere</code> en el texto). Si una fila flex «se rompe» en el teléfono, sospecha de esto primero.</p></div></aside>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>En DevTools, los contenedores flex llevan una pequeña etiqueta «flex» junto a su etiqueta en el panel Elementos. Al pulsarla, el navegador dibuja sobre la página los elementos, los huecos y el espacio libre. Firefox muestra además por qué un elemento creció o encogió.</p></div></aside>
 </section>
   </main>
 </div>

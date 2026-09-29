@@ -49,6 +49,7 @@
       <li><a href="#redes">Redes e internet</a></li>
       <li><a href="#ip">Direcciones IP</a></li>
       <li><a href="#paquetes">Paquetes y puertos</a></li>
+      <li><a href="#dns">DNS</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -282,7 +283,7 @@ console.log("IPv6 por persona:", direccionesIPv6 / personas);</textarea>
           <rect class="d-acento" x="76" y="95" width="28" height="22" rx="4" data-clases="5:d-mal"/>
           <text class="d-sobre-acento d-rotulo d-peq" x="90" y="111" text-anchor="middle">3</text>
         </g>
-        <path class="d-mal-trazo" d="M388 149l24 24M412 149l-24 24" data-pasos="5-6"/>
+        <path class="d-mal-trazo" d="M388 149l24 24M412 149l-24 24" data-pasos="6"/>
         <text class="d-peq" x="400" y="200" text-anchor="middle" data-pasos="5-6">saturado</text>
         <g data-pasos="7-" data-mover="8:translate(406px,-46px)">
           <rect class="d-acento" x="266" y="221" width="28" height="22" rx="4"/>
@@ -388,6 +389,139 @@ for (const paquete of paquetes) {
     </table>
   </div>
   <p>Tu lado de la conversación también usa un puerto, pero lo elige el sistema operativo al azar entre los números altos cada vez que abres una conexión. Una conexión queda identificada por cuatro datos: tu IP y tu puerto, y la IP y el puerto del servidor.</p>
+</section>
+
+<section id="dns" data-parada="DNS">
+  <h2>DNS: de nombres a números</h2>
+  <p>Nadie recuerda que Wikipedia en español está en <code>208.80.153.224</code>. Además, esa IP puede cambiar: los sitios grandes tienen servidores en varios continentes y te dan la IP del que te queda más cerca. Por eso usamos nombres, y un sistema que los traduce a números cada vez que hace falta.</p>
+
+  <h3>Cómo se lee un nombre de dominio</h3>
+  <p>Un <strong>nombre de dominio</strong> es un nombre legible que apunta a uno o varios servidores, como <code>es.wikipedia.org</code>. Se lee <strong>de derecha a izquierda</strong>, de lo más general a lo más concreto, y cada nivel se separa con un punto:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Parte</th><th scope="col">Nombre</th><th scope="col">Qué es</th></tr></thead>
+      <tbody>
+        <tr><td><code>org</code></td><td>Dominio de nivel superior (TLD, <em>Top-Level Domain</em>)</td><td>La terminación. Hay genéricos (<code>.com</code>, <code>.org</code>, <code>.net</code>, <code>.dev</code>) y de país (<code>.mx</code>, <code>.ar</code>, <code>.co</code>, <code>.cl</code>, <code>.es</code>…).</td></tr>
+        <tr><td><code>wikipedia</code></td><td>Nombre registrado</td><td>El nombre que alguien alquiló, por años, a un registrador. Junto con el TLD forma el dominio que tiene dueño: <code>wikipedia.org</code>.</td></tr>
+        <tr><td><code>es</code></td><td>Subdominio</td><td>Una subdivisión que el dueño crea libremente, sin pedir permiso a nadie: <code>es.</code>, <code>en.</code>, <code>www.</code>, <code>tienda.</code>…</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuidado</p><p><code>www</code> no es obligatorio ni especial: es un subdominio como cualquier otro. <code>www.ejemplo.com</code> y <code>ejemplo.com</code> podrían ser sitios distintos, aunque casi siempre el dueño configura uno para que lleve al otro. Esta idea de que el dueño elige los subdominios libremente será clave para <a href="#phishing">detectar enlaces falsos</a>.</p></div></aside>
+
+  <h3>El sistema que responde: DNS</h3>
+  <p>El <strong>DNS</strong> (<em>Domain Name System</em>, sistema de nombres de dominio) traduce nombres de dominio a direcciones IP. Ninguna computadora conoce todos los nombres del mundo: el DNS está repartido en miles de servidores organizados por niveles, y cada nivel sabe a quién preguntarle por el siguiente.</p>
+  <ul>
+    <li>El <strong>resolvedor DNS</strong> (<em>resolver</em>) hace el trabajo de averiguar la respuesta por ti. Normalmente es el de tu proveedor de internet, aunque hay resolvedores públicos como <code>1.1.1.1</code> (Cloudflare), <code>8.8.8.8</code> (Google) o <code>9.9.9.9</code> (Quad9).</li>
+    <li>Los <strong>servidores raíz</strong> están en la cima. Hay 13 nombres (de <code>a.root-servers.net</code> a <code>m.root-servers.net</code>) administrados por 12 organizaciones, con más de 2000 copias repartidas por el mundo.</li>
+    <li>Los <strong>servidores de nivel superior</strong> conocen los dominios de su terminación, por ejemplo todos los <code>.com</code>.</li>
+    <li>Los <strong>servidores autoritativos</strong> tienen la información oficial de un dominio concreto: son los que dicen «la IP de <code>www.ejemplo.com</code> es tal».</li>
+  </ul>
+  <p>Así se resuelve un nombre la primera vez que lo visitas:</p>
+  <figure class="capsula" data-titulo="Resolución DNS paso a paso">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 320" role="img" aria-label="Animación: tu navegador pregunta al resolvedor DNS por www.ejemplo.com. El resolvedor pregunta al servidor raíz, que lo manda a los servidores de .com; estos lo mandan al servidor autoritativo de ejemplo.com, que responde con la IP 203.0.113.50. El resolvedor entrega la IP al navegador y ambos la guardan en caché.">
+        <g data-pasos="3-6">
+          <path class="d-linea" d="M330 196V150H265V80"/>
+          <path class="d-tinta" d="M259 90l6 -12 6 12z"/>
+          <circle class="d-acento" cx="265" cy="118" r="11"/>
+          <text class="d-sobre-acento d-rotulo d-peq" x="265" y="123" text-anchor="middle">1</text>
+        </g>
+        <g data-pasos="4-6">
+          <path class="d-linea" d="M450 196V80"/>
+          <path class="d-tinta" d="M444 90l6 -12 6 12z"/>
+          <circle class="d-acento" cx="450" cy="118" r="11"/>
+          <text class="d-sobre-acento d-rotulo d-peq" x="450" y="123" text-anchor="middle">2</text>
+        </g>
+        <g data-pasos="5-6">
+          <path class="d-linea" d="M470 196V150H630V80"/>
+          <path class="d-tinta" d="M624 90l6 -12 6 12z"/>
+          <circle class="d-acento" cx="630" cy="118" r="11"/>
+          <text class="d-sobre-acento d-rotulo d-peq" x="630" y="123" text-anchor="middle">3</text>
+        </g>
+        <rect class="d-caja" x="180" y="14" width="170" height="64" rx="8" data-clases="3:d-acento-trazo; 4:"/>
+        <text class="d-rotulo" x="265" y="40" text-anchor="middle">Servidor raíz</text>
+        <text class="d-peq d-tenue" x="265" y="63" text-anchor="middle" data-texto="3:Pregunta a los de .com">(la cima: «.»)</text>
+        <rect class="d-caja" x="365" y="14" width="170" height="64" rx="8" data-clases="4:d-acento-trazo; 5:"/>
+        <text class="d-rotulo" x="450" y="40" text-anchor="middle">Servidor de .com</text>
+        <text class="d-peq d-tenue" x="450" y="63" text-anchor="middle" data-texto="4:Pregunta a ejemplo.com">(nivel superior)</text>
+        <rect class="d-caja" x="550" y="14" width="160" height="64" rx="8" data-clases="5:d-acento-trazo; 6:"/>
+        <text class="d-rotulo" x="630" y="40" text-anchor="middle">Autoritativo</text>
+        <text class="d-peq d-tenue" x="630" y="63" text-anchor="middle" data-texto="5:IP: 203.0.113.50">(de ejemplo.com)</text>
+        <g data-pasos="1-2">
+          <text class="d-peq" x="97" y="152" text-anchor="middle">¿Cuál es la IP de</text>
+          <text class="d-mono d-peq" x="97" y="172" text-anchor="middle">www.ejemplo.com?</text>
+        </g>
+        <g data-pasos="7">
+          <text class="d-peq" x="97" y="152" text-anchor="middle">¿ejemplo.com otra vez?</text>
+          <text class="d-peq" x="97" y="172" text-anchor="middle">Ya la sé: está en caché.</text>
+        </g>
+        <rect class="d-caja" x="12" y="196" width="170" height="72" rx="8" data-clases="1:d-acento-trazo; 2:; 6:d-acento-trazo"/>
+        <text class="d-rotulo" x="97" y="237" text-anchor="middle">Tu navegador</text>
+        <text class="d-peq d-tenue" x="97" y="294" text-anchor="middle" data-texto="6:Caché: guardada">Caché: vacía</text>
+        <g data-pasos="2-6">
+          <path class="d-linea" d="M182 222H290"/>
+          <path class="d-tinta" d="M288 216l12 6 -12 6z"/>
+        </g>
+        <g data-pasos="6">
+          <path class="d-punteada" d="M300 246H194"/>
+          <path class="d-tinta" d="M194 240l-12 6 12 6z"/>
+          <text class="d-mono d-peq" x="241" y="266" text-anchor="middle">203.0.113.50</text>
+        </g>
+        <rect class="d-caja" x="300" y="196" width="190" height="72" rx="8" data-clases="2:d-acento-trazo; 3:"/>
+        <text class="d-rotulo" x="395" y="224" text-anchor="middle">Resolvedor DNS</text>
+        <text class="d-peq d-tenue" x="395" y="248" text-anchor="middle">de tu proveedor</text>
+        <text class="d-peq d-tenue" x="395" y="294" text-anchor="middle" data-texto="6:Caché: guardada 1 hora (TTL)">Caché: vacía</text>
+        <g data-pasos="6-">
+          <rect class="d-acento" x="520" y="196" width="188" height="72" rx="10"/>
+          <text class="d-sobre-acento d-mono d-peq" x="614" y="226" text-anchor="middle">www.ejemplo.com</text>
+          <text class="d-sobre-acento d-mono d-peq" x="614" y="250" text-anchor="middle">= 203.0.113.50</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Escribes <code>www.ejemplo.com</code>. Para conectarse, tu navegador necesita la IP del servidor. Primero mira en su propia caché (y en la del sistema operativo): está vacía, porque nunca visitaste ese sitio.</li>
+        <li>Le pregunta al resolvedor DNS, normalmente el de tu proveedor de internet. El resolvedor también guarda respuestas en caché, pero esta no la tiene. Le toca averiguarla.</li>
+        <li data-duracion="6">El resolvedor pregunta a un servidor raíz. El raíz no conoce la IP, pero sabe quién administra <code>.com</code>, y responde: «pregunta a los servidores de <code>.com</code>».</li>
+        <li data-duracion="6">El resolvedor pregunta a un servidor de <code>.com</code>. Tampoco conoce la IP, pero sabe qué servidores son los responsables de <code>ejemplo.com</code>.</li>
+        <li data-duracion="6">El resolvedor pregunta al servidor autoritativo de <code>ejemplo.com</code>, el que tiene la información oficial del dominio. Este sí responde: <code>203.0.113.50</code>.</li>
+        <li data-duracion="7">El resolvedor entrega la IP a tu navegador. Los dos la guardan en caché durante el tiempo que indica la respuesta (su <strong>TTL</strong>, por ejemplo una hora). Ahora el navegador ya puede conectarse al servidor.</li>
+        <li>Si vuelves a entrar antes de que caduque, el navegador usa la IP guardada y no pregunta a nadie. Por eso la segunda visita a un sitio suele empezar más rápido.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Una <strong>caché</strong> es un lugar donde se guarda temporalmente una respuesta para no tener que pedirla otra vez. Gracias a las cachés, casi nunca hace falta recorrer todos los niveles: tu resolvedor ya conoce los servidores de <code>.com</code> y la IP de los sitios populares. El <strong>TTL</strong> (<em>time to live</em>) de cada respuesta, en segundos, dice cuánto tiempo se puede guardar. Por eso, cuando un sitio se muda a otro servidor, algunas personas siguen viendo el antiguo durante un rato: sus cachés todavía no han caducado.</p>
+  <aside class="senal analogia"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Para entenderlo</p><p>El DNS se parece a la agenda de contactos de tu celular: guardas «Mamá» y el teléfono se encarga del número. La analogía falla en dos cosas: la agenda del DNS está repartida entre miles de servidores que se consultan en cadena, y el mismo nombre puede dar números distintos según desde dónde preguntes.</p></div></aside>
+  <p>Ahora ordena tú los pasos. Arrastra las líneas o usa los botones de flecha, y pulsa «Comprobar».</p>
+  <div class="parsons" data-titulo="Ordena la resolución DNS" data-lenguaje="text">
+    <ol>
+      <li>El navegador busca la IP en su caché y en la del sistema operativo</li>
+      <li>El navegador pregunta al resolvedor DNS</li>
+      <li>El resolvedor pregunta a un servidor raíz</li>
+      <li>El raíz responde: pregunta a los servidores de .com</li>
+      <li>El resolvedor pregunta a un servidor de .com</li>
+      <li>El servidor de .com responde: pregunta al autoritativo de ejemplo.com</li>
+      <li>El autoritativo responde con la IP</li>
+      <li>El resolvedor entrega la IP al navegador y ambos la guardan en caché</li>
+    </ol>
+  </div>
+
+  <h3>Una consulta DNS de verdad</h3>
+  <p>Cuando aprendas a usar la terminal (<a href="05-herramientas.html">Estación 5</a>), podrás hacer consultas DNS tú mismo con el comando <code>nslookup</code>, que existe en Windows, macOS y Linux. Esta es una respuesta real para Wikipedia en español (tus números pueden ser distintos según dónde estés):</p>
+  <pre class="consola"><code><span class="prompt">$</span> nslookup es.wikipedia.org
+<span class="salida">Server:		192.168.1.1
+Address:	192.168.1.1#53
+
+Non-authoritative answer:
+es.wikipedia.org	canonical name = dyna.wikimedia.org.
+Name:	dyna.wikimedia.org
+Address: 208.80.153.224
+Name:	dyna.wikimedia.org
+Address: 2620:0:861:ed1a::1</span></code></pre>
+  <p>Léelo de arriba abajo. <code>Server</code> es el resolvedor que respondió (aquí, el router de casa, que reenvía las preguntas a tu proveedor) y <code>#53</code> es el puerto del DNS. <em>Non-authoritative answer</em> significa que la respuesta vino de una caché y no directamente del servidor autoritativo. <em>Canonical name</em> indica que <code>es.wikipedia.org</code> es un alias de otro nombre. Al final aparecen dos direcciones: una IPv4 y una IPv6. En el DNS, cada dato se guarda como un <strong>registro</strong>: el de tipo <code>A</code> guarda una IPv4, el de tipo <code>AAAA</code> una IPv6. Hay más tipos, que verás al publicar tu propio sitio en la <a href="35-devops.html">Estación 35</a>.</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p>Si te equivocas al escribir un dominio, Chrome muestra «No se puede acceder a este sitio» con el código <code>DNS_PROBE_FINISHED_NXDOMAIN</code>. <em>NXDOMAIN</em> significa «ese dominio no existe»: el DNS no encontró el nombre. No es que el servidor esté caído; es que nadie sabe adónde ir. Revisa la ortografía antes de nada.</p></div></aside>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Privacidad</p><p>Tradicionalmente, las consultas DNS viajan sin cifrar, así que tu proveedor (y quien controle la red Wi-Fi a la que te conectas) puede ver qué nombres consultas, aunque no vea el contenido de las páginas. Los navegadores modernos ofrecen <strong>DNS cifrado</strong> (DNS sobre HTTPS); en Chrome, por ejemplo, está en la configuración de seguridad como «Usar DNS seguro».</p></div></aside>
 </section>
   </main>
 </div>

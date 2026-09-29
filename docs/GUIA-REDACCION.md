@@ -142,7 +142,7 @@ Geometría precisa, nada de dibujos «a mano alzada» ni figuras humanas.
 </figure>
 ```
 
-Reglas: 3–8 pasos. Cada `li` explica lo que cambia en ese paso. El paso 1 debe entenderse solo (es lo que se ve
+Reglas: 3–8 pasos. No pongas `opacity` en el atributo `style` de un elemento animado: usa `fill-opacity` o `stroke-opacity`. Cada `li` explica lo que cambia en ese paso. El paso 1 debe entenderse solo (es lo que se ve
 en reposo). `data-mover`, `data-clases` y `data-texto` aplican el último valor cuyo número de paso sea ≤ al actual.
 Usa `px` en `translate`. Para contenido HTML (no SVG) la escena puede tener `div`s con las mismas marcas.
 
@@ -180,7 +180,7 @@ JavaScript (se ejecuta en un Web Worker, sin DOM):
 </div>
 ```
 
-- `data-esperado="línea 1&#10;línea 2"` es un atajo: compara la salida exacta (espacios al borde ignorados).
+- `data-esperado="línea 1&#10;línea 2"` es un atajo: compara la salida exacta (ignora los espacios al principio y al final de cada línea; para arte ASCII o sangrías escribe una verificación propia).
 - La verificación devuelve `true` (correcto) o un texto que explica qué falta. Escribe mensajes útiles y amables.
 - Formato de la consola (igual que Node.js): strings tal cual; arrays `[ 1, 2 ]`; objetos `{ a: 1, b: 'x' }`;
   Map `Map(1) { 'a' => 1 }`. Prefiere verificar valores simples.
@@ -284,7 +284,7 @@ Escribe las líneas **en el orden correcto**: la página las desordena y la pers
 </div>
 ```
 
-Comandos: `pwd ls cd mkdir touch cat echo (con > y >>) rm rmdir mv cp clear help history` y
+Comandos: `pwd ls cd mkdir touch cat echo (con > y >>) rm rmdir mv cp clear help history`, `node archivo.js` (ejecuta el archivo con el motor de los talleres; `node -v`) y
 `git init status add commit -m log --oneline branch switch checkout merge diff restore`.
 
 ### Objetivos, autoevaluación, glosario, videos, recursos

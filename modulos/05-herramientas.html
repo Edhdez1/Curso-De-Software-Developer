@@ -50,6 +50,7 @@
       <li><a href="#teclado">El teclado</a></li>
       <li><a href="#editor">El editor</a></li>
       <li><a href="#terminal">La terminal</a></li>
+      <li><a href="#rutas">Rutas y carpetas</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -529,6 +530,207 @@ return true;
   <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">«No se reconoce» o «command not found»</p><p>Si escribes algo que no es un comando, como <code>hola</code>, el shell responde con un error. En bash verás <code>bash: hola: command not found</code> (u «orden no encontrada»), en zsh <code>zsh: command not found: hola</code> y en PowerShell un mensaje que empieza por <em>«El término 'hola' no se reconoce como nombre de un cmdlet…»</em>. Es la forma de decir «no conozco ningún programa con ese nombre». Revisa la ortografía, los espacios y las mayúsculas. Si el comando es de un programa que acabas de instalar, mira la sección <a href="#problemas">Si algo falla</a>.</p></div></aside>
   <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>Si un comando se queda trabajando y no te devuelve el prompt, pulsa <kbd>Ctrl</kbd> + <kbd>C</kbd>. En la terminal, esa combinación no copia: interrumpe el programa que está en marcha. Es el botón de emergencia de la terminal, y es seguro usarlo.</p></div></aside>
 </section>
+
+<section id="rutas" data-parada="Rutas y carpetas">
+  <h2>Moverte por las carpetas: rutas</h2>
+  <p>En el explorador de archivos ves las carpetas y haces doble clic para entrar. En la terminal no hay ratón: tienes que decir por escrito dónde quieres ir. Para eso sirven las rutas. Una <strong>ruta</strong> (en inglés, <em>path</em>) es la dirección de un archivo o de una carpeta: el camino que hay que recorrer para llegar hasta ella, carpeta por carpeta.</p>
+
+  <h3>El árbol y tu carpeta personal</h3>
+  <p>Como viste en la <a href="02-computadora.html">Estación 2</a>, las carpetas se organizan unas dentro de otras, como las ramas de un árbol puesto boca abajo. Arriba del todo está la <strong>raíz</strong>: en macOS y Linux se escribe <code>/</code>; en Windows, cada disco tiene la suya, como <code>C:\</code>. Dentro de la raíz, en algún lugar, está tu <strong>carpeta personal</strong>: la carpeta de tu usuario, donde viven tus documentos, tus descargas y, desde hoy, tus proyectos. En la terminal se abrevia con el símbolo <code>~</code>.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Dónde</th><th scope="col">Tu carpeta personal (<code>~</code>)</th><th scope="col">Una ruta de ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td>Windows, en PowerShell</td><td><code>C:\Users\Ana</code></td><td><code>C:\Users\Ana\proyectos\juego</code></td></tr>
+        <tr><td>Windows, en Git Bash</td><td><code>/c/Users/Ana</code></td><td><code>/c/Users/Ana/proyectos/juego</code></td></tr>
+        <tr><td>macOS</td><td><code>/Users/ana</code></td><td><code>/Users/ana/proyectos/juego</code></td></tr>
+        <tr><td>Linux</td><td><code>/home/ana</code></td><td><code>/home/ana/proyectos/juego</code></td></tr>
+        <tr><td>Terminal de práctica</td><td><code>/home/tu</code></td><td><code>/home/tu/proyectos/juego</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Fíjate en la barra que separa las carpetas: Windows usa la barra invertida <code>\</code> y los demás la barra normal <code>/</code>. PowerShell acepta las dos. En la web y en JavaScript siempre se usa <code>/</code>, así que acostúmbrate a ella.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Users y Usuarios</p><p>En un Windows en español, el explorador de archivos muestra la carpeta <em>C:\Usuarios</em>, pero su nombre real es <code>C:\Users</code>. Es solo una traducción en pantalla. En la terminal verás siempre el nombre real, <code>Users</code>. Algo parecido pasa en macOS con carpetas como <em>Escritorio</em>, que en la terminal se llama <code>Desktop</code>.</p></div></aside>
+
+  <h3>La carpeta actual</h3>
+  <p>La terminal siempre está «dentro» de una carpeta: la <strong>carpeta actual</strong> (en inglés, <em>working directory</em>, «directorio de trabajo»). Es el punto de partida de todo lo que hagas: <code>ls</code> lista la carpeta actual, <code>mkdir</code> crea carpetas dentro de ella, <code>node</code> busca los archivos en ella. Cuando abres una terminal nueva, la carpeta actual es tu carpeta personal. <code>pwd</code> te dice cuál es, y el comando <code>cd</code> (de <em>change directory</em>, «cambiar de directorio») te mueve a otra. Mira cómo se mueve Ana por su árbol de carpetas:</p>
+  <figure class="capsula" data-titulo="Moverse por el árbol de carpetas">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: un árbol de carpetas con la raíz, home, ana, proyectos, fotos, juego y web. La carpeta actual se resalta mientras se ejecutan cd proyectos, cd juego, cd .., cd ../fotos, cd /home/ana/proyectos/web y cd ~, y abajo se muestra la ruta completa de la carpeta actual.">
+        <path class="d-linea" d="M70 120H96M180 120H206M306 120H321M321 80V180M321 80H336M321 180H336M460 80H477M477 40V120M477 40H494M477 120H494"/>
+        <path class="d-acento-trazo" d="M306 120H321V80H336" data-pasos="2"/>
+        <path class="d-acento-trazo" d="M460 80H477V40H494" data-pasos="3"/>
+        <path class="d-acento-trazo" d="M494 40H477V80H460" data-pasos="4"/>
+        <path class="d-acento-trazo" d="M336 80H321V180H336" data-pasos="5"/>
+        <path class="d-acento-trazo" d="M70 120H96M180 120H206M306 120H321V80H336M460 80H477V120H494" data-pasos="6"/>
+        <path class="d-acento-trazo" d="M494 120H477V80H460M336 80H321V120H306" data-pasos="7"/>
+        <rect class="d-caja" x="14" y="102" width="56" height="36" rx="6"/>
+        <text class="d-mono" x="42" y="126" text-anchor="middle">/</text>
+        <rect class="d-caja" x="96" y="102" width="84" height="36" rx="6"/>
+        <text class="d-mono" x="138" y="126" text-anchor="middle">home</text>
+        <rect class="d-caja" x="206" y="102" width="100" height="36" rx="6" data-clases="1:d-acento; 2:; 7:d-acento"/>
+        <text class="d-mono" x="256" y="126" text-anchor="middle" data-clases="1:d-sobre-acento; 2:; 7:d-sobre-acento">ana (~)</text>
+        <rect class="d-caja" x="336" y="62" width="124" height="36" rx="6" data-clases="2:d-acento; 3:; 4:d-acento; 5:"/>
+        <text class="d-mono" x="398" y="86" text-anchor="middle" data-clases="2:d-sobre-acento; 3:; 4:d-sobre-acento; 5:">proyectos</text>
+        <rect class="d-caja" x="336" y="162" width="124" height="36" rx="6" data-clases="5:d-acento; 6:"/>
+        <text class="d-mono" x="398" y="186" text-anchor="middle" data-clases="5:d-sobre-acento; 6:">fotos</text>
+        <rect class="d-caja" x="494" y="22" width="100" height="36" rx="6" data-clases="3:d-acento; 4:"/>
+        <text class="d-mono" x="544" y="46" text-anchor="middle" data-clases="3:d-sobre-acento; 4:">juego</text>
+        <rect class="d-caja" x="494" y="102" width="100" height="36" rx="6" data-clases="6:d-acento; 7:"/>
+        <text class="d-mono" x="544" y="126" text-anchor="middle" data-clases="6:d-sobre-acento; 7:">web</text>
+        <text class="d-peq d-tenue" x="42" y="160" text-anchor="middle">raíz</text>
+        <rect class="d-codigo" x="14" y="222" width="692" height="66" rx="8"/>
+        <text class="d-codigo-texto" x="30" y="248" style="font-size:16px" data-texto="2:$ cd proyectos; 3:$ cd juego; 4:$ cd ..; 5:$ cd ../fotos; 6:$ cd /home/ana/proyectos/web; 7:$ cd ~">$ pwd</text>
+        <text class="d-codigo-texto" x="30" y="275" style="font-size:16px" data-texto="2:carpeta actual: /home/ana/proyectos; 3:carpeta actual: /home/ana/proyectos/juego; 4:carpeta actual: /home/ana/proyectos; 5:carpeta actual: /home/ana/fotos; 6:carpeta actual: /home/ana/proyectos/web; 7:carpeta actual: /home/ana">carpeta actual: /home/ana</text>
+        <text class="d-codigo-tenue" x="690" y="248" text-anchor="end" style="font-size:14px" data-texto="2:ruta relativa; 3:ruta relativa; 4:.. es la carpeta de arriba; 5:sube y vuelve a bajar; 6:ruta absoluta; 7:~ es tu carpeta personal">solo informa</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Al abrir la terminal, Ana está en su carpeta personal, <code>/home/ana</code>, que se abrevia <code>~</code>. El comando <code>pwd</code> se lo confirma y no mueve nada.</li>
+        <li><code>cd proyectos</code>. Como la ruta no empieza por <code>/</code>, es una ruta relativa: <code>proyectos</code> se busca dentro de la carpeta actual. Ana baja un nivel.</li>
+        <li><code>cd juego</code>. Baja otro nivel. Ahora su carpeta actual es <code>/home/ana/proyectos/juego</code>.</li>
+        <li><code>cd ..</code>. Los dos puntos significan «la carpeta de arriba», la que contiene a la actual (se llama <em>carpeta padre</em>). Ana sube a <code>proyectos</code>.</li>
+        <li data-duracion="6"><code>cd ../fotos</code>. Primero <code>..</code> sube a <code>ana</code>, y desde ahí entra en <code>fotos</code>. Una ruta relativa puede subir y bajar en un solo comando.</li>
+        <li data-duracion="6"><code>cd /home/ana/proyectos/web</code>. Empieza por <code>/</code>, así que es una ruta absoluta: se recorre desde la raíz y lleva al mismo sitio esté donde esté Ana.</li>
+        <li><code>cd ~</code> (o <code>cd</code> sin nada más) la devuelve a su carpeta personal desde cualquier lugar. Es la forma de «volver a casa» si te pierdes.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Rutas absolutas y relativas</h3>
+  <p>Hay dos formas de escribir una ruta, igual que hay dos formas de explicar dónde vives:</p>
+  <ul>
+    <li>Una <strong>ruta absoluta</strong> empieza desde la raíz: <code>/home/ana/proyectos/juego</code>. Es como dar la dirección completa con país, ciudad, calle y número: funciona desde cualquier lugar. En macOS y Linux empieza con <code>/</code>; en Windows, con la letra del disco, como <code>C:\</code>.</li>
+    <li>Una <strong>ruta relativa</strong> parte de la carpeta actual: <code>juego</code>, <code>proyectos/juego</code> o <code>../fotos</code>. Es como decir «la segunda puerta a la derecha»: solo tiene sentido si sabes desde dónde se empieza.</li>
+  </ul>
+  <p>Y hay tres atajos que vas a usar a diario:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Atajo</th><th scope="col">Significa</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td><code>.</code></td><td>La carpeta actual</td><td><code>code .</code> abre la carpeta actual en VS Code</td></tr>
+        <tr><td><code>..</code></td><td>La carpeta de arriba (la carpeta padre)</td><td><code>cd ../..</code> sube dos niveles</td></tr>
+        <tr><td><code>~</code></td><td>Tu carpeta personal</td><td><code>cd ~/proyectos</code> va a <code>proyectos</code> esté donde esté</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Una barra de más</p>
+      <pre class="consola"><code><span class="prompt">$</span> pwd
+<span class="salida">/home/ana</span>
+<span class="prompt">$</span> cd /proyectos
+<span class="salida">bash: cd: /proyectos: No such file or directory</span></code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Relativa desde donde estás</p>
+      <pre class="consola"><code><span class="prompt">$</span> pwd
+<span class="salida">/home/ana</span>
+<span class="prompt">$</span> cd proyectos
+<span class="prompt">$</span> pwd
+<span class="salida">/home/ana/proyectos</span></code></pre>
+    </div>
+  </div>
+  <p>La barra del principio convierte la ruta en absoluta: <code>/proyectos</code> busca una carpeta <code>proyectos</code> justo en la raíz, que no existe. Sin la barra, se busca dentro de la carpeta actual.</p>
+  <p>Practica con este calculador de rutas. Cambia las dos primeras líneas (dónde estás y qué escribes después de <code>cd</code>), pulsa «Ejecutar» y comprueba si acertaste antes de mirar el resultado.</p>
+  <div class="taller" id="taller-rutas" data-titulo="Calculador de rutas">
+    <textarea class="taller-codigo">// Cambia solo estas dos líneas y pulsa «Ejecutar»:
+const estoyEn = "/home/ana/proyectos/juego";
+const escriboCd = "../web";
+
+// No hace falta entender lo de abajo: lo aprenderás en la Línea 2.
+const casa = "/home/ana";
+let destino = escriboCd.replace(/^~/, casa);
+const partes = destino.startsWith("/") ? [] : estoyEn.split("/").filter(Boolean);
+for (const trozo of destino.split("/")) {
+  if (trozo === "" || trozo === ".") continue;
+  if (trozo === "..") partes.pop();
+  else partes.push(trozo);
+}
+console.log("Estabas en:  " + estoyEn);
+console.log("Escribiste:  cd " + escriboCd);
+console.log("Terminas en: /" + partes.join("/"));</textarea>
+  </div>
+  <p>Prueba con <code>..</code>, <code>../..</code>, <code>~/fotos</code>, <code>./niveles</code> y <code>/home/ana</code>. Observa que el punto solo (<code>.</code>) no cambia nada y que las rutas que empiezan por <code>/</code> ignoran dónde estabas. El calculador no comprueba si las carpetas existen; tu terminal sí lo hará.</p>
+
+  <h3>Paso a paso: una sesión real</h3>
+  <p>Sigue esta sesión línea a línea. A la derecha verás en qué carpeta está la terminal y qué hay dentro después de cada comando.</p>
+  <div class="traza" data-titulo="Crear una carpeta y moverse por ella" data-rotulo-memoria="Estado de la terminal" data-inicio="Antes de empezar: la terminal está en /home/ana/proyectos, que solo contiene la carpeta web. Pulsa «Siguiente».">
+    <pre><code class="language-bash">pwd
+mkdir juego
+cd juego
+touch main.js
+ls
+cd ..
+ls</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"Carpeta actual": "/home/ana/proyectos", "Dentro de proyectos": "web/"}, "salida": "/home/ana/proyectos", "nota": "pwd solo informa: muestra la ruta absoluta de la carpeta actual. No cambia nada."},
+      {"linea": 2, "vars": {"Carpeta actual": "/home/ana/proyectos", "Dentro de proyectos": "juego/  web/"}, "nota": "mkdir crea la carpeta juego dentro de la carpeta actual. No te mueve: sigues en proyectos. Y no imprime nada, porque todo salió bien."},
+      {"linea": 3, "vars": {"Carpeta actual": "/home/ana/proyectos/juego", "Dentro de proyectos": "juego/  web/", "Dentro de juego": "(vacía)"}, "nota": "cd juego usa una ruta relativa: busca juego dentro de la carpeta actual y entra. La carpeta actual cambia."},
+      {"linea": 4, "vars": {"Carpeta actual": "/home/ana/proyectos/juego", "Dentro de proyectos": "juego/  web/", "Dentro de juego": "main.js"}, "nota": "touch crea un archivo vacío llamado main.js en la carpeta actual, que ahora es juego."},
+      {"linea": 5, "vars": {"Carpeta actual": "/home/ana/proyectos/juego", "Dentro de proyectos": "juego/  web/", "Dentro de juego": "main.js"}, "salida": "main.js", "nota": "ls lista la carpeta actual. Estamos en juego, así que solo aparece main.js."},
+      {"linea": 6, "vars": {"Carpeta actual": "/home/ana/proyectos", "Dentro de proyectos": "juego/  web/", "Dentro de juego": "main.js"}, "nota": "cd .. sube a la carpeta padre. Volvemos a proyectos."},
+      {"linea": 7, "vars": {"Carpeta actual": "/home/ana/proyectos", "Dentro de proyectos": "juego/  web/", "Dentro de juego": "main.js"}, "salida": "juego/  web/", "nota": "El mismo comando ls de antes da otro resultado, porque la carpeta actual cambió. Por eso conviene mirar el prompt o usar pwd antes de actuar."}
+    ]</script>
+  </div>
+
+  <h3>Dos superpoderes: Tab y el historial</h3>
+  <p><strong>Autocompletar con Tab.</strong> Escribe las primeras letras de un archivo o carpeta y pulsa <kbd>Tab</kbd>: la terminal completa el nombre. Si hay varias opciones, no completa; en bash, pulsa <kbd>Tab</kbd> otra vez para ver la lista (la terminal de práctica la muestra a la primera). Usa Tab siempre: escribes menos y, sobre todo, no te equivocas de nombre. Si Tab no completa nada, es una pista de que ese nombre no existe donde estás.</p>
+  <p><strong>El historial.</strong> La flecha <kbd>↑</kbd> recupera el comando anterior; púlsala varias veces para ir más atrás, y <kbd>↓</kbd> para volver. El comando <code>history</code> muestra la lista completa. En bash y zsh, <kbd>Ctrl</kbd> + <kbd>R</kbd> busca en el historial mientras escribes.</p>
+
+  <h3>Espacios y mayúsculas en los nombres</h3>
+  <p>El shell separa las piezas de un comando por los espacios. Por eso, si una carpeta se llama <code>Mis juegos</code>, el comando <code>cd Mis juegos</code> falla: el shell entiende dos argumentos, <code>Mis</code> y <code>juegos</code>. Hay dos soluciones: escribir el nombre entre comillas, <code>cd "Mis juegos"</code>, o poner una barra invertida antes del espacio, <code>cd Mis\ juegos</code> (lo que hace Tab automáticamente). La mejor solución es no usar espacios en los nombres de tus proyectos: <code>mis-juegos</code>.</p>
+  <p>Con las mayúsculas, cada sistema se comporta distinto. Linux distingue <code>Fotos</code> de <code>fotos</code>: son dos carpetas diferentes. Windows y macOS, en su configuración normal, las consideran la misma. Como tus proyectos acabarán en servidores con Linux, escribe siempre los nombres exactamente igual y, mejor aún, todo en minúsculas.</p>
+
+  <div class="terminal-sim" data-titulo="Misión: explora el árbol" data-inicio="/home/tu">
+    <div class="terminal-instrucciones">
+      <ol>
+        <li>Entra en la carpeta <code>niveles</code>, que está en <code>proyectos/juego/niveles</code>. Puedes hacerlo en varios pasos o en uno.</li>
+        <li>Desde <code>niveles</code>, llega a <code>fotos/viajes</code> con <strong>un solo</strong> comando <code>cd</code> y una ruta relativa. Pista: tienes que subir varios niveles con <code>..</code>.</li>
+        <li>Vuelve a tu carpeta personal con <code>cd ~</code>.</li>
+      </ol>
+      <p>Usa <kbd>Tab</kbd> para completar nombres y <code>pwd</code> si te pierdes. Si algo se complica, pulsa «Reiniciar».</p>
+    </div>
+    <script type="application/json" class="terminal-sistema">{"proyectos": {"juego": {"niveles": {"nivel1.txt": "El bosque", "nivel2.txt": "La cueva"}, "main.js": ""}, "web": {"index.html": ""}}, "fotos": {"viajes": {"cusco.jpg": "", "sevilla.jpg": ""}, "perfil.png": ""}}</script>
+    <script type="text/plain" class="terminal-mision">
+var CASA = "/home/tu";
+function normalizar(ruta, desde) {
+  if (!ruta || ruta === "~") return CASA;
+  if (ruta.indexOf("~/") === 0) ruta = CASA + ruta.slice(1);
+  var abs = ruta.charAt(0) === "/" ? ruta : desde + "/" + ruta;
+  var pila = [];
+  abs.split("/").forEach(function (p) { if (!p || p === ".") return; if (p === "..") pila.pop(); else pila.push(p); });
+  return "/" + pila.join("/");
+}
+function existe(abs) {
+  if (abs === "/" || abs === "/home" || abs === CASA) return true;
+  if (abs.indexOf(CASA + "/") !== 0) return false;
+  var d = sistema, partes = abs.slice(CASA.length + 1).split("/");
+  for (var i = 0; i < partes.length; i++) { if (!d || typeof d !== "object" || !(partes[i] in d)) return false; d = d[partes[i]]; }
+  return typeof d === "object";
+}
+var NIVELES = CASA + "/proyectos/juego/niveles", VIAJES = CASA + "/fotos/viajes";
+var actual = CASA, paso1 = false, paso2 = false, paso3 = false;
+historial.forEach(function (c) {
+  var t = c.trim().split(/\s+/);
+  if (t[0] !== "cd") return;
+  var arg = (t[1] || "").replace(/^["']|["']$/g, "");
+  var nuevo = normalizar(arg, actual);
+  if (!existe(nuevo)) return;
+  if (nuevo === NIVELES) paso1 = true;
+  if (paso1 && actual === NIVELES && nuevo === VIAJES && arg.charAt(0) !== "/" && arg.charAt(0) !== "~") paso2 = true;
+  if (paso2 && nuevo === CASA) paso3 = true;
+  actual = nuevo;
+});
+if (!paso1) return "Paso 1: entra en proyectos/juego/niveles (por ejemplo, cd proyectos/juego/niveles).";
+if (!paso2) return "Paso 2: desde niveles, llega a fotos/viajes con un solo cd y una ruta relativa que empiece por ../ (sube hasta tu carpeta personal y baja a fotos/viajes).";
+if (!paso3 || cwd !== CASA) return "Paso 3: vuelve a tu carpeta personal con cd ~";
+return true;
+    </script>
+  </div>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>Antes de un comando que cambia o borra cosas, mira el prompt o escribe <code>pwd</code>. La mayoría de los desastres en la terminal no vienen de comandos raros, sino de comandos normales ejecutados en la carpeta equivocada.</p></div></aside>
+</section>
   </main>
 </div>
 
@@ -548,6 +750,7 @@ return true;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 <script src="../assets/js/motor.js"></script>
 <script src="../assets/js/terminal.js"></script>

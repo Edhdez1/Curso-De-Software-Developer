@@ -106,7 +106,7 @@
       var bien = 0;
       $$(".parsons-linea", lista).forEach(function (li, pos) {
         var o = orden[pos];
-        var ok = o.id === pos && (!conSangria || o.sangria === fuente[pos].sangria);
+        var ok = fuente[o.id].texto === fuente[pos].texto && (!conSangria || o.sangria === fuente[pos].sangria);
         li.classList.toggle("ok", ok); li.classList.toggle("mal", !ok);
         if (ok) bien++;
       });
@@ -422,7 +422,7 @@
       if (actual || hay) partes.push(actual);
       return partes;
     }
-    var COMANDOS = "pwd, ls, cd, mkdir, touch, cat, echo, rm, rmdir, mv, cp, clear, history, help y git";
+    var COMANDOS = "pwd, ls, cd, mkdir, touch, cat, echo, rm, rmdir, mv, cp, clear, history, help, node y git";
     function ejecutarLinea(linea) {
       var t = trocear(linea);
       if (t === null) return { error: "Falta cerrar unas comillas.", ayuda: "Si abres comillas \" tienes que cerrarlas." };
@@ -528,7 +528,7 @@
           res = []; break;
         }
         case "git": res = comandoGit(args); break;
-        case "node": case "npm": case "code": case "python": case "python3": case "sudo": case "cls": case "dir":
+        case "npm": case "code": case "python": case "python3": case "sudo": case "cls": case "dir":
           return { error: cmd + ": comando no disponible en esta terminal de práctica", ayuda: cmd === "cls" || cmd === "dir" ? "«" + cmd + "» es de la consola de Windows (cmd). En bash se usa «" + (cmd === "cls" ? "clear" : "ls") + "»." : "Aquí solo hay: " + COMANDOS + ". Ese comando lo usarás en tu computadora." };
         default:
           return { error: cmd + ": no se encontró la orden", ayuda: "¿Está bien escrito? Escribe «help» para ver los comandos disponibles." };
@@ -594,6 +594,52 @@
         try { mostrarMision(new Function("sistema", "historial", "git", "cwd", mision)(datos.sistema, datos.historial, datos.git, datos.cwd)); } catch (e2) { /* sin verificación */ }
       }
     }
+    var VERSION_NODE = "v24.21.0";
+    function terminarComando() {
+      entrada.disabled = false;
+      actualizarPrompt();
+      pantalla.scrollTop = pantalla.scrollHeight;
+      comprobar();
+      entrada.focus({ preventScroll: true });
+    }
+    // node archivo.js: ejecuta el archivo del sistema simulado con el mismo motor que los talleres.
+    function ejecutarNode(arg) {
+      if (!arg) { imprimir("Welcome to Node.js " + VERSION_NODE + "."); imprimir("Pista: esta terminal de práctica no tiene el modo interactivo de Node. Escribe «node archivo.js» para ejecutar un archivo.", "aviso"); return terminarComando(); }
+      if (arg === "-v" || arg === "--version") { imprimir(VERSION_NODE); return terminarComando(); }
+      var abs = normalizar(arg), n = obtener(abs);
+      if (!n) { imprimir("Error: Cannot find module '" + abs + "'", "error"); imprimir("Pista: no existe ese archivo aquí. Revisa el nombre con «ls» y que estés en la carpeta correcta.", "aviso"); return terminarComando(); }
+      if (n.tipo === "dir") { imprimir("Error: EISDIR: illegal operation on a directory", "error"); imprimir("Pista: «" + arg + "» es una carpeta; node necesita un archivo .js.", "aviso"); return terminarComando(); }
+      if (!window.TerminalMotor || !window.Worker) { imprimir("No se pudo ejecutar el archivo en este navegador.", "error"); return terminarComando(); }
+      var fuente = window.TerminalMotor.construirFuente(n.contenido, "");
+      var w, limite;
+      try { var url = URL.createObjectURL(new Blob([fuente.fuente], { type: "text/javascript" })); w = new Worker(url); URL.revokeObjectURL(url); }
+      catch (err) { imprimir("No se pudo ejecutar el archivo: " + err.message, "error"); return terminarComando(); }
+      entrada.disabled = true;
+      var acabar = function () { clearTimeout(limite); if (w) { w.terminate(); w = null; } terminarComando(); };
+      var excepcion = function (d) {
+        imprimir(d.nombre + ": " + d.mensaje + (d.linea ? "  (" + arg + ":" + d.linea + ")" : ""), "error");
+        var ayuda = window.TerminalMotor.explicarError(d.nombre, d.mensaje);
+        if (ayuda) imprimir("Pista: " + ayuda, "aviso");
+      };
+      w.onmessage = function (ev) {
+        var m = ev.data;
+        if (m.tipo === "log") imprimir(m.datos);
+        else if (m.tipo === "error") imprimir(m.datos, "error");
+        else if (m.tipo === "aviso") imprimir(m.datos, "aviso");
+        else if (m.tipo === "excepcion") excepcion(m.datos);
+        else if (m.tipo === "fin") acabar();
+        pantalla.scrollTop = pantalla.scrollHeight;
+      };
+      w.onerror = function (ev) {
+        ev.preventDefault();
+        var msg = String(ev.message || "Error").replace(/^Uncaught\s+/, ""), partes = msg.match(/^(\w*Error):\s*([\s\S]*)$/);
+        var lin = ev.lineno ? ev.lineno - fuente.desfase : null;
+        excepcion({ nombre: partes ? partes[1] : "Error", mensaje: partes ? partes[2] : msg, linea: lin > 0 ? lin : null });
+        acabar();
+      };
+      limite = setTimeout(function () { imprimir("Se detuvo el programa tras 5 s. ¿Hay un bucle que nunca termina?", "aviso"); acabar(); }, 5000);
+    }
+
     entrada.addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
         var linea = entrada.value;
@@ -601,6 +647,8 @@
         entrada.value = "";
         if (linea.trim()) historial.push(linea.trim());
         posHist = -1;
+        var mNode = linea.trim().match(/^node(?:\s+(.+))?$/);
+        if (mNode) { ejecutarNode(mNode[1] ? mNode[1].trim() : ""); return; }
         var r = ejecutarLinea(linea.trim());
         if (r && r.limpiar) { $$(".terminal-linea", pantalla).forEach(function (l) { l.remove(); }); }
         else if (r && r.error) { imprimir(r.error, "error"); if (r.ayuda) imprimir("Pista: " + r.ayuda, "aviso"); }
