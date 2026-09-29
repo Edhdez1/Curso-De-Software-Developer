@@ -775,7 +775,7 @@ try {
   <aside class="senal analogia">
     <p>Una API es como la carta de un restaurante. Te dice qué platos existen y cómo pedirlos, sin que tengas que entrar a la cocina ni saber cómo se preparan. El límite de la analogía: un camarero entiende «una de esas, pero sin cebolla»; una API no. Si escribes una letra mal o pides algo que no está en la carta, recibes un error.</p>
   </aside>
-  <p>Ya usaste varias APIs sin llamarlas así: el DOM (<code>document.querySelector</code>), <code>localStorage</code> y la propia <code>console</code> son APIs que el navegador le ofrece a tu código. En esta estación hablamos de las <strong>APIs web</strong> (o APIs HTTP): las que usas a través de internet. Tu programa envía una petición HTTP a un servidor, como las que viste en la <a href="03-internet.html">Estación 3</a>, y el servidor responde con datos, casi siempre en formato JSON (<a href="11-colecciones.html">Estación 11</a>).</p>
+  <p>Ya usaste varias APIs. En la <a href="15-dom.html">Estación 15</a> viste que el navegador le ofrece a tu código sus <em>APIs web</em>: el DOM (<code>document.querySelector</code>), <code>localStorage</code>, la propia <code>console</code>. En esta estación hablamos de otra clase: las <strong>APIs HTTP</strong>, las que usas a través de internet. Tu programa envía una petición HTTP a un servidor, como las que viste en la <a href="03-internet.html#http">Estación 3</a>, y el servidor responde con datos, casi siempre en formato JSON (<a href="11-colecciones.html#json">Estación 11</a>).</p>
 
   <h3>Anatomía de una petición a una API</h3>
   <figure class="diagrama">
@@ -807,7 +807,7 @@ try {
     <li>Un <strong>endpoint</strong> («punto de acceso») es cada dirección concreta que ofrece un servicio: <code>/search/shows</code> busca series, <code>/shows/55138</code> da los datos de una serie.</li>
     <li>Los <strong>parámetros de consulta</strong> (<em>query parameters</em>) van después del <code>?</code>, en pares <code>nombre=valor</code> separados por <code>&amp;</code>. Sirven para afinar la petición: qué buscar, cuántos resultados, en qué idioma.</li>
   </ul>
-  <p>Cuando el valor de un parámetro viene de lo que escribe una persona, no lo pegues a mano en la dirección: los espacios, las tildes y símbolos como <code>&amp;</code> o <code>?</code> tienen significado especial dentro de una URL. Deja que <code>URL</code> y <code>URLSearchParams</code> (que ya asomaron en la <a href="03-internet.html">Estación 3</a>) los codifiquen por ti:</p>
+  <p>Cuando el valor de un parámetro viene de lo que escribe una persona, no lo pegues a mano en la dirección: los espacios, las tildes y símbolos como <code>&amp;</code> o <code>?</code> tienen significado especial dentro de una URL. Deja que <code>URL</code> y su propiedad <code>searchParams</code> los codifiquen por ti (la anatomía de una URL está en la <a href="03-internet.html#url">Estación 3</a>):</p>
   <div class="taller" id="taller-url" data-titulo="Armar la dirección de una petición">
     <textarea class="taller-codigo">const url = new URL("https://api.tvmaze.com/search/shows");
 url.searchParams.set("q", "la casa de papel");
@@ -904,7 +904,7 @@ console.log("https://api.tvmaze.com/search/shows?q=" + encodeURIComponent(busque
   }
 ]</code></pre>
   <p>Observa los detalles que tu código tendrá que manejar: <code>genres</code> puede venir vacío, <code>rating.average</code> puede ser <code>null</code>, y en algunas series <code>image</code> es <code>null</code>. <code>summary</code> trae HTML: nunca lo metas con <code>innerHTML</code> en tu página, por el riesgo de seguridad que viste en la <a href="15-dom.html">Estación 15</a>. Y la búsqueda de TVmaze es aproximada: con «arcane» también devuelve series llamadas «Cane» o «Crane», con menos puntuación (<code>score</code>).</p>
-  <p>Recorrer una respuesta así es lo que aprendiste en la <a href="11-colecciones.html">Estación 11</a> con arrays de objetos y <code>JSON.parse</code>. Practícalo con la forma exacta de TVmaze:</p>
+  <p>Recorrer una respuesta así es lo que aprendiste en la <a href="11-colecciones.html#datos-reales">Estación 11</a> con arrays de objetos y <code>JSON.parse</code>, y pintarla en la página es lo que hiciste en la <a href="15-dom.html#estado">Estación 15</a>. Practícalo con la forma exacta de TVmaze:</p>
   <div class="taller" id="taller-respuesta" data-titulo="Recorrer una respuesta de TVmaze">
     <textarea class="taller-codigo">// Una respuesta recortada, tal como llega por la red: un texto JSON
 const texto = '[{"score":0.54,"show":{"name":"Arcane: League of Legends","premiered":"2021-11-06","rating":{"average":8.5}}},{"score":0.52,"show":{"name":"Arcane: Bridging the Rift","premiered":"2022-08-04","rating":{"average":null}}}]';
@@ -915,12 +915,12 @@ console.log(resultados.length + " resultados");
 for (const resultado of resultados) {
   const serie = resultado.show;
   const anio = serie.premiered.slice(0, 4);
-  // ?? usa el valor de la derecha si el de la izquierda es null o undefined
+  // ?? pone un valor por defecto si el de la izquierda es null o undefined
   const nota = serie.rating.average ?? "sin valoración";
   console.log(serie.name + " (" + anio + ") · " + nota);
 }</textarea>
   </div>
-  <p>El operador <code>??</code> («fusión de nulos», <em>nullish coalescing</em>) es muy útil con APIs: pone un valor por defecto cuando el dato viene <code>null</code> o no viene.</p>
+  <p>La coalescencia nula (<code>??</code>), que conociste en la <a href="08-decisiones.html">Estación 8</a>, es muy útil con APIs: pone un valor por defecto cuando el dato viene <code>null</code> o no viene.</p>
   <aside class="senal nota" data-titulo="Impacto">
     <p>Las claves de API son como contraseñas: identifican a quien paga o responde por el uso. Todo lo que pones en el código de una página web lo puede ver cualquiera con las herramientas de desarrollo, así que una clave secreta nunca va en el código del navegador. Las APIs de esta estación no necesitan clave. Cómo se guardan los secretos en un servidor lo verás en la <a href="31-seguridad.html">Estación 31</a>.</p>
   </aside>

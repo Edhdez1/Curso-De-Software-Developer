@@ -32,7 +32,7 @@
      ===================================================================== */
   function iniciarParsons(caja, n) {
     var fuente = $$("ol > li", caja).map(function (li, i) {
-      return { id: i, texto: li.textContent.replace(/^\s+|\s+$/g, ""), sangria: parseInt(li.getAttribute("data-sangria"), 10) || 0 };
+      return { id: i, texto: li.textContent.replace(/^\s+|\s+$/g, ""), sangria: parseInt(li.getAttribute("data-sangria"), 10) || 0, grupo: li.getAttribute("data-grupo") };
     });
     if (fuente.length < 2) return;
     var leng = caja.getAttribute("data-lenguaje") || "text";
@@ -108,7 +108,8 @@
       var bien = 0;
       $$(".parsons-linea", lista).forEach(function (li, pos) {
         var o = orden[pos];
-        var ok = fuente[o.id].texto === fuente[pos].texto && (!conSangria || o.sangria === fuente[pos].sangria);
+        var mismo = fuente[o.id].texto === fuente[pos].texto || (fuente[o.id].grupo && fuente[o.id].grupo === fuente[pos].grupo);
+        var ok = mismo && (!conSangria || o.sangria === fuente[pos].sangria);
         li.classList.toggle("ok", ok); li.classList.toggle("mal", !ok);
         if (ok) bien++;
       });
