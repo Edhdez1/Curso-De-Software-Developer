@@ -65,6 +65,64 @@ export function ejecutar(codigo, verificacion, tiempo = 4000) {
   });
 }
 
+import { spawnSync } from "node:child_process";
+
+function verificarEn(verificacion, salida, codigo, resultados) {
+  if (!verificacion) return undefined;
+  try {
+    const f = vm.runInNewContext("(function(salida, codigo, resultados){\n" + verificacion + "\n})", {});
+    const r = f(salida.slice(), codigo, resultados || []);
+    return r === undefined ? true : r;
+  } catch (e) { return "La verificación falló: " + e.message; }
+}
+
+export function ejecutarPython(codigo, verificacion) {
+  const p = spawnSync("python3", ["-c", codigo], { encoding: "utf8", timeout: 5000 });
+  const salida = p.stdout ? p.stdout.replace(/\n$/, "").split("\n").filter((l, i, a) => !(a.length === 1 && l === "")) : [];
+  const excepcion = p.status !== 0 ? { nombre: "PythonError", mensaje: (p.stderr || "").trim().split("\n").pop(), linea: null } : null;
+  return { salida, excepcion, veredicto: verificarEn(verificacion, salida, codigo), tiempoAgotado: !!p.error };
+}
+
+const AYUDANTE_SQL = `
+import sqlite3, json, sys
+datos = json.loads(sys.stdin.read())
+db = sqlite3.connect(":memory:")
+res = []
+error = None
+try:
+    if datos["prep"].strip():
+        db.executescript(datos["prep"])
+except Exception as e:
+    error = "Error en los datos de ejemplo: " + str(e)
+if not error:
+    try:
+        buf = ""
+        for linea in datos["sql"].splitlines(True):
+            buf += linea
+            if sqlite3.complete_statement(buf):
+                cur = db.execute(buf)
+                if cur.description:
+                    res.append({"columns": [d[0] for d in cur.description], "values": [list(f) for f in cur.fetchall()]})
+                buf = ""
+        if buf.strip():
+            cur = db.execute(buf)
+            if cur.description:
+                res.append({"columns": [d[0] for d in cur.description], "values": [list(f) for f in cur.fetchall()]})
+    except Exception as e:
+        error = "Error de SQL: " + str(e)
+print(json.dumps({"res": res, "error": error}))
+`;
+export function ejecutarSQL(codigo, preparacion, verificacion) {
+  const p = spawnSync("python3", ["-c", AYUDANTE_SQL], { input: JSON.stringify({ sql: codigo, prep: preparacion || "" }), encoding: "utf8", timeout: 5000 });
+  let datos = { res: [], error: p.stderr || "sin salida" };
+  try { datos = JSON.parse(p.stdout); } catch (e) { /* queda el error */ }
+  const salida = [];
+  for (const r of datos.res) salida.push(...Motor.tablaTexto(r.columns, r.values));
+  if (!datos.res.length && !datos.error) salida.push("Listo: la instrucción se ejecutó y no devolvió filas.");
+  const excepcion = datos.error ? { nombre: "SQLError", mensaje: datos.error, linea: null } : null;
+  return { salida, excepcion, veredicto: verificarEn(verificacion, salida, codigo, datos.res), tiempoAgotado: false };
+}
+
 function talleresDe(html) {
   const lista = [];
   const re = /<div class="taller"([^>]*)>([\s\S]*?)<\/div>/g;
@@ -73,6 +131,7 @@ function talleresDe(html) {
     const attrs = m[1], cuerpo = m[2];
     const fuentes = [...cuerpo.matchAll(/<textarea class="taller-codigo"([^>]*)>([\s\S]*?)<\/textarea>/g)].map((t) => ({ lenguaje: atributo(t[1], "data-lenguaje"), codigo: desescapar(t[2]).replace(/^\n/, "") }));
     const verif = (cuerpo.match(/<script type="text\/plain" class="taller-verificar">([\s\S]*?)<\/script>/) || [])[1] || "";
+    const prep = (cuerpo.match(/<script type="text\/plain" class="taller-preparacion">([\s\S]*?)<\/script>/) || [])[1] || "";
     const esperado = atributo(attrs, "data-esperado");
     const fin = m.index + m[0].length;
     const siguiente = html.indexOf('<div class="taller"', fin);
@@ -84,7 +143,7 @@ function talleresDe(html) {
       titulo: atributo(attrs, "data-titulo") || "",
       modo: atributo(attrs, "data-modo") || "js",
       tiempo: (parseFloat(atributo(attrs, "data-tiempo")) || 4) * 1000,
-      fuentes, verificacion: verif || (esperado !== null ? verificacionEsperada(esperado) : ""),
+      fuentes, preparacion: prep, verificacion: verif || (esperado !== null ? verificacionEsperada(esperado) : ""),
       solucion: sol ? desescapar(sol[1]) : null,
       ejercicio,
       arreglar: /arregl|corrig|error|bug|depur/i.test(atributo(attrs, "data-titulo") + " " + html.slice(Math.max(0, m.index - 1500), m.index).split('<article class="ejercicio"').pop()),
@@ -102,17 +161,18 @@ async function probarArchivo(archivo) {
     if (t.modo === "web") continue;
     const inicial = t.fuentes[0] ? t.fuentes[0].codigo : "";
     probados++;
-    const ri = await ejecutar(inicial, t.verificacion, t.tiempo);
+    const correr = (codigo, verif) => t.modo === "python" ? ejecutarPython(codigo, verif) : t.modo === "sql" ? ejecutarSQL(codigo, t.preparacion, verif) : ejecutar(codigo, verif, t.tiempo);
+    const ri = await correr(inicial, t.verificacion);
     if (ri.tiempoAgotado && !t.arreglar) problemas.push(`${t.id}: el código inicial no termina (¿bucle infinito o setInterval?)`);
     if (t.ejercicio && t.verificacion && ri.veredicto === true) problemas.push(`${t.id}: el código inicial YA pasa la verificación (el ejercicio no exige nada)`);
     if (!t.ejercicio && ri.excepcion && !t.arreglar) problemas.push(`${t.id}: el ejemplo lanza ${ri.excepcion.nombre}: ${ri.excepcion.mensaje}`);
     if (t.verificacion && !t.solucion && t.ejercicio) problemas.push(`${t.id}: tiene verificación pero no hay <details class="solucion"> con <pre><code> después`);
     if (t.solucion && t.verificacion) {
-      const rs = await ejecutar(t.solucion, t.verificacion, t.tiempo);
+      const rs = await correr(t.solucion, t.verificacion);
       if (rs.excepcion) problemas.push(`${t.id}: la SOLUCIÓN lanza ${rs.excepcion.nombre}: ${rs.excepcion.mensaje}${rs.excepcion.linea ? " (línea " + rs.excepcion.linea + ")" : ""}`);
       else if (rs.veredicto !== true) problemas.push(`${t.id}: la SOLUCIÓN no pasa la verificación → ${JSON.stringify(rs.veredicto)} | salida: ${JSON.stringify(rs.salida).slice(0, 300)}`);
     } else if (t.solucion) {
-      const rs = await ejecutar(t.solucion, "", t.tiempo);
+      const rs = await correr(t.solucion, "");
       if (rs.excepcion) problemas.push(`${t.id}: la SOLUCIÓN lanza ${rs.excepcion.nombre}: ${rs.excepcion.mensaje}`);
     }
   }

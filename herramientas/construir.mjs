@@ -232,7 +232,7 @@ ${FUENTES}
     </div>
     <p class="cartel-promesa">${esc(m.promesa)}</p>
     <div class="cartel-datos">
-      <span><span class="roundel" style="background:var(--lc-on);color:var(--lc);width:1.6rem;height:1.6rem;font-size:.95rem" aria-hidden="true">${m.linea}</span>Línea ${m.linea}: ${esc(linea.nombre)}</span>
+      <span><span class="roundel" aria-hidden="true">${m.linea}</span>Línea ${m.linea}: ${esc(linea.nombre)}</span>
       <span>${ICO.reloj}Unas ${horasTexto(m.horas)} con práctica</span>
       <span><span class="nivel-barras" aria-hidden="true">${niveles}</span>Dificultad ${m.dificultad} de 5</span>
       ${requisitos.length ? `<span>${ICO.requisito}Antes: ${requisitos.map((r) => `<a href="${archivoModulo(r)}" style="color:inherit">${esc(r.estacion)}</a>`).join(", ")}</span>` : ""}
@@ -268,6 +268,7 @@ ${cuerpo.trim()}
 ${scriptsPrism(lenguajesDe(cuerpo))}
 <script src="../assets/js/motor.js"></script>
 <script src="../assets/js/terminal.js"></script>
+<script src="../assets/js/practicas.js"></script>
 </body>
 </html>
 `;

@@ -312,7 +312,8 @@ kbd, .tecla {
   color: color-mix(in oklch, var(--lc-on) 88%, var(--lc));
 }
 .cartel-datos { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; font-family: var(--f-rotulo); font-weight: 600; font-size: var(--t-peq); }
-.cartel-datos span { display: inline-flex; align-items: center; gap: .4rem; }
+.cartel-datos > span { display: inline-flex; align-items: center; gap: .4rem; }
+.cartel-datos .roundel { background: var(--lc-on); color: var(--lc); width: 1.6rem; height: 1.6rem; font-size: .95rem; }
 .cartel-datos .ico { stroke-width: 2.25; }
 .nivel-barras { display: inline-flex; gap: 3px; align-items: flex-end; height: .95em; }
 .nivel-barras i { display: block; width: 5px; background: currentColor; opacity: .35; border-radius: 1px; }
@@ -390,8 +391,8 @@ kbd, .tecla {
 }
 .contenido ul, .contenido ol { padding-inline-start: 1.35rem; }
 .contenido li + li { margin-top: .4rem; }
-.contenido ul > li::marker { color: var(--lc-ink); content: "■  "; font-size: .7em; }
-.contenido ol > li::marker { color: var(--lc-ink); font-family: var(--f-rotulo); font-weight: 700; }
+.contenido ul:not([class]) > li::marker { color: var(--lc-ink); content: "■  "; font-size: .7em; }
+.contenido ol:not([class]) > li::marker { color: var(--lc-ink); font-family: var(--f-rotulo); font-weight: 700; }
 .entradilla { font-size: var(--t-med); line-height: 1.55; color: var(--tinta); }
 .nota-margen { font-size: var(--t-peq); color: var(--tinta-2); }
 
@@ -937,3 +938,55 @@ details.solucion > summary { color: var(--lc-ink); }
 .glosario-buscar { width: 100%; max-width: 30rem; padding: .7rem .9rem; border-radius: var(--r-ctrl); border: 1.5px solid var(--linea-fuerte); background: var(--suelo); font-size: 1.05rem; }
 .d-resalte { fill: oklch(0.86 0.13 85 / 0.28); }
 .d-codigo-tenue { fill: var(--codigo-tenue) !important; font-family: var(--f-codigo) !important; }
+
+/* ==========================================================================
+   Ordenar líneas (Parsons)
+   ========================================================================== */
+.parsons { border-radius: var(--r-senal); border: 1px solid var(--linea); background: var(--suelo-2); overflow: hidden; }
+.parsons:not(.js) ol { font-family: var(--f-codigo); padding: 1rem 1rem 1rem 2.5rem; }
+.parsons-cabeza, .terminal-cabeza { display: flex; align-items: center; gap: .6rem; padding: .7rem 1rem; background: var(--panel); color: var(--panel-tinta); font-family: var(--f-rotulo); font-weight: 700; font-size: 1.05rem; }
+.parsons-cabeza .ico, .terminal-cabeza .ico { color: var(--lc); }
+.terminal-cabeza .boton { margin-inline-start: auto; color: var(--panel-tinta); border-color: oklch(0.5 0.02 262); }
+.parsons-ayuda { padding: .75rem 1rem 0; font-size: var(--t-peq); color: var(--tinta-2); }
+.parsons-lista { list-style: none !important; margin: 0; padding: .75rem 1rem !important; display: grid; gap: .4rem; counter-reset: pl; }
+.parsons-lista li::marker { content: none; }
+.parsons-linea {
+  display: flex; align-items: center; gap: .5rem; margin: 0 !important; max-width: none !important;
+  margin-inline-start: calc(var(--sangria, 0) * 1.6rem) !important;
+  padding: .45rem .5rem .45rem .8rem; border-radius: 5px; border: 1.5px solid var(--linea-fuerte);
+  background: var(--codigo-fondo); color: var(--codigo-texto); cursor: grab; transition: border-color .2s, background-color .2s, margin .2s var(--curva);
+}
+.parsons-linea code { flex: 1; min-width: 0; font-size: .92rem; background: none !important; color: inherit !important; padding: 0 !important; white-space: pre-wrap; }
+.parsons-linea.arrastrando { opacity: .5; }
+.parsons-linea.destino { border-color: var(--lc); }
+.parsons-linea.ok { border-color: var(--s-ok); background: color-mix(in oklch, var(--s-ok) 22%, var(--codigo-fondo)); }
+.parsons-linea.mal { border-color: var(--s-error); }
+.parsons-botones { display: inline-flex; gap: 2px; flex: none; }
+.parsons-botones button { display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 4px; border: 1px solid var(--codigo-linea); background: var(--codigo-fondo-2); color: var(--codigo-texto); cursor: pointer; font-family: var(--f-rotulo); font-weight: 700; }
+.parsons-botones button:disabled { opacity: .3; cursor: default; }
+.parsons-botones button:hover:not(:disabled) { border-color: var(--lc); }
+.parsons-pie { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; padding: .75rem 1rem; border-top: 1px solid var(--linea); background: var(--suelo); }
+.parsons-veredicto { display: inline-flex; align-items: center; gap: .4rem; font-weight: 700; }
+.parsons-veredicto.ok { color: var(--s-ok); } .parsons-veredicto.mal { color: var(--s-error); }
+
+/* ==========================================================================
+   Terminal simulada
+   ========================================================================== */
+.terminal-sim { border-radius: var(--r-senal); border: 1px solid var(--linea-fuerte); overflow: hidden; background: var(--codigo-fondo-2); }
+.terminal-sim:not(.js) { padding: 1rem; color: var(--codigo-texto); }
+.terminal-sim .terminal-instrucciones { padding: .8rem 1rem; background: var(--suelo-2); color: var(--tinta); border-bottom: 1px solid var(--linea); }
+.terminal-sim .terminal-instrucciones > * + * { margin-top: .5rem; }
+.terminal-pantalla {
+  padding: .8rem 1rem 1rem; min-height: 14rem; max-height: 26rem; overflow: auto; cursor: text;
+  font-family: var(--f-codigo); font-size: .9rem; line-height: 1.55; color: var(--codigo-texto);
+}
+.terminal-linea { white-space: pre-wrap; word-break: break-word; min-height: 1.55em; }
+.terminal-linea.orden { color: var(--codigo-texto); }
+.terminal-linea.error { color: oklch(0.8 0.13 27); }
+.terminal-linea.aviso { color: oklch(0.88 0.12 90); }
+.terminal-linea.tenue { color: var(--codigo-tenue); }
+.terminal-fila { display: flex; align-items: baseline; gap: 0; }
+.terminal-prompt { color: var(--sx-texto); white-space: pre; flex: none; }
+.terminal-entrada { flex: 1; min-width: 4rem; border: 0; outline: none; background: transparent; color: var(--codigo-texto); font: inherit; caret-color: var(--sx-texto); padding: 0; }
+.terminal-entrada:focus-visible { outline: none; box-shadow: 0 2px 0 0 var(--lc); }
+.taller-veredicto.pendiente { display: flex; background: var(--panel); color: var(--panel-tinta-2); font-size: .95rem; }

@@ -141,8 +141,8 @@
         if (a) { if (j === i) a.setAttribute("aria-current", "location"); else a.removeAttribute("aria-current"); }
       });
       if (tren && items[i]) {
-        var li = items[i];
-        tren.style.transform = "translateY(" + (li.offsetTop + li.offsetHeight / 2 - 15) + "px)";
+        var caja = items[i].getBoundingClientRect(), base = nav.getBoundingClientRect();
+        tren.style.transform = "translateY(" + (caja.top - base.top + nav.scrollTop + caja.height / 2 - 15) + "px)";
       }
     }
     function alDesplazar() {
@@ -432,11 +432,15 @@
     var tiempoMax = (parseFloat(caja.getAttribute("data-tiempo")) || 5) * 1000;
     var clave = caja.id ? "taller:" + location.pathname + "#" + caja.id : null;
 
+    var enMarco = modo === "web" || modo === "python" || modo === "sql";
+    var prepEl = $("script.taller-preparacion", caja);
+    var preparacion = prepEl ? prepEl.textContent : "";
+    var LENG_MODO = { web: "markup", python: "python", sql: "sql" };
     var editores = fuentes.map(function (t) {
-      var leng = t.getAttribute("data-lenguaje") || (modo === "web" ? "markup" : (caja.getAttribute("data-lenguaje") || "js"));
+      var leng = t.getAttribute("data-lenguaje") || LENG_MODO[modo] || caja.getAttribute("data-lenguaje") || "js";
       return { lenguaje: ALIAS[leng] || leng, nombre: leng === "markup" ? "html" : leng, inicial: t.value.replace(/^\n/, "").replace(/\s+$/, "") + "\n" };
     });
-    if (!editores.length) editores.push({ lenguaje: "javascript", nombre: "js", inicial: "\n" });
+    if (!editores.length) editores.push({ lenguaje: ALIAS[LENG_MODO[modo]] || "javascript", nombre: LENG_MODO[modo] || "js", inicial: "\n" });
     if (clave) {
       var guardados = (almacen.leer().talleres || {})[clave];
       if (guardados && guardados.length === editores.length) editores.forEach(function (e, i) { e.guardado = guardados[i]; });
@@ -476,16 +480,17 @@
     caja.appendChild(zona);
 
     var salida = crear("div", { "class": "taller-salida", "aria-live": "polite" });
-    salida.appendChild(crear("div", { "class": "taller-salida-rotulo", texto: modo === "web" ? "Consola de la página" : "Consola" }));
+    salida.appendChild(crear("div", { "class": "taller-salida-rotulo", texto: modo === "web" ? "Consola de la página" : modo === "sql" ? "Resultado" : "Consola" }));
     var cuerpoSalida = crear("div");
     cuerpoSalida.appendChild(crear("div", { "class": "vacio", texto: "Pulsa «Ejecutar» (o Ctrl + Enter) para ver el resultado aquí." }));
     salida.appendChild(cuerpoSalida);
     var vista = null, iframe = null;
-    if (modo === "web") {
+    if (enMarco) {
       vista = crear("div", { "class": "taller-vista" });
-      iframe = crear("iframe", { title: "Vista previa — " + titulo, sandbox: "allow-scripts allow-modals", loading: "lazy" });
+      iframe = crear("iframe", { title: (modo === "web" ? "Vista previa — " : "Ejecución — ") + titulo, sandbox: "allow-scripts allow-modals", loading: "lazy" });
       if (caja.getAttribute("data-alto")) iframe.style.height = caja.getAttribute("data-alto");
       vista.appendChild(iframe);
+      if (modo !== "web") vista.hidden = true;
       caja.appendChild(vista);
     }
     caja.appendChild(salida);
@@ -535,7 +540,7 @@
       terminar();
       cuerpoSalida.innerHTML = "";
       mostrarVeredicto(null);
-      if (modo === "web") return ejecutarWeb();
+      if (enMarco) return ejecutarMarco();
       var codigo = editores[0].editor.valor();
       if (!window.TerminalMotor) { linea("error", "No se pudo cargar el motor de ejecución."); return; }
       var fuente = window.TerminalMotor.construirFuente(codigo, verificacion);
@@ -574,25 +579,53 @@
       }, tiempoMax);
     }
 
-    function ejecutarWeb() {
-      var partes = { html: "", css: "", js: "" };
+    var CDN = "https://cdnjs.cloudflare.com/ajax/libs/";
+    function ejecutarMarco() {
+      var partes = { html: "", css: "", js: "", python: "", sql: "" };
       editores.forEach(function (e) { partes[e.nombre === "javascript" ? "js" : e.nombre] = e.editor.valor(); });
+      var sinCierre = function (t) { return String(t).replace(/<\/script/gi, "<\\/script"); };
+      var idJ = JSON.stringify(idTaller);
       var puente = "<script>(function(){var P=parent;function f(v){try{if(typeof v==='string')return v;return JSON.stringify(v);}catch(e){return String(v);}}" +
-        "['log','info','warn','error'].forEach(function(k){var o=console[k];console[k]=function(){var a=[].slice.call(arguments).map(f).join(' ');P.postMessage({terminalTaller:" + JSON.stringify(idTaller) + ",tipo:k==='error'?'error':(k==='warn'?'aviso':'log'),datos:a},'*');o&&o.apply(console,arguments);};});" +
-        "window.addEventListener('error',function(e){P.postMessage({terminalTaller:" + JSON.stringify(idTaller) + ",tipo:'excepcion',datos:{nombre:(e.error&&e.error.name)||'Error',mensaje:(e.error&&e.error.message)||e.message,linea:e.lineno||null}},'*');});})();<\/script>";
-      var verif = verificacion ? "<script>window.addEventListener('load',function(){setTimeout(function(){var r;try{r=(function(salida,codigo){" + verificacion.replace(/<\/script/gi, "<\\/script") + "\n})(window.__salida||[]," + JSON.stringify(partes).replace(/<\/script/gi, "<\\/script") + ");}catch(e){r='La verificación falló: '+e.message;}parent.postMessage({terminalTaller:" + JSON.stringify(idTaller) + ",tipo:'veredicto',datos:r===undefined?true:r},'*');},150);});<\/script>" : "";
-      var html = "<!doctype html><html lang='es'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" + puente +
-        "<script>window.__salida=[];(function(){var o=console.log;console.log=function(){window.__salida.push([].slice.call(arguments).map(function(v){return typeof v==='string'?v:JSON.stringify(v);}).join(' '));o.apply(console,arguments);};})();<\/script>" +
-        "<style>" + partes.css + "</style></head><body>" + partes.html + "<script>" + partes.js.replace(/<\/script/gi, "<\\/script") + "\n<\/script>" + verif + "</body></html>";
+        "window.__salida=[];var PY=" + (modo === "python") + ",buf={log:'',error:''};function emitir(k,a){if(PY){if(/error in loaders|handle error|frame obj/.test(a))return;a=a.replace(/File \"[^\"]*principal\"/,'File \"tu_programa.py\"');}if(k==='log'||k==='info')window.__salida.push(a);P.postMessage({terminalTaller:" + idJ + ",tipo:k==='error'?'error':(k==='warn'?'aviso':'log'),datos:a},'*');}" +
+        "window.__vaciar=function(){['log','error'].forEach(function(k){if(buf[k]){emitir(k,buf[k]);buf[k]='';}});};" +
+        "['log','info','warn','error'].forEach(function(k){var o=console[k];console[k]=function(){var a=[].slice.call(arguments).map(f).join(' ');" +
+        "if(PY&&(k==='log'||k==='error')){buf[k]+=a;var partes=buf[k].split('\\n');buf[k]=partes.pop();partes.forEach(function(l){emitir(k,l);});}else emitir(k,a);o&&o.apply(console,arguments);};});" +
+        "window.addEventListener('error',function(e){P.postMessage({terminalTaller:" + idJ + ",tipo:'excepcion',datos:{nombre:(e.error&&e.error.name)||'Error',mensaje:(e.error&&e.error.message)||e.message,linea:e.lineno||null}},'*');});" +
+        "window.__terminar=function(extra){window.__vaciar();var r=true;" + (verificacion ? "try{r=(function(salida,codigo,resultados){" + sinCierre(verificacion) + "\n})(window.__salida.slice()," + sinCierre(JSON.stringify(modo === "web" ? partes : (partes[modo] || ""))) + ",window.__resultados||[]);}catch(e){r='La verificación falló: '+e.message;}" : "") +
+        "P.postMessage({terminalTaller:" + idJ + ",tipo:'fin',datos:" + (verificacion ? "(r===undefined?true:r)" : "null") + "},'*');};})();<\/script>";
+      var cabeza = "<!doctype html><html lang='es'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" + puente;
+      var html;
+      if (modo === "python") {
+        html = cabeza + "<script src='" + CDN + "brython/3.14.3/brython.min.js'><\/script></head><body>" +
+          "<script type='text/python' id='principal'>\n" + sinCierre(partes.python) + "\n<\/script>" +
+          "<script>window.addEventListener('load',function(){if(!window.__BRYTHON__){console.error('No se pudo cargar el intérprete de Python.');}setTimeout(window.__terminar,300);});<\/script></body></html>";
+      } else if (modo === "sql") {
+        html = cabeza + "<script src='" + CDN + "sql.js/1.14.2/sql-asm.js'><\/script></head><body><script>" +
+          "var tablaTexto=" + window.TerminalMotor.tablaTexto.toString() + ";" +
+          "initSqlJs().then(function(SQL){var db=new SQL.Database();window.__resultados=[];" +
+          "try{db.run(" + sinCierre(JSON.stringify(preparacion)) + ");}catch(e){console.error('Error en los datos de ejemplo: '+e.message);}" +
+          "try{var res=db.exec(" + sinCierre(JSON.stringify(partes.sql)) + ");res.forEach(function(r){window.__resultados.push(r);tablaTexto(r.columns,r.values).forEach(function(l){console.log(l);});});" +
+          "if(!res.length)console.log('Listo: la instrucción se ejecutó y no devolvió filas.');}catch(e){console.error('Error de SQL: '+e.message);}" +
+          "window.__terminar();}).catch(function(e){console.error('No se pudo cargar SQLite: '+e.message);window.__terminar();});<\/script></body></html>";
+      } else {
+        html = cabeza + "<style>" + partes.css + "</style></head><body>" + partes.html + "<script>" + sinCierre(partes.js) + "\n<\/script>" +
+          "<script>window.addEventListener('load',function(){setTimeout(window.__terminar,150);});<\/script></body></html>";
+      }
+      if (modo !== "web") linea("vacio", modo === "python" ? "Ejecutando Python…" : "Ejecutando SQL…");
       iframe.srcdoc = html;
     }
     var idTaller = "t" + Math.random().toString(36).slice(2, 9);
-    if (modo === "web") {
+    if (enMarco) {
       window.addEventListener("message", function (ev) {
         var m = ev.data;
         if (!m || m.terminalTaller !== idTaller) return;
+        var primero = cuerpoSalida.firstChild;
+        if (primero && primero.classList.contains("vacio")) cuerpoSalida.innerHTML = "";
         if (m.tipo === "excepcion") informarError(m.datos);
-        else if (m.tipo === "veredicto") { mostrarVeredicto(m.datos); if (m.datos === true) marcarEjercicio(caja); }
+        else if (m.tipo === "fin") {
+          if (!cuerpoSalida.firstChild) cuerpoSalida.appendChild(crear("div", { "class": "vacio", texto: "(El programa terminó sin imprimir nada.)" }));
+          if (m.datos !== null && m.datos !== undefined) { mostrarVeredicto(m.datos); if (m.datos === true) marcarEjercicio(caja); }
+        }
         else linea(m.tipo === "log" ? "" : m.tipo, m.datos);
       });
     }
@@ -607,7 +640,7 @@
       mostrarVeredicto(null);
       if (iframe) iframe.srcdoc = "";
     });
-    if (modo === "web" && caja.hasAttribute("data-auto")) setTimeout(ejecutar, 50);
+    if (enMarco && caja.hasAttribute("data-auto")) setTimeout(ejecutar, 50);
   }
 
   function marcarEjercicio(caja) {

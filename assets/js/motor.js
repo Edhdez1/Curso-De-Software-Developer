@@ -143,10 +143,10 @@
     var verif = verificacion && verificacion.trim()
       ? "function __verificar(){ var __r; try { __r = (function(salida, codigo){\n" + verificacion + "\n})(__lineas.slice(), " + JSON.stringify(codigo) + "); } catch (e) { __r = 'La verificación falló: ' + (e && e.message); } __enviar('veredicto', __r === undefined ? true : __r); __enviar('fin'); }"
       : "function __verificar(){ __enviar('fin'); }";
-    var cabecera = cuerpo + "\n" + verif + "\n(async function(){\n";
+    var cabecera = "(function(){\n" + cuerpo + "\n" + verif + "\n(async function(){\n";
     var desfase = cabecera.split("\n").length - 1;
     cabecera = cabecera.replace("__DESFASE__", String(desfase));
-    var fuente = cabecera + codigo + "\n})().then(function(){ __principalTerminado = true; __quizaTerminar(); }, function(e){ __errorEjecucion(e); __principalTerminado = true; __quizaTerminar(); });\n";
+    var fuente = cabecera + codigo + "\n})().then(function(){ __principalTerminado = true; __quizaTerminar(); }, function(e){ __errorEjecucion(e); __principalTerminado = true; __quizaTerminar(); });\n})();\n";
     return { fuente: fuente, desfase: desfase, lineasPreludio: lineasPreludio };
   }
 
@@ -174,7 +174,20 @@
     return "";
   }
 
-  var api = { construirFuente: construirFuente, explicarError: explicarError, preludio: preludio };
+  // Tabla de texto para resultados de SQL (mismo formato en el navegador y en las pruebas).
+  function tablaTexto(columnas, filas) {
+    var celda = function (v) { return v === null || v === undefined ? "NULL" : String(v); };
+    var anchos = columnas.map(function (c, i) {
+      return Math.max(String(c).length, filas.reduce(function (m, f) { return Math.max(m, celda(f[i]).length); }, 0));
+    });
+    var fila = function (valores) { return valores.map(function (v, i) { var t = celda(v); return t + Array(anchos[i] - t.length + 1).join(" "); }).join(" | ").replace(/\s+$/, ""); };
+    var lineas = [fila(columnas), anchos.map(function (a) { return Array(a + 1).join("-"); }).join("-+-")];
+    filas.forEach(function (f) { lineas.push(fila(f)); });
+    lineas.push("(" + filas.length + (filas.length === 1 ? " fila)" : " filas)"));
+    return lineas;
+  }
+
+  var api = { construirFuente: construirFuente, explicarError: explicarError, preludio: preludio, tablaTexto: tablaTexto };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.TerminalMotor = api;
 })(typeof self !== "undefined" ? self : this);
