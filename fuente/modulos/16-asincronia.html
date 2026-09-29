@@ -186,7 +186,7 @@ console.log(usuario);</textarea>
   <h3>Cuando algo sale mal</h3>
   <p>Una petición puede fallar: no hay conexión, el usuario no existe… Con callbacks, la costumbre más extendida (la usa Node.js en sus funciones clásicas) es el <strong>callback con error primero</strong>: el primer parámetro del callback es el error, o <code>null</code> si todo fue bien, y el segundo son los datos.</p>
   <pre><code class="language-js">function pedirUsuario(id, callback) {
-  setTimeout(() => {
+  setTimeout(() =&gt; {
     if (id &lt;= 0) {
       callback(new Error("Id no válido"), null);
     } else {
@@ -195,7 +195,7 @@ console.log(usuario);</textarea>
   }, 500);
 }
 
-pedirUsuario(-1, (error, usuario) => {
+pedirUsuario(-1, (error, usuario) =&gt; {
   if (error) {
     console.log("Falló: " + error.message);
     return;
@@ -254,10 +254,10 @@ console.log("Esperando al servidor…");</textarea>
   <div class="comparar">
     <div>
       <p class="comparar-rotulo mal">Callbacks anidados</p>
-      <pre><code class="language-js">iniciarSesion("ana", "1234", (e, sesion) => {
-  pedirPerfil(sesion.token, (e, perfil) => {
-    pedirPartidas(perfil.id, (e, partidas) => {
-      pedirPuntuacion(partidas[0].id, (e, puntos) => {
+      <pre><code class="language-js">iniciarSesion("ana", "1234", (e, sesion) =&gt; {
+  pedirPerfil(sesion.token, (e, perfil) =&gt; {
+    pedirPartidas(perfil.id, (e, partidas) =&gt; {
+      pedirPuntuacion(partidas[0].id, (e, puntos) =&gt; {
         console.log(puntos);
       });
     });
@@ -381,12 +381,16 @@ console.log(puntos);</code></pre>
 const pedido = pedirPizza("margarita");
 console.log(pedido); // todavía no hay pizza: hay una promesa
 
-pedido
+// (el await del principio hace que el taller espere al final de la cadena)
+await pedido
   .then((pizza) => console.log("A comer: " + pizza))
   .catch((error) => console.log("No hubo pizza: " + error.message))
   .finally(() => console.log("Pedido cerrado"));</textarea>
   </div>
   <p><strong>Modifica:</strong> pide una pizza de <code>"piña"</code>. Ahora se salta el <code>then</code>, se ejecuta el <code>catch</code> y, como siempre, el <code>finally</code>.</p>
+  <aside class="senal nota" data-titulo="Un detalle de los talleres">
+    <p>El taller da por terminado tu programa cuando acaba el código principal y no quedan temporizadores pendientes. Si en ese momento una cadena de promesas sigue en marcha, sus últimos mensajes se perderían. Por eso en algunos talleres verás un <code>await</code> delante de una cadena o de una llamada: le pide al taller que espere a que termine. En la consola del navegador o en Node.js no hace falta, porque siguen atendiendo todo lo pendiente. Qué hace <code>await</code> exactamente lo verás en la próxima sección.</p>
+  </aside>
   <p>Tres reglas para crear promesas:</p>
   <ul>
     <li>Llama a <code>resolve</code> o a <code>reject</code> una sola vez. Las llamadas siguientes se ignoran, porque una promesa establecida ya no cambia.</li>
@@ -395,19 +399,19 @@ pedido
   </ul>
   <p>Hay dos atajos para crear promesas ya establecidas: <code>Promise.resolve(valor)</code> y <code>Promise.reject(error)</code>. Y una función de tres líneas que vas a usar en toda la estación para simular esperas:</p>
   <pre><code class="language-js">function esperar(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) =&gt; setTimeout(resolve, ms));
 }
 
-esperar(1000).then(() => console.log("Pasó un segundo"));</code></pre>
+esperar(1000).then(() =&gt; console.log("Pasó un segundo"));</code></pre>
   <p><code>setTimeout</code> llama a <code>resolve</code> cuando pasan los milisegundos, y la promesa se cumple. Es <code>setTimeout</code> convertido en promesa.</p>
   <p>Un detalle que confunde a mucha gente: el ejecutor se ejecuta <em>enseguida</em>, en el momento de crear la promesa. Lo que se ejecuta después es la función del <code>then</code>. Síguelo paso a paso:</p>
   <div class="traza" data-titulo="Cuándo se ejecuta cada parte de una promesa" data-inicio="Vamos a crear una promesa que se cumple en el acto, sin esperas, para ver con claridad qué parte se ejecuta ahora y qué parte después. Pulsa «Siguiente».">
     <pre><code class="language-js">console.log("1. Antes");
-const promesa = new Promise((resolve) => {
+const promesa = new Promise((resolve) =&gt; {
   console.log("2. El ejecutor corre enseguida");
   resolve("pizza");
 });
-promesa.then((valor) => {
+promesa.then((valor) =&gt; {
   console.log("4. El then recibe: " + valor);
 });
 console.log("3. Después");</code></pre>
@@ -453,7 +457,8 @@ function pedirPuntuacion(idPartida) {
   return esperar(300).then(() => 48200);
 }
 
-iniciarSesion("ana", "1234")
+// (el await del principio hace que el taller espere al final de la cadena)
+await iniciarSesion("ana", "1234")
   .then((sesion) => {
     console.log("1. Sesión iniciada");
     return pedirPerfil(sesion.token);
@@ -475,20 +480,20 @@ iniciarSesion("ana", "1234")
     <div>
       <p class="comparar-rotulo mal">Falta el return</p>
       <pre><code class="language-js">iniciarSesion("ana", "1234")
-  .then((sesion) => {
+  .then((sesion) =&gt; {
     pedirPerfil(sesion.token);
   })
-  .then((perfil) => {
+  .then((perfil) =&gt; {
     console.log(perfil); // undefined
   });</code></pre>
     </div>
     <div>
       <p class="comparar-rotulo bien">Con return, la cadena espera</p>
       <pre><code class="language-js">iniciarSesion("ana", "1234")
-  .then((sesion) => {
+  .then((sesion) =&gt; {
     return pedirPerfil(sesion.token);
   })
-  .then((perfil) => {
+  .then((perfil) =&gt; {
     console.log(perfil); // { id: 7, nombre: 'Ana' }
   });</code></pre>
     </div>
@@ -551,7 +556,7 @@ async function mostrarPuntuacion() {
   }
 }
 
-mostrarPuntuacion();</textarea>
+await mostrarPuntuacion(); // el taller espera a que la función termine</textarea>
   </div>
   <p><strong>Modifica:</strong> otra vez, prueba la clave <code>"0000"</code>. El error que lanza <code>iniciarSesion</code> sale por el <code>await</code> de la primera línea del <code>try</code> y cae en el <code>catch</code>, exactamente como un error síncrono. El <code>finally</code> se ejecuta siempre.</p>
   <aside class="senal clave">
@@ -572,8 +577,9 @@ async function cargarPerfil() {
 }
 
 console.log("A. Antes");
-cargarPerfil();
-console.log("C. Después");</textarea>
+const tarea = cargarPerfil();
+console.log("C. Después");
+await tarea; // solo para el taller: espera a que cargarPerfil termine</textarea>
   </div>
   <p>Sale A, B, C, D. Si esperabas A, B, D, C, no te preocupes: es la confusión más frecuente con <code>await</code>. Síguelo línea a línea:</p>
   <div class="traza" data-titulo="await pausa la función, no el programa" data-inicio="pedirPerfil es la misma función de arriba: devuelve una promesa que se cumple a los 300 ms con { nombre: &quot;Ana&quot; }. Pulsa «Siguiente».">
@@ -622,7 +628,9 @@ const niveles = ["bosque", "cueva", "castillo"];
 niveles.forEach(async (nivel) => {
   await descargar(nivel);
 });
-console.log("¡Todos los niveles listos!");</textarea>
+console.log("¡Todos los niveles listos!");
+
+await esperar(500); // solo para el taller: da tiempo a que terminen las descargas</textarea>
   </div>
   <p>«¡Todos los niveles listos!» sale <em>antes</em> que las descargas: es mentira. <strong>Modifica:</strong> reemplaza el <code>forEach</code> por un bucle <code>for...of</code>, que sí respeta el <code>await</code>:</p>
   <pre><code class="language-js">for (const nivel of niveles) {
@@ -1102,7 +1110,7 @@ try {
 console.log(respuesta.status, respuesta.ok);
 const pikachu = await respuesta.json();
 console.log(pikachu.name, pikachu.height / 10 + " m", pikachu.weight / 10 + " kg");
-console.log(pikachu.types.map((t) => t.type.name));</code></pre>
+console.log(pikachu.types.map((t) =&gt; t.type.name));</code></pre>
       <p>Deberías ver <code>200 true</code>, <code>pikachu 0.4 m 6 kg</code> y una lista con <code>'electric'</code> (el formato exacto cambia un poco entre navegadores).</p></div></li>
     <li><div><p>Abre la pestaña «Red» (<em>Network</em>), filtra por «Fetch/XHR» y vuelve a ejecutar el código. Haz clic en la petición: verás el método, el código de estado, las cabeceras y la respuesta, como en la <a href="03-internet.html">Estación 3</a>.</p></div></li>
     <li><div><p>Cambia <code>pikachu</code> por <code>pikachuu</code> y observa: <code>404 false</code>, sin ningún error rojo. Justo lo que acabas de aprender.</p></div></li>
@@ -1436,9 +1444,9 @@ entrada.addEventListener("input", async () => {
   </div>
   <p>Otra técnica que se combina muy bien con la cancelación es el <strong>debounce</strong> («antirrebote»): en lugar de buscar a cada tecla, esperas a que la persona deje de escribir unos 300 milisegundos. Se hace con el <code>setTimeout</code> y el <code>clearTimeout</code> de la <a href="15-dom.html">Estación 15</a>, y ahorra muchas peticiones, algo que agradecen los límites de uso de las APIs:</p>
   <pre><code class="language-js">let espera = null;
-entrada.addEventListener("input", () => {
+entrada.addEventListener("input", () =&gt; {
   clearTimeout(espera);                                  // cancela la espera anterior
-  espera = setTimeout(() => buscar(entrada.value), 300); // y empieza otra
+  espera = setTimeout(() =&gt; buscar(entrada.value), 300); // y empieza otra
 });</code></pre>
   <p>Ordena este patrón completo, con su sangría. <code>mostrarCargando</code>, <code>mostrar</code> y <code>mostrarError</code> son funciones que cambian la página:</p>
   <div class="parsons" data-titulo="Ordena una carga con sus estados" data-lenguaje="js">
@@ -1461,4 +1469,990 @@ entrada.addEventListener("input", () => {
     <p>Un mensaje que cambia en pantalla no siempre llega a quien usa un lector de pantalla. El atributo <code>aria-live="polite"</code> que viste en los talleres hace que el lector anuncie los cambios de ese elemento («Cargando…», «3 resultados», «Error…»). Y un botón desactivado mientras se carga evita peticiones repetidas. Los estados de carga, error y vacío, y cómo redactar buenos mensajes, se estudian a fondo en la <a href="17-diseno-ux.html">Estación 17</a>.</p>
   </aside>
   <p>Una última idea para errores pasajeros, como un 429 (demasiadas peticiones) o un 503 (servidor saturado): reintentar unas pocas veces, esperando un poco entre intento e intento. Algunas APIs incluso te dicen cuánto esperar en la cabecera <code>Retry-After</code>. Lo vas a programar en uno de los retos de la práctica.</p>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>El código <strong>síncrono</strong> espera a que termine cada paso; el <strong>asíncrono</strong> empieza una tarea que tarda y sigue, y continúa con el resultado cuando llega.</li>
+    <li>JavaScript hace una cosa a la vez (un solo hilo). Las esperas las hace el navegador o Node.js; lo que está listo espera en una cola y el <strong>bucle de eventos</strong> lo ejecuta cuando JavaScript queda libre. Por eso un bucle largo congela la página y un <code>setTimeout</code> no.</li>
+    <li>Los <strong>callbacks</strong> asíncronos funcionan, pero al encadenar esperas forman el «callback hell». Un valor asíncrono no se puede devolver con <code>return</code> desde un callback.</li>
+    <li>Una <strong>promesa</strong> representa un resultado futuro: pendiente, cumplida (con un valor) o rechazada (con un error). <code>then</code>, <code>catch</code> y <code>finally</code> dicen qué hacer; <code>new Promise((resolve, reject) =&gt; …)</code> crea una. En una cadena, recuerda el <code>return</code>.</li>
+    <li><code>async</code> hace que una función devuelva una promesa; <code>await</code> pausa esa función (no el programa) hasta que la promesa se establece, y los errores se atrapan con <code>try</code>/<code>catch</code>. Cuidado con olvidar <code>await</code> y con <code>await</code> dentro de <code>forEach</code>.</li>
+    <li><code>Promise.all</code> lanza varias operaciones independientes a la vez y espera a todas; <code>Promise.race</code> se queda con la primera y sirve para tiempos límite; <code>allSettled</code> y <code>any</code> cubren los otros casos.</li>
+    <li>Una <strong>API</strong> define cómo pedirle cosas a otro programa. Una API REST organiza los datos en recursos con URL y usa métodos HTTP (GET, POST, PUT, PATCH, DELETE) y códigos de estado. Antes de programar, lee su documentación: endpoints, parámetros, forma de la respuesta, límites de uso y licencia.</li>
+    <li><code>fetch(url, opciones)</code> devuelve una promesa con un <code>Response</code>; los datos se leen con <code>await respuesta.json()</code>. <code>fetch</code> solo se rechaza si no hay respuesta: comprueba siempre <code>respuesta.ok</code>. Para enviar datos: <code>method</code>, <code>headers</code> con <code>Content-Type</code> y <code>body</code> con <code>JSON.stringify</code>.</li>
+    <li>Una interfaz que pide datos tiene cinco estados: inicial, cargando, éxito, vacío y error. <code>try</code>/<code>catch</code>/<code>finally</code> los organiza.</li>
+    <li><code>AbortSignal.timeout(ms)</code> pone un tiempo límite a <code>fetch</code> y <code>AbortController</code> cancela peticiones, por ejemplo la búsqueda anterior, para evitar condiciones de carrera.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Resuelve los ejercicios en orden. Todos se ejecutan aquí, con servidores simulados: el código que escribas es el mismo que escribirías con <code>fetch</code> de verdad. Usa las pistas solo después de intentarlo unos minutos; la solución está para comparar, no para copiar.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-esperar">
+    <h3>Tu primera promesa</h3>
+    <p>Completa la función <code>esperar(ms)</code> para que devuelva una promesa que se cumpla cuando pasen <code>ms</code> milisegundos. El resto del programa ya está escrito: si tu función es correcta, imprimirá «Preparados», «Listos» y «¡Ya!» con medio segundo entre cada uno, y al final «Tiempo correcto».</p>
+    <div class="taller" id="taller-ej1" data-titulo="Ejercicio 1">
+      <textarea class="taller-codigo">function esperar(ms) {
+  // Devuelve una promesa nueva que se cumpla cuando pasen ms milisegundos.
+  // Pista: crea la promesa y usa setTimeout dentro.
+}
+
+const inicio = Date.now();
+console.log("Preparados");
+await esperar(500);
+console.log("Listos");
+await esperar(500);
+console.log("¡Ya!");
+const total = Date.now() - inicio;
+console.log(total >= 1000 ? "Tiempo correcto" : "Demasiado rápido: " + total + " ms");</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/new\s+Promise/.test(codigo)) return "Crea la promesa con new Promise((resolve) => { ... }) y devuélvela con return.";
+if (salida[0] !== "Preparados" || salida[1] !== "Listos" || salida[2] !== "¡Ya!") return "Deberían salir «Preparados», «Listos» y «¡Ya!», en ese orden.";
+if (salida[3] !== "Tiempo correcto") return "Las esperas no funcionan todavía (" + (salida[3] || "no se imprimió nada") + "). ¿Devuelves la promesa con return? ¿Llamas a resolve dentro del setTimeout?";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La estructura es <code>return new Promise((resolve) =&gt; { ... });</code>. Dentro de las llaves va lo que hace esperar.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>setTimeout</code> recibe una función y unos milisegundos. ¿Qué función quieres que se llame cuando pase el tiempo? Justamente <code>resolve</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function esperar(ms) {
+  return new Promise((resolve) =&gt; {
+    setTimeout(resolve, ms);
+  });
+}
+
+const inicio = Date.now();
+console.log("Preparados");
+await esperar(500);
+console.log("Listos");
+await esperar(500);
+console.log("¡Ya!");
+const total = Date.now() - inicio;
+console.log(total &gt;= 1000 ? "Tiempo correcto" : "Demasiado rápido: " + total + " ms");</code></pre>
+      <p>Sin el <code>return</code>, la función devolvería <code>undefined</code> y <code>await undefined</code> no espera nada. También vale <code>setTimeout(() =&gt; resolve(), ms)</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-arregla">
+    <h3>Arregla: el dato que nunca llega</h3>
+    <p>Este programa debería imprimir <code>Lyra: 1200 puntos</code>, pero imprime <code>undefined: undefined puntos</code>. Tiene dos errores relacionados. Encuéntralos y arréglalos.</p>
+    <div class="taller" id="taller-ej2" data-titulo="Ejercicio 2" data-esperado="Lyra: 1200 puntos">
+      <textarea class="taller-codigo">function pedirPuntuacion(jugador) {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve({ jugador: jugador, puntos: 1200 }), 300);
+  });
+}
+
+function mostrar() {
+  const resultado = pedirPuntuacion("Lyra");
+  console.log(resultado.jugador + ": " + resultado.puntos + " puntos");
+}
+
+await mostrar();</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Añade <code>console.log(resultado);</code> antes de la otra línea. Si ves <code>Promise { &lt;pending&gt; }</code>, <code>resultado</code> es la promesa, no los datos. ¿Qué palabra hace esperar a una promesa?</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Si añades solo <code>await</code>, el navegador protesta: <code>await</code> solo vale dentro de funciones marcadas con otra palabra.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function pedirPuntuacion(jugador) {
+  return new Promise((resolve) =&gt; {
+    setTimeout(() =&gt; resolve({ jugador: jugador, puntos: 1200 }), 300);
+  });
+}
+
+async function mostrar() {
+  const resultado = await pedirPuntuacion("Lyra");
+  console.log(resultado.jugador + ": " + resultado.puntos + " puntos");
+}
+
+await mostrar();</code></pre>
+      <p>Faltaban <code>await</code> (para recibir los datos y no la promesa) y <code>async</code> (para poder usar <code>await</code> dentro de la función).</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-then-await">
+    <h3>De then a async/await</h3>
+    <p>Reescribe la cadena de <code>then</code> con <code>async</code>/<code>await</code>, sin ningún <code>.then</code>. Maneja los errores con <code>try</code>, <code>catch</code> y <code>finally</code>. La salida debe seguir siendo exactamente la misma:</p>
+    <pre class="consola"><code>Sesión iniciada
+Hola, Ana (nivel 12)
+Fin</code></pre>
+    <div class="taller" id="taller-ej3" data-titulo="Ejercicio 3">
+      <textarea class="taller-codigo">function esperar(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+async function iniciarSesion(clave) {
+  await esperar(200);
+  if (clave !== "1234") throw new Error("Clave incorrecta");
+  return { token: "abc" };
+}
+async function pedirPerfil(token) {
+  await esperar(200);
+  return { nombre: "Ana", nivel: 12 };
+}
+
+// Reescribe esta cadena sin .then
+await iniciarSesion("1234")
+  .then((sesion) => {
+    console.log("Sesión iniciada");
+    return pedirPerfil(sesion.token);
+  })
+  .then((perfil) => console.log("Hola, " + perfil.nombre + " (nivel " + perfil.nivel + ")"))
+  .catch((error) => console.log("Error: " + error.message))
+  .finally(() => console.log("Fin"));</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (/\.then\s*\(/.test(codigo)) return "Todavía hay un .then: reescribe la cadena con await.";
+if (!/await\s+iniciarSesion/.test(codigo) || !/await\s+pedirPerfil/.test(codigo)) return "Usa await para esperar a iniciarSesion y a pedirPerfil.";
+if (!/\btry\s*\{/.test(codigo) || !/\bcatch\s*\(/.test(codigo) || !/\bfinally\s*\{/.test(codigo)) return "Maneja los errores con try { } catch (error) { } finally { }, como hacía la cadena.";
+var esp = ["Sesión iniciada", "Hola, Ana (nivel 12)", "Fin"];
+for (var i = 0; i < esp.length; i++) if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] || "(nada)") + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Crea una función <code>async function entrar() { ... }</code> y llámala al final con <code>await entrar();</code>. Dentro, cada <code>then</code> se convierte en una línea con <code>const algo = await ...</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Lo que estaba en <code>catch</code> va en <code>catch (error) { ... }</code> y lo del <code>finally</code>, en <code>finally { ... }</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function esperar(ms) {
+  return new Promise((resolve) =&gt; setTimeout(resolve, ms));
+}
+async function iniciarSesion(clave) {
+  await esperar(200);
+  if (clave !== "1234") throw new Error("Clave incorrecta");
+  return { token: "abc" };
+}
+async function pedirPerfil(token) {
+  await esperar(200);
+  return { nombre: "Ana", nivel: 12 };
+}
+
+async function entrar() {
+  try {
+    const sesion = await iniciarSesion("1234");
+    console.log("Sesión iniciada");
+    const perfil = await pedirPerfil(sesion.token);
+    console.log("Hola, " + perfil.nombre + " (nivel " + perfil.nivel + ")");
+  } catch (error) {
+    console.log("Error: " + error.message);
+  } finally {
+    console.log("Fin");
+  }
+}
+
+await entrar();</code></pre>
+      <p>Prueba con la clave <code>"0000"</code>: deberías ver «Error: Clave incorrecta» y «Fin», igual que con la cadena original.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-ok">
+    <h3>¿Salió bien? Comprueba respuesta.ok</h3>
+    <p>Escribe <code>obtenerJSON(url)</code>: debe pedir la dirección con <code>fetchFalso</code>, lanzar un <code>Error</code> con el texto <code>"Error HTTP "</code> más el código si la respuesta no está bien, y si está bien devolver los datos del cuerpo. Las pruebas del final deben imprimir:</p>
+    <pre class="consola"><code>pikachu (#25)
+No se pudo: Error HTTP 404
+No se pudo: Failed to fetch</code></pre>
+    <div class="taller" id="taller-ej4" data-titulo="Ejercicio 4">
+      <textarea class="taller-codigo">// ---- Servidor simulado (no lo cambies) ----
+const POKEMON = {
+  pikachu: { id: 25, name: "pikachu" },
+  eevee: { id: 133, name: "eevee" },
+};
+function fetchFalso(url) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const direccion = new URL(url);
+      if (direccion.hostname !== "pokeapi.co") return reject(new TypeError("Failed to fetch"));
+      const datos = POKEMON[direccion.pathname.split("/").pop()];
+      const status = datos ? 200 : 404;
+      resolve({ status: status, ok: status === 200, json: async () => datos ?? { message: "Not Found" } });
+    }, 200);
+  });
+}
+// ---- Fin del servidor simulado ----
+
+async function obtenerJSON(url) {
+  // 1. Pide la url con fetchFalso y espera la respuesta.
+  // 2. Si la respuesta no está bien, lanza un Error("Error HTTP " + código).
+  // 3. Si está bien, devuelve los datos del cuerpo.
+}
+
+// Pruebas (no las cambies)
+const direcciones = [
+  "https://pokeapi.co/api/v2/pokemon/pikachu",
+  "https://pokeapi.co/api/v2/pokemon/mewthree",
+  "https://pokeapi.coo/api/v2/pokemon/eevee",
+];
+for (const url of direcciones) {
+  try {
+    const pokemon = await obtenerJSON(url);
+    console.log(pokemon.name + " (#" + pokemon.id + ")");
+  } catch (error) {
+    console.log("No se pudo: " + error.message);
+  }
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/\.(ok|status)\b/.test(codigo)) return "Dentro de obtenerJSON, comprueba respuesta.ok (o respuesta.status) antes de leer los datos.";
+var esp = ["pikachu (#25)", "No se pudo: Error HTTP 404", "No se pudo: Failed to fetch"];
+for (var i = 0; i < esp.length; i++) if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] || "(nada)") + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Dos <code>await</code>: uno para <code>fetchFalso(url)</code> y otro para <code>respuesta.json()</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>if (!respuesta.ok) { throw new Error("Error HTTP " + respuesta.status); }</code>. No hace falta un <code>try</code> dentro de <code>obtenerJSON</code>: los errores suben solos hasta el <code>catch</code> de las pruebas.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// ---- Servidor simulado (no lo cambies) ----
+const POKEMON = {
+  pikachu: { id: 25, name: "pikachu" },
+  eevee: { id: 133, name: "eevee" },
+};
+function fetchFalso(url) {
+  return new Promise((resolve, reject) =&gt; {
+    setTimeout(() =&gt; {
+      const direccion = new URL(url);
+      if (direccion.hostname !== "pokeapi.co") return reject(new TypeError("Failed to fetch"));
+      const datos = POKEMON[direccion.pathname.split("/").pop()];
+      const status = datos ? 200 : 404;
+      resolve({ status: status, ok: status === 200, json: async () =&gt; datos ?? { message: "Not Found" } });
+    }, 200);
+  });
+}
+// ---- Fin del servidor simulado ----
+
+async function obtenerJSON(url) {
+  const respuesta = await fetchFalso(url);
+  if (!respuesta.ok) {
+    throw new Error("Error HTTP " + respuesta.status);
+  }
+  const datos = await respuesta.json();
+  return datos;
+}
+
+// Pruebas (no las cambies)
+const direcciones = [
+  "https://pokeapi.co/api/v2/pokemon/pikachu",
+  "https://pokeapi.co/api/v2/pokemon/mewthree",
+  "https://pokeapi.coo/api/v2/pokemon/eevee",
+];
+for (const url of direcciones) {
+  try {
+    const pokemon = await obtenerJSON(url);
+    console.log(pokemon.name + " (#" + pokemon.id + ")");
+  } catch (error) {
+    console.log("No se pudo: " + error.message);
+  }
+}</code></pre>
+      <p>Cambia <code>fetchFalso</code> por <code>fetch</code> y esta función funciona igual con la PokeAPI real. La tercera prueba muestra que un fallo de red también llega al <code>catch</code>, aunque <code>obtenerJSON</code> no haga nada especial con él.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-paralelo">
+    <h3>Carga en paralelo</h3>
+    <p>La pantalla de inicio tarda 1,5 segundos porque pide el perfil, los amigos y los logros uno detrás de otro. Ninguna petición depende de las otras. Cambia las tres líneas marcadas para lanzarlas a la vez con <code>Promise.all</code>. La última línea debe decir <code>Rápido: menos de 0,9 s</code>.</p>
+    <div class="taller" id="taller-ej5" data-titulo="Ejercicio 5">
+      <textarea class="taller-codigo">function esperar(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+async function pedirPerfil() { await esperar(600); return { nombre: "Lyra" }; }
+async function pedirAmigos() { await esperar(500); return ["Leo", "Mía", "Sol"]; }
+async function pedirLogros() { await esperar(400); return ["Primer nivel", "Sin daño", "Jefe final", "Coleccionista", "Speedrun"]; }
+
+const inicio = Date.now();
+
+// Cambia estas tres líneas para que las peticiones vayan a la vez
+const perfil = await pedirPerfil();
+const amigos = await pedirAmigos();
+const logros = await pedirLogros();
+
+console.log("Perfil: " + perfil.nombre);
+console.log("Amigos: " + amigos.length);
+console.log("Logros: " + logros.length);
+const ms = Date.now() - inicio;
+console.log(ms < 900 ? "Rápido: menos de 0,9 s" : "Lento: " + ms + " ms");</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/Promise\.all\s*\(/.test(codigo)) return "Usa Promise.all([...]) para lanzar las tres peticiones a la vez.";
+var esp = ["Perfil: Lyra", "Amigos: 3", "Logros: 5", "Rápido: menos de 0,9 s"];
+for (var i = 0; i < esp.length; i++) if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] || "(nada)") + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>Promise.all</code> recibe un array con las tres promesas: <code>[pedirPerfil(), pedirAmigos(), pedirLogros()]</code>. Fíjate en que las funciones se llaman ahí mismo, sin <code>await</code> delante de cada una.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El resultado es un array con los tres valores en el mismo orden. Con desestructuración: <code>const [perfil, amigos, logros] = await Promise.all([...]);</code></p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function esperar(ms) {
+  return new Promise((resolve) =&gt; setTimeout(resolve, ms));
+}
+async function pedirPerfil() { await esperar(600); return { nombre: "Lyra" }; }
+async function pedirAmigos() { await esperar(500); return ["Leo", "Mía", "Sol"]; }
+async function pedirLogros() { await esperar(400); return ["Primer nivel", "Sin daño", "Jefe final", "Coleccionista", "Speedrun"]; }
+
+const inicio = Date.now();
+
+const [perfil, amigos, logros] = await Promise.all([
+  pedirPerfil(),
+  pedirAmigos(),
+  pedirLogros(),
+]);
+
+console.log("Perfil: " + perfil.nombre);
+console.log("Amigos: " + amigos.length);
+console.log("Logros: " + logros.length);
+const ms = Date.now() - inicio;
+console.log(ms &lt; 900 ? "Rápido: menos de 0,9 s" : "Lento: " + ms + " ms");</code></pre>
+      <p>Ahora el total es lo que tarda la más lenta (unos 600 ms) en lugar de la suma (1500 ms).</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-limite">
+    <h3>Ponle un tiempo límite a cualquier promesa</h3>
+    <p>Escribe <code>conLimite(promesa, ms)</code>: debe devolver una promesa que se cumpla con el valor de <code>promesa</code> si llega antes de <code>ms</code> milisegundos, y que se rechace con <code>new Error("Tiempo agotado")</code> si no llega a tiempo. Las pruebas deben imprimir <code>datos rápidos</code> y <code>Error: Tiempo agotado</code>.</p>
+    <div class="taller" id="taller-ej6" data-titulo="Ejercicio 6" data-esperado="datos rápidos&#10;Error: Tiempo agotado">
+      <textarea class="taller-codigo">function esperar(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+async function pedir(dato, ms) {
+  await esperar(ms);
+  return dato;
+}
+
+function conLimite(promesa, ms) {
+  // Tu código aquí
+}
+
+// Pruebas (no las cambies)
+const rapida = pedir("datos rápidos", 200);
+const lenta = pedir("datos lentos", 1500);
+try {
+  console.log(await conLimite(rapida, 800));
+} catch (error) {
+  console.log("Error: " + error.message);
+}
+try {
+  console.log(await conLimite(lenta, 800));
+} catch (error) {
+  console.log("Error: " + error.message);
+}</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Necesitas una segunda promesa que se <em>rechace</em> pasados <code>ms</code> milisegundos: <code>new Promise((resolve, reject) =&gt; setTimeout(...))</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Haz competir las dos con <code>Promise.race([promesa, limite])</code> y devuelve el resultado de la carrera.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function esperar(ms) {
+  return new Promise((resolve) =&gt; setTimeout(resolve, ms));
+}
+async function pedir(dato, ms) {
+  await esperar(ms);
+  return dato;
+}
+
+function conLimite(promesa, ms) {
+  const limite = new Promise((resolve, reject) =&gt; {
+    setTimeout(() =&gt; reject(new Error("Tiempo agotado")), ms);
+  });
+  return Promise.race([promesa, limite]);
+}
+
+// Pruebas (no las cambies)
+const rapida = pedir("datos rápidos", 200);
+const lenta = pedir("datos lentos", 1500);
+try {
+  console.log(await conLimite(rapida, 800));
+} catch (error) {
+  console.log("Error: " + error.message);
+}
+try {
+  console.log(await conLimite(lenta, 800));
+} catch (error) {
+  console.log("Error: " + error.message);
+}</code></pre>
+      <p>Recuerda que la carrera no cancela a la perdedora: la petición lenta sigue hasta el final aunque ya nadie use su resultado. Con <code>fetch</code>, lo correcto es <code>AbortSignal.timeout(ms)</code>, que sí la cancela.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-reintentar">
+    <h3>Reintentar cuando el servidor está saturado</h3>
+    <p>El servidor simulado responde 429 (demasiadas peticiones) las dos primeras veces y después contesta bien. Otro endpoint, <code>/caido</code>, responde siempre 503. Escribe <code>conReintentos(url, intentos)</code>: en cada intento pide la dirección, imprime <code>Intento N: respuesta CÓDIGO</code> y, si la respuesta está bien, devuelve sus datos; si no, espera 200 ms antes del siguiente intento. Si se acaban los intentos, lanza <code>new Error("Sin respuesta tras N intentos")</code>. Las pruebas deben imprimir:</p>
+    <pre class="consola"><code>Intento 1: respuesta 429
+Intento 2: respuesta 429
+Intento 3: respuesta 200
+Puntuaciones: 3
+Intento 1: respuesta 503
+Intento 2: respuesta 503
+Intento 3: respuesta 503
+Error: Sin respuesta tras 3 intentos</code></pre>
+    <div class="taller" id="taller-ej7" data-titulo="Ejercicio 7" data-esperado="Intento 1: respuesta 429&#10;Intento 2: respuesta 429&#10;Intento 3: respuesta 200&#10;Puntuaciones: 3&#10;Intento 1: respuesta 503&#10;Intento 2: respuesta 503&#10;Intento 3: respuesta 503&#10;Error: Sin respuesta tras 3 intentos">
+      <textarea class="taller-codigo">// ---- Servidor simulado (no lo cambies) ----
+let visitas = 0;
+function fetchFalso(url) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      visitas++;
+      if (url.endsWith("/caido")) {
+        resolve({ status: 503, ok: false, json: async () => ({ error: "Servicio no disponible" }) });
+      } else if (visitas <= 2) {
+        resolve({ status: 429, ok: false, json: async () => ({ error: "Demasiadas peticiones" }) });
+      } else {
+        resolve({ status: 200, ok: true, json: async () => [48200, 39150, 27400] });
+      }
+    }, 100);
+  });
+}
+function esperar(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+// ---- Fin del servidor simulado ----
+
+async function conReintentos(url, intentos) {
+  // Tu código aquí
+}
+
+// Pruebas (no las cambies)
+try {
+  const puntos = await conReintentos("https://api.example.com/puntuaciones", 5);
+  console.log("Puntuaciones: " + puntos.length);
+} catch (error) {
+  console.log("Error: " + error.message);
+}
+try {
+  await conReintentos("https://api.example.com/caido", 3);
+} catch (error) {
+  console.log("Error: " + error.message);
+}</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Un bucle <code>for (let intento = 1; intento &lt;= intentos; intento++)</code>. Dentro, un <code>await fetchFalso(url)</code> y el <code>console.log</code> del intento.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Si <code>respuesta.ok</code>, haz <code>return await respuesta.json()</code>: el <code>return</code> sale del bucle y de la función. Si el bucle termina sin haber devuelto nada, es que se acabaron los intentos: el <code>throw</code> va después del bucle.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// ---- Servidor simulado (no lo cambies) ----
+let visitas = 0;
+function fetchFalso(url) {
+  return new Promise((resolve) =&gt; {
+    setTimeout(() =&gt; {
+      visitas++;
+      if (url.endsWith("/caido")) {
+        resolve({ status: 503, ok: false, json: async () =&gt; ({ error: "Servicio no disponible" }) });
+      } else if (visitas &lt;= 2) {
+        resolve({ status: 429, ok: false, json: async () =&gt; ({ error: "Demasiadas peticiones" }) });
+      } else {
+        resolve({ status: 200, ok: true, json: async () =&gt; [48200, 39150, 27400] });
+      }
+    }, 100);
+  });
+}
+function esperar(ms) {
+  return new Promise((resolve) =&gt; setTimeout(resolve, ms));
+}
+// ---- Fin del servidor simulado ----
+
+async function conReintentos(url, intentos) {
+  for (let intento = 1; intento &lt;= intentos; intento++) {
+    const respuesta = await fetchFalso(url);
+    console.log("Intento " + intento + ": respuesta " + respuesta.status);
+    if (respuesta.ok) {
+      return await respuesta.json();
+    }
+    if (intento &lt; intentos) {
+      await esperar(200);
+    }
+  }
+  throw new Error("Sin respuesta tras " + intentos + " intentos");
+}
+
+// Pruebas (no las cambies)
+try {
+  const puntos = await conReintentos("https://api.example.com/puntuaciones", 5);
+  console.log("Puntuaciones: " + puntos.length);
+} catch (error) {
+  console.log("Error: " + error.message);
+}
+try {
+  await conReintentos("https://api.example.com/caido", 3);
+} catch (error) {
+  console.log("Error: " + error.message);
+}</code></pre>
+      <p>En una app real se esperaría cada vez más (por ejemplo 1, 2 y 4 segundos: se llama <em>espera exponencial</em>) y solo se reintentarían los errores pasajeros (429, 503, fallos de red), nunca un 404: por mucho que insistas, lo que no existe no va a aparecer.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-post">
+    <h3>Publica tu puntuación con POST</h3>
+    <p>Escribe <code>enviarPuntuacion(jugador, puntos)</code>. Debe enviar a <code>https://api.example.com/puntuaciones</code> una petición POST con la cabecera <code>Content-Type: application/json</code> y un cuerpo JSON con <code>jugador</code> y <code>puntos</code>. Después lee el JSON de la respuesta: si está bien, imprime <code>Guardada con id ID: JUGADOR, PUNTOS puntos</code>; si no, imprime <code>Rechazada: CÓDIGO (MENSAJE)</code> con el <code>error</code> que envía el servidor. Las pruebas deben imprimir:</p>
+    <pre class="consola"><code>Guardada con id 7: Lyra, 1200 puntos
+Rechazada: 400 (puntos debe ser un número)</code></pre>
+    <div class="taller" id="taller-ej8" data-titulo="Ejercicio 8" data-esperado="Guardada con id 7: Lyra, 1200 puntos&#10;Rechazada: 400 (puntos debe ser un número)">
+      <textarea class="taller-codigo">// ---- Servidor simulado de puntuaciones (no lo cambies) ----
+function fetchFalso(url, opciones = {}) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const responder = (status, datos) => resolve({ status: status, ok: status >= 200 && status <= 299, json: async () => datos });
+      if (opciones.method !== "POST") return responder(405, { error: "usa el método POST" });
+      const cabeceras = opciones.headers || {};
+      const tipo = Object.keys(cabeceras).find((k) => k.toLowerCase() === "content-type");
+      if (!tipo || cabeceras[tipo] !== "application/json") return responder(415, { error: "falta la cabecera Content-Type: application/json" });
+      let cuerpo;
+      try { cuerpo = JSON.parse(opciones.body); } catch (e) { return responder(400, { error: "el cuerpo no es JSON válido" }); }
+      if (typeof cuerpo.jugador !== "string" || cuerpo.jugador === "") return responder(400, { error: "falta el nombre del jugador" });
+      if (typeof cuerpo.puntos !== "number") return responder(400, { error: "puntos debe ser un número" });
+      responder(201, { id: 7, jugador: cuerpo.jugador, puntos: cuerpo.puntos });
+    }, 200);
+  });
+}
+// ---- Fin del servidor simulado ----
+
+async function enviarPuntuacion(jugador, puntos) {
+  // Tu código aquí
+}
+
+// Pruebas (no las cambies)
+await enviarPuntuacion("Lyra", 1200);
+await enviarPuntuacion("Leo", "muchos");</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El segundo argumento de <code>fetchFalso</code> es un objeto con <code>method</code>, <code>headers</code> y <code>body</code>, igual que en el ejemplo de JSONPlaceholder de la sección de fetch.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El cuerpo tiene que ser texto: <code>body: JSON.stringify({ jugador: jugador, puntos: puntos })</code>. Si el servidor responde 415 o «el cuerpo no es JSON válido», revisa la cabecera y el <code>JSON.stringify</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// ---- Servidor simulado de puntuaciones (no lo cambies) ----
+function fetchFalso(url, opciones = {}) {
+  return new Promise((resolve) =&gt; {
+    setTimeout(() =&gt; {
+      const responder = (status, datos) =&gt; resolve({ status: status, ok: status &gt;= 200 &amp;&amp; status &lt;= 299, json: async () =&gt; datos });
+      if (opciones.method !== "POST") return responder(405, { error: "usa el método POST" });
+      const cabeceras = opciones.headers || {};
+      const tipo = Object.keys(cabeceras).find((k) =&gt; k.toLowerCase() === "content-type");
+      if (!tipo || cabeceras[tipo] !== "application/json") return responder(415, { error: "falta la cabecera Content-Type: application/json" });
+      let cuerpo;
+      try { cuerpo = JSON.parse(opciones.body); } catch (e) { return responder(400, { error: "el cuerpo no es JSON válido" }); }
+      if (typeof cuerpo.jugador !== "string" || cuerpo.jugador === "") return responder(400, { error: "falta el nombre del jugador" });
+      if (typeof cuerpo.puntos !== "number") return responder(400, { error: "puntos debe ser un número" });
+      responder(201, { id: 7, jugador: cuerpo.jugador, puntos: cuerpo.puntos });
+    }, 200);
+  });
+}
+// ---- Fin del servidor simulado ----
+
+async function enviarPuntuacion(jugador, puntos) {
+  const respuesta = await fetchFalso("https://api.example.com/puntuaciones", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jugador: jugador, puntos: puntos }),
+  });
+  const datos = await respuesta.json();
+  if (respuesta.ok) {
+    console.log("Guardada con id " + datos.id + ": " + datos.jugador + ", " + datos.puntos + " puntos");
+  } else {
+    console.log("Rechazada: " + respuesta.status + " (" + datos.error + ")");
+  }
+}
+
+// Pruebas (no las cambies)
+await enviarPuntuacion("Lyra", 1200);
+await enviarPuntuacion("Leo", "muchos");</code></pre>
+      <p>Aquí leemos el JSON también cuando la respuesta es un error, porque este servidor explica el motivo en el cuerpo. Muchas APIs lo hacen; su documentación te dice cómo. Y fíjate en quién valida: el servidor no confía en lo que le envías. Nunca debería hacerlo (lo verás en la <a href="31-seguridad.html">Estación 31</a>).</p>
+    </details>
+  </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: buscador de series de videojuegos</h2>
+  <p>Vas a construir un buscador de series basadas en videojuegos (Arcane, The Last of Us, Castlevania…) que consume una API. Primero aquí, con un servidor simulado que imita exactamente al endpoint de búsqueda de TVmaze, y después en tu computadora, con la API real. El código que escribas en el taller servirá casi sin cambios en la versión real: esa es la ventaja de simular bien.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Lee la «documentación».</strong> El servidor simulado (al principio de la pestaña JS) responde a <code>GET /search/shows?q=texto</code> con un array de objetos <code>{ score, show }</code>, como TVmaze. Si no encuentra nada, devuelve <code>[]</code>. El selector «Simular red» te deja provocar una red lenta, un error 500 o una caída de conexión. No toques esa parte.</p></div></li>
+    <li><div><p><strong>Completa <code>buscarSeries(texto, senal)</code>.</strong> Arma la dirección con <code>new URL("/search/shows", URL_BASE)</code> y <code>url.searchParams.set("q", texto)</code>. Pide con <code>await fetchFalso(url, { signal: senal })</code>. Si la respuesta no está bien, lanza <code>new Error("Error HTTP " + respuesta.status)</code>; si está bien, devuelve el JSON.</p></div></li>
+    <li><div><p><strong>Completa <code>pintarResultados(lista)</code>.</strong> Vacía la lista y, por cada resultado, crea un <code>li</code> con el nombre en un <code>strong</code> y, debajo, un <code>span</code> con el año de estreno, los géneros y la valoración. Cuidado con los datos que faltan: sin <code>premiered</code>, muestra «¿?»; sin géneros, «sin géneros»; si <code>rating.average</code> es <code>null</code>, «sin valoración». Usa <code>textContent</code>.</p></div></li>
+    <li><div><p><strong>Prepara la búsqueda en el <code>submit</code>.</strong> Evita que el formulario recargue la página, lee el texto sin espacios de los bordes y, si está vacío, avísalo en <code>#estado</code> y termina. Si no, crea un <code>AbortController</code> nuevo, vacía los resultados, muestra «Buscando «texto»…», desactiva «Buscar» y activa «Cancelar».</p></div></li>
+    <li><div><p><strong>Estados con <code>try</code>/<code>catch</code>/<code>finally</code>.</strong> En el <code>try</code>, espera a <code>buscarSeries</code>: con lista vacía, muestra un estado vacío útil («No encontramos series con…»); si no, cuántas series encontraste y la lista. En el <code>catch</code>, si <code>error.name === "AbortError"</code> muestra «Búsqueda cancelada.»; si no, un mensaje de error que diga qué hacer. En el <code>finally</code>, reactiva «Buscar» y desactiva «Cancelar».</p></div></li>
+    <li><div><p><strong>Conecta «Cancelar»</strong> para que llame a <code>controlador.abort()</code>.</p></div></li>
+    <li><div><p><strong>Prueba todos los caminos:</strong> «castlevania» (dos resultados), «pokemon» (sin tilde también funciona), «zelda» (vacío), los cuatro escenarios del selector, y cancelar una búsqueda con la red lenta. En cada caso, ¿sabrías qué está pasando sin mirar el código?</p></div></li>
+  </ol>
+  <div class="taller" id="taller-proyecto" data-modo="web" data-titulo="Proyecto: buscador de series" data-alto="26rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;h1&gt;Series de videojuegos&lt;/h1&gt;
+&lt;form id="buscador" role="search"&gt;
+  &lt;label for="texto"&gt;Busca una serie&lt;/label&gt;
+  &lt;div class="fila"&gt;
+    &lt;input id="texto" placeholder="Ej.: castlevania" autocomplete="off"&gt;
+    &lt;button id="boton"&gt;Buscar&lt;/button&gt;
+    &lt;button type="button" id="cancelar" disabled&gt;Cancelar&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/form&gt;
+&lt;p class="simular"&gt;
+  &lt;label for="escenario"&gt;Simular red:&lt;/label&gt;
+  &lt;select id="escenario"&gt;
+    &lt;option value="normal"&gt;Normal&lt;/option&gt;
+    &lt;option value="lenta"&gt;Lenta (3 s)&lt;/option&gt;
+    &lt;option value="error"&gt;Error del servidor (500)&lt;/option&gt;
+    &lt;option value="sin-red"&gt;Sin conexión&lt;/option&gt;
+  &lt;/select&gt;
+&lt;/p&gt;
+&lt;p id="estado" aria-live="polite"&gt;Escribe el nombre de una serie basada en un videojuego.&lt;/p&gt;
+&lt;ul id="resultados"&gt;&lt;/ul&gt;
+&lt;p class="credito"&gt;Datos de ejemplo tomados de TVmaze.&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 0; padding: 0.75rem 1rem; background: #f6f7fb; color: #1d2433; }
+h1 { font-size: 1.3rem; margin: 0 0 0.5rem; }
+.fila { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.25rem; }
+input, button, select { font: inherit; padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid #9aa3b5; }
+input { flex: 1 1 12rem; }
+button { background: #1d2433; color: white; border-color: #1d2433; cursor: pointer; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+.simular { font-size: 0.85rem; color: #555; }
+#estado { font-weight: 600; }
+#resultados { list-style: none; padding: 0; display: grid; gap: 0.5rem; }
+#resultados li { background: white; border: 1px solid #d5d9e3; border-radius: 8px; padding: 0.5rem 0.75rem; }
+#resultados strong { display: block; }
+#resultados span { font-size: 0.85rem; color: #555; }
+.credito { font-size: 0.8rem; color: #666; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// ================= Servidor simulado (no lo cambies) =================
+// Imita al endpoint https://api.tvmaze.com/search/shows?q=texto
+// Datos reales de TVmaze, recortados (las valoraciones cambian con el tiempo).
+const SERIES = [
+  { id: 55138, name: "Arcane: League of Legends", premiered: "2021-11-06", genres: ["Action", "Adventure", "Fantasy"], rating: { average: 8.5 } },
+  { id: 46562, name: "The Last of Us", premiered: "2023-01-15", genres: ["Drama", "Action", "Horror"], rating: { average: 7.9 } },
+  { id: 49041, name: "Fallout", premiered: "2024-04-10", genres: ["Drama", "Action", "Science-Fiction"], rating: { average: 7.9 } },
+  { id: 25242, name: "Castlevania", premiered: "2017-07-07", genres: ["Fantasy", "Horror", "Supernatural"], rating: { average: 7.9 } },
+  { id: 62483, name: "Castlevania: Nocturne", premiered: "2023-09-28", genres: ["Fantasy", "Horror", "Supernatural"], rating: { average: 7.3 } },
+  { id: 48945, name: "Cyberpunk: Edgerunners", premiered: "2022-09-13", genres: ["Action", "Anime", "Science-Fiction"], rating: { average: 7.5 } },
+  { id: 28276, name: "The Witcher", premiered: "2019-12-20", genres: ["Drama", "Action", "Fantasy"], rating: { average: 7.8 } },
+  { id: 35158, name: "Halo", premiered: "2022-03-24", genres: ["Action", "Science-Fiction"], rating: { average: 7.9 } },
+  { id: 60743, name: "Twisted Metal", premiered: "2023-07-27", genres: ["Action", "Fantasy", "Science-Fiction"], rating: { average: 7 } },
+  { id: 53242, name: "Sonic Prime", premiered: "2022-12-15", genres: ["Comedy", "Adventure", "Children"], rating: { average: 6.7 } },
+  { id: 7646, name: "Sonic X", premiered: "2003-08-23", genres: [], rating: { average: 6.4 } },
+  { id: 53633, name: "DOTA: Dragon's Blood", premiered: "2021-03-25", genres: ["Action", "Adventure", "Anime", "Fantasy"], rating: { average: 7.2 } },
+  { id: 53166, name: "Tomb Raider: The Legend of Lara Croft", premiered: "2024-10-10", genres: ["Action", "Adventure", "Fantasy"], rating: { average: 6.8 } },
+  { id: 590, name: "Pokémon", premiered: "1997-04-01", genres: ["Adventure", "Anime", "Fantasy"], rating: { average: 7.4 } },
+  { id: 71529, name: "Devil May Cry", premiered: "2025-04-03", genres: ["Action", "Fantasy", "Horror"], rating: { average: 7.4 } },
+  { id: 15770, name: "Pac-Man and the Ghostly Adventures", premiered: "2013-06-15", genres: [], rating: { average: null } },
+];
+const normalizar = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+function fetchFalso(url, opciones = {}) {
+  const escenario = document.querySelector("#escenario").value;
+  return new Promise((resolve, reject) => {
+    const temporizador = setTimeout(() => {
+      if (escenario === "sin-red") return reject(new TypeError("Failed to fetch"));
+      if (escenario === "error") return resolve({ status: 500, ok: false, json: async () => ({ message: "Internal Server Error" }) });
+      const q = normalizar(new URL(url).searchParams.get("q") || "");
+      const datos = SERIES
+        .filter((serie) => normalizar(serie.name).includes(q))
+        .map((serie) => ({ score: 1, show: serie }));
+      resolve({ status: 200, ok: true, json: async () => datos });
+    }, escenario === "lenta" ? 3000 : 300 + Math.random() * 700);
+    const senal = opciones.signal;
+    if (senal) {
+      senal.addEventListener("abort", () => {
+        clearTimeout(temporizador);
+        reject(senal.reason);
+      });
+    }
+  });
+}
+// ================= Fin del servidor simulado =================
+
+const URL_BASE = "https://api.tvmaze.com";
+const formulario = document.querySelector("#buscador");
+const campo = document.querySelector("#texto");
+const boton = document.querySelector("#boton");
+const cancelar = document.querySelector("#cancelar");
+const estado = document.querySelector("#estado");
+const resultados = document.querySelector("#resultados");
+let controlador = null; // el AbortController de la búsqueda en curso
+
+// Paso 2: devuelve el array de resultados de la API para un texto.
+async function buscarSeries(texto, senal) {
+  // Tu código aquí
+}
+
+// Paso 3: dibuja la lista de resultados (con textContent).
+function pintarResultados(lista) {
+  // Tu código aquí
+}
+
+// Pasos 4 y 5: el formulario y sus estados.
+formulario.addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  // Tu código aquí
+});
+
+// Paso 6: el botón Cancelar.</textarea>
+    <script type="text/plain" class="taller-verificar">
+var propio = (codigo.js.split("Fin del servidor simulado")[1] || "");
+if (!/await\s+fetchFalso\s*\(/.test(propio)) return "Paso 2: en buscarSeries, pide los datos con await fetchFalso(url, { signal: senal }).";
+if (!/\.ok\b/.test(propio)) return "Paso 2: comprueba respuesta.ok antes de leer el JSON.";
+if (!/\btry\s*\{[\s\S]*\bcatch\s*\([\s\S]*\bfinally\s*\{/.test(propio)) return "Paso 5: organiza los estados con try { } catch (error) { } finally { }.";
+if (!/new\s+AbortController\s*\(/.test(propio) || !/\.abort\s*\(\s*\)/.test(propio)) return "Pasos 4 y 6: crea un AbortController en cada búsqueda y llama a abort() desde el botón Cancelar.";
+if (/innerHTML/.test(propio)) return "Paso 3: pinta los datos de la API con textContent, sin innerHTML.";
+if (!/AbortError/.test(propio)) return "Paso 5: en el catch, distingue la cancelación (error.name === \"AbortError\") de los demás errores.";
+return true;
+    </script>
+  </div>
+  <p>La comprobación automática revisa que uses las piezas clave (<code>await</code>, <code>ok</code>, <code>try</code>/<code>catch</code>/<code>finally</code>, <code>AbortController</code>, <code>textContent</code>). Lo demás compruébalo tú con el paso 7: una interfaz se prueba usándola.</p>
+  <details class="solucion"><summary>Ver una solución de referencia (la parte que escribes tú)</summary>
+    <pre><code class="language-js">const URL_BASE = "https://api.tvmaze.com";
+const formulario = document.querySelector("#buscador");
+const campo = document.querySelector("#texto");
+const boton = document.querySelector("#boton");
+const cancelar = document.querySelector("#cancelar");
+const estado = document.querySelector("#estado");
+const resultados = document.querySelector("#resultados");
+let controlador = null; // el AbortController de la búsqueda en curso
+
+async function buscarSeries(texto, senal) {
+  const url = new URL("/search/shows", URL_BASE);
+  url.searchParams.set("q", texto);
+  const respuesta = await fetchFalso(url, { signal: senal });
+  if (!respuesta.ok) {
+    throw new Error("Error HTTP " + respuesta.status);
+  }
+  return await respuesta.json();
+}
+
+function pintarResultados(lista) {
+  resultados.replaceChildren();
+  for (const resultado of lista) {
+    const serie = resultado.show;
+    const anio = serie.premiered ? serie.premiered.slice(0, 4) : "¿?";
+    const generos = serie.genres.length &gt; 0 ? serie.genres.join(", ") : "sin géneros";
+    const nota = serie.rating.average ?? "sin valoración";
+
+    const item = document.createElement("li");
+    const nombre = document.createElement("strong");
+    nombre.textContent = serie.name;
+    const detalles = document.createElement("span");
+    detalles.textContent = anio + " · " + generos + " · " + nota;
+    item.append(nombre, detalles);
+    resultados.append(item);
+  }
+}
+
+formulario.addEventListener("submit", async (evento) =&gt; {
+  evento.preventDefault();
+  const texto = campo.value.trim();
+  if (texto === "") {
+    estado.textContent = "Escribe algo para buscar.";
+    return;
+  }
+
+  controlador = new AbortController();
+  resultados.replaceChildren();
+  estado.textContent = "Buscando «" + texto + "»…";
+  boton.disabled = true;
+  cancelar.disabled = false;
+
+  try {
+    const lista = await buscarSeries(texto, controlador.signal);
+    if (lista.length === 0) {
+      estado.textContent = "No encontramos series con «" + texto + "». Prueba con otra palabra.";
+    } else {
+      estado.textContent = lista.length === 1 ? "1 serie encontrada." : lista.length + " series encontradas.";
+      pintarResultados(lista);
+    }
+  } catch (error) {
+    if (error.name === "AbortError") {
+      estado.textContent = "Búsqueda cancelada.";
+    } else {
+      estado.textContent = "No se pudo buscar (" + error.message + "). Revisa tu conexión e inténtalo de nuevo.";
+    }
+  } finally {
+    boton.disabled = false;
+    cancelar.disabled = true;
+  }
+});
+
+cancelar.addEventListener("click", () =&gt; {
+  if (controlador) {
+    controlador.abort();
+  }
+});</code></pre>
+    <p>Fíjate en el diseño: mientras hay una búsqueda en marcha, «Buscar» está desactivado y «Cancelar» activo, así que nunca hay dos búsquedas a la vez y no puede haber respuestas desordenadas. Otra opción válida es dejar «Buscar» activo y cancelar la búsqueda anterior al empezar una nueva, como en el taller de la carrera de respuestas.</p>
+  </details>
+
+  <h3>La versión real, en tu computadora</h3>
+  <p>Ahora, el mismo buscador contra la API real de TVmaze. Necesitas tu editor y un navegador (<a href="05-herramientas.html">Estación 5</a>).</p>
+  <ol class="pasos">
+    <li><div><p>Crea una carpeta <code>buscador-series</code> con tres archivos: <code>index.html</code>, <code>estilos.css</code> y <code>app.js</code>.</p></div></li>
+    <li><div><p>En <code>index.html</code>, pega esta estructura. Es la del taller sin el selector de simulación, con el enlace a TVmaze que pide su licencia y el script con <code>defer</code> (<a href="15-dom.html">Estación 15</a>):</p>
+      <pre><code class="language-html">&lt;!doctype html&gt;
+&lt;html lang="es"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+  &lt;title&gt;Series de videojuegos&lt;/title&gt;
+  &lt;link rel="stylesheet" href="estilos.css"&gt;
+  &lt;script src="app.js" defer&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Series de videojuegos&lt;/h1&gt;
+  &lt;form id="buscador" role="search"&gt;
+    &lt;label for="texto"&gt;Busca una serie&lt;/label&gt;
+    &lt;div class="fila"&gt;
+      &lt;input id="texto" placeholder="Ej.: castlevania" autocomplete="off"&gt;
+      &lt;button id="boton"&gt;Buscar&lt;/button&gt;
+      &lt;button type="button" id="cancelar" disabled&gt;Cancelar&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/form&gt;
+  &lt;p id="estado" aria-live="polite"&gt;Escribe el nombre de una serie basada en un videojuego.&lt;/p&gt;
+  &lt;ul id="resultados"&gt;&lt;/ul&gt;
+  &lt;p class="credito"&gt;Datos de &lt;a href="https://www.tvmaze.com"&gt;TVmaze&lt;/a&gt; (licencia CC BY-SA).&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre></div></li>
+    <li><div><p>Copia el CSS del taller en <code>estilos.css</code>.</p></div></li>
+    <li><div><p>En <code>app.js</code>, pega tu código del taller <em>sin</em> el servidor simulado (desde <code>const URL_BASE</code> hasta el final) y cambia una sola línea:</p>
+      <pre><code class="language-diff">-  const respuesta = await fetchFalso(url, { signal: senal });
++  const respuesta = await fetch(url, { signal: senal });</code></pre></div></li>
+    <li><div><p>Abre <code>index.html</code> en el navegador (con doble clic sirve: TVmaze acepta peticiones desde cualquier página, incluso desde un archivo de tu computadora). Busca «castlevania», «mario» y «zelda». La búsqueda real es aproximada, así que verás más resultados que en la simulación.</p></div></li>
+    <li><div><p>Abre la pestaña «Red» y mira cada petición. Después elige «Sin conexión» en el menú de limitación y busca otra vez: tu estado de error debería aparecer. Vuelve a la conexión normal al terminar.</p></div></li>
+  </ol>
+  <p><strong>Para ir más allá:</strong> muestra la imagen de cada serie (<code>serie.image?.medium</code>, con un <code>img</code> y su texto alternativo; recuerda que <code>image</code> puede ser <code>null</code>); enlaza cada nombre a su ficha (<code>serie.url</code>); añade un tiempo límite combinando señales con <code>AbortSignal.any([controlador.signal, AbortSignal.timeout(8000)])</code>, que existe en los navegadores actuales desde 2024; busca mientras la persona escribe, con <em>debounce</em> y cancelación de la búsqueda anterior; o cambia de API y haz un buscador de ciudades con el clima actual usando Open-Meteo: primero pides las coordenadas de la ciudad y después, con ellas, la temperatura (dos <code>await</code> en serie, porque el segundo depende del primero).</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Si fallas alguna, lee la explicación: equivocarse aquí es la forma más barata de aprender.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Qué imprime este programa? <code>console.log("A"); setTimeout(() =&gt; console.log("B"), 0); console.log("C");</code></p>
+      <ol class="opciones">
+        <li>A, B, C<p class="explica">Sería así si <code>setTimeout</code> con 0 ejecutara la función en el acto. Pero la función va a la cola de tareas y espera a que termine el código en marcha.</p></li>
+        <li>B, A, C<p class="explica"><code>setTimeout</code> nunca adelanta una función: como mucho, la retrasa.</p></li>
+        <li>A, C, B<p class="explica">Correcto. La función de <code>setTimeout</code> espera en la cola hasta que JavaScript termina el código síncrono, aunque el tiempo sea 0.</p></li>
+        <li>A, C, y B nunca se imprime<p class="explica">Con 0 milisegundos la función sí se ejecuta, solo que después del código síncrono.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Pides <code>https://pokeapi.co/api/v2/pokemon/pikachuu</code> con <code>fetch</code> (el nombre está mal escrito) y el servidor responde 404. ¿Qué pasa con la promesa de <code>fetch</code>?</p>
+      <ol class="opciones">
+        <li>Se rechaza con un error 404.<p class="explica">Es la confusión más común con <code>fetch</code>. Solo se rechaza cuando no hay respuesta (sin red, dominio inexistente, bloqueo del navegador).</p></li>
+        <li>Se cumple con una respuesta que tiene <code>ok: false</code> y <code>status: 404</code>.<p class="explica">Correcto. El servidor respondió, así que <code>fetch</code> cumplió su trabajo. Te toca comprobar <code>respuesta.ok</code> y lanzar el error tú.</p></li>
+        <li>Se queda pendiente para siempre.<p class="explica">El servidor respondió, así que la promesa se establece. Quedarse pendiente pasa cuando no llega ninguna respuesta y no hay tiempo límite.</p></li>
+        <li>Devuelve <code>undefined</code>.<p class="explica"><code>fetch</code> siempre devuelve una promesa; con un 404 se cumple con un objeto Response.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Cuáles son los estados posibles de una promesa?</p>
+      <ol class="opciones">
+        <li>Pendiente, cumplida y rechazada.<p class="explica">Correcto. Cuando está cumplida o rechazada se dice que está establecida, y ya no cambia.</p></li>
+        <li>Iniciada, en curso y terminada.<p class="explica">No son esos nombres, y «terminada» no dice lo más importante: si salió bien o mal.</p></li>
+        <li>Pendiente y resuelta.<p class="explica">Falta distinguir entre salir bien y salir mal. Además, «resuelta» (<em>resolved</em>) tiene un significado técnico más sutil.</p></li>
+        <li>Síncrona y asíncrona.<p class="explica">Eso describe formas de ejecutar código, no el estado de una promesa.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Si <code>async function puntos() { return 10; }</code>, ¿qué guarda <code>const p = puntos();</code>?</p>
+      <ol class="opciones">
+        <li>El número 10.<p class="explica">Sería así sin <code>async</code>. Una función <code>async</code> siempre envuelve su resultado en una promesa.</p></li>
+        <li><code>undefined</code>.<p class="explica">La función sí devuelve algo: una promesa.</p></li>
+        <li>Un error, porque no hay <code>await</code> dentro de la función.<p class="explica">Una función <code>async</code> sin <code>await</code> es válida: devuelve una promesa ya cumplida.</p></li>
+        <li>Una promesa que se cumple con 10.<p class="explica">Correcto. Para obtener el 10 escribe <code>const p = await puntos();</code> dentro de otra función <code>async</code>.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Tu pantalla necesita el perfil, los amigos y las noticias, que no dependen entre sí. ¿Qué es mejor?</p>
+      <ol class="opciones">
+        <li>Tres <code>await</code> seguidos, uno por petición.<p class="explica">Funciona, pero tarda la suma de las tres, porque cada petición espera a la anterior sin necesidad.</p></li>
+        <li><code>await Promise.all([pedirPerfil(), pedirAmigos(), pedirNoticias()])</code><p class="explica">Correcto. Las tres salen a la vez y esperas solo lo que tarda la más lenta.</p></li>
+        <li><code>await Promise.race([pedirPerfil(), pedirAmigos(), pedirNoticias()])</code><p class="explica"><code>race</code> se queda solo con la primera que termine; perderías las otras dos.</p></li>
+        <li>Un <code>forEach</code> con una función <code>async</code>.<p class="explica"><code>forEach</code> no espera a las funciones <code>async</code>: no sabrías cuándo terminó todo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Por qué hay dos <code>await</code> en <code>const r = await fetch(url); const datos = await r.json();</code>?</p>
+      <ol class="opciones">
+        <li>Por costumbre: el segundo sobra.<p class="explica">Sin el segundo <code>await</code>, <code>datos</code> sería una promesa, no los datos.</p></li>
+        <li>Porque <code>fetch</code> hace dos peticiones al servidor.<p class="explica">Es una sola petición y una sola respuesta.</p></li>
+        <li>Porque la respuesta llega en dos partes: primero el estado y las cabeceras (ahí se cumple <code>fetch</code>) y después se lee el cuerpo, que también tarda.<p class="explica">Correcto. <code>json()</code> termina de recibir el cuerpo y lo convierte de texto JSON a objeto, y eso es asíncrono.</p></li>
+        <li>Porque <code>json()</code> hace otra petición para convertir el texto.<p class="explica">La conversión ocurre en tu computadora. Lo que tarda es terminar de recibir y leer el cuerpo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Este código imprime «Listo» antes que las descargas. ¿Por qué? <code>archivos.forEach(async (a) =&gt; { await descargar(a); }); console.log("Listo");</code></p>
+      <ol class="opciones">
+        <li>Porque <code>forEach</code> no espera a las funciones <code>async</code> que llama: las lanza y sigue.<p class="explica">Correcto. Usa <code>for...of</code> con <code>await</code> (una por una) o <code>Promise.all</code> con <code>map</code> (todas a la vez).</p></li>
+        <li>Porque falta <code>async</code> delante de <code>forEach</code>.<p class="explica"><code>forEach</code> es un método de los arrays, no una función que puedas marcar como <code>async</code>. El problema es que no espera.</p></li>
+        <li>Porque <code>console.log</code> siempre se ejecuta antes que el resto.<p class="explica"><code>console.log</code> se ejecuta cuando le toca, como cualquier línea. Aquí le toca antes porque nadie esperó a las descargas.</p></li>
+        <li>Porque <code>descargar</code> falla en silencio.<p class="explica">Las descargas se hacen; solo que terminan después de «Listo».</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">En una API REST, ¿qué método y qué respuesta esperas al crear una publicación nueva?</p>
+      <ol class="opciones">
+        <li>GET y 200.<p class="explica">GET es para leer, no para crear.</p></li>
+        <li>DELETE y 204.<p class="explica">DELETE es para borrar.</p></li>
+        <li>PUT y 404.<p class="explica">PUT reemplaza un recurso que ya existe, y 404 significa que no se encontró.</p></li>
+        <li>POST y 201 (Created).<p class="explica">Correcto. POST crea un recurso nuevo y el servidor suele responder 201 con lo que se creó.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">En tu buscador escribes «mario», pero la lista muestra resultados de «ma». ¿Qué pasó y cómo se arregla?</p>
+      <ol class="opciones">
+        <li>El servidor tiene un error; no se puede arreglar desde tu código.<p class="explica">El servidor respondió bien a cada búsqueda. El problema está en tu código, que dibujó una respuesta vieja.</p></li>
+        <li>La respuesta de «ma» llegó después que la de «mario» y se dibujó encima. Se arregla cancelando la búsqueda anterior con <code>AbortController</code>.<p class="explica">Correcto. Es una condición de carrera: las respuestas no siempre llegan en el orden en que salieron.</p></li>
+        <li>Falta un <code>await</code> delante de <code>console.log</code>.<p class="explica"><code>console.log</code> no devuelve una promesa; el <code>await</code> no cambiaría nada.</p></li>
+        <li>Hay que esperar las dos búsquedas con <code>Promise.all</code>.<p class="explica">Seguirías recibiendo la respuesta vieja. Lo que quieres es descartarla, no esperarla.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">La API responde 200 con un array vacío <code>[]</code>. ¿Qué debería mostrar tu interfaz?</p>
+      <ol class="opciones">
+        <li>Un mensaje de error.<p class="explica">La petición salió bien. «No hay resultados» no es un fallo, y tratarlo como tal confunde a la persona.</p></li>
+        <li>Nada: una lista vacía se explica sola.<p class="explica">Una pantalla en blanco no dice si terminó, si sigue cargando o si falló.</p></li>
+        <li>Un estado vacío: «No encontramos resultados», con una sugerencia de qué probar.<p class="explica">Correcto. El estado vacío es uno de los cinco que toda interfaz que pide datos debe diseñar.</p></li>
+        <li>Reintentar hasta que lleguen datos.<p class="explica">Reintentar sirve para errores pasajeros. Una búsqueda sin resultados va a seguir sin resultados.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Dónde pones el código que reactiva el botón «Buscar» para que se ejecute tanto si la búsqueda sale bien como si falla?</p>
+      <ol class="opciones">
+        <li>En el bloque <code>finally</code>.<p class="explica">Correcto. <code>finally</code> se ejecuta siempre, incluso si hubo un error o un <code>return</code> dentro del <code>try</code>.</p></li>
+        <li>Al final del bloque <code>try</code>.<p class="explica">Si ocurre un error antes, esa línea nunca se ejecuta y el botón queda desactivado para siempre.</p></li>
+        <li>En el bloque <code>catch</code>.<p class="explica">Solo se ejecutaría cuando hay un error; si todo sale bien, el botón seguiría desactivado.</p></li>
+        <li>Justo después de llamar a <code>fetch</code>, sin <code>await</code>.<p class="explica">Se reactivaría antes de que llegue la respuesta, y la persona podría lanzar la misma búsqueda muchas veces.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Síncrono</dt><dd>Forma de ejecutar en la que cada instrucción espera a que termine la anterior.</dd>
+    <dt>Asíncrono</dt><dd>Forma de ejecutar en la que una tarea que tarda se empieza, el programa sigue con otras cosas y continúa con el resultado cuando llega.</dd>
+    <dt>Hilo (thread)</dt><dd>Una línea de trabajo que ejecuta instrucciones de una en una. JavaScript ejecuta tu código en un solo hilo.</dd>
+    <dt>Bucle de eventos (event loop)</dt><dd>Mecanismo que, cada vez que JavaScript queda libre, toma la siguiente tarea lista de la cola y la ejecuta.</dd>
+    <dt>Cola de tareas</dt><dd>Lista de funciones que ya pueden ejecutarse (un temporizador que terminó, una respuesta que llegó) y esperan su turno.</dd>
+    <dt>Callback hell</dt><dd>Código con muchos callbacks asíncronos anidados, que crece hacia la derecha y es difícil de leer y de mantener. También se llama «pirámide de la perdición».</dd>
+    <dt>Promesa (Promise)</dt><dd>Objeto que representa un resultado que todavía no existe: puede estar pendiente, cumplida (con un valor) o rechazada (con un error).</dd>
+    <dt>Promesa establecida (settled)</dt><dd>Promesa que ya está cumplida o rechazada. A partir de ese momento no cambia nunca.</dd>
+    <dt>Ejecutor</dt><dd>La función que se le pasa a <code>new Promise</code>. Se ejecuta enseguida y recibe <code>resolve</code> y <code>reject</code> para cumplir o rechazar la promesa.</dd>
+    <dt>then, catch y finally</dt><dd>Métodos de una promesa: <code>then</code> recibe el valor si se cumple, <code>catch</code> el error si se rechaza, y <code>finally</code> se ejecuta en los dos casos.</dd>
+    <dt>async</dt><dd>Palabra que, delante de una función, hace que siempre devuelva una promesa y permite usar <code>await</code> dentro.</dd>
+    <dt>await</dt><dd>Palabra que pausa una función <code>async</code> hasta que una promesa se establece; entrega su valor o lanza su error.</dd>
+    <dt>Promise.all</dt><dd>Combina varias promesas en una que se cumple cuando todas se cumplen (con un array de valores) y se rechaza si alguna falla.</dd>
+    <dt>Promise.race</dt><dd>Combina varias promesas en una que se establece igual que la primera que termina. Se usa para tiempos límite.</dd>
+    <dt>API</dt><dd>Conjunto de reglas que define cómo un programa puede pedirle cosas a otro. Las APIs HTTP se usan a través de internet con peticiones HTTP.</dd>
+    <dt>API REST</dt><dd>API HTTP organizada en recursos con su propia URL, que usa los métodos HTTP (GET, POST, PUT, PATCH, DELETE) como verbos y responde casi siempre con JSON.</dd>
+    <dt>Endpoint</dt><dd>Cada dirección concreta de una API que ofrece un servicio, como <code>/search/shows</code>.</dd>
+    <dt>Parámetro de consulta</dt><dd>Par <code>nombre=valor</code> que va después del <code>?</code> en una URL para afinar la petición, como <code>?q=arcane</code>.</dd>
+    <dt>fetch</dt><dd>Función del navegador y de Node.js para hacer peticiones HTTP. Devuelve una promesa que se cumple con un objeto Response.</dd>
+    <dt>response.ok</dt><dd>Propiedad de una respuesta de <code>fetch</code> que vale <code>true</code> si el código de estado está entre 200 y 299.</dd>
+    <dt>AbortController</dt><dd>Objeto que permite cancelar una petición de <code>fetch</code>: se le pasa su <code>signal</code> a <code>fetch</code> y se llama a <code>abort()</code>.</dd>
+    <dt>Tiempo límite (timeout)</dt><dd>Máximo de tiempo que se espera una respuesta antes de abandonarla. Con <code>fetch</code> se pone con <code>AbortSignal.timeout(ms)</code>.</dd>
+    <dt>Límite de uso (rate limit)</dt><dd>Cantidad máxima de peticiones que una API acepta en un tiempo dado. Si lo superas, suele responder 429.</dd>
+    <dt>Clave de API (API key)</dt><dd>Código que identifica a quien usa una API. Las claves secretas nunca van en el código del navegador.</dd>
+    <dt>Condición de carrera</dt><dd>Error que aparece cuando el resultado depende del orden en que terminan tareas que van a la vez, por ejemplo respuestas que llegan desordenadas.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación, no antes: te servirán para repasar y ver las mismas ideas explicadas por otra persona.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=6O8ax3JYboc" data-canal="Carlos Azaustre - AprendiendoDEV" data-idioma="es" data-nivel="intro" data-duracion="13 min" data-por-que="Repaso claro de callbacks, promesas y async/await, con el mismo orden que esta estación.">Así funcionan las PROMESAS y ASYNC/AWAIT en JAVASCRIPT || Entiende la Asincronía</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=ksg6SDwllDs" data-canal="Desarrollo Útil" data-idioma="es" data-nivel="intro" data-por-que="Promesas, then, catch y async/await explicados desde cero, con ejemplos en la consola.">PROMESAS y ASYNC - AWAIT: THEN? CATCH? Curso de JAVASCRIPT desde CERO #16</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=FJ-w0tf3d_w" data-canal="midulive" data-idioma="es" data-nivel="profundo" data-duracion="8 min" data-por-que="Consumir una API REST con fetch, cabeceras y manejo de errores, en pocos minutos.">Cómo CONSUMIR una API REST con JAVASCRIPT y Fetch + Promises con gestión de Errores</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=8aGhZQkoFbQ" data-canal="JSConf" data-idioma="en" data-nivel="profundo" data-por-que="La charla clásica sobre el bucle de eventos, con animaciones de la pila y la cola; buen puente hacia la Estación 22.">What the heck is the event loop anyway? | Philip Roberts | JSConf EU</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Extensions/Async_JS">JavaScript asíncrono (MDN)</a><p>El módulo de Mozilla sobre asincronía: promesas, <code>async</code>/<code>await</code> y cómo crear APIs basadas en promesas.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/JavaScript/Guide/Using_promises">Usar promesas (MDN)</a><p>Guía de referencia sobre cadenas, manejo de errores y composición de promesas.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/API/Fetch_API/Using_Fetch">Uso de Fetch (MDN)</a><p>Todas las opciones de <code>fetch</code>: métodos, cabeceras, cuerpos, cancelación y cómo leer las respuestas.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/HTTP/Reference/Status">Códigos de estado de respuesta HTTP (MDN)</a><p>La lista completa de códigos, para cuando una API te responda con uno que no conoces.</p></li>
+    <li><a href="https://es.javascript.info/async">Promesas, async/await (javascript.info)</a><p>Capítulos detallados, con tareas al final de cada uno, desde los callbacks hasta el manejo de errores.</p></li>
+    <li><a href="https://es.javascript.info/fetch">Fetch (javascript.info)</a><p>Peticiones GET y POST, cabeceras y respuestas explicadas paso a paso; sigue con los capítulos sobre cancelación y CORS.</p></li>
+  </ul>
 </section>

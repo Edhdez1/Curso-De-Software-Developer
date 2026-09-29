@@ -370,3 +370,1048 @@ for (const caja of document.querySelectorAll(".muestra")) {
     </script>
   </div>
 </section>
+
+<section id="bits" data-parada="Bits y negativos">
+  <h2>Bits: operadores, máscaras y números negativos</h2>
+  <p>Un juego necesita saber cuáles de las cuatro flechas están pulsadas, qué poderes tiene el personaje o con qué capas de objetos choca cada cosa. Podrías usar diez variables booleanas. O podrías usar <em>un solo número</em> en el que cada bit sea un interruptor: encendido o apagado. Así funcionan las capas de colisión de motores como Godot, los permisos de los archivos que acabas de ver o la propiedad <code>buttons</code> de los eventos de ratón del navegador. Para trabajar así hacen falta los operadores a nivel de bits.</p>
+
+  <h3>Los operadores a nivel de bits</h3>
+  <p>Un <strong>operador a nivel de bits</strong> (en inglés, <em>bitwise</em>) trabaja columna por columna sobre los bits de dos números. Es como aplicar <code>&amp;&amp;</code> o <code>||</code> a cada par de bits a la vez, con 1 como verdadero y 0 como falso. Los ejemplos usan 4 bits para que se lean bien:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Operador</th><th scope="col">Nombre</th><th scope="col">Regla para cada bit</th><th scope="col">Ejemplo en binario</th><th scope="col">En decimal</th></tr></thead>
+      <tbody>
+        <tr><td><code>&amp;</code></td><td>AND (Y)</td><td>1 si los dos son 1</td><td><code>1100 &amp; 1010 = 1000</code></td><td><code>12 &amp; 10</code> da 8</td></tr>
+        <tr><td><code>|</code></td><td>OR (O)</td><td>1 si alguno es 1</td><td><code>1100 | 1010 = 1110</code></td><td><code>12 | 10</code> da 14</td></tr>
+        <tr><td><code>^</code></td><td>XOR (O exclusivo)</td><td>1 si son distintos</td><td><code>1100 ^ 1010 = 0110</code></td><td><code>12 ^ 10</code> da 6</td></tr>
+        <tr><td><code>~</code></td><td>NOT (NO)</td><td>invierte cada bit</td><td><code>~0101</code></td><td><code>~5</code> da −6 (lo entenderás al final de la sección)</td></tr>
+        <tr><td><code>&lt;&lt;</code></td><td>Desplazar a la izquierda</td><td>mueve los bits y rellena con 0</td><td><code>0101 &lt;&lt; 1 = 1010</code></td><td><code>5 &lt;&lt; 1</code> da 10</td></tr>
+        <tr><td><code>&gt;&gt;</code></td><td>Desplazar a la derecha</td><td>mueve los bits y descarta los que salen</td><td><code>10100 &gt;&gt; 2 = 101</code></td><td><code>20 &gt;&gt; 2</code> da 5</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Desplazar una posición a la izquierda multiplica por 2 (igual que añadir un cero a la derecha de un número decimal multiplica por 10), y desplazar a la derecha divide entre 2 y descarta el resto. Existe también <code>&gt;&gt;&gt;</code>, un desplazamiento a la derecha «sin signo» que usarás en un momento para ver los bits de un número negativo.</p>
+  <aside class="senal ojo" data-titulo="32 bits y sin decimales">
+    <p>Antes de operar, JavaScript convierte los números a enteros de 32 bits: quita los decimales y, si el número no cabe en 32 bits, descarta los bits de más. Por eso <code>7.9 | 0</code> da 7, pero <code>(2 ** 31) | 0</code> da −2147483648. Verás en código antiguo el truco <code>x | 0</code> para quitar decimales: con números grandes falla. Para eso usa <code>Math.trunc(x)</code>, que verás en la sección de decimales.</p>
+  </aside>
+  <aside class="senal error" data-titulo="&amp; no es &amp;&amp;">
+    <p>Con un solo carácter se escribe otro operador. <code>5 &amp;&amp; 2</code> da 2 (el lógico devuelve el segundo valor si el primero es verdadero), pero <code>5 &amp; 2</code> da 0, porque 101 y 010 no comparten ningún bit. Si te equivocas dentro de un <code>if</code>, la condición cambia sin que salte ningún error.</p>
+  </aside>
+
+  <h3>Máscaras: muchos interruptores en un solo número</h3>
+  <p>La idea es dar a cada opción su propio bit. Para eso se usan potencias de 2, que tienen un único bit encendido, y se suelen escribir con <code>1 &lt;&lt; n</code> («un 1 desplazado n posiciones»). A cada una de esas constantes se le llama <strong>bandera</strong> (en inglés, <em>flag</em>), y a un número que se usa para elegir ciertos bits de otro se le llama <strong>máscara</strong>:</p>
+  <pre><code class="language-js">const ESCUDO = 1 &lt;&lt; 0;  // 0001 = 1
+const SALTO  = 1 &lt;&lt; 1;  // 0010 = 2 (salto doble)
+const IMAN   = 1 &lt;&lt; 2;  // 0100 = 4
+const TURBO  = 1 &lt;&lt; 3;  // 1000 = 8
+
+let poderes = IMAN | ESCUDO;  // 0101 = 5: tiene imán y escudo</code></pre>
+  <p>Con cuatro operaciones controlas cada interruptor sin tocar los demás. Mira qué pasa bit a bit:</p>
+  <figure class="capsula" data-titulo="Consultar, activar, quitar y alternar bits">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: el número poderes, 0101 en binario, se combina bit a bit con distintas máscaras usando AND, OR y XOR para consultar, activar, quitar y alternar poderes"><text class="d-mono d-peq" x="230" y="40" text-anchor="middle">TURBO 8</text><text class="d-mono d-peq" x="310" y="40" text-anchor="middle">IMAN 4</text><text class="d-mono d-peq" x="390" y="40" text-anchor="middle">SALTO 2</text><text class="d-mono d-peq" x="470" y="40" text-anchor="middle">ESCUDO 1</text><text class="d-rotulo" x="20" y="109">poderes</text><g data-pasos="2-"><text class="d-rotulo" x="20" y="179">máscara</text><text class="d-rotulo" x="20" y="257">resultado</text><text class="d-mono" x="172" y="181" text-anchor="middle" style="font-size:24px" data-texto="2:&amp;;4:|;5:&amp;;6:^">&amp;</text><path class="d-linea" d="M160 214H510"/></g><g><rect class="d-caja" x="198" y="78" width="64" height="50" rx="6" data-clases="1:; 2:; 3:; 4:; 5:; 6:"/><text class="d-mono" x="230" y="112" text-anchor="middle" style="font-size:24px" data-texto="1:0; 2:0; 3:0; 4:0; 5:0; 6:0" data-clases="1:; 2:; 3:; 4:; 5:; 6:">0</text><rect class="d-caja" x="278" y="78" width="64" height="50" rx="6" data-clases="1:d-acento; 2:d-acento; 3:d-acento; 4:d-acento; 5:d-acento; 6:d-acento"/><text class="d-mono" x="310" y="112" text-anchor="middle" style="font-size:24px" data-texto="1:1; 2:1; 3:1; 4:1; 5:1; 6:1" data-clases="1:d-sobre-acento; 2:d-sobre-acento; 3:d-sobre-acento; 4:d-sobre-acento; 5:d-sobre-acento; 6:d-sobre-acento">1</text><rect class="d-caja" x="358" y="78" width="64" height="50" rx="6" data-clases="1:; 2:; 3:; 4:; 5:d-acento; 6:d-acento"/><text class="d-mono" x="390" y="112" text-anchor="middle" style="font-size:24px" data-texto="1:0; 2:0; 3:0; 4:0; 5:1; 6:1" data-clases="1:; 2:; 3:; 4:; 5:d-sobre-acento; 6:d-sobre-acento">0</text><rect class="d-caja" x="438" y="78" width="64" height="50" rx="6" data-clases="1:d-acento; 2:d-acento; 3:d-acento; 4:d-acento; 5:d-acento; 6:"/><text class="d-mono" x="470" y="112" text-anchor="middle" style="font-size:24px" data-texto="1:1; 2:1; 3:1; 4:1; 5:1; 6:0" data-clases="1:d-sobre-acento; 2:d-sobre-acento; 3:d-sobre-acento; 4:d-sobre-acento; 5:d-sobre-acento; 6:">1</text></g><g data-pasos="2-"><rect class="d-caja" x="198" y="148" width="64" height="50" rx="6" data-clases="1:; 2:; 3:; 4:; 5:d-acento; 6:d-acento"/><text class="d-mono" x="230" y="182" text-anchor="middle" style="font-size:24px" data-texto="1:0; 2:0; 3:0; 4:0; 5:1; 6:1" data-clases="1:; 2:; 3:; 4:; 5:d-sobre-acento; 6:d-sobre-acento">0</text><rect class="d-caja" x="278" y="148" width="64" height="50" rx="6" data-clases="1:; 2:; 3:d-acento; 4:; 5:d-acento; 6:"/><text class="d-mono" x="310" y="182" text-anchor="middle" style="font-size:24px" data-texto="1:0; 2:0; 3:1; 4:0; 5:1; 6:0" data-clases="1:; 2:; 3:d-sobre-acento; 4:; 5:d-sobre-acento; 6:">0</text><rect class="d-caja" x="358" y="148" width="64" height="50" rx="6" data-clases="1:; 2:d-acento; 3:; 4:d-acento; 5:d-acento; 6:"/><text class="d-mono" x="390" y="182" text-anchor="middle" style="font-size:24px" data-texto="1:0; 2:1; 3:0; 4:1; 5:1; 6:0" data-clases="1:; 2:d-sobre-acento; 3:; 4:d-sobre-acento; 5:d-sobre-acento; 6:">0</text><rect class="d-caja" x="438" y="148" width="64" height="50" rx="6" data-clases="1:; 2:; 3:; 4:; 5:; 6:"/><text class="d-mono" x="470" y="182" text-anchor="middle" style="font-size:24px" data-texto="1:0; 2:0; 3:0; 4:0; 5:0; 6:0" data-clases="1:; 2:; 3:; 4:; 5:; 6:">0</text></g><g data-pasos="2-"><rect class="d-caja" x="198" y="226" width="64" height="50" rx="6" data-clases="1:; 2:; 3:; 4:; 5:; 6:d-acento"/><text class="d-mono" x="230" y="260" text-anchor="middle" style="font-size:24px" data-texto="1:0; 2:0; 3:0; 4:0; 5:0; 6:1" data-clases="1:; 2:; 3:; 4:; 5:; 6:d-sobre-acento">0</text><rect class="d-caja" x="278" y="226" width="64" height="50" rx="6" data-clases="1:; 2:; 3:d-acento; 4:d-acento; 5:d-acento; 6:d-acento"/><text class="d-mono" x="310" y="260" text-anchor="middle" style="font-size:24px" data-texto="1:0; 2:0; 3:1; 4:1; 5:1; 6:1" data-clases="1:; 2:; 3:d-sobre-acento; 4:d-sobre-acento; 5:d-sobre-acento; 6:d-sobre-acento">0</text><rect class="d-caja" x="358" y="226" width="64" height="50" rx="6" data-clases="1:; 2:; 3:; 4:d-acento; 5:d-acento; 6:d-acento"/><text class="d-mono" x="390" y="260" text-anchor="middle" style="font-size:24px" data-texto="1:0; 2:0; 3:0; 4:1; 5:1; 6:1" data-clases="1:; 2:; 3:; 4:d-sobre-acento; 5:d-sobre-acento; 6:d-sobre-acento">0</text><rect class="d-caja" x="438" y="226" width="64" height="50" rx="6" data-clases="1:; 2:; 3:; 4:d-acento; 5:; 6:"/><text class="d-mono" x="470" y="260" text-anchor="middle" style="font-size:24px" data-texto="1:0; 2:0; 3:0; 4:1; 5:0; 6:0" data-clases="1:; 2:; 3:; 4:d-sobre-acento; 5:; 6:">0</text></g><text class="d-mono" x="535" y="110" data-texto="1:= 5; 5:= 7; 6:= 6">= 5</text><text class="d-mono" x="535" y="180" data-pasos="2-" data-texto="2:SALTO; 3:IMAN; 4:SALTO; 5:~ESCUDO; 6:TURBO">SALTO</text><text class="d-mono" x="535" y="248" data-pasos="2-" data-texto="2:= 0; 3:= 4; 4:= 7; 5:= 6; 6:= 14">= 0</text><text class="d-peq d-tenue" x="535" y="268" data-pasos="2-" data-texto="2:no tiene salto doble; 3:sí tiene imán; 4:salto activado; 5:escudo quitado; 6:turbo alternado">no tiene salto doble</text><text class="d-mono" x="360" y="292" text-anchor="middle" data-texto="1:poderes = IMAN | ESCUDO; 2:(poderes &amp; SALTO) !== 0; 3:(poderes &amp; IMAN) !== 0; 4:poderes = poderes | SALTO; 5:poderes = poderes &amp; ~ESCUDO; 6:poderes = poderes ^ TURBO">poderes = IMAN | ESCUDO</text></svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Cada columna es un poder. <code>poderes</code> vale 5, que en binario es 0101: los bits del imán y del escudo están encendidos.</li>
+        <li data-duracion="6"><strong>Consultar</strong> con <code>&amp;</code>: la máscara <code>SALTO</code> solo tiene encendido el bit del salto. Al hacer AND, todo lo demás se apaga y queda solo ese bit. Da 0, así que no tiene salto doble.</li>
+        <li>Con la máscara <code>IMAN</code> el resultado es 4, distinto de 0: sí tiene imán. Por eso la consulta se escribe <code>(poderes &amp; IMAN) !== 0</code>.</li>
+        <li><strong>Activar</strong> con <code>|</code>: OR enciende el bit del salto y deja los demás como estaban. <code>poderes</code> pasa a valer 7.</li>
+        <li data-duracion="6"><strong>Quitar</strong> con <code>&amp; ~</code>: <code>~ESCUDO</code> es una máscara con todos los bits encendidos menos el del escudo. Al hacer AND, solo ese bit se apaga. Quedan 0110, es decir, 6.</li>
+        <li><strong>Alternar</strong> con <code>^</code>: XOR invierte solo el bit del turbo. Si estaba apagado se enciende, y si estaba encendido se apaga. Queda 1110, 14.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Quieres…</th><th scope="col">Escribe</th><th scope="col">Por qué funciona</th></tr></thead>
+      <tbody>
+        <tr><td>Saber si está activada</td><td><code>(poderes &amp; IMAN) !== 0</code></td><td>AND deja solo el bit de la máscara</td></tr>
+        <tr><td>Activarla</td><td><code>poderes |= SALTO</code></td><td>OR enciende el bit y respeta el resto</td></tr>
+        <tr><td>Quitarla</td><td><code>poderes &amp;= ~ESCUDO</code></td><td>AND con «todo menos ese bit»</td></tr>
+        <tr><td>Alternarla</td><td><code>poderes ^= TURBO</code></td><td>XOR invierte solo ese bit</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal error" data-titulo="Los paréntesis no son opcionales">
+    <p><code>poderes &amp; IMAN === IMAN</code> parece correcto, pero <code>===</code> se evalúa antes que <code>&amp;</code>. JavaScript calcula primero <code>IMAN === IMAN</code> (que es <code>true</code>, es decir, 1) y después <code>poderes &amp; 1</code>. Con <code>poderes = 6</code> da 0 aunque el imán esté activado. Escribe siempre <code>(poderes &amp; IMAN) !== 0</code>.</p>
+  </aside>
+  <p>Predice cada línea. Este taller simula las teclas de dirección de un juego guardadas en un solo número:</p>
+  <div class="taller" id="taller-teclas" data-titulo="Predice: teclas pulsadas en un número">
+    <textarea class="taller-codigo">const ARRIBA = 1, ABAJO = 2, IZQUIERDA = 4, DERECHA = 8;
+let teclas = 0;
+
+teclas |= ARRIBA;    // pulsa arriba
+teclas |= DERECHA;   // y a la vez derecha
+console.log(teclas, teclas.toString(2).padStart(4, "0"));
+
+console.log("¿Derecha?", (teclas & DERECHA) !== 0);
+console.log("¿Abajo?", (teclas & ABAJO) !== 0);
+
+teclas &= ~ARRIBA;   // suelta arriba
+console.log(teclas, teclas.toString(2).padStart(4, "0"));</textarea>
+  </div>
+  <p><strong>Modifica:</strong> añade <code>teclas ^= IZQUIERDA</code> dos veces seguidas e imprime después de cada una. ¿Qué pasa la segunda vez?</p>
+  <aside class="senal oficio">
+    <p>En el código de una aplicación normal suele ser más legible un objeto como <code>{ escudo: true, iman: false }</code>. Los bits brillan cuando importa el espacio o la velocidad: motores de juegos, datos enviados por la red cientos de veces por segundo, archivos binarios, hardware. Y aunque no los escribas tú, los leerás: en el navegador, <code>evento.buttons &amp; 2</code> dice si el botón derecho del ratón está pulsado, porque <code>buttons</code> es una máscara (1 izquierdo, 2 derecho, 4 central).</p>
+  </aside>
+
+  <h3>Números negativos: el complemento a dos</h3>
+  <p>Los bits solo guardan ceros y unos: no hay sitio para un signo menos. La solución que usan casi todas las computadoras se llama <strong>complemento a dos</strong>, y la idea es sorprendentemente sencilla: el bit de más a la izquierda pesa en negativo. Con 8 bits, en lugar de valer +128 vale −128:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Bits</th><th scope="col">Cuenta</th><th scope="col">Valor</th></tr></thead>
+      <tbody>
+        <tr><td><code>00000101</code></td><td>4 + 1</td><td>5</td></tr>
+        <tr><td><code>01111111</code></td><td>64 + 32 + 16 + 8 + 4 + 2 + 1</td><td>127 (el mayor)</td></tr>
+        <tr><td><code>10000000</code></td><td>−128</td><td>−128 (el menor)</td></tr>
+        <tr><td><code>11111111</code></td><td>−128 + 127</td><td>−1</td></tr>
+        <tr><td><code>11111011</code></td><td>−128 + 64 + 32 + 16 + 8 + 2 + 1</td><td>−5</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Con 8 bits caben 256 combinaciones. Sin signo representan del 0 al 255; con complemento a dos, del −128 al 127. Para cambiar el signo de un número hay una receta: <strong>invierte todos los bits y suma 1</strong>. El 5 es 00000101; invertido, 11111010; más 1, 11111011, que es −5.</p>
+  <p>¿Por qué un sistema tan raro? Porque la suma funciona sin reglas especiales. Suma 5 y −5 a mano, bit a bit: 00000101 + 11111011 = 1 00000000. Ese 1 del principio es un noveno bit que no cabe en la caja de 8, así que se pierde, y queda 00000000: cero. El mismo circuito que suma positivos sirve para los negativos.</p>
+  <aside class="senal analogia">
+    <p>Piensa en el cuentakilómetros de un coche viejo con tres cifras. Si marca 000 y das marcha atrás un kilómetro, pasa a 999. Si lo que ves en 999 lo interpretas como «−1», todo cuadra: 999 + 1 vuelve a dar 000. El complemento a dos hace lo mismo con bits. La analogía falla en un detalle: el cuentakilómetros no tiene una mitad negativa acordada, y el complemento a dos sí (todo lo que empieza por 1 es negativo).</p>
+  </aside>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 340" role="img" aria-label="Rueda con las 8 combinaciones de 3 bits en círculo. Fuera de la rueda, su valor sin signo de 0 a 7; dentro, su valor en complemento a dos de menos 4 a 3. Sumar 1 avanza en sentido horario; entre 011 y 100 el valor con signo salta de 3 a menos 4, y entre 111 y 000 el valor sin signo salta de 7 a 0."><circle class="d-linea" cx="230" cy="170" r="105"/><rect class="d-caja" x="200" y="48" width="60" height="34" rx="17"/><text class="d-mono" x="230" y="71" text-anchor="middle">000</text><text class="d-rotulo" x="230" y="16" text-anchor="middle">0</text><text class="d-rotulo d-tenue" x="230" y="121" text-anchor="middle">0</text><rect class="d-caja" x="274.25" y="78.75" width="60" height="34" rx="17"/><text class="d-mono" x="304.25" y="101.75" text-anchor="middle">001</text><text class="d-rotulo" x="343.14" y="62.86" text-anchor="middle">1</text><text class="d-rotulo d-tenue" x="268.89" y="137.11" text-anchor="middle">1</text><rect class="d-caja" x="305" y="153" width="60" height="34" rx="17"/><text class="d-mono" x="335" y="176" text-anchor="middle">010</text><text class="d-rotulo" x="390" y="176" text-anchor="middle">2</text><text class="d-rotulo d-tenue" x="285" y="176" text-anchor="middle">2</text><rect class="d-caja" x="274.25" y="227.25" width="60" height="34" rx="17"/><text class="d-mono" x="304.25" y="250.25" text-anchor="middle">011</text><text class="d-rotulo" x="343.14" y="289.14" text-anchor="middle">3</text><text class="d-rotulo d-tenue" x="268.89" y="214.89" text-anchor="middle">3</text><rect class="d-caja" x="200" y="258" width="60" height="34" rx="17"/><text class="d-mono" x="230" y="281" text-anchor="middle">100</text><text class="d-rotulo" x="230" y="336" text-anchor="middle">4</text><text class="d-rotulo d-tenue" x="230" y="231" text-anchor="middle">−4</text><rect class="d-caja" x="125.75" y="227.25" width="60" height="34" rx="17"/><text class="d-mono" x="155.75" y="250.25" text-anchor="middle">101</text><text class="d-rotulo" x="116.86" y="289.14" text-anchor="middle">5</text><text class="d-rotulo d-tenue" x="191.11" y="214.89" text-anchor="middle">−3</text><rect class="d-caja" x="95" y="153" width="60" height="34" rx="17"/><text class="d-mono" x="125" y="176" text-anchor="middle">110</text><text class="d-rotulo" x="70" y="176" text-anchor="middle">6</text><text class="d-rotulo d-tenue" x="175" y="176" text-anchor="middle">−2</text><rect class="d-caja" x="125.75" y="78.75" width="60" height="34" rx="17"/><text class="d-mono" x="155.75" y="101.75" text-anchor="middle">111</text><text class="d-rotulo" x="116.86" y="62.86" text-anchor="middle">7</text><text class="d-rotulo d-tenue" x="191.11" y="137.11" text-anchor="middle">−1</text><path class="d-mal-trazo" d="M261.76 246.68L278.6 287.33"/><path class="d-ok-trazo" d="M198.24 93.32L181.4 52.67"/><path class="d-linea" d="M262.9 41.13A133 133 0 0 1 297.85 55.61"/><path class="d-tinta" d="M299.57 56.63L286.19 55.67L292.31 45.35z"/><text class="d-peq" x="287.02" y="32.34">+1</text><text class="d-rotulo" x="440" y="60">Cómo leer la rueda</text><rect class="d-caja" x="440" y="78" width="60" height="30" rx="15"/><text class="d-mono" x="470" y="99" text-anchor="middle">101</text><text x="512" y="99">los 3 bits guardados</text><text class="d-rotulo" x="470" y="140" text-anchor="middle">5</text><text x="512" y="140">leídos sin signo</text><text class="d-rotulo d-tenue" x="470" y="176" text-anchor="middle">−3</text><text x="512" y="176">leídos con signo</text><path class="d-mal-trazo" d="M460 210h20"/><text x="492" y="215">desborda con signo</text><text class="d-peq d-tenue" x="492" y="235">3 + 1 da −4</text><path class="d-ok-trazo" d="M460 262h20"/><text x="492" y="267">desborda sin signo</text><text class="d-peq d-tenue" x="492" y="287">7 + 1 da 0</text></svg>
+    <figcaption>Con 3 bits hay 8 combinaciones colocadas en círculo. Sumar 1 avanza una casilla. Leídas sin signo van de 0 a 7; con complemento a dos, de −4 a 3. En algún punto del círculo, sumar 1 hace que el valor «dé la vuelta».</figcaption>
+  </figure>
+  <p>Cuando el resultado de una operación no cabe en los bits disponibles se produce un <strong>desbordamiento</strong> (en inglés, <em>overflow</em>): el número da la vuelta como en la rueda. Los números normales de JavaScript no se desbordan así (enseguida verás cómo se guardan), pero existen listas especiales de tamaño fijo en las que cada casilla mide exactamente 8 bits: <code>Int8Array</code> (con signo) y <code>Uint8Array</code> (sin signo). Aquí las usamos solo para ver qué pasa con 8 bits. Predice cada línea:</p>
+  <div class="taller" id="taller-negativos" data-titulo="Predice: desbordar 8 bits">
+    <textarea class="taller-codigo">const conSigno = new Int8Array(1);    // una casilla de 8 bits con signo
+conSigno[0] = 127;
+console.log(conSigno[0]);
+conSigno[0] = conSigno[0] + 1;
+console.log(conSigno[0]);
+
+const sinSigno = new Uint8Array(1);   // una casilla de 8 bits sin signo
+sinSigno[0] = 255 + 1;
+console.log(sinSigno[0]);
+
+console.log(~5);                        // invertir bits, sin sumar 1
+console.log((-5 >>> 0).toString(2));    // los 32 bits de -5</textarea>
+  </div>
+  <p>127 + 1 da −128 y 255 + 1 da 0: los dos saltos de la rueda. <code>~5</code> da −6 porque invertir los bits sin sumar 1 da el negativo menos uno: <code>~x</code> siempre vale <code>-x - 1</code>. Y la última línea muestra −5 con sus 32 bits: casi todos unos, terminando en <code>1011</code>.</p>
+  <aside class="senal nota" data-titulo="Un desbordamiento famoso">
+    <p>En el Pac-Man original de 1980, el número de nivel se guardaba en un solo byte. Al llegar al nivel 256, un cálculo relacionado con ese número se desbordaba y la mitad derecha de la pantalla se llenaba de símbolos sin sentido, haciendo el nivel imposible. Los jugadores lo llaman la «pantalla de la muerte». En las imágenes, los píxeles de un <code>canvas</code> se guardan en un <code>Uint8ClampedArray</code>, que en lugar de dar la vuelta se queda en el límite: 300 se guarda como 255 y −20 como 0.</p>
+  </aside>
+</section>
+
+<section id="decimales" data-parada="Decimales y redondeo">
+  <h2>Decimales: por qué 0.1 + 0.2 no es 0.3</h2>
+  <p>En la Estación 7 viste que <code>0.1 + 0.2</code> da <code>0.30000000000000004</code> y el consejo de redondear al mostrar. Ahora toca entender por qué pasa y qué hacer en programas reales: al comparar decimales, al manejar dinero y al trabajar con números muy grandes.</p>
+
+  <h3>Decimales en binario</h3>
+  <p>Después de la coma, las posiciones binarias valen 1/2, 1/4, 1/8, 1/16… Algunos decimales se escriben exactos: 0.5 es 0.1₂ (medio), 0.75 es 0.11₂ (medio más un cuarto). Pero 0.1 no se puede formar sumando mitades, cuartos y octavos: en binario es 0.000110011001100… y el grupo <code>0011</code> se repite para siempre. Es lo mismo que te pasa a ti al escribir 1/3 en decimal: 0.3333… nunca termina.</p>
+  <p>La computadora tiene un número fijo de bits, así que corta la serie y guarda el número representable más cercano. El 0.1 que guarda JavaScript es, en realidad, 0.1000000000000000055511151231257827… Casi siempre no se nota, porque al mostrarlo JavaScript elige el decimal más corto que corresponde a ese valor. Pero al operar, los pequeños errores se suman y a veces aparecen.</p>
+  <aside class="senal analogia">
+    <p>Escribe 1/3 con cinco decimales: 0.33333. Multiplícalo por 3: 0.99999. No es 1, aunque 1/3 × 3 sí lo sea. Tu «error» no está en la multiplicación, sino en haber cortado el 1/3 al escribirlo. Con 0.1 en binario ocurre exactamente eso.</p>
+  </aside>
+
+  <h3>El formato IEEE 754</h3>
+  <p>Todos los números de tipo <code>number</code> en JavaScript usan el formato de <strong>coma flotante de doble precisión</strong> definido por la norma <strong>IEEE 754</strong>: 64 bits por número. Es la notación científica que quizá viste en el colegio (6.02 × 10²³), pero en binario: un signo, unos dígitos significativos y un exponente que dice dónde va la coma. Se llama «coma flotante» porque la coma se desplaza, «flota», según el exponente. Python (<code>float</code>) y Java, C# o C++ (<code>double</code>) usan el mismo formato, así que todo lo que aprendes aquí vale para ellos.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 250" role="img" aria-label="Los 64 bits con los que JavaScript guarda el número 0.1: 1 bit de signo, 11 bits de exponente y 52 bits de fracción. La fracción repite el patrón 1001 y al final se redondea, por eso 0.1 no se guarda exacto."><rect class="d-l4" x="20" y="60" width="24" height="44" rx="4"/><rect class="d-l6" x="44" y="60" width="126" height="44"/><rect class="d-caja" x="170" y="60" width="530" height="44"/><text class="d-mono d-peq" x="32" y="87" text-anchor="middle">0</text><text class="d-mono d-peq" x="107" y="87" text-anchor="middle" style="font-size:11px">01111111011</text><text class="d-mono" x="435" y="87" text-anchor="middle" style="font-size:9.6px">1001100110011001100110011001100110011001100110011010</text><text class="d-rotulo" x="20" y="44">signo</text><text class="d-rotulo" x="107" y="44" text-anchor="middle">exponente</text><text class="d-rotulo" x="435" y="44" text-anchor="middle">fracción (o mantisa)</text><text class="d-peq d-tenue" x="20" y="126">1 bit</text><text class="d-peq d-tenue" x="107" y="126" text-anchor="middle">11 bits</text><text class="d-peq d-tenue" x="435" y="126" text-anchor="middle">52 bits: el patrón 1001 se repite… y hay que cortarlo</text><path class="d-punteada" d="M660 108v28"/><text class="d-peq" x="652" y="152" text-anchor="end">aquí se redondea el final</text><text class="d-mono" x="360" y="196" text-anchor="middle">valor = (−1)^signo × 1.fracción × 2^(exponente − 1023)</text><text class="d-peq d-tenue" x="360" y="222" text-anchor="middle">Para 0.1: signo 0 (positivo), exponente 1019 − 1023 = −4, así que 0.1 ≈ 1.6 × 2⁻⁴</text></svg>
+    <figcaption>Así guarda JavaScript el 0.1: 1 bit para el signo, 11 para el exponente y 52 para la fracción. La fracción debería repetir 1001 para siempre, pero se corta y se redondea en el último bit.</figcaption>
+  </figure>
+  <p>Consecuencias prácticas:</p>
+  <ul>
+    <li><strong>Unas 15 o 16 cifras significativas.</strong> Da igual que el número sea grande o pequeño: lo que está limitado es la cantidad de cifras, no la posición de la coma.</li>
+    <li><strong>La precisión es relativa.</strong> Entre 1 y 2, dos números consecutivos están separados por 2⁻⁵² ≈ 0.0000000000000002. Esa distancia tiene nombre: <code>Number.EPSILON</code>. Cerca de un millón, la separación es unos diez mil millonésimos; cerca de 9 000 billones, es 2.</li>
+    <li><strong>Los errores se acumulan.</strong> Sumar 0.1 diez veces no da 1.</li>
+  </ul>
+  <p>Predice qué imprime cada línea. Una de las comparaciones da <code>true</code>: ¿cuál y por qué?</p>
+  <div class="taller" id="taller-flotantes" data-titulo="Predice: decimales en binario">
+    <textarea class="taller-codigo">console.log(0.1 + 0.2);
+console.log(0.1 + 0.2 === 0.3);
+console.log(0.5 + 0.25 === 0.75);
+
+let suma = 0;
+for (let i = 0; i < 10; i++) suma += 0.1;
+console.log(suma);
+
+console.log(1.1 * 3);
+console.log((0.1).toFixed(20));</textarea>
+  </div>
+  <p><code>0.5 + 0.25 === 0.75</code> da <code>true</code> porque los tres números se escriben exactos en binario (son mitades y cuartos). El problema no son los decimales en general, sino los que en binario no terminan nunca.</p>
+
+  <h3>Comparar decimales: con tolerancia, nunca con ===</h3>
+  <p>Si dos decimales vienen de cálculos distintos, compararlos con <code>===</code> es jugar a la lotería. Lo correcto es preguntar si están <em>suficientemente cerca</em>: si la distancia entre ellos es menor que una <strong>tolerancia</strong>. La distancia se calcula con <code>Math.abs(a - b)</code>, el <strong>valor absoluto</strong> de la resta, que es el número sin su signo: <code>Math.abs(-3)</code> da 3.</p>
+  <p><code>Number.EPSILON</code> sirve como tolerancia para números cercanos a 1, pero no para números grandes: la documentación de MDN recomienda elegir una tolerancia adecuada al tamaño de los números. Una forma práctica es hacerla <em>relativa</em>, proporcional al tamaño de los números que comparas:</p>
+  <div class="taller" id="taller-casi-igual" data-titulo="Comparar con tolerancia">
+    <textarea class="taller-codigo">// 1e-9 es notación científica: 1 × 10⁻⁹ = 0.000000001
+function casiIgual(a, b, tolerancia = 1e-9) {
+  return Math.abs(a - b) <= tolerancia * Math.max(1, Math.abs(a), Math.abs(b));
+}
+
+console.log(casiIgual(0.1 + 0.2, 0.3));               // cerca de 1
+console.log(casiIgual(1000000.1 + 0.2, 1000000.3));   // cerca de un millón
+console.log(Math.abs(1000000.1 + 0.2 - 1000000.3) < Number.EPSILON); // EPSILON se queda corto
+console.log(casiIgual(0.1, 0.11));                     // de verdad distintos</textarea>
+  </div>
+  <aside class="senal oficio">
+    <p>En los juegos esto aparece constantemente. Un personaje que camina hacia un punto casi nunca cae <em>exactamente</em> encima: por eso se comprueba si «llegó» con algo como <code>distancia &lt; 0.5</code> (medio píxel), no con <code>x === destino.x</code>. Y en mundos gigantes, lejos del origen, las posiciones pierden precisión y los objetos tiemblan; muchos motores recolocan el origen del mundo cerca del jugador para evitarlo.</p>
+  </aside>
+
+  <h3>Enteros seguros y BigInt</h3>
+  <p>Los enteros también se guardan en coma flotante, pero son exactos mientras quepan en los 53 bits significativos. El mayor entero que JavaScript garantiza exacto es 2⁵³ − 1 = 9 007 199 254 740 991, guardado en <code>Number.MAX_SAFE_INTEGER</code>. A esos números se les llama <strong>enteros seguros</strong>. Más allá, algunos enteros no se pueden representar y se «pegan» al vecino:</p>
+  <pre><code class="language-js">console.log(Number.MAX_SAFE_INTEGER);          // 9007199254740991
+console.log(2 ** 53 === 2 ** 53 + 1);          // true (¡dos números distintos «iguales»!)
+console.log(Number.isSafeInteger(2 ** 53));    // false
+
+// BigInt: enteros de cualquier tamaño, con una n al final
+console.log(2n ** 64n);                        // 18446744073709551616n
+console.log(1n + 1);                           // TypeError: no se mezclan con number</code></pre>
+  <p>Esto importa en la vida real: muchos servicios usan identificadores de 64 bits, y si los lees como <code>number</code> se corrompen en silencio. Por eso algunas APIs, como la de X (antes Twitter), envían los identificadores también como texto. Para enteros enormes existe <strong>BigInt</strong>: se escriben con una <code>n</code> al final, son exactos a cualquier tamaño, pero no admiten decimales ni se pueden mezclar con números normales sin convertirlos.</p>
+
+  <h3>Dinero: trabaja en centavos</h3>
+  <p>Nunca guardes dinero en decimales binarios. La práctica habitual es trabajar con enteros en la unidad más pequeña, los centavos: 19.99 se guarda como 1999. Los enteros se suman sin errores. Solo al mostrar se divide entre 100 y se da formato:</p>
+  <pre><code class="language-js">const preciosEnCentavos = [1999, 501, 10, 20];
+const total = preciosEnCentavos.reduce((suma, p) =&gt; suma + p, 0); // 2530, exacto
+console.log((total / 100).toFixed(2));                               // "25.30"
+
+// Con el formato de moneda de un país: Intl.NumberFormat sabe poner símbolos y separadores
+const formato = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" });
+console.log(formato.format(total / 100));                            // "$25.30"</code></pre>
+  <aside class="senal nota" data-titulo="Sumas más precisas en 2026">
+    <p>Desde 2026, los navegadores principales incluyen <code>Math.sumPrecise(lista)</code>, que suma todos los números de una lista y redondea una sola vez al final, en lugar de redondear en cada paso como un bucle. Con dos números no cambia nada (<code>0.1 + 0.2</code> ya está redondeado de la mejor forma posible), pero en sumas largas acumula mucho menos error. Como es reciente, comprueba antes si existe con <code>typeof Math.sumPrecise === "function"</code>: Node.js 24, la versión LTS activa en septiembre de 2026, todavía no la trae.</p>
+  </aside>
+
+  <h3>Redondear: round, floor, ceil y trunc</h3>
+  <p>Cuando necesitas un entero a partir de un decimal, JavaScript te da cuatro funciones. Con números positivos parecen casi iguales; con negativos, no:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Función</th><th scope="col">Qué hace</th><th scope="col">2.5</th><th scope="col">2.7</th><th scope="col">−2.5</th><th scope="col">−2.7</th></tr></thead>
+      <tbody>
+        <tr><td><code>Math.round</code></td><td>Al entero más cercano; con .5 exacto, hacia arriba (hacia +∞)</td><td>3</td><td>3</td><td>−2</td><td>−3</td></tr>
+        <tr><td><code>Math.floor</code></td><td>Siempre hacia abajo (el «suelo»)</td><td>2</td><td>2</td><td>−3</td><td>−3</td></tr>
+        <tr><td><code>Math.ceil</code></td><td>Siempre hacia arriba (el «techo»)</td><td>3</td><td>3</td><td>−2</td><td>−2</td></tr>
+        <tr><td><code>Math.trunc</code></td><td>Corta los decimales (hacia el 0)</td><td>2</td><td>2</td><td>−2</td><td>−2</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 230" role="img" aria-label="Recta numérica de menos 3 a 3. Para menos 2.7: floor va a menos 3, hacia la izquierda; ceil y trunc van a menos 2. Para 2.7: floor y trunc van a 2; ceil va a 3. floor siempre baja, ceil siempre sube y trunc siempre se acerca al cero."><path class="d-linea" d="M30 120H690"/><path class="d-linea" d="M60 112v16"/><text class="d-mono d-peq" x="60" y="148" text-anchor="middle">−3</text><path class="d-linea" d="M160 112v16"/><text class="d-mono d-peq" x="160" y="148" text-anchor="middle">−2</text><path class="d-linea" d="M260 112v16"/><text class="d-mono d-peq" x="260" y="148" text-anchor="middle">−1</text><path class="d-linea" d="M360 112v16"/><text class="d-mono d-peq" x="360" y="148" text-anchor="middle">0</text><path class="d-linea" d="M460 112v16"/><text class="d-mono d-peq" x="460" y="148" text-anchor="middle">1</text><path class="d-linea" d="M560 112v16"/><text class="d-mono d-peq" x="560" y="148" text-anchor="middle">2</text><path class="d-linea" d="M660 112v16"/><text class="d-mono d-peq" x="660" y="148" text-anchor="middle">3</text><circle class="d-acento" cx="90" cy="120" r="7"/><circle class="d-acento" cx="630" cy="120" r="7"/><text class="d-mono d-peq" x="90" y="172" text-anchor="middle">−2.7</text><text class="d-mono d-peq" x="630" y="172" text-anchor="middle">2.7</text><path class="d-linea" d="M90 110C90 62 60 62 60 106"/><path class="d-tinta" d="M60 106L56.4 95.42L66.31 96.77z"/><text class="d-mono d-peq" x="75" y="68" text-anchor="middle">floor</text><path class="d-linea" d="M90 110C90 40 160 40 160 106"/><path class="d-tinta" d="M160 106L154.33 96.36L164.31 95.68z"/><text class="d-mono d-peq" x="125" y="46" text-anchor="middle">ceil y trunc</text><path class="d-linea" d="M630 110C630 40 560 40 560 106"/><path class="d-tinta" d="M560 106L555.69 95.68L565.67 96.36z"/><text class="d-mono d-peq" x="595" y="46" text-anchor="middle">floor y trunc</text><path class="d-linea" d="M630 110C630 62 660 62 660 106"/><path class="d-tinta" d="M660 106L653.69 96.77L663.6 95.42z"/><text class="d-mono d-peq" x="645" y="68" text-anchor="middle">ceil</text><text class="d-peq d-tenue" x="360" y="210" text-anchor="middle">floor siempre baja · ceil siempre sube · trunc siempre va hacia el 0</text></svg>
+    <figcaption>Con negativos, «hacia abajo» significa hacia la izquierda de la recta: <code>Math.floor(-2.7)</code> da −3, no −2. <code>Math.trunc</code> es la única que siempre se acerca al cero.</figcaption>
+  </figure>
+  <aside class="senal error" data-titulo="Math.round con negativos">
+    <p><code>Math.round(-2.5)</code> da −2, no −3: cuando el decimal es exactamente .5, JavaScript redondea hacia +∞. Muchos otros lenguajes redondean «alejándose del cero» y dan −3. Y Python usa otra regla distinta (lo verás en la sección siguiente). Si un cálculo depende de cómo se redondea el .5, compruébalo en la documentación del lenguaje.</p>
+  </aside>
+  <p>Cada una tiene su uso típico:</p>
+  <ul>
+    <li><code>Math.floor</code>: «¿cuántos caben enteros?» o «¿en qué casilla cae?». El píxel 137 de un mapa de casillas de 32 píxeles está en la casilla <code>Math.floor(137 / 32)</code>, la 4.</li>
+    <li><code>Math.ceil</code>: «¿cuántos hacen falta?». Para mostrar 23 productos de 10 en 10 necesitas <code>Math.ceil(23 / 10)</code> páginas: 3.</li>
+    <li><code>Math.round</code>: para mostrar un resultado aproximado, como un porcentaje.</li>
+    <li><code>Math.trunc</code>: para quedarte con la parte entera respetando el signo, por ejemplo al separar horas de minutos en un temporizador que puede ser negativo.</li>
+  </ul>
+  <p>Para redondear a varios decimales hay dos caminos. <code>Math.round(x * 100) / 100</code> devuelve un número con dos decimales como máximo. <code>x.toFixed(2)</code> devuelve un <em>texto</em> con dos decimales exactos, pensado para mostrar. Los dos heredan las rarezas del binario: <code>(1.005).toFixed(2)</code> da <code>"1.00"</code>, porque el 1.005 guardado es en realidad 1.00499999… Por eso la regla de oro es <strong>calcular con toda la precisión y redondear solo al mostrar</strong> (y usar centavos para el dinero).</p>
+  <div class="taller" id="taller-redondeo" data-titulo="Cuatro formas de redondear">
+    <textarea class="taller-codigo">const valores = [2.5, 2.7, -2.5, -2.7];
+for (const v of valores) {
+  console.log(v, "round:", Math.round(v), "floor:", Math.floor(v), "ceil:", Math.ceil(v), "trunc:", Math.trunc(v));
+}
+console.log(Math.ceil(23 / 10), "páginas para 23 productos de 10 en 10");
+console.log("El píxel 137 está en la casilla", Math.floor(137 / 32));
+console.log((1.005).toFixed(2), "y no 1.01");</textarea>
+  </div>
+</section>
+
+<section id="modulo" data-parada="Módulo y porcentajes">
+  <h2>Módulo y porcentajes: ciclos, vueltas y proporciones</h2>
+  <p>El operador <code>%</code> de la Estación 7 parecía una curiosidad: «el resto de la división». En los programas de verdad es una de las herramientas más usadas, porque sirve para todo lo que se repite en ciclos: los días de la semana, las horas del reloj, los turnos de una partida, los fotogramas de una animación o un personaje que sale por un lado de la pantalla y aparece por el otro.</p>
+
+  <h3>División entera: cociente y resto</h3>
+  <p>Al repartir 17 caramelos entre 5 personas, a cada una le tocan 3 y sobran 2: 17 = 5 × 3 + 2. El 3 es el <strong>cociente</strong> y el 2 es el <strong>resto</strong>. En JavaScript, el cociente entero se obtiene con <code>Math.floor(17 / 5)</code> y el resto con <code>17 % 5</code>. Ya usaste la pareja para pasar segundos a horas y minutos. La propiedad clave: con números positivos, <code>n % m</code> siempre da un valor entre 0 y m − 1. Por eso sirve para dar vueltas.</p>
+
+  <h3>Ciclos: la aritmética del reloj</h3>
+  <p>Si son las 22 h y faltan 5 horas, no serán las 27 h: serán las 3. El reloj «da la vuelta» al llegar a 24. Esa forma de contar, en la que los números vuelven a empezar al llegar a un límite, se llama <strong>aritmética modular</strong>, y el límite (24) se llama <strong>módulo</strong>. En código: <code>(22 + 5) % 24</code> da 3.</p>
+  <aside class="senal analogia">
+    <p>Un reloj de agujas es aritmética modular pura: después de las 12 vienen la 1 y las 2, no las 13 y las 14. El límite de la analogía: en el reloj de agujas el ciclo va de 1 a 12, mientras que <code>% 12</code> da valores de 0 a 11. Cuando programes un reloj de 12 horas tendrás que convertir el 0 en 12 al mostrarlo.</p>
+  </aside>
+  <p>La misma idea, en situaciones de juego y de aplicación. Predice la salida antes de ejecutar:</p>
+  <div class="taller" id="taller-ciclos" data-titulo="Predice: ciclos con %">
+    <textarea class="taller-codigo">const dias = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
+const hoy = 4; // viernes (las posiciones empiezan en 0)
+console.log("Dentro de 10 días será", dias[(hoy + 10) % 7]);
+
+const hora = 22;
+console.log("5 horas después de las 22 son las", (hora + 5) % 24);
+
+// Una animación de 4 fotogramas que cambia cada 100 milisegundos
+for (let t = 0; t <= 700; t += 100) {
+  const fotograma = Math.floor(t / 100) % 4;
+  console.log(`t = ${t} ms → fotograma ${fotograma}`);
+}</textarea>
+  </div>
+  <p>Otros usos del mismo patrón: el turno en una partida de 4 jugadores (<code>turno = (turno + 1) % 4</code>), un carrusel de imágenes que vuelve a la primera, las filas alternas de una tabla (<code>i % 2 === 0</code>) o «cada 3 enemigos, uno lleva escudo» (<code>i % 3 === 0</code>).</p>
+
+  <h3>Envolver posiciones y la trampa de los negativos</h3>
+  <p>En Asteroids, si la nave sale por la derecha aparece por la izquierda; en Pac-Man, el túnel lateral hace lo mismo. A eso se le llama <strong>envolver</strong> una posición (en inglés, <em>wrap around</em>). Con una pista de 10 casillas, avanzar es <code>(pos + 1) % 10</code>. Pero retroceder tiene una trampa:</p>
+  <figure class="capsula" data-titulo="Una pista que da la vuelta">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 260" role="img" aria-label="Animación: una ficha avanza por una pista de 10 casillas numeradas de 0 a 9. Al pasar de la 9 vuelve a la 0 gracias al resto. Al retroceder desde la 0, el resto de JavaScript da menos 1, una casilla que no existe; con la fórmula del módulo matemático la ficha aparece en la 9."><text class="d-mono" x="360" y="34" text-anchor="middle" style="font-size:18px" data-texto="1:pos = 7   (ancho = 10); 2:pos = (7 + 1) % 10 = 8; 3:pos = (8 + 1) % 10 = 9; 4:pos = (9 + 1) % 10 = 0; 5:pos = (0 − 1) % 10 = −1; 6:pos = ((0 − 1) % 10 + 10) % 10 = 9">pos = 7   (ancho = 10)</text><rect class="d-caja" x="60" y="110" width="56" height="56" rx="6"/><text class="d-mono d-peq d-tenue" x="88" y="190" text-anchor="middle">0</text><rect class="d-caja" x="120" y="110" width="56" height="56" rx="6"/><text class="d-mono d-peq d-tenue" x="148" y="190" text-anchor="middle">1</text><rect class="d-caja" x="180" y="110" width="56" height="56" rx="6"/><text class="d-mono d-peq d-tenue" x="208" y="190" text-anchor="middle">2</text><rect class="d-caja" x="240" y="110" width="56" height="56" rx="6"/><text class="d-mono d-peq d-tenue" x="268" y="190" text-anchor="middle">3</text><rect class="d-caja" x="300" y="110" width="56" height="56" rx="6"/><text class="d-mono d-peq d-tenue" x="328" y="190" text-anchor="middle">4</text><rect class="d-caja" x="360" y="110" width="56" height="56" rx="6"/><text class="d-mono d-peq d-tenue" x="388" y="190" text-anchor="middle">5</text><rect class="d-caja" x="420" y="110" width="56" height="56" rx="6"/><text class="d-mono d-peq d-tenue" x="448" y="190" text-anchor="middle">6</text><rect class="d-caja" x="480" y="110" width="56" height="56" rx="6"/><text class="d-mono d-peq d-tenue" x="508" y="190" text-anchor="middle">7</text><rect class="d-caja" x="540" y="110" width="56" height="56" rx="6"/><text class="d-mono d-peq d-tenue" x="568" y="190" text-anchor="middle">8</text><rect class="d-caja" x="600" y="110" width="56" height="56" rx="6"/><text class="d-mono d-peq d-tenue" x="628" y="190" text-anchor="middle">9</text><g data-pasos="5"><rect class="d-punteada" x="0" y="110" width="56" height="56" rx="6"/><text class="d-mono d-peq" x="28" y="190" text-anchor="middle">−1</text></g><g data-pasos="4"><path class="d-linea" d="M628 100C628 52 88 52 88 92"/><path class="d-tinta" d="M88 104L82 92L94 92z"/></g><g data-pasos="6"><path class="d-linea" d="M28 200C28 250 628 250 628 208"/><path class="d-tinta" d="M628 196L634 208L622 208z"/></g><circle class="d-acento" cx="508" cy="138" r="18" data-pasos="1-3" data-mover="2:translate(60px,0px); 3:translate(120px,0px)"/><circle class="d-acento" cx="88" cy="138" r="18" data-pasos="4-5" data-mover="5:translate(-60px,0px)" data-clases="5:d-mal"/><circle class="d-ok" cx="628" cy="138" r="18" data-pasos="6"/></svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Una pista de 10 casillas, numeradas del 0 al 9. La ficha está en la casilla 7.</li>
+        <li>Avanza una: <code>(7 + 1) % 10</code> es 8. Mientras no se pase del final, <code>%</code> no cambia nada.</li>
+        <li>Otra más: <code>(8 + 1) % 10</code> es 9, la última casilla.</li>
+        <li data-duracion="6">Y otra: 9 + 1 = 10, y <code>10 % 10</code> es 0. La ficha sale por la derecha y aparece en la primera casilla.</li>
+        <li data-duracion="7">Ahora retrocede desde la 0: <code>(0 − 1) % 10</code>. Esperarías 9, pero JavaScript da −1: una casilla que no existe. Si usas ese número como índice de un array, obtendrás <code>undefined</code>.</li>
+        <li data-duracion="7">La solución es sumar el tamaño y volver a aplicar el resto: <code>((0 − 1) % 10 + 10) % 10</code> da 9. La ficha aparece en la última casilla, como debía.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>¿Por qué pasa? Porque el <code>%</code> de JavaScript no es exactamente el módulo de las matemáticas. Es el <strong>resto</strong>, y el resto toma el signo del número que divides: <code>-7 % 3</code> da −1. El <strong>módulo matemático</strong> toma el signo del divisor, así que con un divisor positivo siempre da un valor entre 0 y el divisor menos 1: el módulo de −7 entre 3 es 2. Con números positivos los dos coinciden; con negativos, no.</p>
+  <p>La diferencia viene de cómo se redondea el cociente, y aquí conecta con la sección anterior: el resto de JavaScript corresponde a un cociente redondeado con <code>Math.trunc</code> (hacia el cero), y el módulo matemático, a uno redondeado con <code>Math.floor</code> (siempre hacia abajo). Hay dos formas equivalentes de escribir un módulo que funcione siempre:</p>
+  <pre><code class="language-js">function mod(a, n) {
+  return ((a % n) + n) % n;        // la receta que recomienda MDN
+}
+// o, lo mismo con Math.floor:
+// return a - n * Math.floor(a / n);</code></pre>
+  <div class="taller" id="taller-resto" data-titulo="Predice: resto y módulo">
+    <textarea class="taller-codigo">console.log(7 % 3);
+console.log(-7 % 3);
+console.log(7 % -3);
+
+function mod(a, n) {
+  return ((a % n) + n) % n;
+}
+console.log(mod(-7, 3));
+console.log(mod(-1, 10));
+console.log(mod(25, 10));</textarea>
+  </div>
+  <p>Cada lenguaje decide qué hace su <code>%</code>. Python, por ejemplo, usa el módulo matemático. Este taller ejecuta Python de verdad (lo aprenderás en la <a href="36-python.html">Estación 36</a>; aquí basta con saber que <code>print</code> es su <code>console.log</code> y <code>//</code> su división entera). Compara cada resultado con JavaScript:</p>
+  <div class="taller" data-modo="python" id="taller-python-modulo" data-titulo="Las mismas cuentas en Python">
+    <textarea class="taller-codigo">print(-7 % 3)            # en JavaScript da -1
+print(-7 // 3)           # división entera hacia abajo, como Math.floor
+print(round(2.5), round(3.5))   # redondeo «bancario»: al par más cercano
+print(2 ** 53 + 1)       # los enteros de Python no tienen límite</textarea>
+  </div>
+  <p>Tres diferencias en cuatro líneas: el <code>%</code> de Python da 2; su <code>round</code> redondea los .5 hacia el número par más cercano (2.5 da 2 y 3.5 da 4, para que los redondeos hacia arriba y hacia abajo se compensen en promedio); y sus enteros crecen sin límite, así que 2⁵³ + 1 sale exacto. Ninguno está «mal»: son decisiones de diseño distintas. Cuando cambies de lenguaje, compruébalo en su documentación.</p>
+
+  <h3>Del índice a la cuadrícula</h3>
+  <p>Los tableros y mapas de casillas (un buscaminas, un mapa de un juego de plataformas) muchas veces se guardan en un array normal, fila tras fila. Con división entera y resto pasas de la posición en el array a la fila y la columna, y al revés:</p>
+  <pre><code class="language-js">const ancho = 4;                       // casillas por fila
+const indice = 7;
+const fila = Math.floor(indice / ancho); // 1
+const columna = indice % ancho;          // 3
+const deVuelta = fila * ancho + columna; // 7</code></pre>
+  <p>La fila es «cuántas filas completas caben antes»; la columna, «cuánto sobra». Lo volverás a usar en la <a href="34-videojuegos.html">Estación 34</a> con los mapas de casillas (<em>tilemaps</em>).</p>
+
+  <h3>Porcentajes</h3>
+  <p>«Por ciento» significa «de cada cien»: 15 % es 15/100, es decir, 0.15. Casi todos los cálculos con porcentajes son una de estas tres preguntas:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Pregunta</th><th scope="col">Fórmula</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td>¿Cuánto es el X % de una cantidad?</td><td><code>cantidad * X / 100</code></td><td>el 20 % de 800 es 160</td></tr>
+        <tr><td>¿Qué porcentaje es A de B?</td><td><code>A / B * 100</code></td><td>340 de 500 es el 68 %</td></tr>
+        <tr><td>¿Cuánto cambió, en porcentaje?</td><td><code>(nuevo - viejo) / viejo * 100</code></td><td>de 250 a 300 es +20 %</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Para aplicar un descuento del 20 % multiplica por lo que queda: <code>precio * (1 - 0.2)</code>. Para añadir un impuesto del 16 %, por lo que se suma: <code>precio * (1 + 0.16)</code>.</p>
+  <aside class="senal error" data-titulo="Tres trampas con porcentajes">
+    <p><strong>Los descuentos no se suman.</strong> Un 20 % y después un 10 % no son un 30 %: es <code>0.8 * 0.9 = 0.72</code>, un 28 % de descuento.</p>
+    <p><strong>Subir y bajar lo mismo no te deja igual.</strong> 100 más un 50 % son 150; 150 menos un 50 % son 75. El segundo porcentaje se calcula sobre otra cantidad.</p>
+    <p><strong>Puntos porcentuales no son porcentajes.</strong> Si la probabilidad de un crítico pasa del 10 % al 12 %, subió 2 <em>puntos porcentuales</em>, pero un 20 % respecto a lo que era.</p>
+  </aside>
+
+  <h3>Proporciones y regla de tres</h3>
+  <p>Dos cantidades son <strong>proporcionales</strong> cuando, si una se multiplica por algo, la otra se multiplica por lo mismo. Si 3 pizzas alcanzan para 12 personas, 5 pizzas alcanzan para <code>5 * 12 / 3</code> = 20. Es la <strong>regla de tres</strong>: multiplica en cruz y divide. En programación la usas para escalar: un juego diseñado a 1280 × 720 que se muestra a 1920 × 1080 multiplica todo por 1920 / 1280 = 1.5; una imagen de proporción 16:9 con 800 px de ancho mide <code>800 * 9 / 16</code> = 450 px de alto; y una barra de progreso llena su ancho en proporción a lo que llevas:</p>
+  <div class="taller" id="taller-porcentajes" data-titulo="Porcentajes y proporciones">
+    <textarea class="taller-codigo">const precio = 800;
+console.log("El 20 % de 800:", precio * 20 / 100);
+console.log("Con 20 % de descuento:", precio * (1 - 0.2));
+console.log("Con 20 % y luego 10 %:", precio * 0.8 * 0.9);
+
+const antes = 250, despues = 300;
+console.log("Subió un", (despues - antes) / antes * 100, "%");
+
+// Barra de experiencia: 340 de 500 puntos, en una barra de 200 píxeles
+const xp = 340, xpNivel = 500, anchoBarra = 200;
+console.log("Relleno:", Math.round(xp / xpNivel * anchoBarra), "px de", anchoBarra);
+console.log("Llevas el", Math.round(xp / xpNivel * 100), "%");</textarea>
+  </div>
+  <p><strong>Modifica:</strong> pon <code>xp = 620</code>. La barra mide más de 200 píxeles y se saldría de su marco. Para evitarlo se usa una función muy común, <code>clamp</code>, que verás en la sección de ángulos e interpolación y practicarás en los ejercicios.</p>
+</section>
+
+<section id="vectores" data-parada="Coordenadas y vectores">
+  <h2>Coordenadas y vectores: moverse por la pantalla</h2>
+  <p>Todo lo que se mueve en un juego (el personaje, las balas, la cámara, los enemigos que te persiguen) se describe con dos ideas: dónde está cada cosa y hacia dónde va. Para lo primero se usan coordenadas; para lo segundo, vectores. Con cinco o seis operaciones sencillas resolverás la mayoría de los movimientos de un juego 2D.</p>
+
+  <h3>Dos sistemas de coordenadas</h3>
+  <p>Unas <strong>coordenadas</strong> son un par de números (x, y) que dicen dónde está un punto: x es la distancia horizontal y y la vertical, medidas desde un punto de partida llamado <strong>origen</strong>. En el colegio se usa el <strong>plano cartesiano</strong>: el origen está en el centro, x crece hacia la derecha y y crece <em>hacia arriba</em>. Las pantallas lo hacen distinto: en el <code>canvas</code>, en CSS y en casi todos los motores 2D (Phaser, Godot), el origen está en la esquina superior izquierda y y crece <em>hacia abajo</em>, porque así se recorren las líneas de la pantalla, de arriba abajo.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Dos sistemas de coordenadas. A la izquierda, el plano cartesiano del colegio: el origen está en el centro y la y crece hacia arriba; el punto (3, 2) queda arriba a la derecha del origen. A la derecha, la pantalla: el origen está en la esquina superior izquierda y la y crece hacia abajo; el punto (3, 2) queda abajo a la derecha del origen."><text class="d-rotulo" x="180" y="24" text-anchor="middle">Plano cartesiano (colegio)</text><path class="d-linea" d="M30 160H320M180 280V50"/><path class="d-tinta" d="M334 160L322 166L322 154z"/><path class="d-tinta" d="M180 36L186 48L174 48z"/><text class="d-mono d-peq" x="326" y="180">x</text><text class="d-mono d-peq" x="190" y="48">y</text><text class="d-mono d-peq d-tenue" x="174" y="178" text-anchor="end">0</text><path class="d-punteada" d="M270 160V100H180"/><circle class="d-acento" cx="270" cy="100" r="7"/><text class="d-mono d-peq" x="280" y="90">(3, 2)</text><text class="d-rotulo" x="540" y="24" text-anchor="middle">Pantalla (canvas, CSS, juegos 2D)</text><rect class="d-caja-suave" x="420" y="60" width="260" height="200" rx="4"/><path class="d-linea" d="M420 60H690M420 60V270"/><path class="d-tinta" d="M704 60L692 66L692 54z"/><path class="d-tinta" d="M420 284L414 272L426 272z"/><text class="d-mono d-peq" x="692" y="80">x</text><text class="d-mono d-peq" x="430" y="286">y</text><text class="d-mono d-peq d-tenue" x="414" y="54" text-anchor="end">(0, 0)</text><path class="d-punteada" d="M537 60V138H420"/><circle class="d-acento" cx="537" cy="138" r="7"/><text class="d-mono d-peq" x="547" y="160">(3, 2)</text><text class="d-peq d-tenue" x="550" y="250" text-anchor="middle">«subir» es restar a y</text></svg>
+    <figcaption>El mismo punto (3, 2) en los dos sistemas. En pantalla, un valor de y más grande significa más abajo.</figcaption>
+  </figure>
+  <aside class="senal error" data-titulo="Saltar hacia abajo">
+    <p>El error más típico al programar el primer juego: para que el personaje salte, le sumas a y… y se hunde en el suelo. En pantalla, <strong>subir es restar a y</strong>. Por lo mismo, la gravedad <em>suma</em> a la velocidad vertical.</p>
+  </aside>
+
+  <h3>Qué es un vector</h3>
+  <p>Un <strong>vector</strong> es una flecha: tiene una dirección y una longitud. En 2D se escribe con dos números, como un punto: (3, −4) significa «3 a la derecha y 4 hacia arriba» (en pantalla, y negativa es arriba). Punto y vector se escriben igual, pero significan cosas distintas: un punto dice <em>dónde</em>; un vector dice <em>cuánto y hacia dónde</em>: un desplazamiento, una velocidad, una fuerza. A la longitud del vector se le llama <strong>magnitud</strong> (o módulo; ojo, no tiene nada que ver con el <code>%</code>). En JavaScript los representaremos con objetos <code>{ x, y }</code>.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Operación</th><th scope="col">Cuenta</th><th scope="col">Para qué sirve</th></tr></thead>
+      <tbody>
+        <tr><td>Sumar</td><td>(a.x + b.x, a.y + b.y)</td><td>Mover: posición + velocidad = posición nueva</td></tr>
+        <tr><td>Restar</td><td>(b.x − a.x, b.y − a.y)</td><td>La flecha que va de a hasta b: «¿hacia dónde está el enemigo?»</td></tr>
+        <tr><td>Escalar</td><td>(v.x × k, v.y × k)</td><td>Alargar o acortar; con k negativo, darle la vuelta</td></tr>
+        <tr><td>Magnitud</td><td>√(x² + y²)</td><td>Longitud del vector; distancia entre dos puntos</td></tr>
+        <tr><td>Normalizar</td><td>v ÷ magnitud</td><td>Quedarte solo con la dirección (longitud 1)</td></tr>
+        <tr><td>Producto punto</td><td>a.x × b.x + a.y × b.y</td><td>Saber si dos direcciones miran hacia el mismo lado</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La magnitud sale del <strong>teorema de Pitágoras</strong>: en un triángulo con un ángulo recto, el lado largo (la hipotenusa) al cuadrado es igual a la suma de los cuadrados de los otros dos. El vector (3, 4) es la hipotenusa de un triángulo con lados 3 y 4, así que mide √(3² + 4²) = √(9 + 16) = √25 = 5. La raíz cuadrada (√) es la operación inversa de elevar al cuadrado: en JavaScript, <code>Math.sqrt(25)</code> da 5, y <code>Math.hypot(3, 4)</code> hace toda la cuenta de una vez.</p>
+  <figure class="capsula" data-titulo="Sumar, restar, medir y normalizar">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación sobre una cuadrícula de pantalla: el jugador en (2, 4) se mueve sumando el vector velocidad (2, menos 1); después, restando posiciones, se obtiene la flecha (5, menos 2) hacia el enemigo; se mide su longitud con Pitágoras y se normaliza a longitud 1."><path class="d-linea" style="opacity:.16;stroke-width:1" d="M40 20V260M80 20V260M120 20V260M160 20V260M200 20V260M240 20V260M280 20V260M320 20V260M360 20V260M400 20V260M440 20V260M480 20V260M40 20H480M40 60H480M40 100H480M40 140H480M40 180H480M40 220H480M40 260H480"/><path class="d-linea" d="M40 20H490M40 20V270"/><path class="d-tinta" d="M496 20L484 26L484 14z"/><path class="d-tinta" d="M40 276L34 264L46 264z"/><text class="d-mono d-peq" x="492" y="38">x</text><text class="d-mono d-peq" x="24" y="272">y</text><text class="d-mono d-peq d-tenue" x="36" y="14" text-anchor="end">0</text><circle class="d-mal" cx="400" cy="60" r="10"/><text class="d-peq" x="400" y="90" text-anchor="middle">enemigo E</text><g data-pasos="2-3"><path class="d-acento-trazo" d="M120 180L189.3 145.4"/><path class="d-acento" d="M200 140L191.5 152.07L185.24 139.55z"/><text class="d-mono d-peq" x="160" y="184">v</text></g><g data-pasos="3-"><circle class="d-punteada" cx="120" cy="180" r="10"/></g><g data-pasos="1-" data-mover="3:translate(80px,-40px)"><circle class="d-acento" cx="120" cy="180" r="10"/><text class="d-peq" x="120" y="210" text-anchor="middle">jugador P</text></g><g data-pasos="4-5"><path class="d-linea" style="stroke-width:3" d="M200 140L379.57 68.17"/><path class="d-tinta" d="M388.86 64.46L379.39 75.78L374.19 62.79z"/><text class="d-mono d-peq" x="288" y="96">d</text></g><g data-pasos="5"><path class="d-punteada" d="M200 140H400V72"/><text class="d-mono" x="300" y="162" text-anchor="middle">5</text><text class="d-mono" x="410" y="106">2</text></g><g data-pasos="6"><path class="d-punteada" d="M200 140L388.86 64.46"/><path class="d-ok-trazo" style="stroke-width:4" d="M200 140L226.93 129.23"/><path class="d-ok" d="M237.14 125.14L227.11 137.77L221.17 122.92z"/></g><text class="d-rotulo" x="530" y="50" data-texto="1:Posiciones; 2:Un vector; 3:Sumar; 4:Restar; 5:Magnitud; 6:Normalizar">Posiciones</text><text class="d-mono" x="530" y="90" data-texto="1:P = (2, 4); 2:v = (2, −1); 3:P + v; 4:d = E − P; 5:|d| = √(5² + 2²); 6:d ÷ |d|">P = (2, 4)</text><text class="d-mono" x="530" y="122" data-texto="1:E = (9, 1); 2:; 3:= (4, 3); 4:= (5, −2); 5:= √29 ≈ 5.39; 6:≈ (0.93, −0.37)">E = (9, 1)</text><text class="d-peq d-tenue" x="530" y="160" data-texto="1:y crece hacia abajo; 2:2 a la derecha, 1 arriba; 3:mover es sumar; 4:la flecha de P hacia E; 5:Pitágoras; 6:longitud 1: solo dirección">y crece hacia abajo</text></svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Una cuadrícula de pantalla: el origen arriba a la izquierda y y hacia abajo. El jugador P está en (2, 4) y el enemigo E en (9, 1).</li>
+        <li>Un vector es un desplazamiento. <code>v = (2, −1)</code> significa 2 casillas a la derecha y 1 hacia arriba (y negativa). Dibujado desde P, es una flecha.</li>
+        <li>Para mover el jugador se suma: P + v = (2 + 2, 4 − 1) = (4, 3). En un juego, esto se hace en cada fotograma con la velocidad.</li>
+        <li data-duracion="6">Para saber hacia dónde está el enemigo se resta: destino menos origen. E − P = (9 − 4, 1 − 3) = (5, −2). Es la flecha que va del jugador al enemigo.</li>
+        <li data-duracion="6">¿Qué tan lejos está? La flecha es la hipotenusa de un triángulo de lados 5 y 2. Por Pitágoras mide √(25 + 4) = √29, unas 5.39 casillas.</li>
+        <li data-duracion="7">Si divides la flecha entre su longitud, obtienes un vector de longitud 1 que apunta al enemigo: aproximadamente (0.93, −0.37). Multiplicado por la velocidad que quieras, dice cuánto moverse en cada fotograma.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Estas son las operaciones como funciones flecha. Fíjate en un detalle: cuando una función flecha devuelve un objeto directamente, el objeto va entre paréntesis, <code>=&gt; ({ x: …, y: … })</code>. Sin ellos, JavaScript confundiría las llaves del objeto con las llaves de un bloque de código.</p>
+  <div class="taller" id="taller-vectores" data-titulo="Predice: operaciones con vectores">
+    <textarea class="taller-codigo">const sumar = (a, b) => ({ x: a.x + b.x, y: a.y + b.y });
+const restar = (a, b) => ({ x: a.x - b.x, y: a.y - b.y });
+const escalar = (v, k) => ({ x: v.x * k, y: v.y * k });
+const longitud = (v) => Math.hypot(v.x, v.y);
+const normalizar = (v) => {
+  const l = longitud(v);
+  return l === 0 ? { x: 0, y: 0 } : { x: v.x / l, y: v.y / l };
+};
+
+const jugador = { x: 100, y: 200 };
+const velocidad = { x: 3, y: -4 };
+console.log(sumar(jugador, velocidad));
+console.log(longitud(velocidad));
+console.log(escalar(velocidad, 2));
+
+const enemigo = { x: 160, y: 120 };
+const haciaEnemigo = restar(enemigo, jugador);
+console.log(haciaEnemigo, longitud(haciaEnemigo));
+console.log(normalizar(haciaEnemigo));</textarea>
+  </div>
+  <aside class="senal ojo" data-titulo="No dividas entre cero">
+    <p>Un vector (0, 0) no tiene dirección: su longitud es 0 y normalizarlo sería dividir entre 0, que en JavaScript da <code>NaN</code>. Por eso <code>normalizar</code> comprueba ese caso y devuelve (0, 0). Si un personaje se queda quieto y de pronto desaparece de la pantalla, sospecha de un <code>NaN</code> en su posición.</p>
+  </aside>
+
+  <h3>Moverse cada fotograma</h3>
+  <p>Un juego redibuja la pantalla muchas veces por segundo; cada dibujo es un <strong>fotograma</strong> (en inglés, <em>frame</em>). En cada fotograma se suma la velocidad a la posición. Si la velocidad está en píxeles por segundo, se multiplica antes por el tiempo transcurrido desde el fotograma anterior (llamado <em>delta time</em>): <code>pos = sumar(pos, escalar(vel, dt))</code>. Así el juego va igual de rápido en una pantalla de 60 imágenes por segundo que en una de 144. Lo trabajarás a fondo en la <a href="34-videojuegos.html">Estación 34</a>.</p>
+
+  <h3>El error de la diagonal</h3>
+  <p>Un clásico de los juegos con teclado: si la flecha derecha da el vector (1, 0) y la flecha arriba (0, −1), al pulsar las dos a la vez el vector es (1, −1), que mide √2 ≈ 1.41. El personaje va un 41 % más rápido en diagonal. La solución es normalizar la dirección antes de multiplicar por la velocidad:</p>
+  <div class="taller" id="taller-diagonal" data-titulo="Más rápido en diagonal">
+    <textarea class="taller-codigo">const longitud = (v) => Math.hypot(v.x, v.y);
+const normalizar = (v) => {
+  const l = longitud(v);
+  return l === 0 ? { x: 0, y: 0 } : { x: v.x / l, y: v.y / l };
+};
+const VELOCIDAD = 200; // píxeles por segundo
+
+// true cuenta como 1 y false como 0 al restar
+function direccionDeTeclas(derecha, izquierda, abajo, arriba) {
+  return { x: derecha - izquierda, y: abajo - arriba };
+}
+
+const soloDerecha = direccionDeTeclas(true, false, false, false);
+const diagonal = direccionDeTeclas(true, false, false, true);
+console.log("Solo derecha:", longitud(soloDerecha) * VELOCIDAD, "px/s");
+console.log("Diagonal:", longitud(diagonal) * VELOCIDAD, "px/s");
+console.log("Diagonal normalizada:", longitud(normalizar(diagonal)) * VELOCIDAD, "px/s");</textarea>
+  </div>
+
+  <h3>El producto punto: ¿está delante o detrás?</h3>
+  <p>El <strong>producto punto</strong> de dos vectores es un solo número: <code>a.x * b.x + a.y * b.y</code>. Parece una cuenta arbitraria, pero tiene una propiedad muy útil: si los dos vectores están normalizados, el resultado dice cuánto se parecen sus direcciones. Da 1 si apuntan igual, 0 si forman un ángulo recto y −1 si apuntan en sentidos opuestos. (Técnicamente, es el coseno del ángulo entre ellos; el coseno lo verás en la sección siguiente.)</p>
+  <p>Con eso se programa, por ejemplo, el cono de visión de un guardia: mira en una dirección, y «te ve» si la dirección hacia ti se parece lo suficiente a la suya. Un umbral de 0.5 equivale a un cono de 60° hacia cada lado:</p>
+  <div class="taller" id="taller-producto-punto" data-titulo="El cono de visión de un guardia">
+    <textarea class="taller-codigo">const restar = (a, b) => ({ x: a.x - b.x, y: a.y - b.y });
+const normalizar = (v) => {
+  const l = Math.hypot(v.x, v.y);
+  return l === 0 ? { x: 0, y: 0 } : { x: v.x / l, y: v.y / l };
+};
+const punto = (a, b) => a.x * b.x + a.y * b.y;
+
+const guardia = { x: 0, y: 0 };
+const mirada = { x: 1, y: 0 }; // mira hacia la derecha
+
+for (const jugador of [{ x: 10, y: 1 }, { x: 0, y: 10 }, { x: -10, y: 2 }, { x: 8, y: 6 }]) {
+  const parecido = punto(mirada, normalizar(restar(jugador, guardia)));
+  console.log(jugador, parecido.toFixed(2), parecido > 0.5 ? "te ve" : "no te ve");
+}</textarea>
+  </div>
+  <p>El producto punto también se usa para iluminar superficies según hacia dónde miran, para saber si un enemigo te ataca por la espalda o para calcular cómo rebota una pelota en una pared inclinada.</p>
+
+  <h3>Pruébalo en movimiento</h3>
+  <p>Este taller junta todo: un círculo rojo persigue al ratón (o a tu dedo) a velocidad constante. En cada fotograma resta posiciones, mide la distancia, normaliza y escala. Dibuja en un <code>canvas</code>: <code>getContext("2d")</code> te da el «pincel», <code>arc</code> dibuja círculos (sus ángulos van en radianes; <code>Math.PI * 2</code> es una vuelta entera, lo entenderás en la próxima sección) y <code>requestAnimationFrame</code>, que conociste en la Estación 15, repite el bucle en cada fotograma. El dibujo con canvas se estudia a fondo en la Estación 34; aquí fíjate solo en la función <code>actualizar</code>.</p>
+  <div class="taller" data-modo="web" id="taller-perseguir" data-titulo="Un enemigo que te persigue" data-alto="22rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas width="480" height="280"&gt;&lt;/canvas&gt;
+&lt;p&gt;Mueve el ratón (o el dedo) sobre el lienzo.&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; }
+canvas { display: block; width: 100%; max-width: 480px; background: #1d2433; border-radius: 8px; touch-action: none; }
+p { margin: 6px 0 0; font-size: 14px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const lienzo = document.querySelector("canvas");
+const ctx = lienzo.getContext("2d");
+
+const enemigo = { x: 60, y: 60 };
+const objetivo = { x: 400, y: 200 };
+const VELOCIDAD = 2; // píxeles por fotograma
+
+// Posición del puntero dentro del lienzo (corrige si el lienzo se ve más pequeño)
+lienzo.addEventListener("pointermove", (e) => {
+  const caja = lienzo.getBoundingClientRect();
+  objetivo.x = (e.clientX - caja.left) * lienzo.width / caja.width;
+  objetivo.y = (e.clientY - caja.top) * lienzo.height / caja.height;
+});
+
+function actualizar() {
+  const dx = objetivo.x - enemigo.x;      // restar: flecha hacia el objetivo
+  const dy = objetivo.y - enemigo.y;
+  const distancia = Math.hypot(dx, dy);   // magnitud
+  if (distancia > VELOCIDAD) {
+    enemigo.x += (dx / distancia) * VELOCIDAD;  // normalizar y escalar
+    enemigo.y += (dy / distancia) * VELOCIDAD;
+  }
+}
+
+function dibujar() {
+  ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+  ctx.strokeStyle = "#5c6b8a";
+  ctx.beginPath(); ctx.moveTo(enemigo.x, enemigo.y); ctx.lineTo(objetivo.x, objetivo.y); ctx.stroke();
+  ctx.fillStyle = "#ffcc4d";
+  ctx.beginPath(); ctx.arc(objetivo.x, objetivo.y, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ff5d73";
+  ctx.beginPath(); ctx.arc(enemigo.x, enemigo.y, 14, 0, Math.PI * 2); ctx.fill();
+}
+
+function bucle() {
+  actualizar();
+  dibujar();
+  requestAnimationFrame(bucle);
+}
+bucle();</textarea>
+  </div>
+  <p><strong>Modifica:</strong> cambia las dos líneas de dentro del <code>if</code> por <code>enemigo.x += dx * 0.05;</code> y <code>enemigo.y += dy * 0.05;</code>. Ahora avanza un 5 % de la distancia en cada fotograma: rápido cuando está lejos y cada vez más despacio al acercarse. Acabas de inventar la interpolación suave de la próxima sección.</p>
+</section>
+
+<section id="angulos" data-parada="Ángulos e interpolación">
+  <h2>Ángulos: girar, apuntar y animar con suavidad</h2>
+  <p>Una torreta que sigue al ratón, una nave que gira con las flechas, balas que salen en abanico, un planeta que orbita, una moneda que flota subiendo y bajando, un menú que se desliza y frena con elegancia. Todo eso es trigonometría e interpolación, y en programación solo necesitas cuatro herramientas: grados y radianes, seno y coseno, <code>atan2</code> y <code>lerp</code>.</p>
+
+  <h3>Grados y radianes</h3>
+  <p>Estás acostumbrado a medir ángulos en <strong>grados</strong>: una vuelta completa son 360°, un ángulo recto 90°. Las matemáticas y JavaScript prefieren otra unidad, el <strong>radián</strong>: se toma un círculo de radio 1 y se mide cuánto recorres por el borde. Una vuelta entera recorre 2π ≈ 6.283 (π, «pi», vale 3.14159… y está en <code>Math.PI</code>). Así que 360° son 2π radianes, 180° son π y 90° son π/2. Un radián mide unos 57.3°.</p>
+  <pre><code class="language-js">const aRadianes = (grados) =&gt; grados * Math.PI / 180;
+const aGrados = (radianes) =&gt; radianes * 180 / Math.PI;</code></pre>
+  <aside class="senal error" data-titulo="Math.sin(90) no da 1">
+    <p>Todas las funciones de <code>Math</code> trabajan en radianes. <code>Math.sin(90)</code> calcula el seno de 90 <em>radianes</em> (más de 14 vueltas) y da 0.894. Para 90 grados, convierte primero: <code>Math.sin(aRadianes(90))</code>. El <code>ctx.rotate</code> del canvas también usa radianes; CSS, en cambio, acepta <code>deg</code>, <code>rad</code> y <code>turn</code>, así que ahí dilo tú: <code>rotate(90deg)</code>.</p>
+  </aside>
+
+  <h3>El círculo unitario: seno y coseno</h3>
+  <p>Imagina un círculo de radio 1 con el centro en el origen: es el <strong>círculo unitario</strong>. Sales del punto de la derecha, (1, 0), y recorres el borde hasta formar un ángulo. El punto al que llegas tiene dos coordenadas con nombre propio: la horizontal es el <strong>coseno</strong> del ángulo y la vertical es el <strong>seno</strong>. En JavaScript, <code>Math.cos(ángulo)</code> y <code>Math.sin(ángulo)</code>.</p>
+  <figure class="capsula" data-titulo="El círculo unitario">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación del círculo unitario: un punto recorre un círculo de radio 1. Para cada ángulo, su distancia horizontal al centro es el coseno y su altura es el seno: 0 grados da (1, 0), 30 grados da (0.87, 0.5), 90 grados da (0, 1) y 180 grados da (menos 1, 0). Una vuelta entera mide 2 pi radianes. En pantalla, con y hacia abajo, el mismo ángulo de 30 grados apunta hacia abajo."><path class="d-linea" style="opacity:.5" d="M70 150H340M200 20V280"/><path class="d-tinta" d="M344 150L332 156L332 144z"/><g data-pasos="1-5"><path class="d-tinta" d="M200 16L206 28L194 28z"/></g><g data-pasos="6"><path class="d-tinta" d="M200 284L194 272L206 272z"/></g><text class="d-mono d-peq" x="340" y="170">x</text><text class="d-mono d-peq" x="212" y="24" data-pasos="1-5">y</text><text class="d-mono d-peq" x="212" y="288" data-pasos="6">y</text><circle class="d-linea" cx="200" cy="150" r="110"/><path class="d-linea" data-pasos="1,5" d="M200 150L310 150"/><path class="d-linea" data-pasos="2" d="M200 150L295.26 95"/><path class="d-linea" data-pasos="3" d="M200 150L200 40"/><path class="d-linea" data-pasos="4" d="M200 150L90 150"/><path class="d-linea" data-pasos="6" d="M200 150L295.26 205"/><g data-pasos="2"><path class="d-acento-trazo" style="stroke-width:5" d="M200 150H295.26"/><path class="d-ok-trazo" style="stroke-width:5" d="M295.26 150V95"/><text class="d-mono d-peq" x="247.63139720814414" y="170" text-anchor="middle">cos</text><text class="d-mono d-peq" x="303.26" y="127.5">sin</text></g><g data-pasos="3"><path class="d-ok-trazo" style="stroke-width:5" d="M200 150V40"/><text class="d-mono d-peq" x="208" y="100">sin</text></g><g data-pasos="4"><path class="d-acento-trazo" style="stroke-width:5" d="M200 150H90"/><text class="d-mono d-peq" x="145" y="170" text-anchor="middle">cos</text></g><g data-pasos="6"><path class="d-acento-trazo" style="stroke-width:5" d="M200 150H295.26"/><path class="d-ok-trazo" style="stroke-width:5" d="M295.26 150V205"/><text class="d-mono d-peq" x="247.63139720814414" y="140" text-anchor="middle">cos</text><text class="d-mono d-peq" x="303.26" y="182.5">sin</text></g><path class="d-linea" data-pasos="2" d="M230 150A30 30 0 0 0 225.98 135"/><path class="d-linea" data-pasos="3" d="M230 150A30 30 0 0 0 200 120"/><path class="d-linea" data-pasos="4" d="M230 150A30 30 0 0 0 170 150"/><path class="d-linea" data-pasos="6" d="M230 150A30 30 0 0 1 225.98 165"/><g data-pasos="5"><path class="d-acento-trazo" d="M318 150A118 118 0 1 0 318 150.01"/><text class="d-mono d-peq" x="320" y="176">0 y 2π</text><text class="d-mono d-peq" x="190" y="24" text-anchor="end">π/2</text><text class="d-mono d-peq" x="78" y="174" text-anchor="end">π</text><text class="d-mono d-peq" x="190" y="284" text-anchor="end">3π/2</text></g><circle class="d-acento" cx="310" cy="150" r="9" data-pasos="1-" data-mover="2:translate(-14.74px,-55px); 3:translate(-110px,-110px); 4:translate(-220px,0px); 5:translate(0px,0px); 6:translate(-14.74px,55px)"/><text class="d-rotulo" x="400" y="70" style="font-size:20px" data-texto="1:ángulo = 0°; 2:ángulo = 30°; 3:ángulo = 90°; 4:ángulo = 180°; 5:una vuelta = 360°; 6:30° en pantalla">ángulo = 0°</text><text class="d-mono" x="400" y="110" data-texto="1:cos = 1; 2:cos ≈ 0.87; 3:cos = 0; 4:cos = −1; 5:360° = 2π rad; 6:cos ≈ 0.87">cos = 1</text><text class="d-mono" x="400" y="140" data-texto="1:sin = 0; 2:sin = 0.5; 3:sin = 1; 4:sin = 0; 5:180° = π ≈ 3.14 rad; 6:sin = 0.5">sin = 0</text><text class="d-tenue" x="400" y="185" data-texto="1:punto = (cos, sin); 2:punto = (cos, sin); 3:punto = (cos, sin); 4:punto = (cos, sin); 5:1 rad ≈ 57.3°; 6:y positiva = hacia abajo">punto = (cos, sin)</text></svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Un círculo de radio 1. El punto empieza a la derecha, con ángulo 0: está en (1, 0). Por eso <code>cos(0)</code> es 1 y <code>sin(0)</code> es 0.</li>
+        <li data-duracion="6">Con un ángulo de 30°, el punto sube por el borde. Su distancia horizontal al centro (el coseno) es 0.87; su altura (el seno) es exactamente 0.5.</li>
+        <li>A 90° el punto está arriba del todo: coseno 0, seno 1.</li>
+        <li>A 180°, en el lado opuesto: coseno −1, seno 0. El coseno y el seno siempre están entre −1 y 1.</li>
+        <li data-duracion="6">Una vuelta entera recorre por el borde 2π ≈ 6.28, porque el radio es 1. Esa distancia recorrida es el ángulo en radianes: π/2 es un cuarto de vuelta, π media vuelta y 3π/2 tres cuartos.</li>
+        <li data-duracion="7">En pantalla, la y crece hacia abajo. Las mismas fórmulas dan el mismo seno, 0.5, pero ahora «y positiva» significa hacia abajo: los ángulos positivos giran en el sentido de las agujas del reloj.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>La consecuencia práctica es enorme: <strong><code>(Math.cos(a), Math.sin(a))</code> es un vector de longitud 1 que apunta en la dirección del ángulo <code>a</code></strong>. Es decir, convierte un ángulo en una dirección ya normalizada. Multiplícalo por una velocidad y tendrás la velocidad de una bala; multiplícalo por un radio y súmalo a un centro, y tendrás un punto sobre un círculo.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Ángulo</th><th scope="col">Radianes</th><th scope="col"><code>cos</code></th><th scope="col"><code>sin</code></th><th scope="col">Dirección en pantalla</th></tr></thead>
+      <tbody>
+        <tr><td>0°</td><td>0</td><td>1</td><td>0</td><td>derecha</td></tr>
+        <tr><td>90°</td><td>π/2</td><td>0</td><td>1</td><td>abajo</td></tr>
+        <tr><td>180°</td><td>π</td><td>−1</td><td>0</td><td>izquierda</td></tr>
+        <tr><td>270° (o −90°)</td><td>3π/2</td><td>0</td><td>−1</td><td>arriba</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Predice primero las tres primeras líneas. El bucle dispara 8 balas en círculo, una cada 45°:</p>
+  <div class="taller" id="taller-grados" data-titulo="Predice: seno, coseno y un abanico de balas">
+    <textarea class="taller-codigo">const aRadianes = (grados) => grados * Math.PI / 180;
+
+console.log(Math.sin(90));
+console.log(Math.sin(aRadianes(90)));
+console.log(Math.cos(aRadianes(90)));
+
+for (let i = 0; i < 8; i++) {
+  const angulo = aRadianes(i * 45);
+  console.log(`bala ${i}: dx = ${Math.cos(angulo).toFixed(2)}, dy = ${Math.sin(angulo).toFixed(2)}`);
+}</textarea>
+  </div>
+  <p>Dos detalles que desconciertan la primera vez. <code>Math.cos(aRadianes(90))</code> no da 0 sino <code>6.123233995736766e-17</code>: la <code>e-17</code> significa «por 10⁻¹⁷», o sea 0.00000000000000006. Es el error de coma flotante de siempre, porque π no se puede guardar exacto. Y en la bala 6 aparece <code>-0.00</code>: el valor real es −0.00000000000000018, que redondeado a dos decimales conserva el signo. Si te molesta al mostrarlo, redondea antes con <code>Math.round</code>.</p>
+
+  <h3>Orbitar y rotar</h3>
+  <p>Para colocar algo en un círculo alrededor de un centro, escala la dirección por el radio y súmala al centro. Si además aumentas el ángulo en cada fotograma, el objeto orbita:</p>
+  <pre><code class="language-js">angulo += 0.02;                                   // radianes por fotograma
+luna.x = planeta.x + radio * Math.cos(angulo);
+luna.y = planeta.y + radio * Math.sin(angulo);
+
+// Una moneda que flota: el seno sube y baja entre -1 y 1 una y otra vez
+moneda.y = alturaBase + 6 * Math.sin(tiempo * 3);</code></pre>
+  <p>Y para <strong>rotar</strong> un vector cualquiera (por ejemplo, las esquinas de una nave) un ángulo <code>a</code> alrededor del origen hay una fórmula fija. No hace falta memorizarla: basta con saber que existe y dónde buscarla.</p>
+  <pre><code class="language-js">const rotar = (v, a) =&gt; ({
+  x: v.x * Math.cos(a) - v.y * Math.sin(a),
+  y: v.x * Math.sin(a) + v.y * Math.cos(a),
+});
+// rotar({ x: 10, y: 0 }, aRadianes(90)) da, aproximadamente, { x: 0, y: 10 }</code></pre>
+
+  <h3>atan2: del vector al ángulo</h3>
+  <p>El seno y el coseno van del ángulo a la dirección. Muchas veces necesitas lo contrario: tienes una dirección (la flecha de la torreta al ratón) y quieres el ángulo para girar el cañón. Para eso está <code>Math.atan2(dy, dx)</code>, el <strong>arcotangente de dos argumentos</strong>. Devuelve el ángulo en radianes, entre −π y π, de la flecha (dx, dy).</p>
+  <pre><code class="language-js">const dx = raton.x - torreta.x;
+const dy = raton.y - torreta.y;
+const angulo = Math.atan2(dy, dx);   // ¡primero y, después x!</code></pre>
+  <aside class="senal error" data-titulo="El orden de atan2">
+    <p>Se escribe <code>Math.atan2(y, x)</code>: primero la y. Es el error más común con esta función, y no da ningún aviso: solo apunta mal. Tampoco sirve <code>Math.atan(dy / dx)</code>: al dividir se pierde el signo de cada parte, así que no distingue si el objetivo está a la izquierda o a la derecha, y con <code>dx = 0</code> divide entre cero. <code>atan2</code> mira los dos signos y acierta en todos los cuadrantes.</p>
+  </aside>
+  <p>En pantalla, como y crece hacia abajo, un objetivo justo debajo de la torreta da 90° y uno justo encima da −90°. Este taller junta <code>atan2</code> para apuntar y <code>cos</code>/<code>sin</code> para disparar. <code>ctx.translate</code> lleva el pincel a la torreta y <code>ctx.rotate</code> gira el lienzo para dibujar el cañón ya girado:</p>
+  <div class="taller" data-modo="web" id="taller-torreta" data-titulo="Una torreta que apunta y dispara" data-alto="22rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas width="480" height="280"&gt;&lt;/canvas&gt;
+&lt;p&gt;Mueve el puntero para apuntar. Haz clic para disparar.&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; }
+canvas { display: block; width: 100%; max-width: 480px; background: #1d2433; border-radius: 8px; touch-action: none; }
+p { margin: 6px 0 0; font-size: 14px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const lienzo = document.querySelector("canvas");
+const ctx = lienzo.getContext("2d");
+const torreta = { x: 240, y: 140 };
+const raton = { x: 400, y: 60 };
+const balas = [];
+let angulo = 0;
+
+function posicion(e) {
+  const caja = lienzo.getBoundingClientRect();
+  raton.x = (e.clientX - caja.left) * lienzo.width / caja.width;
+  raton.y = (e.clientY - caja.top) * lienzo.height / caja.height;
+}
+lienzo.addEventListener("pointermove", posicion);
+lienzo.addEventListener("pointerdown", (e) => {
+  posicion(e);
+  const dir = { x: Math.cos(angulo), y: Math.sin(angulo) }; // ángulo → dirección
+  balas.push({ x: torreta.x + dir.x * 36, y: torreta.y + dir.y * 36, vx: dir.x * 6, vy: dir.y * 6 });
+});
+
+function actualizar() {
+  angulo = Math.atan2(raton.y - torreta.y, raton.x - torreta.x); // dirección → ángulo
+  for (const b of balas) { b.x += b.vx; b.y += b.vy; }
+  // quitar las balas que salieron del lienzo
+  for (let i = balas.length - 1; i >= 0; i--) {
+    const b = balas[i];
+    if (b.x < 0 || b.x > lienzo.width || b.y < 0 || b.y > lienzo.height) balas.splice(i, 1);
+  }
+}
+
+function dibujar() {
+  ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+  ctx.save();
+  ctx.translate(torreta.x, torreta.y); // el origen del pincel pasa a la torreta
+  ctx.rotate(angulo);                  // y el lienzo gira el ángulo calculado
+  ctx.fillStyle = "#9fb3d9";
+  ctx.fillRect(0, -6, 40, 12);         // el cañón se dibuja «hacia la derecha»
+  ctx.restore();
+  ctx.fillStyle = "#e8ecf4";
+  ctx.beginPath(); ctx.arc(torreta.x, torreta.y, 18, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ffcc4d";
+  for (const b of balas) { ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = "#e8ecf4";
+  ctx.font = "16px monospace";
+  ctx.fillText(`ángulo: ${Math.round(angulo * 180 / Math.PI)}°`, 12, 24);
+}
+
+function bucle() { actualizar(); dibujar(); requestAnimationFrame(bucle); }
+bucle();</textarea>
+  </div>
+  <p><strong>Modifica:</strong> haz que cada clic dispare tres balas en abanico, con ángulos <code>angulo - 0.2</code>, <code>angulo</code> y <code>angulo + 0.2</code>. ¿Cuántos grados son 0.2 radianes?</p>
+
+  <h3>Interpolación lineal: lerp</h3>
+  <p>Otra pregunta constante al animar: «si voy de A a B, ¿dónde estoy cuando llevo una fracción <code>t</code> del camino?». Con <code>t = 0</code> estás en A; con <code>t = 1</code>, en B; con <code>t = 0.5</code>, justo a la mitad. La respuesta es la <strong>interpolación lineal</strong>, que en todos los motores se llama <strong>lerp</strong> (de <em>linear interpolation</em>):</p>
+  <pre><code class="language-js">const lerp = (a, b, t) =&gt; a + (b - a) * t;</code></pre>
+  <p>Es la regla de tres de la sección anterior disfrazada: recorres el porcentaje <code>t</code> de la distancia <code>b - a</code>. Sirve para números, para posiciones (aplicada a x y a y) y para colores (aplicada a cada canal). Tiene dos compañeras inseparables:</p>
+  <ul>
+    <li><strong>Lerp inverso</strong>: la pregunta al revés, «¿qué fracción del camino llevo si estoy en <code>v</code>?». <code>(v - a) / (b - a)</code>.</li>
+    <li><strong>Clamp</strong> (limitar): encierra un valor entre un mínimo y un máximo. <code>Math.min(Math.max(v, min), max)</code>: si se pasa por arriba, se queda en el máximo; si se pasa por abajo, en el mínimo. JavaScript todavía no trae <code>Math.clamp</code> (en 2026 sigue siendo una propuesta en estudio), así que se escribe con <code>min</code> y <code>max</code>.</li>
+  </ul>
+  <p>Combinando las dos primeras obtienes un <strong>cambio de rango</strong> (en inglés, <em>remap</em>): convertir un valor de una escala a otra. Por ejemplo, la posición de un deslizador en píxeles a un volumen entre 0 y 1:</p>
+  <div class="taller" id="taller-lerp" data-titulo="lerp, lerp inverso, clamp y cambio de rango">
+    <textarea class="taller-codigo">const lerp = (a, b, t) => a + (b - a) * t;
+const lerpInverso = (a, b, v) => (v - a) / (b - a);
+const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
+const cambiarRango = (v, a1, b1, a2, b2) => lerp(a2, b2, lerpInverso(a1, b1, v));
+
+console.log(lerp(100, 200, 0.25));           // un cuarto del camino
+console.log(lerpInverso(0, 50, 20));         // ¿qué fracción es 20 de 0 a 50?
+console.log(clamp(130, 0, 100), clamp(-5, 0, 100));
+
+// Un deslizador de volumen mide de 40 px a 240 px; el volumen va de 0 a 1
+console.log(cambiarRango(190, 40, 240, 0, 1));
+
+// A mitad de camino entre rojo puro (255) y nada (0) en el canal rojo
+console.log(Math.round(lerp(255, 0, 0.5)));</textarea>
+  </div>
+  <aside class="senal oficio" data-titulo="La cámara que sigue al jugador">
+    <p>Un truco muy usado: en cada fotograma, <code>camara.x = lerp(camara.x, jugador.x, 0.1)</code>. La cámara recorre el 10 % de lo que le falta, así que se mueve rápido si el jugador está lejos y frena al acercarse. Es justo lo que viste al modificar el taller del enemigo. Tiene una pega: con más fotogramas por segundo, la cámara va más rápida. En la Estación 34 verás cómo hacerlo independiente de los fotogramas.</p>
+  </aside>
+
+  <h3>Easing: movimiento con personalidad</h3>
+  <p>Un objeto que se mueve con <code>lerp</code> y un <code>t</code> que avanza de forma constante arranca de golpe, va a velocidad fija y frena en seco. Se ve mecánico. En el mundo real las cosas aceleran y frenan. El <strong>easing</strong> (suavizado) consiste en deformar <code>t</code> antes de pasarlo a <code>lerp</code>: sigue yendo de 0 a 1, pero no al mismo ritmo. Estas son las curvas más comunes:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 230" role="img" aria-label="Cuatro gráficas de easing, con el tiempo t de 0 a 1 en horizontal y el avance en vertical: lineal es una recta; ease-in empieza plana y termina empinada; ease-out empieza empinada y termina plana; ease-in-out tiene forma de S."><rect class="d-caja-suave" x="30" y="40" width="140" height="140" rx="4"/><path class="d-linea" d="M30 40V180H170"/><path class="d-acento-trazo" d="M30 180L33.5 176.5L37 173L40.5 169.5L44 166L47.5 162.5L51 159L54.5 155.5L58 152L61.5 148.5L65 145L68.5 141.5L72 138L75.5 134.5L79 131L82.5 127.5L86 124L89.5 120.5L93 117L96.5 113.5L100 110L103.5 106.5L107 103L110.5 99.5L114 96L117.5 92.5L121 89L124.5 85.5L128 82L131.5 78.5L135 75L138.5 71.5L142 68L145.5 64.5L149 61L152.5 57.5L156 54L159.5 50.5L163 47L166.5 43.5L170 40"/><text class="d-mono d-peq" x="100" y="202" text-anchor="middle">lineal</text><text class="d-peq d-tenue" x="170" y="220" text-anchor="end">t →</text><rect class="d-caja-suave" x="205" y="40" width="140" height="140" rx="4"/><path class="d-linea" d="M205 40V180H345"/><path class="d-acento-trazo" d="M205 180L208.5 179.91L212 179.65L215.5 179.21L219 178.6L222.5 177.81L226 176.85L229.5 175.71L233 174.4L236.5 172.91L240 171.25L243.5 169.41L247 167.4L250.5 165.21L254 162.85L257.5 160.31L261 157.6L264.5 154.71L268 151.65L271.5 148.41L275 145L278.5 141.41L282 137.65L285.5 133.71L289 129.6L292.5 125.31L296 120.85L299.5 116.21L303 111.4L306.5 106.41L310 101.25L313.5 95.91L317 90.4L320.5 84.71L324 78.85L327.5 72.81L331 66.6L334.5 60.21L338 53.65L341.5 46.91L345 40"/><text class="d-mono d-peq" x="275" y="202" text-anchor="middle">ease-in (t²)</text><text class="d-peq d-tenue" x="345" y="220" text-anchor="end">t →</text><rect class="d-caja-suave" x="380" y="40" width="140" height="140" rx="4"/><path class="d-linea" d="M380 40V180H520"/><path class="d-acento-trazo" d="M380 180L383.5 173.09L387 166.35L390.5 159.79L394 153.4L397.5 147.19L401 141.15L404.5 135.29L408 129.6L411.5 124.09L415 118.75L418.5 113.59L422 108.6L425.5 103.79L429 99.15L432.5 94.69L436 90.4L439.5 86.29L443 82.35L446.5 78.59L450 75L453.5 71.59L457 68.35L460.5 65.29L464 62.4L467.5 59.69L471 57.15L474.5 54.79L478 52.6L481.5 50.59L485 48.75L488.5 47.09L492 45.6L495.5 44.29L499 43.15L502.5 42.19L506 41.4L509.5 40.79L513 40.35L516.5 40.09L520 40"/><text class="d-mono d-peq" x="450" y="202" text-anchor="middle">ease-out</text><text class="d-peq d-tenue" x="520" y="220" text-anchor="end">t →</text><rect class="d-caja-suave" x="555" y="40" width="140" height="140" rx="4"/><path class="d-linea" d="M555 40V180H695"/><path class="d-acento-trazo" d="M555 180L558.5 179.74L562 178.99L565.5 177.76L569 176.08L572.5 173.98L576 171.5L579.5 168.64L583 165.44L586.5 161.93L590 158.13L593.5 154.06L597 149.76L600.5 145.25L604 140.56L607.5 135.7L611 130.72L614.5 125.63L618 120.46L621.5 115.25L625 110L628.5 104.75L632 99.53L635.5 94.37L639 89.28L642.5 84.3L646 79.44L649.5 74.75L653 70.24L656.5 65.94L660 61.88L663.5 58.07L667 54.56L670.5 51.36L674 48.51L677.5 46.02L681 43.92L684.5 42.24L688 41.01L691.5 40.26L695 40"/><text class="d-mono d-peq" x="625" y="202" text-anchor="middle">ease-in-out</text><text class="d-peq d-tenue" x="695" y="220" text-anchor="end">t →</text></svg>
+    <figcaption>Cuatro funciones de easing. En horizontal, el tiempo <code>t</code>; en vertical, cuánto camino se ha recorrido. Donde la curva es más empinada, el objeto va más rápido.</figcaption>
+  </figure>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Nombre</th><th scope="col">Fórmula</th><th scope="col">Sensación</th><th scope="col">Úsala para…</th></tr></thead>
+      <tbody>
+        <tr><td>Lineal</td><td><code>t</code></td><td>Mecánica</td><td>Barras de progreso, cosas que deben ir a ritmo fijo</td></tr>
+        <tr><td><em>Ease-in</em></td><td><code>t * t</code></td><td>Arranca despacio y acelera</td><td>Algo que sale de la pantalla o empieza a caer</td></tr>
+        <tr><td><em>Ease-out</em></td><td><code>1 - (1 - t) * (1 - t)</code></td><td>Sale rápido y frena</td><td>Algo que entra y se detiene: menús, ventanas, notificaciones</td></tr>
+        <tr><td><em>Ease-in-out</em></td><td><code>t * t * (3 - 2 * t)</code></td><td>Suave al principio y al final</td><td>Desplazamientos de cámara, transiciones entre pantallas</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La última fórmula se llama <em>smoothstep</em>. Otra versión muy usada sale del coseno: <code>(1 - Math.cos(Math.PI * t)) / 2</code>. Las transiciones de CSS que viste en la Estación 14 (<code>ease</code>, <code>ease-in</code>, <code>ease-out</code>, <code>cubic-bezier(…)</code>) son exactamente esto, con curvas un poco más elaboradas. Mira las cuatro a la vez:</p>
+  <div class="taller" data-modo="web" id="taller-easing" data-titulo="Cuatro formas de ir de A a B" data-alto="20rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas width="480" height="230"&gt;&lt;/canvas&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; }
+canvas { display: block; width: 100%; max-width: 480px; background: #1d2433; border-radius: 8px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const lienzo = document.querySelector("canvas");
+const ctx = lienzo.getContext("2d");
+const lerp = (a, b, t) => a + (b - a) * t;
+
+const curvas = [
+  { nombre: "lineal", f: (t) => t },
+  { nombre: "ease-in", f: (t) => t * t },
+  { nombre: "ease-out", f: (t) => 1 - (1 - t) * (1 - t) },
+  { nombre: "ease-in-out", f: (t) => t * t * (3 - 2 * t) },
+];
+const DURACION = 1500; // milisegundos de viaje
+const PAUSA = 700;     // milisegundos quieto al llegar
+
+function dibujar(ahora) {
+  // t va de 0 a 1 durante el viaje y se queda en 1 durante la pausa
+  const t = Math.min((ahora % (DURACION + PAUSA)) / DURACION, 1);
+  ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+  ctx.font = "14px monospace";
+  curvas.forEach((curva, i) => {
+    const y = 42 + i * 52;
+    const x = lerp(30, 450, curva.f(t));
+    ctx.fillStyle = "#8a93a8";
+    ctx.fillText(curva.nombre, 12, y - 18);
+    ctx.fillStyle = "#ffcc4d";
+    ctx.beginPath(); ctx.arc(x, y, 11, 0, Math.PI * 2); ctx.fill();
+  });
+  requestAnimationFrame(dibujar);
+}
+requestAnimationFrame(dibujar);</textarea>
+  </div>
+  <p><strong>Modifica:</strong> añade una quinta curva con el coseno, <code>(t) => (1 - Math.cos(Math.PI * t)) / 2</code>, y compárala con <em>ease-in-out</em>. Si quieres un catálogo visual de decenas de curvas, busca <em>easings.net</em>.</p>
+</section>
+
+<section id="azar" data-parada="Probabilidad y azar">
+  <h2>Probabilidad y azar: dados, cartas y botín</h2>
+  <p>En la <a href="08-decisiones.html">Estación 8</a> usaste <code>Math.random()</code> para decisiones al azar: un número entre 0 y 1 (puede salir 0, nunca 1), <code>Math.random() &lt; 0.3</code> para algo que pasa el 30 % de las veces y <code>Math.floor(Math.random() * 3)</code> para elegir entre tres opciones. Aquí vas a razonar con probabilidades y a resolver los problemas de azar que aparecen en todos los juegos: tirar dados, barajar cartas, repartir botín y conseguir que dos partidas con la misma «semilla» sean idénticas.</p>
+
+  <h3>Probabilidad en tres reglas</h3>
+  <p>Una <strong>probabilidad</strong> es un número entre 0 (imposible) y 1 (seguro), que también se escribe como porcentaje: 0.25 es un 25 %. Cuando todos los resultados son igual de probables, se calcula como casos favorables entre casos posibles: sacar un 6 con un dado es 1/6 ≈ 16.7 %. Con eso y tres reglas se resuelve casi todo lo que necesita un juego:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Complemento.</strong> La probabilidad de que algo <em>no</em> pase es 1 menos la de que pase. No sacar un 6: 1 − 1/6 = 5/6.</p></div></li>
+    <li><div><p><strong>Sucesos independientes: se multiplican.</strong> Dos sucesos son <strong>independientes</strong> si uno no afecta al otro, como dos tiradas de dado. Sacar dos 6 seguidos: 1/6 × 1/6 = 1/36 ≈ 2.8 %.</p></div></li>
+    <li><div><p><strong>«Al menos una vez» = 1 − «ninguna vez».</strong> Sacar al menos un 6 en 4 tiradas es 1 menos la probabilidad de no sacarlo en ninguna: 1 − (5/6)⁴ ≈ 51.8 %. Hacerlo al revés (sumar 1/6 cuatro veces) da 66.7 %, que es falso.</p></div></li>
+  </ol>
+  <aside class="senal nota" data-titulo="Una apuesta del siglo XVII">
+    <p>La tercera regla tiene historia. En el siglo XVII, el caballero de Méré, un jugador francés, ganaba dinero apostando a sacar al menos un 6 en cuatro tiradas: 51.8 % a su favor. Cuando intentó una variante con dos dados empezó a perder y no entendía por qué. Se lo preguntó a Blaise Pascal, que lo discutió por carta con Pierre de Fermat, y de esas cartas nació buena parte de la teoría de la probabilidad.</p>
+  </aside>
+  <aside class="senal error" data-titulo="La falacia del jugador">
+    <p>«Salió cruz cinco veces seguidas, así que ahora toca cara». No: la moneda no tiene memoria, y cada tirada sigue siendo 50 %. Igual de falso es pensar que un objeto con un 1 % de probabilidad «sale seguro» en 100 intentos: la probabilidad de conseguirlo al menos una vez es 1 − 0.99¹⁰⁰ ≈ 63 %. Uno de cada tres jugadores se quedará sin él tras 100 intentos.</p>
+  </aside>
+
+  <h3>Números al azar en un rango</h3>
+  <p>Todas las recetas salen de estirar y desplazar el <code>[0, 1)</code> de <code>Math.random()</code>. (Los corchetes significan «incluye el 0» y el paréntesis «no llega al 1».)</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Quieres</th><th scope="col">Receta</th></tr></thead>
+      <tbody>
+        <tr><td>Decimal entre <code>min</code> y <code>max</code> (sin llegar a <code>max</code>)</td><td><code>min + Math.random() * (max - min)</code></td></tr>
+        <tr><td>Entero entre <code>min</code> y <code>max</code>, los dos incluidos</td><td><code>Math.floor(Math.random() * (max - min + 1)) + min</code></td></tr>
+        <tr><td>Tirar un dado</td><td><code>Math.floor(Math.random() * 6) + 1</code></td></tr>
+        <tr><td>Un elemento al azar de una lista</td><td><code>lista[Math.floor(Math.random() * lista.length)]</code></td></tr>
+        <tr><td>Algo que pasa con probabilidad <code>p</code></td><td><code>Math.random() &lt; p</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El «+ 1» de la segunda receta es la fuente de muchos errores de uno de más o de menos. Y hay un error todavía más traicionero, porque el código parece correcto y funciona «casi» bien: usar <code>Math.round</code> en lugar de <code>Math.floor</code>. Este taller tira 60 000 veces un dado bien hecho y otro mal hecho, y cuenta cuántas veces sale cada cara. Antes de ejecutar, predice: ¿qué caras saldrán menos con el dado malo?</p>
+  <div class="taller" id="taller-dados" data-titulo="Predice: un dado mal hecho">
+    <textarea class="taller-codigo">function dadoMalo() { return Math.round(Math.random() * 5) + 1; }   // da de 1 a 6, pero…
+function dadoBueno() { return Math.floor(Math.random() * 6) + 1; }
+
+const conteoMalo = [0, 0, 0, 0, 0, 0, 0];   // posición 0 sin usar
+const conteoBueno = [0, 0, 0, 0, 0, 0, 0];
+for (let i = 0; i < 60000; i++) {
+  conteoMalo[dadoMalo()]++;
+  conteoBueno[dadoBueno()]++;
+}
+for (let cara = 1; cara <= 6; cara++) {
+  console.log(`cara ${cara}: dado malo ${conteoMalo[cara]}, dado bueno ${conteoBueno[cara]}`);
+}</textarea>
+  </div>
+  <p>Con el dado bueno cada cara sale unas 10 000 veces. Con el malo, el 1 y el 6 salen la mitad que las demás: <code>Math.round</code> solo convierte en 1 los números entre 0 y 0.5, un tramo de ancho 0.5, mientras que convierte en 2 todo lo que hay entre 0.5 y 1.5, un tramo el doble de ancho.</p>
+
+  <h3>Pseudoaleatorio y semillas</h3>
+  <p><code>Math.random()</code> no es azar de verdad. Es un <strong>generador pseudoaleatorio</strong>: una fórmula que, a partir de un número inicial, produce una secuencia que <em>parece</em> aleatoria. Ese número inicial se llama <strong>semilla</strong> (en inglés, <em>seed</em>). Con la misma semilla, la misma fórmula produce siempre la misma secuencia. <code>Math.random()</code> elige su semilla al arrancar y no deja cambiarla, pero muchas veces te conviene controlarla:</p>
+  <ul>
+    <li><strong>Mundos generados</strong>: en Minecraft, compartir la semilla de un mundo basta para que otra persona genere exactamente el mismo mapa.</li>
+    <li><strong>Retos diarios</strong>: todos los jugadores reciben el mismo nivel «al azar» si la semilla es la fecha.</li>
+    <li><strong>Repeticiones y pruebas</strong>: si guardas la semilla, puedes reproducir una partida o un fallo que ocurrió «por azar» (lo agradecerás en la <a href="26-testing.html">Estación 26</a>).</li>
+  </ul>
+  <p>Para eso se escribe (o se importa) un generador propio. Este es <em>mulberry32</em>, uno muy pequeño y popular en juegos. No necesitas entender cada línea, pero fíjate en que usa lo que aprendiste en esta estación: un número hexadecimal, <code>| 0</code>, <code>^</code> y <code>&gt;&gt;&gt;</code>. <code>Math.imul</code> multiplica como enteros de 32 bits, y 4294967296 es 2³², el número de combinaciones de 32 bits: dividir entre él deja el resultado entre 0 y 1.</p>
+  <div class="taller" id="taller-semilla" data-titulo="Misma semilla, misma partida">
+    <textarea class="taller-codigo">function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;   // entre 0 y 1, como Math.random
+  };
+}
+
+const partidaA = crearAzar(2026);
+const partidaB = crearAzar(2026);   // misma semilla
+const partidaC = crearAzar(7);      // otra semilla
+const dado = (azar) => Math.floor(azar() * 6) + 1;
+
+const tiradas = (azar) => [1, 2, 3, 4, 5, 6, 7, 8].map(() => dado(azar)).join(" ");
+console.log("Partida A:", tiradas(partidaA));
+console.log("Partida B:", tiradas(partidaB));
+console.log("Partida C:", tiradas(partidaC));</textarea>
+  </div>
+  <aside class="senal ojo" data-titulo="Azar y seguridad">
+    <p>Ni <code>Math.random()</code> ni generadores como este sirven para contraseñas, códigos de verificación o sorteos con dinero: con suficientes datos, alguien podría predecir los siguientes números. Para eso existen <code>crypto.getRandomValues()</code> y <code>crypto.randomUUID()</code>, que verás en la <a href="31-seguridad.html">Estación 31</a>.</p>
+  </aside>
+
+  <h3>Barajar: el algoritmo de Fisher-Yates</h3>
+  <p>Barajar un mazo, mezclar las preguntas de un test, ordenar al azar a los jugadores: necesitas una permutación aleatoria de una lista en la que <em>todos los órdenes posibles sean igual de probables</em>. En internet circula este atajo:</p>
+  <pre><code class="language-js">lista.sort(() =&gt; Math.random() - 0.5);   // NO lo uses para barajar</code></pre>
+  <p>Parece ingenioso: el comparador dice «mayor» o «menor» al azar. Pero <code>sort</code> no está diseñado para un comparador que se contradice, y el resultado está muy sesgado: algunos órdenes salen muchas más veces que otros. La forma correcta, rápida y demostradamente justa es el <strong>algoritmo de Fisher-Yates</strong> (en su versión moderna, la de Richard Durstenfeld de 1964, popularizada por Donald Knuth): recorre la lista desde el final y cambia cada posición con otra elegida al azar entre las que todavía no están fijas, incluida ella misma.</p>
+  <figure class="capsula" data-titulo="Fisher-Yates, carta a carta">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 270" role="img" aria-label="Animación del algoritmo de Fisher-Yates con cinco cartas A, B, C, D y E. Desde la última posición hacia la primera, se elige una posición al azar entre 0 y la actual y se intercambian las cartas; cada posición ya procesada queda fija. El resultado final es E, C, A, D, B."><rect class="d-codigo" x="20" y="12" width="680" height="40" rx="6"/><text class="d-codigo-texto" x="36" y="38" style="font-size:15px">para i desde n−1 hasta 1:  j = azar entre 0 e i;  intercambiar(i, j)</text><rect class="d-caja-suave" x="88" y="98" width="84" height="84" rx="8"/><text class="d-mono d-peq d-tenue" x="130" y="216" text-anchor="middle">0</text><rect class="d-caja-suave" x="198" y="98" width="84" height="84" rx="8"/><text class="d-mono d-peq d-tenue" x="240" y="216" text-anchor="middle">1</text><rect class="d-caja-suave" x="308" y="98" width="84" height="84" rx="8"/><text class="d-mono d-peq d-tenue" x="350" y="216" text-anchor="middle">2</text><rect class="d-caja-suave" x="418" y="98" width="84" height="84" rx="8"/><text class="d-mono d-peq d-tenue" x="460" y="216" text-anchor="middle">3</text><rect class="d-caja-suave" x="528" y="98" width="84" height="84" rx="8"/><text class="d-mono d-peq d-tenue" x="570" y="216" text-anchor="middle">4</text><rect class="d-ok" x="94" y="190" width="72" height="6" rx="3" data-pasos="6-"/><rect class="d-ok" x="204" y="190" width="72" height="6" rx="3" data-pasos="6-"/><rect class="d-ok" x="314" y="190" width="72" height="6" rx="3" data-pasos="5-"/><rect class="d-ok" x="424" y="190" width="72" height="6" rx="3" data-pasos="4-"/><rect class="d-ok" x="534" y="190" width="72" height="6" rx="3" data-pasos="3-"/><g data-pasos="1-" data-mover="5:translate(220px,0px)"><rect class="d-caja" x="94" y="104" width="72" height="72" rx="6"/><text class="d-rotulo" x="130" y="150" text-anchor="middle" style="font-size:30px">A</text></g><g data-pasos="1-" data-mover="3:translate(330px,0px)"><rect class="d-caja" x="204" y="104" width="72" height="72" rx="6"/><text class="d-rotulo" x="240" y="150" text-anchor="middle" style="font-size:30px">B</text></g><g data-pasos="1-" data-mover="5:translate(-220px,0px); 6:translate(-110px,0px)"><rect class="d-caja" x="314" y="104" width="72" height="72" rx="6"/><text class="d-rotulo" x="350" y="150" text-anchor="middle" style="font-size:30px">C</text></g><g data-pasos="1-"><rect class="d-caja" x="424" y="104" width="72" height="72" rx="6"/><text class="d-rotulo" x="460" y="150" text-anchor="middle" style="font-size:30px">D</text></g><g data-pasos="1-" data-mover="3:translate(-330px,0px); 6:translate(-440px,0px)"><rect class="d-caja" x="534" y="104" width="72" height="72" rx="6"/><text class="d-rotulo" x="570" y="150" text-anchor="middle" style="font-size:30px">E</text></g><text class="d-mono" x="570" y="86" text-anchor="middle" data-pasos="2-3">i</text><text class="d-mono" x="240" y="86" text-anchor="middle" data-pasos="2-3">j</text><text class="d-mono" x="460" y="86" text-anchor="middle" data-pasos="4">i = j</text><text class="d-mono" x="350" y="86" text-anchor="middle" data-pasos="5">i</text><text class="d-mono" x="130" y="86" text-anchor="middle" data-pasos="5">j</text><text class="d-mono" x="240" y="86" text-anchor="middle" data-pasos="6">i</text><text class="d-mono" x="130" y="86" text-anchor="middle" data-pasos="6">j</text><text x="360" y="252" text-anchor="middle" data-texto="1:Cinco cartas en orden: A B C D E; 2:i = 4: el azar elige j = 1; 3:Se intercambian: la posición 4 queda fija; 4:i = 3: sale j = 3, la D se queda; 5:i = 2: sale j = 0, se cambian A y C; 6:i = 1: sale j = 0. Resultado: E C A D B">Cinco cartas en orden: A B C D E</text></svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Cinco cartas en orden, en las posiciones de la 0 a la 4. Vamos a recorrerlas desde la última hacia la primera.</li>
+        <li><code>i</code> empieza en la última posición, la 4. Se elige <code>j</code> al azar entre 0 y 4, ambos incluidos. Esta vez sale 1.</li>
+        <li data-duracion="6">Se intercambian las cartas de las posiciones 4 y 1: la B va al final y la E a la posición 1. La posición 4 ya es definitiva (línea verde): no se volverá a tocar.</li>
+        <li data-duracion="6"><code>i</code> baja a 3 y el azar elige entre 0 y 3. Sale 3: la carta se «intercambia consigo misma» y se queda. Es importante que esto pueda pasar; si no, el resultado no sería justo.</li>
+        <li><code>i</code> baja a 2 y sale <code>j = 0</code>: se intercambian la A y la C. La posición 2 queda fija.</li>
+        <li data-duracion="7">Con <code>i = 1</code> sale <code>j = 0</code> y se intercambian la C y la E. La posición 0 queda fija sola. Resultado: E C A D B. Cada uno de los 120 órdenes posibles tenía la misma probabilidad de salir.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Escrito en JavaScript cabe en cinco líneas. El intercambio usa la desestructuración de arrays de la Estación 11. Ordénalas:</p>
+  <div class="parsons" data-titulo="Ordena Fisher-Yates" data-lenguaje="js" data-exito="¡Correcto! Ese es el algoritmo de Fisher-Yates.">
+    <ol>
+      <li>function barajar(lista) {</li>
+      <li data-sangria="1">for (let i = lista.length - 1; i &gt; 0; i--) {</li>
+      <li data-sangria="2">const j = Math.floor(Math.random() * (i + 1));</li>
+      <li data-sangria="2">[lista[i], lista[j]] = [lista[j], lista[i]];</li>
+      <li data-sangria="1">} // fin del for</li>
+      <li data-sangria="1">return lista;</li>
+      <li>} // fin de la función</li>
+    </ol>
+  </div>
+  <p>Fíjate en el <code>i + 1</code>: <code>j</code> debe poder valer <code>i</code>. Y en que la función cambia la lista original (baraja «en el sitio»); si necesitas conservarla, baraja una copia: <code>barajar([...lista])</code>. Ahora comprueba el sesgo. El taller baraja 60 000 veces la lista <code>[1, 2, 3]</code> con cada método y cuenta cuántas veces sale cada uno de los 6 órdenes posibles. Lo justo serían unas 10 000 veces cada uno:</p>
+  <div class="taller" id="taller-sesgo" data-titulo="¿Qué barajado es justo?">
+    <textarea class="taller-codigo">function barajarConSort(lista) {
+  return lista.sort(() => Math.random() - 0.5);
+}
+
+function barajar(lista) {
+  for (let i = lista.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [lista[i], lista[j]] = [lista[j], lista[i]];
+  }
+  return lista;
+}
+
+function contar(metodo) {
+  const conteo = {};
+  for (let i = 0; i < 60000; i++) {
+    const orden = metodo([1, 2, 3]).join("");
+    conteo[orden] = (conteo[orden] || 0) + 1;
+  }
+  return conteo;
+}
+
+console.log("Con sort:", contar(barajarConSort));
+console.log("Fisher-Yates:", contar(barajar));</textarea>
+  </div>
+  <p>Con <code>sort</code>, algunos órdenes salen cinco o seis veces más que otros (las cifras exactas dependen del navegador). Con Fisher-Yates, los seis quedan cerca de 10 000. <strong>Modifica:</strong> cambia <code>(i + 1)</code> por <code>i</code> en <code>barajar</code> y vuelve a ejecutar. ¿Qué órdenes desaparecen?</p>
+
+  <h3>Probabilidades ponderadas: el botín</h3>
+  <p>Un cofre suelta un objeto común el 70 % de las veces, uno raro el 25 % y uno épico el 5 %. No todos los resultados son igual de probables: cada uno tiene un <strong>peso</strong>. La idea para elegir es colocar los tramos uno detrás de otro sobre una barra de 0 a 1 y ver dónde cae un número al azar:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 200" role="img" aria-label="Una barra de 0 a 1 dividida en tres tramos: común ocupa de 0 a 0.70, raro de 0.70 a 0.95 y épico de 0.95 a 1. Un número al azar r igual a 0.83 cae en el tramo raro."><rect class="d-l2" x="40" y="60" width="448" height="56"/><rect class="d-l6" x="488" y="60" width="160" height="56"/><rect class="d-l8" x="648" y="60" width="32" height="56"/><rect class="d-linea" x="40" y="60" width="640" height="56"/><path class="d-linea" d="M488 60v56M648 60v56"/><text class="d-rotulo" x="264" y="94" text-anchor="middle">común 70 %</text><text class="d-rotulo" x="568" y="94" text-anchor="middle">raro 25 %</text><text class="d-peq" x="664" y="50" text-anchor="middle">épico 5 %</text><text class="d-mono d-peq" x="40" y="138" text-anchor="middle">0</text><text class="d-mono d-peq" x="488" y="138" text-anchor="middle">0.70</text><text class="d-mono d-peq" x="648" y="138" text-anchor="middle">0.95</text><text class="d-mono d-peq" x="680" y="138" text-anchor="middle">1</text><path class="d-linea" d="M571.1999999999999 186V122"/><path class="d-tinta" d="M571.2 120L577.2 132L565.2 132z"/><text class="d-mono" x="581.1999999999999" y="182">r = 0.83 → raro</text><text class="d-peq d-tenue" x="40" y="30">Math.random() cae en algún punto de la barra</text></svg>
+    <figcaption>Cada objeto ocupa un tramo tan ancho como su probabilidad. Los límites son las probabilidades acumuladas: 0.70, y luego 0.70 + 0.25 = 0.95.</figcaption>
+  </figure>
+  <p>Con pocos objetos basta una cadena de <code>if</code> que compara con los límites acumulados:</p>
+  <pre><code class="language-js">const r = Math.random();
+let botin;
+if (r &lt; 0.70) botin = "común";        // de 0 a 0.70
+else if (r &lt; 0.95) botin = "raro";    // de 0.70 a 0.95
+else botin = "épico";                  // de 0.95 a 1</code></pre>
+  <p>Fíjate en que la segunda comparación es con 0.95, no con 0.25: los límites se acumulan. En los juegos de verdad la tabla de botín tiene decenas de objetos y cambia a menudo, así que se escribe una función general que recorre una lista de pesos acumulando. La programarás en uno de los retos de la práctica.</p>
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>Las cajas de botín de pago, en las que se gasta dinero real por un objeto al azar, se parecen mucho a las apuestas. Varios países las regulan, y algunas tiendas y leyes exigen publicar las probabilidades de cada objeto. Si diseñas un sistema así, muestra las probabilidades con honestidad y piensa en quién juega: a menudo, menores de edad.</p>
+  </aside>
+</section>
+
+<section id="crecimiento" data-parada="Potencias y logaritmos">
+  <h2>Potencias, logaritmos y sumatorias: cómo crece el trabajo</h2>
+  <p>Un programa que tarda un segundo con 1000 datos, ¿cuánto tardará con un millón? ¿Mil veces más? ¿Un millón de veces más? ¿Apenas el doble? La respuesta depende de cómo crece el trabajo con los datos, y en la <a href="20-algoritmos.html">Estación 20</a> aprenderás a describirlo con la notación Big-O. Esa notación usa exactamente tres ideas matemáticas: potencias, logaritmos y sumatorias. Si las entiendes aquí, Big-O será solo un nombre nuevo.</p>
+
+  <h3>Potencias: multiplicar muchas veces</h3>
+  <p>Una potencia bⁿ es b multiplicado por sí mismo n veces: 2⁵ = 2 × 2 × 2 × 2 × 2 = 32. A b se le llama <strong>base</strong> y a n, <strong>exponente</strong>. En JavaScript: <code>2 ** 5</code> (o <code>Math.pow(2, 5)</code>). Tres reglas que conviene recordar: cualquier número elevado a 0 da 1; multiplicar potencias de la misma base suma los exponentes (2³ × 2⁴ = 2⁷); y un exponente negativo significa «uno entre»: 2⁻¹ = 1/2 = 0.5.</p>
+  <p>Las potencias de 2 aparecen por todas partes en informática, porque cada bit más duplica las combinaciones: con n bits hay 2ⁿ valores posibles.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Potencia</th><th scope="col">Valor</th><th scope="col">Dónde la has visto</th></tr></thead>
+      <tbody>
+        <tr><td>2⁸</td><td>256</td><td>Valores de un byte; niveles de cada canal de color</td></tr>
+        <tr><td>2¹⁰</td><td>1024</td><td>Un kibibyte (KiB), Estación 2; filas de una tabla de verdad con 10 variables</td></tr>
+        <tr><td>2¹⁶</td><td>65 536</td><td>Valores de 16 bits</td></tr>
+        <tr><td>2³²</td><td>4 294 967 296</td><td>Direcciones IPv4 (Estación 3); enteros de 32 bits de las operaciones con bits</td></tr>
+        <tr><td>2⁵³</td><td>9 007 199 254 740 992</td><td>El límite de los enteros seguros de JavaScript</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Cuando algo se multiplica por una cantidad fija en cada paso, se dice que crece de forma <strong>exponencial</strong>, y crece de un modo que la intuición no espera. Cuenta la leyenda que el inventor del ajedrez pidió como premio un grano de trigo en la primera casilla, dos en la segunda, cuatro en la tercera, y así hasta la 64. En la última casilla habría 2⁶³ granos, y en total 2⁶⁴ − 1: más de 18 trillones, muchísimo más que todo el trigo cosechado en la historia. Lo mismo protege tus contraseñas: cada carácter más multiplica las combinaciones que un atacante tendría que probar.</p>
+
+  <h3>Logaritmos: la pregunta al revés</h3>
+  <p>La potencia responde «¿cuánto es 2 multiplicado 10 veces?» (1024). El <strong>logaritmo</strong> responde la pregunta inversa: «¿cuántas veces hay que multiplicar 2 para llegar a 1024?». Se escribe log₂(1024) = 10, y se lee «logaritmo en base 2 de 1024». Dicho de otra forma, más útil para programar: <strong>el logaritmo en base 2 de n es cuántas veces puedes partir n por la mitad hasta llegar a 1</strong>.</p>
+  <div class="traza" data-titulo="¿Cuántas veces cabe partir 100 por la mitad?">
+    <pre><code class="language-js">let n = 100;
+let pasos = 0;
+while (n &gt; 1) {
+  n = Math.floor(n / 2);
+  pasos++;
+}
+console.log(pasos, "mitades");</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"n": "100"}, "nota": "Empezamos con 100 elementos."},
+      {"linea": 2, "vars": {"n": "100", "pasos": "0"}, "nota": "Todavía no hemos partido nada."},
+      {"linea": 3, "vars": {"n": "100", "pasos": "0"}, "nota": "¿100 > 1? Sí."},
+      {"linea": 4, "vars": {"n": "50", "pasos": "0"}, "nota": "Nos quedamos con la mitad: 50."},
+      {"linea": 5, "vars": {"n": "50", "pasos": "1"}, "nota": "Primera mitad."},
+      {"linea": 3, "vars": {"n": "50", "pasos": "1"}, "nota": "¿50 > 1? Sí."},
+      {"linea": 4, "vars": {"n": "25", "pasos": "1"}, "nota": "50 / 2 = 25."},
+      {"linea": 5, "vars": {"n": "25", "pasos": "2"}, "nota": "Segunda mitad."},
+      {"linea": 3, "vars": {"n": "25", "pasos": "2"}, "nota": "¿25 > 1? Sí."},
+      {"linea": 4, "vars": {"n": "12", "pasos": "2"}, "nota": "25 / 2 = 12.5, que Math.floor deja en 12."},
+      {"linea": 5, "vars": {"n": "12", "pasos": "3"}, "nota": "Tercera."},
+      {"linea": 3, "vars": {"n": "12", "pasos": "3"}, "nota": "¿12 > 1? Sí."},
+      {"linea": 4, "vars": {"n": "6", "pasos": "3"}, "nota": "12 / 2 = 6."},
+      {"linea": 5, "vars": {"n": "6", "pasos": "4"}, "nota": "Cuarta."},
+      {"linea": 3, "vars": {"n": "6", "pasos": "4"}, "nota": "¿6 > 1? Sí."},
+      {"linea": 4, "vars": {"n": "3", "pasos": "4"}, "nota": "6 / 2 = 3."},
+      {"linea": 5, "vars": {"n": "3", "pasos": "5"}, "nota": "Quinta."},
+      {"linea": 3, "vars": {"n": "3", "pasos": "5"}, "nota": "¿3 > 1? Sí."},
+      {"linea": 4, "vars": {"n": "1", "pasos": "5"}, "nota": "3 / 2 = 1.5, que Math.floor deja en 1."},
+      {"linea": 5, "vars": {"n": "1", "pasos": "6"}, "nota": "Sexta mitad."},
+      {"linea": 3, "vars": {"n": "1", "pasos": "6"}, "nota": "¿1 > 1? No: ya no se puede partir más."},
+      {"linea": 7, "vars": {"n": "1", "pasos": "6"}, "salida": "6 mitades", "nota": "6 pasos. Y log₂(100) ≈ 6.64: el logaritmo cuenta exactamente esto, sin redondear."}
+    ]</script>
+  </div>
+  <p>¿Por qué importa? Porque hay algoritmos que en cada paso descartan la mitad de los datos. El ejemplo clásico es adivinar un número entre 1 y 1 000 000 con pistas de «mayor» o «menor»: si siempre dices el número del medio, descartas la mitad en cada intento, y en unos 20 intentos lo tienes, porque log₂(1 000 000) ≈ 20. Es la <strong>búsqueda binaria</strong>, que programarás en la Estación 20. El logaritmo crece tan despacio que con mil millones de datos solo necesitarías unos 30 pasos.</p>
+  <div class="taller" id="taller-mitades" data-titulo="Mitades y logaritmos">
+    <textarea class="taller-codigo">function contarMitades(n) {
+  let pasos = 0;
+  while (n > 1) {
+    n = Math.floor(n / 2);
+    pasos++;
+  }
+  return pasos;
+}
+
+for (const n of [8, 1000, 1000000, 1000000000]) {
+  console.log(n, "→", contarMitades(n), "mitades; log2 =", Math.log2(n).toFixed(2));
+}
+
+// Otros logaritmos de Math
+console.log(Math.log10(1000));                 // base 10: cuántos ceros
+console.log(Math.floor(Math.log10(4096)) + 1); // cifras que tiene 4096
+console.log(Math.ceil(Math.log2(1000)));       // bits para numerar 1000 cosas</textarea>
+  </div>
+  <p>Además de <code>Math.log2</code> y <code>Math.log10</code>, existe <code>Math.log</code>, el logaritmo «natural», en base e ≈ 2.718 (un número que aparece en el crecimiento continuo, como el interés compuesto). Cuando en informática se escribe «log n» sin base, casi siempre es base 2; para comparar cómo crecen los algoritmos, la base no cambia la forma de la curva.</p>
+
+  <h3>Sumatorias: Σ es un bucle</h3>
+  <p>En documentación técnica y en artículos sobre algoritmos verás la letra griega sigma mayúscula, Σ. Una <strong>sumatoria</strong> es una forma compacta de escribir una suma de muchos términos:</p>
+  <pre class="consola"><code>  n
+  Σ  i   =  1 + 2 + 3 + … + n
+ i=1</code></pre>
+  <p>Se lee «suma de i, para i desde 1 hasta n». Si la miras con ojos de programador, es un bucle <code>for</code> con un acumulador, como los de la Estación 9: el índice va abajo, el límite arriba y lo que se suma a la derecha. Hay una fórmula para esta suma en concreto: 1 + 2 + … + n = n × (n + 1) / 2. Cuenta la anécdota que Carl Friedrich Gauss la descubrió de niño cuando su maestro mandó sumar del 1 al 100: emparejó 1 + 100, 2 + 99, 3 + 98… y vio 50 parejas de 101, es decir, 5050.</p>
+  <p>¿Por qué te importa? Porque aparece al contar el trabajo de dos bucles anidados. Si un juego comprueba si cada objeto choca con cada uno de los demás, el primero se compara con n − 1 objetos, el segundo con n − 2 más, y así: en total, n × (n − 1) / 2 comparaciones. Con 10 objetos son 45; con 1000, casi medio millón. El trabajo crece como n²: multiplicar por 10 los objetos multiplica por 100 el trabajo. Por eso los juegos con muchos objetos dividen el mapa en zonas y solo comparan los que están cerca.</p>
+  <div class="taller" id="taller-sumatoria" data-titulo="Predice: la sumatoria y los bucles anidados">
+    <textarea class="taller-codigo">const n = 100;
+let suma = 0;
+for (let i = 1; i <= n; i++) {
+  suma += i;
+}
+console.log("Con bucle:", suma);
+console.log("Con la fórmula:", n * (n + 1) / 2);
+
+// ¿Cuántas comparaciones hacen falta para revisar todas las parejas de objetos?
+for (const objetos of [10, 100, 1000]) {
+  let comparaciones = 0;
+  for (let a = 0; a < objetos; a++) {
+    for (let b = a + 1; b < objetos; b++) {
+      comparaciones++;
+    }
+  }
+  console.log(`${objetos} objetos → ${comparaciones} comparaciones`);
+}</textarea>
+  </div>
+
+  <h3>Cómo crecen, comparados</h3>
+  <p>Estas son las formas de crecer que usará la Estación 20, dibujadas juntas. Fíjate en que no es cuestión de «un poco más rápido»: son mundos distintos.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 330" role="img" aria-label="Gráfica de cómo crecen cuatro funciones cuando n va de 1 a 20: logaritmo en base 2 de n apenas sube hasta 4.3; n crece en línea recta hasta 20; n al cuadrado se sale de la gráfica en n igual a 10; y 2 elevado a n se sale ya en n igual a 7."><path class="d-linea" d="M70 30V290H500"/><path class="d-tinta" d="M70 26L76 38L64 38z"/><path class="d-tinta" d="M504 290L492 296L492 284z"/><path class="d-linea" d="M175 290v6"/><text class="d-peq d-tenue" x="175" y="312" text-anchor="middle">5</text><path class="d-linea" d="M280 290v6"/><text class="d-peq d-tenue" x="280" y="312" text-anchor="middle">10</text><path class="d-linea" d="M385 290v6"/><text class="d-peq d-tenue" x="385" y="312" text-anchor="middle">15</text><path class="d-linea" d="M490 290v6"/><text class="d-peq d-tenue" x="490" y="312" text-anchor="middle">20</text><path class="d-punteada" style="opacity:.5" d="M70 227.5H490"/><text class="d-peq d-tenue" x="60" y="231.5" text-anchor="end">25</text><path class="d-punteada" style="opacity:.5" d="M70 165H490"/><text class="d-peq d-tenue" x="60" y="169" text-anchor="end">50</text><path class="d-punteada" style="opacity:.5" d="M70 102.5H490"/><text class="d-peq d-tenue" x="60" y="106.5" text-anchor="end">75</text><path class="d-punteada" style="opacity:.5" d="M70 40H490"/><text class="d-peq d-tenue" x="60" y="44" text-anchor="end">100</text><text class="d-peq d-tenue" x="510" y="294">n</text><text class="d-peq d-tenue" x="70" y="20" text-anchor="middle">pasos</text><path class="d-t2" style="fill:none;stroke-width:3.5" d="M91 290L96.25 289.2L101.5 288.54L106.75 287.98L112 287.5L117.25 287.08L122.5 286.7L127.75 286.35L133 286.04L138.25 285.75L143.5 285.48L148.75 285.23L154 285L159.25 284.78L164.5 284.58L169.75 284.38L175 284.2L180.25 284.02L185.5 283.85L190.75 283.69L196 283.54L201.25 283.39L206.5 283.25L211.75 283.11L217 282.98L222.25 282.86L227.5 282.73L232.75 282.61L238 282.5L243.25 282.39L248.5 282.28L253.75 282.18L259 282.08L264.25 281.98L269.5 281.88L274.75 281.79L280 281.7L285.25 281.61L290.5 281.52L295.75 281.43L301 281.35L306.25 281.27L311.5 281.19L316.75 281.11L322 281.04L327.25 280.96L332.5 280.89L337.75 280.82L343 280.75L348.25 280.68L353.5 280.61L358.75 280.55L364 280.48L369.25 280.42L374.5 280.36L379.75 280.29L385 280.23L390.25 280.17L395.5 280.11L400.75 280.06L406 280L411.25 279.94L416.5 279.89L421.75 279.83L427 279.78L432.25 279.73L437.5 279.68L442.75 279.63L448 279.58L453.25 279.53L458.5 279.48L463.75 279.43L469 279.38L474.25 279.33L479.5 279.29L484.75 279.24L490 279.2"/><path class="d-t4" style="fill:none;stroke-width:3.5" d="M91 287.5L96.25 286.88L101.5 286.25L106.75 285.63L112 285L117.25 284.38L122.5 283.75L127.75 283.13L133 282.5L138.25 281.88L143.5 281.25L148.75 280.63L154 280L159.25 279.38L164.5 278.75L169.75 278.13L175 277.5L180.25 276.88L185.5 276.25L190.75 275.63L196 275L201.25 274.38L206.5 273.75L211.75 273.13L217 272.5L222.25 271.88L227.5 271.25L232.75 270.63L238 270L243.25 269.38L248.5 268.75L253.75 268.13L259 267.5L264.25 266.88L269.5 266.25L274.75 265.63L280 265L285.25 264.38L290.5 263.75L295.75 263.13L301 262.5L306.25 261.88L311.5 261.25L316.75 260.63L322 260L327.25 259.38L332.5 258.75L337.75 258.13L343 257.5L348.25 256.88L353.5 256.25L358.75 255.63L364 255L369.25 254.38L374.5 253.75L379.75 253.13L385 252.5L390.25 251.88L395.5 251.25L400.75 250.63L406 250L411.25 249.38L416.5 248.75L421.75 248.13L427 247.5L432.25 246.88L437.5 246.25L442.75 245.63L448 245L453.25 244.38L458.5 243.75L463.75 243.13L469 242.5L474.25 241.88L479.5 241.25L484.75 240.63L490 240"/><path class="d-t5" style="fill:none;stroke-width:3.5" d="M91 287.5L96.25 286.09L101.5 284.38L106.75 282.34L112 280L117.25 277.34L122.5 274.38L127.75 271.09L133 267.5L138.25 263.59L143.5 259.38L148.75 254.84L154 250L159.25 244.84L164.5 239.38L169.75 233.59L175 227.5L180.25 221.09L185.5 214.38L190.75 207.34L196 200L201.25 192.34L206.5 184.38L211.75 176.09L217 167.5L222.25 158.59L227.5 149.38L232.75 139.84L238 130L243.25 119.84L248.5 109.38L253.75 98.59L259 87.5L264.25 76.09L269.5 64.38L274.75 52.34L280 40L285.25 30"/><path class="d-t1" style="fill:none;stroke-width:3.5" d="M91 285L96.25 284.05L101.5 282.93L106.75 281.59L112 280L117.25 278.11L122.5 275.86L127.75 273.18L133 270L138.25 266.22L143.5 261.72L148.75 256.36L154 250L159.25 242.43L164.5 233.43L169.75 222.73L175 210L180.25 194.86L185.5 176.86L190.75 155.46L196 130L201.25 99.73L206.5 63.73L211.75 30"/><path class="d-t1" style="fill:none;stroke-width:3.5" d="M530 74h36"/><text class="d-mono" x="578" y="80">2ⁿ</text><text class="d-peq d-tenue" x="578" y="98">se duplica en cada paso</text><path class="d-t5" style="fill:none;stroke-width:3.5" d="M530 119h36"/><text class="d-mono" x="578" y="125">n²</text><text class="d-peq d-tenue" x="578" y="143">todas las parejas</text><path class="d-t4" style="fill:none;stroke-width:3.5" d="M530 164h36"/><text class="d-mono" x="578" y="170">n</text><text class="d-peq d-tenue" x="578" y="188">recorrer una vez</text><path class="d-t2" style="fill:none;stroke-width:3.5" d="M530 209h36"/><text class="d-mono" x="578" y="215">log₂ n</text><text class="d-peq d-tenue" x="578" y="233">partir por la mitad</text></svg>
+    <figcaption>Pasos de trabajo según la cantidad de datos n. El logaritmo casi no sube; n crece en línea recta; n² se dispara; 2ⁿ se sale de la gráfica enseguida.</figcaption>
+  </figure>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">n</th><th scope="col">log₂ n</th><th scope="col">n</th><th scope="col">n²</th><th scope="col">2ⁿ</th></tr></thead>
+      <tbody>
+        <tr><td>10</td><td>3.3</td><td>10</td><td>100</td><td>1024</td></tr>
+        <tr><td>100</td><td>6.6</td><td>100</td><td>10 000</td><td>un 1 seguido de 30 cifras</td></tr>
+        <tr><td>1000</td><td>10</td><td>1000</td><td>1 000 000</td><td>más que átomos en el universo observable</td></tr>
+        <tr><td>1 000 000</td><td>20</td><td>1 000 000</td><td>1 000 000 000 000</td><td>imposible de calcular</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal clave">
+    <p>Cuando alguien diga que un algoritmo es «logarítmico», piensa en «parte el problema por la mitad en cada paso» (casi gratis). «Lineal» es «mira cada dato una vez». «Cuadrático» es «compara cada dato con todos los demás» (dos bucles anidados). Y «exponencial» es «prueba todas las combinaciones» (inviable salvo con muy pocos datos).</p>
+  </aside>
+</section>

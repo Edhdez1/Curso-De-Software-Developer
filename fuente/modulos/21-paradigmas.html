@@ -337,3 +337,1347 @@ console.log(rex);</textarea>
   <h3>¿Clase u objeto literal?</h3>
   <p>No todo necesita una clase. Si solo existe un objeto de ese tipo (la configuración del juego) o si son datos sin comportamiento (un producto que llega de un servidor en formato JSON), un objeto literal con llaves es más sencillo. Usa una clase cuando vas a crear muchos objetos con la misma forma y el mismo comportamiento, o cuando el objeto tiene reglas que proteger, que es justo el tema de la siguiente sección.</p>
 </section>
+
+<section id="encapsulamiento" data-parada="Encapsulamiento">
+  <h2>Encapsulamiento y abstracción</h2>
+  <p>Con la clase <code>Personaje</code> de la sección anterior, cualquier parte del programa puede hacer esto:</p>
+  <pre><code class="language-js">const lyra = new Personaje("Lyra", 120);
+lyra.vida = -500;       // nada lo impide
+lyra.vida = "mucha";    // tampoco</code></pre>
+  <p>Y en una tienda, <code>producto.precio = -10</code>. El programa no falla en esa línea: falla mucho después, en otro archivo, cuando algo intenta calcular con una vida negativa o un precio que es texto. Son los errores más difíciles de encontrar, porque el síntoma aparece lejos de la causa.</p>
+  <p>Toda clase tiene reglas que deberían cumplirse siempre: la vida está entre 0 y la vida máxima; el precio no es negativo; el stock nunca baja de cero. A esas reglas se les llama <strong>invariantes</strong>. El encapsulamiento sirve para protegerlas.</p>
+  <p>El <strong>encapsulamiento</strong> (<em>encapsulation</em>) consiste en esconder el estado interno de un objeto y permitir cambiarlo solo a través de sus métodos, que comprueban las reglas antes de tocar nada. Lo que el resto del programa sí puede usar se llama la <strong>interfaz pública</strong> del objeto.</p>
+  <aside class="senal analogia">
+    <p>Un cajero automático no te deja meter la mano en la caja fuerte. Te ofrece unos botones (su interfaz pública) y cada botón revisa las reglas: si pides más dinero del que tienes, no te lo da. El dinero está encapsulado. La analogía falla en algo: en programación, quien escribe la clase decide qué se esconde, y puede equivocarse dejando algo expuesto.</p>
+  </aside>
+
+  <h3>Campos privados con #</h3>
+  <p>Un campo cuyo nombre empieza con <code>#</code> es un <strong>campo privado</strong>: solo el código escrito dentro de la clase puede leerlo o cambiarlo. Existen en JavaScript desde 2022 y funcionan en todos los navegadores modernos y en Node.js. Tienen dos reglas: hay que declararlos arriba, en el cuerpo de la clase, y el <code>#</code> forma parte del nombre (<code>#vida</code> y <code>vida</code> son cosas distintas).</p>
+  <pre><code class="language-js">class Personaje {
+  #vida;            // declarados arriba: obligatorio para los privados
+  #vidaMaxima;
+
+  constructor(nombre, vidaMaxima) {
+    this.nombre = nombre;
+    this.#vidaMaxima = vidaMaxima;
+    this.#vida = vidaMaxima;
+  }
+
+  recibirDanio(cantidad) {
+    if (cantidad &lt; 0) return;               // un daño negativo no puede curar
+    this.#vida = Math.max(0, this.#vida - cantidad);
+  }
+
+  curar(cantidad) {
+    this.#vida = Math.min(this.#vidaMaxima, this.#vida + cantidad);
+  }
+
+  get vida() {                               // se puede leer, pero no cambiar
+    return this.#vida;
+  }
+}</code></pre>
+  <p>Ahora la única forma de cambiar la vida es a través de <code>recibirDanio</code> y <code>curar</code>, y los dos respetan las reglas. Intenta hacer trampa con este personaje. <strong>Predice</strong> cada línea y después ejecuta:</p>
+  <div class="taller" id="taller-privados" data-titulo="Intenta romper al personaje">
+    <textarea class="taller-codigo">class Personaje {
+  #vida;
+  #vidaMaxima;
+
+  constructor(nombre, vidaMaxima) {
+    this.nombre = nombre;
+    this.#vidaMaxima = vidaMaxima;
+    this.#vida = vidaMaxima;
+  }
+
+  recibirDanio(cantidad) {
+    if (cantidad < 0) return;
+    this.#vida = Math.max(0, this.#vida - cantidad);
+  }
+
+  curar(cantidad) {
+    this.#vida = Math.min(this.#vidaMaxima, this.#vida + cantidad);
+  }
+
+  get vida() {
+    return this.#vida;
+  }
+}
+
+const lyra = new Personaje("Lyra", 120);
+lyra.recibirDanio(50);
+lyra.recibirDanio(-1000);   // trampa: ¿un daño negativo cura?
+console.log(lyra.vida);
+lyra.curar(500);            // trampa: ¿curar por encima del máximo?
+console.log(lyra.vida);
+lyra.vida = 9999;           // trampa: cambiarla desde fuera
+console.log(lyra.vida);
+lyra.vidaExtra = 50;        // ¿y esto?
+console.log(lyra);
+// console.log(lyra.#vida);</textarea>
+  </div>
+  <p>Resultado: 70, 120 y 120. El daño negativo se ignora, la curación se detiene en el máximo y la asignación <code>lyra.vida = 9999</code> no tiene efecto, porque <code>vida</code> solo tiene la parte de lectura. Fíjate en la última línea impresa: <code>Personaje { nombre: 'Lyra', vidaExtra: 50 }</code>. La consola no muestra los campos privados, y sí aceptó <code>vidaExtra</code>: los objetos de JavaScript admiten propiedades nuevas en cualquier momento. Los privados protegen lo que ya existe; no impiden agregar cosas nuevas.</p>
+  <p><strong>Modifica</strong>: quita las dos barras de la última línea y ejecuta de nuevo. Esta vez no se imprime nada: JavaScript revisa los <code>#</code> antes de ejecutar la primera línea y responde con <code>SyntaxError: Private field '#vida' must be declared in an enclosing class</code> («el campo privado debe declararse en una clase que lo rodee»). El error aparece antes de que el programa arranque, así que es imposible leer un privado desde fuera por accidente.</p>
+  <aside class="senal ojo" data-titulo="Silencio o error: depende del modo estricto">
+    <p>En el taller, <code>lyra.vida = 9999</code> se ignora en silencio. Dentro de una clase, en un módulo (la forma moderna de organizar archivos, que verás en la <a href="22-ejecucion.html">Estación 22</a>) o en un archivo que empieza con <code>"use strict";</code>, JavaScript trabaja en <strong>modo estricto</strong>: una versión más exigente del lenguaje que convierte esos fallos silenciosos en errores. Ahí la misma línea lanza <code>TypeError: Cannot set property vida of #&lt;Personaje&gt; which has only a getter</code>. En proyectos reales casi todo tu código estará en modo estricto, y es mejor así: un error visible se arregla; uno silencioso se esconde.</p>
+  </aside>
+  <aside class="senal nota" data-titulo="¿Y el guion bajo?">
+    <p>En código anterior a 2022 verás nombres como <code>this._vida</code>. El guion bajo es solo una <em>convención</em>: un aviso entre personas que dice «no toques esto desde fuera». No protege nada; cualquiera puede escribir <code>lyra._vida = -500</code>. TypeScript (<a href="23-typescript.html">Estación 23</a>) tiene la palabra <code>private</code>, que se comprueba al compilar pero desaparece al ejecutar. El <code>#</code> es la única protección que JavaScript aplica de verdad mientras el programa corre. Las DevTools del navegador sí te muestran los privados al inspeccionar un objeto, como ayuda para depurar; tu código, no.</p>
+  </aside>
+
+  <h3>Getters y setters: propiedades con reglas</h3>
+  <p>Un <strong>getter</strong> es un método que se lee como si fuera una propiedad, sin paréntesis: se escribe con <code>get</code> delante. Un <strong>setter</strong> es un método que se ejecuta cuando asignas un valor con <code>=</code>: se escribe con <code>set</code> delante. Juntos se llaman <em>accesores</em>. Sirven para validar lo que entra y para calcular lo que sale. Mira un producto de una tienda:</p>
+  <pre><code class="language-js">class Producto {
+  #precio = 0;
+  #stock = 0;
+
+  constructor(nombre, precio, stock) {
+    this.nombre = nombre;
+    this.precio = precio;   // pasa por el setter: se valida desde el principio
+    this.#stock = stock;
+  }
+
+  get precio() {
+    return this.#precio;
+  }
+
+  set precio(nuevo) {
+    if (typeof nuevo !== "number" || nuevo &lt; 0) {
+      throw new Error(`Precio no válido para ${this.nombre}: ${nuevo}`);
+    }
+    this.#precio = nuevo;
+  }
+
+  get stock() {             // sin setter: solo lectura desde fuera
+    return this.#stock;
+  }
+
+  get agotado() {           // propiedad calculada: no se guarda, se deduce
+    return this.#stock === 0;
+  }
+
+  vender(cantidad) {
+    if (cantidad &lt;= 0 || cantidad &gt; this.#stock) return false;
+    this.#stock -= cantidad;
+    return true;
+  }
+}</code></pre>
+  <p>Quien usa la clase escribe <code>cafe.precio = 10</code> como con cualquier propiedad, pero por detrás se ejecuta el setter, que rechaza valores absurdos lanzando un error (<code>throw</code>, de la <a href="12-depuracion.html#excepciones">Estación 12</a>). <code>agotado</code> es una <em>propiedad calculada</em>: no se guarda en ningún sitio, se deduce del stock cada vez que la lees, así que nunca puede quedar desactualizada.</p>
+  <div class="taller" id="taller-producto" data-titulo="Predice y modifica: un producto con reglas">
+    <textarea class="taller-codigo">class Producto {
+  #precio = 0;
+  #stock = 0;
+
+  constructor(nombre, precio, stock) {
+    this.nombre = nombre;
+    this.precio = precio;
+    this.#stock = stock;
+  }
+
+  get precio() {
+    return this.#precio;
+  }
+
+  set precio(nuevo) {
+    if (typeof nuevo !== "number" || nuevo < 0) {
+      throw new Error(`Precio no válido para ${this.nombre}: ${nuevo}`);
+    }
+    this.#precio = nuevo;
+  }
+
+  get stock() {
+    return this.#stock;
+  }
+
+  get agotado() {
+    return this.#stock === 0;
+  }
+
+  vender(cantidad) {
+    if (cantidad <= 0 || cantidad > this.#stock) return false;
+    this.#stock -= cantidad;
+    return true;
+  }
+}
+
+const cafe = new Producto("Café de Colombia", 12, 3);
+console.log(cafe.precio, cafe.stock, cafe.agotado);
+console.log(cafe.vender(2), cafe.stock);
+console.log(cafe.vender(5), cafe.stock);
+cafe.precio = 10;
+console.log(cafe.precio);
+try {
+  cafe.precio = -3;
+} catch (error) {
+  console.log(error.message);
+}</textarea>
+  </div>
+  <p>Deberías ver <code>12 3 false</code>, <code>true 1</code>, <code>false 1</code> (no se pueden vender 5 si quedan 1), <code>10</code> y el mensaje del precio no válido. <strong>Modifica</strong>: añade un método <code>reponer(cantidad)</code> que sume al stock solo si la cantidad es positiva. Después vende la última unidad y comprueba que <code>cafe.agotado</code> pasa a <code>true</code>.</p>
+  <aside class="senal error" data-titulo="Error común: un getter que se llama a sí mismo">
+    <p>Si escribes <code>get vida() { return this.vida; }</code>, leer <code>this.vida</code> vuelve a ejecutar el getter, que vuelve a leer <code>this.vida</code>, que vuelve a ejecutar el getter… hasta que JavaScript se rinde con <code>RangeError: Maximum call stack size exceeded</code> («se superó el tamaño máximo de la pila de llamadas»). Es la recursión sin caso base de la <a href="20-algoritmos.html">Estación 20</a>. El dato tiene que vivir con otro nombre: <code>#vida</code>. El getter <code>vida</code> solo lo entrega.</p>
+  </aside>
+  <p>También puedes tener <em>métodos</em> privados: <code>#calcularDescuento() { … }</code>, que se llaman con <code>this.#calcularDescuento()</code> desde dentro de la clase. Úsalos para los pasos internos que no forman parte de la interfaz pública.</p>
+
+  <h3>Miembros estáticos: static</h3>
+  <p>A veces un dato o una acción pertenece a la clase en general, no a cada instancia: cuántos enemigos se crearon en total, o una forma rápida de crear un enemigo típico. Para eso existe <strong>static</strong>. Un miembro estático se usa con el nombre de la clase, no con una instancia:</p>
+  <pre><code class="language-js">class Enemigo {
+  static total = 0;                  // un solo contador para toda la clase
+
+  static crearSlime() {              // método de fábrica
+    return new Enemigo("Slime", 20);
+  }
+
+  constructor(nombre, vida) {
+    this.nombre = nombre;
+    this.vida = vida;
+    Enemigo.total++;
+  }
+}
+
+const e1 = Enemigo.crearSlime();
+const e2 = new Enemigo("Lobo", 45);
+console.log(Enemigo.total);   // 2
+console.log(e1.total);        // undefined: las instancias no lo tienen</code></pre>
+  <p>Ya usaste muchos métodos estáticos sin saberlo: <code>Math.max</code>, <code>Number.parseInt</code>, <code>Object.keys</code>, <code>Array.isArray</code>, <code>JSON.parse</code>. Son funciones útiles agrupadas bajo el nombre de una clase u objeto. Un método estático que crea y devuelve instancias, como <code>crearSlime</code>, se llama <em>método de fábrica</em>: le pone nombre a una forma habitual de construir objetos.</p>
+
+  <h3>Abstracción: mostrar lo esencial</h3>
+  <p>La <strong>abstracción</strong> consiste en ofrecer una forma sencilla de usar algo complejo, escondiendo los detalles que no le importan a quien lo usa. Va de la mano del encapsulamiento: el encapsulamiento protege los datos; la abstracción decide qué se muestra y con qué nombres.</p>
+  <pre><code class="language-js">class Carrito {
+  #lineas = [];     // detalle interno: podría ser un array, un Map o una base de datos
+
+  agregar(producto, cantidad = 1) {
+    const linea = this.#lineas.find((l) =&gt; l.producto === producto);
+    if (linea) {
+      linea.cantidad += cantidad;
+    } else {
+      this.#lineas.push({ producto, cantidad });
+    }
+  }
+
+  get unidades() {
+    return this.#lineas.reduce((suma, l) =&gt; suma + l.cantidad, 0);
+  }
+
+  get total() {
+    return this.#lineas.reduce((suma, l) =&gt; suma + l.producto.precio * l.cantidad, 0);
+  }
+}
+
+const carrito = new Carrito();
+carrito.agregar(cafe, 2);
+carrito.agregar(taza);
+console.log(carrito.unidades, carrito.total);</code></pre>
+  <p>Quien usa <code>Carrito</code> solo conoce tres cosas: <code>agregar</code>, <code>unidades</code> y <code>total</code>. No sabe si por dentro hay un array o un <code>Map</code>, ni cómo se suman los precios. Por eso, si mañana cambias el array por un <code>Map</code> para que sea más rápido (<a href="19-estructuras-datos.html">Estación 19</a>), ninguna otra parte del programa se rompe.</p>
+  <aside class="senal analogia">
+    <p>Para conducir usas volante, pedales y palanca. No necesitas saber cómo inyecta combustible el motor, y el fabricante puede cambiar el motor entero sin que tengas que aprender a conducir otra vez. La interfaz (volante y pedales) es la abstracción; el motor, el detalle escondido.</p>
+  </aside>
+  <aside class="senal oficio">
+    <p>Diseña la interfaz pública antes que el interior: escribe primero cómo te gustaría <em>usar</em> la clase (<code>carrito.agregar(cafe, 2)</code>, <code>carrito.total</code>) y después implementa. Empieza con todo privado y abre solo lo que otros necesiten de verdad. Cerrar algo que ya es público obliga a cambiar el código de otras personas; abrir algo privado no rompe nada.</p>
+  </aside>
+</section>
+
+<section id="herencia" data-parada="Herencia y polimorfismo">
+  <h2>Herencia y polimorfismo</h2>
+  <p>Tu juego tiene héroes, enemigos y jefes. Todos tienen nombre y vida, y todos reciben daño. Los enemigos, además, atacan. Los jefes atacan más fuerte y cambian de fase cuando están heridos. Si copias el código de <code>Personaje</code> dentro de <code>Enemigo</code> y de <code>Jefe</code>, el día que arregles un fallo en <code>recibirDanio</code> tendrás que acordarte de arreglarlo en tres sitios. Alguna vez se te olvidará.</p>
+  <p>La <strong>herencia</strong> (<em>inheritance</em>) permite que una clase se base en otra y reciba todas sus propiedades y métodos. La clase original se llama <strong>superclase</strong> o clase madre; la nueva, <strong>subclase</strong> o clase hija. En JavaScript se escribe con <code>extends</code>. La herencia expresa una relación «es un»: un Jefe <em>es un</em> Enemigo, y un Enemigo <em>es un</em> Personaje. Si la frase «X es un Y» suena rara, la herencia probablemente no es la herramienta adecuada.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 350" role="img" aria-label="Diagrama de herencia: Personaje, con nombre, vidaMaxima, vida, recibirDanio y describir, es la superclase. Heroe, con nivel y curar, y Enemigo, con danio y atacar, heredan de Personaje. Jefe, con fase, hereda de Enemigo y sobrescribe recibirDanio y atacar.">
+      <rect class="d-caja" x="10" y="100" width="200" height="130" rx="8"/>
+      <rect class="d-acento" x="10" y="100" width="200" height="32" rx="8"/>
+      <rect class="d-acento" x="10" y="116" width="200" height="16"/>
+      <rect class="d-linea" x="10" y="100" width="200" height="130" rx="8"/>
+      <text class="d-sobre-acento d-rotulo" x="110" y="122" text-anchor="middle">Personaje</text>
+      <text class="d-mono d-peq" x="24" y="152">nombre</text>
+      <text class="d-mono d-peq" x="24" y="170">vidaMaxima, vida</text>
+      <path class="d-punteada" d="M18 180H202"/>
+      <text class="d-mono d-peq" x="24" y="200">recibirDanio(cantidad)</text>
+      <text class="d-mono d-peq" x="24" y="218">describir()</text>
+      <text class="d-peq d-tenue" x="110" y="250" text-anchor="middle">superclase</text>
+
+      <rect class="d-caja" x="260" y="20" width="200" height="96" rx="8"/>
+      <rect class="d-acento" x="260" y="20" width="200" height="32" rx="8"/>
+      <rect class="d-acento" x="260" y="36" width="200" height="16"/>
+      <rect class="d-linea" x="260" y="20" width="200" height="96" rx="8"/>
+      <text class="d-sobre-acento d-rotulo" x="360" y="42" text-anchor="middle">Heroe</text>
+      <text class="d-mono d-peq" x="274" y="72">nivel</text>
+      <path class="d-punteada" d="M268 82H452"/>
+      <text class="d-mono d-peq" x="274" y="104">curar(cantidad)</text>
+
+      <rect class="d-caja" x="260" y="200" width="200" height="96" rx="8"/>
+      <rect class="d-acento" x="260" y="200" width="200" height="32" rx="8"/>
+      <rect class="d-acento" x="260" y="216" width="200" height="16"/>
+      <rect class="d-linea" x="260" y="200" width="200" height="96" rx="8"/>
+      <text class="d-sobre-acento d-rotulo" x="360" y="222" text-anchor="middle">Enemigo</text>
+      <text class="d-mono d-peq" x="274" y="252">danio</text>
+      <path class="d-punteada" d="M268 262H452"/>
+      <text class="d-mono d-peq" x="274" y="284">atacar(objetivo)</text>
+
+      <rect class="d-caja" x="510" y="200" width="200" height="114" rx="8"/>
+      <rect class="d-acento" x="510" y="200" width="200" height="32" rx="8"/>
+      <rect class="d-acento" x="510" y="216" width="200" height="16"/>
+      <rect class="d-linea" x="510" y="200" width="200" height="114" rx="8"/>
+      <text class="d-sobre-acento d-rotulo" x="610" y="222" text-anchor="middle">Jefe</text>
+      <text class="d-mono d-peq" x="524" y="252">fase</text>
+      <path class="d-punteada" d="M518 262H702"/>
+      <text class="d-mono d-peq" x="524" y="284">recibirDanio(cantidad)</text>
+      <text class="d-mono d-peq" x="524" y="302">atacar(objetivo)</text>
+      <text class="d-peq d-tenue" x="610" y="336" text-anchor="middle">sobrescribe dos métodos</text>
+
+      <path class="d-linea" d="M260 68H236V248H260"/>
+      <path class="d-linea" d="M236 165H224"/>
+      <path class="d-tinta" d="M211 165l13 -7v14z"/>
+      <path class="d-linea" d="M510 248H474"/>
+      <path class="d-tinta" d="M461 248l13 -7v14z"/>
+      <text class="d-peq d-tenue" x="360" y="142" text-anchor="middle">subclases de Personaje</text>
+      <text class="d-peq d-tenue" x="486" y="238" text-anchor="middle">es un</text>
+      <text class="d-peq d-tenue" x="248" y="160" text-anchor="end">es un</text>
+    </svg>
+    <figcaption>Cada flecha apunta a la clase de la que se hereda y se lee «es un»: un Heroe es un Personaje, un Jefe es un Enemigo. Arriba de la línea punteada de cada caja van las propiedades; abajo, los métodos que esa clase añade o cambia. Jefe no repite <code>nombre</code> ni <code>describir</code>: los recibe por herencia.</figcaption>
+  </figure>
+
+  <h3>extends y super</h3>
+  <pre><code class="language-js">class Personaje {
+  constructor(nombre, vidaMaxima) {
+    this.nombre = nombre;
+    this.vidaMaxima = vidaMaxima;
+    this.vida = vidaMaxima;
+  }
+  recibirDanio(cantidad) {
+    this.vida = Math.max(0, this.vida - cantidad);
+  }
+  describir() {
+    return `${this.nombre} (${this.vida}/${this.vidaMaxima})`;
+  }
+}
+
+class Enemigo extends Personaje {
+  constructor(nombre, vidaMaxima, danio) {
+    super(nombre, vidaMaxima);   // primero, que Personaje prepare lo suyo
+    this.danio = danio;          // después, lo propio del enemigo
+  }
+  atacar(objetivo) {
+    objetivo.recibirDanio(this.danio);
+    return `${this.nombre} golpea a ${objetivo.nombre} (-${this.danio})`;
+  }
+}
+
+const heroe = new Personaje("Lyra", 120);
+const lobo = new Enemigo("Lobo", 40, 15);
+console.log(lobo.atacar(heroe));   // Lobo golpea a Lyra (-15)
+console.log(lobo.describir());     // Lobo (40/40): describir viene de Personaje
+console.log(heroe.describir());    // Lyra (105/120)</code></pre>
+  <ul>
+    <li><code>class Enemigo extends Personaje</code> dice que Enemigo hereda todo lo de Personaje. Por eso <code>lobo.describir()</code> funciona aunque <code>Enemigo</code> no lo defina.</li>
+    <li><code>super(nombre, vidaMaxima)</code> llama al constructor de la superclase para que prepare su parte del objeto (nombre y vida). En una subclase que tiene su propio constructor, <strong>es obligatorio llamar a <code>super(...)</code> antes de usar <code>this</code></strong>.</li>
+    <li>Si la subclase no escribe constructor, JavaScript usa uno automático que pasa todos los argumentos a <code>super</code>.</li>
+  </ul>
+  <aside class="senal error" data-titulo="Error común: usar this antes de super">
+    <p>Si escribes <code>this.danio = danio;</code> antes de <code>super(...)</code>, obtienes <code>ReferenceError: Must call super constructor in derived class before accessing 'this' or returning from derived constructor</code>: «hay que llamar al constructor de la superclase antes de acceder a this». En una subclase, el objeto lo termina de preparar la superclase; hasta que <code>super</code> no se ejecuta, <code>this</code> todavía no está listo. Regla: <code>super</code> en la primera línea del constructor.</p>
+  </aside>
+  <aside class="senal nota" data-titulo="Ya lo habías usado">
+    <p>¿Recuerdas <code>SaldoInsuficienteError</code> de la <a href="12-depuracion.html#excepciones">Estación 12</a>? Ahora puedes leer cada pieza: <code>extends Error</code> hereda todo lo que tiene un error de JavaScript (el mensaje, la pila de llamadas); <code>super(mensaje)</code> deja que <code>Error</code> guarde el mensaje; <code>this.name = …</code> añade lo propio. Y <code>error instanceof SaldoInsuficienteError</code> pregunta «¿este objeto es de esa clase o de una subclase suya?». Los errores del propio lenguaje forman una jerarquía: <code>TypeError</code>, <code>RangeError</code> y <code>SyntaxError</code> son subclases de <code>Error</code>.</p>
+  </aside>
+
+  <h3>Sobrescribir métodos y super.metodo()</h3>
+  <p>Una subclase puede <strong>sobrescribir</strong> (<em>override</em>) un método: definir uno con el mismo nombre que reemplaza al heredado. Si quiere aprovechar el original y añadir algo, lo llama con <code>super.nombreDelMetodo(...)</code>. El jefe recibe la mitad del daño gracias a su armadura, y en la fase 2 golpea dos veces:</p>
+  <pre><code class="language-js">class Jefe extends Enemigo {
+  constructor(nombre, vidaMaxima, danio) {
+    super(nombre, vidaMaxima, danio);
+    this.fase = 1;
+  }
+
+  recibirDanio(cantidad) {
+    super.recibirDanio(Math.ceil(cantidad / 2));   // armadura: recibe la mitad
+    if (this.vida &lt;= this.vidaMaxima / 2) {
+      this.fase = 2;
+    }
+  }
+
+  atacar(objetivo) {
+    const texto = super.atacar(objetivo);         // el ataque normal de Enemigo
+    if (this.fase === 2) {
+      objetivo.recibirDanio(this.danio);           // en fase 2, un segundo golpe
+      return `${texto} ¡y otra vez! (-${this.danio})`;
+    }
+    return texto;
+  }
+}</code></pre>
+  <p><strong>Predice</strong> las líneas que imprime este combate. Calcula la vida del dragón después de cada golpe (recuerda la armadura) y decide cuándo cambia de fase:</p>
+  <div class="taller" id="taller-jefe" data-titulo="Predice: el jefe cambia de fase">
+    <textarea class="taller-codigo">class Personaje {
+  constructor(nombre, vidaMaxima) {
+    this.nombre = nombre;
+    this.vidaMaxima = vidaMaxima;
+    this.vida = vidaMaxima;
+  }
+  recibirDanio(cantidad) {
+    this.vida = Math.max(0, this.vida - cantidad);
+  }
+  describir() {
+    return `${this.nombre} (${this.vida}/${this.vidaMaxima})`;
+  }
+}
+
+class Enemigo extends Personaje {
+  constructor(nombre, vidaMaxima, danio) {
+    super(nombre, vidaMaxima);
+    this.danio = danio;
+  }
+  atacar(objetivo) {
+    objetivo.recibirDanio(this.danio);
+    return `${this.nombre} golpea a ${objetivo.nombre} (-${this.danio})`;
+  }
+}
+
+class Jefe extends Enemigo {
+  constructor(nombre, vidaMaxima, danio) {
+    super(nombre, vidaMaxima, danio);
+    this.fase = 1;
+  }
+  recibirDanio(cantidad) {
+    super.recibirDanio(Math.ceil(cantidad / 2));
+    if (this.vida <= this.vidaMaxima / 2) {
+      this.fase = 2;
+    }
+  }
+  atacar(objetivo) {
+    const texto = super.atacar(objetivo);
+    if (this.fase === 2) {
+      objetivo.recibirDanio(this.danio);
+      return `${texto} ¡y otra vez! (-${this.danio})`;
+    }
+    return texto;
+  }
+}
+
+const heroe = new Personaje("Lyra", 200);
+const dragon = new Jefe("Dragón", 100, 20);
+
+console.log(dragon.atacar(heroe));
+dragon.recibirDanio(60);
+console.log(dragon.describir(), "fase", dragon.fase);
+dragon.recibirDanio(40);
+console.log(dragon.describir(), "fase", dragon.fase);
+console.log(dragon.atacar(heroe));
+console.log(heroe.describir());
+console.log(dragon instanceof Jefe, dragon instanceof Enemigo, dragon instanceof Personaje);
+console.log(heroe instanceof Enemigo);</textarea>
+  </div>
+  <p>El golpe de 60 se queda en 30 (vida 70, fase 1); el de 40 se queda en 20 (vida 50, justo la mitad: fase 2). A partir de ahí el dragón golpea dos veces y Lyra termina con 140. Fíjate en que <code>dragon.describir()</code> viene de <code>Personaje</code>, dos niveles más arriba, y en que <code>dragon instanceof Personaje</code> es <code>true</code>: un jefe es un enemigo y también es un personaje. <strong>Modifica</strong>: añade al jefe un método <code>rugir()</code> que devuelva <code>"¡Dragón ruge en la fase 2!"</code> usando <code>this.nombre</code> y <code>this.fase</code>.</p>
+  <p>Ahora ordena tú una subclase. El constructor va primero y las líneas deben quedar con su sangría correcta:</p>
+  <div class="parsons" data-titulo="Ordena la clase Jefe" data-lenguaje="js">
+    <ol>
+      <li>class Jefe extends Enemigo {</li>
+      <li data-sangria="1">constructor(nombre, vida, danio) {</li>
+      <li data-sangria="2">super(nombre, vida, danio);</li>
+      <li data-sangria="2">this.fase = 1;</li>
+      <li data-sangria="1">}  // fin del constructor</li>
+      <li data-sangria="1">rugir() {</li>
+      <li data-sangria="2">return "¡" + this.nombre + " ruge!";</li>
+      <li data-sangria="1">}  // fin de rugir</li>
+      <li>}  // fin de la clase</li>
+    </ol>
+  </div>
+
+  <h3>Polimorfismo: el mismo mensaje, distintas respuestas</h3>
+  <p>Mira este bucle. Recorre una oleada de enemigos y le dice a cada uno «ataca». No pregunta de qué clase es cada enemigo; cada uno sabe cómo atacar a su manera:</p>
+  <pre><code class="language-js">class Slime extends Enemigo {
+  atacar(objetivo) {
+    objetivo.recibirDanio(3);
+    return `${this.nombre} salpica a ${objetivo.nombre} (-3)`;
+  }
+}
+
+class Arquera extends Enemigo {
+  atacar(objetivo) {
+    const total = this.danio * 2;
+    objetivo.recibirDanio(total);
+    return `${this.nombre} dispara dos flechas a ${objetivo.nombre} (-${total})`;
+  }
+}
+
+const heroe = new Personaje("Lyra", 200);
+const oleada = [
+  new Slime("Slime", 20, 0),
+  new Enemigo("Lobo", 40, 15),
+  new Arquera("Arquera", 30, 6),
+  new Jefe("Dragón", 100, 20),
+];
+
+for (const enemigo of oleada) {
+  console.log(enemigo.atacar(heroe));
+}
+// Slime salpica a Lyra (-3)
+// Lobo golpea a Lyra (-15)
+// Arquera dispara dos flechas a Lyra (-12)
+// Dragón golpea a Lyra (-20)</code></pre>
+  <p>Esto es el <strong>polimorfismo</strong> (del griego, «muchas formas»): distintos objetos responden al mismo método, cada uno a su manera, y el código que los usa no necesita saber de qué clase es cada uno. Su gran ventaja: para añadir un enemigo nuevo creas una clase con su <code>atacar</code> y el bucle funciona sin tocar una sola línea. Sin polimorfismo tendrías una cadena de <code>if (tipo === "slime") … else if (tipo === "arquera") …</code> que crece con cada enemigo nuevo.</p>
+  <p>En JavaScript el polimorfismo ni siquiera necesita herencia. El lenguaje no comprueba la clase de un objeto antes de llamar a un método: solo le importa que el método exista. Se le llama <em>duck typing</em>, por el dicho «si camina como un pato y hace cuac como un pato, es un pato». En la tienda, cada método de pago calcula su comisión a su manera:</p>
+  <div class="taller" id="taller-pagos" data-titulo="Modifica: un método de pago más">
+    <textarea class="taller-codigo">// Clase base: define lo común y deja la comisión a cada subclase
+class MetodoDePago {
+  comision(monto) {
+    throw new Error("Cada método de pago debe definir comision()");
+  }
+  totalAPagar(monto) {
+    return monto + this.comision(monto);   // usa la comisión de cada subclase
+  }
+}
+
+class Tarjeta extends MetodoDePago {
+  nombre = "Tarjeta";
+  comision(monto) {
+    return monto * 0.035;
+  }
+}
+
+class Efectivo extends MetodoDePago {
+  nombre = "Efectivo";
+  comision(monto) {
+    return 0;
+  }
+}
+
+class Transferencia extends MetodoDePago {
+  nombre = "Transferencia";
+  comision(monto) {
+    return monto >= 1000 ? 0 : 5;
+  }
+}
+
+const monto = 800;
+const metodos = [new Tarjeta(), new Efectivo(), new Transferencia()];
+for (const metodo of metodos) {
+  console.log(`${metodo.nombre}: ${metodo.totalAPagar(monto).toFixed(2)}`);
+}</textarea>
+  </div>
+  <p>Imprime <code>Tarjeta: 828.00</code>, <code>Efectivo: 800.00</code> y <code>Transferencia: 805.00</code>. <strong>Modifica</strong>: crea la clase <code>MonederoDigital</code> con una comisión de 2 más el 1 % del monto y añádela al array. Debería mostrar <code>Monedero digital: 810.00</code>. Después crea una clase <code>Vales</code> que extienda <code>MetodoDePago</code> pero <em>olvide</em> definir <code>comision</code>, y mira el mensaje que aparece.</p>
+  <p><code>MetodoDePago</code> funciona como una <em>clase abstracta</em>: una clase que no se usa directamente, sino como molde común para sus subclases, y que obliga a cada una a completar una parte. JavaScript no tiene una palabra especial para esto (TypeScript sí: <code>abstract</code>, en la <a href="23-typescript.html">Estación 23</a>), así que la convención es lanzar un error en el método que las subclases deben definir.</p>
+  <aside class="senal ojo">
+    <p>En JavaScript una clase solo puede extender a <em>una</em> clase. No existe <code>class Pato extends Volador, Nadador</code>. Esto evita problemas conocidos de otros lenguajes (¿qué pasa si las dos madres tienen un método con el mismo nombre?), pero limita lo que la herencia puede expresar. La sección <a href="#composicion">Composición</a> resuelve justo ese problema.</p>
+  </aside>
+  <aside class="senal oficio">
+    <p>Mantén las jerarquías bajas: uno o dos niveles suelen bastar. Cada nivel que añades es código que hay que leer en otro sitio para entender una clase. Si te encuentras en cinco niveles (<code>Entidad → Personaje → Enemigo → EnemigoVolador → Murcielago</code>), es momento de pensar en composición.</p>
+  </aside>
+
+  <h3>La misma idea en otro lenguaje</h3>
+  <p>Los paradigmas no pertenecen a un lenguaje. Este es el mismo diseño en Python, el lenguaje de la <a href="36-python.html">Estación 36</a>. Léelo buscando las equivalencias y ejecútalo:</p>
+  <div class="taller" data-modo="python" id="taller-python-clases" data-titulo="Clases en Python">
+    <textarea class="taller-codigo">class Personaje:
+    def __init__(self, nombre, vida):
+        self.nombre = nombre
+        self.vida = vida
+
+    def recibir_danio(self, cantidad):
+        self.vida = max(0, self.vida - cantidad)
+
+    def describir(self):
+        return f"{self.nombre} ({self.vida})"
+
+
+class Enemigo(Personaje):
+    def __init__(self, nombre, vida, danio):
+        super().__init__(nombre, vida)
+        self.danio = danio
+
+    def atacar(self, objetivo):
+        objetivo.recibir_danio(self.danio)
+        return f"{self.nombre} golpea a {objetivo.nombre} (-{self.danio})"
+
+
+heroe = Personaje("Lyra", 120)
+lobo = Enemigo("Lobo", 40, 15)
+print(lobo.atacar(heroe))
+print(heroe.describir())
+print(isinstance(lobo, Personaje))</textarea>
+  </div>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">JavaScript</th><th scope="col">Python</th><th scope="col">Qué es</th></tr></thead>
+      <tbody>
+        <tr><td><code>constructor(nombre)</code></td><td><code>def __init__(self, nombre):</code></td><td>El método que prepara cada instancia</td></tr>
+        <tr><td><code>this.nombre</code></td><td><code>self.nombre</code></td><td>El objeto actual (en Python se escribe como primer parámetro)</td></tr>
+        <tr><td><code>class Enemigo extends Personaje</code></td><td><code>class Enemigo(Personaje):</code></td><td>Herencia</td></tr>
+        <tr><td><code>super(nombre, vida)</code></td><td><code>super().__init__(nombre, vida)</code></td><td>Llamar al constructor de la superclase</td></tr>
+        <tr><td><code>new Enemigo("Lobo", 40, 15)</code></td><td><code>Enemigo("Lobo", 40, 15)</code></td><td>Crear una instancia (Python no usa <code>new</code>)</td></tr>
+        <tr><td><code>lobo instanceof Personaje</code></td><td><code>isinstance(lobo, Personaje)</code></td><td>¿Es de esa clase o de una subclase?</td></tr>
+        <tr><td><code>#vida</code></td><td><code>_vida</code> (solo convención)</td><td>Dato interno; Python no tiene privados estrictos</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="prototipos" data-parada="Prototipos">
+  <h2>Cómo funcionan por debajo: prototipos</h2>
+  <p>En el taller de las mascotas viste que <code>console.log(rex)</code> muestra los datos, pero no los métodos. Hagamos más preguntas a un objeto:</p>
+  <pre><code class="language-js">const lyra = new Personaje("Lyra", 120);
+console.log(Object.keys(lyra));                 // [ 'nombre', 'vidaMaxima', 'vida' ]
+console.log(Object.hasOwn(lyra, "describir"));  // false: lyra no tiene describir
+console.log("describir" in lyra);               // true: pero puede usarlo
+console.log(lyra.describir());                  // y funciona</code></pre>
+  <p><code>Object.hasOwn(objeto, "nombre")</code> pregunta si la propiedad es <em>propia</em>, es decir, si está guardada en ese mismo objeto. El operador <code>in</code> pregunta si el objeto puede <em>usarla</em>, venga de donde venga. ¿Cómo puede <code>lyra</code> usar un método que no tiene?</p>
+  <p>Cada objeto de JavaScript tiene un enlace escondido a otro objeto, llamado su <strong>prototipo</strong>. Cuando le pides a un objeto una propiedad que no tiene, JavaScript no se rinde: se la pide a su prototipo. Si el prototipo tampoco la tiene, se la pide al prototipo del prototipo, y así sucesivamente. Esa fila de objetos enlazados se llama <strong>cadena de prototipos</strong> (<em>prototype chain</em>). Al final de toda cadena está <code>Object.prototype</code>, y detrás de él, <code>null</code>: el fin.</p>
+  <p>Los métodos de una clase se guardan en un objeto especial, <code>NombreDeLaClase.prototype</code>, y <code>new</code> enlaza cada instancia con él (es el paso 3 de la cápsula «Qué hace new»). Por eso mil enemigos comparten una sola copia de <code>atacar</code> en la memoria. Mira cómo busca JavaScript en la cadena de un jefe:</p>
+  <figure class="capsula" data-titulo="Buscar en la cadena de prototipos">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 400" role="img" aria-label="Animación: la cadena de prototipos de jefe va de jefe a Jefe.prototype, Enemigo.prototype, Personaje.prototype, Object.prototype y null. jefe.fase se encuentra en el propio objeto; jefe.describir en Personaje.prototype; jefe.atacar en Jefe.prototype, que tapa al de Enemigo; jefe.toString en Object.prototype; jefe.volar no está en ninguna parte y la búsqueda termina en null.">
+        <rect class="d-caja" x="200" y="12" width="340" height="52" rx="8"/>
+        <text class="d-rotulo" x="214" y="34">jefe <tspan class="d-tenue d-peq">(el propio objeto)</tspan></text>
+        <text class="d-mono d-peq" x="214" y="54">nombre, vida, vidaMaxima, danio, fase</text>
+        <rect class="d-caja" x="200" y="82" width="340" height="52" rx="8"/>
+        <text class="d-rotulo" x="214" y="104">Jefe.prototype</text>
+        <text class="d-mono d-peq" x="214" y="124">recibirDanio(), atacar()</text>
+        <rect class="d-caja" x="200" y="152" width="340" height="52" rx="8"/>
+        <text class="d-rotulo" x="214" y="174">Enemigo.prototype</text>
+        <text class="d-mono d-peq" x="214" y="194">atacar()</text>
+        <rect class="d-caja" x="200" y="222" width="340" height="52" rx="8"/>
+        <text class="d-rotulo" x="214" y="244">Personaje.prototype</text>
+        <text class="d-mono d-peq" x="214" y="264">recibirDanio(), describir()</text>
+        <rect class="d-caja" x="200" y="292" width="340" height="52" rx="8"/>
+        <text class="d-rotulo" x="214" y="314">Object.prototype</text>
+        <text class="d-mono d-peq" x="214" y="334">toString(), hasOwnProperty(), …</text>
+        <rect class="d-caja-suave" x="330" y="358" width="80" height="30" rx="15"/>
+        <text class="d-mono" x="370" y="378" text-anchor="middle">null</text>
+
+        <path class="d-linea" d="M370 64v8"/><path class="d-tinta" d="M370 82l-6 -10h12z"/>
+        <path class="d-linea" d="M370 134v8"/><path class="d-tinta" d="M370 152l-6 -10h12z"/>
+        <path class="d-linea" d="M370 204v8"/><path class="d-tinta" d="M370 222l-6 -10h12z"/>
+        <path class="d-linea" d="M370 274v8"/><path class="d-tinta" d="M370 292l-6 -10h12z"/>
+        <path class="d-linea" d="M370 344v4"/><path class="d-tinta" d="M370 358l-6 -10h12z"/>
+        <text class="d-peq d-tenue" x="382" y="78">enlace al prototipo</text>
+
+        <g data-pasos="2-" data-mover="3:translate(0px,210px); 4:translate(0px,70px); 5:translate(0px,280px); 6:translate(0px,335px)">
+          <rect class="d-acento" x="10" y="21" width="172" height="34" rx="17"/>
+          <text class="d-sobre-acento d-mono" x="96" y="43" text-anchor="middle" style="font-size:14px" data-texto="2:jefe.fase; 3:jefe.describir(); 4:jefe.atacar(); 5:jefe.toString(); 6:jefe.volar()">jefe.fase</text>
+          <path class="d-linea" d="M182 38h6"/>
+          <path class="d-tinta" d="M198 38l-10 -6v12z"/>
+        </g>
+
+        <rect class="d-acento-trazo" x="195" y="7" width="350" height="62" rx="11" data-pasos="2"/>
+        <rect class="d-acento-trazo" x="195" y="217" width="350" height="62" rx="11" data-pasos="3"/>
+        <rect class="d-acento-trazo" x="195" y="77" width="350" height="62" rx="11" data-pasos="4"/>
+        <rect class="d-acento-trazo" x="195" y="287" width="350" height="62" rx="11" data-pasos="5"/>
+        <rect class="d-mal-trazo" x="325" y="353" width="90" height="40" rx="20" data-pasos="6"/>
+
+        <g class="d-peq">
+          <text class="d-rotulo" x="556" y="43" data-pasos="2">aquí está</text>
+          <text class="d-rotulo" x="556" y="253" data-pasos="3">aquí está</text>
+          <text class="d-rotulo" x="556" y="113" data-pasos="4">aquí está</text>
+          <text class="d-rotulo" x="556" y="323" data-pasos="5">aquí está</text>
+          <text class="d-tenue" x="556" y="43" data-pasos="3-6">no está</text>
+          <text class="d-tenue" x="556" y="113" data-pasos="3,5,6">no está</text>
+          <text class="d-tenue" x="556" y="183" data-pasos="3,5,6">no está</text>
+          <text class="d-tenue" x="556" y="183" data-pasos="4">queda tapado</text>
+          <text class="d-tenue" x="556" y="253" data-pasos="5,6">no está</text>
+          <text class="d-tenue" x="556" y="323" data-pasos="6">no está</text>
+          <text class="d-rotulo" x="424" y="378" data-pasos="6">fin: undefined</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li data-duracion="7"><code>jefe</code> es una instancia de <code>Jefe</code>. Sus datos (nombre, vida, fase…) viven en el propio objeto. Detrás tiene una cadena de enlaces: <code>Jefe.prototype</code>, <code>Enemigo.prototype</code>, <code>Personaje.prototype</code>, <code>Object.prototype</code> y, al final, <code>null</code>.</li>
+        <li><code>jefe.fase</code>: JavaScript busca primero en el propio objeto. Está ahí, así que lo usa y la búsqueda termina.</li>
+        <li data-duracion="8"><code>jefe.describir()</code>: no está en <code>jefe</code>, ni en <code>Jefe.prototype</code>, ni en <code>Enemigo.prototype</code>. JavaScript sigue la cadena hasta <code>Personaje.prototype</code> y ahí lo encuentra. Se ejecuta con <code>this = jefe</code>, así que describe al jefe, no a un personaje genérico.</li>
+        <li data-duracion="8"><code>jefe.atacar()</code>: hay dos <code>atacar</code> en la cadena, pero la búsqueda se detiene en el primero que encuentra, el de <code>Jefe.prototype</code>. Así funciona sobrescribir: el método de la subclase tapa al de la superclase. <code>super.atacar()</code> le pide a JavaScript que empiece a buscar un eslabón más allá.</li>
+        <li><code>jefe.toString()</code>: ninguna de tus clases lo definió, pero <code>Object.prototype</code> sí. Por eso todos los objetos tienen <code>toString</code> y <code>hasOwnProperty</code> aunque nunca los escribiste.</li>
+        <li data-duracion="7"><code>jefe.volar()</code>: nadie lo tiene. Al llegar a <code>null</code>, la búsqueda termina con <code>undefined</code>, y llamar a <code>undefined</code> como si fuera una función da <code>TypeError: jefe.volar is not a function</code>.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>MDN señala que la cadena de prototipos se parece más a una <em>delegación</em> que a una herencia clásica: un objeto que no sabe hacer algo le «delega» la tarea a su prototipo. En lenguajes como Java o C#, una instancia es un único bloque que ya contiene todo lo heredado; en JavaScript, cada nivel es un objeto aparte, enlazado con el siguiente, y la búsqueda ocurre mientras el programa corre.</p>
+  <p>Explóralo tú. Este taller pregunta a los objetos por su cadena y hace dos experimentos: añadir un método al prototipo <em>después</em> de crear los objetos, y tapar un método con una propiedad propia.</p>
+  <div class="taller" id="taller-prototipos" data-titulo="Explora la cadena">
+    <textarea class="taller-codigo">class Personaje {
+  constructor(nombre) {
+    this.nombre = nombre;
+  }
+  saludar() {
+    return `Hola, soy ${this.nombre}`;
+  }
+}
+
+const a = new Personaje("Lyra");
+const b = new Personaje("Bruno");
+
+console.log(Object.keys(a));
+console.log(Object.hasOwn(a, "saludar"), "saludar" in a);
+console.log(Object.getPrototypeOf(a) === Personaje.prototype);
+console.log(a.saludar === b.saludar);   // ¿es la misma función?
+
+// Experimento 1: añadir un método al prototipo DESPUÉS de crear los objetos
+Personaje.prototype.bailar = function () {
+  return `${this.nombre} baila`;
+};
+console.log(b.bailar());
+
+// Experimento 2: una propiedad propia tapa a la del prototipo
+a.saludar = () => "¡Soy un impostor!";
+console.log(a.saludar(), "|", b.saludar());
+
+// Los arrays también tienen prototipo: ahí vive map
+const numeros = [1, 2, 3];
+console.log(Object.getPrototypeOf(numeros) === Array.prototype, Object.hasOwn(numeros, "map"));</textarea>
+  </div>
+  <p>Resultados: <code>[ 'nombre' ]</code> (lo único propio de <code>a</code>); <code>false true</code>; <code>true</code>; y <code>true</code> otra vez, porque <code>a.saludar</code> y <code>b.saludar</code> son literalmente la misma función, guardada una sola vez en <code>Personaje.prototype</code>. El primer experimento demuestra que el enlace está vivo: <code>b</code> ya existía y aun así puede <code>bailar</code>. El segundo muestra que lo propio tapa a lo heredado: <code>a</code> tiene ahora su propio <code>saludar</code>, pero <code>b</code> sigue usando el del prototipo. La última línea explica un misterio de la Estación 11: todos los arrays tienen <code>map</code> porque todos están enlazados con <code>Array.prototype</code>, donde vive <code>map</code>.</p>
+  <p><code>Object.getPrototypeOf(objeto)</code> devuelve el prototipo de un objeto. En código antiguo o en la consola verás también <code>__proto__</code> (en las DevTools aparece como <code>[[Prototype]]</code>): es una forma vieja de acceder al mismo enlace que MDN desaconseja. Usa <code>Object.getPrototypeOf</code>.</p>
+
+  <h3>Antes de class: funciones constructoras</h3>
+  <p><code>class</code> llegó a JavaScript en 2015. Antes, lo mismo se escribía con una función normal y su propiedad <code>prototype</code>. Vas a encontrar este estilo en código antiguo y en muchos tutoriales:</p>
+  <pre><code class="language-js">function Personaje(nombre, vida) {        // función constructora
+  this.nombre = nombre;
+  this.vida = vida;
+}
+
+Personaje.prototype.describir = function () {
+  return `${this.nombre} (${this.vida})`;
+};
+
+const lyra = new Personaje("Lyra", 120);
+console.log(lyra.describir());   // Lyra (120)</code></pre>
+  <p>El resultado es casi idéntico: un objeto con sus datos, enlazado con <code>Personaje.prototype</code>, donde vive el método. Por eso se dice que las clases son <em>azúcar sintáctico</em>: una forma más cómoda de escribir lo mismo. «Casi», porque las clases añaden cosas que las funciones no pueden hacer: campos privados con <code>#</code>, la obligación de usar <code>new</code> y el modo estricto siempre activo. De hecho, <code>typeof Personaje</code> da <code>"function"</code> también cuando la escribes con <code>class</code>.</p>
+  <aside class="senal error" data-titulo="Error común: modificar los prototipos del lenguaje">
+    <p>Si puedes añadir <code>bailar</code> a <code>Personaje.prototype</code>, también podrías añadir métodos a <code>Array.prototype</code> o <code>String.prototype</code>, y todos los arrays del programa los tendrían. No lo hagas. A esta práctica se le llama <em>monkey patching</em> y causa conflictos reales: en 2018 el lenguaje iba a incorporar <code>Array.prototype.flatten</code>, pero una biblioteca antigua ya había añadido su propio <code>flatten</code> con otro comportamiento y habría roto miles de páginas. El estándar tuvo que llamarlo <code>flat</code>. El episodio se conoce como <em>SmooshGate</em>. Añade métodos a <em>tus</em> clases, nunca a las del lenguaje.</p>
+  </aside>
+</section>
+
+<section id="composicion" data-parada="Composición">
+  <h2>Composición sobre herencia</h2>
+  <p>Tu juego crece. Ahora hay murciélagos que vuelan, tiburones que nadan, un dragón marino que vuela <em>y</em> nada, y un power-up que permite volar al héroe. Con herencia empiezas bien: <code>EnemigoVolador extends Enemigo</code> y <code>EnemigoNadador extends Enemigo</code>. Pero el dragón marino necesitaría heredar de los dos, y JavaScript solo permite una clase madre. Y el héroe no es un enemigo, así que no puede reutilizar <code>EnemigoVolador</code>. Terminas copiando código, justo lo que la herencia prometía evitar.</p>
+  <p>Hay un segundo problema: cuando muchas clases heredan de una, cualquier cambio en la madre afecta a todas las hijas, incluso a las que no esperabas. Joe Armstrong, creador del lenguaje Erlang, lo resumió en una frase famosa del libro <em>Coders at Work</em> (2009): querías un plátano, pero lo que obtuviste fue un gorila sosteniendo el plátano, y la selva entera. Al heredar te llevas todo lo que la clase madre arrastra, lo necesites o no.</p>
+  <p>La <strong>composición</strong> (<em>composition</em>) construye objetos juntando piezas pequeñas e independientes, en lugar de heredar de una cadena de clases. Expresa una relación «tiene un»: un personaje <em>tiene un</em> inventario, <em>tiene</em> formas de moverse, <em>tiene un</em> ataque.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Comparación. A la izquierda, herencia: Enemigo tiene tres subclases, Volador, Nadador y Terrestre; una clase VoladorNadador necesitaría heredar de Volador y de Nadador a la vez, lo que no se puede. A la derecha, composición: un objeto DragonMarino tiene piezas: movimientos Vuelo y Nado, un ataque Mordida y un Inventario; se pueden cambiar o sumar piezas sin tocar las demás.">
+      <text class="d-rotulo" x="20" y="26">Herencia: «es un»</text>
+      <rect class="d-caja" x="120" y="44" width="120" height="34" rx="6"/>
+      <text class="d-mono" x="180" y="66" text-anchor="middle" style="font-size:14px">Enemigo</text>
+      <rect class="d-caja" x="20" y="130" width="100" height="34" rx="6"/>
+      <text class="d-mono" x="70" y="152" text-anchor="middle" style="font-size:14px">Volador</text>
+      <rect class="d-caja" x="140" y="130" width="100" height="34" rx="6"/>
+      <text class="d-mono" x="190" y="152" text-anchor="middle" style="font-size:14px">Nadador</text>
+      <rect class="d-caja" x="250" y="130" width="100" height="34" rx="6"/>
+      <text class="d-mono" x="300" y="152" text-anchor="middle" style="font-size:14px">Terrestre</text>
+      <path class="d-linea" d="M70 130V104H300V130M190 104V130M180 104V92"/>
+      <path class="d-tinta" d="M180 79l-7 13h14z"/>
+      <rect class="d-caja" x="80" y="220" width="180" height="34" rx="6"/>
+      <text class="d-mono" x="170" y="242" text-anchor="middle" style="font-size:14px">VoladorNadador</text>
+      <path class="d-mal-trazo" d="M130 220V194H70V168M210 220V194H190V168"/>
+      <text class="d-peq" x="170" y="280" text-anchor="middle">Solo puede extender una clase: ¿de cuál?</text>
+
+      <path class="d-punteada" d="M366 16V290"/>
+
+      <text class="d-rotulo" x="386" y="26">Composición: «tiene un»</text>
+      <rect class="d-caja" x="386" y="44" width="324" height="206" rx="8"/>
+      <text class="d-rotulo" x="400" y="70">DragonMarino</text>
+      <rect class="d-caja-suave" x="400" y="84" width="296" height="34" rx="6"/>
+      <text class="d-mono" x="414" y="106" style="font-size:14px">movimientos: [Vuelo, Nado]</text>
+      <rect class="d-caja-suave" x="400" y="128" width="296" height="34" rx="6"/>
+      <text class="d-mono" x="414" y="150" style="font-size:14px">ataque: Mordida</text>
+      <rect class="d-caja-suave" x="400" y="172" width="296" height="34" rx="6"/>
+      <text class="d-mono" x="414" y="194" style="font-size:14px">inventario: Inventario</text>
+      <text class="d-peq d-tenue" x="400" y="234">Cambia o suma piezas sin tocar las demás</text>
+      <text class="d-peq" x="386" y="280">Power-up: heroe.movimientos.push(new Vuelo())</text>
+    </svg>
+    <figcaption>Con herencia, cada combinación de capacidades pide una clase nueva, y algunas combinaciones ni siquiera se pueden expresar (en rojo). Con composición, el objeto se arma con piezas: para un dragón marino basta con darle dos movimientos, y un héroe puede ganar una pieza en plena partida.</figcaption>
+  </figure>
+  <p>En código, cada pieza es un objeto pequeño con una sola responsabilidad. La criatura no hereda sus capacidades: las <em>tiene</em> y les delega el trabajo.</p>
+  <pre><code class="language-js">// Piezas pequeñas: cada una sabe hacer una cosa
+class Vuelo {
+  describir(nombre) {
+    return `${nombre} vuela sobre el mapa`;
+  }
+}
+
+class Nado {
+  describir(nombre) {
+    return `${nombre} nada bajo el agua`;
+  }
+}
+
+class Mordida {
+  constructor(danio) {
+    this.danio = danio;
+  }
+  usar(atacante, objetivo) {
+    objetivo.recibirDanio(this.danio);
+    return `${atacante.nombre} muerde a ${objetivo.nombre} (-${this.danio})`;
+  }
+}
+
+// La criatura TIENE movimientos y un ataque, y les delega el trabajo
+class Criatura {
+  constructor(nombre, vida, movimientos, ataque) {
+    this.nombre = nombre;
+    this.vida = vida;
+    this.movimientos = movimientos;
+    this.ataque = ataque;
+  }
+  recibirDanio(cantidad) {
+    this.vida = Math.max(0, this.vida - cantidad);
+  }
+  moverse() {
+    return this.movimientos.map((m) =&gt; m.describir(this.nombre)).join(" / ");
+  }
+  atacar(objetivo) {
+    return this.ataque.usar(this, objetivo);
+  }
+}
+
+const dragonMarino = new Criatura("Dragón marino", 150, [new Vuelo(), new Nado()], new Mordida(25));</code></pre>
+  <p>Dos detalles importantes. Primero, <code>Criatura</code> no sabe qué movimientos concretos tiene: solo les pide <code>describir</code>. Es polimorfismo otra vez, ahora sin herencia. Segundo, las piezas se pueden cambiar mientras el juego corre: para el power-up basta con <code>heroe.movimientos.push(new Vuelo())</code>, y para que el dragón aprenda a escupir fuego, <code>dragonMarino.ataque = new AlientoDeFuego()</code>. Con herencia, la clase de un objeto queda fija para siempre en el momento del <code>new</code>.</p>
+  <div class="taller" id="taller-composicion" data-titulo="Modifica: arma criaturas con piezas">
+    <textarea class="taller-codigo">class Vuelo {
+  describir(nombre) {
+    return `${nombre} vuela sobre el mapa`;
+  }
+}
+
+class Nado {
+  describir(nombre) {
+    return `${nombre} nada bajo el agua`;
+  }
+}
+
+class Mordida {
+  constructor(danio) {
+    this.danio = danio;
+  }
+  usar(atacante, objetivo) {
+    objetivo.recibirDanio(this.danio);
+    return `${atacante.nombre} muerde a ${objetivo.nombre} (-${this.danio})`;
+  }
+}
+
+class AlientoDeFuego {
+  usar(atacante, objetivo) {
+    objetivo.recibirDanio(40);
+    return `${atacante.nombre} lanza fuego sobre ${objetivo.nombre} (-40)`;
+  }
+}
+
+class Criatura {
+  constructor(nombre, vida, movimientos, ataque) {
+    this.nombre = nombre;
+    this.vida = vida;
+    this.movimientos = movimientos;
+    this.ataque = ataque;
+  }
+  recibirDanio(cantidad) {
+    this.vida = Math.max(0, this.vida - cantidad);
+  }
+  moverse() {
+    return this.movimientos.map((m) => m.describir(this.nombre)).join(" / ");
+  }
+  atacar(objetivo) {
+    return this.ataque.usar(this, objetivo);
+  }
+}
+
+const murcielago = new Criatura("Murciélago", 15, [new Vuelo()], new Mordida(3));
+const dragonMarino = new Criatura("Dragón marino", 150, [new Vuelo(), new Nado()], new Mordida(25));
+const heroe = new Criatura("Lyra", 120, [], null);
+
+console.log(murcielago.moverse());
+console.log(dragonMarino.moverse());
+console.log(dragonMarino.atacar(heroe));
+
+heroe.movimientos.push(new Vuelo());          // power-up en plena partida
+console.log(heroe.moverse());
+
+dragonMarino.ataque = new AlientoDeFuego();   // cambia de ataque sin cambiar de clase
+console.log(dragonMarino.atacar(heroe));
+console.log(heroe.vida);</textarea>
+  </div>
+  <p><strong>Modifica</strong>: crea una pieza <code>Caminar</code> con su método <code>describir</code> y úsala para armar un pingüino que camina y nada. Después dale al murciélago el <code>AlientoDeFuego</code> y haz que ataque al héroe. No tuviste que crear ninguna clase <code>PinguinoCaminanteNadador</code>.</p>
+  <p>Existe otra forma de componer, muy común en JavaScript: funciones que añaden capacidades a un objeto que ya existe, llamadas <em>mixins</em>.</p>
+  <pre><code class="language-js">const conVuelo = (objeto) =&gt;
+  Object.assign(objeto, {
+    volar() {
+      return `${this.nombre} vuela`;
+    },
+  });
+
+const gallina = conVuelo({ nombre: "Gallina" });
+console.log(gallina.volar());   // Gallina vuela</code></pre>
+  <p><code>Object.assign(destino, origen)</code> copia las propiedades de <code>origen</code> dentro de <code>destino</code>. Es rápido de escribir, pero los mixins mezclan todo en un mismo objeto y, si dos mixins usan el mismo nombre, el segundo pisa al primero sin avisar. Las piezas separadas de <code>Criatura</code> son más claras cuando el juego crece.</p>
+  <aside class="senal clave">
+    <p>«Favorece la composición de objetos por encima de la herencia de clases.» Es una de las recomendaciones más citadas del libro <em>Design Patterns</em> (1994), escrito por cuatro autores conocidos como la «Banda de los Cuatro» (<em>Gang of Four</em>). Dice <em>favorece</em>, no <em>prohíbe</em>: la herencia sigue siendo buena para jerarquías cortas y estables.</p>
+  </aside>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Pregunta</th><th scope="col">Herencia</th><th scope="col">Composición</th></tr></thead>
+      <tbody>
+        <tr><td>¿Qué relación expresa?</td><td>«Es un», estable en el tiempo</td><td>«Tiene un» o «puede hacer»</td></tr>
+        <tr><td>¿Combinar capacidades?</td><td>Difícil: una sola clase madre</td><td>Fácil: se suman piezas</td></tr>
+        <tr><td>¿Cambiar durante la ejecución?</td><td>No: la clase se fija con <code>new</code></td><td>Sí: se cambia la pieza</td></tr>
+        <tr><td>Riesgo principal</td><td>Un cambio en la madre rompe a las hijas</td><td>Muchas piezas pequeñas que hay que conectar</td></tr>
+        <tr><td>Buen uso</td><td>Jerarquías cortas y claras: <code>Error</code> → <code>TypeError</code>; <code>MetodoDePago</code> → <code>Tarjeta</code></td><td>Habilidades, equipamiento, comportamientos que se combinan</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal oficio">
+    <p>Los motores de videojuegos están construidos sobre composición. En Unity, un <em>GameObject</em> es casi un contenedor vacío al que le añades componentes: uno para dibujarlo, otro para la física, otro con tu código. En Godot, una escena es un árbol de nodos (un sprite, una forma de colisión, un reproductor de animaciones) que se combinan. Lo verás en la <a href="34-videojuegos.html">Estación 34</a>. Y muchos patrones de diseño clásicos, como Strategy o Decorator, son formas organizadas de componer objetos: los estudiarás, junto con los principios SOLID, en la <a href="25-codigo-limpio.html">Estación 25</a>.</p>
+  </aside>
+</section>
+
+<section id="funcional" data-parada="Funciones puras">
+  <h2>Funciones puras e inmutabilidad</h2>
+  <p>Un error real de tienda en línea. La función que aplica las rebajas funciona… y además estropea el catálogo:</p>
+  <pre><code class="language-js">const catalogo = [
+  { nombre: "Café", precio: 10 },
+  { nombre: "Taza", precio: 8 },
+];
+
+function aplicarRebajas(productos) {
+  for (const p of productos) {
+    p.precio = p.precio * 0.8;       // cambia el objeto original
+  }
+  return productos;
+}
+
+const enOferta = aplicarRebajas(catalogo);
+console.log(enOferta[0].precio);   // 8: bien
+console.log(catalogo[0].precio);   // 8: ¡el catálogo normal también bajó!
+aplicarRebajas(catalogo);          // otra pantalla vuelve a llamarla…
+console.log(catalogo[0].precio);   // 6.4: rebaja sobre rebaja</code></pre>
+  <p>Nadie escribió «cambia el catálogo», pero cambió. En un programa grande, encontrar quién modificó un dato es de las tareas más lentas de la depuración. La <strong>programación funcional</strong> (<em>functional programming</em>) ataca este problema de raíz: propone construir el programa con funciones que se comportan como las de matemáticas, que reciben datos y devuelven un resultado sin tocar nada más, y con datos que nunca se modifican. Sus dos pilares son las funciones puras y la inmutabilidad.</p>
+
+  <h3>Funciones puras, un paso más allá</h3>
+  <p>En la <a href="10-funciones.html#disenar">Estación 10</a> conociste las funciones puras: con las mismas entradas devuelven siempre la misma salida, y no tienen efectos secundarios (cambiar una variable de fuera, imprimir, guardar, enviar datos). Aquí conviene añadir dos matices que se escapan con facilidad:</p>
+  <ul>
+    <li><strong>Modificar un argumento también es un efecto secundario.</strong> <code>aplicarRebajas</code> no toca ninguna variable global, pero cambia los objetos que recibió, y esos objetos son los mismos que tiene quien la llamó (lo viste en la <a href="11-colecciones.html#referencias">Estación 11</a>: los arrays y objetos se pasan por referencia).</li>
+    <li><strong>Leer algo que cambia solo también rompe la pureza.</strong> <code>Math.random()</code>, <code>Date.now()</code> o una variable global que otra parte del programa modifica hacen que la misma llamada pueda dar resultados distintos.</li>
+  </ul>
+  <p>Una forma rápida de comprobar si una función es pura: ¿podrías reemplazar la llamada por su resultado sin que el programa cambie? Si <code>calcularDanio(10, 4)</code> siempre vale 6, puedes escribir 6 en su lugar. A esa propiedad se le llama <strong>transparencia referencial</strong>. Sigue esta traza y compara las dos funciones:</p>
+  <div class="traza" data-titulo="Pura contra impura">
+    <pre><code class="language-js">let total = 0;
+function sumarImpura(n) {
+  total = total + n;
+  return total;
+}
+function sumarPura(a, b) {
+  return a + b;
+}
+console.log(sumarImpura(5));
+console.log(sumarImpura(5));
+console.log(sumarPura(0, 5));
+console.log(sumarPura(0, 5));</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"total": "0"}, "nota": "total vive fuera de las dos funciones: es una variable global."},
+      {"linea": 3, "vars": {"total": "5", "n": "5"}, "nota": "La línea 9 llama a sumarImpura(5). La función cambia total, que no le pertenece: es un efecto secundario."},
+      {"linea": 9, "vars": {"total": "5"}, "salida": "5", "nota": "Devuelve 5 y se imprime."},
+      {"linea": 3, "vars": {"total": "10", "n": "5"}, "nota": "La línea 10 hace exactamente la misma llamada, con el mismo argumento… pero total ya no valía 0."},
+      {"linea": 10, "vars": {"total": "10"}, "salida": "10", "nota": "Mismo argumento, resultado distinto: sumarImpura no es pura. Su resultado depende de la historia del programa, y si otra función también toca total, de quién pasó antes."},
+      {"linea": 7, "vars": {"total": "10", "a": "0", "b": "5"}, "nota": "sumarPura solo usa sus parámetros a y b. No lee ni cambia nada de fuera."},
+      {"linea": 11, "vars": {"total": "10"}, "salida": "5", "nota": "Devuelve 5."},
+      {"linea": 12, "vars": {"total": "10"}, "salida": "5", "nota": "Otra vez 5, y lo será siempre. total no se tocó. Podrías reemplazar sumarPura(0, 5) por 5 en cualquier parte sin cambiar nada."}
+    ]</script>
+  </div>
+  <p>¿Por qué tanto interés en la pureza? Una función pura se entiende leyendo solo su código, se prueba llamándola y mirando lo que devuelve (<a href="26-testing.html">Estación 26</a>), se puede ejecutar en cualquier orden o en paralelo sin sorpresas, y su resultado se puede guardar para no recalcularlo (la memoización de la <a href="20-algoritmos.html">Estación 20</a> solo es segura con funciones puras).</p>
+
+  <h3>Núcleo funcional, cáscara imperativa</h3>
+  <p>Un programa sin efectos secundarios no sirve de nada: hay que mostrar cosas, guardar partidas, reproducir sonidos. La idea no es eliminarlos, sino <em>separarlos</em>. Mucha gente lo resume como «núcleo funcional, cáscara imperativa» (<em>functional core, imperative shell</em>, una expresión popularizada por el programador Gary Bernhardt): un núcleo de funciones puras que toma todas las decisiones, y una capa fina alrededor que hace los efectos.</p>
+  <pre><code class="language-js">// Núcleo puro: las reglas del juego, sin tocar nada de fuera
+function aplicarGolpe(estado, danio) {
+  const vida = Math.max(0, estado.vida - danio);
+  return { ...estado, vida, derrotado: vida === 0 };
+}
+
+// Cáscara: aquí viven los efectos (azar, consola, pantalla)
+let estado = { nombre: "Lyra", vida: 30, derrotado: false };
+const danio = Math.floor(Math.random() * 20) + 1;    // impuro: azar
+estado = aplicarGolpe(estado, danio);
+console.log(`Lyra recibe ${danio}. Vida: ${estado.vida}`);   // impuro: consola</code></pre>
+  <p>Todas las reglas difíciles están en <code>aplicarGolpe</code>, que es pura y fácil de probar: <code>aplicarGolpe({ vida: 30 }, 50)</code> siempre devuelve vida 0 y <code>derrotado: true</code>. Lo impredecible (el azar) y lo visible (la consola) quedan en tres líneas fáciles de revisar.</p>
+
+  <h3>Inmutabilidad</h3>
+  <p>En la Estación 11 viste que <strong>mutar</strong> es cambiar un array u objeto que ya existe, y que todos los que tienen una referencia a él ven el cambio (repasa la cápsula «Dos nombres, un mismo array» si lo necesitas). La <strong>inmutabilidad</strong> es la disciplina de no mutar nunca los datos: cuando necesitas una versión distinta, creas una copia nueva con el cambio y dejas el original intacto. Quien tenga el original no se lleva sorpresas.</p>
+  <p>Así se arregla la función de las rebajas:</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Muta lo que recibe</p>
+      <pre><code class="language-js">function aplicarRebajas(productos) {
+  for (const p of productos) {
+    p.precio = p.precio * 0.8;
+  }
+  return productos;
+}</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Devuelve datos nuevos</p>
+      <pre><code class="language-js">function aplicarRebajas(productos) {
+  return productos.map((p) =&gt; ({
+    ...p,
+    precio: p.precio * 0.8,
+  }));
+}</code></pre>
+    </div>
+  </div>
+  <p><code>map</code> crea un array nuevo y <code>{ ...p, precio: … }</code> crea un objeto nuevo con todas las propiedades de <code>p</code> y el precio cambiado. El catálogo original no se entera. Los paréntesis alrededor de las llaves <code>({ … })</code> le dicen a la flecha que devuelve un objeto y no que empieza un bloque de código.</p>
+  <p>Esta tabla reúne las operaciones más comunes en sus dos versiones. Todas las de la derecha crean un array u objeto nuevo:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Quieres…</th><th scope="col">Mutando el original</th><th scope="col">Sin mutar (crea uno nuevo)</th></tr></thead>
+      <tbody>
+        <tr><td>Añadir al final</td><td><code>lista.push(x)</code></td><td><code>[...lista, x]</code></td></tr>
+        <tr><td>Quitar el elemento de la posición <code>i</code></td><td><code>lista.splice(i, 1)</code></td><td><code>lista.toSpliced(i, 1)</code> o <code>lista.filter((_, j) =&gt; j !== i)</code></td></tr>
+        <tr><td>Cambiar el elemento de la posición <code>i</code></td><td><code>lista[i] = x</code></td><td><code>lista.with(i, x)</code></td></tr>
+        <tr><td>Ordenar</td><td><code>lista.sort(comparar)</code></td><td><code>lista.toSorted(comparar)</code></td></tr>
+        <tr><td>Cambiar una propiedad</td><td><code>obj.vida = 5</code></td><td><code>{ ...obj, vida: 5 }</code></td></tr>
+        <tr><td>Quitar una propiedad</td><td><code>delete obj.clave</code></td><td><code>const { clave, ...resto } = obj</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><code>toSpliced</code> y <code>with</code> llegaron en 2023, igual que <code>toSorted</code> y <code>toReversed</code>: funcionan en todos los navegadores modernos y en Node.js 20 o posterior (compruébalo con <code>node --version</code>). En <code>filter((_, j) =&gt; …)</code>, el guion bajo es un nombre de parámetro que, por convención, significa «este no lo uso». Y la última fila usa la desestructuración con resto de la Estación 11: <code>resto</code> recibe todas las propiedades menos <code>clave</code>.</p>
+  <aside class="senal ojo" data-titulo="La copia es superficial">
+    <p>El spread solo copia el primer nivel. En <code>const copia = { ...jugador }</code>, si <code>jugador.inventario</code> es un array, <code>copia.inventario</code> es <em>el mismo</em> array. Para añadir un objeto sin mutar hay que copiar también el nivel de dentro: <code>{ ...jugador, inventario: [...jugador.inventario, "poción"] }</code>. Si necesitas una copia completa de datos anidados, usa <code>structuredClone</code>, que viste en la Estación 11.</p>
+  </aside>
+
+  <h3>Object.freeze: que JavaScript te vigile</h3>
+  <p>La inmutabilidad es una disciplina, pero puedes pedir ayuda al lenguaje. <code>Object.freeze(objeto)</code> <em>congela</em> un objeto: ya no se pueden cambiar, añadir ni quitar sus propiedades. Tiene dos límites que conviene conocer: es superficial (los objetos que hay dentro no se congelan), y fuera del modo estricto el intento de cambio se ignora en silencio. Por eso este taller empieza con <code>"use strict";</code>. <strong>Predice</strong> y ejecuta:</p>
+  <div class="taller" id="taller-freeze" data-titulo="Predice: congelar y copiar">
+    <textarea class="taller-codigo">"use strict";
+const config = Object.freeze({ dificultad: "normal", sonido: { volumen: 80 } });
+
+try {
+  config.dificultad = "difícil";
+} catch (error) {
+  console.log(error.name + ": " + error.message);
+}
+
+config.sonido.volumen = 10;    // el objeto de dentro NO está congelado
+console.log(config.dificultad, config.sonido.volumen);
+
+const precios = [30, 10, 20];
+const ordenados = precios.toSorted((a, b) => a - b);
+console.log(precios, ordenados);
+const conDescuento = precios.map((p) => p * 0.9);
+console.log(precios, conDescuento);</textarea>
+  </div>
+  <p>El cambio de <code>dificultad</code> lanza <code>TypeError: Cannot assign to read only property 'dificultad'</code> («no se puede asignar a la propiedad de solo lectura»); el texto exacto varía un poco según el navegador. El volumen, en cambio, sí pasa a 10: <code>freeze</code> no entró en <code>sonido</code>. Y <code>precios</code> sigue siendo <code>[ 30, 10, 20 ]</code> después de ordenar y de aplicar el descuento. <strong>Modifica</strong>: borra la primera línea (<code>"use strict";</code>) y vuelve a ejecutar. ¿Qué cambia en la primera línea impresa? Ahora el intento falla en silencio y no hay nada que capturar: por eso el modo estricto es tu aliado.</p>
+
+  <h3>Una recompensa de la inmutabilidad: deshacer</h3>
+  <p>Si nunca modificas un estado, puedes guardar todos los anteriores sin miedo a que cambien. Eso hace casi gratis funciones como «deshacer», las repeticiones de una partida o comparar el antes y el después:</p>
+  <pre><code class="language-js">const historial = [{ vida: 100, oro: 0 }];
+const actual = () =&gt; historial[historial.length - 1];
+
+historial.push({ ...actual(), oro: actual().oro + 50 });     // gana oro
+historial.push({ ...actual(), vida: actual().vida - 30 });   // recibe daño
+console.log(actual());   // { vida: 70, oro: 50 }
+
+historial.pop();         // deshacer el último cambio
+console.log(actual());   // { vida: 100, oro: 50 }</code></pre>
+  <p>El array <code>historial</code> sí cambia (es la cáscara), pero ningún estado guardado dentro se modifica nunca. Si los estados se mutaran, «deshacer» devolvería un estado que ya fue alterado. React, la biblioteca de interfaces de la <a href="32-react.html">Estación 32</a>, se apoya en esta misma idea: para cambiar lo que se ve en pantalla le das un estado nuevo en lugar de mutar el anterior.</p>
+  <aside class="senal oficio">
+    <p>Copiar tiene un coste: crear un array nuevo de un millón de elementos en cada cambio es lento. En la práctica, la mayoría de los datos de una app son pequeños y la claridad compensa de sobra. Cuando no es así, los equipos usan estructuras pensadas para esto o bibliotecas como Immer, que te dejan escribir como si mutaras y por debajo crean las copias. Y cuando un objeto tiene identidad propia y cambia sesenta veces por segundo (la posición de un personaje en un juego), mutarlo dentro de su clase, bien encapsulado, es una decisión razonable.</p>
+  </aside>
+</section>
+
+<section id="orden-superior" data-parada="Orden superior">
+  <h2>Funciones de orden superior, currying y composición</h2>
+  <p>La tienda necesita descuentos del 10 %, del 20 % y del 30 %, y el precio final pasa por varios pasos: aplicar el descuento, sumar el impuesto y redondear. Escrito con llamadas anidadas, se lee de dentro hacia fuera, al revés de como ocurre:</p>
+  <pre><code class="language-js">const precio = redondear(sumarImpuesto(aplicarDescuento(99, 0.2)));</code></pre>
+  <p>La programación funcional tiene herramientas para escribir esto de forma más clara. Todas se basan en algo que ya sabes de la <a href="10-funciones.html#flechas">Estación 10</a>: en JavaScript las funciones son valores (se dice que son <em>de primera clase</em>), así que puedes guardarlas en variables, pasarlas como argumento y devolverlas desde otra función. Una función que recibe o devuelve funciones es una <em>función de orden superior</em>. <code>map</code>, <code>filter</code>, <code>reduce</code>, <code>setTimeout</code> y <code>addEventListener</code> son funciones de orden superior que ya usas a diario:</p>
+  <pre><code class="language-js">const carrito = [
+  { nombre: "Café", precio: 12, cantidad: 2 },
+  { nombre: "Taza", precio: 8, cantidad: 1 },
+  { nombre: "Filtros", precio: 3, cantidad: 0 },
+];
+
+const total = carrito
+  .filter((l) =&gt; l.cantidad &gt; 0)             // qué líneas cuentan
+  .map((l) =&gt; l.precio * l.cantidad)         // cuánto vale cada una
+  .reduce((suma, subtotal) =&gt; suma + subtotal, 0);   // cómo se combinan
+console.log(total);   // 32</code></pre>
+
+  <h3>Funciones que fabrican funciones</h3>
+  <p>Una función de orden superior también puede <em>devolver</em> una función nueva, configurada con los datos que le pasaste. Gracias a los closures (<a href="10-funciones.html#closures">Estación 10</a>), la función devuelta recuerda esos datos:</p>
+  <pre><code class="language-js">function crearDescuento(porcentaje) {
+  return (precio) =&gt; precio * (1 - porcentaje);
+}
+
+const rebajaDeVerano = crearDescuento(0.2);
+const cupon10 = crearDescuento(0.1);
+
+console.log(rebajaDeVerano(50));          // 40
+console.log([10, 20, 30].map(cupon10));   // [ 9, 18, 27 ]</code></pre>
+  <p><code>crearDescuento</code> es una fábrica de funciones: en lugar de escribir tres funciones casi iguales, escribes una que las produce. Fíjate en que <code>cupon10</code> encaja directamente en <code>map</code>, porque es una función que recibe un precio y devuelve otro.</p>
+
+  <h3>Currying</h3>
+  <p>El <strong>currying</strong> (en español también «currificación», por el matemático Haskell Curry) consiste en transformar una función que recibe varios argumentos a la vez en una cadena de funciones que reciben uno cada una: en lugar de <code>multiplicar(a, b)</code>, <code>multiplicar(a)(b)</code>.</p>
+  <pre><code class="language-js">const multiplicar = (a) =&gt; (b) =&gt; a * b;
+
+const doble = multiplicar(2);     // fija el primer argumento
+const triple = multiplicar(3);
+
+console.log(doble(21));             // 42
+console.log([1, 2, 3].map(triple)); // [ 3, 6, 9 ]
+console.log(multiplicar(4)(5));     // 20: los dos argumentos seguidos</code></pre>
+  <p>La ventaja práctica es poder fijar los primeros argumentos y obtener una función especializada, lista para <code>map</code> o <code>filter</code>. A esto se le llama <em>aplicación parcial</em>. Un ejemplo de juego: una explosión que daña a todos los enemigos, sin mutar ninguno.</p>
+  <pre><code class="language-js">const hacerDanio = (cantidad) =&gt; (enemigo) =&gt; ({
+  ...enemigo,
+  vida: Math.max(0, enemigo.vida - cantidad),
+});
+
+const enemigos = [{ nombre: "Slime", vida: 8 }, { nombre: "Lobo", vida: 40 }];
+const trasLaExplosion = enemigos.map(hacerDanio(10));
+// [ { nombre: 'Slime', vida: 0 }, { nombre: 'Lobo', vida: 30 } ]</code></pre>
+  <aside class="senal error" data-titulo="Error común: pasar la fábrica en vez de lo que fabrica">
+    <p><code>[10, 20].map(crearDescuento)</code> no aplica ningún descuento: le pasa cada precio a la <em>fábrica</em>, que devuelve funciones. El resultado es <code>[ [Function (anonymous)], [Function (anonymous)] ]</code>. Lo correcto es llamar primero a la fábrica: <code>[10, 20].map(crearDescuento(0.1))</code>.</p>
+  </aside>
+  <aside class="senal ojo" data-titulo="map le pasa más argumentos de los que crees">
+    <p><code>["1", "2", "3"].map(parseInt)</code> da <code>[ 1, NaN, NaN ]</code>. <code>map</code> llama al callback con tres argumentos (el elemento, su índice y el array), y <code>parseInt</code> interpreta el segundo como la base de numeración: <code>parseInt("2", 1)</code> no tiene sentido. Cuando pases una función ya hecha a <code>map</code>, asegúrate de que espera un solo argumento, o envuélvela: <code>.map((t) =&gt; parseInt(t, 10))</code> o <code>.map(Number)</code>.</p>
+  </aside>
+
+  <h3>Composición de funciones</h3>
+  <p>La <strong>composición de funciones</strong> combina funciones pequeñas en una más grande, de modo que la salida de una es la entrada de la siguiente, como en una cadena de montaje. Una función <code>pipe</code> («tubería») hace ese trabajo en tres líneas usando <code>reduce</code>:</p>
+  <pre><code class="language-js">const pipe = (...funciones) =&gt; (valorInicial) =&gt;
+  funciones.reduce((valor, f) =&gt; f(valor), valorInicial);
+
+const aplicarDescuento = crearDescuento(0.2);
+const sumarImpuesto = (precio) =&gt; precio * 1.16;
+const redondear = (precio) =&gt; Math.round(precio * 100) / 100;
+
+const precioFinal = pipe(aplicarDescuento, sumarImpuesto, redondear);
+console.log(precioFinal(99));                   // 91.87
+console.log([99, 25, 15].map(precioFinal));     // [ 91.87, 23.2, 13.92 ]</code></pre>
+  <p><code>...funciones</code> es un <em>parámetro rest</em>: reúne todos los argumentos que recibe <code>pipe</code> en un array. <code>reduce</code> empieza con el valor inicial y le aplica cada función por turno. El resultado se lee en el orden en que ocurre: descuento, impuesto, redondeo. Míralo en acción:</p>
+  <figure class="capsula" data-titulo="Una tubería de funciones">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 240" role="img" aria-label="Animación: el valor 99 entra en la tubería precioFinal. aplicarDescuento lo convierte en 79.2, sumarImpuesto en 91.872 y redondear en 91.87, que sale como resultado.">
+        <text class="d-mono" x="10" y="24" style="font-size:14px">const precioFinal = pipe(aplicarDescuento, sumarImpuesto, redondear)</text>
+
+        <rect class="d-caja" x="95" y="56" width="160" height="66" rx="8"/>
+        <text class="d-mono" x="175" y="84" text-anchor="middle" style="font-size:14px">aplicarDescuento</text>
+        <text class="d-peq d-tenue" x="175" y="106" text-anchor="middle">× 0.8 (20 % menos)</text>
+        <rect class="d-caja" x="285" y="56" width="160" height="66" rx="8"/>
+        <text class="d-mono" x="365" y="84" text-anchor="middle" style="font-size:14px">sumarImpuesto</text>
+        <text class="d-peq d-tenue" x="365" y="106" text-anchor="middle">× 1.16 (16 %)</text>
+        <rect class="d-caja" x="475" y="56" width="160" height="66" rx="8"/>
+        <text class="d-mono" x="555" y="84" text-anchor="middle" style="font-size:14px">redondear</text>
+        <text class="d-peq d-tenue" x="555" y="106" text-anchor="middle">a 2 decimales</text>
+
+        <path class="d-linea" d="M60 89H85"/><path class="d-tinta" d="M95 89l-10 -6v12z"/>
+        <path class="d-linea" d="M255 89H275"/><path class="d-tinta" d="M285 89l-10 -6v12z"/>
+        <path class="d-linea" d="M445 89H465"/><path class="d-tinta" d="M475 89l-10 -6v12z"/>
+        <path class="d-linea" d="M635 89H660"/><path class="d-tinta" d="M670 89l-10 -6v12z"/>
+        <text class="d-peq d-tenue" x="10" y="93">entra</text>
+        <text class="d-peq d-tenue" x="676" y="93">sale</text>
+
+        <rect class="d-acento-trazo" x="90" y="51" width="170" height="76" rx="11" data-pasos="2"/>
+        <rect class="d-acento-trazo" x="280" y="51" width="170" height="76" rx="11" data-pasos="3"/>
+        <rect class="d-acento-trazo" x="470" y="51" width="170" height="76" rx="11" data-pasos="4"/>
+
+        <path class="d-punteada" d="M20 167H700"/>
+        <g data-mover="2:translate(125px,0px); 3:translate(315px,0px); 4:translate(505px,0px); 5:translate(610px,0px)">
+          <rect class="d-acento" x="5" y="150" width="100" height="34" rx="17"/>
+          <text class="d-sobre-acento d-mono" x="55" y="172" text-anchor="middle" style="font-size:15px" data-texto="2:79.2; 3:91.872; 4:91.87">99</text>
+        </g>
+
+        <g class="d-peq">
+          <text x="175" y="214" text-anchor="middle" data-pasos="2">99 × 0.8 = 79.2</text>
+          <text x="365" y="214" text-anchor="middle" data-pasos="3">79.2 × 1.16 = 91.872</text>
+          <text x="555" y="214" text-anchor="middle" data-pasos="4">91.872 → 91.87</text>
+          <text x="710" y="214" text-anchor="end" data-pasos="5">precioFinal(99) devuelve 91.87</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li><code>pipe</code> recibió tres funciones y devolvió una nueva, <code>precioFinal</code>. Todavía no se ha calculado nada: la tubería está montada y el valor 99 espera en la entrada.</li>
+        <li>Al llamar a <code>precioFinal(99)</code>, <code>reduce</code> empieza con 99 y se lo pasa a la primera función. <code>aplicarDescuento</code> devuelve 79.2.</li>
+        <li>La salida de una función es la entrada de la siguiente: <code>sumarImpuesto(79.2)</code> devuelve 91.872.</li>
+        <li><code>redondear(91.872)</code> deja dos decimales: 91.87. Si cambiaras el orden de las funciones, el resultado podría cambiar: en una tubería el orden importa.</li>
+        <li>No quedan funciones: <code>reduce</code> termina y <code>precioFinal(99)</code> devuelve 91.87. Ninguna de las tres funciones sabe que forma parte de una tubería, y cada una se puede probar y reutilizar por separado.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <aside class="senal nota" data-titulo="¿Y el operador |>?">
+    <p>Quizá leas sobre un operador de tubería, <code>|&gt;</code>, que permitiría escribir <code>99 |&gt; aplicarDescuento(%) |&gt; …</code>. Es una propuesta para el lenguaje que en septiembre de 2026 sigue en la etapa 2 del proceso de estandarización (las etapas van de 0 a 4, y solo en la 4 se considera terminada). No funciona en ningún navegador sin herramientas extra, así que no la uses todavía. Tu <code>pipe</code> de tres líneas hace el mismo trabajo hoy.</p>
+  </aside>
+  <p>Ahora te toca a ti. <strong>Predice</strong> las cinco líneas antes de ejecutar:</p>
+  <div class="taller" id="taller-tuberia" data-titulo="Predice y modifica: fábricas y tuberías">
+    <textarea class="taller-codigo">function crearDescuento(porcentaje) {
+  return (precio) => precio * (1 - porcentaje);
+}
+const multiplicar = (a) => (b) => a * b;
+const pipe = (...funciones) => (valorInicial) =>
+  funciones.reduce((valor, f) => f(valor), valorInicial);
+
+const rebajaDeVerano = crearDescuento(0.2);
+const triple = multiplicar(3);
+console.log(rebajaDeVerano(50));
+console.log([1, 2, 3].map(triple));
+
+const sumarImpuesto = (precio) => precio * 1.16;
+const redondear = (precio) => Math.round(precio * 100) / 100;
+const precioFinal = pipe(rebajaDeVerano, sumarImpuesto, redondear);
+console.log(precioFinal(99));
+console.log([99, 25, 15].map(precioFinal));
+console.log(sumarImpuesto(rebajaDeVerano(99)));   // sin redondear</textarea>
+  </div>
+  <p>La última línea muestra <code>91.872</code>: sin <code>redondear</code>, el precio tendría tres decimales (y con otros números, los decimales inexactos de la <a href="07-variables.html#numeros">Estación 7</a>). <strong>Modifica</strong>: crea <code>precioSocio</code>, una tubería con un 30 % de descuento, impuesto y redondeo, y comprueba que <code>precioSocio(100)</code> da <code>81.2</code>. Después añade al final de <code>precioFinal</code> una función que sume 4.99 de envío. ¿Importa si la pones antes o después de <code>redondear</code>?</p>
+
+  <h3>Métodos como callbacks: cuidado con this</h3>
+  <p>Una trampa que mezcla objetos y funciones de orden superior. Si pasas un método como callback, se «despega» de su objeto:</p>
+  <pre><code class="language-js">const lyra = new Personaje("Lyra", 120);
+
+setTimeout(lyra.describir, 1000);
+// TypeError: Cannot read properties of undefined (reading 'nombre')</code></pre>
+  <p><code>setTimeout</code> recibe la función <code>describir</code>, pero no el objeto. Cuando la llama, no hay nada a la izquierda del punto, así que <code>this</code> vale <code>undefined</code> (dentro de las clases siempre se trabaja en modo estricto). Tienes dos arreglos: envolver la llamada en una flecha, que conserva el objeto, o usar <code>bind</code>, que crea una copia de la función con <code>this</code> fijado para siempre:</p>
+  <pre><code class="language-js">setTimeout(() =&gt; console.log(lyra.describir()), 1000);   // la flecha llama a lyra.describir()
+const describirLyra = lyra.describir.bind(lyra);          // this queda fijado en lyra
+setTimeout(() =&gt; console.log(describirLyra()), 1000);</code></pre>
+  <p>Lo mismo pasa con <code>boton.addEventListener("click", tienda.agregar)</code> en la <a href="15-dom.html">Estación 15</a>: usa <code>() =&gt; tienda.agregar(producto)</code>.</p>
+</section>
+
+<section id="combinar" data-parada="Cuándo usar cada uno">
+  <h2>Cuándo usar cada enfoque (y cómo combinarlos)</h2>
+  <p>Orientación a objetos y programación funcional no son equipos rivales. Resuelven problemas distintos, y en un mismo proyecto conviven. Estas son pautas que usan muchos equipos:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Situación</th><th scope="col">Enfoque que suele encajar</th><th scope="col">Por qué</th></tr></thead>
+      <tbody>
+        <tr><td>Entidades con identidad y estado que cambia: un personaje, un enemigo, una conexión, una cuenta</td><td>Clases con campos privados</td><td>El objeto protege sus reglas y agrupa sus datos con su comportamiento</td></tr>
+        <tr><td>Cálculos y reglas: daño, precios, impuestos, estadísticas, validaciones</td><td>Funciones puras</td><td>Fáciles de entender, probar y reutilizar</td></tr>
+        <tr><td>Transformar colecciones de datos: filtrar productos, ordenar un ranking</td><td><code>map</code>, <code>filter</code>, <code>reduce</code>, <code>toSorted</code></td><td>Declarativo y sin mutar el original</td></tr>
+        <tr><td>Muchas variantes de un comportamiento: métodos de pago, tipos de enemigo</td><td>Polimorfismo (con herencia corta o con composición)</td><td>Añadir una variante no obliga a tocar el código que las usa</td></tr>
+        <tr><td>Capacidades que se combinan: volar, nadar, disparar</td><td>Composición</td><td>Evita la explosión de subclases</td></tr>
+        <tr><td>Estado de una interfaz o historial para deshacer</td><td>Datos inmutables</td><td>Cada cambio es un estado nuevo y los anteriores quedan intactos</td></tr>
+        <tr><td>Datos sin comportamiento: lo que llega de una API en JSON</td><td>Objetos literales, sin clase</td><td>No hay reglas que proteger; <code>JSON.parse</code> ya da objetos normales</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Una clase también puede ser inmutable. Un vector de posición (<a href="18-matematicas.html">Estación 18</a>) es un buen ejemplo: sus métodos devuelven vectores nuevos en lugar de cambiar el suyo.</p>
+  <pre><code class="language-js">class Vector2 {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    Object.freeze(this);          // nadie puede cambiar x ni y
+  }
+  sumar(otro) {
+    return new Vector2(this.x + otro.x, this.y + otro.y);   // devuelve uno nuevo
+  }
+  escalar(factor) {
+    return new Vector2(this.x * factor, this.y * factor);
+  }
+}
+
+const posicion = new Vector2(10, 5);
+const velocidad = new Vector2(2, -1);
+const siguiente = posicion.sumar(velocidad.escalar(3));
+console.log(siguiente);   // Vector2 { x: 16, y: 2 }
+console.log(posicion);    // Vector2 { x: 10, y: 5 }: intacto</code></pre>
+  <p>Aquí tienes las dos ideas trabajando juntas en una página real. La tienda guarda su estado en un objeto de una clase con un campo privado; los cálculos son funciones puras que no saben nada de la página; y solo la parte final, la cáscara, toca el DOM. Pulsa los botones de la vista previa:</p>
+  <div class="taller" data-modo="web" id="taller-tienda-web" data-titulo="Una tienda: objetos + funciones puras" data-alto="20rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html"><h1>Tienda de Lyra</h1>
+<section id="productos"></section>
+<h2>Tu carrito</h2>
+<ul id="lineas"></ul>
+<p id="total">Carrito vacío</p>
+<button id="vaciar">Vaciar carrito</button></textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+#productos { display: flex; gap: .5rem; flex-wrap: wrap; }
+button { padding: .5rem .8rem; border-radius: 8px; border: 1px solid #888; background: #f4f4f4; cursor: pointer; }
+#total { font-weight: bold; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// 1. Datos
+const catalogo = [
+  { id: 1, nombre: "Café", precio: 12 },
+  { id: 2, nombre: "Taza", precio: 8 },
+  { id: 3, nombre: "Molinillo", precio: 45 },
+];
+
+// 2. Núcleo funcional: funciones puras que no tocan la página
+function agregarLinea(lineas, producto) {
+  const existe = lineas.some((l) => l.id === producto.id);
+  if (!existe) return [...lineas, { ...producto, cantidad: 1 }];
+  return lineas.map((l) => (l.id === producto.id ? { ...l, cantidad: l.cantidad + 1 } : l));
+}
+const calcularTotal = (lineas) => lineas.reduce((suma, l) => suma + l.precio * l.cantidad, 0);
+const descuentoPorVolumen = (total) => (total >= 100 ? total * 0.1 : 0);
+
+// 3. Un objeto que guarda el estado y protege sus reglas
+class Tienda {
+  #lineas = [];
+  agregar(producto) {
+    this.#lineas = agregarLinea(this.#lineas, producto);
+  }
+  vaciar() {
+    this.#lineas = [];
+  }
+  get lineas() {
+    return this.#lineas;
+  }
+  get total() {
+    const bruto = calcularTotal(this.#lineas);
+    return bruto - descuentoPorVolumen(bruto);
+  }
+}
+
+// 4. Cáscara imperativa: dibujar y escuchar clics (efectos secundarios)
+const tienda = new Tienda();
+
+function dibujar() {
+  const lista = document.querySelector("#lineas");
+  lista.innerHTML = "";
+  for (const l of tienda.lineas) {
+    const li = document.createElement("li");
+    li.textContent = `${l.nombre} × ${l.cantidad}: $${l.precio * l.cantidad}`;
+    lista.append(li);
+  }
+  document.querySelector("#total").textContent =
+    tienda.lineas.length === 0 ? "Carrito vacío" : `Total: $${tienda.total}`;
+}
+
+for (const producto of catalogo) {
+  const boton = document.createElement("button");
+  boton.textContent = `${producto.nombre} ($${producto.precio})`;
+  boton.addEventListener("click", () => {
+    tienda.agregar(producto);
+    dibujar();
+  });
+  document.querySelector("#productos").append(boton);
+}
+
+document.querySelector("#vaciar").addEventListener("click", () => {
+  tienda.vaciar();
+  dibujar();
+});</textarea>
+  </div>
+  <p>Compra un molinillo y cinco cafés: el total bruto es 105 y el descuento por volumen (10 % desde 100) lo deja en 94.5. <strong>Modifica</strong>: añade una función pura <code>quitarLinea(lineas, id)</code> que devuelva las líneas sin la del producto indicado, un método <code>quitar(id)</code> en <code>Tienda</code> que la use, y un botón para quitar el café. Fíjate en que ninguna función del núcleo cambió al añadir botones: por eso es fácil probarlas.</p>
+
+  <h3>Cómo se ve en carpetas</h3>
+  <p>En un proyecto real, esta separación también se nota en los archivos: cada clase importante vive en su propio archivo, y las funciones puras de un mismo tema se agrupan en otro. Cómo se conectan los archivos entre sí (<code>import</code> y <code>export</code>) lo verás en la <a href="22-ejecucion.html">Estación 22</a>. Practica la estructura en la terminal (repasa los comandos en la <a href="05-herramientas.html">Estación 5</a>). Crea esto dentro de tu carpeta personal:</p>
+  <pre class="consola"><code>juego/
+  entidades/     personaje.js  enemigo.js   (clases)
+  logica/        combate.js                 (funciones puras)</code></pre>
+  <div class="terminal-sim" data-titulo="Organiza el proyecto del juego" data-inicio="/home/tu">
+    <script type="application/json" class="terminal-sistema">{"notas.txt": "Ideas: jefe con dos fases, tienda de pociones"}</script>
+    <script type="text/plain" class="terminal-mision">
+var j = sistema.juego;
+if (!j || typeof j !== "object") return "Crea la carpeta juego con: mkdir juego";
+if (!j.entidades || typeof j.entidades !== "object") return "Dentro de juego falta la carpeta entidades (prueba mkdir juego/entidades).";
+if (!j.logica || typeof j.logica !== "object") return "Dentro de juego falta la carpeta logica.";
+if (j.entidades["personaje.js"] === undefined || j.entidades["enemigo.js"] === undefined) return "En juego/entidades deben estar personaje.js y enemigo.js (usa touch).";
+if (j.logica["combate.js"] === undefined) return "En juego/logica debe estar combate.js.";
+return true;
+    </script>
+  </div>
+  <aside class="senal oficio">
+    <p>Más que elegir «el mejor paradigma», los equipos siguen las costumbres de sus herramientas. React (<a href="32-react.html">Estación 32</a>) favorece componentes escritos como funciones y estado inmutable. Los motores de juegos como Godot o Unity (<a href="34-videojuegos.html">Estación 34</a>) organizan el mundo en objetos y componentes. Un servidor con Node.js (<a href="29-backend.html">Estación 29</a>) suele combinar clases para los servicios con funciones puras para validar y transformar datos. Lo que más se valora en una revisión de código no es la pureza de un estilo, sino la consistencia: que todo el proyecto se lea igual.</p>
+  </aside>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Un paradigma es una forma de organizar un programa. El código imperativo dice <em>cómo</em>, paso a paso; el declarativo dice <em>qué</em> resultado quieres (<code>filter</code>, SQL, HTML). JavaScript es multiparadigma.</li>
+    <li>Una clase es la plantilla; cada objeto creado con <code>new</code> es una instancia. <code>new</code> crea el objeto, lo enlaza con el prototipo, ejecuta el <code>constructor</code> con <code>this</code> apuntando a él y lo devuelve.</li>
+    <li>En un método, <code>this</code> es el objeto a la izquierda del punto. Si pasas un método como callback, pierde su objeto: envuélvelo en una flecha o usa <code>bind</code>.</li>
+    <li>Encapsulamiento: el estado va en campos privados (<code>#vida</code>) y solo cambia a través de métodos que respetan las reglas. Los getters y setters validan y calculan; <code>static</code> es para lo que pertenece a la clase y no a cada instancia.</li>
+    <li>Herencia (<code>extends</code>): la subclase recibe todo de la superclase. En su constructor, <code>super(...)</code> va antes de usar <code>this</code>. Sobrescribir reemplaza un método; <code>super.metodo()</code> reutiliza el original.</li>
+    <li>Polimorfismo: objetos distintos responden al mismo método a su manera, y el código que los usa no pregunta de qué clase son.</li>
+    <li>Por debajo, los métodos viven en <code>Clase.prototype</code> y JavaScript los busca siguiendo la cadena de prototipos hasta <code>null</code>. Las clases son, casi, una forma cómoda de escribir funciones constructoras.</li>
+    <li>Favorece la composición («tiene un») sobre la herencia («es un») cuando las capacidades se combinan o cambian durante el juego.</li>
+    <li>Funciones puras + inmutabilidad: calcula en un núcleo sin efectos secundarios, crea datos nuevos en lugar de mutarlos (<code>...</code>, <code>map</code>, <code>toSorted</code>, <code>with</code>) y deja los efectos en una cáscara fina. <code>Object.freeze</code> es superficial y solo avisa en modo estricto.</li>
+    <li>Funciones de orden superior: fábricas de funciones, currying (<code>(a) =&gt; (b) =&gt; …</code>) y composición con <code>pipe</code> permiten armar cálculos grandes con piezas pequeñas y probadas.</li>
+  </ul>
+</section>
