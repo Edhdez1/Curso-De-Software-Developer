@@ -115,7 +115,7 @@ de la línea), `d-acento-trazo`, `d-sobre-acento` (texto sobre el acento), `d-te
 `d-fondo`, `d-fondo-2`, `d-tinta`, `d-mono`, `d-rotulo`, `d-titulo`, `d-peq`, `d-ok`/`d-mal`/`d-aviso` (rellenos
 semánticos), `d-ok-trazo`/`d-mal-trazo`, `d-l1`…`d-l8` (rellenos de color de cada línea), `d-t1`…`d-t8` (trazos),
 `d-codigo` (fondo de código), `d-codigo-texto`, `d-codigo-tenue`, `d-resalte` (resaltado de línea).
-Los `<text>` heredan la tipografía; tamaño por defecto 16px. Deja margen en el `viewBox` para etiquetas.
+El `<svg>` pone color de tinta, tipografía y 16px por herencia: una clase en un `<g>` (por ejemplo `d-peq` o `d-ok`) afecta a todos sus textos. En `data-texto`, `data-clases` y `data-mover` las entradas se separan con `;` seguido del número de paso, así que un texto puede contener `;` siempre que no vaya seguido de «número:». Deja margen en el `viewBox` para etiquetas.
 Puntas de flecha: dibújalas como `<path class="d-tinta" d="M… l12 8 -12 8z"/>` (sin `marker`).
 Geometría precisa, nada de dibujos «a mano alzada» ni figuras humanas.
 
@@ -163,7 +163,7 @@ console.log(b);</code></pre>
 
 `linea` es la línea que se acaba de ejecutar; `vars` es la memoria completa **después** de ejecutarla (valores como
 texto; los strings con comillas: `"\"Ana\""`); `salida` es lo que esa línea imprime. Para bucles, repite pasos por
-cada vuelta. `data-rotulo-memoria` cambia el título «Memoria (variables)».
+cada vuelta. `data-rotulo-memoria` cambia el título «Memoria (variables)». Si el primer paso tiene `"linea": 0`, se usa como estado inicial (por ejemplo, variables que ya existían).
 
 ### Taller (editor que ejecuta código de verdad)
 
@@ -270,7 +270,7 @@ el concepto.
 </div>
 ```
 
-Escribe las líneas **en el orden correcto**: la página las desordena y la persona las ordena.
+Escribe las líneas **en el orden correcto**: la página las desordena y la persona las ordena. Usa solo algoritmos con un único orden válido (si dos líneas pueden intercambiarse sin cambiar el resultado, la corrección las marcaría como error).
 
 ### Terminal simulada (comandos y Git sin instalar nada)
 

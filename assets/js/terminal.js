@@ -180,7 +180,7 @@
     });
   }
   function entradas(expr) {
-    return String(expr).split(";").map(function (p) {
+    return String(expr).split(/;\s*(?=\d+\s*:)/).map(function (p) {
       var i = p.indexOf(":");
       if (i === -1) return null;
       return { paso: parseInt(p.slice(0, i), 10), valor: p.slice(i + 1).trim() };
@@ -304,7 +304,7 @@
     var lenguaje = lenguajeDe(codeEl) || "javascript";
     var lineas = codeEl.textContent.replace(/\n$/, "").split("\n");
     var titulo = caja.getAttribute("data-titulo") || "Paso a paso";
-    pasos.unshift({ linea: 0, vars: {}, nota: caja.getAttribute("data-inicio") || "Antes de empezar: la memoria está vacía y no se ha ejecutado ninguna línea. Pulsa «Siguiente»." });
+    if (!pasos.length || pasos[0].linea !== 0) pasos.unshift({ linea: 0, vars: {}, nota: caja.getAttribute("data-inicio") || "Antes de empezar: la memoria está vacía y no se ha ejecutado ninguna línea. Pulsa «Siguiente»." });
 
     var pre = crear("pre", { "class": "traza-codigo" });
     var code = crear("code");
