@@ -185,7 +185,10 @@ JavaScript (se ejecuta en un Web Worker, sin DOM):
 - Formato de la consola (igual que Node.js): strings tal cual; arrays `[ 1, 2 ]`; objetos `{ a: 1, b: 'x' }`;
   Map `Map(1) { 'a' => 1 }`. Prefiere verificar valores simples.
 - Opcionales: `data-tiempo="10"` (segundos máximos, por defecto 5), `data-exito="mensaje"`.
-- Hay `setTimeout`, promesas, `await` de nivel superior y `fetch`. No hay `document`, `prompt` ni `alert` útiles.
+- Hay `setTimeout`, promesas y `await` de nivel superior. No hay `document`, `prompt` ni `alert` útiles.
+- `fetch` a otros sitios **no funciona en la versión publicada** del curso (el visor bloquea las peticiones
+  externas). En talleres, simula la red con una función que devuelve una promesa (`setTimeout` + datos de ejemplo)
+  y muestra el `fetch` real como bloque de código para probar en la consola del navegador o en Node.
 - Dentro de `<textarea>` el código va literal (no escapes `<`), pero nunca escribas `</textarea>`.
   Dentro de `<script type="text/plain">` nunca escribas `</script>`. Un taller no contiene `</div>` interno.
 
@@ -217,7 +220,8 @@ Python (se ejecuta con Brython en el navegador; se verifica con Python real en l
 </div>
 ```
 
-No uses `input()` en talleres (no funciona en todos los visores). Solo la biblioteca estándar básica.
+No uses `input()` en talleres (no funciona en todos los visores). La biblioteca estándar (`random`, `math`, `json`,
+`datetime`…) funciona; paquetes externos (`requests`, `pandas`…) no.
 
 SQL (SQLite real en el navegador):
 

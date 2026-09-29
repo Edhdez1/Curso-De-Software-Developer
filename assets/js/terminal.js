@@ -596,8 +596,8 @@
       var cabeza = "<!doctype html><html lang='es'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" + puente;
       var html;
       if (modo === "python") {
-        html = cabeza + "<script src='" + CDN + "brython/3.14.3/brython.min.js'><\/script></head><body>" +
-          "<script type='text/python' id='principal'>\n" + sinCierre(partes.python) + "\n<\/script>" +
+        html = cabeza + "<script src='" + CDN + "brython/3.14.3/brython.min.js'><\/script><script src='" + CDN + "brython/3.14.3/brython_stdlib.js'><\/script></head><body>" +
+          "<brython-options indexeddb='false' cache='false'></brython-options><script type='text/python' id='principal'>\n" + sinCierre(partes.python) + "\n<\/script>" +
           "<script>window.addEventListener('load',function(){if(!window.__BRYTHON__){console.error('No se pudo cargar el intérprete de Python.');}setTimeout(window.__terminar,300);});<\/script></body></html>";
       } else if (modo === "sql") {
         html = cabeza + "<script src='" + CDN + "sql.js/1.14.2/sql-asm.js'><\/script></head><body><script>" +
