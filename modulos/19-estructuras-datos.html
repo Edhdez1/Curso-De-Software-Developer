@@ -52,6 +52,7 @@
       <li><a href="#hash">Tablas hash y Map</a></li>
       <li><a href="#conjuntos">Conjuntos</a></li>
       <li><a href="#arboles">Árboles</a></li>
+      <li><a href="#monticulos">Montículos</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -1241,6 +1242,142 @@ mostrar(habilidades, 0);
     └─ a ─ l* ─ t ─ o*      sal, salto
            └─ u ─ d*        salud
 (* = aquí termina una palabra)</code></pre>
+</section>
+
+<section id="monticulos" data-parada="Montículos">
+  <h2>Montículos y colas de prioridad</h2>
+  <p>En urgencias de un hospital no se atiende por orden de llegada: primero pasa quien está más grave, aunque haya llegado el último. Lo mismo ocurre en muchos programas. Un juego de estrategia procesa los eventos por el momento en que deben ocurrir, no por el orden en que se programaron. Un sistema operativo da el procesador a la tarea más prioritaria. Un buscador de rutas explora primero el camino más prometedor. Todos necesitan una <strong>cola de prioridad</strong>: una colección donde cada elemento tiene una prioridad y siempre sale el más urgente.</p>
+  <p>¿Con qué la implementamos? Un array desordenado permite agregar en <code>O(1)</code>, pero encontrar el más urgente obliga a revisarlos todos: <code>O(n)</code>. Un array ordenado da el más urgente al instante, pero cada inserción tiene que abrir hueco en su sitio: <code>O(n)</code>. La estructura que equilibra las dos cosas es el <strong>montículo</strong> (en inglés, <em>heap</em>): agregar y sacar el más urgente cuestan <code>O(log n)</code>, y mirar cuál es el más urgente, <code>O(1)</code>.</p>
+
+  <h3>Un árbol guardado en un array</h3>
+  <p>Un <strong>montículo mínimo</strong> es un árbol binario con dos reglas:</p>
+  <ol>
+    <li>Cada padre es menor o igual que sus hijos. Por eso el más pequeño (el más urgente, si la prioridad 1 es la más urgente) siempre está en la raíz.</li>
+    <li>Es un árbol <em>completo</em>: se llena nivel por nivel, de izquierda a derecha, sin huecos.</li>
+  </ol>
+  <p>Gracias a la segunda regla, el árbol se puede guardar en un simple array, sin nodos ni referencias: la raíz va en la posición 0 y los hijos del elemento de la posición <code>i</code> están en <code>2 * i + 1</code> y <code>2 * i + 2</code>. Su padre está en <code>Math.floor((i - 1) / 2)</code>. Un montículo máximo es igual, pero con el mayor arriba.</p>
+  <figure class="capsula" data-titulo="Insertar y extraer en un montículo">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: un montículo mínimo con 10 en la raíz, dibujado como árbol y como array. Al insertar 12 se coloca al final y sube intercambiándose con 15, y se detiene bajo el 10. Al extraer, sale el 10, el último elemento, 15, pasa a la raíz y baja intercambiándose con el 12, hasta quedar sobre el 30.">
+        <text class="d-rotulo d-tenue" x="20" y="40">Árbol</text>
+        <text class="d-rotulo d-tenue" x="20" y="256">Array</text>
+        <g data-pasos="5-">
+          <rect class="d-acento" x="20" y="60" width="104" height="34" rx="17"/>
+          <text class="d-rotulo d-sobre-acento" x="72" y="82" text-anchor="middle">sale el 10</text>
+        </g>
+        <text x="710" y="40" text-anchor="end" data-texto="1:Cada padre ≤ sus hijos; 2:insertar(12): al final; 3:12 &lt; 15: intercambian; 4:12 &gt; 10: se queda; 5:extraer(): sale el 10; 6:15 &gt; 12: baja por el 12; 7:15 &lt; 30: se queda">Cada padre ≤ sus hijos</text>
+        <text class="d-peq d-tenue" x="710" y="64" text-anchor="end" data-texto="1:hijos de i: 2i+1 y 2i+2; 2:posición 6; 3:sube a la posición 2; 4:2 comparaciones: O(log n); 5:el último (15) pasa a la raíz; 6:compara con el menor de sus hijos; 7:montículo válido otra vez">hijos de i: 2i+1 y 2i+2</text>
+        <path class="d-linea" d="M360 45 L220 115 M360 45 L500 115 M220 115 L150 185 M220 115 L290 185 M500 115 L430 185"/>
+        <path class="d-punteada" d="M500 115 L570 185"/>
+        <path class="d-linea" d="M500 115 L570 185" data-pasos="2-4"/>
+        <circle class="d-punteada" cx="570" cy="185" r="22"/>
+        <circle class="d-caja" cx="360" cy="45" r="22" data-clases="4:d-resalte; 5:d-acento; 6:d-resalte; 7:"/>
+        <circle class="d-caja" cx="220" cy="115" r="22" data-clases="6:d-resalte; 7:"/>
+        <circle class="d-caja" cx="500" cy="115" r="22" data-clases="3:d-resalte; 5:; 6:d-resalte"/>
+        <circle class="d-caja" cx="150" cy="185" r="22"/>
+        <circle class="d-caja" cx="290" cy="185" r="22"/>
+        <circle class="d-caja" cx="430" cy="185" r="22" data-clases="7:d-resalte"/>
+        <circle class="d-caja" cx="570" cy="185" r="22" data-pasos="2-4" data-clases="2:d-resalte"/>
+        <g class="d-mono" text-anchor="middle" style="font-size:18px">
+          <text x="360" y="51" data-texto="1:10; 5:15; 6:12" data-clases="5:d-sobre-acento; 6:">10</text>
+          <text x="220" y="121">20</text>
+          <text x="500" y="121" data-texto="1:15; 3:12; 6:15">15</text>
+          <text x="150" y="191">40</text>
+          <text x="290" y="191">50</text>
+          <text x="430" y="191">30</text>
+          <text x="570" y="191" data-pasos="2-4" data-texto="2:12; 3:15">12</text>
+        </g>
+        <rect class="d-caja" x="150" y="232" width="60" height="36"/>
+        <rect class="d-caja" x="210" y="232" width="60" height="36"/>
+        <rect class="d-caja" x="270" y="232" width="60" height="36"/>
+        <rect class="d-caja" x="330" y="232" width="60" height="36"/>
+        <rect class="d-caja" x="390" y="232" width="60" height="36"/>
+        <rect class="d-caja" x="450" y="232" width="60" height="36"/>
+        <rect class="d-caja" x="510" y="232" width="60" height="36" data-pasos="2-4"/>
+        <g class="d-mono" text-anchor="middle">
+          <text x="180" y="256" data-texto="1:10; 5:15; 6:12">10</text>
+          <text x="240" y="256">20</text>
+          <text x="300" y="256" data-texto="1:15; 3:12; 6:15">15</text>
+          <text x="360" y="256">40</text>
+          <text x="420" y="256">50</text>
+          <text x="480" y="256">30</text>
+          <text x="540" y="256" data-pasos="2-4" data-texto="2:12; 3:15">12</text>
+        </g>
+        <g class="d-mono d-peq d-tenue" text-anchor="middle">
+          <text x="180" y="288">0</text><text x="240" y="288">1</text><text x="300" y="288">2</text><text x="360" y="288">3</text>
+          <text x="420" y="288">4</text><text x="480" y="288">5</text><text x="540" y="288">6</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Un montículo mínimo con seis números, dibujado como árbol y guardado como array. Cada padre es menor que sus hijos, así que el mínimo, 10, está en la raíz y en la posición 0. Los hijos del 20 (posición 1) están en las posiciones 3 y 4: 2 × 1 + 1 y 2 × 1 + 2.</li>
+        <li>Insertamos el 12. Siempre entra al final del array, que en el árbol es el primer hueco del último nivel: la posición 6, hija del 15.</li>
+        <li data-duracion="6">¿Se rompe la regla? Sí: 12 es menor que su padre, 15. Intercambian. El 12 «flota» hacia arriba a la posición 2.</li>
+        <li data-duracion="6">Ahora su padre es el 10, y 12 es mayor: la regla se cumple y el 12 se queda. Solo hicieron falta 2 comparaciones, una por nivel. La altura de un árbol completo es <code>log n</code>, así que insertar cuesta <code>O(log n)</code>.</li>
+        <li data-duracion="6">Extraemos el mínimo: sale el 10 de la raíz. Para no dejar un hueco arriba, el último elemento del array (el 15) se mueve a la raíz. El árbol sigue completo, pero la regla está rota.</li>
+        <li data-duracion="6">El 15 se «hunde»: se compara con sus hijos, 20 y 12, y se intercambia con el menor, el 12. Si se intercambiara con el 20, el 20 quedaría encima del 12 y la regla seguiría rota.</li>
+        <li>En su nueva posición, el 15 solo tiene un hijo, el 30, y es menor que él: se queda. El nuevo mínimo, 12, está en la raíz, listo para la siguiente extracción. Otra vez, <code>O(log n)</code>.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuidado</p><p>Un montículo <strong>no</strong> es un array ordenado. En la cápsula, el array final es <code>[12, 20, 15, 40, 50, 30]</code>: solo se garantiza que el primero es el menor. El segundo más pequeño puede estar en la posición 1 o en la 2. Si necesitas todo ordenado, extrae los elementos uno a uno (así funciona el algoritmo de ordenamiento <em>heapsort</em>, que verás mencionado en la <a href="20-algoritmos.html">Estación 20</a>).</p></div></aside>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Dos «heap» que no tienen nada que ver</p><p>En inglés, <em>heap</em> también es el nombre de una zona de la memoria donde se guardan los objetos de tu programa (en español, «montículo» o «memoria dinámica»). Es una coincidencia de nombre: esa memoria no está organizada como esta estructura. La verás en la <a href="22-ejecucion.html">Estación 22</a>. Cuando leas «heap», fíjate en el contexto.</p></div></aside>
+  <p>JavaScript no trae una cola de prioridad incorporada, así que en este taller tienes una implementación completa con las dos operaciones de la cápsula. Cada elemento es un objeto con <code>prioridad</code> (cuanto menor, más urgente) y <code>dato</code>. No hace falta que memorices el código: léelo con la cápsula al lado y predice en qué orden se atiende a los pacientes.</p>
+  <div class="taller" id="taller-monticulo" data-titulo="Predice y modifica: urgencias con un montículo">
+    <textarea class="taller-codigo">function padre(i) {
+  return Math.floor((i - 1) / 2);
+}
+
+function intercambiar(arr, a, b) {
+  [arr[a], arr[b]] = [arr[b], arr[a]]; // desestructuración: intercambia dos posiciones
+}
+
+function insertar(monticulo, elemento) {
+  monticulo.push(elemento);            // 1. entra al final
+  let i = monticulo.length - 1;
+  // 2. flota: mientras sea más urgente que su padre, intercambian
+  while (i > 0 && monticulo[i].prioridad < monticulo[padre(i)].prioridad) {
+    intercambiar(monticulo, i, padre(i));
+    i = padre(i);
+  }
+}
+
+function extraer(monticulo) {
+  if (monticulo.length === 0) return undefined;
+  const primero = monticulo[0];
+  const ultimo = monticulo.pop();
+  if (monticulo.length > 0) {
+    monticulo[0] = ultimo;             // 1. el último pasa a la raíz
+    let i = 0;
+    while (true) {                     // 2. se hunde hacia el hijo más urgente
+      const izq = 2 * i + 1;
+      const der = 2 * i + 2;
+      let menor = i;
+      if (izq < monticulo.length && monticulo[izq].prioridad < monticulo[menor].prioridad) menor = izq;
+      if (der < monticulo.length && monticulo[der].prioridad < monticulo[menor].prioridad) menor = der;
+      if (menor === i) break;          // ya es más urgente que sus hijos: se queda
+      intercambiar(monticulo, i, menor);
+      i = menor;
+    }
+  }
+  return primero;
+}
+
+const urgencias = [];
+insertar(urgencias, { prioridad: 3, dato: "Tos leve" });
+insertar(urgencias, { prioridad: 1, dato: "Fractura" });
+insertar(urgencias, { prioridad: 4, dato: "Renovar una receta" });
+insertar(urgencias, { prioridad: 2, dato: "Fiebre alta" });
+console.log("Más urgente ahora mismo:", urgencias[0].dato); // mirar: O(1)
+
+while (urgencias.length > 0) {
+  const paciente = extraer(urgencias);
+  console.log(`Atendemos (prioridad ${paciente.prioridad}): ${paciente.dato}`);
+}</textarea>
+  </div>
+  <p><strong>Modifica</strong>: antes del <code>while</code>, inserta un paciente con prioridad 1, «Quemadura». ¿Sale antes o después de la fractura? Un montículo no garantiza el orden entre elementos con la misma prioridad: se dice que no es <em>estable</em>. Si necesitas desempatar por orden de llegada, añade un número de llegada y compáralo cuando las prioridades sean iguales.</p>
+  <p>Otros lenguajes sí traen su montículo: en Python, el módulo <code>heapq</code>; en Java y en C# (desde .NET 6), la clase <code>PriorityQueue</code>. En JavaScript se suele usar una biblioteca o una implementación corta como la del taller. Usos típicos: atender eventos por tiempo en simulaciones y juegos, planificar tareas, obtener los 10 mejores de un millón de puntuaciones sin ordenarlas todas y, sobre todo, el algoritmo de Dijkstra para encontrar caminos, que verás en la <a href="20-algoritmos.html">Estación 20</a>.</p>
 </section>
   </main>
 </div>
