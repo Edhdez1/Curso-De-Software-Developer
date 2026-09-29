@@ -1681,3 +1681,601 @@ return true;
     <li>Funciones de orden superior: fábricas de funciones, currying (<code>(a) =&gt; (b) =&gt; …</code>) y composición con <code>pipe</code> permiten armar cálculos grandes con piezas pequeñas y probadas.</li>
   </ul>
 </section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Resuelve los ejercicios en orden: empiezan guiados y terminan en retos que combinan varias ideas. Cada uno tiene un botón «Ejecutar» que comprueba tu solución. Intenta cada ejercicio unos minutos antes de abrir las pistas: el esfuerzo de buscar la respuesta es lo que hace que se quede. La solución está para comparar, no para copiar.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-producto">
+    <h3>Tu primera clase: Producto</h3>
+    <p>Completa la clase <code>Producto</code>: el constructor debe guardar <code>nombre</code> y <code>precio</code> en el objeto, y el método <code>etiqueta()</code> debe <em>devolver</em> (no imprimir) un texto como <code>Café: $4.5</code>. Después crea dos productos con <code>new</code> e imprime sus etiquetas. La salida debe ser exactamente:</p>
+    <pre class="consola"><code>Café: $4.5
+Taza: $8</code></pre>
+    <div class="taller" id="taller-ej-producto" data-titulo="Ejercicio 1">
+      <textarea class="taller-codigo">class Producto {
+  constructor(nombre, precio) {
+    // 1. Guarda nombre y precio en this
+  }
+
+  etiqueta() {
+    // 2. Devuelve el texto "nombre: $precio"
+  }
+}
+
+// 3. Crea cafe ("Café", 4.5) y taza ("Taza", 8) con new
+// 4. Imprime cafe.etiqueta() y taza.etiqueta()
+</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/class\s+Producto/.test(codigo)) return "Falta la clase Producto.";
+if ((codigo.match(/new\s+Producto\s*\(/g) || []).length < 2) return "Crea los dos productos con new Producto(...).";
+if (/console\.log\(\s*["'`]Caf/.test(codigo)) return "No escribas el texto a mano: imprime lo que devuelve cafe.etiqueta().";
+if (salida[0] !== "Café: $4.5") return "La primera línea debería ser «Café: $4.5» y es «" + (salida[0] === undefined ? "(nada)" : salida[0]) + "».";
+if (salida[1] !== "Taza: $8") return "La segunda línea debería ser «Taza: $8» y es «" + (salida[1] === undefined ? "(nada)" : salida[1]) + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Dentro del constructor: <code>this.nombre = nombre;</code> y lo mismo con el precio. Sin <code>this.</code>, los datos se pierden al terminar el constructor.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>etiqueta</code> usa una plantilla literal: <code>return `${this.nombre}: $${this.precio}`;</code>. El primer <code>$</code> es el signo de dólar que se imprime; el segundo abre la inserción <code>${…}</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">class Producto {
+  constructor(nombre, precio) {
+    this.nombre = nombre;
+    this.precio = precio;
+  }
+
+  etiqueta() {
+    return `${this.nombre}: $${this.precio}`;
+  }
+}
+
+const cafe = new Producto("Café", 4.5);
+const taza = new Producto("Taza", 8);
+console.log(cafe.etiqueta());
+console.log(taza.etiqueta());</code></pre>
+      <p>Un único método <code>etiqueta</code> sirve para los dos productos porque <code>this</code> es, en cada llamada, el objeto que está antes del punto.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-arregla-jefe">
+    <h3>Arregla la clase del enemigo</h3>
+    <p>Este programa tiene tres errores, uno de cada tipo que viste en la estación. Ejecútalo, lee el mensaje, corrige, y repite hasta que imprima <code>Dragón tiene 250 de vida (fase 1)</code>.</p>
+    <div class="taller" id="taller-ej-arregla" data-titulo="Ejercicio 2" data-esperado="Dragón tiene 250 de vida (fase 1)">
+      <textarea class="taller-codigo">class Enemigo {
+  constructor(nombre, vida) {
+    this.nombre = nombre;
+    this.vida = vida;
+  }
+  recibirDanio(cantidad) {
+    vida = vida - cantidad;
+  }
+}
+
+class Jefe extends Enemigo {
+  constructor(nombre, vida) {
+    this.fase = 1;
+    super(nombre, vida);
+  }
+}
+
+const dragon = Jefe("Dragón", 300);
+dragon.recibirDanio(50);
+console.log(dragon.nombre + " tiene " + dragon.vida + " de vida (fase " + dragon.fase + ")");</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El primer mensaje dice <em>Class constructor Jefe cannot be invoked without 'new'</em>. ¿Qué palabra falta al crear el dragón?</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El segundo habla de <em>super constructor</em>: en una subclase, ¿qué tiene que ir primero en el constructor? El tercero, <em>vida is not defined</em>: dentro de un método, ¿cómo se nombra una propiedad del objeto?</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">class Enemigo {
+  constructor(nombre, vida) {
+    this.nombre = nombre;
+    this.vida = vida;
+  }
+  recibirDanio(cantidad) {
+    this.vida = this.vida - cantidad;
+  }
+}
+
+class Jefe extends Enemigo {
+  constructor(nombre, vida) {
+    super(nombre, vida);
+    this.fase = 1;
+  }
+}
+
+const dragon = new Jefe("Dragón", 300);
+dragon.recibirDanio(50);
+console.log(dragon.nombre + " tiene " + dragon.vida + " de vida (fase " + dragon.fase + ")");</code></pre>
+      <p>Tres reglas: las clases se instancian con <code>new</code>; en una subclase, <code>super(...)</code> va antes de cualquier <code>this</code>; y dentro de los métodos, las propiedades se leen y se cambian con <code>this.</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-monedero">
+    <h3>Un monedero que no se deja engañar</h3>
+    <p>Escribe la clase <code>Monedero</code> con un campo privado <code>#saldo</code> que empieza en 0, y:</p>
+    <ul>
+      <li><code>depositar(monto)</code>: suma el monto; si es 0 o negativo, no hace nada.</li>
+      <li><code>gastar(monto)</code>: si no alcanza el saldo, devuelve <code>false</code> y no cambia nada; si alcanza, resta y devuelve <code>true</code>.</li>
+      <li>Un getter <code>saldo</code> para leer el saldo desde fuera, sin setter.</li>
+    </ul>
+    <p>Las pruebas del final deben imprimir <code>50</code>, <code>true 20</code>, <code>false 20</code> y <code>20</code>.</p>
+    <div class="taller" id="taller-ej-monedero" data-titulo="Ejercicio 3">
+      <textarea class="taller-codigo">class Monedero {
+  // Tu código aquí
+}
+
+// Pruebas (no las cambies)
+const m = new Monedero();
+m.depositar(50);
+m.depositar(-20);
+console.log(m.saldo);
+console.log(m.gastar(30), m.saldo);
+console.log(m.gastar(100), m.saldo);
+m.saldo = 1000000;   // intento de trampa
+console.log(m.saldo);</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/#saldo/.test(codigo)) return "Guarda el saldo en un campo privado llamado #saldo.";
+if (!/get\s+saldo\s*\(/.test(codigo)) return "Añade un getter para leerlo: get saldo() { … }";
+var esp = ["50", "true 20", "false 20", "20"];
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Declara el campo arriba con su valor inicial: <code>#saldo = 0;</code>. No hace falta constructor: el campo se crea solo en cada <code>new</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>gastar</code>, comprueba primero el caso malo y sal pronto: <code>if (monto &gt; this.#saldo) return false;</code>. La última prueba imprime 20 porque, sin setter, la asignación <code>m.saldo = 1000000</code> no tiene efecto.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">class Monedero {
+  #saldo = 0;
+
+  get saldo() {
+    return this.#saldo;
+  }
+
+  depositar(monto) {
+    if (monto &lt;= 0) return;
+    this.#saldo += monto;
+  }
+
+  gastar(monto) {
+    if (monto &gt; this.#saldo) return false;
+    this.#saldo -= monto;
+    return true;
+  }
+}
+
+// Pruebas (no las cambies)
+const m = new Monedero();
+m.depositar(50);
+m.depositar(-20);
+console.log(m.saldo);
+console.log(m.gastar(30), m.saldo);
+console.log(m.gastar(100), m.saldo);
+m.saldo = 1000000;
+console.log(m.saldo);</code></pre>
+      <p>Si hubieras usado una propiedad normal (<code>this.saldo</code>), la trampa del final habría funcionado y el monedero tendría un millón. El campo privado más un getter sin setter es la forma de ofrecer un dato «de solo lectura».</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-maga">
+    <h3>Herencia: la maga</h3>
+    <p>Crea la clase <code>Maga</code> que extienda a <code>Personaje</code>. Su constructor recibe <code>(nombre, ataque, mana)</code>. Sobrescribe <code>atacar()</code>: si le quedan 10 de mana o más, gasta 10 y devuelve el ataque normal seguido de <code> + hechizo (mana: N)</code>; si no, devuelve el ataque normal. Reutiliza el texto de <code>Personaje</code> con <code>super.atacar()</code>. La salida debe ser:</p>
+    <pre class="consola"><code>Lyra ataca con 12 de daño + hechizo (mana: 15)
+Lyra ataca con 12 de daño + hechizo (mana: 5)
+Lyra ataca con 12 de daño
+5</code></pre>
+    <div class="taller" id="taller-ej-maga" data-titulo="Ejercicio 4">
+      <textarea class="taller-codigo">class Personaje {
+  constructor(nombre, ataque) {
+    this.nombre = nombre;
+    this.ataque = ataque;
+  }
+  atacar() {
+    return `${this.nombre} ataca con ${this.ataque} de daño`;
+  }
+}
+
+// Crea aquí la clase Maga
+
+
+// Pruebas (no las cambies)
+const maga = new Maga("Lyra", 12, 25);
+console.log(maga.atacar());
+console.log(maga.atacar());
+console.log(maga.atacar());
+console.log(maga.mana);</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/class\s+Maga\s+extends\s+Personaje/.test(codigo)) return "Declara la clase así: class Maga extends Personaje { … }";
+if (!/super\s*\(/.test(codigo)) return "En el constructor de Maga llama a super(nombre, ataque) antes de usar this.";
+if (!/super\.atacar\s*\(/.test(codigo)) return "Reutiliza el ataque normal con super.atacar() en lugar de copiar el texto.";
+var esp = ["Lyra ataca con 12 de daño + hechizo (mana: 15)", "Lyra ataca con 12 de daño + hechizo (mana: 5)", "Lyra ataca con 12 de daño", "5"];
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El constructor: <code>super(nombre, ataque);</code> y después <code>this.mana = mana;</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>atacar()</code>: <code>if (this.mana &gt;= 10) { this.mana -= 10; return `${super.atacar()} + hechizo (mana: ${this.mana})`; }</code> y fuera del <code>if</code>, <code>return super.atacar();</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">class Personaje {
+  constructor(nombre, ataque) {
+    this.nombre = nombre;
+    this.ataque = ataque;
+  }
+  atacar() {
+    return `${this.nombre} ataca con ${this.ataque} de daño`;
+  }
+}
+
+class Maga extends Personaje {
+  constructor(nombre, ataque, mana) {
+    super(nombre, ataque);
+    this.mana = mana;
+  }
+
+  atacar() {
+    if (this.mana &gt;= 10) {
+      this.mana -= 10;
+      return `${super.atacar()} + hechizo (mana: ${this.mana})`;
+    }
+    return super.atacar();
+  }
+}
+
+// Pruebas (no las cambies)
+const maga = new Maga("Lyra", 12, 25);
+console.log(maga.atacar());
+console.log(maga.atacar());
+console.log(maga.atacar());
+console.log(maga.mana);</code></pre>
+      <p>Gracias a <code>super.atacar()</code>, si mañana cambias el texto del ataque en <code>Personaje</code>, la maga lo recibe sin tocar su clase.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-pura">
+    <h3>De impuras a puras</h3>
+    <p>Las dos funciones de este programa mutan lo que reciben. Reescríbelas para que sean puras: deben devolver datos <em>nuevos</em> sin tocar los originales. No cambies las pruebas. La salida correcta es:</p>
+    <pre class="consola"><code>[]
+[ 'café' ]
+[ 'café', 'taza' ]
+false
+10 15 Báculo</code></pre>
+    <div class="taller" id="taller-ej-pura" data-titulo="Ejercicio 5" data-esperado="[]&#10;[ 'café' ]&#10;[ 'café', 'taza' ]&#10;false&#10;10 15 Báculo">
+      <textarea class="taller-codigo">function agregarAlCarrito(carrito, producto) {
+  carrito.push(producto);
+  return carrito;
+}
+
+function equipar(personaje, arma) {
+  personaje.arma = arma.nombre;
+  personaje.ataque = personaje.ataque + arma.bonus;
+  return personaje;
+}
+
+// Pruebas (no las cambies)
+const vacio = [];
+const conCafe = agregarAlCarrito(vacio, "café");
+const conCafeYTaza = agregarAlCarrito(conCafe, "taza");
+console.log(vacio);
+console.log(conCafe);
+console.log(conCafeYTaza);
+console.log(vacio === conCafe);
+
+const lyra = { nombre: "Lyra", ataque: 10, arma: null };
+const lyraArmada = equipar(lyra, { nombre: "Báculo", bonus: 5 });
+console.log(lyra.ataque, lyraArmada.ataque, lyraArmada.arma);</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Ejecuta primero el código tal como está: las tres primeras líneas muestran el mismo array con los dos productos, porque solo existe un array. Esa es la pista de que hay mutación.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para el carrito: <code>return [...carrito, producto];</code>. Para el personaje: <code>return { ...personaje, arma: …, ataque: … };</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function agregarAlCarrito(carrito, producto) {
+  return [...carrito, producto];
+}
+
+function equipar(personaje, arma) {
+  return {
+    ...personaje,
+    arma: arma.nombre,
+    ataque: personaje.ataque + arma.bonus,
+  };
+}
+
+// Pruebas (no las cambies)
+const vacio = [];
+const conCafe = agregarAlCarrito(vacio, "café");
+const conCafeYTaza = agregarAlCarrito(conCafe, "taza");
+console.log(vacio);
+console.log(conCafe);
+console.log(conCafeYTaza);
+console.log(vacio === conCafe);
+
+const lyra = { nombre: "Lyra", ataque: 10, arma: null };
+const lyraArmada = equipar(lyra, { nombre: "Báculo", bonus: 5 });
+console.log(lyra.ataque, lyraArmada.ataque, lyraArmada.arma);</code></pre>
+      <p>Ahora cada llamada crea un array u objeto nuevo, y <code>vacio === conCafe</code> es <code>false</code> porque son dos arrays distintos. Otra solución válida: copiar primero y mutar solo la copia (<code>const copia = [...carrito]; copia.push(producto); return copia;</code>). Mutar algo que acabas de crear no afecta a nadie.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-envios">
+    <h3>Polimorfismo en la tienda: envíos</h3>
+    <p>La tienda ofrece tres formas de envío. <code>Estandar</code> ya está hecha. Crea <code>Express</code> (15 más 3 por kilo) y <code>RecogerEnTienda</code> (gratis), cada una con su <code>nombre</code> y su método <code>costo(pesoKg)</code>. La función <code>cotizar</code> no debe cambiar: tiene que funcionar con cualquier forma de envío. Para 3 kilos, la salida es:</p>
+    <pre class="consola"><code>Estándar: $11
+Express: $24
+Recoger en tienda: $0</code></pre>
+    <div class="taller" id="taller-ej-envios" data-titulo="Ejercicio 6">
+      <textarea class="taller-codigo">class Estandar {
+  nombre = "Estándar";
+  costo(pesoKg) {
+    return 5 + 2 * pesoKg;
+  }
+}
+
+// Crea aquí las clases Express y RecogerEnTienda
+
+
+function cotizar(opciones, pesoKg) {
+  for (const opcion of opciones) {
+    console.log(`${opcion.nombre}: $${opcion.costo(pesoKg)}`);
+  }
+}
+
+cotizar([new Estandar(), new Express(), new RecogerEnTienda()], 3);</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/class\s+Express\b/.test(codigo) || !/class\s+RecogerEnTienda\b/.test(codigo)) return "Crea las clases Express y RecogerEnTienda.";
+if (/instanceof|\.nombre\s*===/.test(codigo)) return "No preguntes de qué clase es cada opción: deja que cada clase calcule su propio costo.";
+var esp = ["Estándar: $11", "Express: $24", "Recoger en tienda: $0"];
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista</summary><p>Copia la forma de <code>Estandar</code>: un campo <code>nombre = "Express";</code> y un método <code>costo(pesoKg)</code> con su propia fórmula. <code>RecogerEnTienda</code> puede devolver <code>0</code> sin usar el peso.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">class Estandar {
+  nombre = "Estándar";
+  costo(pesoKg) {
+    return 5 + 2 * pesoKg;
+  }
+}
+
+class Express {
+  nombre = "Express";
+  costo(pesoKg) {
+    return 15 + 3 * pesoKg;
+  }
+}
+
+class RecogerEnTienda {
+  nombre = "Recoger en tienda";
+  costo(pesoKg) {
+    return 0;
+  }
+}
+
+function cotizar(opciones, pesoKg) {
+  for (const opcion of opciones) {
+    console.log(`${opcion.nombre}: $${opcion.costo(pesoKg)}`);
+  }
+}
+
+cotizar([new Estandar(), new Express(), new RecogerEnTienda()], 3);</code></pre>
+      <p>Las tres clases no heredan de nada y aun así <code>cotizar</code> las trata igual: basta con que todas tengan <code>nombre</code> y <code>costo</code>. Añadir una cuarta forma de envío no obliga a tocar <code>cotizar</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-criaturas">
+    <h3>Criaturas por composición</h3>
+    <p>La clase <code>Criatura</code> ya está hecha: tiene una lista de habilidades y un método <code>usar(nombreHabilidad)</code> que busca la habilidad por su <code>nombre</code> y le pide que actúe. Crea las piezas <code>Volar</code> y <code>Nadar</code> (cada una con una propiedad <code>nombre</code> y un método <code>usar(criatura)</code>), arma un pato que vuela y nada, y un pez que solo nada. Sin usar <code>extends</code>. La salida debe ser:</p>
+    <pre class="consola"><code>Pato vuela
+Pato nada
+Pez no sabe volar
+Pez vuela</code></pre>
+    <div class="taller" id="taller-ej-criaturas" data-titulo="Ejercicio 7">
+      <textarea class="taller-codigo">class Criatura {
+  constructor(nombre, habilidades) {
+    this.nombre = nombre;
+    this.habilidades = habilidades;
+  }
+  aprender(habilidad) {
+    this.habilidades.push(habilidad);
+  }
+  usar(nombreHabilidad) {
+    const habilidad = this.habilidades.find((h) => h.nombre === nombreHabilidad);
+    if (!habilidad) return `${this.nombre} no sabe ${nombreHabilidad}`;
+    return habilidad.usar(this);
+  }
+}
+
+// 1. Crea las clases Volar y Nadar. Cada una necesita:
+//    - una propiedad nombre ("volar" o "nadar")
+//    - un método usar(criatura) que devuelva, por ejemplo, "Pato vuela"
+// 2. Crea pato (vuela y nada) y pez (solo nada)
+
+
+// Pruebas (no las cambies)
+console.log(pato.usar("volar"));
+console.log(pato.usar("nadar"));
+console.log(pez.usar("volar"));
+pez.aprender(new Volar());   // ¡un pez volador!
+console.log(pez.usar("volar"));</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (/\bextends\b/.test(codigo)) return "Este ejercicio es de composición: resuélvelo sin extends.";
+if (!/class\s+Volar\b/.test(codigo) || !/class\s+Nadar\b/.test(codigo)) return "Crea las clases Volar y Nadar.";
+var esp = ["Pato vuela", "Pato nada", "Pez no sabe volar", "Pez vuela"];
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Una pieza puede ser tan pequeña como esto: <code>class Volar { nombre = "volar"; usar(criatura) { return `${criatura.nombre} vuela`; } }</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Las criaturas se crean pasando un array de piezas: <code>const pato = new Criatura("Pato", [new Volar(), new Nadar()]);</code>. Fíjate en que las pruebas usan <code>new Volar()</code> otra vez: cada criatura tiene sus propias piezas.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">class Criatura {
+  constructor(nombre, habilidades) {
+    this.nombre = nombre;
+    this.habilidades = habilidades;
+  }
+  aprender(habilidad) {
+    this.habilidades.push(habilidad);
+  }
+  usar(nombreHabilidad) {
+    const habilidad = this.habilidades.find((h) =&gt; h.nombre === nombreHabilidad);
+    if (!habilidad) return `${this.nombre} no sabe ${nombreHabilidad}`;
+    return habilidad.usar(this);
+  }
+}
+
+class Volar {
+  nombre = "volar";
+  usar(criatura) {
+    return `${criatura.nombre} vuela`;
+  }
+}
+
+class Nadar {
+  nombre = "nadar";
+  usar(criatura) {
+    return `${criatura.nombre} nada`;
+  }
+}
+
+const pato = new Criatura("Pato", [new Volar(), new Nadar()]);
+const pez = new Criatura("Pez", [new Nadar()]);
+
+// Pruebas (no las cambies)
+console.log(pato.usar("volar"));
+console.log(pato.usar("nadar"));
+console.log(pez.usar("volar"));
+pez.aprender(new Volar());
+console.log(pez.usar("volar"));</code></pre>
+      <p>Con herencia habrías necesitado clases como <code>PatoVoladorNadador</code>, y el pez nunca habría podido aprender a volar sin cambiar de clase. Con composición, las capacidades son piezas que se suman en cualquier momento.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-pipe">
+    <h3>Tu propia tubería con currying</h3>
+    <p>Escribe desde cero: <code>pipe</code>, que recibe varias funciones y devuelve una función que pasa un valor por todas ellas en orden; y <code>descuento</code>, con currying, de forma que <code>descuento(0.25)(40)</code> dé <code>30</code>. Con ellas, crea <code>precioOferta</code>: 25 % de descuento, después el envío y al final el redondeo. La salida debe ser <code>[ 34.99, 79.98, 13.99 ]</code> y, en la segunda línea, los precios originales sin cambios.</p>
+    <div class="taller" id="taller-ej-pipe" data-titulo="Ejercicio 8" data-esperado="[ 34.99, 79.98, 13.99 ]&#10;[ 40, 99.99, 12 ]">
+      <textarea class="taller-codigo">// 1. pipe: recibe varias funciones y devuelve una función que
+//    pasa un valor por todas ellas, en orden
+const pipe = null; // cámbialo
+
+// 2. descuento con currying: descuento(0.25)(40) debe dar 30
+const descuento = null; // cámbialo
+
+// Estas dos ya están hechas
+const sumarEnvio = (precio) => precio + 4.99;
+const redondear = (n) => Math.round(n * 100) / 100;
+
+// 3. Crea precioOferta con pipe: 25 % de descuento, envío y redondeo
+
+
+// Pruebas (no las cambies)
+const precios = [40, 99.99, 12];
+console.log(precios.map(precioOferta));
+console.log(precios);</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>descuento</code> es una flecha que devuelve otra flecha: <code>(porcentaje) =&gt; (precio) =&gt; …</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para <code>pipe</code>, reúne las funciones con un parámetro rest (<code>...funciones</code>) y usa <code>reduce</code>: el acumulador es el valor que va pasando de función en función. Luego: <code>const precioOferta = pipe(descuento(0.25), sumarEnvio, redondear);</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const pipe = (...funciones) =&gt; (valorInicial) =&gt;
+  funciones.reduce((valor, f) =&gt; f(valor), valorInicial);
+
+const descuento = (porcentaje) =&gt; (precio) =&gt; precio * (1 - porcentaje);
+
+const sumarEnvio = (precio) =&gt; precio + 4.99;
+const redondear = (n) =&gt; Math.round(n * 100) / 100;
+
+const precioOferta = pipe(descuento(0.25), sumarEnvio, redondear);
+
+// Pruebas (no las cambies)
+const precios = [40, 99.99, 12];
+console.log(precios.map(precioOferta));
+console.log(precios);</code></pre>
+      <p>Si en lugar de <code>reduce</code> escribiste un bucle <code>for...of</code> que va actualizando el valor, también es correcto. Prueba a cambiar el orden y poner <code>redondear</code> antes de <code>sumarEnvio</code>: con estos precios el resultado no cambia, pero con otros sí podría; en una tubería, el orden es parte del diseño.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-inventario">
+    <h3>Inventario inmutable</h3>
+    <p>El estado inicial está congelado a fondo y el programa trabaja en modo estricto: cualquier mutación lanzará un <code>TypeError</code>. Escribe <code>agregarObjeto(estado, objeto)</code>, que devuelve un estado nuevo con el objeto al final del inventario, y <code>usarPocion(estado)</code>: si hay una <code>"poción"</code>, devuelve un estado nuevo con 30 de vida más (máximo 100) y una poción menos; si no hay, devuelve <em>el mismo</em> estado. La salida debe ser:</p>
+    <pre class="consola"><code>60 3
+90 espada, poción
+100 espada
+true
+espada, escudo</code></pre>
+    <div class="taller" id="taller-ej-inventario" data-titulo="Ejercicio 9" data-esperado="60 3&#10;90 espada, poción&#10;100 espada&#10;true&#10;espada, escudo">
+      <textarea class="taller-codigo">"use strict";
+// Congela un objeto y todo lo que tiene dentro (no lo cambies)
+function congelar(obj) {
+  Object.values(obj).forEach((valor) => {
+    if (typeof valor === "object" && valor !== null) congelar(valor);
+  });
+  return Object.freeze(obj);
+}
+
+const inicial = congelar({ vida: 60, inventario: ["poción", "espada", "poción"] });
+
+function agregarObjeto(estado, objeto) {
+  // Devuelve un estado NUEVO con el objeto al final del inventario
+}
+
+function usarPocion(estado) {
+  // Si hay una "poción": estado NUEVO con 30 de vida más (máximo 100)
+  // y sin UNA de las pociones. Si no hay: devuelve el mismo estado.
+}
+
+// Pruebas (no las cambies)
+const e1 = usarPocion(inicial);
+const e2 = usarPocion(e1);
+const e3 = usarPocion(e2);
+const e4 = agregarObjeto(e3, "escudo");
+console.log(inicial.vida, inicial.inventario.length);
+console.log(e1.vida, e1.inventario.join(", "));
+console.log(e2.vida, e2.inventario.join(", "));
+console.log(e3 === e2);
+console.log(e4.inventario.join(", "));</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Busca la posición de la primera poción con <code>estado.inventario.indexOf("poción")</code>. Si da <code>-1</code>, no hay pociones: <code>return estado;</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para quitar un elemento sin mutar tienes <code>toSpliced(i, 1)</code> o <code>filter((_, j) =&gt; j !== i)</code>. El estado nuevo se arma con spread: <code>{ ...estado, vida: …, inventario: … }</code>. Para el tope de vida, <code>Math.min(100, …)</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">"use strict";
+function congelar(obj) {
+  Object.values(obj).forEach((valor) =&gt; {
+    if (typeof valor === "object" &amp;&amp; valor !== null) congelar(valor);
+  });
+  return Object.freeze(obj);
+}
+
+const inicial = congelar({ vida: 60, inventario: ["poción", "espada", "poción"] });
+
+function agregarObjeto(estado, objeto) {
+  return { ...estado, inventario: [...estado.inventario, objeto] };
+}
+
+function usarPocion(estado) {
+  const i = estado.inventario.indexOf("poción");
+  if (i === -1) return estado;
+  return {
+    ...estado,
+    vida: Math.min(100, estado.vida + 30),
+    inventario: estado.inventario.toSpliced(i, 1),
+  };
+}
+
+// Pruebas (no las cambies)
+const e1 = usarPocion(inicial);
+const e2 = usarPocion(e1);
+const e3 = usarPocion(e2);
+const e4 = agregarObjeto(e3, "escudo");
+console.log(inicial.vida, inicial.inventario.length);
+console.log(e1.vida, e1.inventario.join(", "));
+console.log(e2.vida, e2.inventario.join(", "));
+console.log(e3 === e2);
+console.log(e4.inventario.join(", "));</code></pre>
+      <p>Cada estado es una foto: <code>inicial</code>, <code>e1</code> y <code>e2</code> siguen existiendo y no cambian, así que podrías mostrar un historial o deshacer. Devolver el mismo estado cuando no hay nada que hacer (<code>e3 === e2</code>) es una costumbre útil: quien lo recibe sabe, con una comparación rápida, que nada cambió. Es lo que hace React para decidir si redibuja una pantalla.</p>
+    </details>
+  </article>
+</section>
