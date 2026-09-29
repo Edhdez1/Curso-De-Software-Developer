@@ -54,7 +54,7 @@ export function ejecutar(codigo, verificacion, tiempo = 4000) {
       setInterval: (f, ms, ...a) => { const t = setInterval(f, Math.max(ms || 0, 1), ...a); temporizadores.add(t); return t; },
       clearInterval: (t) => { temporizadores.delete(t); clearInterval(t); },
     };
-    const ctx = vm.createContext({ self, structuredClone, queueMicrotask, TextEncoder, TextDecoder, URL, URLSearchParams });
+    const ctx = vm.createContext({ self, structuredClone, queueMicrotask, TextEncoder, TextDecoder, URL, URLSearchParams, AbortController, AbortSignal, DOMException, Event, EventTarget, performance, crypto: globalThis.crypto });
     const limite = setTimeout(() => { r.tiempoAgotado = true; acabar(); }, tiempo);
     try {
       vm.runInContext(fuente, ctx, { filename: "codigo-usuario", timeout: tiempo });

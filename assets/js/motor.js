@@ -165,10 +165,14 @@
       if (m) linea = parseInt(m[1], 10) - __DESFASE__;
       __enviar("excepcion", { nombre: e && e.name ? e.name : "Error", mensaje: e && e.message !== undefined ? String(e.message) : String(e), linea: linea > 0 ? linea : null });
     }
+    // Se termina en una tarea posterior: así se ejecutan antes todas las promesas pendientes (microtareas).
     function __quizaTerminar() {
       if (__terminado || !__principalTerminado || __pendientes > 0) return;
-      __terminado = true;
-      __verificar();
+      __setTimeout(function () {
+        if (__terminado || __pendientes > 0) return;
+        __terminado = true;
+        __verificar();
+      }, 0);
     }
     return { formato: __formato };
   }
