@@ -1,0 +1,1913 @@
+<section id="ruta" data-parada="Lo que vas a lograr">
+  <h2>Lo que vas a lograr</h2>
+  <p class="entradilla">Cada vez que pulsas una tecla, abres una foto o ganas una partida, dentro de tu computadora ocurren millones de operaciones diminutas. No necesitas ser ingeniera o ingeniero electrónico para programar, pero sí un buen mapa mental de la máquina: qué es un bit, dónde vive un programa mientras se ejecuta, qué hace el sistema operativo y dónde están tus archivos. Con ese mapa, lo que veas en las próximas estaciones dejará de parecer magia.</p>
+  <ul class="objetivos">
+    <li>Explicar el modelo entrada, proceso, salida y almacenamiento, y distinguir hardware, software y firmware.</li>
+    <li>Contar en binario y convertir números del 0 al 255 entre decimal y binario.</li>
+    <li>Calcular y comparar tamaños de información (bit, byte, kB, KiB, MB, GB…) y explicar por qué un disco de 1 TB aparece como unos 931 «GB».</li>
+    <li>Explicar cómo se guardan como números el texto (ASCII, Unicode, UTF-8), los colores (RGB), las imágenes (píxeles) y el sonido (muestreo).</li>
+    <li>Describir qué hacen la CPU, la RAM, el almacenamiento y la GPU, y seguir el ciclo buscar, decodificar y ejecutar de una CPU.</li>
+    <li>Ordenar la jerarquía de memoria y explicar por qué la RAM es rápida pero se borra al apagar.</li>
+    <li>Describir qué hace el sistema operativo con los procesos, la memoria, los archivos, los dispositivos y los permisos.</li>
+    <li>Escribir rutas absolutas y relativas, y explicar qué es una extensión y qué es un archivo de texto plano.</li>
+    <li>Contar, a grandes rasgos, cómo el código que escribes llega a ejecutarse: código máquina, ensamblador, compiladores e intérpretes.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="Antes de empezar">
+    <p>No necesitas saber programar. Solo conviene que hayas pasado por la <a href="01-bienvenida.html">Estación 1: Cómo aprender a programar</a>, donde se explica cómo usar las cápsulas, los talleres y las trazas. Los talleres de esta estación traen el código ya escrito: tu trabajo es predecir qué va a pasar, pulsar «Ejecutar» y cambiar los valores que se indican. La forma de escribir ese código (la sintaxis) la aprenderás desde la <a href="06-primeros-pasos.html">Estación 6: Tu primer programa</a>.</p>
+  </aside>
+</section>
+
+<section id="que-es" data-parada="Qué es una computadora">
+  <h2>Qué es una computadora</h2>
+  <p>Un teléfono, una consola de videojuegos, un cajero automático y el control de una lavadora parecen aparatos muy distintos. Por dentro hacen lo mismo. Una <strong>computadora</strong> es una máquina que recibe datos, los procesa siguiendo instrucciones, los guarda y produce resultados. Un <strong>dato</strong> es cualquier información que la máquina puede manejar: una tecla pulsada, una foto, la posición de tu personaje. Una <strong>instrucción</strong> es una orden muy simple («suma estos dos números», «copia este dato allí»). Un <strong>programa</strong> es una lista de instrucciones que, juntas, cumplen una tarea: un navegador, un editor de fotos o un juego.</p>
+  <p>Ese recorrido tiene cuatro etapas que conviene aprender de memoria, porque aparecen en todo lo que vas a construir:</p>
+  <ul>
+    <li><strong>Entrada</strong>: los datos llegan desde fuera (teclado, ratón, micrófono, cámara, un sensor, la red).</li>
+    <li><strong>Proceso</strong>: el procesador ejecuta las instrucciones del programa sobre esos datos.</li>
+    <li><strong>Salida</strong>: los resultados salen hacia fuera (pantalla, altavoces, impresora, la red).</li>
+    <li><strong>Almacenamiento</strong>: los datos y los programas se guardan para usarlos más tarde, incluso después de apagar.</li>
+  </ul>
+  <p>Mira qué pasa, de forma simplificada, cuando escribes una letra en una aplicación de notas:</p>
+  <figure class="capsula" data-titulo="De la tecla a la pantalla">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 340" role="img" aria-label="Animación: al pulsar la tecla A, un número viaja del teclado a la CPU y la memoria, sale hacia la pantalla, que dibuja la letra, y al guardar se copia al almacenamiento como el archivo nota.txt">
+        <rect class="d-caja-suave" x="20" y="10" width="680" height="36" rx="18"/>
+        <text x="360" y="34" text-anchor="middle" style="font-size:15px" data-texto="1:Esperando datos…; 2:Viaja 01000001, el número de la tecla A; 3:Proceso: el programa añade la A al texto; 4:Salida: los píxeles que dibujan la A; 5:Almacenamiento: nota.txt queda guardado">Esperando datos…</text>
+        <text class="d-rotulo d-tenue" x="95" y="72" text-anchor="middle">ENTRADA</text>
+        <text class="d-rotulo d-tenue" x="360" y="72" text-anchor="middle">PROCESO</text>
+        <text class="d-rotulo d-tenue" x="625" y="72" text-anchor="middle">SALIDA</text>
+        <rect class="d-caja" x="20" y="85" width="150" height="44" rx="6" data-clases="2:d-acento-trazo; 3:"/>
+        <text x="95" y="113" text-anchor="middle">Teclado</text>
+        <rect class="d-caja" x="20" y="143" width="150" height="44" rx="6"/>
+        <text x="95" y="171" text-anchor="middle">Ratón</text>
+        <rect class="d-caja" x="20" y="201" width="150" height="44" rx="6"/>
+        <text x="95" y="229" text-anchor="middle">Micrófono</text>
+        <rect class="d-caja-suave" x="250" y="85" width="220" height="160" rx="10"/>
+        <rect class="d-caja" x="270" y="100" width="180" height="56" rx="6" data-clases="3:d-acento-trazo; 4:"/>
+        <text x="360" y="133" text-anchor="middle">CPU (procesador)</text>
+        <rect class="d-caja" x="270" y="172" width="180" height="56" rx="6" data-clases="3:d-acento-trazo; 4:"/>
+        <text x="360" y="205" text-anchor="middle">RAM (memoria)</text>
+        <rect class="d-caja" x="550" y="85" width="150" height="102" rx="6" data-clases="4:d-acento-trazo; 5:"/>
+        <text x="625" y="108" text-anchor="middle">Pantalla</text>
+        <rect class="d-caja-suave" x="566" y="118" width="118" height="56" rx="4"/>
+        <text class="d-mono" x="625" y="159" text-anchor="middle" style="font-size:32px" data-pasos="4-">A</text>
+        <rect class="d-caja" x="550" y="201" width="150" height="44" rx="6"/>
+        <text x="625" y="229" text-anchor="middle">Altavoces</text>
+        <rect class="d-caja" x="250" y="290" width="220" height="44" rx="6" data-clases="5:d-acento-trazo"/>
+        <text x="360" y="318" text-anchor="middle">Almacenamiento (SSD)</text>
+        <g data-pasos="5-">
+          <rect class="d-acento" x="486" y="297" width="96" height="30" rx="6"/>
+          <text class="d-sobre-acento d-mono" x="534" y="317" text-anchor="middle" style="font-size:14px">nota.txt</text>
+        </g>
+        <path class="d-linea" d="M170 107H238"/><path class="d-tinta" d="M238 99l12 8-12 8z"/>
+        <path class="d-linea" d="M170 165H238"/><path class="d-tinta" d="M238 157l12 8-12 8z"/>
+        <path class="d-linea" d="M170 223H238"/><path class="d-tinta" d="M238 215l12 8-12 8z"/>
+        <path class="d-linea" d="M470 136H538"/><path class="d-tinta" d="M538 128l12 8-12 8z"/>
+        <path class="d-linea" d="M470 223H538"/><path class="d-tinta" d="M538 215l12 8-12 8z"/>
+        <path class="d-linea" d="M360 261V276"/><path class="d-tinta" d="M352 261l8-12 8 12z"/><path class="d-tinta" d="M352 276l8 12 8-12z"/>
+        <circle class="d-acento" cx="205" cy="107" r="8" data-pasos="2-5" data-mover="3:translate(155px,57px); 4:translate(300px,29px); 5:translate(155px,161px)"/>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Toda computadora tiene cuatro tipos de partes: de entrada (por donde llegan los datos), de proceso (la CPU y la memoria), de salida (por donde salen los resultados) y de almacenamiento (donde los datos se guardan de forma permanente).</li>
+        <li>Pulsas la tecla A. El teclado no envía una letra: envía un número, y ese número viaja como una serie de unos y ceros por un cable o por radio.</li>
+        <li data-duracion="7">El número llega a la memoria RAM, donde está cargado el programa que usas (una aplicación de notas). La CPU ejecuta las instrucciones de ese programa, que dicen algo como: «si llega una tecla, añade su letra al texto y avisa a la pantalla».</li>
+        <li>El resultado sale hacia la pantalla. La CPU (con ayuda de la tarjeta gráfica) calcula qué puntos de la pantalla hay que encender para dibujar la A.</li>
+        <li data-duracion="7">Si pulsas «Guardar», el texto se copia al almacenamiento como un archivo, <code>nota.txt</code>. Ahí se queda aunque apagues la computadora. Lo que estaba solo en la RAM, en cambio, se pierde al apagar.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <aside class="senal analogia">
+    <p>Una computadora se parece a la cocina de un restaurante. Los pedidos entran por la ventanilla (entrada). La cocinera jefa (la CPU) sigue recetas (los programas) sobre la mesa de trabajo (la RAM). Los ingredientes que no se usan ahora esperan en la despensa (el almacenamiento). Los platos salen al comedor (salida). La analogía falla en un punto importante: la cocinera entiende lo que cocina y la CPU no entiende nada. Solo sigue instrucciones, sin saber para qué sirven.</p>
+  </aside>
+
+  <h3>Hardware, software y firmware</h3>
+  <p>El <strong>hardware</strong> son las partes físicas: los chips, la pantalla, el teclado, los cables. Se puede tocar. El <strong>software</strong> son los programas y los datos: las instrucciones que le dicen al hardware qué hacer. No se puede tocar; se guarda como información. Tu navegador, tus juegos y el propio sistema operativo son software.</p>
+  <p>Entre los dos hay una capa que casi nadie ve: el <strong>firmware</strong>, un software pequeño grabado dentro de un componente para arrancarlo y controlarlo a bajo nivel. El ejemplo más conocido es el <strong>UEFI</strong> de una computadora, el programa que se ejecuta nada más pulsar el botón de encendido, antes que cualquier otra cosa. Tu teclado, tu disco y tu router también tienen su propio firmware, y a veces se actualiza.</p>
+  <p>Los componentes de hardware se agrupan según qué hacen con la información:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Función</th><th scope="col">Qué hace</th><th scope="col">Ejemplos</th></tr></thead>
+      <tbody>
+        <tr><td>Entrada</td><td>Mete datos en la computadora</td><td>Teclado, ratón, micrófono, cámara, escáner, mando de consola, sensores</td></tr>
+        <tr><td>Salida</td><td>Saca resultados hacia fuera</td><td>Pantalla, altavoces, auriculares, impresora</td></tr>
+        <tr><td>Entrada y salida</td><td>Hace las dos cosas</td><td>Pantalla táctil, tarjeta de red (Wi-Fi o cable), auriculares con micrófono</td></tr>
+        <tr><td>Proceso</td><td>Ejecuta instrucciones y hace cálculos</td><td>CPU (procesador), GPU (tarjeta gráfica)</td></tr>
+        <tr><td>Memoria y almacenamiento</td><td>Guarda datos, por un rato o para siempre</td><td>RAM (temporal), SSD, disco duro, memoria USB (permanentes)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Todo eso está conectado a la <strong>placa base</strong> (en inglés, <em>motherboard</em>), la gran placa de circuito que hace de calle principal: por sus pistas de cobre viajan los datos entre la CPU, la memoria, el almacenamiento y los puertos.</p>
+  <aside class="senal error">
+    <p>Mucha gente llama «CPU» a la caja de la computadora de escritorio, o «la computadora» al monitor. La CPU es un chip del tamaño de una galleta que está dentro de esa caja, pegado a la placa base. El monitor es solo un dispositivo de salida: si lo desconectas, la computadora sigue funcionando.</p>
+  </aside>
+
+  <h3>Computadoras en todas partes</h3>
+  <p>Cuando pienses en «computadora», no pienses solo en una portátil. Tu teléfono es una computadora, y muy potente. También lo son una consola, un reloj inteligente, un router y un televisor moderno. Hay computadoras diminutas escondidas dentro de coches, lavadoras, ascensores o semáforos: se llaman <strong>sistemas embebidos</strong> (del inglés <em>embedded</em>, «incrustados»), porque viven dentro de otro aparato y hacen una sola tarea. Y en el otro extremo están los <strong>servidores</strong>: computadoras sin pantalla, apiladas por miles en centros de datos, que responden a las peticiones de otras computadoras. Cuando ves una página web o un video, un servidor te lo está enviando. Lo verás en la <a href="03-internet.html">Estación 3: Cómo funciona internet y la web</a>.</p>
+
+  <h3>La gran idea: el programa almacenado</h3>
+  <p>Una calculadora de bolsillo solo sabe calcular. Tu computadora, en cambio, puede ser un procesador de textos por la mañana y una consola de videojuegos por la noche. ¿Cómo es posible? Porque sigue una idea que el matemático John von Neumann describió en 1945: las instrucciones del programa se guardan en la misma memoria que los datos. Para cambiar lo que hace la máquina no hace falta recablearla; basta con cargar otro programa. A esto se le llama <strong>arquitectura de programa almacenado</strong> o <strong>arquitectura de von Neumann</strong>.</p>
+  <aside class="senal clave">
+    <p>Una computadora de propósito general puede hacer cualquier cálculo que se pueda describir paso a paso, si tiene tiempo y memoria suficientes. Lo que la convierte en editor, juego o navegador es el programa que ejecuta. Por eso programar es tan poderoso: tú decides en qué se convierte la máquina.</p>
+  </aside>
+
+  <h3>Una historia muy corta</h3>
+  <p>No hace falta memorizar fechas, pero conocer el camino ayuda a entender por qué las computadoras son como son:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Año</th><th scope="col">Qué pasó</th></tr></thead>
+      <tbody>
+        <tr><td>1843</td><td>Ada Lovelace publica unas notas sobre la máquina analítica de Charles Babbage, una calculadora mecánica que nunca se llegó a construir. Incluyen un algoritmo para calcular los números de Bernoulli, que suele citarse como el primer programa publicado.</td></tr>
+        <tr><td>1936</td><td>Alan Turing describe una máquina imaginaria capaz de ejecutar cualquier algoritmo. Es la base teórica de la computadora de propósito general.</td></tr>
+        <tr><td>1945</td><td>Se termina ENIAC, una de las primeras computadoras electrónicas de propósito general (se presentó al público en 1946). Ocupaba una sala entera. Ese mismo año, von Neumann describe la idea del programa almacenado.</td></tr>
+        <tr><td>1947</td><td>Se inventa el <strong>transistor</strong>, un interruptor electrónico diminuto y sin partes móviles. Es la pieza básica de todos los chips actuales.</td></tr>
+        <tr><td>1958</td><td>Primer circuito integrado: varios transistores fabricados juntos en una sola pieza de material.</td></tr>
+        <tr><td>1971</td><td>Intel 4004, el primer microprocesador comercial: una CPU completa en un solo chip, con unos 2300 transistores.</td></tr>
+        <tr><td>1981</td><td>La IBM PC lleva la computadora personal a oficinas y hogares.</td></tr>
+        <tr><td>2007</td><td>El iPhone populariza el teléfono inteligente con pantalla táctil. El primer teléfono con Android llega en 2008.</td></tr>
+        <tr><td>Hoy</td><td>El procesador de un teléfono tiene miles de millones de transistores.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal nota" data-titulo="La computadora no piensa">
+    <p>Una computadora no entiende ni decide nada por su cuenta: ejecuta instrucciones muy simples a una velocidad enorme. Si el resultado es absurdo, casi siempre es porque las instrucciones lo eran. Por eso en la <a href="04-pensamiento.html">Estación 4: Pensamiento computacional y algoritmos</a> aprenderás a escribir pasos precisos antes de programar.</p>
+  </aside>
+</section>
+
+<section id="bits" data-parada="Bits y binario">
+  <h2>Bits: el idioma de la máquina</h2>
+  <p>Dentro de un chip no hay letras, ni colores, ni números como los que escribes en papel. Hay miles de millones de transistores, y cada uno funciona como un interruptor que puede estar en uno de dos estados: deja pasar la corriente o no la deja pasar. A esos dos estados los llamamos <strong>1</strong> y <strong>0</strong>.</p>
+  <p>Un <strong>bit</strong> (del inglés <em>binary digit</em>, «dígito binario») es la unidad más pequeña de información: un solo valor que puede ser 0 o 1. Sí o no. Encendido o apagado. Todo lo que guarda y procesa una computadora, desde este texto hasta tu juego favorito, está hecho de bits.</p>
+  <aside class="senal ojo" data-titulo="¿Por qué solo dos estados?">
+    <p>No es que la electricidad «solo tenga dos estados»: un voltaje puede tomar infinitos valores. Es una decisión de diseño. Distinguir entre «bastante voltaje» y «casi nada» es muy fiable aunque haya ruido eléctrico, calor o piezas imperfectas. Distinguir diez niveles distintos sería mucho más frágil. Por eso casi todas las computadoras trabajan en binario.</p>
+  </aside>
+  <p>Un bit tampoco es un 1 dibujado en algún sitio. Es un estado físico, y cambia según el soporte:</p>
+  <ul>
+    <li>En la CPU y en la RAM, es un voltaje alto o bajo, o una pequeña carga eléctrica.</li>
+    <li>En un SSD o una memoria USB, es una carga eléctrica atrapada en una celda.</li>
+    <li>En un disco duro, es la dirección del magnetismo de una zona microscópica del disco.</li>
+    <li>En una fibra óptica, es un pulso de luz o su ausencia.</li>
+  </ul>
+
+  <h3>Cuántas cosas caben en unos pocos bits</h3>
+  <p>Con un bit puedes representar dos cosas: 0 o 1. Con dos bits, cuatro: 00, 01, 10 y 11. Cada bit que añades <strong>duplica</strong> las combinaciones posibles, porque cada combinación anterior puede terminar en 0 o en 1:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Bits</th><th scope="col">Combinaciones</th><th scope="col">Alcanza para…</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>2</td><td>Encendido o apagado; sí o no</td></tr>
+        <tr><td>2</td><td>4</td><td>Las cuatro direcciones de una cruceta: arriba, abajo, izquierda, derecha</td></tr>
+        <tr><td>3</td><td>8</td><td>Los días de la semana (y sobra uno)</td></tr>
+        <tr><td>4</td><td>16</td><td>Los números del 0 al 15</td></tr>
+        <tr><td>8</td><td>256</td><td>Los números del 0 al 255</td></tr>
+        <tr><td>16</td><td>65&nbsp;536</td><td>Los números del 0 al 65&nbsp;535</td></tr>
+        <tr><td>32</td><td>4&nbsp;294&nbsp;967&nbsp;296</td><td>Una dirección de internet de las clásicas (IPv4, que verás en la Estación 3)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>En matemáticas esto se escribe 2<sup>n</sup>: con n bits hay 2 multiplicado por sí mismo n veces combinaciones. Con 8 bits, 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 = 256.</p>
+
+  <h3>Contar en binario</h3>
+  <p>Para entender el binario, fíjate primero en cómo cuentas normalmente. Nuestro sistema es <strong>decimal</strong> (base 10): usa diez cifras, del 0 al 9, y el valor de cada cifra depende de su posición. En 347, el 7 vale 7 unidades, el 4 vale 4 decenas (40) y el 3 vale 3 centenas (300). Cada posición vale diez veces más que la de su derecha: 1, 10, 100, 1000…</p>
+  <p>El sistema <strong>binario</strong> (base 2) funciona igual, pero con solo dos cifras, 0 y 1, y cada posición vale el <strong>doble</strong> que la de su derecha: 1, 2, 4, 8, 16, 32, 64, 128… Para saber cuánto vale un número binario, sumas los valores de las posiciones donde hay un 1:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Valor de la posición</th><th scope="col">8</th><th scope="col">4</th><th scope="col">2</th><th scope="col">1</th><th scope="col">Total</th></tr></thead>
+      <tbody>
+        <tr><td>Binario 1101</td><td>1</td><td>1</td><td>0</td><td>1</td><td>8 + 4 + 1 = <strong>13</strong></td></tr>
+        <tr><td>Binario 0110</td><td>0</td><td>1</td><td>1</td><td>0</td><td>4 + 2 = <strong>6</strong></td></tr>
+        <tr><td>Binario 1111</td><td>1</td><td>1</td><td>1</td><td>1</td><td>8 + 4 + 2 + 1 = <strong>15</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Contar es como mirar el cuentakilómetros de un coche, pero con ruedas que solo tienen 0 y 1. Cuando una posición ya está en 1 y le toca subir, vuelve a 0 y «se lleva una» a la posición de su izquierda. Míralo con cuatro bombillas:</p>
+  <figure class="capsula" data-titulo="Contar con bombillas">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 250" role="img" aria-label="Animación: cuatro bombillas con valores 8, 4, 2 y 1 cuentan en binario 0, 1, 2, 3 y 4, y después muestran 13 y 15">
+        <text class="d-rotulo d-tenue" x="150" y="40" text-anchor="middle">vale 8</text>
+        <text class="d-rotulo d-tenue" x="270" y="40" text-anchor="middle">vale 4</text>
+        <text class="d-rotulo d-tenue" x="390" y="40" text-anchor="middle">vale 2</text>
+        <text class="d-rotulo d-tenue" x="510" y="40" text-anchor="middle">vale 1</text>
+        <circle class="d-caja" cx="150" cy="100" r="34" data-clases="6:d-acento"/>
+        <circle class="d-caja" cx="270" cy="100" r="34" data-clases="5:d-acento"/>
+        <circle class="d-caja" cx="390" cy="100" r="34" data-clases="3:d-acento; 5:; 7:d-acento"/>
+        <circle class="d-caja" cx="510" cy="100" r="34" data-clases="2:d-acento; 3:; 4:d-acento; 5:; 6:d-acento"/>
+        <rect class="d-caja-suave" x="136" y="136" width="28" height="12" rx="3"/>
+        <rect class="d-caja-suave" x="256" y="136" width="28" height="12" rx="3"/>
+        <rect class="d-caja-suave" x="376" y="136" width="28" height="12" rx="3"/>
+        <rect class="d-caja-suave" x="496" y="136" width="28" height="12" rx="3"/>
+        <text class="d-mono" x="150" y="190" text-anchor="middle" style="font-size:28px" data-texto="1:0; 6:1">0</text>
+        <text class="d-mono" x="270" y="190" text-anchor="middle" style="font-size:28px" data-texto="1:0; 5:1">0</text>
+        <text class="d-mono" x="390" y="190" text-anchor="middle" style="font-size:28px" data-texto="1:0; 3:1; 5:0; 7:1">0</text>
+        <text class="d-mono" x="510" y="190" text-anchor="middle" style="font-size:28px" data-texto="1:0; 2:1; 3:0; 4:1; 5:0; 6:1">0</text>
+        <g data-pasos="3,5">
+          <path class="d-acento-trazo" d="M474 172H440"/><path class="d-tinta" d="M446 166l-12 6 12 6z"/>
+          <text class="d-peq" x="452" y="200" text-anchor="middle">lleva 1</text>
+        </g>
+        <g data-pasos="5">
+          <path class="d-acento-trazo" d="M354 172H320"/><path class="d-tinta" d="M326 166l-12 6 12 6z"/>
+          <text class="d-peq" x="332" y="200" text-anchor="middle">lleva 1</text>
+        </g>
+        <rect class="d-caja" x="590" y="58" width="110" height="94" rx="8"/>
+        <text class="d-peq d-tenue" x="645" y="80" text-anchor="middle">en decimal</text>
+        <text class="d-mono" x="645" y="132" text-anchor="middle" style="font-size:40px" data-texto="1:0; 2:1; 3:2; 4:3; 5:4; 6:13; 7:15">0</text>
+        <text x="330" y="236" text-anchor="middle" data-texto="1:Ninguna bombilla encendida = 0; 2:1 = 1; 3:2 = 2; 4:2 + 1 = 3; 5:4 = 4; 6:8 + 4 + 1 = 13; 7:8 + 4 + 2 + 1 = 15">Ninguna bombilla encendida = 0</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Cuatro bombillas, cuatro bits. Cada una vale el doble que la de su derecha: 8, 4, 2 y 1. Todas apagadas: el número es 0.</li>
+        <li>Encendemos la de la derecha, que vale 1. En binario, <code>0001</code> es 1.</li>
+        <li data-duracion="7">Para llegar a 2 no podemos poner un «2» en la bombilla de la derecha: solo existen 0 y 1. Así que se apaga y se lleva una a la siguiente, que vale 2. <code>0010</code> es 2. Igual que en decimal, después del 9 viene el 10.</li>
+        <li>Volvemos a encender la de la derecha: 2 + 1 = 3. <code>0011</code> es 3.</li>
+        <li data-duracion="7">Para llegar a 4, las dos de la derecha están llenas: se apagan las dos y la llevada pasa hasta la que vale 4. <code>0100</code> es 4. Es el mismo salto que en decimal de 99 a 100.</li>
+        <li>Cualquier número se escribe encendiendo las bombillas que suman ese valor. El 13 es 8 + 4 + 1: <code>1101</code>.</li>
+        <li>Con las cuatro encendidas llegamos al máximo: 8 + 4 + 2 + 1 = 15. Con 4 bits hay 16 combinaciones, del 0 al 15. Para contar más, hacen falta más bombillas.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>El byte: bits de ocho en ocho</h3>
+  <p>Un bit suelto sirve para poco, así que las computadoras los agrupan. Un <strong>byte</strong> es un grupo de 8 bits. Con 8 bits hay 256 combinaciones, así que un byte puede representar los números del 0 al 255. Que sean 8 es una convención que se impuso en los años sesenta y hoy es universal. Casi todo se mide en bytes: el tamaño de un archivo, la memoria de tu computadora o la capacidad de tu teléfono.</p>
+  <p>Estos son los valores de las ocho posiciones de un byte. Apréndetelos: los vas a ver muchas veces.</p>
+  <pre class="consola"><code>128   64   32   16    8    4    2    1</code></pre>
+  <p>Enciende y apaga las bombillas de este panel haciendo clic en ellas. Intenta formar el 200, el 42 y el 255. Fíjate en qué pasa con el número cuando enciendes la bombilla de la izquierda, la que vale 128.</p>
+  <div class="taller" id="taller-bombillas" data-modo="web" data-titulo="Panel de 8 bombillas" data-alto="17rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="panel"&gt;&lt;/div&gt;
+&lt;p id="suma"&gt;&lt;/p&gt;
+&lt;p id="decimal"&gt;&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 16px; background: #f4f5f9; color: #1c2230; }
+#panel { display: flex; gap: 6px; flex-wrap: wrap; }
+.bit { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 14px; font-weight: bold; width: 56px; }
+.bombilla { width: 52px; height: 52px; border-radius: 50%; border: 3px solid #1c2230; background: #d9dce4; font: bold 22px monospace; color: #1c2230; cursor: pointer; }
+.bombilla.encendida { background: #ffcf3d; box-shadow: 0 0 16px #ffcf3d; }
+#suma { font-size: 16px; margin: 14px 0 4px; }
+#decimal { font-size: 24px; font-weight: bold; margin: 0; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// Puedes hacer clic en las bombillas o cambiar este texto
+// (8 ceros y unos) y pulsar «Ejecutar».
+const inicial = "00001101";
+
+const valores = [128, 64, 32, 16, 8, 4, 2, 1];
+const bits = inicial.padStart(8, "0").slice(-8).split("").map(Number);
+const panel = document.getElementById("panel");
+
+function dibujar() {
+  panel.innerHTML = "";
+  let total = 0;
+  const partes = [];
+  valores.forEach(function (valor, i) {
+    const caja = document.createElement("div");
+    caja.className = "bit";
+    const etiqueta = document.createElement("span");
+    etiqueta.textContent = valor;
+    const boton = document.createElement("button");
+    boton.className = bits[i] ? "bombilla encendida" : "bombilla";
+    boton.textContent = bits[i];
+    boton.onclick = function () {
+      bits[i] = bits[i] ? 0 : 1;
+      dibujar();
+    };
+    caja.append(etiqueta, boton);
+    panel.append(caja);
+    if (bits[i]) {
+      total = total + valor;
+      partes.push(valor);
+    }
+  });
+  document.getElementById("suma").textContent = "Suma de las encendidas: " + (partes.join(" + ") || "ninguna");
+  document.getElementById("decimal").textContent = bits.join("") + " en binario = " + total + " en decimal";
+  console.log(bits.join("") + " = " + total);
+}
+
+dibujar();</textarea>
+  </div>
+  <p>Si formaste el 255, tienes las ocho bombillas encendidas: <code>11111111</code>. Es el número más grande que cabe en un byte. El 200 es <code>11001000</code> (128 + 64 + 8) y el 42 es <code>00101010</code> (32 + 8 + 2).</p>
+
+  <h3>De decimal a binario, paso a paso</h3>
+  <p>Para escribir un número decimal en binario hay dos métodos. Los dos llegan al mismo resultado; usa el que te resulte más cómodo.</p>
+  <p><strong>Método 1: restar potencias de 2.</strong> Busca el valor más grande de la tabla (128, 64, 32…) que no se pase de tu número, pon un 1 en esa posición y réstalo. Repite con lo que quede. Las posiciones que no usaste llevan 0. Para 200:</p>
+  <ol class="pasos">
+    <li><div><p>¿Cabe 128 en 200? Sí. Pongo un 1 en la posición del 128 y me quedan 200 − 128 = 72.</p></div></li>
+    <li><div><p>¿Cabe 64 en 72? Sí. Pongo un 1 y me quedan 72 − 64 = 8.</p></div></li>
+    <li><div><p>¿Caben 32 o 16 en 8? No. Pongo 0 en esas dos posiciones.</p></div></li>
+    <li><div><p>¿Cabe 8 en 8? Sí. Pongo un 1 y me queda 0. Las posiciones del 4, el 2 y el 1 llevan 0.</p></div></li>
+    <li><div><p>Resultado: <code>11001000</code>. Compruébalo sumando: 128 + 64 + 8 = 200.</p></div></li>
+  </ol>
+  <p><strong>Método 2: dividir entre 2.</strong> Divide el número entre 2 y anota el resto (0 o 1). Repite con el cociente hasta llegar a 0. Después lee los restos de abajo arriba. Para 13: 13 ÷ 2 = 6, resto 1; 6 ÷ 2 = 3, resto 0; 3 ÷ 2 = 1, resto 1; 1 ÷ 2 = 0, resto 1. Leídos de abajo arriba: <code>1101</code>.</p>
+  <p>La computadora puede hacer estas conversiones por ti. Antes de ejecutar este taller, <strong>predice</strong> qué va a imprimir cada línea. No te preocupes por cómo está escrito el código: en cada línea, fíjate solo en los números y en el comentario de la derecha.</p>
+  <div class="taller" id="taller-predice-binario" data-titulo="Predice: decimal y binario">
+    <textarea class="taller-codigo">console.log((5).toString(2));        // el 5, escrito en binario
+console.log((13).toString(2));       // el 13, escrito en binario
+console.log((255).toString(2));      // el 255, escrito en binario
+console.log(parseInt("1101", 2));    // "1101" leído como binario
+console.log(parseInt("100000000", 2)); // un 1 seguido de ocho ceros</textarea>
+  </div>
+  <p>La última línea da 256: el primer número que ya no cabe en un byte y necesita un noveno bit. Ahora <strong>modifica</strong> el taller: escribe tu edad y el año en que naciste en lugar de 5 y 13, y comprueba el resultado sumando las posiciones a mano.</p>
+  <aside class="senal error">
+    <p>«10» en binario no es diez: es dos (un 2 y ningún 1). Por eso el chiste clásico dice: «Hay 10 tipos de personas: las que entienden binario y las que no». Cuando haya dudas sobre la base, lo correcto es decirlo: «10 en binario».</p>
+  </aside>
+  <aside class="senal ojo" data-titulo="Tres confusiones frecuentes">
+    <p>El binario no es un lenguaje de programación: es una forma de escribir números, igual que los números romanos. Tampoco es cierto que más bits signifiquen siempre números más grandes: los bits de más también sirven para tener más precisión, más colores o más niveles de volumen. Y la computadora no guarda solo números enteros positivos: también guarda números negativos y decimales usando bits, con reglas propias que verás en la <a href="18-matematicas.html">Estación 18: Matemáticas útiles para programar</a>. Esas reglas explican, por ejemplo, por qué en muchos lenguajes 0.1 + 0.2 no da exactamente 0.3 (lo comprobarás en la <a href="07-variables.html">Estación 7</a>).</p>
+  </aside>
+</section>
+
+<section id="unidades" data-parada="Bytes y unidades">
+  <h2>Cuánto ocupa la información</h2>
+  <p>Compras un disco de 1 TB, lo conectas y Windows dice que tiene 931 GB. Contratas internet de 100 megas y un archivo de 100 MB tarda ocho segundos en bajar, no uno. En los dos casos nadie te ha robado nada: son confusiones de unidades. Esta sección te las deja claras para siempre.</p>
+
+  <h3>Bit y byte: b minúscula, B mayúscula</h3>
+  <p>El bit se abrevia con <strong>b minúscula</strong> y el byte con <strong>B mayúscula</strong>. Parece un detalle, pero entre uno y otro hay un factor de 8. Hay una costumbre que conviene conocer:</p>
+  <ul>
+    <li>La <strong>velocidad de internet</strong> se mide en bits por segundo: Mb/s o Mbps (megabits por segundo).</li>
+    <li>El <strong>tamaño de los archivos</strong> y la capacidad de los discos se miden en bytes: MB, GB, TB.</li>
+  </ul>
+  <p>Así, una conexión de 100 Mb/s descarga, como mucho, 100 ÷ 8 = 12,5 megabytes por segundo. Un archivo de 1 GB (1000 MB) tarda 1000 ÷ 12,5 = 80 segundos en condiciones ideales. En la práctica algo más, porque parte de la conexión se gasta en controlar el envío.</p>
+
+  <h3>Kilo, mega, giga… y sus primos binarios</h3>
+  <p>Igual que 1 kilómetro son 1000 metros, 1 <strong>kilobyte</strong> (kB) son 1000 bytes. Cada prefijo multiplica por mil:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Unidad</th><th scope="col">Equivale a</th><th scope="col">Ejemplo aproximado</th></tr></thead>
+      <tbody>
+        <tr><td>1 bit (b)</td><td>Un 0 o un 1</td><td>La respuesta a una pregunta de sí o no</td></tr>
+        <tr><td>1 byte (B)</td><td>8 bits</td><td>Una letra sin tilde en un archivo de texto</td></tr>
+        <tr><td>1 kilobyte (kB)</td><td>1000 bytes</td><td>Un párrafo de texto</td></tr>
+        <tr><td>1 megabyte (MB)</td><td>1000 kB</td><td>Un minuto de música en MP3; una foto de teléfono ocupa de 2 a 5 MB</td></tr>
+        <tr><td>1 gigabyte (GB)</td><td>1000 MB</td><td>Una hora de video en alta definición ocupa de 1 a 3 GB, según la compresión</td></tr>
+        <tr><td>1 terabyte (TB)</td><td>1000 GB</td><td>El disco de una computadora: unas 300&nbsp;000 fotos de teléfono</td></tr>
+        <tr><td>1 petabyte (PB)</td><td>1000 TB</td><td>El almacenamiento de un centro de datos (los grandes tienen muchísimos)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El problema es que las computadoras cuentan en binario, y en binario los números redondos son potencias de 2, no de 10. Durante décadas se usó «kilobyte» para decir 1024 bytes (2<sup>10</sup>), porque 1024 está muy cerca de 1000. Para acabar con la ambigüedad, en 1998 se crearon los <strong>prefijos binarios</strong>, con una «i» en medio:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Prefijo decimal</th><th scope="col">Bytes</th><th scope="col">Prefijo binario</th><th scope="col">Bytes</th><th scope="col">Diferencia</th></tr></thead>
+      <tbody>
+        <tr><td>kilobyte (kB)</td><td>1000</td><td>kibibyte (KiB)</td><td>1024</td><td>2,4 %</td></tr>
+        <tr><td>megabyte (MB)</td><td>1000<sup>2</sup> = 1&nbsp;000&nbsp;000</td><td>mebibyte (MiB)</td><td>1024<sup>2</sup> = 1&nbsp;048&nbsp;576</td><td>4,9 %</td></tr>
+        <tr><td>gigabyte (GB)</td><td>1000<sup>3</sup></td><td>gibibyte (GiB)</td><td>1024<sup>3</sup> = 1&nbsp;073&nbsp;741&nbsp;824</td><td>7,4 %</td></tr>
+        <tr><td>terabyte (TB)</td><td>1000<sup>4</sup></td><td>tebibyte (TiB)</td><td>1024<sup>4</sup></td><td>10 %</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Según la norma, kB, MB y GB son múltiplos de 1000, y KiB, MiB y GiB son múltiplos de 1024. En la vida real se mezclan, y ahí nace el misterio del disco:</p>
+  <ul>
+    <li>Los fabricantes de discos y memorias USB usan prefijos decimales. Un disco de «1 TB» tiene 1&nbsp;000&nbsp;000&nbsp;000&nbsp;000 bytes.</li>
+    <li>Windows divide entre 1024<sup>3</sup> (es decir, calcula en GiB) pero escribe «GB». 10<sup>12</sup> ÷ 1024<sup>3</sup> ≈ 931,3. Por eso muestra «931 GB».</li>
+    <li>macOS usa prefijos decimales desde 2009 y muestra 1 TB. En Linux depende del programa que uses.</li>
+    <li>La RAM es la excepción: un módulo de «16 GB» tiene en realidad 16 GiB.</li>
+  </ul>
+  <p>Además, el sistema operativo y el formato del disco ocupan algo de espacio, así que siempre verás un poco menos de lo que dice la caja.</p>
+  <aside class="senal error">
+    <p>«Me estafaron con el disco duro». No: los bytes están todos. Es la misma cantidad medida con dos reglas distintas, igual que 1 milla y 1,6 kilómetros son la misma distancia. Y «Mb» y «MB» tampoco son lo mismo: si confundes la velocidad de tu conexión con megabytes, esperarás descargas ocho veces más rápidas de lo posible.</p>
+  </aside>
+  <p>Comprueba las cuentas. <strong>Predice</strong> los resultados antes de ejecutar y después <strong>modifica</strong> los valores: prueba con un SSD de 512 GB y con tu velocidad de internet.</p>
+  <div class="taller" id="taller-disco" data-titulo="La calculadora del disco">
+    <textarea class="taller-codigo">// Cambia el tamaño anunciado y pulsa «Ejecutar».
+const gigabytesAnunciados = 1000;   // un disco de 1 TB son 1000 GB
+const bytes = gigabytesAnunciados * 1000 ** 3;
+const gibibytes = bytes / 1024 ** 3;
+
+console.log("Bytes de verdad:", bytes);
+console.log("Lo que muestra Windows:", gibibytes.toFixed(1), "GB (en realidad, GiB)");
+console.log("Lo que muestra macOS:", gigabytesAnunciados, "GB");
+
+// Internet: los proveedores anuncian megabits por segundo (Mb/s)
+const megabitsPorSegundo = 100;
+const megabytesPorSegundo = megabitsPorSegundo / 8;
+console.log("Velocidad en bytes:", megabytesPorSegundo, "MB/s");
+console.log("Descargar 1 GB tarda unos", 1000 / megabytesPorSegundo, "segundos");</textarea>
+  </div>
+  <p>La computadora escribe los decimales con punto (931.3), como en inglés. Con un SSD de 512 GB deberías ver unos 476,8 «GB» en Windows. El símbolo <code>**</code> significa «elevado a»: <code>1024 ** 3</code> es 1024 × 1024 × 1024.</p>
+
+  <h3>Comprimir: guardar lo mismo en menos bytes</h3>
+  <p>Una foto de 1920 × 1080 puntos, guardada tal cual, ocupa unos 6 MB (lo calcularás en la práctica). Sin embargo, esa misma foto en tu teléfono ocupa bastante menos. El truco es la <strong>compresión</strong>: un conjunto de técnicas para guardar la misma información con menos bytes. Hay dos familias:</p>
+  <ul>
+    <li><strong>Compresión sin pérdida</strong>: al descomprimir recuperas exactamente los mismos bytes. La usan los archivos ZIP y las imágenes PNG. Es imprescindible para textos y programas: un solo bit cambiado estropearía el archivo.</li>
+    <li><strong>Compresión con pérdida</strong>: descarta detalles que apenas se notan. La usan las fotos JPEG, la música MP3 o AAC y casi todo el video (H.264, H.265, AV1). Ocupa muchísimo menos, pero lo descartado ya no se recupera. Si vuelves a comprimir una y otra vez, la calidad empeora.</li>
+  </ul>
+  <aside class="senal oficio">
+    <p>Cuando programes, escribe la unidad en el nombre de tus datos: <code>tamanoEnBytes</code>, <code>duracionEnSegundos</code>, <code>velocidadMbps</code>. Mezclar unidades es un error clásico, y algunos han salido carísimos: en 1999, la sonda Mars Climate Orbiter se perdió porque un equipo calculaba en unidades inglesas y otro en unidades del sistema métrico.</p>
+  </aside>
+</section>
+
+<section id="representar" data-parada="Todo son números">
+  <h2>Todo son números: texto, color, imagen y sonido</h2>
+  <p>Si dentro de la computadora solo hay bits, ¿cómo es que ves letras, fotos y videos, y oyes música? La respuesta es un acuerdo. Las personas que diseñan los formatos deciden que cierto número significa cierta letra, cierto color o cierta vibración del aire. Mientras quien escribe y quien lee usen el mismo acuerdo, todo funciona.</p>
+  <aside class="senal clave">
+    <p>Los bytes no saben lo que son. Los mismos cuatro bytes pueden ser un número, dos letras o el color de un píxel. Quien decide qué significan es el programa que los lee, según el <strong>formato</strong> que espera.</p>
+  </aside>
+
+  <h3>Texto: cada carácter tiene un número</h3>
+  <p>Para guardar texto, a cada carácter (letra, cifra, signo o espacio) se le asigna un número llamado <strong>código</strong>. La primera tabla que se hizo popular fue <strong>ASCII</strong> (siglas en inglés de «Código Estándar Estadounidense para el Intercambio de Información»), publicada en 1963. Usa 7 bits, así que tiene 128 códigos: las letras del inglés en mayúsculas y minúsculas, las cifras, los signos de puntuación, el espacio y unos cuantos códigos de control, como el salto de línea.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Carácter</th><th scope="col">Código ASCII</th><th scope="col">En binario</th></tr></thead>
+      <tbody>
+        <tr><td>(espacio)</td><td>32</td><td><code>00100000</code></td></tr>
+        <tr><td><code>0</code></td><td>48</td><td><code>00110000</code></td></tr>
+        <tr><td><code>A</code></td><td>65</td><td><code>01000001</code></td></tr>
+        <tr><td><code>B</code></td><td>66</td><td><code>01000010</code></td></tr>
+        <tr><td><code>a</code></td><td>97</td><td><code>01100001</code></td></tr>
+        <tr><td><code>b</code></td><td>98</td><td><code>01100010</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Fíjate: las letras van seguidas (A = 65, B = 66, C = 67…) y cada minúscula está exactamente 32 posiciones después de su mayúscula. Además, el carácter «0» no es el número 0: es el código 48. Predice cada línea antes de ejecutar:</p>
+  <div class="taller" id="taller-letras" data-titulo="Predice: las letras son números">
+    <textarea class="taller-codigo">console.log("A".charCodeAt(0));   // el código de la A mayúscula
+console.log("a".charCodeAt(0));   // el código de la a minúscula
+console.log("0".charCodeAt(0));   // el código del carácter 0
+console.log("ñ".charCodeAt(0));   // el código de la ñ
+console.log(String.fromCharCode(72, 111, 108, 97)); // de códigos a letras</textarea>
+  </div>
+  <p>La ñ da 241, un número mayor que 127: no está en ASCII. ASCII se pensó para el inglés y no tiene ñ, ni tildes, ni ¿ ni ¡. Durante años cada región inventó su propia tabla para los códigos del 128 al 255, y un mismo byte significaba cosas distintas en Europa, Rusia o Japón. Era un caos.</p>
+
+  <h3>Unicode y UTF-8</h3>
+  <p><strong>Unicode</strong> resolvió el caos con un catálogo único para todo el planeta: asigna un número distinto a cada carácter de casi todas las escrituras del mundo, además de símbolos matemáticos, notas musicales y emojis. Ese número se llama <strong>punto de código</strong> y se escribe con el formato U+ seguido de cifras: la ñ es U+00F1 (241 en decimal). La versión 18.0, publicada en septiembre de 2026, tiene más de 170&nbsp;000 caracteres. Para ser compatible, Unicode mantiene los 128 códigos de ASCII: la A sigue siendo 65.</p>
+  <p>Pero un catálogo no dice cómo guardar los números en bytes. De eso se encarga una <strong>codificación</strong>. La más usada, con muchísima diferencia, es <strong>UTF-8</strong>: cerca del 99 % de las páginas web la usan. Su gran idea es usar un número variable de bytes por carácter:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Caracteres</th><th scope="col">Bytes en UTF-8</th><th scope="col">Ejemplos</th></tr></thead>
+      <tbody>
+        <tr><td>Los 128 de ASCII</td><td>1</td><td><code>a</code>, <code>Z</code>, <code>7</code>, <code>?</code>, espacio</td></tr>
+        <tr><td>Letras con tilde, ñ, ¿, ¡, griego, cirílico, árabe…</td><td>2</td><td><code>ñ</code>, <code>á</code>, <code>ü</code>, <code>¡</code></td></tr>
+        <tr><td>Casi todo lo demás: chino, japonés, símbolos</td><td>3</td><td><code>€</code>, <code>中</code></td></tr>
+        <tr><td>Emojis y escrituras históricas</td><td>4</td><td>La cara sonriente y casi todos los emojis</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Así, un texto en inglés ocupa lo mismo que en ASCII, y cualquier idioma cabe en el mismo archivo. Míralo con una palabra que usas a diario:</p>
+  <figure class="capsula" data-titulo="La palabra «año» en bytes">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Animación: la palabra año se convierte en los números 97, 241 y 111, después en cuatro bytes UTF-8 (97, 195, 177, 111) y en bits. Leídos con otra tabla aparece aÃ±o; leídos como UTF-8 vuelve a ser año">
+        <text class="d-rotulo d-tenue" x="20" y="55">Texto</text>
+        <text class="d-rotulo d-tenue" x="20" y="122" data-pasos="2-">Unicode</text>
+        <text class="d-rotulo d-tenue" x="20" y="180" data-pasos="3-">Bytes</text>
+        <text class="d-rotulo d-tenue" x="20" y="256" data-pasos="5-">Lectura</text>
+        <rect class="d-caja" x="150" y="22" width="80" height="52" rx="6"/>
+        <rect class="d-caja" x="318" y="22" width="80" height="52" rx="6"/>
+        <rect class="d-caja" x="486" y="22" width="80" height="52" rx="6"/>
+        <text class="d-mono" x="190" y="58" text-anchor="middle" style="font-size:28px">a</text>
+        <text class="d-mono" x="358" y="58" text-anchor="middle" style="font-size:28px">ñ</text>
+        <text class="d-mono" x="526" y="58" text-anchor="middle" style="font-size:28px">o</text>
+        <g data-pasos="2-">
+          <rect class="d-caja-suave" x="150" y="100" width="80" height="32" rx="16"/>
+          <rect class="d-caja-suave" x="318" y="100" width="80" height="32" rx="16"/>
+          <rect class="d-caja-suave" x="486" y="100" width="80" height="32" rx="16"/>
+          <text class="d-mono" x="190" y="122" text-anchor="middle" style="font-size:18px">97</text>
+          <text class="d-mono" x="358" y="122" text-anchor="middle" style="font-size:18px">241</text>
+          <text class="d-mono" x="526" y="122" text-anchor="middle" style="font-size:18px">111</text>
+        </g>
+        <g data-pasos="3-">
+          <path class="d-linea" d="M190 132V152M358 132L302 152M358 132L414 152M526 132V152"/>
+          <rect class="d-caja" x="140" y="152" width="100" height="44" rx="6"/>
+          <rect class="d-caja" x="252" y="152" width="100" height="44" rx="6" data-clases="3:d-acento-trazo"/>
+          <rect class="d-caja" x="364" y="152" width="100" height="44" rx="6" data-clases="3:d-acento-trazo"/>
+          <rect class="d-caja" x="476" y="152" width="100" height="44" rx="6"/>
+          <text class="d-mono" x="190" y="180" text-anchor="middle" style="font-size:16px" data-texto="3:97; 4:01100001">97</text>
+          <text class="d-mono" x="302" y="180" text-anchor="middle" style="font-size:16px" data-texto="3:195; 4:11000011">195</text>
+          <text class="d-mono" x="414" y="180" text-anchor="middle" style="font-size:16px" data-texto="3:177; 4:10110001">177</text>
+          <text class="d-mono" x="526" y="180" text-anchor="middle" style="font-size:16px" data-texto="3:111; 4:01101111">111</text>
+        </g>
+        <text x="648" y="168" text-anchor="middle" style="font-size:15px" data-pasos="3-">3 caracteres</text>
+        <text x="648" y="190" text-anchor="middle" style="font-size:15px" data-pasos="3-">4 bytes</text>
+        <rect class="d-caja-suave" x="140" y="222" width="436" height="50" rx="8" data-pasos="5-"/>
+        <g data-pasos="5">
+          <text class="d-mono" x="190" y="256" text-anchor="middle" style="font-size:26px">a</text>
+          <text class="d-mono d-mal" x="302" y="256" text-anchor="middle" style="font-size:26px">Ã</text>
+          <text class="d-mono d-mal" x="414" y="256" text-anchor="middle" style="font-size:26px">±</text>
+          <text class="d-mono" x="526" y="256" text-anchor="middle" style="font-size:26px">o</text>
+          <text class="d-peq d-tenue" x="648" y="232" text-anchor="middle">con Windows-1252</text>
+          <text class="d-mono d-mal" x="648" y="262" text-anchor="middle" style="font-size:22px">aÃ±o</text>
+        </g>
+        <g data-pasos="6">
+          <text class="d-mono" x="190" y="256" text-anchor="middle" style="font-size:26px">a</text>
+          <text class="d-mono d-ok" x="358" y="256" text-anchor="middle" style="font-size:26px">ñ</text>
+          <text class="d-mono" x="526" y="256" text-anchor="middle" style="font-size:26px">o</text>
+          <text class="d-peq d-tenue" x="648" y="232" text-anchor="middle">con UTF-8</text>
+          <text class="d-mono d-ok" x="648" y="262" text-anchor="middle" style="font-size:22px">año</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Una palabra corriente: «año». Para la computadora, cada carácter no es un dibujo, sino un número.</li>
+        <li>Unicode le da a cada carácter su punto de código: a = 97, ñ = 241 (U+00F1), o = 111. La a y la o tienen el mismo número que en ASCII.</li>
+        <li data-duracion="7">Para guardarlo, UTF-8 convierte cada número en bytes. La a y la o caben en 1 byte cada una, pero la ñ necesita 2: el 195 y el 177. Tres caracteres, cuatro bytes.</li>
+        <li>En el disco o en la red solo viajan bits: esos cuatro bytes son 32 unos y ceros.</li>
+        <li data-duracion="8">Si un programa lee esos bytes con otra tabla, por ejemplo la antigua Windows-1252, que usa 1 byte por carácter, cada byte se convierte en un carácter distinto: el 195 es «Ã» y el 177 es «±». Aparece «aÃ±o». Este desastre tiene nombre: <strong>mojibake</strong>, una palabra japonesa que significa algo así como «caracteres transformados».</li>
+        <li>Leídos como UTF-8, los mismos bytes vuelven a ser «año». Los bytes no dicen en qué codificación se escribieron: hay que leerlos con la misma con la que se guardaron.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Cuenta los bytes tú mismo. <code>TextEncoder</code> es una herramienta del navegador que convierte texto en bytes UTF-8. Predice cuántos bytes ocupa cada carácter:</p>
+  <div class="taller" id="taller-utf8" data-titulo="Predice: ¿cuántos bytes ocupa?">
+    <textarea class="taller-codigo">const codificador = new TextEncoder();      // convierte texto en bytes UTF-8
+const cara = String.fromCodePoint(128512);  // el emoji de la cara sonriente
+console.log(codificador.encode("a").length);    // bytes de la a
+console.log(codificador.encode("ñ").length);    // bytes de la ñ
+console.log(codificador.encode("€").length);    // bytes del símbolo del euro
+console.log(codificador.encode(cara).length);   // bytes del emoji
+console.log(codificador.encode("año").join(" ")); // los bytes de «año», uno por uno</textarea>
+  </div>
+  <aside class="senal error">
+    <p>Tres ideas equivocadas muy comunes. «Una letra siempre ocupa 1 byte»: en UTF-8 ocupa de 1 a 4. «Unicode y UTF-8 son lo mismo»: Unicode es el catálogo que da un número a cada carácter y UTF-8 es una manera de guardar esos números en bytes (también existen UTF-16 y UTF-32). «Los emojis son imágenes metidas en el texto»: son caracteres con su propio número; la tipografía de tu dispositivo decide cómo dibujarlos, por eso el mismo emoji se ve distinto en cada marca de teléfono.</p>
+  </aside>
+  <aside class="senal oficio">
+    <p>Si alguna vez ves «Ã±» donde debería haber una «ñ», ya sabes el diagnóstico: alguien guardó en UTF-8 y alguien leyó con otra tabla. La regla profesional es sencilla de decir: usa UTF-8 en todo, siempre. En tus archivos de código, en tus páginas web (lo verás en la <a href="13-html.html">Estación 13: HTML</a>) y en tus bases de datos.</p>
+  </aside>
+
+  <h3>Color: tres números para cada punto</h3>
+  <p>Una pantalla está formada por puntos de luz diminutos. Cada punto mezcla tres luces: roja, verde y azul. Variando su intensidad se consigue cualquier color. Es el modelo <strong>RGB</strong> (del inglés <em>red, green, blue</em>). Cada canal suele guardarse en un byte, es decir, con un número del 0 (apagado) al 255 (máxima intensidad). Tres bytes por punto dan 256 × 256 × 256 = 16&nbsp;777&nbsp;216 colores posibles.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Rojo</th><th scope="col">Verde</th><th scope="col">Azul</th><th scope="col">Color que ves</th></tr></thead>
+      <tbody>
+        <tr><td>255</td><td>0</td><td>0</td><td>Rojo puro</td></tr>
+        <tr><td>0</td><td>255</td><td>0</td><td>Verde puro</td></tr>
+        <tr><td>255</td><td>255</td><td>0</td><td>Amarillo (luz roja más luz verde)</td></tr>
+        <tr><td>255</td><td>136</td><td>0</td><td>Naranja</td></tr>
+        <tr><td>0</td><td>0</td><td>0</td><td>Negro (todo apagado)</td></tr>
+        <tr><td>255</td><td>255</td><td>255</td><td>Blanco (todo encendido)</td></tr>
+        <tr><td>128</td><td>128</td><td>128</td><td>Gris medio (los tres iguales)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal ojo" data-titulo="La luz no se mezcla como la pintura">
+    <p>Con pinturas, mezclar rojo y verde da un marrón oscuro. Con luz, rojo y verde dan amarillo, y los tres a tope dan blanco. Las pantallas suman luz; la pintura la resta.</p>
+  </aside>
+  <p>Mezcla colores cambiando los tres números y pulsando «Ejecutar». Intenta conseguir amarillo, un morado, un gris claro y el color de tu camiseta. Debajo verás los 24 bits que ocupa cada color.</p>
+  <div class="taller" id="taller-rgb" data-modo="web" data-titulo="Mezclador RGB" data-alto="15rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="muestra"&gt;&lt;/div&gt;
+&lt;p id="texto"&gt;&lt;/p&gt;
+&lt;pre id="canales"&gt;&lt;/pre&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 16px; background: #f4f5f9; color: #1c2230; }
+#muestra { height: 90px; border-radius: 10px; border: 2px solid #1c2230; }
+#texto { font-size: 18px; font-weight: bold; margin: 12px 0 4px; }
+#canales { font-size: 15px; margin: 0; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// Cada canal va de 0 (apagado) a 255 (máximo). Cambia los números.
+const rojo = 255;
+const verde = 136;
+const azul = 0;
+
+const color = "rgb(" + rojo + ", " + verde + ", " + azul + ")";
+document.getElementById("muestra").style.background = color;
+document.getElementById("texto").textContent = color;
+const enBits = [rojo, verde, azul].map(function (n) {
+  return n.toString(2).padStart(8, "0");
+});
+document.getElementById("canales").textContent =
+  "Rojo:  " + enBits[0] + "\nVerde: " + enBits[1] + "\nAzul:  " + enBits[2];
+console.log(color + " ocupa 24 bits: " + enBits.join(" "));</textarea>
+  </div>
+  <p>En diseño web verás los colores escritos de otra forma, como <code>#FF8800</code>. Es el mismo naranja (255, 136, 0) escrito en <strong>hexadecimal</strong>, un sistema en base 16 que resume cada byte en dos cifras. Lo usarás en la <a href="14-css.html">Estación 14: CSS</a> y lo entenderás a fondo en la <a href="18-matematicas.html">Estación 18</a>.</p>
+
+  <h3>Imágenes: una cuadrícula de píxeles</h3>
+  <p>Una imagen digital es una cuadrícula de puntos de color llamados <strong>píxeles</strong> (de <em>picture element</em>, «elemento de imagen»). Cada píxel guarda su color, normalmente como tres números RGB. La <strong>resolución</strong> es el ancho por el alto en píxeles: una imagen de 1920 × 1080 tiene 2&nbsp;073&nbsp;600 píxeles, unos 2 millones. Si te acercas mucho a una foto, llega un momento en que ves los cuadraditos.</p>
+  <p>En los videojuegos clásicos, los personajes eran <strong>sprites</strong>: imágenes pequeñas dibujadas píxel a píxel. Este sprite de 8 × 8 está definido con números: cada cifra es un píxel y cada número elige un color de la paleta. Cámbiale los ojos, dale otra expresión o dibuja un corazón:</p>
+  <div class="taller" id="taller-sprite" data-modo="web" data-titulo="Un sprite hecho de números" data-alto="19rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="lienzo"&gt;&lt;/div&gt;
+&lt;p id="info"&gt;&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 16px; background: #f4f5f9; color: #1c2230; }
+#lienzo { display: grid; grid-template-columns: repeat(8, 26px); gap: 1px; background: #c9ccd6; width: max-content; border: 1px solid #c9ccd6; }
+#lienzo div { width: 26px; height: 26px; }
+#info { font-size: 15px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// Cada cifra es un píxel. 0 = fondo, 1 = negro, 2 = amarillo, 3 = rojo
+const sprite = [
+  "00111100",
+  "01222210",
+  "12122121",
+  "12222221",
+  "13222231",
+  "12333321",
+  "01222210",
+  "00111100"
+];
+const paleta = ["#ffffff", "#1c2230", "#ffcf3d", "#e5383b"];
+
+const lienzo = document.getElementById("lienzo");
+sprite.forEach(function (fila) {
+  fila.split("").forEach(function (cifra) {
+    const pixel = document.createElement("div");
+    pixel.style.background = paleta[Number(cifra)];
+    lienzo.append(pixel);
+  });
+});
+const pixeles = sprite.length * sprite[0].length;
+const resumen = pixeles + " píxeles × 3 bytes (RGB) = " + pixeles * 3 + " bytes sin comprimir";
+document.getElementById("info").textContent = resumen;
+console.log(resumen);</textarea>
+  </div>
+  <p>Este sprite ocupa 192 bytes sin comprimir. Un fondo de pantalla de 3840 × 2160 (lo que se llama 4K) tiene más de 8 millones de píxeles: casi 25 MB sin comprimir. Por eso las imágenes casi siempre se guardan comprimidas. Volverás a los sprites en la <a href="34-videojuegos.html">Estación 34: Desarrollo de videojuegos</a>.</p>
+  <aside class="senal nota">
+    <p>Más megapíxeles no garantizan mejores fotos. La calidad depende también del tamaño del sensor, de la lente y del procesado que hace la cámara. Un megapíxel es un millón de píxeles.</p>
+  </aside>
+
+  <h3>Sonido: medir una onda muchas veces por segundo</h3>
+  <p>El sonido es una vibración del aire, una onda que sube y baja de forma continua. Un micrófono la convierte en una señal eléctrica, y la computadora la mide muchas veces por segundo. Cada medida se llama <strong>muestra</strong> y se guarda como un número. A este proceso se le llama <strong>muestreo</strong>.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 260" role="img" aria-label="Una onda de sonido con quince medidas marcadas a intervalos regulares. Cada medida es un número, positivo si la onda está por encima del eje y negativo si está por debajo">
+      <text class="d-peq d-tenue" x="60" y="24">presión del aire</text>
+      <path class="d-punteada" d="M60 125H700"/>
+      <text class="d-peq d-tenue" x="700" y="148" text-anchor="end">tiempo</text>
+      <polyline class="d-linea" points="70,112.6 75,104.1 80,96.5 85,89.9 90,84.5 95,80.3 100,77.4 105,75.7 110,75.1 115,75.5 120,76.6 125,78.3 130,80.2 135,82.3 140,84.1 145,85.6 150,86.5 155,86.8 160,86.3 165,85.0 170,82.9 175,80.2 180,76.9 185,73.3 190,69.6 195,66.0 200,62.7 205,60.0 210,58.2 215,57.4 220,57.8 225,59.5 230,62.6 235,67.1 240,72.9 245,79.9 250,87.8 255,96.6 260,106.0 265,115.6 270,125.1 275,134.4 280,143.2 285,151.1 290,158.0 295,163.9 300,168.4 305,171.8 310,173.9 315,174.8 320,174.7 325,173.8 330,172.3 335,170.4 340,168.4 345,166.5 350,164.8 355,163.7 360,163.2 365,163.5 370,164.5 375,166.3 380,168.8 385,171.9 390,175.5 395,179.2 400,182.9 405,186.3 410,189.2 415,191.3 420,192.5 425,192.5 430,191.2 435,188.6 440,184.5 445,179.2 450,172.6 455,164.9 460,156.4 465,147.2 470,137.7 475,128.0 480,118.6 485,109.7 490,101.4 495,94.1 500,87.9 505,83.0 510,79.2 515,76.7 520,75.4 525,75.1 530,75.8 535,77.1 540,78.9 545,80.9 550,82.9 555,84.7 560,86.0 565,86.7 570,86.7 575,85.9 580,84.4 585,82.1 590,79.1 595,75.8 600,72.1 605,68.3 610,64.8 615,61.7 620,59.3 625,57.8 630,57.4 635,58.2 640,60.4 645,64.0 650,68.9 655,75.1 660,82.4 665,90.7 670,99.7 675,109.1 680,118.8 685,128.3 690,137.4"/>
+      <path class="d-acento-trazo" d="M90 125V84.5M130 125V80.2M170 125V82.9M210 125V58.2M250 125V87.8M290 125V158M330 125V172.3M370 125V164.5M410 125V189.2M450 125V172.6M490 125V101.4M530 125V75.8M570 125V86.7M610 125V64.8M650 125V68.9"/>
+      <g class="d-acento">
+        <circle cx="90" cy="84.5" r="5"/><circle cx="130" cy="80.2" r="5"/><circle cx="170" cy="82.9" r="5"/><circle cx="210" cy="58.2" r="5"/><circle cx="250" cy="87.8" r="5"/>
+        <circle cx="290" cy="158" r="5"/><circle cx="330" cy="172.3" r="5"/><circle cx="370" cy="164.5" r="5"/><circle cx="410" cy="189.2" r="5"/><circle cx="450" cy="172.6" r="5"/>
+        <circle cx="490" cy="101.4" r="5"/><circle cx="530" cy="75.8" r="5"/><circle cx="570" cy="86.7" r="5"/><circle cx="610" cy="64.8" r="5"/><circle cx="650" cy="68.9" r="5"/>
+      </g>
+      <text class="d-peq d-tenue" x="20" y="238">muestras:</text>
+      <g>
+        <text text-anchor="middle" class="d-mono d-peq" x="90" y="238">45</text><text text-anchor="middle" class="d-mono d-peq" x="130" y="238">50</text><text text-anchor="middle" class="d-mono d-peq" x="170" y="238">47</text><text text-anchor="middle" class="d-mono d-peq" x="210" y="238">74</text><text text-anchor="middle" class="d-mono d-peq" x="250" y="238">41</text>
+        <text text-anchor="middle" class="d-mono d-peq" x="290" y="238">-37</text><text text-anchor="middle" class="d-mono d-peq" x="330" y="238">-53</text><text text-anchor="middle" class="d-mono d-peq" x="370" y="238">-44</text><text text-anchor="middle" class="d-mono d-peq" x="410" y="238">-71</text><text text-anchor="middle" class="d-mono d-peq" x="450" y="238">-53</text>
+        <text text-anchor="middle" class="d-mono d-peq" x="490" y="238">26</text><text text-anchor="middle" class="d-mono d-peq" x="530" y="238">55</text><text text-anchor="middle" class="d-mono d-peq" x="570" y="238">43</text><text text-anchor="middle" class="d-mono d-peq" x="610" y="238">67</text><text text-anchor="middle" class="d-mono d-peq" x="650" y="238">62</text>
+      </g>
+    </svg>
+    <figcaption>La línea es la onda real, continua. Cada punto es una muestra: la altura de la onda en ese instante, guardada como número. Con suficientes muestras por segundo, al reproducirlas el oído no nota la diferencia. Los valores son de ejemplo.</figcaption>
+  </figure>
+  <p>¿Cuántas muestras hacen falta? En un CD de música se toman 44&nbsp;100 muestras por segundo; en el video, lo habitual son 48&nbsp;000. No son números al azar: el oído humano percibe vibraciones de hasta unas 20&nbsp;000 por segundo, y para capturar una vibración hay que medir al menos el doble de veces. Cada muestra de un CD usa 16 bits (2 bytes), y hay dos canales (izquierdo y derecho). Echa la cuenta: 44&nbsp;100 × 2 bytes × 2 canales × 60 segundos son unos 10,6 MB por minuto. Un MP3 reduce eso a más o menos 1 MB gracias a la compresión con pérdida.</p>
+  <p>El <strong>video</strong> combina todo lo anterior: es una sucesión de imágenes (llamadas fotogramas, normalmente entre 24 y 60 por segundo) más su sonido, y casi siempre se guarda muy comprimido.</p>
+  <aside class="senal nota" data-titulo="Los programas también son números">
+    <p>Si todo son números, los programas también. Las instrucciones que ejecuta la CPU están guardadas como bytes, igual que una foto. Es la idea del programa almacenado que viste al principio, y la retomarás en la sección <a href="#del-codigo">Del código a la máquina</a>.</p>
+  </aside>
+</section>
+
+<section id="dentro" data-parada="CPU, memoria y disco">
+  <h2>Dentro de la caja: CPU, memoria y almacenamiento</h2>
+  <p>Haces doble clic en un juego y, un par de segundos después, estás jugando. ¿Dónde estaba el juego antes del clic? ¿Quién lo ejecuta? ¿Por qué se pierde la partida si se va la luz y no guardaste? Para responder, abramos la caja. Estas son las piezas principales de cualquier computadora, sea una portátil, un teléfono o una consola:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Pieza</th><th scope="col">Qué hace</th><th scope="col">Cómo se mide</th></tr></thead>
+      <tbody>
+        <tr><td>CPU (procesador)</td><td>Ejecuta las instrucciones de los programas</td><td>Núcleos y frecuencia en GHz</td></tr>
+        <tr><td>RAM (memoria principal)</td><td>Guarda los programas en ejecución y sus datos, mientras hay corriente</td><td>GB (en realidad, GiB)</td></tr>
+        <tr><td>Almacenamiento (SSD o disco duro)</td><td>Guarda archivos y programas de forma permanente</td><td>GB o TB</td></tr>
+        <tr><td>GPU (tarjeta gráfica)</td><td>Hace muchísimos cálculos en paralelo: gráficos, juegos, inteligencia artificial</td><td>Núcleos y memoria propia (VRAM)</td></tr>
+        <tr><td>Placa base</td><td>Conecta todo y reparte la energía</td><td>Qué piezas admite</td></tr>
+        <tr><td>Fuente de alimentación o batería</td><td>Da energía a todo lo demás</td><td>Vatios (W) o vatios hora (Wh)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>La CPU: el ciclo que nunca para</h3>
+  <p>La <strong>CPU</strong> (del inglés <em>Central Processing Unit</em>, «unidad central de procesamiento»), también llamada <strong>procesador</strong>, es el chip que ejecuta las instrucciones. Por dentro tiene tres partes que conviene conocer:</p>
+  <ul>
+    <li>La <strong>unidad de control</strong>: lee cada instrucción y decide qué hay que hacer.</li>
+    <li>La <strong>ALU</strong> (unidad aritmético-lógica): hace los cálculos (sumas, restas, multiplicaciones) y las comparaciones (¿es mayor?, ¿es igual?).</li>
+    <li>Los <strong>registros</strong>: unas pocas casillas de memoria dentro de la propia CPU, diminutas y rapidísimas, donde la CPU guarda los datos con los que trabaja en ese instante. Uno especial, el <strong>contador de programa</strong> (en inglés, <em>program counter</em> o PC), recuerda en qué casilla de la memoria está la siguiente instrucción.</li>
+  </ul>
+  <p>La CPU repite siempre el mismo ciclo de tres pasos, llamado <strong>ciclo de instrucción</strong>: <strong>buscar</strong> la siguiente instrucción en la memoria (en inglés, <em>fetch</em>), <strong>decodificar</strong>, es decir, averiguar qué pide esa instrucción (<em>decode</em>), y <strong>ejecutarla</strong> (<em>execute</em>). Míralo en una CPU de juguete con un programa de cuatro instrucciones:</p>
+  <figure class="capsula" data-titulo="Una CPU de juguete">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 325" role="img" aria-label="Animación: una CPU busca, decodifica y ejecuta cuatro instrucciones guardadas en la memoria. Carga 20 en el registro A, le suma 22 con la ALU, guarda 42 en la casilla 7 y se detiene">
+        <text class="d-rotulo" x="165" y="28" text-anchor="middle">Memoria (RAM)</text>
+        <rect class="d-caja-suave" x="50" y="42" width="230" height="30" rx="4"/>
+        <rect class="d-caja-suave" x="50" y="76" width="230" height="30" rx="4"/>
+        <rect class="d-caja-suave" x="50" y="110" width="230" height="30" rx="4"/>
+        <rect class="d-caja-suave" x="50" y="144" width="230" height="30" rx="4"/>
+        <rect class="d-caja" x="50" y="178" width="230" height="30" rx="4"/>
+        <rect class="d-caja" x="50" y="212" width="230" height="30" rx="4" data-clases="4:d-acento-trazo; 5:"/>
+        <rect class="d-caja" x="50" y="246" width="230" height="30" rx="4" data-clases="5:d-acento-trazo; 6:"/>
+        <rect class="d-caja" x="50" y="280" width="230" height="30" rx="4" data-clases="6:d-acento-trazo; 7:"/>
+        <rect class="d-resalte" x="50" y="42" width="230" height="30" rx="4" data-mover="5:translate(0px,34px); 6:translate(0px,68px); 7:translate(0px,102px)"/>
+        <g>
+          <text class="d-mono d-peq d-tenue" x="66" y="62">0</text><text class="d-mono d-peq d-tenue" x="66" y="96">1</text><text class="d-mono d-peq d-tenue" x="66" y="130">2</text><text class="d-mono d-peq d-tenue" x="66" y="164">3</text>
+          <text class="d-mono d-peq d-tenue" x="66" y="198">4</text><text class="d-mono d-peq d-tenue" x="66" y="232">5</text><text class="d-mono d-peq d-tenue" x="66" y="266">6</text><text class="d-mono d-peq d-tenue" x="66" y="300">7</text>
+        </g>
+        <g>
+          <text style="font-size:15px" class="d-mono" x="92" y="62">CARGAR A, [5]</text>
+          <text style="font-size:15px" class="d-mono" x="92" y="96">SUMAR A, [6]</text>
+          <text style="font-size:15px" class="d-mono" x="92" y="130">GUARDAR A, [7]</text>
+          <text style="font-size:15px" class="d-mono" x="92" y="164">PARAR</text>
+          <text style="font-size:15px" class="d-mono" x="92" y="232">20</text>
+          <text style="font-size:15px" class="d-mono" x="92" y="266">22</text>
+          <text style="font-size:15px" class="d-mono" x="92" y="300" data-pasos="6-">42</text>
+        </g>
+        <path class="d-linea" d="M294 176H366"/><path class="d-tinta" d="M294 168l-12 8 12 8z"/><path class="d-tinta" d="M366 168l12 8-12 8z"/>
+        <text class="d-peq d-tenue" x="330" y="164" text-anchor="middle">bus</text>
+        <g data-pasos="2,4-6">
+          <rect class="d-acento" x="284" y="188" width="92" height="26" rx="13"/>
+          <text class="d-sobre-acento d-peq" x="330" y="206" text-anchor="middle" data-texto="2:instrucción; 4:20; 5:22; 6:42">instrucción</text>
+        </g>
+        <rect class="d-caja" x="380" y="42" width="320" height="268" rx="10"/>
+        <text class="d-rotulo" x="540" y="68" text-anchor="middle">CPU</text>
+        <rect class="d-caja-suave" x="396" y="82" width="288" height="84" rx="6" data-clases="2:d-acento-trazo; 4:"/>
+        <text class="d-peq d-tenue" x="412" y="102">Unidad de control</text>
+        <text x="412" y="128" style="font-size:15px" data-texto="1:Contador de programa (PC): 0; 2:Contador de programa (PC): 1; 5:Contador de programa (PC): 2; 6:Contador de programa (PC): 3; 7:Contador de programa (PC): 4">Contador de programa (PC): 0</text>
+        <text x="412" y="152" style="font-size:15px" data-texto="1:Instrucción: ninguna todavía; 2:Instrucción: CARGAR A, [5]; 5:Instrucción: SUMAR A, [6]; 6:Instrucción: GUARDAR A, [7]; 7:Instrucción: PARAR">Instrucción: ninguna todavía</text>
+        <rect class="d-caja" x="396" y="182" width="130" height="64" rx="6" data-clases="4:d-acento-trazo; 6:"/>
+        <text class="d-peq d-tenue" x="461" y="202" text-anchor="middle">Registro A</text>
+        <text class="d-mono" x="461" y="234" text-anchor="middle" style="font-size:24px" data-texto="1:vacío; 4:20; 5:42">vacío</text>
+        <rect class="d-caja" x="554" y="182" width="130" height="64" rx="6" data-clases="5:d-acento-trazo; 6:"/>
+        <text class="d-peq d-tenue" x="619" y="202" text-anchor="middle">ALU</text>
+        <text class="d-mono" x="619" y="234" text-anchor="middle" style="font-size:15px" data-pasos="5">20 + 22 = 42</text>
+        <rect class="d-caja-suave" x="396" y="262" width="288" height="34" rx="17"/>
+        <text x="540" y="284" text-anchor="middle" style="font-size:14px" data-texto="1:Lista para empezar; 2:Fase 1: buscar; 3:Fase 2: decodificar; 4:Fase 3: ejecutar; 5:Ciclo 2: busca, decodifica, ejecuta; 6:Ciclo 3: busca, decodifica, ejecuta; 7:Ciclo 4: se detiene">Lista para empezar</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li data-duracion="7">La memoria guarda a la vez las instrucciones del programa (casillas 0 a 3, en gris) y los datos (casillas 5 y 6). El contador de programa de la CPU apunta a la casilla 0: ahí está la primera instrucción.</li>
+        <li><strong>Buscar</strong>: la CPU trae la instrucción de la casilla 0 por el <strong>bus</strong>, el conjunto de conexiones entre la CPU y la memoria. El contador avanza a 1.</li>
+        <li><strong>Decodificar</strong>: la unidad de control interpreta esos bits y entiende la orden: «copia en el registro A lo que hay en la casilla 5».</li>
+        <li><strong>Ejecutar</strong>: el 20 viaja desde la casilla 5 hasta el registro A. Primer ciclo terminado.</li>
+        <li data-duracion="7">Segundo ciclo, a toda velocidad: busca <code>SUMAR A, [6]</code>, la decodifica, trae el 22 y la ALU calcula 20 + 22. El resultado, 42, sustituye al 20 en el registro A.</li>
+        <li>Tercer ciclo: <code>GUARDAR A, [7]</code> copia el 42 desde el registro a la casilla 7 de la memoria.</li>
+        <li data-duracion="7">Cuarto ciclo: <code>PARAR</code>. Una CPU real hace exactamente esto, buscar, decodificar y ejecutar, con instrucciones igual de sencillas, miles de millones de veces por segundo.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Ahora sigue tú mismo un programa algo más largo, paso a paso. Está escrito en un <strong>lenguaje ensamblador</strong> inventado para aprender: cada línea es una instrucción de la CPU con un nombre legible. Los que usan los procesadores reales se parecen mucho (verás uno al final de la estación). Lo que va detrás del punto y coma es un comentario para personas. El programa calcula el total de una compra: 3 unidades de un producto que cuesta 15.</p>
+  <div class="traza" data-titulo="La CPU calcula un total" data-rotulo-memoria="Registros y memoria" data-inicio="Antes de empezar: la memoria ya guarda el precio (15) en la casilla 10 y la cantidad (3) en la casilla 11. Los registros A y B están vacíos y el contador de programa (PC) apunta a la primera instrucción. Pulsa «Siguiente».">
+    <pre><code class="language-text">CARGAR A, [10]     ; A = casilla 10
+CARGAR B, [11]     ; B = casilla 11
+MULTIPLICAR A, B   ; A = A × B
+GUARDAR A, [12]    ; casilla 12 = A
+MOSTRAR [12]       ; a la pantalla
+PARAR              ; fin</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"PC": "1", "A": "15", "[10]": "15", "[11]": "3"}, "nota": "Buscar: la CPU trae la primera instrucción. Decodificar: «copia en el registro A lo que hay en la casilla 10». Ejecutar: A pasa a valer 15. El PC ya apunta a la siguiente instrucción."},
+      {"linea": 2, "vars": {"PC": "2", "A": "15", "B": "3", "[10]": "15", "[11]": "3"}, "nota": "El mismo ciclo con la segunda instrucción: el registro B pasa a valer 3. La CPU no puede calcular con datos que están en la memoria: primero los trae a sus registros."},
+      {"linea": 3, "vars": {"PC": "3", "A": "45", "B": "3", "[10]": "15", "[11]": "3"}, "nota": "La ALU multiplica los dos registros: 15 × 3 = 45. El resultado se guarda en A y el 15 que había se pierde. Por eso el precio sigue a salvo en la casilla 10 de la memoria."},
+      {"linea": 4, "vars": {"PC": "4", "A": "45", "B": "3", "[10]": "15", "[11]": "3", "[12]": "45"}, "nota": "El 45 viaja del registro A a la casilla 12 de la memoria. Los registros son pocos y se reutilizan todo el tiempo: lo que quieras conservar tiene que ir a la memoria."},
+      {"linea": 5, "vars": {"PC": "5", "A": "45", "B": "3", "[10]": "15", "[11]": "3", "[12]": "45"}, "salida": "45", "nota": "MOSTRAR envía el contenido de la casilla 12 a la pantalla. En una computadora real, mostrar algo requiere pedir ayuda al sistema operativo, como verás en la próxima sección."},
+      {"linea": 6, "vars": {"PC": "6", "A": "45", "B": "3", "[10]": "15", "[11]": "3", "[12]": "45"}, "nota": "PARAR detiene el programa. Hicieron falta seis ciclos de buscar, decodificar y ejecutar para calcular 15 × 3. Una CPU moderna hace miles de millones de ciclos por segundo."}
+    ]</script>
+  </div>
+
+  <h3>GHz, núcleos y arquitecturas</h3>
+  <p>El ritmo de la CPU lo marca un <strong>reloj</strong> interno que emite pulsos. Su frecuencia se mide en hercios: 1 <strong>GHz</strong> (gigahercio) son mil millones de pulsos por segundo. Las CPU actuales funcionan más o menos entre 2 y 5 GHz. Además, casi todas tienen varios <strong>núcleos</strong> (en inglés, <em>cores</em>): cada núcleo es una CPU completa capaz de ejecutar su propio programa, así que un procesador de 8 núcleos puede hacer 8 cosas realmente a la vez.</p>
+  <aside class="senal error">
+    <p>«Más GHz siempre es más rápido». No necesariamente. Un procesador moderno a 3 GHz puede ser mucho más rápido que uno antiguo a 4 GHz, porque hace más trabajo en cada pulso, tiene más núcleos o una caché más grande. Los GHz solo sirven para comparar procesadores de la misma familia.</p>
+  </aside>
+  <p>No todas las CPU entienden las mismas instrucciones. El repertorio de instrucciones que entiende una CPU se llama su <strong>arquitectura</strong>. En 2026 dominan dos:</p>
+  <ul>
+    <li><strong>x86-64</strong> (también llamada x64 o AMD64): la de los procesadores de Intel y AMD, en la mayoría de computadoras personales con Windows o Linux.</li>
+    <li><strong>ARM</strong> (ARM64 en su versión actual): la de casi todos los teléfonos y tabletas, los Mac con chips de Apple desde 2020 y cada vez más portátiles con Windows.</li>
+  </ul>
+  <p>Un programa traducido a instrucciones de una arquitectura no funciona directamente en la otra. macOS y Windows incluyen traductores que convierten sobre la marcha programas de x86-64 para que funcionen en ARM, pero es una capa extra. Las herramientas que usarás en el curso (Node.js, VS Code, Git) tienen versiones nativas para las dos.</p>
+
+  <h3>La GPU: miles de ayudantes</h3>
+  <p>La <strong>GPU</strong> (del inglés <em>Graphics Processing Unit</em>, «unidad de procesamiento gráfico») es un procesador especializado con miles de núcleos sencillos. Cada uno es menos listo que un núcleo de CPU, pero todos trabajan a la vez. Es perfecta para tareas que se pueden repartir en muchísimos cálculos iguales: calcular el color de los millones de píxeles de cada fotograma de un juego, editar video o entrenar modelos de inteligencia artificial. Algunas GPU vienen integradas en el mismo chip que la CPU; otras son tarjetas separadas con su propia memoria, la VRAM. Muchos equipos recientes incluyen además una NPU, un procesador pensado para ejecutar inteligencia artificial gastando poca energía.</p>
+  <aside class="senal analogia">
+    <p>La CPU es una chef experta que puede preparar cualquier receta, paso a paso. La GPU es un equipo de mil ayudantes que solo saben pelar y cortar, pero pelan mil papas a la vez. Si tienes que pelar un millón de papas, gana el equipo. Si tienes que inventar un plato nuevo, gana la chef.</p>
+  </aside>
+
+  <h3>RAM y almacenamiento: la mesa y la despensa</h3>
+  <p>Es la confusión más común de todas, porque mucha gente llama «memoria» a las dos cosas:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">RAM (memoria principal)</th><th scope="col">Almacenamiento (SSD o disco duro)</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Para qué sirve</th><td>Guardar los programas que se están ejecutando y sus datos</td><td>Guardar archivos y programas aunque no se usen</td></tr>
+        <tr><th scope="row">¿Se borra al apagar?</th><td>Sí: es <strong>volátil</strong></td><td>No: es <strong>persistente</strong></td></tr>
+        <tr><th scope="row">Velocidad</th><td>Muy rápida</td><td>Mucho más lenta (un SSD, menos)</td></tr>
+        <tr><th scope="row">Tamaño típico en 2026</th><td>De 8 a 32 GB en una portátil</td><td>De 256 GB a 2 TB</td></tr>
+        <tr><th scope="row">Precio por GB</th><td>Alto</td><td>Bajo</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>RAM</strong> significa <em>Random Access Memory</em>, «memoria de acceso aleatorio», porque se puede leer cualquier casilla directamente, en cualquier orden, sin recorrer las anteriores. El almacenamiento puede ser de dos tipos principales. Un <strong>SSD</strong> (<em>Solid State Drive</em>, «unidad de estado sólido») guarda los datos en chips, sin partes móviles; los de tipo NVMe, que se conectan directamente a la placa base, son muy rápidos. Un <strong>disco duro</strong> o <strong>HDD</strong> (<em>Hard Disk Drive</em>) guarda los datos magnetizando unos discos que giran; es más barato por GB, pero más lento y delicado.</p>
+  <aside class="senal analogia">
+    <p>Volvamos a la cocina. La RAM es la mesa de trabajo: rápida y a mano, pero pequeña, y al cerrar la cocina se limpia entera. El almacenamiento es la despensa: cabe muchísimo y nada se pierde por la noche, pero cada viaje a buscar algo lleva tiempo. Nadie cocina dentro de la despensa: primero se lleva a la mesa lo que se va a usar.</p>
+  </aside>
+
+  <h3>La jerarquía de memoria</h3>
+  <p>La CPU es tan rápida que la RAM, comparada con ella, es lenta. Por eso entre las dos hay memorias intermedias llamadas <strong>caché</strong> (se pronuncia «caché», como en francés): pequeñas memorias ultrarrápidas dentro del procesador, organizadas en niveles (L1, L2 y L3), que guardan copias de los datos que la CPU está usando más a menudo. El resultado es una pirámide: cuanto más cerca de la CPU, más rápida, más pequeña y más cara es cada memoria.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 340" role="img" aria-label="Pirámide de la jerarquía de memoria. De arriba abajo: registros, caché, RAM, SSD y disco duro o red. Arriba es más rápida y cara; abajo, más grande y barata. Tiempos aproximados: menos de 1 nanosegundo, de 1 a 15 ns, unos 100 ns, de 20 a 100 microsegundos y de 5 a 10 milisegundos">
+      <text class="d-peq d-tenue" x="40" y="26">Más rápida y más cara</text>
+      <text class="d-peq d-tenue" x="20" y="332">Más lenta, más grande y más barata</text>
+      <path class="d-linea" d="M24 52V298"/><path class="d-tinta" d="M18 52l6-12 6 12z"/><path class="d-tinta" d="M18 298l6 12 6-12z"/>
+      <polygon class="d-acento" points="205,40 295,40 328,92 172,92"/>
+      <polygon class="d-caja" points="172,92 328,92 361,144 139,144"/>
+      <polygon class="d-caja" points="139,144 361,144 394,196 106,196"/>
+      <polygon class="d-caja" points="106,196 394,196 427,248 73,248"/>
+      <polygon class="d-caja" points="73,248 427,248 460,300 40,300"/>
+      <text class="d-sobre-acento d-rotulo" x="250" y="72" text-anchor="middle">Registros</text>
+      <text class="d-rotulo" x="250" y="124" text-anchor="middle">Caché (L1, L2, L3)</text>
+      <text class="d-rotulo" x="250" y="176" text-anchor="middle">RAM</text>
+      <text class="d-rotulo" x="250" y="228" text-anchor="middle">SSD</text>
+      <text class="d-rotulo" x="250" y="280" text-anchor="middle">Disco duro y red</text>
+      <path class="d-punteada" d="M320 67H470M353 119H470M386 171H470M419 223H470M452 275H470"/>
+      <text class="d-rotulo d-peq" x="480" y="26">Tamaño típico</text>
+      <text class="d-rotulo d-peq" x="615" y="26">Tiempo</text>
+      <g>
+        <text class="d-peq" x="480" y="72">cientos de bytes</text><text class="d-peq" x="615" y="72">menos de 1 ns</text>
+        <text class="d-peq" x="480" y="124">de KB a MB</text><text class="d-peq" x="615" y="124">de 1 a 15 ns</text>
+        <text class="d-peq" x="480" y="176">de 8 a 64 GB</text><text class="d-peq" x="615" y="176">unos 100 ns</text>
+        <text class="d-peq" x="480" y="228">256 GB a varios TB</text><text class="d-peq" x="615" y="228">de 20 a 100 µs</text>
+        <text class="d-peq" x="480" y="280">varios TB</text><text class="d-peq" x="615" y="280">de 5 a 10 ms</text>
+      </g>
+    </svg>
+    <figcaption>La jerarquía de memoria. Los tiempos son órdenes de magnitud aproximados y cambian según el equipo. 1 ns (nanosegundo) es una milmillonésima de segundo; 1 µs (microsegundo), una millonésima; 1 ms (milisegundo), una milésima.</figcaption>
+  </figure>
+  <p>Los nanosegundos son difíciles de imaginar. Este taller los convierte a escala humana: ¿qué pasaría si leer la caché tardara un segundo? <strong>Predice</strong> el orden de magnitud de cada resultado (¿minutos?, ¿horas?, ¿días?) y después ejecuta.</p>
+  <div class="taller" id="taller-escala" data-titulo="Si un nanosegundo durara un segundo">
+    <textarea class="taller-codigo">// Tiempos aproximados de lectura, en nanosegundos (ns)
+const cacheL1 = 1;
+const ram = 100;
+const ssd = 50000;
+const discoDuro = 5000000;
+
+// Si 1 ns durara 1 segundo...
+console.log("Caché L1:", cacheL1, "segundo");
+console.log("RAM:", (ram / 60).toFixed(1), "minutos");
+console.log("SSD:", (ssd / 3600).toFixed(1), "horas");
+console.log("Disco duro:", (discoDuro / 86400).toFixed(1), "días");</textarea>
+  </div>
+  <p>Si la caché fuera tomar algo de tu mesa, la RAM sería ir a la cocina, el SSD una excursión de medio día y el disco duro un viaje de dos meses. Por eso los programas rápidos intentan tener a mano (en caché y en RAM) los datos que usan a menudo. Prueba a cambiar <code>discoDuro</code> por 10000000 (10 ms): el viaje dura casi cuatro meses.</p>
+
+  <h3>Qué pasa cuando abres un programa</h3>
+  <p>Con todas las piezas sobre la mesa, ya puedes entender el recorrido completo. Ordena los pasos:</p>
+  <div class="parsons" data-titulo="Ordena: abrir un juego" data-lenguaje="text">
+    <ol>
+      <li>Haces doble clic en el icono del juego.</li>
+      <li>El sistema operativo busca el programa en el almacenamiento (SSD).</li>
+      <li>Copia las instrucciones y los datos que hacen falta desde el SSD a la RAM.</li>
+      <li>La CPU busca en la RAM la primera instrucción del juego.</li>
+      <li>La CPU la decodifica, la ejecuta y repite el ciclo con la siguiente, sin parar.</li>
+      <li>La GPU calcula cada fotograma y la pantalla lo muestra.</li>
+      <li>Al guardar la partida, los datos se copian de la RAM al SSD.</li>
+    </ol>
+  </div>
+  <p>Esto explica por qué perder la luz sin guardar hace perder la partida: estaba solo en la RAM. Y explica por qué una computadora con poca RAM va lenta. Cuando la RAM se llena, el sistema operativo mueve a un espacio del disco, llamado <strong>memoria de intercambio</strong> (en inglés, <em>swap</em>), los datos que menos se usan. Funciona, pero cada vez que los necesita tiene que ir a buscarlos a la despensa.</p>
+  <aside class="senal error">
+    <p>«Cerrar todas las apps del teléfono lo hace más rápido». Los sistemas operativos modernos gestionan la RAM solos: congelan y liberan las apps que no usas. Cerrarlas a mano no suele ayudar, y volver a abrirlas desde cero gasta más tiempo y batería. Solo vale la pena cerrar una app que se ha quedado colgada o que se porta mal.</p>
+  </aside>
+</section>
+
+<section id="sistema-operativo" data-parada="Sistema operativo">
+  <h2>El sistema operativo: el gerente de la máquina</h2>
+  <p>En tu computadora hay ahora mismo decenas de programas funcionando: el navegador, la música, el antivirus, el reloj. Todos quieren usar la misma CPU, la misma RAM y el mismo disco. ¿Quién decide quién usa qué, y cuándo? ¿Quién impide que un programa lea los archivos de otra persona? El <strong>sistema operativo</strong> (SO), el programa más importante de la máquina.</p>
+  <p>El sistema operativo es el software que administra el hardware y ofrece servicios a los demás programas, que se llaman <strong>aplicaciones</strong>. Sus tareas principales son:</p>
+  <ul>
+    <li><strong>Procesos</strong>: arranca y detiene programas, y reparte el tiempo de la CPU entre ellos.</li>
+    <li><strong>Memoria</strong>: le da a cada programa su propio trozo de RAM y evita que uno pise el de otro.</li>
+    <li><strong>Archivos</strong>: organiza los datos del almacenamiento en archivos y carpetas.</li>
+    <li><strong>Dispositivos</strong>: habla con el teclado, la pantalla, la impresora o la tarjeta de red a través de los <strong>controladores</strong> (en inglés, <em>drivers</em>), pequeños programas que saben manejar un modelo concreto de hardware.</li>
+    <li><strong>Usuarios y permisos</strong>: decide quién puede leer, cambiar o ejecutar cada cosa.</li>
+    <li><strong>Interfaz</strong>: te ofrece una forma de manejarlo todo, con ventanas o con comandos escritos.</li>
+  </ul>
+  <aside class="senal analogia">
+    <p>El sistema operativo es como la gerencia de un hotel. Asigna habitaciones (memoria) a los huéspedes (programas), organiza los turnos del personal (tiempo de CPU), guarda el equipaje en la consigna (archivos) y decide qué llave abre cada puerta (permisos). Los huéspedes no entran a la sala de máquinas: piden lo que necesitan en recepción. La diferencia es que este hotel atiende miles de peticiones por segundo.</p>
+  </aside>
+
+  <h3>El kernel y las llamadas al sistema</h3>
+  <p>La parte central del sistema operativo se llama <strong>kernel</strong> (en español, «núcleo», aunque se suele usar la palabra inglesa para no confundirlo con los núcleos de la CPU). Es el único software con acceso total al hardware. Las aplicaciones no pueden tocar el disco ni la pantalla directamente: se lo piden al kernel mediante <strong>llamadas al sistema</strong> (en inglés, <em>system calls</em>), peticiones formales como «abre este archivo» o «envía estos datos por la red». Así, si una aplicación falla o tiene malas intenciones, el daño que puede hacer está limitado.</p>
+  <figure class="capsula" data-titulo="Una app pide abrir un archivo">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 325" role="img" aria-label="Animación: capas de una computadora, de arriba abajo persona, aplicación, kernel del sistema operativo, controlador del SSD y hardware. La petición de abrir una foto baja capa por capa hasta el SSD y los bytes suben de vuelta hasta la aplicación">
+        <path class="d-punteada" d="M620 40V290"/>
+        <rect class="d-caja" x="20" y="15" width="500" height="50" rx="8" data-clases="2:d-acento-trazo; 3:; 6:d-acento-trazo"/>
+        <text x="40" y="46">Tú (persona usuaria)</text>
+        <text class="d-ok" x="500" y="46" text-anchor="end" data-pasos="6">ves la foto</text>
+        <rect class="d-caja" x="20" y="77" width="500" height="50" rx="8" data-clases="3:d-acento-trazo; 4:; 6:d-acento-trazo"/>
+        <text x="40" y="108">Aplicación: visor de fotos</text>
+        <rect class="d-caja" x="20" y="139" width="500" height="50" rx="8" data-clases="4:d-acento-trazo; 5:"/>
+        <text x="40" y="160">Sistema operativo: kernel</text>
+        <text class="d-peq d-tenue" x="40" y="180">procesos, memoria, archivos, permisos</text>
+        <rect class="d-caja" x="20" y="201" width="500" height="50" rx="8" data-clases="5:d-acento-trazo; 6:"/>
+        <text x="40" y="232">Sistema operativo: controlador del SSD</text>
+        <rect class="d-caja-suave" x="20" y="263" width="500" height="50" rx="8" data-clases="5:d-acento-trazo; 6:"/>
+        <text x="40" y="294">Hardware: SSD</text>
+        <g data-pasos="2-6" data-mover="2:translate(0px,-62px); 3:translate(0px,0px); 4:translate(0px,62px); 5:translate(0px,186px); 6:translate(0px,0px)">
+          <rect class="d-acento" x="540" y="85" width="160" height="34" rx="17"/>
+          <text class="d-sobre-acento" x="620" y="107" text-anchor="middle" style="font-size:14px" data-texto="2:clic en foto.jpg; 3:abrir foto.jpg; 4:permiso: sí; 5:leer los bytes; 6:bytes de la foto">clic en foto.jpg</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Una computadora funciona por capas. Cada capa solo habla con la de al lado, y las aplicaciones nunca tocan el hardware directamente.</li>
+        <li>Haces doble clic en <code>foto.jpg</code>. Tu clic llega a la aplicación de fotos como un dato de entrada más.</li>
+        <li>La aplicación no sabe leer un disco. Hace una llamada al sistema, una petición formal al kernel: «abre <code>foto.jpg</code> y dame su contenido».</li>
+        <li data-duracion="7">El kernel comprueba los permisos: ¿tu usuario puede leer ese archivo? Si la respuesta es no, la petición termina aquí con un error. Si es sí, consulta el sistema de archivos para saber en qué zonas del SSD están los bytes de la foto.</li>
+        <li>El controlador traduce la petición al idioma concreto de ese modelo de SSD, y el disco entrega los bytes.</li>
+        <li data-duracion="7">Los bytes suben capa por capa hasta la aplicación, que los interpreta como una imagen JPEG y le pide al sistema que la dibuje en su ventana. Para ti, todo pasó en unos milisegundos.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Procesos: muchos programas, turnos muy cortos</h3>
+  <p>Un <strong>proceso</strong> es un programa en ejecución. El programa es la receta guardada en el disco; el proceso es la receta mientras se cocina, con su propio trozo de RAM y su estado. Si abres dos ventanas del mismo editor, puedes tener dos procesos del mismo programa.</p>
+  <p>Tu computadora tiene unos pocos núcleos, pero cientos de procesos. El sistema operativo hace un truco: le da a cada proceso un turno de CPU muy corto, de unos pocos milisegundos, lo pausa, guarda su estado y le da el turno al siguiente. Lo hace tan rápido que parece que todo ocurre a la vez. A esto se le llama <strong>multitarea</strong>. Con varios núcleos, además, varios procesos avanzan de verdad al mismo tiempo.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 230" role="img" aria-label="Línea de tiempo de 40 milisegundos en dos núcleos. Los turnos se reparten entre el navegador, la música, un juego y el sistema; cada turno dura unos pocos milisegundos">
+      <text class="d-rotulo" x="20" y="81">Núcleo 1</text>
+      <text class="d-rotulo" x="20" y="141">Núcleo 2</text>
+      <rect class="d-l2" x="111" y="55" width="85" height="40" rx="3"/>
+      <rect class="d-l5" x="198" y="55" width="27" height="40" rx="3"/>
+      <rect class="d-l6" x="227" y="55" width="114" height="40" rx="3"/>
+      <rect class="d-l2" x="343" y="55" width="85" height="40" rx="3"/>
+      <rect class="d-l7" x="430" y="55" width="27" height="40" rx="3"/>
+      <rect class="d-l6" x="459" y="55" width="114" height="40" rx="3"/>
+      <rect class="d-l2" x="575" y="55" width="85" height="40" rx="3"/>
+      <rect class="d-l5" x="662" y="55" width="27" height="40" rx="3"/>
+      <rect class="d-l6" x="111" y="115" width="114" height="40" rx="3"/>
+      <rect class="d-l7" x="227" y="115" width="27" height="40" rx="3"/>
+      <rect class="d-l2" x="256" y="115" width="85" height="40" rx="3"/>
+      <rect class="d-l6" x="343" y="115" width="114" height="40" rx="3"/>
+      <rect class="d-l5" x="459" y="115" width="27" height="40" rx="3"/>
+      <rect class="d-l2" x="488" y="115" width="85" height="40" rx="3"/>
+      <rect class="d-l6" x="575" y="115" width="114" height="40" rx="3"/>
+      <path class="d-linea" d="M110 170H690M110 170v6M255 170v6M400 170v6M545 170v6M690 170v6"/>
+      <g>
+        <text text-anchor="middle" class="d-peq d-tenue" x="110" y="192">0 ms</text><text text-anchor="middle" class="d-peq d-tenue" x="255" y="192">10 ms</text><text text-anchor="middle" class="d-peq d-tenue" x="400" y="192">20 ms</text><text text-anchor="middle" class="d-peq d-tenue" x="545" y="192">30 ms</text><text text-anchor="middle" class="d-peq d-tenue" x="690" y="192">40 ms</text>
+      </g>
+      <rect class="d-l2" x="110" y="208" width="14" height="14" rx="2"/><text class="d-peq" x="130" y="220">Navegador</text>
+      <rect class="d-l5" x="250" y="208" width="14" height="14" rx="2"/><text class="d-peq" x="270" y="220">Música</text>
+      <rect class="d-l6" x="390" y="208" width="14" height="14" rx="2"/><text class="d-peq" x="410" y="220">Juego</text>
+      <rect class="d-l7" x="530" y="208" width="14" height="14" rx="2"/><text class="d-peq" x="550" y="220">Sistema</text>
+    </svg>
+    <figcaption>Cuarenta milisegundos en la vida de un procesador de dos núcleos (reparto de ejemplo). Cada bloque es un turno. En un segundo caben cientos de turnos, y por eso la música no se corta mientras juegas.</figcaption>
+  </figure>
+  <p>El sistema operativo también <strong>aísla</strong> los procesos: cada uno tiene su propia memoria y no puede leer la de los demás. Por eso, si una aplicación se cuelga, casi nunca arrastra a las otras: basta con cerrarla. Cómo se reparten los turnos, qué son los hilos y cómo se organiza la memoria de un proceso por dentro lo verás a fondo en la <a href="22-ejecucion.html">Estación 22: Cómo se ejecuta el código</a>.</p>
+  <p>Puedes ver tus procesos, y cuánta CPU y RAM gasta cada uno, con estas herramientas:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Sistema</th><th scope="col">Herramienta</th><th scope="col">Cómo abrirla</th></tr></thead>
+      <tbody>
+        <tr><td>Windows</td><td>Administrador de tareas</td><td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Esc</kbd></td></tr>
+        <tr><td>macOS</td><td>Monitor de Actividad</td><td><kbd>Cmd</kbd> + <kbd>Espacio</kbd> y escribe «Monitor de Actividad»</td></tr>
+        <tr><td>Linux</td><td>Monitor del sistema, o <code>top</code> y <code>htop</code> en la terminal</td><td>Desde el menú de aplicaciones</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal oficio">
+    <p>Cuando tu computadora vaya lenta, no adivines: abre el Administrador de tareas o el Monitor de Actividad y ordena por CPU o por memoria. Casi siempre hay un proceso concreto que se está comiendo los recursos. Medir antes de actuar es una costumbre que te servirá toda tu carrera.</p>
+  </aside>
+
+  <h3>Usuarios y permisos</h3>
+  <p>Una computadora puede tener varias cuentas de usuario, y cada archivo tiene un dueño y unos <strong>permisos</strong> que dicen quién puede leerlo, modificarlo o ejecutarlo. Hay una cuenta especial con poder total: el <strong>administrador</strong> en Windows, o <strong>root</strong> en macOS y Linux. Por eso a veces el sistema te pide la contraseña antes de instalar algo: está pidiendo permiso para actuar como administrador. En los teléfonos pasa lo mismo cuando una app quiere usar la cámara, el micrófono o tu ubicación.</p>
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>Los permisos existen para proteger tus datos. Antes de aceptar que una aplicación use tu micrófono o tus contactos, pregúntate si de verdad lo necesita. Y cuando programes tus propias apps, pide solo los permisos imprescindibles: la gente lo nota y lo agradece. La seguridad tiene su propia estación, la <a href="31-seguridad.html">31</a>.</p>
+  </aside>
+
+  <h3>Ventanas o comandos</h3>
+  <p>Hay dos grandes formas de manejar un sistema operativo. La <strong>interfaz gráfica</strong> (GUI, del inglés <em>Graphical User Interface</em>) es la de ventanas, iconos y ratón. La <strong>interfaz de línea de comandos</strong> (CLI, <em>Command Line Interface</em>) es una ventana de texto, la <strong>terminal</strong>, donde escribes órdenes. Parece anticuada, pero es la herramienta diaria de cualquier programador: es más rápida para muchas tareas y se puede automatizar. La aprenderás en la <a href="05-herramientas.html">Estación 5: Tu taller</a>.</p>
+
+  <h3>Los sistemas operativos en 2026</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Sistema</th><th scope="col">Dónde lo encuentras</th><th scope="col">A tener en cuenta</th></tr></thead>
+      <tbody>
+        <tr><td>Windows 11</td><td>La mayoría de computadoras personales</td><td>De Microsoft. Windows 10 dejó de recibir soporte general el 14 de octubre de 2025, y su programa de actualizaciones de seguridad extendidas para uso doméstico termina el 13 de octubre de 2026.</td></tr>
+        <tr><td>macOS</td><td>Las computadoras Mac</td><td>De Apple. Desde 2020, los Mac usan procesadores propios de arquitectura ARM.</td></tr>
+        <tr><td>Linux</td><td>La gran mayoría de servidores de internet, la nube, las supercomputadoras y muchas computadoras personales</td><td>Libre y gratuito. Se distribuye en paquetes llamados distribuciones, como Ubuntu, Fedora, Debian o Linux Mint.</td></tr>
+        <tr><td>Android</td><td>La mayoría de los teléfonos del mundo</td><td>De Google. Usa el kernel de Linux.</td></tr>
+        <tr><td>iOS y iPadOS</td><td>iPhone y iPad</td><td>De Apple. Comparte base con macOS.</td></tr>
+        <tr><td>ChromeOS</td><td>Chromebooks, muy comunes en escuelas</td><td>De Google. Centrado en el navegador.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal error">
+    <p>«Windows es la computadora». No: Windows es un programa, el que administra la computadora. En la misma máquina podrías instalar Linux, y el hardware sería exactamente el mismo. Del mismo modo, Android no es «un sistema aparte de Linux»: por debajo usa el kernel de Linux.</p>
+  </aside>
+  <aside class="senal ojo" data-titulo="Mantén tu sistema actualizado">
+    <p>Un sistema operativo sin soporte deja de recibir parches de seguridad, y cualquier fallo que se descubra quedará abierto para siempre. Si tu equipo no admite una versión con soporte, instalar una distribución de Linux ligera suele ser una buena salida para seguir usándolo con seguridad.</p>
+  </aside>
+
+  <h3>Qué pasa al encender la computadora</h3>
+  <p>Cuando pulsas el botón de encendido, la RAM está vacía: el sistema operativo está en el disco y alguien tiene que cargarlo. Ese proceso se llama <strong>arranque</strong> (en inglés, <em>boot</em>). Ordénalo:</p>
+  <div class="parsons" data-titulo="Ordena: el arranque" data-lenguaje="text">
+    <ol>
+      <li>Pulsas el botón de encendido y llega corriente a la placa base.</li>
+      <li>La CPU ejecuta el firmware (UEFI), que está grabado en un chip de la placa base.</li>
+      <li>El firmware comprueba el hardware básico y busca un disco desde el que arrancar.</li>
+      <li>El firmware ejecuta el cargador de arranque que encuentra en ese disco.</li>
+      <li>El cargador de arranque copia el kernel del sistema operativo a la RAM y le cede el control.</li>
+      <li>El kernel prepara la memoria, los procesos y los controladores de los dispositivos.</li>
+      <li>Se ponen en marcha los servicios del sistema (red, sonido, actualizaciones…).</li>
+      <li>Aparece la pantalla de inicio de sesión.</li>
+    </ol>
+  </div>
+  <aside class="senal clave">
+    <p>Los programas dependen del sistema operativo y de la arquitectura para los que se prepararon. Un archivo <code>.exe</code> de Windows no se abre en un Mac, y una app de iPhone no se instala en Android. Una de las razones por las que este curso empieza con JavaScript es que funciona en cualquier navegador, en cualquier sistema. Y con Node.js, que instalarás en la Estación 5, el mismo código funciona en Windows, macOS y Linux.</p>
+  </aside>
+</section>
+
+<section id="archivos" data-parada="Archivos y rutas">
+  <h2>Archivos, carpetas y rutas</h2>
+  <p>Programar es, en buena parte, crear y organizar archivos. Una página web son varios archivos que se llaman entre sí: el HTML dice «usa los estilos de <code>css/estilos.css</code>» y «muestra la imagen <code>img/logo.png</code>». Si una de esas direcciones está mal escrita, la página sale sin estilos o con la imagen rota. Es uno de los errores más frecuentes de quien empieza, y se evita entendiendo bien cómo se organizan los archivos.</p>
+
+  <h3>Qué es un archivo</h3>
+  <p>Un <strong>archivo</strong> (o fichero) es una secuencia de bytes guardada en el almacenamiento, con un nombre. Nada más. El disco, por dentro, es una enorme fila de bytes; el <strong>sistema de archivos</strong> es la parte del sistema operativo que lleva la cuenta de qué bytes pertenecen a cada archivo, cómo se llama, en qué carpeta está, quién es su dueño y cuándo se modificó. Cada sistema operativo usa el suyo: NTFS en Windows, APFS en macOS y ext4 en muchas instalaciones de Linux. Las memorias USB suelen usar exFAT, que entienden todos.</p>
+  <p>Las <strong>carpetas</strong> (también llamadas <strong>directorios</strong>) agrupan archivos y otras carpetas. Como una carpeta puede contener carpetas, que a su vez contienen carpetas, el conjunto forma un <strong>árbol</strong> que se dibuja al revés: arriba está la <strong>raíz</strong>, la carpeta que lo contiene todo, y de ella cuelgan las ramas.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Sistema</th><th scope="col">Raíz</th><th scope="col">Tu carpeta personal (usuaria «ana»)</th><th scope="col">Separador</th></tr></thead>
+      <tbody>
+        <tr><td>Windows</td><td><code>C:\</code> (una raíz por cada disco: <code>C:\</code>, <code>D:\</code>…)</td><td><code>C:\Users\ana</code></td><td><code>\</code> (barra invertida)</td></tr>
+        <tr><td>macOS</td><td><code>/</code></td><td><code>/Users/ana</code></td><td><code>/</code> (barra)</td></tr>
+        <tr><td>Linux</td><td><code>/</code></td><td><code>/home/ana</code></td><td><code>/</code> (barra)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal nota">
+    <p>El Escritorio, Documentos o Descargas no son lugares mágicos: son carpetas normales dentro de tu carpeta personal. En Windows, el Escritorio suele ser <code>C:\Users\ana\Desktop</code>, aunque el explorador lo muestre traducido como «Escritorio».</p>
+  </aside>
+
+  <h3>Rutas absolutas y relativas</h3>
+  <p>Una <strong>ruta</strong> (en inglés, <em>path</em>) es la dirección de un archivo o una carpeta dentro del árbol. Hay dos formas de escribirla:</p>
+  <ul>
+    <li>Una <strong>ruta absoluta</strong> es la dirección completa, empezando por la raíz. Funciona igual estés donde estés: <code>/home/ana/proyectos/web/css/estilos.css</code>.</li>
+    <li>Una <strong>ruta relativa</strong> son indicaciones desde la carpeta en la que estás ahora, llamada <strong>carpeta actual</strong> (en inglés, <em>working directory</em>). Si estás en <code>/home/ana/proyectos/web</code>, la misma hoja de estilos es <code>css/estilos.css</code>.</li>
+  </ul>
+  <p>En las rutas relativas hay dos nombres especiales: <code>.</code> (un punto) significa «la carpeta actual» y <code>..</code> (dos puntos) significa «la carpeta de arriba», la que contiene a la actual, llamada <strong>carpeta padre</strong>. Cada <code>..</code> sube un nivel.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 760 440" role="img" aria-label="Árbol de carpetas desde la raíz: home, ana, fotos con playa.jpg, y proyectos con la carpeta web, que contiene index.html y las carpetas css (con estilos.css) e img (con logo.png). Desde css, la ruta relativa ../img/logo.png sube a web, entra en img y llega a logo.png">
+      <path class="d-linea" d="M38 46V69H60M74 80V103H96M110 114V205M110 137H132M110 205H132M146 148V171H168M146 216V239H168M182 250V375M182 273H204M182 307H204M182 375H204M218 318V341H240M218 386V409H240"/>
+      <rect class="d-resalte" x="168" y="226" width="50" height="24" rx="4"/>
+      <rect class="d-resalte" x="204" y="294" width="50" height="24" rx="4"/>
+      <rect class="d-resalte" x="204" y="362" width="50" height="24" rx="4"/>
+      <rect class="d-resalte" x="240" y="396" width="92" height="24" rx="4"/>
+      <g>
+        <text class="d-mono" x="30" y="40" style="font-weight:700">/</text>
+        <text class="d-mono" x="66" y="74" style="font-weight:700">home/</text>
+        <text class="d-mono" x="102" y="108" style="font-weight:700">ana/</text>
+        <text class="d-mono" x="138" y="142" style="font-weight:700">fotos/</text>
+        <text class="d-mono" x="174" y="176">playa.jpg</text>
+        <text class="d-mono" x="138" y="210" style="font-weight:700">proyectos/</text>
+        <text class="d-mono" x="174" y="244" style="font-weight:700">web/</text>
+        <text class="d-mono" x="210" y="278">index.html</text>
+        <text class="d-mono" x="210" y="312" style="font-weight:700">css/</text>
+        <text class="d-mono" x="246" y="346">estilos.css</text>
+        <text class="d-mono" x="210" y="380" style="font-weight:700">img/</text>
+        <text class="d-mono" x="246" y="414">logo.png</text>
+      </g>
+      <text class="d-peq d-tenue" x="48" y="40">(raíz)</text>
+      <text class="d-acento d-peq" x="228" y="243">paso 1: .. sube a web</text>
+      <rect class="d-acento" x="264" y="297" width="90" height="22" rx="11"/>
+      <text class="d-sobre-acento d-peq" x="309" y="312" text-anchor="middle">estás aquí</text>
+      <text class="d-acento d-peq" x="264" y="379">paso 2: entra en img</text>
+      <text class="d-acento d-peq" x="342" y="413">paso 3: logo.png</text>
+      <rect class="d-caja-suave" x="440" y="30" width="305" height="262" rx="8"/>
+      <text class="d-rotulo d-peq" x="456" y="58">Estás en</text>
+      <text class="d-mono d-peq" x="456" y="80">/home/ana/proyectos/web/css</text>
+      <text class="d-rotulo d-peq" x="456" y="116">Quieres llegar a</text>
+      <text class="d-mono d-peq" x="456" y="138">logo.png</text>
+      <text class="d-rotulo d-peq" x="456" y="174">Ruta relativa</text>
+      <text class="d-mono" x="456" y="198" style="font-size:16px">../img/logo.png</text>
+      <text class="d-rotulo d-peq" x="456" y="232">Ruta absoluta</text>
+      <text class="d-mono d-peq" x="456" y="254">/home/ana/proyectos/</text>
+      <text class="d-mono d-peq" x="456" y="274">web/img/logo.png</text>
+    </svg>
+    <figcaption>Un árbol de carpetas. Las carpetas terminan en barra. Desde <code>css</code>, la ruta relativa <code>../img/logo.png</code> se lee así: sube a la carpeta padre (<code>web</code>), entra en <code>img</code> y toma <code>logo.png</code>.</figcaption>
+  </figure>
+  <p>Más ejemplos con el mismo árbol:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Estás en</th><th scope="col">Quieres llegar a</th><th scope="col">Ruta relativa</th></tr></thead>
+      <tbody>
+        <tr><td><code>/home/ana/proyectos/web</code></td><td><code>index.html</code></td><td><code>index.html</code> o <code>./index.html</code></td></tr>
+        <tr><td><code>/home/ana/proyectos/web</code></td><td><code>estilos.css</code></td><td><code>css/estilos.css</code></td></tr>
+        <tr><td><code>/home/ana/proyectos/web/css</code></td><td><code>index.html</code></td><td><code>../index.html</code></td></tr>
+        <tr><td><code>/home/ana/proyectos/web</code></td><td><code>playa.jpg</code></td><td><code>../../fotos/playa.jpg</code> (sube dos niveles)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal analogia">
+    <p>Una ruta absoluta es como una dirección postal completa: país, ciudad, calle, número y piso. Sirve desde donde la leas. Una ruta relativa es como las indicaciones que le das a alguien que ya está en tu edificio: «sube un piso y es la segunda puerta». Son más cortas, pero solo funcionan si sabes desde dónde se empieza.</p>
+  </aside>
+  <p>Practica con una terminal simulada: nada de lo que hagas aquí afecta a tu computadora. Estos son los cuatro comandos que necesitas (los aprenderás con calma en la Estación 5): <code>pwd</code> muestra la ruta absoluta de la carpeta en la que estás; <code>ls</code> lista lo que hay en ella; <code>cd ruta</code> te mueve a otra carpeta; y <code>touch ruta</code> crea un archivo vacío. Tu misión:</p>
+  <ol class="pasos">
+    <li><div><p>Entra en la carpeta <code>css</code> con una sola orden: <code>cd proyectos/web/css</code>.</p></div></li>
+    <li><div><p>Comprueba dónde estás con <code>pwd</code>.</p></div></li>
+    <li><div><p>Sin salir de <code>css</code>, crea un archivo llamado <code>fondo.png</code> dentro de la carpeta <code>img</code> usando una ruta relativa que empiece por <code>..</code>. Después compruébalo con <code>ls ../img</code>.</p></div></li>
+  </ol>
+  <div class="terminal-sim" data-titulo="Muévete por el árbol" data-inicio="/home/tu">
+    <script type="application/json" class="terminal-sistema">{"fotos": {"playa.jpg": "(imagen)"}, "proyectos": {"web": {"index.html": "Hola", "css": {"estilos.css": "h1 { color: navy; }"}, "img": {"logo.png": "(imagen)"}}}}</script>
+    <script type="text/plain" class="terminal-mision">
+      var web = sistema.proyectos && sistema.proyectos.web;
+      var img = web && web.img;
+      if (!(img && img["fondo.png"] !== undefined)) {
+        if (cwd === "/home/tu/proyectos/web/css") return "Bien, ya estás en css. Ahora crea fondo.png dentro de img con una ruta relativa: sube con .. y entra en img.";
+        return "Primero entra en la carpeta css: cd proyectos/web/css";
+      }
+      var relativa = historial.some(function (h) { return /^touch\s+(\.\/)?\.\.\/img\/fondo\.png\s*$/.test(h); });
+      if (!relativa) return "El archivo ya existe, pero la idea es crearlo desde css con una ruta relativa: touch ../img/fondo.png. Pulsa «Reiniciar» y prueba de nuevo.";
+      var usoPwd = historial.some(function (h) { return /^pwd\s*$/.test(h); });
+      if (!usoPwd) return "Casi: te falta usar pwd para ver la ruta absoluta de la carpeta en la que estás.";
+      return true;
+    </script>
+  </div>
+  <aside class="senal ojo" data-titulo="Barras hacia un lado o hacia el otro">
+    <p>Windows separa las carpetas con la barra invertida (<code>C:\Users\ana\Documents</code>) y macOS y Linux con la barra normal (<code>/Users/ana/Documents</code>). En la web y en el código que escribirás, usa <strong>siempre</strong> la barra normal <code>/</code>, también en Windows: los navegadores, Node.js y casi todas las herramientas la entienden en todos los sistemas.</p>
+  </aside>
+
+  <h3>La extensión: una pista, no una garantía</h3>
+  <p>La <strong>extensión</strong> es la parte final del nombre de un archivo, después del último punto: <code>.txt</code>, <code>.jpg</code>, <code>.html</code>, <code>.js</code>. Indica, por convención, qué formato tiene el contenido, y el sistema operativo la usa para decidir con qué programa abrir el archivo. Pero es solo parte del nombre. Si cambias <code>foto.png</code> por <code>foto.jpg</code>, los bytes de dentro siguen siendo los de una imagen PNG. Para convertir de un formato a otro hace falta un programa que reescriba los bytes.</p>
+  <p>Muchos formatos empiezan con unos bytes fijos que los identifican, llamados <strong>firma</strong> o «número mágico». Todas las imágenes PNG empiezan con los mismos 8 bytes, y los bytes 2, 3 y 4 son los códigos ASCII de las letras P, N y G. Ejecuta el taller y después cambia el nombre a <code>"foto.jpg"</code>:</p>
+  <div class="taller" id="taller-firma" data-titulo="¿Qué hay dentro de verdad?">
+    <textarea class="taller-codigo">// Estos son los primeros 8 bytes de cualquier imagen PNG.
+const primerosBytes = [137, 80, 78, 71, 13, 10, 26, 10];
+// Cambia el nombre, por ejemplo a "foto.jpg", y vuelve a ejecutar.
+const nombre = "foto.png";
+
+const extension = nombre.split(".").pop();
+const firma = String.fromCharCode(primerosBytes[1], primerosBytes[2], primerosBytes[3]);
+console.log("Nombre del archivo:", nombre);
+console.log("Extensión según el nombre:", extension);
+console.log("Formato según los bytes:", firma);</textarea>
+  </div>
+  <p>Por cierto, ¿reconoces los números 80, 78 y 71? Son las letras P, N y G en ASCII: la misma tabla de la sección anterior.</p>
+  <aside class="senal ojo" data-titulo="Muestra siempre las extensiones">
+    <p>Windows y macOS ocultan por defecto las extensiones de los tipos conocidos. Eso confunde al programar y, además, es un riesgo: un programa malicioso llamado <code>factura.pdf.exe</code> aparece como <code>factura.pdf</code>. Actívalas hoy mismo. En Windows 11: Explorador de archivos, menú <strong>Ver</strong>, <strong>Mostrar</strong> y marca <strong>Extensiones de nombre de archivo</strong>. En macOS: Finder, menú <strong>Ajustes</strong>, pestaña <strong>Avanzado</strong>, y activa la opción de mostrar todas las extensiones.</p>
+  </aside>
+
+  <h3>Texto plano y archivos binarios</h3>
+  <p>Hay dos grandes familias de archivos. Un archivo de <strong>texto plano</strong> contiene solo caracteres (normalmente en UTF-8), sin formato: ni negritas, ni tamaños de letra, ni imágenes. Lo puedes abrir con cualquier editor y leerlo. Todo el código fuente es texto plano: <code>.js</code>, <code>.html</code>, <code>.css</code>, <code>.py</code>, <code>.json</code>, <code>.md</code>, <code>.txt</code>. Un archivo <strong>binario</strong> contiene bytes que solo tienen sentido para un programa concreto: imágenes (<code>.jpg</code>, <code>.png</code>), audio (<code>.mp3</code>), programas (<code>.exe</code>) o documentos de Word (<code>.docx</code>, que por dentro es un ZIP con muchos archivos).</p>
+  <aside class="senal error">
+    <p>Escribir código en Word, Google Docs o Pages. Estos programas guardan formato además del texto, y sustituyen las comillas rectas <code>"</code> por comillas tipográficas <code>“ ”</code>, que ningún lenguaje de programación entiende. El código se escribe en un editor de código, como VS Code, que instalarás en la <a href="05-herramientas.html">Estación 5</a>.</p>
+  </aside>
+
+  <h3>Tres detalles que causan muchos errores</h3>
+  <ul>
+    <li><strong>Archivos ocultos.</strong> En macOS y Linux, los archivos cuyo nombre empieza por punto (como <code>.gitignore</code>) están ocultos y no aparecen en un listado normal. En Windows se ocultan con un atributo. Muchas herramientas de programación guardan su configuración en archivos así.</li>
+    <li><strong>Mayúsculas y minúsculas.</strong> Linux distingue <code>Foto.png</code> de <code>foto.png</code>: son dos archivos distintos. Windows y macOS, por defecto, no los distinguen. Como casi todos los servidores usan Linux, una página que funciona en tu computadora puede tener imágenes rotas al publicarla si escribiste un nombre con otra mayúscula.</li>
+    <li><strong>Espacios, tildes y símbolos.</strong> Un nombre como <code>Mi Proyecto Año 2.html</code> funciona en tu explorador, pero da problemas en la terminal, en las direcciones web (los espacios se convierten en <code>%20</code>) y entre sistemas. Windows, además, prohíbe estos caracteres en los nombres: <code>\ / : * ? " &lt; &gt; |</code>.</li>
+  </ul>
+  <aside class="senal oficio">
+    <p>La convención profesional para archivos y carpetas de proyectos: todo en minúsculas, sin espacios, sin tildes ni ñ, y con guiones para separar palabras. Por ejemplo, <code>mi-primer-proyecto/index.html</code> o <code>img/foto-perfil.png</code>. Te ahorrará horas de errores misteriosos.</p>
+  </aside>
+  <aside class="senal nota" data-titulo="Borrar no es destruir">
+    <p>Cuando borras un archivo, normalmente va a la papelera. Y aunque la vacíes, el sistema de archivos suele limitarse a marcar ese espacio como libre: los bytes siguen ahí hasta que algo los sobrescribe, y a veces se pueden recuperar. En los SSD es mucho más difícil, porque el propio disco limpia pronto las zonas liberadas. Tenlo en cuenta antes de vender o regalar un equipo: bórralo con la opción de restablecer del sistema.</p>
+  </aside>
+</section>
+
+<section id="del-codigo" data-parada="Del código a la máquina">
+  <h2>Del código que escribes a la máquina</h2>
+  <p>Ya sabes que la CPU solo entiende instrucciones muy simples, codificadas en bits. Pero en este curso escribirás cosas como <code>console.log("Hola")</code>, que se parecen más al inglés que a una fila de unos y ceros. ¿Quién traduce una cosa en la otra? Esta sección responde a esa pregunta, a grandes rasgos.</p>
+
+  <h3>Tres niveles de lenguaje</h3>
+  <ul>
+    <li>El <strong>código máquina</strong> son las instrucciones tal como las entiende la CPU: patrones de bits. Cada arquitectura (x86-64, ARM) tiene los suyos. Es el único lenguaje que la CPU ejecuta directamente.</li>
+    <li>El <strong>lenguaje ensamblador</strong> pone nombres legibles a esas instrucciones, casi una a una: <code>mov</code> (mover), <code>add</code> (sumar). Sigue dependiendo de la arquitectura. Lo usaste en la traza de la CPU de juguete.</li>
+    <li>Los <strong>lenguajes de alto nivel</strong>, como JavaScript, Python, Java, C# o Rust, se parecen más al lenguaje humano, trabajan con ideas como «texto» o «lista» en lugar de registros, y no dependen del procesador. Una línea de alto nivel equivale a muchas instrucciones de máquina.</li>
+  </ul>
+  <figure class="capsula" data-titulo="La escalera de la abstracción">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 320" role="img" aria-label="Animación: la línea de JavaScript let total = 2 + 3 se traduce a dos instrucciones de ensamblador x86-64, después a sus bits de código máquina, y la CPU termina con un registro que vale 5. En un procesador ARM, la misma línea da otras instrucciones y otros bits">
+        <text class="d-rotulo" x="20" y="45">JavaScript</text>
+        <rect class="d-codigo" x="200" y="15" width="500" height="50" rx="6"/>
+        <text class="d-codigo-texto" x="220" y="46" style="font-size:17px">let total = 2 + 3;</text>
+        <g data-pasos="2-">
+          <path class="d-linea" d="M450 67V78"/><path class="d-tinta" d="M443 78l7 10 7-10z"/>
+          <text class="d-peq d-tenue" x="466" y="83">lo traduce un compilador o el motor</text>
+          <text class="d-rotulo" x="20" y="127" data-texto="2:Ensamblador x86; 5:Ensamblador ARM">Ensamblador x86</text>
+          <rect class="d-codigo" x="200" y="90" width="500" height="64" rx="6"/>
+          <text class="d-codigo-texto" x="220" y="117" style="font-size:16px" data-texto="2:mov eax, 2; 5:mov w0, #2">mov eax, 2</text>
+          <text class="d-codigo-texto" x="220" y="143" style="font-size:16px" data-texto="2:add eax, 3; 5:add w0, w0, #3">add eax, 3</text>
+          <text class="d-codigo-tenue" x="470" y="117" style="font-size:14px" data-texto="2:(pon 2 en eax); 5:(pon 2 en w0)">(pon 2 en eax)</text>
+          <text class="d-codigo-tenue" x="470" y="143" style="font-size:14px" >(súmale 3)</text>
+        </g>
+        <g data-pasos="3-">
+          <path class="d-linea" d="M450 156V167"/><path class="d-tinta" d="M443 167l7 10 7-10z"/>
+          <text class="d-peq d-tenue" x="466" y="172">cada instrucción es un patrón de bits</text>
+          <text class="d-rotulo" x="20" y="216">Código máquina</text>
+          <rect class="d-codigo" x="200" y="179" width="500" height="64" rx="6"/>
+          <text class="d-codigo-texto" x="220" y="205" style="font-size:14px" data-texto="3:10111000 00000010 00000000 00000000 00000000; 5:01010010 10000000 00000000 01000000">10111000 00000010 00000000 00000000 00000000</text>
+          <text class="d-codigo-texto" x="220" y="231" style="font-size:14px" data-texto="3:10000011 11000000 00000011; 5:00010001 00000000 00001100 00000000">10000011 11000000 00000011</text>
+        </g>
+        <g data-pasos="4-">
+          <path class="d-linea" d="M450 245V256"/><path class="d-tinta" d="M443 256l7 10 7-10z"/>
+          <text class="d-peq d-tenue" x="466" y="261">la CPU busca, decodifica y ejecuta</text>
+          <text class="d-rotulo" x="20" y="296">CPU</text>
+          <rect class="d-caja" x="200" y="268" width="500" height="44" rx="6" data-clases="4:d-acento-trazo; 5:"/>
+          <text class="d-mono" x="220" y="296" data-texto="4:registro eax = 5; 5:registro w0 = 5">registro eax = 5</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Arriba, una línea de JavaScript que una persona puede leer: «guarda en <code>total</code> la suma de 2 y 3». La CPU no puede ejecutarla tal cual: no sabe qué es <code>let</code> ni qué es <code>total</code>.</li>
+        <li data-duracion="7">Un programa traductor (un compilador, o el motor de JavaScript mientras el programa corre) la convierte en instrucciones de ensamblador: «pon 2 en el registro eax» y «súmale 3». Es una versión simplificada: un motor real genera algunas instrucciones más.</li>
+        <li data-duracion="7">Cada instrucción de ensamblador corresponde a un patrón de bits. Eso es el código máquina, lo único que la CPU entiende. Estos son los bits reales de esas dos instrucciones en un procesador x86-64 (5 bytes la primera y 3 la segunda).</li>
+        <li>La CPU busca, decodifica y ejecuta esos bits, y su registro termina valiendo 5. En ningún momento nadie «entendió» la suma: cada capa aplicó reglas.</li>
+        <li data-duracion="8">En un procesador ARM, como el de tu teléfono o un Mac reciente, la misma línea de JavaScript se traduce a otras instrucciones y a otros bits. Tu código no cambia. Esa es la gran ventaja de los lenguajes de alto nivel: no dependen del procesador.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Compilar o interpretar</h3>
+  <p>Hay dos estrategias para hacer esa traducción:</p>
+  <ul>
+    <li>Un <strong>compilador</strong> traduce el programa entero antes de ejecutarlo y produce un archivo nuevo, ya traducido, que se puede ejecutar muchas veces sin volver a traducir. Así funcionan C, C++, Rust o Go. Tus juegos y tu navegador llegaron a tu computadora ya compilados.</li>
+    <li>Un <strong>intérprete</strong> lee el programa y lo va ejecutando sobre la marcha, instrucción a instrucción, cada vez que lo pones en marcha. Así funciona Python, en su forma habitual.</li>
+  </ul>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 280" role="img" aria-label="Comparación. Arriba, un lenguaje compilado: el código fuente pasa por el compilador, que produce un programa en código máquina que ejecuta la CPU. Abajo, un lenguaje interpretado: el código fuente lo lee un intérprete o motor, que lo traduce y ejecuta sobre la marcha en la CPU">
+      <text class="d-rotulo" x="20" y="28">Compilado (C, C++, Rust, Go)</text>
+      <rect class="d-caja" x="20" y="42" width="140" height="60" rx="6"/>
+      <text x="90" y="68" text-anchor="middle">Código fuente</text>
+      <text class="d-mono d-peq d-tenue" x="90" y="89" text-anchor="middle">juego.c</text>
+      <path class="d-linea" d="M160 72H188"/><path class="d-tinta" d="M188 64l12 8-12 8z"/>
+      <rect class="d-acento" x="200" y="42" width="150" height="60" rx="6"/>
+      <text class="d-sobre-acento d-rotulo" x="275" y="77" text-anchor="middle">Compilador</text>
+      <path class="d-linea" d="M350 72H378"/><path class="d-tinta" d="M378 64l12 8-12 8z"/>
+      <rect class="d-caja" x="390" y="42" width="160" height="60" rx="6"/>
+      <text x="470" y="68" text-anchor="middle">Programa en</text>
+      <text x="470" y="89" text-anchor="middle">código máquina</text>
+      <path class="d-linea" d="M550 72H578"/><path class="d-tinta" d="M578 64l12 8-12 8z"/>
+      <rect class="d-caja" x="590" y="42" width="110" height="60" rx="6"/>
+      <text class="d-rotulo" x="645" y="77" text-anchor="middle">CPU</text>
+      <text class="d-peq d-tenue" x="20" y="126">Traduce todo una vez, antes de ejecutar. Se entrega el programa ya traducido.</text>
+      <text class="d-rotulo" x="20" y="168">Interpretado (Python) y con JIT (JavaScript)</text>
+      <rect class="d-caja" x="20" y="182" width="140" height="60" rx="6"/>
+      <text x="90" y="208" text-anchor="middle">Código fuente</text>
+      <text class="d-mono d-peq d-tenue" x="90" y="229" text-anchor="middle">juego.js</text>
+      <path class="d-linea" d="M160 212H188"/><path class="d-tinta" d="M188 204l12 8-12 8z"/>
+      <rect class="d-acento" x="200" y="182" width="350" height="60" rx="6"/>
+      <text class="d-sobre-acento d-rotulo" x="375" y="207" text-anchor="middle">Intérprete o motor</text>
+      <text class="d-sobre-acento d-peq" x="375" y="228" text-anchor="middle">lee, traduce y ejecuta sobre la marcha</text>
+      <path class="d-linea" d="M550 212H578"/><path class="d-tinta" d="M578 204l12 8-12 8z"/>
+      <rect class="d-caja" x="590" y="182" width="110" height="60" rx="6"/>
+      <text class="d-rotulo" x="645" y="217" text-anchor="middle">CPU</text>
+      <text class="d-peq d-tenue" x="20" y="266">Traduce mientras ejecuta. Se entrega el código fuente, y quien lo usa necesita el intérprete.</text>
+    </svg>
+    <figcaption>Dos formas de llevar el código fuente hasta la CPU. En la práctica la frontera es borrosa: muchos lenguajes combinan las dos.</figcaption>
+  </figure>
+  <aside class="senal analogia">
+    <p>Piensa en dos traductores. El compilador es quien traduce un libro entero antes de publicarlo: tarda, pero después cualquiera lo lee rápido y sin traductor. El intérprete es quien traduce una conferencia en directo, frase a frase: empieza enseguida, pero tiene que estar presente cada vez que se da la charla. La analogía se queda corta en un punto: los intérpretes modernos también toman notas para ir más rápido, como verás ahora.</p>
+  </aside>
+  <p>JavaScript combina lo mejor de los dos. Se ejecuta en programas llamados <strong>motores</strong>: V8 (en Chrome, Edge y Node.js), SpiderMonkey (en Firefox) y JavaScriptCore (en Safari). Un motor empieza interpretando el código para arrancar rápido, observa qué partes se ejecutan muchas veces y las compila a código máquina mientras el programa corre. A esa técnica se la llama compilación <strong>JIT</strong> (del inglés <em>just in time</em>, «justo a tiempo»). Java y C# siguen un camino intermedio: se compilan a un código intermedio que después ejecuta una máquina virtual, también con JIT.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">Compilado</th><th scope="col">Interpretado</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Cuándo se traduce</th><td>Antes, una sola vez</td><td>Mientras se ejecuta, cada vez</td></tr>
+        <tr><th scope="row">Qué se entrega</th><td>El programa traducido (para un sistema y una arquitectura concretos)</td><td>El código fuente, que funciona donde haya intérprete</td></tr>
+        <tr><th scope="row">Velocidad típica</th><td>Muy alta</td><td>Menor (el JIT reduce mucho la diferencia)</td></tr>
+        <tr><th scope="row">Algunos errores se detectan…</th><td>Al compilar, antes de ejecutar</td><td>Al llegar a la línea con el error</td></tr>
+        <tr><th scope="row">Ejemplos</th><td>C, C++, Rust, Go</td><td>Python, Ruby, PHP; JavaScript con JIT</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Mira el mismo cálculo de la traza (15 × 3) escrito en dos lenguajes de alto nivel. En JavaScript, que aprenderás desde la Estación 6, sería así:</p>
+  <pre><code class="language-js">const precio = 15;
+const cantidad = 3;
+const total = precio * cantidad;
+console.log("Total:", total);
+console.log("En binario:", total.toString(2));</code></pre>
+  <p>Y en Python, que verás en la <a href="36-python.html">Estación 36</a>. Predice qué imprimirá y ejecútalo. Un detalle curioso: el navegador no sabe ejecutar Python, así que este taller usa Brython, un programa que traduce Python a JavaScript. Traductores sobre traductores.</p>
+  <div class="taller" id="taller-python" data-modo="python" data-titulo="El mismo programa en Python">
+    <textarea class="taller-codigo"># El mismo cálculo de la traza, escrito en Python
+precio = 15
+cantidad = 3
+total = precio * cantidad
+print("Total:", total)
+print("En binario:", bin(total))</textarea>
+  </div>
+  <p>Los dos programas hacen lo mismo con palabras distintas: <code>console.log</code> en un caso, <code>print</code> en el otro. El <code>0b</code> que pone Python delante indica que lo que sigue está en binario: 101101 es 32 + 8 + 4 + 1 = 45.</p>
+  <aside class="senal error">
+    <p>«JavaScript y Java son lo mismo». Son lenguajes distintos, creados por personas distintas, que se parecen tan poco como «pan» y «pantalón». JavaScript se llamó así en 1995 por marketing, para aprovechar la fama que tenía Java en aquel momento. Otra idea equivocada: «los lenguajes interpretados nunca se compilan». Los motores de JavaScript compilan constantemente, gracias al JIT.</p>
+  </aside>
+  <aside class="senal oficio">
+    <p>No existe «el mejor lenguaje»: cada uno domina un terreno. Páginas y apps web: JavaScript y TypeScript (este curso). Videojuegos: C# con Unity, GDScript o C# con Godot, C++ con Unreal, o JavaScript para juegos web. Apps de teléfono: Kotlin para Android, Swift para iPhone, o JavaScript con React Native. Datos e inteligencia artificial: Python. Sistemas operativos, motores y controladores: C, C++ y Rust. Lo bueno es que los conceptos se transfieren: cuando domines uno, aprenderás el siguiente mucho más rápido.</p>
+  </aside>
+  <aside class="senal clave">
+    <p>Tu código JavaScript nunca habla directamente con el hardware. Entre tu programa y los transistores hay varias capas: el motor de JavaScript, el sistema operativo con sus controladores y, al final, el código máquina. Cada capa esconde la complejidad de la de abajo. Eso se llama <strong>abstracción</strong>, y es la idea más poderosa de la informática. Verás cómo funciona un motor por dentro en la <a href="22-ejecucion.html">Estación 22: Cómo se ejecuta el código</a>. Y en la próxima estación saldrás de la caja: verás cómo hablan entre sí millones de computadoras en la <a href="03-internet.html">Estación 3: Cómo funciona internet y la web</a>.</p>
+  </aside>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Una computadora recibe datos (entrada), los procesa siguiendo un programa (proceso), produce resultados (salida) y guarda información (almacenamiento). El hardware es lo físico; el software, los programas; el firmware, el software grabado en el propio hardware.</li>
+    <li>Todo se guarda en bits (0 o 1). Con n bits hay 2<sup>n</sup> combinaciones. En binario, cada posición vale el doble que la de su derecha: 128, 64, 32, 16, 8, 4, 2, 1. Un byte son 8 bits: del 0 al 255.</li>
+    <li>b es bit y B es byte: 100 Mb/s son 12,5 MB/s. kB, MB y GB son múltiplos de 1000; KiB, MiB y GiB, de 1024. Un disco de 1 TB aparece como 931 «GB» en Windows porque cuenta en GiB.</li>
+    <li>Texto, colores, imágenes y sonido son números con un formato acordado. Unicode da un número a cada carácter; UTF-8 lo guarda en 1 a 4 bytes. Leer bytes con la codificación equivocada produce mojibake («aÃ±o»).</li>
+    <li>RGB usa tres bytes por color (rojo, verde y azul, de 0 a 255). Una imagen es una cuadrícula de píxeles. El sonido se guarda midiendo la onda miles de veces por segundo.</li>
+    <li>La CPU repite sin parar el ciclo buscar, decodificar y ejecutar, con registros diminutos y una ALU que calcula. La GPU hace miles de cálculos sencillos en paralelo.</li>
+    <li>La RAM es rápida y volátil (se borra al apagar); el almacenamiento es lento y persistente. Jerarquía: registros, caché, RAM, SSD, disco duro. Para ejecutar un programa, se copia del almacenamiento a la RAM.</li>
+    <li>El sistema operativo administra procesos, memoria, archivos, dispositivos (con controladores) y permisos. Las apps le piden todo al kernel mediante llamadas al sistema.</li>
+    <li>Un archivo es una secuencia de bytes con nombre. Las rutas absolutas empiezan en la raíz; las relativas, en la carpeta actual (<code>..</code> sube un nivel). La extensión es solo parte del nombre. El código es texto plano.</li>
+    <li>La CPU solo entiende código máquina. Un compilador traduce todo antes de ejecutar; un intérprete, sobre la marcha; los motores de JavaScript mezclan ambos con JIT.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Resuelve los ejercicios en orden. Todos traen el código casi terminado: solo tienes que cambiar valores o copiar y adaptar una línea, siguiendo los comentarios. Pulsa «Ejecutar» para comprobar tu respuesta. Usa las pistas solo después de intentarlo unos minutos, con papel y lápiz a mano: el esfuerzo de buscar la respuesta es lo que hace que se quede en tu memoria.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-a-binario">
+    <h3>Escribe números en binario</h3>
+    <p>Escribe en binario los números 5, 10 y 200, entre las comillas. Usa la tabla de valores 128, 64, 32, 16, 8, 4, 2, 1. El programa te mostrará cuánto vale en decimal lo que escribiste.</p>
+    <div class="taller" id="taller-ej-binario" data-titulo="Ejercicio 1">
+      <textarea class="taller-codigo">// Escribe cada número en binario, entre las comillas.
+const cinco = "";
+const diez = "";
+const doscientos = "";
+
+// No cambies nada de aquí para abajo: muestra cuánto vale lo que escribiste.
+console.log(cinco + " vale " + parseInt(cinco, 2));
+console.log(diez + " vale " + parseInt(diez, 2));
+console.log(doscientos + " vale " + parseInt(doscientos, 2));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var metas = [5, 10, 200];
+var nombres = ["cinco", "diez", "doscientos"];
+for (var i = 0; i < 3; i++) {
+  var m = /^([01]+) vale (\d+)$/.exec((salida[i] || "").trim());
+  if (!m) return "Revisa " + nombres[i] + ": escribe solo ceros y unos entre las comillas, por ejemplo \"110\".";
+  if (Number(m[2]) !== metas[i]) return "Lo que escribiste en " + nombres[i] + " (" + m[1] + ") vale " + m[2] + ", no " + metas[i] + ". Busca las posiciones que suman " + metas[i] + ".";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Empieza por la posición de mayor valor que no se pase de tu número. Para el 5: ¿cabe un 4? Sí, y sobra 1.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El 10 es 8 + 2. El 200 es 128 + 64 + 8. Pon un 1 en esas posiciones y un 0 en las demás.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const cinco = "101";
+const diez = "1010";
+const doscientos = "11001000";
+
+console.log(cinco + " vale " + parseInt(cinco, 2));
+console.log(diez + " vale " + parseInt(diez, 2));
+console.log(doscientos + " vale " + parseInt(doscientos, 2));</code></pre>
+      <p>Los ceros a la izquierda no cambian el valor: <code>"00000101"</code> también es 5, igual que 007 es 7 en decimal. Escrito con los 8 bits de un byte, el 5 es <code>00000101</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-a-decimal">
+    <h3>De binario a decimal</h3>
+    <p>Convierte a decimal los números binarios 1010, 1111 y 100000. Hazlo primero a mano y escribe cada resultado (un número, sin comillas) en lugar del 0.</p>
+    <div class="taller" id="taller-ej-decimal" data-titulo="Ejercicio 2">
+      <textarea class="taller-codigo">// Escribe el valor decimal en lugar de cada 0.
+const a = 0; // 1010 en binario
+const b = 0; // 1111 en binario
+const c = 0; // 100000 en binario
+
+// No cambies esto:
+console.log("1010 →", a);
+console.log("1111 →", b);
+console.log("100000 →", c);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = [["1010", 10], ["1111", 15], ["100000", 32]];
+for (var i = 0; i < 3; i++) {
+  var l = (salida[i] || "").trim();
+  var n = Number(l.split("→")[1]);
+  if (n !== esperado[i][1]) return "La conversión de " + esperado[i][0] + " no es correcta (tu respuesta: " + l.split("→")[1].trim() + "). Escribe el valor de cada posición (…, 32, 16, 8, 4, 2, 1) debajo de cada dígito, empezando por la derecha, y suma solo donde hay un 1.";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Alinea los valores desde la derecha. En 1010, las posiciones valen 8, 4, 2 y 1, y hay unos en la del 8 y la del 2.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>100000 tiene seis dígitos: el 1 está en la sexta posición empezando por la derecha, que vale 32.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const a = 10; // 1010 = 8 + 2
+const b = 15; // 1111 = 8 + 4 + 2 + 1
+const c = 32; // 100000 = 32
+
+console.log("1010 →", a);
+console.log("1111 →", b);
+console.log("100000 →", c);</code></pre>
+      <p>Para comprobarlo con la computadora, puedes usar lo que viste en el taller de las bombillas: <code>parseInt("1010", 2)</code> da 10. Fíjate en un patrón: un 1 seguido de ceros siempre es una potencia de 2 (10 = 2, 100 = 4, 1000 = 8…), y una fila de unos siempre es una potencia de 2 menos 1 (1111 = 16 − 1 = 15).</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-combinaciones">
+    <h3>¿Cuántas combinaciones caben?</h3>
+    <p>La primera línea calcula las combinaciones de 3 bits: <code>2 ** 3</code> (2 elevado a 3). Copia esa línea tres veces y adáptala para que imprima, en este orden: las combinaciones de 4 bits, las de 16 bits y, por último, 2 elevado al número <strong>mínimo</strong> de bits que necesitas para dar un número distinto a cada uno de 100 jugadores.</p>
+    <div class="taller" id="taller-ej-combinaciones" data-titulo="Ejercicio 3">
+      <textarea class="taller-codigo">console.log(2 ** 3);  // con 3 bits hay 8 combinaciones
+// Escribe debajo tus tres líneas.
+</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (salida[0] !== "8") return "No borres la primera línea: debe seguir imprimiendo 8.";
+if (salida[1] !== "16") return "La segunda línea debería imprimir las combinaciones de 4 bits. Copia la primera y cambia el 3 por un 4.";
+if (salida[2] !== "65536") return "La tercera línea debería imprimir las combinaciones de 16 bits: 2 ** 16.";
+if (salida[3] === "64") return "Con 6 bits solo hay 64 combinaciones: no alcanzan para 100 jugadores. Prueba con uno más.";
+if (salida[3] === "256" || salida[3] === "512" || salida[3] === "1024") return "Con esos bits caben los 100 jugadores, pero sobran muchas combinaciones. ¿Hay un número de bits más pequeño que todavía llegue a 100?";
+if (salida[3] !== "128") return "La cuarta línea debería imprimir 2 elevado al número mínimo de bits para 100 jugadores.";
+if (salida.length > 4) return "Imprime solo cuatro líneas: la del ejemplo y tus tres líneas.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Para 4 bits, la línea es igual que la primera pero con un 4: <code>console.log(2 ** 4);</code></p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para los 100 jugadores, prueba: 2<sup>6</sup> = 64 no alcanza. ¿Y 2<sup>7</sup>?</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">console.log(2 ** 3);  // con 3 bits hay 8 combinaciones
+console.log(2 ** 4);  // 16
+console.log(2 ** 16); // 65536
+console.log(2 ** 7);  // 128: 7 bits alcanzan para 100 jugadores; 6 bits (64) no</code></pre>
+      <p>16 bits dan 65&nbsp;536 combinaciones, muchas más que 16 × 2. Así crecen las potencias de 2: cada bit extra duplica. Por eso con pocos bits se pueden representar cantidades enormes.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-clasifica">
+    <h3>Clasifica los componentes</h3>
+    <p>Escribe entre las comillas la categoría de cada componente. Usa exactamente una de estas palabras: <code>entrada</code>, <code>salida</code>, <code>entrada y salida</code>, <code>proceso</code>, <code>memoria</code> (para la memoria temporal) o <code>almacenamiento</code> (para la permanente).</p>
+    <div class="taller" id="taller-ej-clasifica" data-titulo="Ejercicio 4">
+      <textarea class="taller-codigo">const teclado = "";
+const microfono = "";
+const pantalla = "";
+const impresora = "";
+const pantallaTactil = "";
+const tarjetaWifi = "";
+const cpu = "";
+const gpu = "";
+const ram = "";
+const ssd = "";
+
+console.log("Tus respuestas:", teclado, "|", microfono, "|", pantalla, "|", impresora, "|", pantallaTactil);
+console.log("Tus respuestas:", tarjetaWifi, "|", cpu, "|", gpu, "|", ram, "|", ssd);</textarea>
+      <script type="text/plain" class="taller-verificar">
+function valor(nombre) {
+  var m = new RegExp("const\\s+" + nombre + "\\s*=\\s*[\"'`]([^\"'`]*)[\"'`]").exec(codigo);
+  if (!m) return "";
+  var v = m[1].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+  if (/^(entrada ?[\/-] ?salida|e\/s|entrada-salida)$/.test(v)) v = "entrada y salida";
+  return v;
+}
+var esperado = [
+  ["teclado", "entrada", "El teclado solo mete datos: es de entrada."],
+  ["microfono", "entrada", "El micrófono capta sonido y lo mete en la computadora: es de entrada."],
+  ["pantalla", "salida", "Una pantalla normal solo muestra resultados: es de salida."],
+  ["impresora", "salida", "La impresora saca resultados al papel: es de salida."],
+  ["pantallaTactil", "entrada y salida", "La pantalla táctil muestra imágenes (salida) y detecta tus dedos (entrada)."],
+  ["tarjetaWifi", "entrada y salida", "La tarjeta Wi-Fi recibe y envía datos: es de entrada y salida."],
+  ["cpu", "proceso", "La CPU ejecuta las instrucciones: es de proceso."],
+  ["gpu", "proceso", "La GPU también ejecuta cálculos, miles en paralelo: es de proceso."],
+  ["ram", "memoria", "La RAM guarda los datos solo mientras hay corriente: es la memoria temporal."],
+  ["ssd", "almacenamiento", "El SSD conserva los datos al apagar: es almacenamiento."]
+];
+for (var i = 0; i < esperado.length; i++) {
+  var v = valor(esperado[i][0]);
+  if (!v) return "Falta la categoría de " + esperado[i][0] + ".";
+  if (v !== esperado[i][1]) return "Revisa " + esperado[i][0] + " (escribiste «" + v + "»). Pregúntate: ¿mete información, la saca, las dos cosas, la procesa o la guarda?";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Para cada uno, pregúntate: ¿mete información, la saca o las dos cosas? Si no hace ninguna de las tres, ¿la procesa o la guarda?</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Hay dos de «entrada y salida»: uno que tocas con los dedos y otro que no ves, pero que habla con el router. La RAM y el SSD se diferencian en qué pasa al apagar.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const teclado = "entrada";
+const microfono = "entrada";
+const pantalla = "salida";
+const impresora = "salida";
+const pantallaTactil = "entrada y salida";
+const tarjetaWifi = "entrada y salida";
+const cpu = "proceso";
+const gpu = "proceso";
+const ram = "memoria";
+const ssd = "almacenamiento";
+
+console.log("Tus respuestas:", teclado, "|", microfono, "|", pantalla, "|", impresora, "|", pantallaTactil);
+console.log("Tus respuestas:", tarjetaWifi, "|", cpu, "|", gpu, "|", ram, "|", ssd);</code></pre>
+      <p>La pantalla táctil es el mejor ejemplo de dispositivo de entrada y salida: el mismo cristal muestra y escucha. La RAM y el SSD guardan datos, pero la RAM los pierde al apagar y el SSD no.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-descifra">
+    <h3>Descifra el mensaje</h3>
+    <p>Alguien te envió este mensaje en códigos: <code>80 114 111 103 114 97 109 97</code>. Antes de usar la computadora, intenta descifrar alguna letra a mano: sabes que A = 65 y a = 97, y que las letras van seguidas. Después escribe una segunda línea que muestre el mensaje completo con <code>String.fromCharCode</code>.</p>
+    <div class="taller" id="taller-ej-descifra" data-titulo="Ejercicio 5">
+      <textarea class="taller-codigo">// Ejemplo: String.fromCharCode convierte códigos en texto.
+console.log(String.fromCharCode(72, 111, 108, 97));
+// Escribe debajo una línea igual con los códigos del mensaje secreto.
+</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (salida[0] !== "Hola") return "No borres la línea del ejemplo: debe seguir imprimiendo «Hola».";
+if (/["'`]\s*Programa\s*["'`]/.test(codigo)) return "Tienes que descifrarlo con String.fromCharCode, no escribir la palabra a mano.";
+if (!salida[1]) return "Falta la segunda línea: copia la del ejemplo y pon los códigos del mensaje.";
+if (salida[1] !== "Programa") return "La segunda línea muestra «" + salida[1] + "». Revisa que copiaste los ocho códigos, separados por comas y en orden.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>80 está 15 posiciones después de 65 (la A). Cuenta 15 letras desde la A. Y 97 es la a minúscula.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>String.fromCharCode</code> acepta varios números separados por comas, como en el ejemplo.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">console.log(String.fromCharCode(72, 111, 108, 97));
+console.log(String.fromCharCode(80, 114, 111, 103, 114, 97, 109, 97));</code></pre>
+      <p>El mensaje es «Programa». La primera letra es mayúscula (80, entre 65 y 90) y las demás minúsculas (entre 97 y 122). Fíjate en que la r aparece dos veces con el mismo código, 114.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-imagen">
+    <h3>¿Cuánto pesa una imagen sin comprimir?</h3>
+    <p>Una imagen de 1920 × 1080 píxeles usa 3 bytes por píxel (rojo, verde y azul). Cambia el 0 por el cálculo que da el número total de bytes, usando las constantes <code>ancho</code>, <code>alto</code> y <code>bytesPorPixel</code>. El resultado debe ser exactamente:</p>
+    <pre class="consola"><code>6220800 bytes
+6.2 MB
+5.9 MiB</code></pre>
+    <div class="taller" id="taller-ej-imagen" data-titulo="Ejercicio 6">
+      <textarea class="taller-codigo">const ancho = 1920;
+const alto = 1080;
+const bytesPorPixel = 3; // rojo, verde y azul: 1 byte cada uno
+
+const bytes = 0; // ← cambia el 0 por el cálculo
+
+console.log(bytes + " bytes");
+console.log((bytes / 1000 ** 2).toFixed(1) + " MB");
+console.log((bytes / 1024 ** 2).toFixed(1) + " MiB");</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (/6220800/.test(codigo)) return "No escribas el resultado a mano: calcúlalo con ancho, alto y bytesPorPixel.";
+if (!/const\s+bytes\s*=[^\n]*ancho/.test(codigo) || !/const\s+bytes\s*=[^\n]*alto/.test(codigo)) return "Calcula bytes a partir de ancho y alto (y de los bytes por píxel).";
+if (salida[0] !== "6220800 bytes") return "La primera línea debería ser «6220800 bytes» y es «" + (salida[0] || "(nada)") + "». ¿Multiplicaste las tres constantes?";
+if (salida[1] !== "6.2 MB") return "La segunda línea debería ser «6.2 MB».";
+if (salida[2] !== "5.9 MiB") return "La tercera línea debería ser «5.9 MiB».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista</summary><p>El número de píxeles es ancho por alto, y cada píxel ocupa <code>bytesPorPixel</code> bytes. En JavaScript, multiplicar se escribe con <code>*</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const ancho = 1920;
+const alto = 1080;
+const bytesPorPixel = 3; // rojo, verde y azul: 1 byte cada uno
+
+const bytes = ancho * alto * bytesPorPixel;
+
+console.log(bytes + " bytes");
+console.log((bytes / 1000 ** 2).toFixed(1) + " MB");
+console.log((bytes / 1024 ** 2).toFixed(1) + " MiB");</code></pre>
+      <p>Una foto JPEG de ese tamaño suele ocupar menos de 1 MB. La diferencia es la compresión con pérdida: JPEG descarta detalles que el ojo apenas nota. Prueba a cambiar la resolución a 3840 × 2160 (4K) para ver cuánto ocuparía sin comprimir.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-rutas">
+    <h3>Escribe las rutas</h3>
+    <p>Usa el árbol de carpetas de la sección <a href="#archivos">Archivos, carpetas y rutas</a> y escribe, entre las comillas:</p>
+    <ol>
+      <li>La ruta <strong>absoluta</strong> de <code>index.html</code>.</li>
+      <li>Estando en <code>/home/ana/proyectos/web/img</code>, la ruta <strong>relativa</strong> a <code>estilos.css</code>.</li>
+      <li>Estando en <code>/home/ana/proyectos</code>, la ruta relativa a <code>playa.jpg</code>.</li>
+      <li>Estando en <code>/home/ana/fotos</code>, la ruta relativa a <code>logo.png</code>.</li>
+    </ol>
+    <div class="taller" id="taller-ej-rutas" data-titulo="Ejercicio 7">
+      <textarea class="taller-codigo">const a = "";
+const b = "";
+const c = "";
+const d = "";
+
+console.log("a)", a);
+console.log("b)", b);
+console.log("c)", c);
+console.log("d)", d);</textarea>
+      <script type="text/plain" class="taller-verificar">
+function resolver(base, rel) {
+  var partes = rel.charAt(0) === "/" ? [] : base.split("/").filter(Boolean);
+  rel.split("/").forEach(function (p) {
+    if (!p || p === ".") return;
+    if (p === "..") partes.pop(); else partes.push(p);
+  });
+  return "/" + partes.join("/");
+}
+var casos = [
+  { letra: "a", base: "/", meta: "/home/ana/proyectos/web/index.html", absoluta: true },
+  { letra: "b", base: "/home/ana/proyectos/web/img", meta: "/home/ana/proyectos/web/css/estilos.css" },
+  { letra: "c", base: "/home/ana/proyectos", meta: "/home/ana/fotos/playa.jpg" },
+  { letra: "d", base: "/home/ana/fotos", meta: "/home/ana/proyectos/web/img/logo.png" }
+];
+for (var i = 0; i < casos.length; i++) {
+  var k = casos[i];
+  var r = (salida[i] || "").trim().replace(/^[a-d]\)\s*/, "").trim();
+  if (!r || r === k.letra + ")") return "Falta la respuesta " + k.letra + ").";
+  if (r.indexOf("\\") !== -1) return "En " + k.letra + ") usa la barra normal /, como en macOS, Linux y la web.";
+  if (k.absoluta && r.charAt(0) !== "/") return "La respuesta a) debe ser una ruta absoluta: empieza en la raíz, /.";
+  if (!k.absoluta && r.charAt(0) === "/") return "En " + k.letra + ") se pide una ruta relativa: no empieces por /, empieza desde la carpeta en la que estás.";
+  var destino = resolver(k.base, r);
+  if (destino !== k.meta) return "La ruta " + k.letra + ") («" + r + "») lleva a " + destino + ", no al archivo pedido. Recuerda que cada .. sube una carpeta.";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Una ruta absoluta empieza por <code>/</code> y nombra todas las carpetas desde la raíz. Para las relativas, primero sube con <code>..</code> hasta una carpeta que contenga (directa o indirectamente) al archivo, y después baja nombrando carpetas.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Desde <code>img</code>, sube una vez para llegar a <code>web</code> y entra en <code>css</code>. Desde <code>fotos</code>, sube una vez para llegar a <code>ana</code> y baja por <code>proyectos</code>, <code>web</code> e <code>img</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const a = "/home/ana/proyectos/web/index.html";
+const b = "../css/estilos.css";
+const c = "../fotos/playa.jpg";
+const d = "../proyectos/web/img/logo.png";
+
+console.log("a)", a);
+console.log("b)", b);
+console.log("c)", c);
+console.log("d)", d);</code></pre>
+      <p>También son válidas las variantes que empiezan por <code>./</code>, como <code>./../css/estilos.css</code>: el <code>.</code> significa «aquí mismo» y no cambia nada. El truco para las relativas siempre es el mismo: sube hasta el primer antepasado común y después baja.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-utf8">
+    <h3>Detective de UTF-8</h3>
+    <p>Para el texto <code>¡Hola, año 2026! </code> seguido de un emoji, predice tres cifras y escríbelas en lugar de los 0: (1) cuántos bytes ocupa en UTF-8; (2) qué devuelve <code>texto.length</code>, sabiendo que JavaScript cuenta los emojis como 2; (3) cuántos caracteres ve una persona, contando espacios y signos. Cuando aciertes, quita las <code>//</code> de las tres últimas líneas para ver cómo lo mide JavaScript.</p>
+    <div class="taller" id="taller-ej-utf8" data-titulo="Ejercicio 8">
+      <textarea class="taller-codigo">const cara = String.fromCodePoint(128512); // el emoji de la cara sonriente
+const texto = "¡Hola, año 2026! " + cara;
+
+// Tus predicciones (cambia los 0):
+const bytesUtf8 = 0;    // bytes que ocupa en UTF-8
+const largoJs = 0;      // lo que devuelve texto.length
+const caracteres = 0;   // caracteres que ve una persona
+
+console.log("Predicciones:", bytesUtf8, largoJs, caracteres);
+// console.log(new TextEncoder().encode(texto).length);
+// console.log(texto.length);
+// console.log([...texto].length);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var m = /^Predicciones:\s*(-?\d+)\s+(-?\d+)\s+(-?\d+)$/.exec((salida[0] || "").trim());
+if (!m) return "No cambies la línea de las predicciones; cambia solo los tres 0 por números.";
+var p = [Number(m[1]), Number(m[2]), Number(m[3])];
+if (p[0] === 0 && p[1] === 0 && p[2] === 0) return "Cambia los tres 0 por tus predicciones.";
+var fallos = [];
+if (p[0] !== 23) fallos.push("los bytes en UTF-8 (¿qué caracteres ocupan 2 bytes y cuál ocupa 4?)");
+if (p[1] !== 19) fallos.push("lo que devuelve texto.length (el emoji cuenta doble)");
+if (p[2] !== 18) fallos.push("los caracteres que ve una persona (cuenta también los espacios y los signos)");
+if (fallos.length) return "Revisa " + fallos.join("; y ") + ".";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Cuenta primero los caracteres: ¡, H, o, l, a, la coma, el espacio… hasta el emoji. Después piensa cuáles no son de ASCII: la ¡ y la ñ ocupan 2 bytes en UTF-8 y el emoji ocupa 4.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Si una persona ve 18 caracteres y uno de ellos (el emoji) cuenta doble para JavaScript, <code>length</code> da uno más. Para los bytes: los caracteres de ASCII suman 1 cada uno, y hay que añadir lo que ocupan de más la ¡, la ñ y el emoji.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const cara = String.fromCodePoint(128512); // el emoji de la cara sonriente
+const texto = "¡Hola, año 2026! " + cara;
+
+const bytesUtf8 = 23;    // 15 caracteres ASCII + ¡ (2) + ñ (2) + emoji (4)
+const largoJs = 19;      // 17 caracteres normales + el emoji, que cuenta 2
+const caracteres = 18;   // lo que ve una persona
+
+console.log("Predicciones:", bytesUtf8, largoJs, caracteres);
+console.log(new TextEncoder().encode(texto).length);
+console.log(texto.length);
+console.log([...texto].length);</code></pre>
+      <p>Tres medidas distintas para el mismo texto. JavaScript guarda los textos internamente en UTF-16, donde los emojis ocupan dos «unidades», y <code>length</code> cuenta unidades, no caracteres. Esto importa, por ejemplo, al limitar el largo de un mensaje o de un nombre de usuario: lo retomarás al trabajar con textos en la Línea 2.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-mojibake">
+    <h3>Provoca un mojibake</h3>
+    <p>El programa convierte la ñ en bytes UTF-8 y los vuelve a leer como UTF-8. Añade dos líneas: una que lea <strong>los mismos bytes</strong> con la tabla antigua <code>"windows-1252"</code> (debe mostrar <code>Ã±</code>) y otra que haga lo mismo con la palabra <code>"año"</code> (debe mostrar <code>aÃ±o</code>). Después explica en una frase, en voz alta o por escrito, por qué aparece «Ã±».</p>
+    <div class="taller" id="taller-ej-mojibake" data-titulo="Ejercicio 9">
+      <textarea class="taller-codigo">const bytes = new TextEncoder().encode("ñ");          // la ñ guardada en UTF-8
+console.log([...bytes].join(" "));                     // sus bytes, en decimal
+console.log(new TextDecoder("utf-8").decode(bytes));   // leídos como UTF-8
+
+// 1. Añade una línea que lea los mismos bytes con la tabla "windows-1252".
+// 2. Añade otra que haga lo mismo con la palabra de tres letras que viste en la cápsula.
+</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (salida[0] !== "195 177") return "La primera línea debería mostrar los bytes de la ñ: 195 177. No cambies las primeras líneas.";
+if (salida[1] !== "ñ") return "La segunda línea debería leer los bytes como UTF-8 y mostrar «ñ».";
+if (salida[2] !== "Ã±") return "La tercera línea debería leer los mismos bytes con la tabla \"windows-1252\" y mostrar «Ã±». Ahora muestra: «" + (salida[2] || "(nada)") + "».";
+if (salida[3] !== "aÃ±o") return "La cuarta línea debería mostrar «aÃ±o». Ahora muestra: «" + (salida[3] || "(nada)") + "». Convierte «año» en bytes con TextEncoder y léelos con windows-1252.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Copia la tercera línea y cambia <code>"utf-8"</code> por <code>"windows-1252"</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para «año» necesitas sus bytes: <code>new TextEncoder().encode("año")</code>. Pon esa expresión dentro de <code>.decode( … )</code> en lugar de <code>bytes</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const bytes = new TextEncoder().encode("ñ");          // la ñ guardada en UTF-8
+console.log([...bytes].join(" "));                     // sus bytes, en decimal
+console.log(new TextDecoder("utf-8").decode(bytes));   // leídos como UTF-8
+console.log(new TextDecoder("windows-1252").decode(bytes));
+console.log(new TextDecoder("windows-1252").decode(new TextEncoder().encode("año")));</code></pre>
+      <p>La explicación: en UTF-8 la ñ ocupa 2 bytes (195 y 177). Windows-1252 es una tabla de 1 byte por carácter, así que lee cada byte como un carácter distinto: el 195 es «Ã» y el 177 es «±». Los bytes son los mismos; lo que cambia es la tabla con la que se interpretan.</p>
+    </details>
+  </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: radiografía de tu computadora</h2>
+  <p>Vas a hacer la ficha técnica de la computadora con la que estudias, entender cada dato con lo que aprendiste y decidir si es adecuada para el curso. Si solo tienes teléfono o tableta, haz la ficha de ese dispositivo: los conceptos son los mismos. Necesitarás unos 45 minutos.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Busca la información del sistema.</strong> En Windows 11: Configuración, Sistema, Información. En macOS: menú Apple, Acerca de este Mac. En Linux: Configuración, apartado Acerca de (o Sistema, Acerca de, según la versión), o en una terminal los comandos <code>lscpu</code>, <code>free -h</code> y <code>lsblk</code>. En un teléfono: Ajustes, Información del teléfono (Android) o Ajustes, General, Información (iPhone).</p></div></li>
+    <li><div><p><strong>Anota la CPU</strong>: modelo, número de núcleos y arquitectura. En Windows, la línea «Tipo de sistema» dice si el procesador es x64 o ARM. En un Mac, si pone «Chip Apple M…», es ARM; si pone «Procesador Intel», es x86-64. En Linux, <code>lscpu</code> muestra <code>x86_64</code> o <code>aarch64</code> (ARM).</p></div></li>
+    <li><div><p><strong>Anota la RAM</strong> total y cuánta está en uso ahora mismo. En Windows, Administrador de tareas (<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Esc</kbd>), pestaña Rendimiento, Memoria. En macOS, Monitor de Actividad, pestaña Memoria.</p></div></li>
+    <li><div><p><strong>Anota el almacenamiento</strong>: si es SSD o disco duro, la capacidad que anunciaba el fabricante y la que muestra tu sistema. Explica la diferencia con lo que sabes de GB y GiB.</p></div></li>
+    <li><div><p><strong>Anota el sistema operativo y su versión</strong>, y comprueba en la web del fabricante si sigue recibiendo actualizaciones de seguridad.</p></div></li>
+    <li><div><p><strong>Identifica los 3 procesos que más memoria usan</strong>, ordenando por memoria en el Administrador de tareas o el Monitor de Actividad. ¿Te sorprende alguno?</p></div></li>
+    <li><div><p><strong>Haz un experimento</strong>: apunta la RAM en uso, abre 20 pestañas del navegador con páginas distintas, espera un minuto y vuelve a apuntarla.</p></div></li>
+    <li><div><p><strong>Dibuja el diagrama de entrada, proceso, salida y almacenamiento</strong> de tu equipo con sus dispositivos reales, a mano o en una herramienta como Excalidraw.</p></div></li>
+    <li><div><p><strong>Rellena el taller</strong> con tus datos y saca una conclusión. Como referencia, en 2026 8 GB de RAM son el mínimo razonable para programar y 16 GB van cómodos para todo el curso. Un SSD marca más diferencia que casi cualquier otra mejora.</p></div></li>
+  </ol>
+  <div class="taller" id="taller-proyecto" data-titulo="Proyecto: ficha de mi computadora">
+    <textarea class="taller-codigo">// Rellena con los datos de TU computadora (los textos, entre comillas).
+const sistemaOperativo = "Escribe aquí tu sistema y su versión";
+const procesador = "Escribe aquí el modelo de tu procesador";
+const nucleos = 0;
+const arquitectura = "x64 o ARM64";
+const ramGB = 0;
+const ramEnUsoAntesGB = 0;
+const ramEnUsoDespuesGB = 0;   // después de abrir 20 pestañas
+const discoAnunciadoGB = 0;    // lo que decía la tienda, por ejemplo 512
+const tipoDisco = "SSD o HDD";
+
+// De aquí para abajo no hace falta cambiar nada.
+const discoGiB = discoAnunciadoGB * 1000 ** 3 / 1024 ** 3;
+console.log("=== Radiografía de mi computadora ===");
+console.log("Sistema:", sistemaOperativo);
+console.log("CPU:", procesador, "·", nucleos, "núcleos ·", arquitectura);
+console.log("RAM:", ramGB, "GB · 20 pestañas usaron", (ramEnUsoDespuesGB - ramEnUsoAntesGB).toFixed(1), "GB más");
+console.log("Disco:", tipoDisco, "de", discoAnunciadoGB, "GB anunciados ·", discoGiB.toFixed(1), "GiB (lo que Windows llama GB)");
+if (ramGB >= 16) console.log("Veredicto: RAM cómoda para todo el curso.");
+else if (ramGB >= 8) console.log("Veredicto: RAM suficiente; cierra los programas que no uses mientras programas.");
+else console.log("Veredicto: RAM justa; el curso funciona en el navegador, pero irá más lento.");</textarea>
+    <script type="text/plain" class="taller-verificar">
+var todo = salida.join("\n");
+if (/Escribe aquí/.test(todo)) return "Cambia los textos «Escribe aquí…» por los datos de tu computadora.";
+if (/x64 o ARM64/.test(todo)) return "En arquitectura, deja solo una opción: \"x64\" o \"ARM64\".";
+if (/SSD o HDD/.test(todo)) return "En tipo de disco, deja solo una opción: \"SSD\" o \"HDD\".";
+if (/· 0 núcleos/.test(todo)) return "Escribe cuántos núcleos tiene tu procesador (un número, sin comillas).";
+if (/RAM: 0 GB/.test(todo)) return "Escribe cuánta RAM tiene tu equipo, en GB (un número, sin comillas).";
+if (/de 0 GB anunciados/.test(todo)) return "Escribe la capacidad anunciada de tu disco, en GB (por ejemplo 512 o 1000).";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una ficha de ejemplo</summary>
+    <pre><code class="language-js">const sistemaOperativo = "Windows 11 Home";
+const procesador = "AMD Ryzen 5 7530U";
+const nucleos = 6;
+const arquitectura = "x64";
+const ramGB = 16;
+const ramEnUsoAntesGB = 5.8;
+const ramEnUsoDespuesGB = 7.9;
+const discoAnunciadoGB = 512;
+const tipoDisco = "SSD";
+
+const discoGiB = discoAnunciadoGB * 1000 ** 3 / 1024 ** 3;
+console.log("=== Radiografía de mi computadora ===");
+console.log("Sistema:", sistemaOperativo);
+console.log("CPU:", procesador, "·", nucleos, "núcleos ·", arquitectura);
+console.log("RAM:", ramGB, "GB · 20 pestañas usaron", (ramEnUsoDespuesGB - ramEnUsoAntesGB).toFixed(1), "GB más");
+console.log("Disco:", tipoDisco, "de", discoAnunciadoGB, "GB anunciados ·", discoGiB.toFixed(1), "GiB (lo que Windows llama GB)");
+if (ramGB >= 16) console.log("Veredicto: RAM cómoda para todo el curso.");
+else if (ramGB >= 8) console.log("Veredicto: RAM suficiente; cierra los programas que no uses mientras programas.");
+else console.log("Veredicto: RAM justa; el curso funciona en el navegador, pero irá más lento.");</code></pre>
+    <p>En este ejemplo, Windows mostraría el disco como unos 476,8 «GB». Las dos últimas líneas toman una decisión según la RAM: es un <code>if</code>, una estructura que aprenderás en la <a href="08-decisiones.html">Estación 8</a>. Por ahora basta con que la leas como una frase: «si la RAM es de 16 o más, escribe esto; si no, si es de 8 o más, escribe esto otro».</p>
+  </details>
+  <p><strong>Para ir más allá:</strong> haz la misma ficha de tu teléfono y compara las arquitecturas; escribe tu edad y tu año de nacimiento en binario; o busca el nombre del controlador (driver) de tu tarjeta de red en el Administrador de dispositivos de Windows o en la Información del sistema de macOS. En la <a href="29-backend.html">Estación 29</a> podrás generar parte de esta ficha automáticamente con Node.js.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Si fallas alguna, lee la explicación: equivocarse aquí es la forma más barata de aprender.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Cuál de estos componentes pierde su contenido al apagar la computadora?</p>
+      <ol class="opciones">
+        <li>El SSD<p class="explica">No. El SSD es almacenamiento persistente: guarda los datos sin corriente.</p></li>
+        <li>El disco duro (HDD)<p class="explica">No. El disco duro guarda los datos magnetizando sus discos, y eso se mantiene sin corriente.</p></li>
+        <li>La memoria RAM<p class="explica">Correcto. La RAM es volátil: necesita corriente para mantener los datos. Por eso se pierde lo que no guardaste.</p></li>
+        <li>Una memoria USB<p class="explica">No. Una memoria USB funciona como un pequeño SSD: es persistente.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Cuántos bits tiene un byte?</p>
+      <ol class="opciones">
+        <li>2<p class="explica">Dos son los valores posibles de un bit (0 o 1), no los bits de un byte.</p></li>
+        <li>8<p class="explica">Correcto. Un byte son 8 bits, que permiten 256 valores distintos, del 0 al 255.</p></li>
+        <li>10<p class="explica">No. Quizá pensaste en el sistema decimal, pero el byte no tiene nada que ver con él.</p></li>
+        <li>1024<p class="explica">1024 son los bytes de un kibibyte (KiB), no los bits de un byte.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Qué número decimal representa el binario <code>1011</code>?</p>
+      <ol class="opciones">
+        <li>11<p class="explica">Correcto: 8 + 0 + 2 + 1 = 11.</p></li>
+        <li>13<p class="explica">13 es <code>1101</code>: parece que leíste los dígitos en otro orden. Los valores se asignan empezando por la derecha: 1, 2, 4, 8.</p></li>
+        <li>3<p class="explica">3 es <code>11</code> en binario. En <code>1011</code> hay además un 1 en la posición que vale 8.</p></li>
+        <li>1011<p class="explica">Eso sería leerlo como si fuera decimal. En binario, cada posición vale el doble que la anterior.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Cuántos valores distintos se pueden representar con 8 bits?</p>
+      <ol class="opciones">
+        <li>8<p class="explica">Con 8 bits no hay 8 valores: cada bit duplica las combinaciones.</p></li>
+        <li>16<p class="explica">16 sería 8 × 2, pero las combinaciones se multiplican por 2 con cada bit: 2 × 2 × … ocho veces.</p></li>
+        <li>255<p class="explica">255 es el valor más alto, pero también está el 0. Del 0 al 255 hay 256 valores.</p></li>
+        <li>256<p class="explica">Correcto: 2<sup>8</sup> = 256, del 0 al 255.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Qué relación hay entre Unicode y UTF-8?</p>
+      <ol class="opciones">
+        <li>Son dos nombres para exactamente lo mismo.<p class="explica">Se confunden a menudo, pero no. Uno es el catálogo y el otro, una forma de guardarlo.</p></li>
+        <li>Unicode asigna un número a cada carácter; UTF-8 es una forma de guardar esos números en bytes.<p class="explica">Correcto. Unicode es el catálogo; UTF-8 es la codificación más usada (también existen UTF-16 y UTF-32).</p></li>
+        <li>UTF-8 es más moderno y reemplazó a Unicode.<p class="explica">No se reemplazan: se complementan. Sin el catálogo de Unicode, UTF-8 no tendría números que guardar.</p></li>
+        <li>Unicode solo sirve para los emojis.<p class="explica">Unicode incluye casi todas las escrituras del mundo; los emojis son una pequeña parte.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Cuál es la función principal del sistema operativo?</p>
+      <ol class="opciones">
+        <li>Navegar por internet.<p class="explica">Eso lo hace el navegador, que es una aplicación. El sistema operativo le da acceso a la red.</p></li>
+        <li>Proteger contra virus, y nada más.<p class="explica">La seguridad es una de sus tareas, pero no la única ni la principal.</p></li>
+        <li>Administrar el hardware (CPU, memoria, archivos, dispositivos) y ofrecer servicios a los programas.<p class="explica">Correcto. Es el intermediario entre las aplicaciones y el hardware.</p></li>
+        <li>Escribir los programas que usas.<p class="explica">Los programas los escriben personas; el sistema operativo los ejecuta y les da recursos.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Tu conexión es de 100 Mb/s. En condiciones ideales, ¿cuánto tarda en descargarse un archivo de 1 GB (1000 MB)?</p>
+      <ol class="opciones">
+        <li>10 segundos<p class="explica">Ese resultado confunde bits con bytes: 100 Mb/s no son 100 MB/s.</p></li>
+        <li>80 segundos<p class="explica">Correcto. 100 Mb/s ÷ 8 = 12,5 MB/s, y 1000 MB ÷ 12,5 MB/s = 80 s.</p></li>
+        <li>100 segundos<p class="explica">Cerca, pero dividiste 1000 entre 10 en lugar de entre 12,5.</p></li>
+        <li>10 minutos<p class="explica">Demasiado. Con 12,5 MB por segundo, en 10 minutos bajarías 7,5 GB.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿En qué orden trabaja la CPU con cada instrucción?</p>
+      <ol class="opciones">
+        <li>Ejecutar, buscar, decodificar<p class="explica">No puede ejecutar una instrucción que todavía no ha traído de la memoria.</p></li>
+        <li>Decodificar, ejecutar, guardar en el disco<p class="explica">El ciclo no pasa por el disco: trabaja con la memoria y los registros. Y falta buscar.</p></li>
+        <li>Buscar, ejecutar, decodificar<p class="explica">Para ejecutar, primero tiene que saber qué pide la instrucción: decodificar va antes.</p></li>
+        <li>Buscar, decodificar, ejecutar<p class="explica">Correcto: trae la instrucción de la memoria, averigua qué pide y la realiza. Y vuelta a empezar.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Estás en <code>/home/ana/proyectos/web/css</code>. ¿A qué archivo apunta la ruta relativa <code>../img/logo.png</code>?</p>
+      <ol class="opciones">
+        <li><code>/home/ana/proyectos/web/img/logo.png</code><p class="explica">Correcto. <code>..</code> sube de <code>css</code> a <code>web</code>, y desde ahí se entra en <code>img</code>.</p></li>
+        <li><code>/home/ana/proyectos/web/css/img/logo.png</code><p class="explica">Esa respuesta ignora el <code>..</code>: busca <code>img</code> dentro de <code>css</code>.</p></li>
+        <li><code>/img/logo.png</code><p class="explica">Eso sería una ruta absoluta. Las rutas relativas parten de la carpeta actual, no de la raíz.</p></li>
+        <li>A un archivo oculto<p class="explica">Los archivos ocultos empiezan por punto, pero <code>..</code> es otra cosa: significa «la carpeta padre».</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Si cambias el nombre de <code>foto.png</code> a <code>foto.jpg</code>, ¿qué pasa?</p>
+      <ol class="opciones">
+        <li>El archivo se convierte al formato JPEG.<p class="explica">No. Para convertir hace falta un programa que reescriba los bytes en el otro formato.</p></li>
+        <li>La imagen pierde calidad.<p class="explica">Los bytes no cambian, así que la imagen tampoco.</p></li>
+        <li>El contenido sigue siendo PNG: la extensión es solo parte del nombre, aunque algún programa puede confundirse.<p class="explica">Correcto. Por eso la firma de los primeros bytes sigue diciendo «PNG».</p></li>
+        <li>El archivo se borra.<p class="explica">Cambiar el nombre no borra nada.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Compras un disco de 1 TB y Windows muestra 931 GB. ¿Por qué?</p>
+      <ol class="opciones">
+        <li>El fabricante cuenta 1 TB como 10<sup>12</sup> bytes y Windows divide entre 1024<sup>3</sup>, aunque escriba «GB».<p class="explica">Correcto. Son 931 GiB: los mismos bytes medidos con otra unidad.</p></li>
+        <li>El disco viene defectuoso.<p class="explica">No: todos los discos de 1 TB muestran eso en Windows.</p></li>
+        <li>El sistema operativo ocupa 69 GB.<p class="explica">El sistema ocupa espacio, pero eso se nota en el espacio libre, no en la capacidad total.</p></li>
+        <li>El fabricante miente en la caja.<p class="explica">No miente: usa los prefijos decimales, que son los de la norma.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Qué hace un compilador?</p>
+      <ol class="opciones">
+        <li>Ejecuta el código línea por línea mientras lo lee.<p class="explica">Eso describe a un intérprete.</p></li>
+        <li>Busca errores de ortografía en los comentarios.<p class="explica">No. Los comentarios los ignora.</p></li>
+        <li>Convierte un programa de Windows en uno de macOS.<p class="explica">No es su función. Para otro sistema hay que volver a compilar el código fuente pensando en ese sistema.</p></li>
+        <li>Traduce el programa entero a otro lenguaje, por ejemplo código máquina, antes de ejecutarlo.<p class="explica">Correcto. El resultado se puede ejecutar muchas veces sin volver a traducir.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Hardware</dt><dd>Las partes físicas de una computadora: chips, pantalla, teclado, discos, cables.</dd>
+    <dt>Software</dt><dd>Los programas y datos que le dicen al hardware qué hacer.</dd>
+    <dt>Firmware</dt><dd>Software pequeño grabado dentro de un componente para arrancarlo y controlarlo a bajo nivel, como el UEFI de una computadora.</dd>
+    <dt>CPU (procesador)</dt><dd>Chip que ejecuta las instrucciones de los programas repitiendo el ciclo buscar, decodificar y ejecutar.</dd>
+    <dt>Núcleo (core)</dt><dd>Cada una de las unidades de un procesador capaces de ejecutar su propio programa. Varios núcleos permiten hacer varias cosas a la vez.</dd>
+    <dt>GPU</dt><dd>Procesador con miles de núcleos sencillos que hace muchos cálculos en paralelo: gráficos, videojuegos, inteligencia artificial.</dd>
+    <dt>RAM</dt><dd>Memoria principal, rápida y volátil, donde están los programas en ejecución y sus datos. Se borra al apagar.</dd>
+    <dt>Almacenamiento</dt><dd>Donde se guardan archivos y programas de forma persistente, aunque no haya corriente: SSD, disco duro, memoria USB.</dd>
+    <dt>Caché</dt><dd>Memoria pequeña y ultrarrápida, dentro del procesador, que guarda copias de los datos que se usan a menudo.</dd>
+    <dt>Bit</dt><dd>La unidad mínima de información: un 0 o un 1.</dd>
+    <dt>Byte</dt><dd>Grupo de 8 bits. Puede representar 256 valores, del 0 al 255.</dd>
+    <dt>Binario</dt><dd>Sistema de numeración en base 2, que usa solo 0 y 1. Cada posición vale el doble que la de su derecha.</dd>
+    <dt>ASCII</dt><dd>Tabla de 1963 que asigna números a 128 caracteres básicos del inglés, como A = 65.</dd>
+    <dt>Unicode</dt><dd>Estándar que asigna un número único (punto de código) a cada carácter de casi todas las escrituras del mundo, emojis incluidos.</dd>
+    <dt>UTF-8</dt><dd>La codificación más usada para guardar Unicode en bytes: de 1 a 4 bytes por carácter, compatible con ASCII.</dd>
+    <dt>Píxel</dt><dd>Cada uno de los puntos de color que forman una imagen digital o una pantalla.</dd>
+    <dt>RGB</dt><dd>Modelo de color que mezcla luz roja, verde y azul. Cada canal suele ir de 0 a 255.</dd>
+    <dt>Muestreo</dt><dd>Medir una señal, como el sonido, muchas veces por segundo y guardar cada medida como un número.</dd>
+    <dt>Sistema operativo</dt><dd>Software que administra el hardware y ofrece servicios a los programas: Windows, macOS, Linux, Android, iOS.</dd>
+    <dt>Kernel</dt><dd>La parte central del sistema operativo, con acceso total al hardware. Las aplicaciones le piden servicios mediante llamadas al sistema.</dd>
+    <dt>Proceso</dt><dd>Un programa en ejecución, con su propia memoria y su estado.</dd>
+    <dt>Controlador (driver)</dt><dd>Programa que permite al sistema operativo manejar un modelo concreto de hardware.</dd>
+    <dt>Ruta (path)</dt><dd>La dirección de un archivo o carpeta. Absoluta si empieza en la raíz; relativa si parte de la carpeta actual.</dd>
+    <dt>Extensión</dt><dd>Parte final del nombre de un archivo (<code>.js</code>, <code>.png</code>) que indica su formato por convención.</dd>
+    <dt>Compilador</dt><dd>Programa que traduce todo el código fuente a otro lenguaje, por ejemplo código máquina, antes de ejecutarlo.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación, no antes: te servirán para repasar y para ver las mismas ideas explicadas por otras personas.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=-V4AbHyR_x4" data-canal="EDteam" data-idioma="es" data-nivel="intro" data-duracion="17 min" data-por-que="Qué es el sistema binario y cómo se convierte, con ejemplos claros.">¿Qué es el sistema binario y como funciona?</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=0zkX6nlpiSk" data-canal="Nate Gentile" data-idioma="es" data-nivel="intro" data-duracion="35 min" data-por-que="Recorrido pieza a pieza por una computadora real: CPU, RAM, disco, placa base y gráfica.">¿Cómo funciona un PC y que hace cada pieza? | Componentes del ordenador explicados</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=nfYOp3_SyqM" data-canal="CS50" data-idioma="es" data-nivel="curso" data-duracion="2 h" data-por-que="La primera clase del curso de Harvard, en español: binario, ASCII, Unicode, RGB y algoritmos.">CS50x en Español - Clase 0 - Scratch</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=MijmeoH9LT4" data-canal="Computerphile" data-idioma="en" data-nivel="profundo" data-duracion="10 min" data-por-que="Por qué UTF-8 es tan ingenioso, contado con papel y bolígrafo.">Characters, Symbols and the Unicode Miracle - Computerphile</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://cs50xenespanol.github.io/2024/notas/0.html">Notas de la clase 0 (CS50x en Español)</a><p>Los apuntes de la clase de Harvard en español: binario, ASCII, Unicode, RGB y representación de datos.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Getting_started/Environment_setup/Dealing_with_files">Manejo de archivos (MDN)</a><p>Cómo organizar los archivos de un proyecto web, cómo nombrarlos y cómo escribir rutas relativas.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Glossary/UTF-8">UTF-8 (Glosario de MDN)</a><p>Definición breve de UTF-8 y su relación con ASCII y Unicode.</p></li>
+    <li><a href="https://support.apple.com/es-es/102119">Cómo se mide la capacidad de almacenamiento de los dispositivos Apple (Apple)</a><p>La explicación oficial de por qué 1 GB son 1000 millones de bytes y de dónde sale la diferencia con el sistema binario.</p></li>
+    <li><a href="https://support.microsoft.com/es-es/windows/extensiones-de-nombre-de-archivo-comunes-en-windows-da4a4430-8e76-89c5-59f7-1cdbbc75cb01">Extensiones de nombre de archivo comunes en Windows (Microsoft)</a><p>Qué significa cada extensión y cómo mostrarlas en el Explorador de archivos.</p></li>
+    <li><a href="https://www.nand2tetris.org/">Nand2Tetris (en inglés)</a><p>Curso libre y avanzado en el que construyes una computadora completa desde las puertas lógicas hasta un sistema operativo. Opcional, para cuando tengas más base.</p></li>
+  </ul>
+</section>

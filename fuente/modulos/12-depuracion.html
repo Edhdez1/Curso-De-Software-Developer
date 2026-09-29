@@ -1,0 +1,2126 @@
+<section id="ruta" data-parada="Lo que vas a lograr">
+  <h2>Lo que vas a lograr</h2>
+  <p class="entradilla">Tu código va a fallar. El de todo el mundo falla: el de quien empezó ayer y el de quien lleva veinte años programando. La diferencia entre ambas personas no está en cuántos errores cometen, sino en lo rápido que los encuentran. En esta estación vas a aprender a leer lo que te dice la computadora cuando algo sale mal y a buscar fallos con un método, como en una investigación, en lugar de cambiar cosas al azar hasta que funcione.</p>
+  <ul class="objetivos">
+    <li>Distinguir los errores de sintaxis, de ejecución y lógicos, y saber en qué momento aparece cada uno.</li>
+    <li>Leer un mensaje de error pieza por pieza: tipo, descripción, archivo, línea y columna.</li>
+    <li>Seguir la pila de llamadas (<em>stack trace</em>) para llegar desde donde explotó el programa hasta donde empezó el problema.</li>
+    <li>Reconocer los errores más comunes de JavaScript (<code>ReferenceError</code>, <code>TypeError</code>, <code>SyntaxError</code> y <code>RangeError</code>) y su causa típica.</li>
+    <li>Usar <code>console.log</code> con estrategia, y también <code>console.table</code>, <code>console.error</code> y <code>console.warn</code>.</li>
+    <li>Pausar un programa con puntos de interrupción y con la palabra <code>debugger</code>, y avanzar línea a línea en las DevTools del navegador.</li>
+    <li>Capturar errores con <code>try</code>, <code>catch</code> y <code>finally</code>, y lanzar tus propios errores con <code>throw</code>.</li>
+    <li>Aplicar un método de depuración (reproducir, formular una hipótesis, experimentar) y técnicas como el patito de goma y la bisección.</li>
+    <li>Pedir ayuda bien: crear un ejemplo mínimo, buscar el error en internet y usar la IA sin dejar de entender tu código.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="Antes de empezar">
+    <p>Necesitas manejar funciones (<a href="10-funciones.html">Estación 10: Funciones</a>) y arrays y objetos (<a href="11-colecciones.html">Estación 11: Arrays y objetos</a>), porque ahí aparecen los errores más interesantes. También te servirá recordar cómo abrir la consola del navegador (<a href="06-primeros-pasos.html">Estación 6: Tu primer programa</a>) y cómo ejecutar un archivo con <code>node</code> en la terminal (<a href="05-herramientas.html">Estación 5: Tu taller</a>). Casi todo lo practicarás aquí mismo, en el navegador.</p>
+  </aside>
+</section>
+
+<section id="tipos" data-parada="Tres tipos de errores">
+  <h2>Los errores son información</h2>
+  <p>Imagina que llevas una hora escribiendo un juego, pulsas «Ejecutar» y la consola se llena de letras rojas. La reacción de casi todo el mundo es la misma: frustración y la sensación de «no sirvo para esto». Esa sensación es normal, pero está equivocada. Un mensaje de error no es un juicio sobre ti. Es la computadora diciéndote qué no pudo hacer y, casi siempre, dónde. Es información gratis.</p>
+  <p>A un fallo en un programa se le llama <strong>bug</strong> (en inglés, «bicho»). Encontrar la causa de un bug y corregirla se llama <strong>depurar</strong> (en inglés, <em>debugging</em>, algo así como «quitar bichos»). Depurar no es una tarea que aparece cuando lo haces mal: es una parte normal del trabajo de programar, todos los días, en todos los equipos.</p>
+  <aside class="senal nota" data-titulo="Un bicho de verdad">
+    <p>El 9 de septiembre de 1947, el equipo que operaba la computadora Harvard Mark II encontró una polilla atrapada en uno de sus relés. La pegaron con cinta en el cuaderno de registro con la nota <em>«First actual case of bug being found»</em>: «primer caso real de un bicho encontrado». Grace Hopper, una de las pioneras de la programación, trabajaba en ese equipo y contó la historia tantas veces que se hizo famosa. La palabra <em>bug</em> ya se usaba antes para hablar de fallos en máquinas; por eso la nota dice «caso <em>real</em>». El cuaderno, con la polilla, se conserva en el Museo Nacional de Historia Estadounidense, en Washington.</p>
+  </aside>
+
+  <h3>Tres familias de errores</h3>
+  <p>En la <a href="06-primeros-pasos.html#errores">Estación 6</a> viste que los errores se distinguen por el momento en que aparecen. Repasemos las tres familias, porque saber a cuál pertenece tu error es el primer paso para encontrarlo: cada familia se busca de una forma distinta.</p>
+  <ol>
+    <li><strong>Error de sintaxis</strong> (<em>syntax error</em>). El código está mal escrito según las reglas del lenguaje. JavaScript lee todo el programa <strong>antes</strong> de ejecutarlo y, si encuentra una falta de escritura, se niega a empezar: no se ejecuta ni una sola línea, ni siquiera las que estaban bien.</li>
+    <li><strong>Error de ejecución</strong> (<em>runtime error</em>). El código está bien escrito, pero al ejecutarse pide algo imposible, como usar una variable que no existe. El programa avanza hasta esa línea y <strong>se detiene ahí</strong>; lo anterior sí se ejecutó. En JavaScript, un error que se produce durante la ejecución se llama <strong>excepción</strong>, y en esta estación aprenderás a atraparlas.</li>
+    <li><strong>Error lógico</strong> (<em>logic error</em>). El programa se ejecuta de principio a fin sin quejarse, pero hace algo distinto de lo que querías. No aparece ningún mensaje rojo. Son los más difíciles, porque para la computadora todo va bien: hace exactamente lo que le dijiste, no lo que querías decir. Buena parte de esta estación trata de ellos.</li>
+  </ol>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 320" role="img" aria-label="Diagrama: un programa pasa por cuatro etapas: escribes el código, JavaScript lo lee entero, lo ejecuta línea a línea y sale un resultado. Un error de sintaxis detiene todo en la etapa de lectura, antes de ejecutar nada. Un error de ejecución detiene el programa a mitad de la ejecución. Un error lógico deja que el programa llegue al final, pero con un resultado equivocado.">
+      <rect class="d-caja" x="150" y="20" width="115" height="70" rx="8"/>
+      <text class="d-rotulo" x="207.5" y="50" text-anchor="middle">Escribes</text>
+      <text class="d-rotulo" x="207.5" y="72" text-anchor="middle">el código</text>
+      <rect class="d-caja" x="295" y="20" width="115" height="70" rx="8"/>
+      <text class="d-rotulo" x="352.5" y="50" text-anchor="middle">JavaScript</text>
+      <text class="d-rotulo" x="352.5" y="72" text-anchor="middle">lo lee entero</text>
+      <rect class="d-caja" x="440" y="20" width="115" height="70" rx="8"/>
+      <text class="d-rotulo" x="497.5" y="50" text-anchor="middle">Lo ejecuta</text>
+      <text class="d-rotulo" x="497.5" y="72" text-anchor="middle">línea a línea</text>
+      <rect class="d-caja" x="585" y="20" width="115" height="70" rx="8"/>
+      <text class="d-rotulo" x="642.5" y="50" text-anchor="middle">Sale un</text>
+      <text class="d-rotulo" x="642.5" y="72" text-anchor="middle">resultado</text>
+      <path class="d-linea" d="M267 55H282"/><path class="d-tinta" d="M281 47l12 8-12 8z"/>
+      <path class="d-linea" d="M412 55H427"/><path class="d-tinta" d="M426 47l12 8-12 8z"/>
+      <path class="d-linea" d="M557 55H572"/><path class="d-tinta" d="M571 47l12 8-12 8z"/>
+      <path class="d-punteada" d="M207.5 92V118M352.5 92V118M497.5 92V118M642.5 92V118"/>
+
+      <text class="d-rotulo" x="10" y="146">Error de sintaxis</text>
+      <path class="d-linea d-t3" d="M207.5 140H352.5" style="stroke-width:6"/>
+      <circle class="d-tinta" cx="207.5" cy="140" r="5"/>
+      <circle class="d-mal" cx="352.5" cy="140" r="10"/>
+      <text class="d-peq" x="352.5" y="172" text-anchor="middle">se detiene aquí: no se ejecuta nada</text>
+
+      <text class="d-rotulo" x="10" y="211">Error de ejecución</text>
+      <path class="d-linea d-t3" d="M207.5 205H497.5" style="stroke-width:6"/>
+      <circle class="d-tinta" cx="207.5" cy="205" r="5"/>
+      <circle class="d-mal" cx="497.5" cy="205" r="10"/>
+      <text class="d-peq" x="497.5" y="237" text-anchor="middle">se detiene a mitad: lo anterior sí se ejecutó</text>
+
+      <text class="d-rotulo" x="10" y="276">Error lógico</text>
+      <path class="d-linea d-t3" d="M207.5 270H642.5" style="stroke-width:6"/>
+      <circle class="d-tinta" cx="207.5" cy="270" r="5"/>
+      <circle class="d-aviso" cx="642.5" cy="270" r="10"/>
+      <text class="d-peq" x="710" y="302" text-anchor="end">llega al final, pero con un resultado equivocado</text>
+    </svg>
+    <figcaption>Dónde se detiene un programa según el tipo de error. Cuanto más a la derecha llega el error, más difícil suele ser encontrarlo.</figcaption>
+  </figure>
+  <aside class="senal analogia">
+    <p>Piensa en una receta de cocina. Un error de sintaxis es una receta con frases que nadie entiende («bat1r lo h uevos»): el cocinero ni siquiera empieza. Un error de ejecución es una receta que pide «el azúcar del frasco azul» cuando no hay frasco azul: el cocinero empieza, llega a ese paso y se queda parado. Un error lógico es una receta que dice «una taza de sal» donde debía decir «una cucharadita»: el cocinero la sigue al pie de la letra y el pastel sale incomible. La analogía tiene un límite: un cocinero humano quizá sospecharía de la taza de sal. La computadora nunca sospecha.</p>
+  </aside>
+
+  <h3>Compruébalo tú</h3>
+  <p>Los errores de sintaxis y de ejecución ya los provocaste en la Estación 6. Ahora le toca al tercero. Este programa calcula el promedio de tres notas: 8, 6 y 10, que deberían dar 8. Antes de ejecutar, <strong>predice</strong> qué va a imprimir.</p>
+  <div class="taller" id="taller-error-logico" data-titulo="Predice: un error lógico">
+    <textarea class="taller-codigo">const nota1 = 8;
+const nota2 = 6;
+const nota3 = 10;
+const promedio = nota1 + nota2 + nota3 / 3;
+console.log("Promedio:", promedio);</textarea>
+  </div>
+  <p>Sale <code>17.333333333333332</code> y ningún mensaje rojo. El programa está bien escrito y no pide nada imposible, pero hace otra cosa: como viste en la <a href="07-variables.html#numeros">Estación 7</a>, la división va antes que la suma, así que solo se divide <code>nota3</code>. La corrección es <code>(nota1 + nota2 + nota3) / 3</code>. Este tipo de error solo lo detectas si <strong>sabes qué resultado esperabas</strong> y lo comparas con el que obtuviste.</p>
+  <aside class="senal clave">
+    <p>Una pista rápida para clasificar: si no se imprimió nada de nada, sospecha de un error de sintaxis. Si se imprimió una parte y luego apareció el error, es de ejecución y el problema está en la línea donde se detuvo, o en algo que alimenta esa línea. Si no hay error pero el resultado está mal, es lógico y te toca investigar con método.</p>
+  </aside>
+  <aside class="senal oficio">
+    <p>Tu editor también te ayuda. Visual Studio Code subraya en rojo muchos errores de sintaxis mientras escribes, antes de ejecutar nada, y los reúne en su panel de problemas. Más adelante verás dos herramientas que detectan todavía más errores antes de ejecutar: los linters como ESLint (<a href="25-codigo-limpio.html">Estación 25</a>) y TypeScript (<a href="23-typescript.html">Estación 23</a>).</p>
+  </aside>
+</section>
+
+<section id="leer" data-parada="Leer el mensaje">
+  <h2>Leer un mensaje de error</h2>
+  <p>Mucha gente que empieza ve el texto rojo y no lo lee: pasa directamente a cambiar cosas a ver si se arregla. Es como ir al médico, que te dé el diagnóstico y taparte los oídos. El <strong>mensaje de error</strong> es el texto que la computadora escribe cuando algo falla, y está pensado para que lo leas. En la <a href="06-primeros-pasos.html#errores">Estación 6</a> desarmaste un error de Node.js en sus partes. Ahora vas a leer uno en la consola del navegador, con una pieza nueva: la columna.</p>
+  <figure class="capsula" data-titulo="Anatomía de un mensaje de error">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: un mensaje de error de la consola se lee por partes. Uncaught significa que nadie lo capturó; ReferenceError es el tipo; puntuacion is not defined es el mensaje; puntos.js:4:26 es la ubicación. La línea 4 del código usa puntuacion en lugar de puntos; al corregirla, la consola muestra Puntos: 50.">
+        <rect class="d-codigo" x="10" y="10" width="700" height="100" rx="8"/>
+        <text class="d-codigo-tenue" x="26" y="32" style="font-size:13px">Consola</text>
+        <rect class="d-resalte" x="20" y="43" width="92" height="27" rx="4" data-pasos="2"/>
+        <rect class="d-resalte" x="106" y="43" width="160" height="27" rx="4" data-pasos="3"/>
+        <rect class="d-resalte" x="260" y="43" width="254" height="27" rx="4" data-pasos="4"/>
+        <rect class="d-resalte" x="50" y="74" width="176" height="27" rx="4" data-pasos="5"/>
+        <rect class="d-resalte" x="592" y="43" width="108" height="27" rx="4" data-pasos="5"/>
+        <g data-pasos="1-5">
+          <text class="d-codigo-texto" x="26" y="62" style="font-size:16px" textLength="76.8">Uncaught</text>
+          <text class="d-codigo-texto" x="113" y="62" style="font-size:16px" textLength="144">ReferenceError:</text>
+          <text class="d-codigo-texto" x="267" y="62" style="font-size:16px" textLength="240">puntuacion is not defined</text>
+          <text class="d-codigo-texto" x="58" y="93" style="font-size:16px" textLength="163.2">at puntos.js:4:26</text>
+          <text class="d-codigo-tenue" x="694" y="62" text-anchor="end" style="font-size:14px">puntos.js:4</text>
+        </g>
+        <text class="d-codigo-texto" x="26" y="62" style="font-size:16px" data-pasos="6">Puntos: 50</text>
+
+        <rect class="d-codigo" x="10" y="130" width="420" height="160" rx="8"/>
+        <text class="d-codigo-tenue" x="26" y="152" style="font-size:13px">puntos.js</text>
+        <rect class="d-resalte" x="16" y="243" width="408" height="25" rx="4" data-pasos="5-"/>
+        <text class="d-codigo-tenue" x="26" y="182" style="font-size:15px">1</text>
+        <text class="d-codigo-tenue" x="26" y="208" style="font-size:15px">2</text>
+        <text class="d-codigo-tenue" x="26" y="234" style="font-size:15px">3</text>
+        <text class="d-codigo-tenue" x="26" y="260" style="font-size:15px">4</text>
+        <text class="d-codigo-texto" x="50" y="182" style="font-size:15px">const jugador = "Lyra";</text>
+        <text class="d-codigo-texto" x="50" y="208" style="font-size:15px">let puntos = 0;</text>
+        <text class="d-codigo-texto" x="50" y="234" style="font-size:15px">puntos = puntos + 50;</text>
+        <text class="d-codigo-texto" x="50" y="260" style="font-size:15px" textLength="333" data-pasos="1-5">console.log("Puntos: " + puntuacion);</text>
+        <path class="d-mal-trazo" d="M275 266H365" data-pasos="5"/>
+        <text class="d-codigo-texto" x="50" y="260" style="font-size:15px" textLength="297" data-pasos="6">console.log("Puntos: " + puntos);</text>
+        <path class="d-ok-trazo" d="M275 266H329" data-pasos="6"/>
+
+        <rect class="d-caja-suave" x="450" y="130" width="260" height="160" rx="8"/>
+        <text class="d-rotulo" x="466" y="156">Traducción</text>
+        <text x="466" y="188" style="font-size:15px" data-pasos="2-">Estado: nadie lo capturó</text>
+        <text x="466" y="216" style="font-size:15px" data-pasos="3-">Tipo: ReferenceError</text>
+        <text x="466" y="244" style="font-size:15px" data-pasos="4-">Qué: «puntuacion» no existe</text>
+        <text x="466" y="272" style="font-size:15px" data-pasos="5-">Dónde: línea 4, columna 26</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Así se ve un error en la consola del navegador. Parece un muro de texto en inglés, pero siempre tiene las mismas piezas. Vamos a leerlas una por una.</li>
+        <li>«Uncaught» significa «no capturado». Nadie atrapó el error (más adelante aprenderás a hacerlo con <code>try</code> y <code>catch</code>), así que el programa se detuvo en seco.</li>
+        <li>El tipo: <code>ReferenceError</code>. Es la familia del problema. Un error de referencia significa que usaste un nombre que no apunta a nada.</li>
+        <li>El mensaje: <code>puntuacion is not defined</code>, es decir, «puntuacion no está definida». Te da el nombre exacto que JavaScript no encontró.</li>
+        <li data-duracion="7">La ubicación: <code>puntos.js:4:26</code> significa archivo <code>puntos.js</code>, línea 4, columna 26 (el carácter número 26 de esa línea). En la consola puedes hacer clic en el enlace de la derecha y el navegador te lleva a esa línea.</li>
+        <li>En la línea 4 está el culpable: la variable se llama <code>puntos</code>, no <code>puntuacion</code>. Lo cambias, ejecutas otra vez y funciona. El mensaje te llevó directo al fallo.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Dónde vas a ver los errores</h3>
+  <p>El mismo error se presenta de forma un poco distinta según dónde ejecutes el código:</p>
+  <ul>
+    <li><strong>En los talleres de este curso</strong> verás una línea roja con el tipo, el mensaje y el número de línea, por ejemplo <code>ReferenceError: puntuacion is not defined (línea 4)</code>. Debajo, el curso añade una «Pista» en español. Esa pista es una ayuda para aprender: las herramientas reales no la tienen, así que acostúmbrate a leer primero el mensaje original.</li>
+    <li><strong>En la consola del navegador</strong> (la abres con <kbd>F12</kbd>, como viste en la <a href="06-primeros-pasos.html">Estación 6</a>) el mensaje empieza por <code>Uncaught</code> y a la derecha aparece un enlace con el archivo y la línea.</li>
+    <li><strong>En la terminal, con Node.js</strong>, con el formato que desarmaste en la Estación 6: archivo y línea, la línea de código copiada con un <code>^</code> debajo de la columna exacta, el tipo y el mensaje, y después la pila de llamadas (las líneas que empiezan por <code>at</code>), que aprenderás a leer en la próxima sección.</li>
+  </ul>
+  <p>Practica en la terminal. La carpeta <code>juego</code> tiene un archivo de una sola línea con el mismo fallo. Esta terminal de práctica ejecuta <code>node</code> con el mismo motor que los talleres, así que el mensaje es más corto que el de Node real, pero tiene lo esencial: tipo, mensaje, archivo y línea.</p>
+  <div class="terminal-sim" data-titulo="Lee el error en la terminal" data-inicio="/home/tu">
+    <script type="application/json" class="terminal-sistema">{"juego": {"puntos.js": "let puntos = 50; console.log(\"Puntos: \" + puntuacion);\n"}}</script>
+    <div class="terminal-instrucciones">
+      <p><strong>Misión:</strong> entra en la carpeta <code>juego</code>, mira el archivo con <code>cat puntos.js</code> y ejecútalo con <code>node puntos.js</code>. Lee el error. Después reescribe el archivo corregido con <code>echo 'let puntos = 50; console.log("Puntos: " + puntos);' &gt; puntos.js</code> (fíjate en las comillas simples por fuera) y vuelve a ejecutarlo.</p>
+    </div>
+    <script type="text/plain" class="terminal-mision">
+var archivo = sistema.juego && sistema.juego["puntos.js"];
+if (archivo === undefined) return "No borres la carpeta juego ni el archivo puntos.js. Pulsa «Reiniciar» si hace falta.";
+var ejecuciones = historial.filter(function (h) { return /^node\s+puntos\.js$/.test(h); }).length;
+if (!ejecuciones) return "Entra en la carpeta (cd juego) y ejecuta el archivo con node puntos.js para ver el error.";
+if (archivo.indexOf("puntuacion") !== -1) return "Ya viste el error. Ahora reescribe el archivo con echo para que use puntos en lugar de puntuacion.";
+if (!/console\.log\("Puntos: " \+ puntos\)/.test(archivo)) return "El archivo debería quedar así: let puntos = 50; console.log(\"Puntos: \" + puntos);";
+var ultimoEcho = -1, ultimoNode = -1;
+historial.forEach(function (h, i) { if (/^echo /.test(h)) ultimoEcho = i; if (/^node\s+puntos\.js$/.test(h)) ultimoNode = i; });
+if (ultimoNode < ultimoEcho) return "Archivo corregido. Ejecútalo otra vez con node puntos.js para comprobarlo.";
+return true;
+    </script>
+  </div>
+  <aside class="senal nota" data-titulo="Cada navegador lo dice a su manera">
+    <p>Como viste en la Estación 6, Chrome, Edge y Node.js comparten motor (V8) y mensajes, mientras que Firefox y Safari redactan otras frases. Con el error más común de todos la diferencia es grande. Si <code>jugador</code> vale <code>undefined</code> y escribes <code>jugador.nombre</code>, Chrome dice <code>Cannot read properties of undefined (reading 'nombre')</code>, Firefox dice <code>jugador is undefined</code> y Safari dice <code>undefined is not an object (evaluating 'jugador.nombre')</code>. El tipo, <code>TypeError</code>, es el mismo en los tres. En este curso usamos los mensajes de Chrome y Node.</p>
+  </aside>
+
+  <h3>La línea del error no siempre es la línea del fallo</h3>
+  <p>El número de línea indica dónde JavaScript <em>se dio cuenta</em> del problema, que no siempre es donde te equivocaste. El caso más típico es olvidar cerrar una llave. En este archivo falta la <code>}</code> de la función (debería ir en la línea 3):</p>
+  <pre><code class="language-js">function crearJugador(nombre) {
+  return { nombre: nombre, vidas: 3 };
+
+const lyra = crearJugador("Lyra");
+console.log(lyra.nombre);</code></pre>
+  <pre class="consola"><code><span class="prompt">$</span> node llave.js
+<span class="salida">/home/ana/juego/llave.js:6
+
+
+
+SyntaxError: Unexpected end of input</span></code></pre>
+  <p>Node se queja de la línea 6, que ni siquiera existe: JavaScript siguió leyendo, esperando la llave que cierra la función, hasta que se acabó el archivo. «Final inesperado». El fallo real está tres líneas más arriba.</p>
+  <aside class="senal ojo">
+    <p>Regla práctica: ve a la línea que indica el mensaje. Si esa línea te parece correcta, mira las líneas justo <em>anteriores</em>. Los errores de sintaxis casi siempre están en la línea señalada o un poco más arriba, nunca más abajo.</p>
+  </aside>
+  <aside class="senal error">
+    <p>Arreglar varios errores a la vez «de memoria». Cuando un programa tiene varios fallos, JavaScript solo te muestra el primero que encuentra: al arreglarlo puede aparecer el siguiente. Corrige uno, ejecuta, lee el nuevo mensaje y repite. En el editor, un solo carácter olvidado puede provocar varios subrayados rojos en cadena; empieza siempre por el primero.</p>
+  </aside>
+  <p>Practica la lectura. Este programa tiene un error de sintaxis. Ejecútalo, lee el mensaje y el número de línea, corrige y vuelve a ejecutar hasta que imprima <code>Hola, Lyra. Tienes 3 vidas.</code></p>
+  <div class="taller" id="taller-leer-arregla" data-titulo="Lee el error y arréglalo" data-esperado="Hola, Lyra. Tienes 3 vidas.">
+    <textarea class="taller-codigo">const nombre = "Lyra";
+const vidas = 3;
+console.log("Hola, " + nombre + ". Tienes " + vidas + " vidas.);</textarea>
+  </div>
+  <p>El mensaje fue <code>Invalid or unexpected token</code> en la línea 3. Las últimas comillas nunca se cierran: <code>" vidas.);</code> abre un texto que se come el paréntesis y el punto y coma. Faltaba una <code>"</code> antes del <code>)</code>.</p>
+</section>
+
+<section id="pila" data-parada="La pila de llamadas">
+  <h2>La pila de llamadas: de dónde viene el error</h2>
+  <p>El mensaje te dice dónde explotó el programa. Pero en cuanto usas funciones, el lugar donde explota casi nunca es el lugar donde está el fallo. Una función puede recibir un dato malo que otra le pasó, y esa otra lo recibió de una tercera. Para seguir el rastro necesitas la pila de llamadas.</p>
+  <p>En la <a href="10-funciones.html">Estación 10</a> viste la idea: cuando una función llama a otra, la primera se queda esperando hasta que la segunda termine. La computadora lleva la cuenta de quién espera a quién en la <strong>pila de llamadas</strong> (en inglés, <em>call stack</em>): una lista de las funciones que están en marcha en este momento, con la más reciente arriba.</p>
+  <aside class="senal analogia">
+    <p>Es como una pila de platos. Cada vez que se llama a una función se pone un plato encima; cuando la función termina, se quita ese plato. Siempre trabajas con el plato de arriba, y para llegar a los de abajo tienes que ir quitando los de encima. La analogía falla en un detalle: en la cocina puedes sacar un plato del medio con cuidado; en la pila de llamadas, nunca.</p>
+  </aside>
+  <p>Cuando ocurre un error, JavaScript toma una foto de la pila en ese instante y la imprime junto al mensaje. Esa foto se llama <strong>traza de la pila</strong> o, casi siempre, por su nombre en inglés: <strong>stack trace</strong>. Mira este programa de una tienda. Tiene dos productos, pero alguien pide el total de tres:</p>
+  <pre><code class="language-js">const productos = [
+  { nombre: "Camiseta", precio: 15 },
+  { nombre: "Gorra", precio: 10 },
+];
+
+function precioDe(indice) {
+  return productos[indice].precio;
+}
+
+function totalCarrito(indices) {
+  let total = 0;
+  for (const i of indices) {
+    total += precioDe(i);
+  }
+  return total;
+}
+
+console.log(totalCarrito([0, 1, 2]));</code></pre>
+  <figure class="capsula" data-titulo="La pila de llamadas y su foto">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 320" role="img" aria-label="Animación: el código principal llama a totalCarrito, que llama a precioDe tres veces. Con el índice 2, productos[2] es undefined y se produce un TypeError. La pila tiene tres platos: principal, totalCarrito y precioDe. La traza de la pila lista esos tres platos de arriba abajo. La causa real está en la línea 18, que pide un producto que no existe.">
+        <rect class="d-codigo" x="10" y="10" width="390" height="300" rx="8"/>
+        <text class="d-codigo-tenue" x="24" y="31" style="font-size:13px">carrito.js</text>
+        <rect class="d-resalte" x="14" y="272" width="382" height="21" rx="4" data-mover="2:translate(0px,-84px); 3:translate(0px,-189px); 6:translate(0px,0px)"/>
+        <rect class="d-mal-trazo" x="14" y="272" width="382" height="21" rx="4" data-pasos="6"/>
+        <g class="d-codigo-tenue" style="font-size:13px" text-anchor="end">
+          <text class="d-codigo-tenue" x="44" y="56">1</text>
+          <text class="d-codigo-tenue" x="44" y="77">6</text>
+          <text class="d-codigo-tenue" x="44" y="98">7</text>
+          <text class="d-codigo-tenue" x="44" y="119">8</text>
+          <text class="d-codigo-tenue" x="44" y="140">10</text>
+          <text class="d-codigo-tenue" x="44" y="161">11</text>
+          <text class="d-codigo-tenue" x="44" y="182">12</text>
+          <text class="d-codigo-tenue" x="44" y="203">13</text>
+          <text class="d-codigo-tenue" x="44" y="224">14</text>
+          <text class="d-codigo-tenue" x="44" y="245">15</text>
+          <text class="d-codigo-tenue" x="44" y="266">16</text>
+          <text class="d-codigo-tenue" x="44" y="287">18</text>
+        </g>
+        <text class="d-codigo-texto" x="56" y="56" style="font-size:14px">const productos = [ {…}, {…} ];</text>
+        <text class="d-codigo-texto" x="56" y="77" style="font-size:14px">function precioDe(indice) {</text>
+        <text class="d-codigo-texto" x="72.8" y="98" style="font-size:14px">return productos[indice].precio;</text>
+        <text class="d-codigo-texto" x="56" y="119" style="font-size:14px">}</text>
+        <text class="d-codigo-texto" x="56" y="140" style="font-size:14px">function totalCarrito(indices) {</text>
+        <text class="d-codigo-texto" x="72.8" y="161" style="font-size:14px">let total = 0;</text>
+        <text class="d-codigo-texto" x="72.8" y="182" style="font-size:14px">for (const i of indices) {</text>
+        <text class="d-codigo-texto" x="89.6" y="203" style="font-size:14px">total += precioDe(i);</text>
+        <text class="d-codigo-texto" x="72.8" y="224" style="font-size:14px">}</text>
+        <text class="d-codigo-texto" x="72.8" y="245" style="font-size:14px">return total;</text>
+        <text class="d-codigo-texto" x="56" y="266" style="font-size:14px">}</text>
+        <text class="d-codigo-texto" x="56" y="287" style="font-size:14px">console.log(totalCarrito([0, 1, 2]));</text>
+
+        <text class="d-rotulo" x="562" y="28" text-anchor="middle">Pila de llamadas</text>
+        <g data-pasos="4-">
+          <rect class="d-mal" x="415" y="44" width="4" height="38" rx="2"/>
+          <text class="d-mono" x="427" y="59" style="font-size:13px">TypeError: Cannot read properties</text>
+          <text class="d-mono" x="427" y="77" style="font-size:13px">of undefined (reading 'precio')</text>
+        </g>
+        <g data-pasos="3-">
+          <rect class="d-caja" x="415" y="96" width="290" height="38" rx="6"/>
+          <rect class="d-mal-trazo" x="415" y="96" width="290" height="38" rx="6" data-pasos="4-"/>
+          <text class="d-mono" x="427" y="120" style="font-size:13px" data-texto="5:at precioDe (carrito.js:7:28)">precioDe(2) · línea 7</text>
+        </g>
+        <g data-pasos="2-">
+          <rect class="d-caja" x="415" y="144" width="290" height="38" rx="6"/>
+          <text class="d-mono" x="427" y="168" style="font-size:13px" data-texto="5:at totalCarrito (carrito.js:13:14)">totalCarrito · línea 13</text>
+        </g>
+        <rect class="d-caja" x="415" y="192" width="290" height="38" rx="6"/>
+        <text class="d-mono" x="427" y="216" style="font-size:13px" data-texto="5:at carrito.js:18:13">principal · línea 18</text>
+        <path class="d-linea" d="M408 238H712" style="stroke-width:3"/>
+        <text x="415" y="266" style="font-size:15px" data-texto="2:i = 0 e i = 1: bien, total = 25; 3:i = 2: se llama a precioDe(2); 4:productos[2] no existe: es undefined; 5:Arriba lo más reciente, abajo el inicio; 6:Causa: la línea 18 pide el producto 2">El programa empieza en la línea 18</text>
+        <text class="d-tenue" x="415" y="290" style="font-size:13px" data-pasos="5-">(se lee de arriba abajo)</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>El programa empieza por abajo: la línea 18 llama a <code>totalCarrito([0, 1, 2])</code>. En la pila hay un solo plato: el código principal.</li>
+        <li data-duracion="6"><code>totalCarrito</code> empieza a trabajar y su plato se pone encima. Su bucle llama a <code>precioDe</code> con cada índice. Con 0 y 1 todo va bien: <code>precioDe</code> entra, devuelve el precio y sale de la pila. <code>total</code> ya vale 25.</li>
+        <li>Tercera vuelta: <code>i</code> vale 2. Se llama a <code>precioDe(2)</code> y un tercer plato se pone arriba. Ahora se ejecuta la línea 7.</li>
+        <li data-duracion="6"><code>productos[2]</code> no existe, así que vale <code>undefined</code>. Leer <code>.precio</code> de <code>undefined</code> es imposible: <code>TypeError</code>. Nadie captura el error y el programa se detiene.</li>
+        <li data-duracion="6">La traza de la pila es la foto de este momento: una línea por plato, empezando por el de arriba. Cada línea dice qué función estaba en marcha y en qué archivo, línea y columna iba.</li>
+        <li data-duracion="7">¿Dónde está el fallo de verdad? La línea 7 hizo lo que podía con lo que recibió. Quien pidió un producto que no existe fue la línea 18. Recorre la traza hacia abajo hasta encontrar la línea donde tu lógica se equivocó.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Así se ve de verdad al ejecutarlo con Node.js:</p>
+  <pre class="consola"><code><span class="prompt">$</span> node carrito.js
+<span class="salida">/home/ana/tienda/carrito.js:7
+  return productos[indice].precio;
+                           ^
+
+TypeError: Cannot read properties of undefined (reading 'precio')
+    at precioDe (/home/ana/tienda/carrito.js:7:28)
+    at totalCarrito (/home/ana/tienda/carrito.js:13:14)
+    at Object.&lt;anonymous&gt; (/home/ana/tienda/carrito.js:18:13)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+
+Node.js v24.21.0</span></code></pre>
+  <p>Y así en la consola de Chrome, si el mismo código se carga en una página web:</p>
+  <pre class="consola"><code><span class="salida">Uncaught TypeError: Cannot read properties of undefined (reading 'precio')
+    at precioDe (carrito.js:7:28)
+    at totalCarrito (carrito.js:13:14)
+    at carrito.js:18:13</span></code></pre>
+  <p>Las dos trazas cuentan la misma historia. Para leer una traza:</p>
+  <ol class="pasos">
+    <li><div><p><strong>La primera línea <code>at</code> es donde explotó.</strong> Aquí, dentro de <code>precioDe</code>, en la línea 7, columna 28 (justo donde se intenta leer <code>.precio</code>).</p></div></li>
+    <li><div><p><strong>Cada línea siguiente es quien llamó a la anterior.</strong> A <code>precioDe</code> la llamó <code>totalCarrito</code> desde la línea 13, y a <code>totalCarrito</code> la llamó el código principal (que Node llama <code>Object.&lt;anonymous&gt;</code> y Chrome deja sin nombre) desde la línea 18.</p></div></li>
+    <li><div><p><strong>Ignora lo que no es tuyo.</strong> Las líneas de <code>node:internal</code> son de Node. En proyectos reales también verás líneas de librerías, en carpetas como <code>node_modules</code>. Busca las líneas que apuntan a <em>tus</em> archivos.</p></div></li>
+    <li><div><p><strong>Pregúntate en cada línea tuya: ¿aquí ya venía mal el dato?</strong> <code>precioDe</code> recibió un 2. <code>totalCarrito</code> le pasó el 2 porque venía en su lista. La lista <code>[0, 1, 2]</code> nació en la línea 18. Ahí está la causa.</p></div></li>
+  </ol>
+  <aside class="senal clave">
+    <p>Donde explota no siempre es donde está el fallo. La traza te da el camino completo: empieza por arriba para saber <em>qué</em> pasó y baja para descubrir <em>por qué</em> llegó ahí un dato malo.</p>
+  </aside>
+  <p>Arréglalo tú. Sin tocar la función <code>precioDe</code>, haz que el programa imprima <code>25</code>, el total de los dos productos que existen.</p>
+  <div class="taller" id="taller-pila" data-titulo="Arregla el carrito (error en la pila)">
+    <textarea class="taller-codigo">const productos = [
+  { nombre: "Camiseta", precio: 15 },
+  { nombre: "Gorra", precio: 10 },
+];
+
+function precioDe(indice) {
+  return productos[indice].precio;
+}
+
+function totalCarrito(indices) {
+  let total = 0;
+  for (const i of indices) {
+    total += precioDe(i);
+  }
+  return total;
+}
+
+console.log(totalCarrito([0, 1, 2]));</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (codigo.indexOf("return productos[indice].precio;") === -1) return "El reto es arreglarlo sin tocar precioDe: busca la causa más abajo en la pila.";
+if (salida[0] !== "25") return "Debería imprimirse 25. Se imprimió «" + (salida[0] || "(nada)") + "».";
+return true;
+    </script>
+  </div>
+  <p>La solución es cambiar la línea 18 por <code>totalCarrito([0, 1])</code>. Otra opción, que verás en la sección de <a href="#excepciones">excepciones</a>, es que <code>precioDe</code> compruebe el índice y lance un error con un mensaje claro, como «No existe el producto 2». Así, la próxima persona que se equivoque lo entenderá al instante.</p>
+  <aside class="senal nota" data-titulo="En Python, la pila se lee al revés">
+    <p>Todos los lenguajes tienen pila de llamadas, pero no todos la imprimen en el mismo orden. Python pone arriba el inicio y abajo lo más reciente, y el tipo de error va al final. Lo avisa en la primera línea: <em>most recent call last</em>, «la llamada más reciente, al final». Lo verás en la <a href="36-python.html">Estación 36</a>; por ahora, recuerda que siempre hay que comprobar en qué orden viene la traza.</p>
+  </aside>
+  <pre class="consola"><code><span class="prompt">$</span> python3 carrito.py
+<span class="salida">Traceback (most recent call last):
+  File "/home/ana/tienda/carrito.py", line 12, in &lt;module&gt;
+    print(total_carrito([0, 1, 2]))
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ana/tienda/carrito.py", line 9, in total_carrito
+    total += precio_de(i)
+             ^^^^^^^^^^^^
+  File "/home/ana/tienda/carrito.py", line 4, in precio_de
+    return precios[indice]
+           ~~~~~~~^^^^^^^^
+IndexError: list index out of range</span></code></pre>
+  <p>Aquí tienes el mismo carrito escrito en Python. No necesitas saber Python: el error se parece tanto al de JavaScript que lo vas a reconocer. Ejecútalo, lee la traza de abajo arriba y arréglalo para que imprima <code>25</code>.</p>
+  <div class="taller" data-modo="python" id="taller-pila-python" data-titulo="El mismo error, en Python">
+    <textarea class="taller-codigo">precios = [15, 10]
+
+def precio_de(indice):
+    return precios[indice]
+
+def total_carrito(indices):
+    total = 0
+    for i in indices:
+        total += precio_de(i)
+    return total
+
+print(total_carrito([0, 1, 2]))</textarea>
+    <script type="text/plain" class="taller-verificar">return salida[0] === "25" || "Debería imprimirse 25. Revisa qué índices pide la última línea.";</script>
+  </div>
+</section>
+
+<section id="comunes" data-parada="Errores comunes">
+  <h2>Los errores más comunes de JavaScript</h2>
+  <p>JavaScript tiene pocos tipos de error, y cuatro de ellos explican casi todo lo que vas a ver al principio. Cada tipo es una familia con una causa de fondo parecida. Si reconoces la familia, ya sabes por dónde empezar a buscar.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Tipo</th><th scope="col">Qué le pasa a JavaScript</th><th scope="col">Cuándo aparece</th><th scope="col">Ejemplo típico</th></tr></thead>
+      <tbody>
+        <tr><td><code>SyntaxError</code></td><td>«No entiendo lo que escribiste»</td><td>Al leer el programa, antes de ejecutar (y al leer datos con <code>JSON.parse</code>)</td><td>Un paréntesis o unas comillas sin cerrar</td></tr>
+        <tr><td><code>ReferenceError</code></td><td>«No encuentro ese nombre»</td><td>Al ejecutar</td><td>Una variable mal escrita</td></tr>
+        <tr><td><code>TypeError</code></td><td>«Ese valor no sirve para lo que pides»</td><td>Al ejecutar</td><td>Leer una propiedad de <code>undefined</code></td></tr>
+        <tr><td><code>RangeError</code></td><td>«Ese número está fuera de lo permitido»</td><td>Al ejecutar</td><td>Crear un array de tamaño negativo</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>ReferenceError: «no encuentro ese nombre»</h3>
+  <p>Aparece cuando usas un nombre que no existe en ese punto del programa. Las causas habituales:</p>
+  <pre><code class="language-js">const jugador = "Lyra";
+console.log(Jugador);   // ReferenceError: Jugador is not defined (mayúscula distinta)
+
+console.log(hola);      // ReferenceError: hola is not defined (faltan las comillas: "hola")
+
+function curar() {
+  const cantidad = 20;
+}
+console.log(cantidad);  // ReferenceError: cantidad is not defined (solo existe dentro de curar)
+
+console.log(nivel);     // ReferenceError: Cannot access 'nivel' before initialization
+let nivel = 1;          // se usó antes de la línea que lo crea</code></pre>
+  <p><strong>Qué revisar:</strong> copia el nombre de la línea donde lo declaraste y compáralo letra por letra, mayúsculas incluidas. Si está bien escrito, fíjate en <em>dónde</em> lo declaraste: si fue dentro de una función o de un bloque <code>{ }</code>, fuera de ahí no existe (lo viste en la <a href="10-funciones.html">Estación 10</a> como ámbito). Y si querías un texto, ponle comillas.</p>
+
+  <h3>TypeError: «ese valor no sirve para eso»</h3>
+  <p>Es el error más frecuente en JavaScript. El nombre existe, pero su valor es del tipo equivocado para lo que intentas hacer. Estos son los mensajes que más vas a ver:</p>
+  <pre><code class="language-js">const jugador = { nombre: "Lyra", vidas: 3 };
+
+console.log(jugador.arma.nombre);
+// TypeError: Cannot read properties of undefined (reading 'nombre')
+// jugador.arma no existe, vale undefined, y de undefined no se puede leer nada
+
+jugador.saltar();
+// TypeError: jugador.saltar is not a function
+
+const saludo = "hola";
+saludo.push("!");
+// TypeError: saludo.push is not a function (push es de los arrays, no de los textos)
+
+const vidasMaximas = 5;
+vidasMaximas = 6;
+// TypeError: Assignment to constant variable.
+
+for (const dato of jugador) { }
+// TypeError: jugador is not iterable (un objeto no se recorre con for...of)</code></pre>
+  <aside class="senal error">
+    <p>Leer mal <code>Cannot read properties of undefined (reading 'nombre')</code>. Mucha gente piensa que el problema es la propiedad <code>nombre</code>. No: el problema es lo que está <em>antes</em> del punto, que vale <code>undefined</code>. Si un objeto existe pero no tiene la propiedad que pides, JavaScript no da error: te devuelve <code>undefined</code> en silencio. El error aparece al dar el <em>siguiente</em> paso sobre ese <code>undefined</code>.</p>
+  </aside>
+  <p>¿Por qué algo vale <code>undefined</code> sin que tú lo quisieras? Las causas típicas son cinco: un índice fuera del array (<code>lista[5]</code> en una lista de 3), una propiedad mal escrita (<code>jugador.inventaro</code>), una función que olvidó el <code>return</code> (devuelve <code>undefined</code>), un <code>find</code> que no encontró nada (también devuelve <code>undefined</code>) y un dato que todavía no ha llegado (lo verás con la asincronía en la <a href="16-asincronia.html">Estación 16</a>).</p>
+  <aside class="senal ojo">
+    <p>En la <a href="11-colecciones.html">Estación 11</a> viste el encadenamiento opcional <code>?.</code>: <code>jugador.arma?.nombre</code> devuelve <code>undefined</code> en lugar de lanzar el error. Úsalo cuando que falte el dato sea normal (un jugador puede no tener arma). No lo uses para hacer callar un error que no entiendes: el fallo sigue ahí, solo que ahora aparecerá más tarde y más lejos de su causa.</p>
+  </aside>
+
+  <h3>SyntaxError: «no entiendo lo que escribiste»</h3>
+  <p>Ya conoces el mecanismo: si hay un error de sintaxis, no se ejecuta nada. La tabla de la <a href="06-primeros-pasos.html#errores">Estación 6</a> recogía los mensajes de sintaxis más frecuentes al empezar; aquí los tienes junto con los que aparecen cuando el código crece, con funciones, bloques y objetos:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Mensaje</th><th scope="col">Causa más probable</th></tr></thead>
+      <tbody>
+        <tr><td><code>missing ) after argument list</code></td><td>Falta cerrar el paréntesis de una llamada, o falta una coma o un <code>+</code> entre dos argumentos.</td></tr>
+        <tr><td><code>Unexpected token '{'</code> (u otro símbolo)</td><td>Sobra o falta algo justo antes de ese símbolo: un paréntesis, una coma entre elementos, un operador.</td></tr>
+        <tr><td><code>Unexpected end of input</code></td><td>Falta cerrar una llave <code>}</code>, un corchete <code>]</code> o un paréntesis. El error apunta al final del archivo.</td></tr>
+        <tr><td><code>Invalid or unexpected token</code></td><td>Comillas sin cerrar, o comillas tipográficas (“así”) copiadas de un documento o un chat en lugar de comillas rectas (").</td></tr>
+        <tr><td><code>Identifier 'x' has already been declared</code></td><td>Dos <code>let</code> o <code>const</code> con el mismo nombre en el mismo bloque.</td></tr>
+        <tr><td><code>Unexpected identifier</code></td><td>Una palabra en un sitio donde no toca: suele faltar una coma, un operador o unas comillas.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Hay un <code>SyntaxError</code> especial que sí ocurre durante la ejecución: el que lanza <code>JSON.parse</code> cuando el texto que le pasas no es JSON válido (lo viste en la <a href="11-colecciones.html">Estación 11</a>). En ese caso el mal escrito no es tu código, sino los datos:</p>
+  <pre><code class="language-js">JSON.parse("{nombre: 'Ana'}");
+// SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+// En JSON, las claves y los textos van con comillas dobles: {"nombre": "Ana"}</code></pre>
+  <p>Como ocurre al ejecutar, este sí se puede atrapar con <code>try</code> y <code>catch</code>, y lo harás más adelante.</p>
+
+  <h3>RangeError: «ese número está fuera de lo permitido»</h3>
+  <p>Aparece cuando pasas un número válido, pero fuera del rango que acepta una operación. Es el menos frecuente de los cuatro:</p>
+  <pre><code class="language-js">new Array(-1);          // RangeError: Invalid array length
+(3.14159).toFixed(200); // RangeError: toFixed() digits argument must be between 0 and 100
+"ja".repeat(-1);        // RangeError: Invalid count value: -1
+
+function eco() {
+  return eco();         // se llama a sí misma sin parar
+}
+eco();                  // RangeError: Maximum call stack size exceeded</code></pre>
+  <p>El último merece atención. Una función que se llama a sí misma sin una condición para detenerse va poniendo platos en la pila hasta que no cabe ninguno más. Es la <strong>recursión infinita</strong> (la recursión se estudia en la <a href="20-algoritmos.html">Estación 20</a>). En Firefox el mismo problema se llama <code>InternalError: too much recursion</code>.</p>
+
+  <h3>Provoca errores a propósito</h3>
+  <p>La mejor forma de perderles el miedo es provocarlos. En este taller todas las líneas peligrosas están comentadas. Quita las dos barras <code>//</code> del principio de <strong>una</strong> línea, ejecuta y lee el mensaje. Antes de ejecutar, intenta predecir el tipo y el mensaje. Después vuelve a comentarla y pasa a la siguiente.</p>
+  <div class="taller" id="taller-galeria" data-titulo="Galería de errores">
+    <textarea class="taller-codigo">const jugador = { nombre: "Lyra", vidas: 3 };
+const enemigos = ["slime", "murciélago"];
+
+// console.log(jugadr.nombre);
+// jugador.saltar();
+// console.log(jugador.arma.nombre);
+// jugador = { nombre: "Tom" };
+// console.log(enemigos[5].toUpperCase());
+// const casillas = new Array(-3);
+// console.log(enemigos.lenght.toFixed(0));
+
+console.log("Todo en orden:", jugador.nombre, "tiene", jugador.vidas, "vidas");</textarea>
+  </div>
+  <p>Fíjate en la última línea comentada: <code>enemigos.lenght</code> (con la <em>h</em> cambiada de sitio) no da error por sí sola; vale <code>undefined</code>. El error aparece un paso después, al llamar a <code>.toFixed</code> sobre ese <code>undefined</code>. Los errores de sintaxis no caben en esta galería: romperían el programa entero antes de empezar.</p>
+
+  <h3>Cuando JavaScript no se queja</h3>
+  <p>JavaScript es un lenguaje muy tolerante. En muchas situaciones en que otros lenguajes darían error, JavaScript sigue adelante con un valor extraño. Eso produce errores lógicos silenciosos. Predice qué imprime cada línea:</p>
+  <div class="taller" id="taller-silencios" data-titulo="Predice: errores que no avisan">
+    <textarea class="taller-codigo">const jugador = { nombre: "Lyra", vidas: 3 };
+console.log(jugador.vida);
+console.log(jugador.vida + 1);
+console.log("Jugador: " + jugador);
+console.log("5" + 5);
+console.log(Number("cinco"));</textarea>
+  </div>
+  <p>Ninguna línea dio error, y todas tienen un problema. Aprende a reconocer estos valores como <strong>síntomas</strong>, porque cada uno apunta a una causa:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Si ves…</th><th scope="col">Sospecha primero de…</th></tr></thead>
+      <tbody>
+        <tr><td><code>undefined</code> donde esperabas un valor</td><td>Una propiedad mal escrita, un índice que no existe o una función sin <code>return</code>.</td></tr>
+        <tr><td><code>NaN</code></td><td>Una cuenta con <code>undefined</code> o con un texto que no es un número.</td></tr>
+        <tr><td><code>[object Object]</code></td><td>Un objeto pegado a un texto con <code>+</code>. Imprímelo aparte o usa <code>JSON.stringify</code>.</td></tr>
+        <tr><td>Números «pegados», como <code>55</code> o <code>505</code></td><td>Un número que en realidad es texto: <code>+</code> concatenó en lugar de sumar.</td></tr>
+        <tr><td>Nada impreso</td><td>Una condición que nunca se cumple, un bucle que no da ninguna vuelta o una función a la que nadie llama.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Para estos casos no hay mensaje que leer: necesitas un método para investigar. Es lo siguiente.</p>
+</section>
+
+<section id="metodo" data-parada="Un método">
+  <h2>Un método, no a ciegas</h2>
+  <p>Cuando no hay mensaje de error, o cuando el mensaje no basta, la tentación es cambiar algo «a ver si así funciona». Luego otra cosa. Luego otra. A veces funciona y no sabes por qué; casi siempre, el programa acaba peor que al principio. Las investigaciones sobre cómo depuran las personas que empiezan describen justo eso: prueba y error sin rumbo. Y recomiendan enseñar a depurar de forma explícita, formulando hipótesis y poniéndolas a prueba. Eso es lo que vas a aprender aquí.</p>
+  <p>En la <a href="06-primeros-pasos.html#errores">Estación 6</a> aprendiste un método rápido para errores con mensaje: leer el tipo, ir a la línea, comparar, cambiar una sola cosa y volver a ejecutar. Para los errores de sintaxis casi siempre basta. Cuando no basta, porque no hay mensaje o porque el mensaje señala un lugar que parece correcto, necesitas el método completo, que se parece mucho al método científico:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Diagrama del ciclo de depuración: 1 reproducir, 2 observar, 3 hipótesis, 4 experimento y 5 conclusión. Si la hipótesis no se confirma, se vuelve a la hipótesis. Si se confirma, se pasa a 6: arreglar y comprobar. Después, conviene escribir una prueba para que el fallo no vuelva.">
+      <rect class="d-caja" x="10" y="30" width="120" height="64" rx="8"/>
+      <text class="d-rotulo" x="70" y="58" text-anchor="middle">1. Reproducir</text>
+      <text class="d-peq d-tenue" x="70" y="80" text-anchor="middle">hazlo fallar</text>
+      <rect class="d-caja" x="155" y="30" width="120" height="64" rx="8"/>
+      <text class="d-rotulo" x="215" y="58" text-anchor="middle">2. Observar</text>
+      <text class="d-peq d-tenue" x="215" y="80" text-anchor="middle">mira los valores</text>
+      <rect class="d-caja" x="300" y="30" width="120" height="64" rx="8"/>
+      <text class="d-rotulo" x="360" y="58" text-anchor="middle">3. Hipótesis</text>
+      <text class="d-peq d-tenue" x="360" y="80" text-anchor="middle">«creo que…»</text>
+      <rect class="d-caja" x="445" y="30" width="120" height="64" rx="8"/>
+      <text class="d-rotulo" x="505" y="58" text-anchor="middle">4. Experimento</text>
+      <text class="d-peq d-tenue" x="505" y="80" text-anchor="middle">predice y prueba</text>
+      <rect class="d-caja" x="590" y="30" width="120" height="64" rx="8"/>
+      <text class="d-rotulo" x="650" y="58" text-anchor="middle">5. Conclusión</text>
+      <text class="d-peq d-tenue" x="650" y="80" text-anchor="middle">¿se confirma?</text>
+      <path class="d-linea" d="M132 62H141"/><path class="d-tinta" d="M141 54l12 8-12 8z"/>
+      <path class="d-linea" d="M277 62H286"/><path class="d-tinta" d="M286 54l12 8-12 8z"/>
+      <path class="d-linea" d="M422 62H431"/><path class="d-tinta" d="M431 54l12 8-12 8z"/>
+      <path class="d-linea" d="M567 62H576"/><path class="d-tinta" d="M576 54l12 8-12 8z"/>
+      <path class="d-linea" d="M620 96V140H360V110"/><path class="d-tinta" d="M352 110l8-12 8 12z"/>
+      <text class="d-peq" x="490" y="162" text-anchor="middle">no: formula otra hipótesis</text>
+      <path class="d-linea" d="M680 96V184"/><path class="d-tinta" d="M672 184l8 12 8-12z"/>
+      <text class="d-peq" x="690" y="150">sí</text>
+      <rect class="d-acento" x="560" y="200" width="150" height="64" rx="8"/>
+      <text class="d-rotulo d-sobre-acento" x="635" y="228" text-anchor="middle">6. Arreglar</text>
+      <text class="d-peq d-sobre-acento" x="635" y="250" text-anchor="middle">y comprobar</text>
+      <path class="d-punteada" d="M556 232H420"/>
+      <text class="d-peq d-tenue" x="410" y="237" text-anchor="end">después: una prueba para que no vuelva</text>
+    </svg>
+    <figcaption>El ciclo de depuración. La flecha de vuelta es la más importante: una hipótesis que falla no es un fracaso, es información.</figcaption>
+  </figure>
+  <ol class="pasos">
+    <li><div><p><strong>Reproducir.</strong> Consigue que el fallo ocurra a propósito, siempre que quieras. Anota los pasos y los datos exactos: «con 3 productos en el carrito y el cupón VERANO, el total sale negativo». Si no puedes reproducirlo, no podrás saber si lo arreglaste.</p></div></li>
+    <li><div><p><strong>Observar.</strong> Reúne pistas antes de tocar nada. Lee el mensaje de error completo, con su traza. Escribe dos frases: «esperaba…» y «obtuve…». Mira los valores de las variables en los puntos clave.</p></div></li>
+    <li><div><p><strong>Formular una hipótesis.</strong> Una explicación concreta y comprobable: «creo que <code>precio</code> es un texto y por eso <code>+</code> concatena». «Algo falla con el precio» no es una hipótesis: no se puede comprobar.</p></div></li>
+    <li><div><p><strong>Experimentar.</strong> Diseña una prueba que pueda demostrar que te equivocas, y <em>predice</em> el resultado antes de ejecutarla: «si tengo razón, <code>typeof precio</code> dirá <code>"string"</code>». Predecir primero evita que te engañes al ver el resultado.</p></div></li>
+    <li><div><p><strong>Concluir.</strong> Si la predicción falló, descartaste una causa: formula otra hipótesis con lo que aprendiste. Si se cumplió, ya sabes qué pasa.</p></div></li>
+    <li><div><p><strong>Arreglar y comprobar.</strong> Corrige la causa, no el síntoma. Después repite los pasos del punto 1 para confirmar que el fallo desapareció, y revisa que no rompiste otra cosa. Cuando aprendas a escribir pruebas automáticas (<a href="26-testing.html">Estación 26</a>), añadirás una que falle si el bug vuelve.</p></div></li>
+  </ol>
+  <aside class="senal analogia">
+    <p>Es el trabajo de un detective: reúne pistas, sospecha de alguien, busca la prueba que lo confirme o lo descarte. La analogía se queda corta a tu favor: en una investigación real no puedes repetir el crimen, pero con un programa puedes reproducir el fallo tantas veces como quieras. Con los mismos datos, un programa hace casi siempre exactamente lo mismo. «Casi», porque hay excepciones: el azar (<code>Math.random</code>), la fecha y la hora, o la red.</p>
+  </aside>
+
+  <h3>Reproducir: el paso que casi todos se saltan</h3>
+  <p>Hay fallos que solo aparecen a veces. Son los más desesperantes, y la solución es encontrar una forma fiable de hacerlos aparecer. Este dado de seis caras tiene un bug. Ejecuta el taller varias veces y mira la primera línea: a menudo parece correcta. La segunda parte tira el dado 1000 veces y apunta el mínimo y el máximo, y ahí el fallo no se puede esconder.</p>
+  <div class="taller" id="taller-dado" data-titulo="Reproduce el error del dado">
+    <textarea class="taller-codigo">// Un dado de seis caras debería dar números del 1 al 6.
+function tirarDado() {
+  return Math.floor(Math.random() * 6);
+}
+
+// Una tirada suelta no demuestra nada: ejecuta varias veces.
+console.log("Tirada:", tirarDado());
+
+// Para reproducir el fallo, tira 1000 veces y apunta el mínimo y el máximo.
+let minimo = Infinity;
+let maximo = -Infinity;
+for (let i = 0; i < 1000; i++) {
+  const tirada = tirarDado();
+  if (tirada < minimo) minimo = tirada;
+  if (tirada > maximo) maximo = tirada;
+}
+console.log("Mínimo:", minimo, "Máximo:", maximo);</textarea>
+    <script type="text/plain" class="taller-verificar">
+var ultima = salida[salida.length - 1] || "";
+if (ultima === "Mínimo: 0 Máximo: 5") return "Reproducido: el dado da del 0 al 5. Ahora formula una hipótesis sobre la línea 3 y arréglala.";
+if (ultima !== "Mínimo: 1 Máximo: 6") return "Tras 1000 tiradas deberías ver «Mínimo: 1 Máximo: 6». Ves «" + ultima + "».";
+return true;
+    </script>
+  </div>
+  <p>Con 1000 tiradas se ve claro: el dado da números del 0 al 5. <code>Math.random()</code> devuelve un decimal entre 0 (incluido) y 1 (sin incluir); al multiplicarlo por 6 y quitar decimales salen enteros del 0 al 5. Falta sumar 1: <code>Math.floor(Math.random() * 6) + 1</code>. Arréglalo y comprueba que el veredicto se pone en verde.</p>
+  <aside class="senal clave">
+    <p>Cambia una sola cosa cada vez. Si cambias cinco cosas y el programa funciona, no sabes cuál lo arregló, ni si alguna de las otras cuatro introdujo un fallo nuevo que aparecerá mañana.</p>
+  </aside>
+  <aside class="senal error">
+    <p>La «depuración a escopetazos»: cambiar cosas al azar, añadir paréntesis por si acaso, copiar código de internet sin entenderlo, hasta que el error desaparece. El error puede desaparecer y el fallo seguir ahí, escondido. Si notas que llevas un rato haciendo cambios sin una hipótesis detrás, para, vuelve al paso 2 y escribe qué esperabas y qué obtuviste.</p>
+  </aside>
+  <aside class="senal oficio">
+    <p>Lleva un diario de depuración: un archivo de texto o un papel donde anotas cada hipótesis, el experimento que hiciste y el resultado. Parece lento, pero evita que pruebes dos veces lo mismo y te obliga a pensar antes de tocar. Si al final tienes que pedir ayuda, ese diario es exactamente lo que la otra persona necesita leer.</p>
+  </aside>
+
+  <h3>El patito de goma</h3>
+  <p>Una de las técnicas más eficaces parece una broma. Consiste en explicar tu código, línea por línea y en voz alta, a un patito de goma (o a una taza, una planta o una foto). Se llama <strong>depuración del patito de goma</strong> (<em>rubber duck debugging</em>) y el nombre viene del libro <em>The Pragmatic Programmer</em> (1999), de Andrew Hunt y David Thomas, que cuenta la historia de un programador que llevaba un patito de goma para explicarle su código.</p>
+  <p>Funciona porque al explicar no puedes saltarte pasos. Mientras lees el código «en tu cabeza», ves lo que crees que dice; al tener que decir en voz alta «aquí sumo el precio, que es un número…», te das cuenta de que nunca comprobaste que fuera un número. Muchas veces encuentras el fallo a mitad de la explicación. Con una persona de verdad también funciona, y es frecuente que el fallo aparezca antes de que la otra persona diga una palabra.</p>
+  <aside class="senal nota" data-titulo="Descansar también es depurar">
+    <p>Si llevas mucho rato atascado, levántate y camina unos minutos. Al volver lees el código con ojos nuevos, en lugar de ver lo que recuerdas haber escrito. No es pereza: es parte del método.</p>
+  </aside>
+
+  <h3>Bisección: partir el problema por la mitad</h3>
+  <p>Cuando el programa es largo y no sabes ni por dónde empezar, no revises línea por línea desde arriba. Usa la <strong>bisección</strong>: comprueba en la mitad, descarta la mitad que funciona y repite con la otra.</p>
+  <figure class="capsula" data-titulo="Bisección: encontrar el fallo en pocos pasos">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 250" role="img" aria-label="Animación: un programa de 8 pasos da un resultado equivocado. Se comprueba el valor después del paso 4 y es correcto, así que se descartan los pasos 1 a 4. Se comprueba después del paso 6 y está mal, así que se descartan los pasos 7 y 8. Se comprueba después del paso 5 y es correcto: el culpable es el paso 6, encontrado con 3 comprobaciones.">
+        <text class="d-rotulo" x="360" y="32" text-anchor="middle" data-texto="2:Sospechosos: 4 pasos (del 5 al 8); 3:Sospechosos: 2 pasos (el 5 y el 6); 4:Culpable: el paso 6, en 3 comprobaciones; 5:Cada comprobación descarta la mitad">Sospechosos: 8 pasos</text>
+        <rect class="d-caja" x="20" y="80" width="72" height="56" rx="8" data-clases="2:d-caja-suave"/>
+        <rect class="d-caja" x="104" y="80" width="72" height="56" rx="8" data-clases="2:d-caja-suave"/>
+        <rect class="d-caja" x="188" y="80" width="72" height="56" rx="8" data-clases="2:d-caja-suave"/>
+        <rect class="d-caja" x="272" y="80" width="72" height="56" rx="8" data-clases="2:d-caja-suave"/>
+        <rect class="d-caja" x="356" y="80" width="72" height="56" rx="8" data-clases="4:d-caja-suave"/>
+        <rect class="d-caja" x="440" y="80" width="72" height="56" rx="8" data-clases="4:d-acento"/>
+        <rect class="d-caja" x="524" y="80" width="72" height="56" rx="8" data-clases="3:d-caja-suave"/>
+        <rect class="d-caja" x="608" y="80" width="72" height="56" rx="8" data-clases="3:d-caja-suave"/>
+        <text x="56" y="113" text-anchor="middle" style="font-size:15px" data-clases="2:d-tenue">Paso 1</text>
+        <text x="140" y="113" text-anchor="middle" style="font-size:15px" data-clases="2:d-tenue">Paso 2</text>
+        <text x="224" y="113" text-anchor="middle" style="font-size:15px" data-clases="2:d-tenue">Paso 3</text>
+        <text x="308" y="113" text-anchor="middle" style="font-size:15px" data-clases="2:d-tenue">Paso 4</text>
+        <text x="392" y="113" text-anchor="middle" style="font-size:15px" data-clases="4:d-tenue">Paso 5</text>
+        <text x="476" y="113" text-anchor="middle" style="font-size:15px" data-clases="4:d-sobre-acento">Paso 6</text>
+        <text x="560" y="113" text-anchor="middle" style="font-size:15px" data-clases="3:d-tenue">Paso 7</text>
+        <text x="644" y="113" text-anchor="middle" style="font-size:15px" data-clases="3:d-tenue">Paso 8</text>
+        <path class="d-punteada" d="M20 60H680" data-pasos="1"/>
+        <text class="d-peq d-tenue" x="20" y="54" data-pasos="1">el valor entra aquí…</text>
+        <text class="d-peq d-tenue" x="680" y="54" text-anchor="end" data-pasos="1">…y sale mal aquí</text>
+        <g data-pasos="2-">
+          <path class="d-acento-trazo" d="M350 64V152"/>
+          <path class="d-ok-trazo" d="M342 170l6 6 10-12"/>
+          <text class="d-peq" x="350" y="198" text-anchor="middle">bien</text>
+        </g>
+        <g data-pasos="3-">
+          <path class="d-acento-trazo" d="M518 64V152"/>
+          <path class="d-mal-trazo" d="M512 164l12 12M524 164l-12 12"/>
+          <text class="d-peq" x="518" y="198" text-anchor="middle">mal</text>
+        </g>
+        <g data-pasos="4-">
+          <path class="d-acento-trazo" d="M434 64V152"/>
+          <path class="d-ok-trazo" d="M426 170l6 6 10-12"/>
+          <text class="d-peq" x="434" y="198" text-anchor="middle">bien</text>
+        </g>
+        <text x="360" y="236" text-anchor="middle" style="font-size:15px" data-pasos="5">1000 líneas: 500, 250, 125, 63, 32, 16, 8, 4, 2, 1. Unas diez comprobaciones.</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Un programa hace 8 pasos seguidos y el resultado final está mal. ¿Qué paso lo estropeó? Si los revisas uno por uno desde arriba, puedes necesitar 8 intentos.</li>
+        <li data-duracion="6">Pon un <code>console.log</code> en la mitad, después del paso 4, y compara con el valor que <em>debería</em> haber ahí. Es correcto: los pasos 1 a 4 quedan descartados. El fallo está en la segunda mitad.</li>
+        <li data-duracion="6">Parte por la mitad lo que queda: comprueba después del paso 6. El valor ya está mal, así que el fallo está en el paso 5 o en el 6. Los pasos 7 y 8 quedan descartados.</li>
+        <li>Última comprobación, después del paso 5: el valor es correcto. El culpable es el paso 6. Lo encontraste con 3 comprobaciones.</li>
+        <li data-duracion="6">La ventaja crece con el tamaño: cada comprobación descarta la mitad de lo que queda. En un programa de 1000 líneas bastan unas diez.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>La bisección tiene dos versiones según el problema:</p>
+  <ul>
+    <li><strong>Para valores equivocados:</strong> imprime el valor en la mitad del proceso y compáralo con el que debería tener. Para eso necesitas saber qué valor esperas en cada punto: escríbelo antes de mirar.</li>
+    <li><strong>Para errores que rompen el programa</strong> (incluidos los de sintaxis que no localizas): <strong>comenta</strong> la mitad del código y ejecuta. Si el error desaparece, estaba en la mitad comentada; si sigue, está en la otra. En Visual Studio Code, <kbd>Ctrl</kbd> + <kbd>/</kbd> (<kbd>Cmd</kbd> + <kbd>/</kbd> en Mac) comenta o descomenta las líneas seleccionadas. Ojo: comenta bloques completos, sin dejar una llave abierta a medias, o crearás un error de sintaxis nuevo.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="La misma idea, a lo grande">
+    <p>Git, la herramienta que guarda la historia de tus proyectos, tiene un comando que aplica la bisección a esa historia: <code>git bisect</code>. Si algo funcionaba hace un mes y hoy no, Git te lleva a una versión intermedia, le dices si funciona o no, y en pocos pasos encuentra el cambio exacto que lo rompió. Lo verás en la <a href="24-git.html">Estación 24</a>.</p>
+  </aside>
+  <p>Repasa el método ordenando sus pasos:</p>
+  <div class="parsons" data-titulo="Ordena el método de depuración" data-lenguaje="text">
+    <ol>
+      <li>Reproduce el fallo: encuentra los pasos y los datos que lo provocan siempre.</li>
+      <li>Observa: lee el mensaje completo y anota qué esperabas y qué obtuviste.</li>
+      <li>Formula una hipótesis concreta: «creo que el precio llega como texto».</li>
+      <li>Diseña un experimento y predice el resultado: «si tengo razón, typeof dirá string».</li>
+      <li>Ejecuta el experimento y compara el resultado con tu predicción.</li>
+      <li>Si se confirma, corrige la causa, no el síntoma.</li>
+      <li>Repite los pasos de reproducción para comprobar que el fallo desapareció.</li>
+    </ol>
+  </div>
+
+  <h3>Experimentos que se pueden deshacer</h3>
+  <p>Al depurar vas a hacer cambios de prueba: un <code>console.log</code> aquí, una línea comentada allá. El riesgo es terminar con un código lleno de restos y sin recordar cómo era el original. La solución profesional es Git, que conociste en la <a href="05-herramientas.html">Estación 5</a>: antes de empezar a experimentar, guarda un punto de partida con un commit. Así, <code>git diff</code> te muestra exactamente qué cambiaste desde entonces y <code>git restore</code> deshace los cambios de un archivo.</p>
+  <div class="terminal-sim" data-titulo="Guarda, experimenta y deshaz" data-inicio="/home/tu">
+    <script type="application/json" class="terminal-sistema">{"tienda": {"carrito.js": "const precio = 20;\nconsole.log(precio * 3);\n"}}</script>
+    <div class="terminal-instrucciones">
+      <p><strong>Misión:</strong> entra en la carpeta <code>tienda</code> (<code>cd tienda</code>), crea un repositorio (<code>git init</code>) y guarda el punto de partida (<code>git add .</code> y <code>git commit -m "Antes de depurar"</code>). Después haz un experimento añadiendo una impresión de prueba: <code>echo "console.log('prueba:', precio)" &gt;&gt; carrito.js</code>, y ejecuta el archivo con <code>node carrito.js</code> para ver su efecto. Mira qué cambió con <code>git diff</code> y deshazlo con <code>git restore carrito.js</code>. Comprueba con <code>cat carrito.js</code> que volvió a su estado original.</p>
+    </div>
+    <script type="text/plain" class="terminal-mision">
+if (!git) return "Entra en la carpeta tienda (cd tienda) y crea el repositorio con git init.";
+if (!git.commits.length) return "Guarda el punto de partida: git add . y después git commit -m \"Antes de depurar\".";
+var experimento = historial.some(function (h) { return /^echo .*>>\s*carrito\.js$/.test(h); });
+if (!experimento) return "Ahora haz un experimento: echo \"console.log('prueba:', precio)\" >> carrito.js";
+if (!historial.some(function (h) { return /^node\s+carrito\.js$/.test(h); })) return "Ejecuta el archivo con node carrito.js para ver el efecto del experimento.";
+if (!historial.some(function (h) { return /^git diff/.test(h); })) return "Mira qué cambió con git diff.";
+if (!git.limpio) return "Deshaz el experimento con git restore carrito.js.";
+return true;
+    </script>
+  </div>
+</section>
+
+<section id="consola" data-parada="console.log y compañía">
+  <h2>Espiar con la consola</h2>
+  <p>Para poner a prueba una hipótesis necesitas ver lo que pasa dentro del programa mientras se ejecuta. La herramienta más rápida ya la conoces: <code>console.log</code>. Usarla para investigar se llama <strong>depurar con impresiones</strong> (en inglés, <em>print debugging</em>), y la usan a diario personas que llevan décadas programando. La diferencia entre usarla bien y usarla mal está en <em>qué</em> imprimes y <em>dónde</em>.</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Impresiones que no dicen nada</p>
+      <pre><code class="language-js">console.log("aquí");
+console.log("aquí 2");
+console.log(total);</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Impresiones que responden preguntas</p>
+      <pre><code class="language-js">console.log("calcular recibe:", { cuenta, porcentaje });
+console.log("propina calculada:", propina);
+console.log("¿aplica descuento?", total &gt; 100);</code></pre>
+    </div>
+  </div>
+  <p>Cinco reglas para que cada <code>console.log</code> te enseñe algo:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Ponle una etiqueta.</strong> Con tres números sueltos en la consola no sabrás cuál es cuál. <code>console.log("total antes del descuento:", total)</code> se entiende solo.</p></div></li>
+    <li><div><p><strong>Deja ver el tipo.</strong> <code>console.log("cuenta:", cuenta)</code> imprime lo mismo si <code>cuenta</code> es el número 50 o el texto <code>"50"</code>. Envuelve las variables en llaves: <code>console.log({ cuenta, propina })</code>. Es un atajo para <code>{ cuenta: cuenta, propina: propina }</code>: crea un objeto al vuelo, y al imprimir un objeto la consola muestra los nombres y pone comillas a los textos.</p></div></li>
+    <li><div><p><strong>Imprime en las fronteras.</strong> Al entrar en una función (¿qué recibe?), antes de su <code>return</code> (¿qué devuelve?), antes y después de la línea sospechosa, dentro de cada rama de un <code>if</code> (¿por dónde pasó?) y dentro de un bucle, con el contador (¿en qué vuelta se estropea?).</p></div></li>
+    <li><div><p><strong>Predice antes de ejecutar.</strong> Escribe qué esperas ver. Si ves otra cosa, acabas de encontrar una pista.</p></div></li>
+    <li><div><p><strong>Bórralas al terminar.</strong> Una vez resuelto el fallo, quita las impresiones de prueba. Un programa lleno de <code>console.log</code> olvidados es difícil de leer y ensucia la consola de quien lo use.</p></div></li>
+  </ol>
+  <p>Mira la diferencia de la regla 2 con los mismos datos (salida real de Node.js):</p>
+  <pre class="consola"><code><span class="prompt">&gt;</span> console.log("cuenta:", cuenta, "propina:", propina)
+<span class="salida">cuenta: 50 propina: 5</span>
+<span class="prompt">&gt;</span> console.log({ cuenta, propina })
+<span class="salida">{ cuenta: '50', propina: 5 }</span></code></pre>
+  <p>Con la segunda forma salta a la vista que <code>cuenta</code> es un texto (<code>'50'</code>, con comillas) y <code>propina</code> un número.</p>
+  <p>Ponlo en práctica. Esta tienda cobra un 10 % menos en compras de más de 100 y un 20 % menos a los socios. La tercera línea debería imprimir 160 (un socio paga con el 20 %, aunque compre más de 100), pero imprime otra cosa. Añade un <code>console.log</code> con etiqueta dentro de cada rama del <code>if</code> para descubrir por dónde pasa el programa, y después arréglalo.</p>
+  <div class="taller" id="taller-ramas" data-titulo="Espía las ramas del if (error lógico)">
+    <textarea class="taller-codigo">function precioFinal(precio, esSocio) {
+  let descuento = 0;
+  if (precio > 100) {
+    descuento = 10;
+  } else if (esSocio) {
+    descuento = 20;
+  }
+  return precio - precio * descuento / 100;
+}
+
+console.log(precioFinal(50, false));  // esperado: 50
+console.log(precioFinal(200, false)); // esperado: 180
+console.log(precioFinal(200, true));  // esperado: 160</textarea>
+    <script type="text/plain" class="taller-verificar">
+var numeros = salida.filter(function (l) { return /^-?\d+(\.\d+)?$/.test(l.trim()); });
+if (numeros.join(",") === "50,180,180") return "Reproducido: la tercera llamada da 180. ¿En qué rama entra un socio que compra 200? Imprímelo para confirmarlo.";
+if (numeros.join(",") !== "50,180,160") return "Los tres resultados deberían ser 50, 180 y 160. Ahora son: " + (numeros.join(", ") || "(ninguno)") + ".";
+return true;
+    </script>
+  </div>
+  <p>Con un <code>console.log("rama: más de 100")</code> en la primera rama verás que el socio que compra 200 entra ahí: la primera condición que se cumple gana y las demás ni se miran (lo viste en la <a href="08-decisiones.html">Estación 8</a>). La solución es comprobar primero <code>esSocio</code>. Cuando funcione, borra las impresiones de prueba.</p>
+
+  <h3>Una trampa de la consola del navegador</h3>
+  <aside class="senal ojo">
+    <p>En la consola del navegador, un objeto impreso con <code>console.log</code> se muestra de forma perezosa: cuando lo despliegas con la flecha, ves sus valores <em>de ese momento</em>, no los del momento en que se imprimió. Si el objeto cambió después, te mostrará los valores nuevos y te hará creer algo falso. Para ver una foto fija, imprime una copia: <code>console.log(JSON.parse(JSON.stringify(objeto)))</code> o <code>console.log(structuredClone(objeto))</code>, que conociste en la <a href="11-colecciones.html">Estación 11</a>.</p>
+  </aside>
+
+  <h3>console.table: datos en forma de tabla</h3>
+  <p>Cuando tienes un array de objetos, que es la forma de casi todos los datos reales, un <code>console.log</code> devuelve una línea larga difícil de leer. <code>console.table</code> los muestra como una tabla: una fila por elemento y una columna por propiedad.</p>
+  <pre><code class="language-js">const jugadores = [
+  { nombre: "Ana", puntos: 120 },
+  { nombre: "Leo", puntos: "90" },
+  { nombre: "Sol", puntos: 150 },
+];
+console.table(jugadores);
+console.table(jugadores, ["puntos"]); // solo la columna puntos</code></pre>
+  <p>En el navegador verás una tabla con celdas. En Node, la dibuja con caracteres (salida real):</p>
+  <pre class="consola"><code><span class="salida">┌─────────┬────────┬────────┐
+│ (index) │ nombre │ puntos │
+├─────────┼────────┼────────┤
+│ 0       │ 'Ana'  │ 120    │
+│ 1       │ 'Leo'  │ '90'   │
+│ 2       │ 'Sol'  │ 150    │
+└─────────┴────────┴────────┘</span></code></pre>
+  <p>La primera columna, <code>(index)</code>, es la posición en el array. ¿Ves el dato raro? Los puntos de Leo tienen comillas: son un texto. En una tabla, un valor distinto de los demás salta a la vista mucho antes que en una línea larga. En los talleres de este curso <code>console.table</code> se muestra como un <code>console.log</code> normal; para ver la tabla de verdad, pruébalo en la consola del navegador.</p>
+
+  <h3>console.error y console.warn: niveles de gravedad</h3>
+  <p>La consola distingue mensajes por su gravedad. <code>console.error</code> escribe un mensaje de error y <code>console.warn</code> un aviso. En el navegador se ven en rojo y en amarillo, y en la consola puedes filtrar por nivel para ver, por ejemplo, solo los errores. Además, en Chrome un <code>console.error</code> se puede desplegar para ver la pila de llamadas desde donde se llamó. En Node, <code>console.error</code> y <code>console.warn</code> escriben en la salida de errores, un canal separado de la salida normal que la terminal muestra igual pero que se puede guardar aparte.</p>
+  <pre><code class="language-js">function precioDe(producto) {
+  if (producto.precio === undefined) {
+    console.warn("Producto sin precio, uso 0:", producto.nombre);
+    return 0;
+  }
+  if (producto.precio &lt; 0) {
+    console.error("Precio negativo, revisa los datos:", producto);
+  }
+  return producto.precio;
+}</code></pre>
+  <p>Usa <code>console.error</code> para problemas reales que tu programa detecta (por ejemplo, dentro de un <code>catch</code>, como verás enseguida) y <code>console.warn</code> para situaciones raras que no impiden seguir. En los talleres de este curso también aparecen en rojo y en amarillo.</p>
+  <div class="taller" id="taller-niveles" data-titulo="Tres niveles de mensaje">
+    <textarea class="taller-codigo">const inventario = [
+  { nombre: "Espada", precio: 30 },
+  { nombre: "Mapa" },
+  { nombre: "Poción", precio: -5 },
+];
+
+for (const producto of inventario) {
+  if (producto.precio === undefined) {
+    console.warn("Aviso: sin precio:", producto.nombre);
+  } else if (producto.precio &lt; 0) {
+    console.error("Error: precio negativo:", producto.nombre, producto.precio);
+  } else {
+    console.log("OK:", producto.nombre, producto.precio);
+  }
+}
+console.table(inventario);</textarea>
+  </div>
+  <aside class="senal nota" data-titulo="Más herramientas de la consola">
+    <p>La consola del navegador y la de Node tienen más métodos útiles para depurar: <code>console.group()</code> y <code>console.groupEnd()</code> agrupan mensajes con sangría; <code>console.count("etiqueta")</code> cuenta cuántas veces pasa el programa por una línea; <code>console.time("x")</code> y <code>console.timeEnd("x")</code> miden cuánto tarda un trozo de código; <code>console.trace()</code> imprime la pila de llamadas en ese punto, sin que haya error; y <code>console.assert(condicion, "mensaje")</code> escribe un error solo si la condición es falsa. Pruébalos en la consola del navegador: en los talleres de este curso solo existen <code>log</code>, <code>info</code>, <code>debug</code>, <code>error</code>, <code>warn</code> y <code>table</code>. Si usas otro, verás <code>TypeError: console.group is not a function</code>, y ya sabes leerlo.</p>
+  </aside>
+  <aside class="senal oficio">
+    <p>En los equipos profesionales, las impresiones de prueba no se guardan en el proyecto. Muchos equipos configuran una herramienta que avisa si queda algún <code>console.log</code> olvidado (lo verás con ESLint en la <a href="25-codigo-limpio.html">Estación 25</a>). Los mensajes que sí deben quedarse, como los errores de un servidor, se registran con herramientas de <em>logging</em> que añaden la fecha, el nivel de gravedad y más contexto.</p>
+  </aside>
+
+  <h3>De la foto a la película</h3>
+  <p>Un <code>console.log</code> es una foto: te enseña un valor en un instante. Para algunos fallos necesitas la película completa: cómo cambia cada variable, línea por línea. Este programa calcula el promedio de tres notas (8, 6 y 10) y debería dar 8, pero imprime <code>NaN</code>. Avanza paso a paso y busca el momento exacto en que las cosas se tuercen.</p>
+  <div class="traza" data-titulo="¿Dónde aparece el NaN?">
+    <pre><code class="language-js">const notas = [8, 6, 10];
+let suma = 0;
+for (let i = 1; i &lt;= notas.length; i++) {
+  suma = suma + notas[i];
+}
+console.log("Promedio:", suma / notas.length);</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"notas": "[ 8, 6, 10 ]"}, "nota": "Se crea el array con tres notas. Recuerda: sus posiciones son 0, 1 y 2."},
+      {"linea": 2, "vars": {"notas": "[ 8, 6, 10 ]", "suma": "0"}, "nota": "suma empieza en 0."},
+      {"linea": 3, "vars": {"notas": "[ 8, 6, 10 ]", "suma": "0", "i": "1"}, "nota": "Empieza el bucle con i = 1. ¿1 <= 3? Sí, entra. Primera pista: la primera nota está en la posición 0, no en la 1."},
+      {"linea": 4, "vars": {"notas": "[ 8, 6, 10 ]", "suma": "6", "i": "1"}, "nota": "notas[1] es 6, así que suma = 0 + 6 = 6. El 8 se quedó fuera."},
+      {"linea": 3, "vars": {"notas": "[ 8, 6, 10 ]", "suma": "6", "i": "2"}, "nota": "i++ deja i en 2. ¿2 <= 3? Sí."},
+      {"linea": 4, "vars": {"notas": "[ 8, 6, 10 ]", "suma": "16", "i": "2"}, "nota": "notas[2] es 10: suma = 6 + 10 = 16."},
+      {"linea": 3, "vars": {"notas": "[ 8, 6, 10 ]", "suma": "16", "i": "3"}, "nota": "i vale 3. ¿3 <= 3? Sí, entra otra vez. Segunda pista: la posición 3 no existe."},
+      {"linea": 4, "vars": {"notas": "[ 8, 6, 10 ]", "suma": "NaN", "i": "3"}, "nota": "notas[3] es undefined. 16 + undefined da NaN, sin ningún mensaje de error. Desde aquí, todo lo que se calcule con suma será NaN."},
+      {"linea": 3, "vars": {"notas": "[ 8, 6, 10 ]", "suma": "NaN", "i": "4"}, "nota": "i vale 4. ¿4 <= 3? No: el bucle termina."},
+      {"linea": 6, "vars": {"notas": "[ 8, 6, 10 ]", "suma": "NaN"}, "salida": "Promedio: NaN", "nota": "i ya no existe fuera del bucle. NaN / 3 sigue siendo NaN. La película mostró dos fallos: el bucle empieza en 1 (se salta el 8) y usa <= (lee una posición que no existe)."}
+    ]</script>
+  </div>
+  <p>Hay dos fallos, y si arreglas solo uno el resultado sigue mal: empezando en 0 pero con <code>&lt;=</code> sigue saliendo <code>NaN</code>; usando <code>&lt;</code> pero empezando en 1 sale 5.33. La versión correcta es <code>for (let i = 0; i &lt; notas.length; i++)</code>, o mejor, <code>for (const nota of notas)</code>, que no puede equivocarse de posición. Este componente de paso a paso es un depurador en miniatura. El de verdad lo tienes en tu navegador, y funciona con cualquier programa.</p>
+</section>
+
+<section id="devtools" data-parada="DevTools y breakpoints">
+  <h2>El depurador del navegador</h2>
+  <p>Llenar el código de <code>console.log</code> funciona, pero tiene límites: tienes que adivinar de antemano qué imprimir, y cada nueva pregunta te obliga a editar y volver a ejecutar. Un <strong>depurador</strong> (en inglés, <em>debugger</em>) es una herramienta que <strong>pausa</strong> tu programa en la línea que elijas y te deja mirar dentro: el valor de cada variable, la pila de llamadas completa, y avanzar línea a línea viendo cómo cambia todo. Es la película del apartado anterior, pero con tu programa real.</p>
+  <p>Todos los navegadores traen uno dentro de sus herramientas para desarrolladores, las <strong>DevTools</strong>. Aquí usamos Chrome (Edge es casi idéntico, porque está construido sobre la misma base). Para abrirlas:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Para abrir…</th><th scope="col">Windows y Linux</th><th scope="col">Mac</th></tr></thead>
+      <tbody>
+        <tr><td>Las DevTools</td><td><kbd>F12</kbd> o <kbd>Ctrl</kbd> + <kbd>Mayús</kbd> + <kbd>I</kbd></td><td><kbd>Cmd</kbd> + <kbd>Opción</kbd> + <kbd>I</kbd></td></tr>
+        <tr><td>Directamente la consola</td><td><kbd>Ctrl</kbd> + <kbd>Mayús</kbd> + <kbd>J</kbd></td><td><kbd>Cmd</kbd> + <kbd>Opción</kbd> + <kbd>J</kbd></td></tr>
+        <tr><td>Un archivo en el panel de fuentes</td><td><kbd>Ctrl</kbd> + <kbd>P</kbd></td><td><kbd>Cmd</kbd> + <kbd>P</kbd></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El depurador vive en el panel <strong>Sources</strong> (si tienes Chrome en español, puede aparecer como <em>Fuentes</em>). Las DevTools cambian de aspecto con cada versión, así que en lugar de una captura de pantalla aquí tienes un esquema de sus zonas:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 420" role="img" aria-label="Esquema del panel Sources de Chrome DevTools: a la izquierda, el árbol de archivos; en el centro, el editor de código con un punto de interrupción en la línea 3, donde el programa está pausado; a la derecha, los botones para avanzar y las secciones Watch, Breakpoints, Scope y Call Stack; abajo, la consola, donde se evalúa cuenta más propina y sale el texto 505.">
+      <rect class="d-caja" x="10" y="10" width="700" height="400" rx="8"/>
+      <path class="d-linea" d="M10 44H710M160 44V330M486 44V330M10 330H710"/>
+      <text x="30" y="33" style="font-size:14px">Elements</text>
+      <text x="115" y="33" style="font-size:14px">Console</text>
+      <rect class="d-acento" x="192" y="16" width="76" height="24" rx="4"/>
+      <text class="d-sobre-acento" x="230" y="33" text-anchor="middle" style="font-size:14px">Sources</text>
+      <text x="290" y="33" style="font-size:14px">Network</text>
+
+      <text class="d-peq d-tenue" x="22" y="66">Page</text>
+      <text class="d-peq" x="22" y="92">tienda</text>
+      <text class="d-peq" x="38" y="116">index.html</text>
+      <rect class="d-resalte" x="30" y="126" width="110" height="20" rx="3"/>
+      <text class="d-peq" x="38" y="140">app.js</text>
+
+      <text class="d-peq d-tenue" x="172" y="66">app.js</text>
+      <g class="d-mono" style="font-size:12px">
+        <text class="d-mono d-tenue" x="190" y="96" text-anchor="end" style="font-size:12px">1</text>
+        <text class="d-mono d-tenue" x="190" y="120" text-anchor="end" style="font-size:12px">2</text>
+        <rect class="d-resalte" x="172" y="130" width="310" height="20" rx="3"/>
+        <rect class="d-acento" x="173" y="131" width="22" height="18" rx="3"/>
+        <text class="d-mono d-sobre-acento" x="190" y="144" text-anchor="end" style="font-size:12px">3</text>
+        <text class="d-mono d-tenue" x="190" y="168" text-anchor="end" style="font-size:12px">4</text>
+        <text class="d-mono d-tenue" x="190" y="192" text-anchor="end" style="font-size:12px">5</text>
+        <text class="d-mono" x="202" y="96" style="font-size:12px">function calcular(cuenta, pct) {</text>
+        <text class="d-mono" x="216.4" y="120" style="font-size:12px" textLength="256">const propina = cuenta * pct / 100;</text>
+        <text class="d-mono" x="216.4" y="144" style="font-size:12px">const total = cuenta + propina;</text>
+        <text class="d-mono" x="216.4" y="168" style="font-size:12px">return total;</text>
+        <text class="d-mono" x="202" y="192" style="font-size:12px">}</text>
+      </g>
+      <text class="d-peq d-tenue" x="202" y="226">Paused on breakpoint</text>
+
+      <rect class="d-caja-suave" x="504" y="52" width="36" height="28" rx="5"/>
+      <path class="d-linea" d="M514 59V73"/><path class="d-tinta" d="M519 59v14l11-7z"/>
+      <rect class="d-caja-suave" x="554" y="52" width="36" height="28" rx="5"/>
+      <path class="d-linea" d="M563 70q9-14 18 0"/><path class="d-tinta" d="M577 66l6 5-8 2z"/><circle class="d-tinta" cx="572" cy="75" r="2.5"/>
+      <rect class="d-caja-suave" x="604" y="52" width="36" height="28" rx="5"/>
+      <path class="d-linea" d="M622 57V68"/><path class="d-tinta" d="M617 66l5 6 5-6z"/><circle class="d-tinta" cx="622" cy="76" r="2.5"/>
+      <rect class="d-caja-suave" x="654" y="52" width="36" height="28" rx="5"/>
+      <path class="d-linea" d="M672 62V73"/><path class="d-tinta" d="M667 64l5-6 5 6z"/><circle class="d-tinta" cx="672" cy="76" r="2.5"/>
+      <text class="d-peq" x="522" y="98" text-anchor="middle">F8</text>
+      <text class="d-peq" x="572" y="98" text-anchor="middle">F10</text>
+      <text class="d-peq" x="622" y="98" text-anchor="middle">F11</text>
+      <text class="d-peq" x="672" y="98" text-anchor="middle">Mayús F11</text>
+
+      <text class="d-rotulo" x="510" y="124" style="font-size:14px">Watch</text>
+      <text class="d-mono" x="510" y="142" style="font-size:12px">typeof cuenta: "string"</text>
+      <text class="d-rotulo" x="510" y="166" style="font-size:14px">Breakpoints</text>
+      <rect class="d-acento" x="510" y="175" width="10" height="10" rx="2"/>
+      <text class="d-mono" x="526" y="184" style="font-size:12px">app.js:3</text>
+      <text class="d-rotulo" x="510" y="208" style="font-size:14px">Scope</text>
+      <text class="d-mono" x="510" y="226" style="font-size:12px">cuenta: "50"</text>
+      <text class="d-mono" x="510" y="244" style="font-size:12px">pct: "10"</text>
+      <text class="d-mono" x="510" y="262" style="font-size:12px">propina: 5</text>
+      <text class="d-rotulo" x="510" y="286" style="font-size:14px">Call Stack</text>
+      <text class="d-mono" x="510" y="304" style="font-size:12px">calcular</text>
+      <text class="d-mono d-tenue" x="700" y="304" text-anchor="end" style="font-size:12px">app.js:3</text>
+      <text class="d-mono" x="510" y="321" style="font-size:12px">(anonymous)</text>
+      <text class="d-mono d-tenue" x="700" y="321" text-anchor="end" style="font-size:12px">app.js:10</text>
+
+      <text class="d-peq d-tenue" x="22" y="352">Console</text>
+      <text class="d-mono" x="22" y="376" style="font-size:13px">&gt; cuenta + propina</text>
+      <text class="d-mono" x="22" y="398" style="font-size:13px">&lt; '505'</text>
+
+      <g style="font-size:13px" text-anchor="middle">
+        <circle class="d-acento" cx="140" cy="62" r="11"/><text class="d-sobre-acento d-rotulo" x="140" y="67" style="font-size:13px">1</text>
+        <circle class="d-acento" cx="468" cy="62" r="11"/><text class="d-sobre-acento d-rotulo" x="468" y="67" style="font-size:13px">2</text>
+        <circle class="d-acento" cx="494" cy="66" r="9"/><text class="d-sobre-acento d-rotulo" x="494" y="70.5" style="font-size:12px">3</text>
+        <circle class="d-acento" cx="494" cy="120" r="9"/><text class="d-sobre-acento d-rotulo" x="494" y="124.5" style="font-size:12px">4</text>
+        <circle class="d-acento" cx="494" cy="162" r="9"/><text class="d-sobre-acento d-rotulo" x="494" y="166.5" style="font-size:12px">5</text>
+        <circle class="d-acento" cx="494" cy="204" r="9"/><text class="d-sobre-acento d-rotulo" x="494" y="208.5" style="font-size:12px">6</text>
+        <circle class="d-acento" cx="494" cy="282" r="9"/><text class="d-sobre-acento d-rotulo" x="494" y="286.5" style="font-size:12px">7</text>
+        <circle class="d-acento" cx="690" cy="350" r="11"/><text class="d-sobre-acento d-rotulo" x="690" y="355" style="font-size:13px">8</text>
+      </g>
+    </svg>
+    <figcaption>Esquema del panel Sources de Chrome con el programa pausado en la línea 3. Los números corresponden a la lista de abajo. Los nombres están en inglés, como en la mayoría de tutoriales.</figcaption>
+  </figure>
+  <ol>
+    <li><strong>Árbol de archivos</strong> (<em>Page</em>): todos los archivos que cargó la página. Haz clic en uno para abrirlo.</li>
+    <li><strong>Editor de código</strong>: haz clic en el <strong>número</strong> de una línea para poner un <strong>punto de interrupción</strong> (<em>breakpoint</em>): una marca que dice «detente justo antes de ejecutar esta línea». Aparece una etiqueta de color sobre el número. Cuando el programa se pausa, la línea queda resaltada. Si pasas el ratón por encima de una variable, ves su valor.</li>
+    <li><strong>Botones para avanzar</strong>: reanudar, pasar por encima, entrar y salir (los explica la tabla de abajo).</li>
+    <li><strong>Watch</strong> («observar»): escribe expresiones que quieras vigilar, como <code>typeof cuenta</code> o <code>total &gt; 100</code>. Se recalculan en cada paso.</li>
+    <li><strong>Breakpoints</strong>: la lista de tus puntos de interrupción. Puedes desactivarlos uno a uno sin borrarlos.</li>
+    <li><strong>Scope</strong> («ámbito»): las variables que existen en este punto y su valor actual. Los textos aparecen con comillas, así que un <code>"50"</code> que debía ser número se delata solo. Con doble clic puedes cambiar un valor para probar una hipótesis.</li>
+    <li><strong>Call Stack</strong> («pila de llamadas»): la misma pila que ves en una traza de error, pero en vivo. Haz clic en una función de la lista para ver sus variables.</li>
+    <li><strong>Consola</strong>: mientras el programa está pausado, lo que escribas aquí se evalúa con las variables de ese momento. Es perfecta para experimentos rápidos.</li>
+  </ol>
+
+  <h3>Avanzar paso a paso</h3>
+  <p>Cuando el programa está pausado, estos cuatro botones deciden cómo sigue. Las teclas son las mismas en Chrome y en Edge:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Botón</th><th scope="col">Tecla</th><th scope="col">Qué hace</th><th scope="col">Úsalo cuando…</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Resume</strong> (reanudar)</td><td><kbd>F8</kbd></td><td>Sigue ejecutando normalmente hasta el siguiente punto de interrupción, o hasta el final.</td><td>Ya viste lo que querías en esta parada.</td></tr>
+        <tr><td><strong>Step over</strong> (pasar por encima)</td><td><kbd>F10</kbd></td><td>Ejecuta la línea actual completa y se detiene en la siguiente. Si la línea llama a una función, la ejecuta entera sin entrar.</td><td>Confías en esa función y quieres avanzar por la actual.</td></tr>
+        <tr><td><strong>Step into</strong> (entrar)</td><td><kbd>F11</kbd></td><td>Si la línea llama a una función, entra y se detiene en su primera línea.</td><td>Sospechas de la función que se llama en esta línea.</td></tr>
+        <tr><td><strong>Step out</strong> (salir)</td><td><kbd>Mayús</kbd> + <kbd>F11</kbd></td><td>Termina de ejecutar la función actual y se detiene en la línea que la llamó.</td><td>Entraste en una función y ya no te interesa.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>En un Mac, las teclas <kbd>F</kbd> pueden necesitar la tecla <kbd>Fn</kbd>. También funcionan <kbd>Cmd</kbd> + <kbd>\</kbd> (reanudar), <kbd>Cmd</kbd> + <kbd>'</kbd> (pasar por encima), <kbd>Cmd</kbd> + <kbd>;</kbd> (entrar) y <kbd>Cmd</kbd> + <kbd>Mayús</kbd> + <kbd>;</kbd> (salir).</p>
+
+  <h3>La palabra debugger</h3>
+  <p>Otra forma de poner un punto de interrupción es escribirlo en el código. La instrucción <code>debugger;</code> hace que el programa se pause en esa línea, <em>siempre que las DevTools estén abiertas</em>. Si están cerradas, no hace nada. Es útil cuando te cuesta encontrar la línea en el panel de fuentes, o cuando el código está dentro de algo que no controlas fácilmente, como la vista previa de un taller.</p>
+  <aside class="senal ojo">
+    <p>No dejes un <code>debugger;</code> olvidado en tu código: a cualquier persona que abra las DevTools en tu página se le pausará el programa. Los linters lo detectan (ESLint tiene una regla, <code>no-debugger</code>, activada en su configuración recomendada).</p>
+  </aside>
+
+  <h3>Practica con el depurador de verdad</h3>
+  <p>Esta calculadora de propinas tiene el fallo clásico: con una cuenta de 50 y un 10 % de propina, dice que el total es 505. No te preocupes por las líneas que usan <code>document</code> y <code>addEventListener</code>: conectan el botón con la función y las entenderás en la <a href="15-dom.html">Estación 15</a>. Lo importante es que, al pulsar el botón, se llama a <code>calcularTotal</code> con lo que hay escrito en las dos cajas.</p>
+  <ol class="pasos">
+    <li><div><p>Abre las DevTools (<kbd>F12</kbd>) y deja la ventana abierta.</p></div></li>
+    <li><div><p>Pulsa «Ejecutar» en el taller. El curso pulsa el botón de la calculadora por ti para comprobar el resultado, así que el navegador se detendrá en la línea <code>debugger;</code>. Puede que el archivo aparezca con un nombre raro, como <code>about:srcdoc</code>: es la vista previa del taller.</p></div></li>
+    <li><div><p>Mira la sección Scope: ¿qué valen <code>cuenta</code> y <code>porcentaje</code>? ¿Tienen comillas?</p></div></li>
+    <li><div><p>Avanza con <em>Step over</em> (<kbd>F10</kbd>) línea a línea y observa cómo aparecen <code>propina</code> y <code>total</code>. Añade <code>typeof cuenta</code> en Watch.</p></div></li>
+    <li><div><p>Con la hipótesis confirmada, reanuda con <kbd>F8</kbd>, corrige el código, borra la línea <code>debugger;</code> y vuelve a ejecutar hasta que la vista previa diga <code>Total: 55</code>.</p></div></li>
+  </ol>
+  <div class="taller" data-modo="web" id="taller-devtools" data-titulo="Depura la calculadora de propinas" data-alto="16rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;h2&gt;Calculadora de propinas&lt;/h2&gt;
+&lt;p&gt;&lt;label&gt;Cuenta: &lt;input id="cuenta" value="50"&gt;&lt;/label&gt;&lt;/p&gt;
+&lt;p&gt;&lt;label&gt;Propina (%): &lt;input id="porcentaje" value="10"&gt;&lt;/label&gt;&lt;/p&gt;
+&lt;button id="calcular"&gt;Calcular total&lt;/button&gt;
+&lt;p id="resultado"&gt;&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; padding: 0.5rem 1rem; }
+input { width: 5rem; font-size: 1rem; }
+#resultado { font-size: 1.4rem; font-weight: bold; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">function calcularTotal(cuenta, porcentaje) {
+  debugger; // con las DevTools abiertas, el navegador se detiene aquí
+  const propina = cuenta * porcentaje / 100;
+  const total = cuenta + propina;
+  return total;
+}
+
+// Conecta el botón con la función (lo verás en la Estación 15).
+document.querySelector("#calcular").addEventListener("click", function () {
+  const cuenta = document.querySelector("#cuenta").value;
+  const porcentaje = document.querySelector("#porcentaje").value;
+  const total = calcularTotal(cuenta, porcentaje);
+  document.querySelector("#resultado").textContent = "Total: " + total;
+});</textarea>
+    <script type="text/plain" class="taller-verificar">
+document.querySelector("#calcular").click();
+var r = document.querySelector("#resultado").textContent;
+if (r === "Total: 505") return "La calculadora dice «Total: 505». Abre las DevTools (F12), ejecuta otra vez y mira en Scope qué tipo tienen cuenta y propina.";
+if (r !== "Total: 55") return "Con una cuenta de 50 y un 10 % de propina, el total debería ser «Total: 55». Ahora dice «" + r + "».";
+return true;
+    </script>
+  </div>
+  <p>Todo lo que llega de una caja de texto de una página es un texto, aunque la persona escriba números. <code>cuenta * porcentaje</code> funciona porque <code>*</code> convierte a número, pero <code>cuenta + propina</code> pega <code>"50"</code> y <code>5</code>. La mejor corrección es convertir los datos justo cuando entran: <code>Number(document.querySelector("#cuenta").value)</code>, y lo mismo con el porcentaje. Si no tienes DevTools a mano (por ejemplo, en un móvil), puedes seguir la misma investigación en esta traza, que imita lo que verías al avanzar con el depurador:</p>
+  <div class="traza" data-titulo="Lo que verías paso a paso en el depurador" data-rotulo-memoria="Scope (variables)" data-inicio="El programa está a punto de empezar. En el depurador, esto sería el momento en que se detiene en el punto de interrupción. Pulsa «Siguiente».">
+    <pre><code class="language-js">function calcularTotal(cuenta, porcentaje) {
+  const propina = cuenta * porcentaje / 100;
+  const total = cuenta + propina;
+  return total;
+}
+const resultado = calcularTotal("50", "10");
+console.log("Total:", resultado);</code></pre>
+    <script type="application/json">[
+      {"linea": 6, "vars": {"cuenta": "\"50\"", "porcentaje": "\"10\""}, "nota": "La línea 6 llama a calcularTotal con dos textos, \"50\" y \"10\", como llegarían de un formulario. Con Step into (F11), la ejecución entra en la función. Fíjate: los valores tienen comillas, igual que en el panel Scope."},
+      {"linea": 2, "vars": {"cuenta": "\"50\"", "porcentaje": "\"10\"", "propina": "5"}, "nota": "El operador * convierte los textos a números para multiplicar: 50 * 10 / 100 = 5. propina es un número, sin comillas. Hasta aquí, todo bien."},
+      {"linea": 3, "vars": {"cuenta": "\"50\"", "porcentaje": "\"10\"", "propina": "5", "total": "\"505\""}, "nota": "¡Aquí está! cuenta es un texto, así que + concatena: \"50\" + 5 da \"505\". Hipótesis confirmada: el fallo es el tipo de cuenta."},
+      {"linea": 4, "vars": {"cuenta": "\"50\"", "porcentaje": "\"10\"", "propina": "5", "total": "\"505\""}, "nota": "La función devuelve el texto \"505\". Con Step out (Mayús + F11) volverías a la línea que la llamó."},
+      {"linea": 6, "vars": {"resultado": "\"505\""}, "nota": "De vuelta en el código principal. Las variables de la función ya no existen; resultado guarda lo que devolvió."},
+      {"linea": 7, "vars": {"resultado": "\"505\""}, "salida": "Total: 505", "nota": "Se imprime el total equivocado. La corrección: convertir con Number() los datos que llegan como texto, antes de calcular."}
+    ]</script>
+  </div>
+
+  <h3>Más trucos del panel de fuentes</h3>
+  <ul>
+    <li><strong>Puntos de interrupción condicionales.</strong> Haz clic derecho en el número de línea y elige <em>Add conditional breakpoint</em>. Escribe una condición, como <code>i === 250</code>, y el programa solo se detendrá cuando se cumpla. Ideal para un bucle que falla en la vuelta 250 de 1000.</li>
+    <li><strong>Logpoints.</strong> Con clic derecho y <em>Add logpoint</em> escribes un mensaje, como en un <code>console.log</code>, que se imprime en la consola cada vez que pasa por ahí, sin pausar y sin tocar tu código.</li>
+    <li><strong>Pausar en las excepciones.</strong> En la sección Breakpoints, activa <em>Pause on uncaught exceptions</em>: cuando ocurra un error no capturado, el depurador se detendrá en la línea exacta del error, con todas las variables tal como estaban. También existe <em>Pause on caught exceptions</em>, para los errores que sí se capturan.</li>
+    <li><strong>Probar un arreglo al vuelo.</strong> Puedes editar el código en el panel y guardar con <kbd>Ctrl</kbd> + <kbd>S</kbd> (<kbd>Cmd</kbd> + <kbd>S</kbd> en Mac) para probar una idea. El cambio es temporal: al recargar la página, desaparece. Cuando funcione, cópialo a tu archivo.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="En otros navegadores y en Node">
+    <p>Firefox tiene las mismas ideas con otros nombres: su panel se llama <em>Debugger</em> (en español, «Depurador») y también se abre con <kbd>F12</kbd>. En Safari primero hay que activar las funciones para desarrolladores en los ajustes avanzados. Para programas de Node.js, Visual Studio Code trae su propio depurador: el más sencillo de usar es la <em>JavaScript Debug Terminal</em> (la creas desde el desplegable de la terminal o con el comando <em>Debug: Create JavaScript Debug Terminal</em>); todo lo que ejecutes con <code>node</code> en ella se para en tus puntos de interrupción. Los controles son los mismos que acabas de aprender.</p>
+  </aside>
+  <aside class="senal clave">
+    <p>¿<code>console.log</code> o depurador? Los dos. <code>console.log</code> es rápido para una pregunta concreta y funciona en cualquier sitio. El depurador gana cuando no sabes qué preguntar, cuando necesitas ver muchas variables a la vez o cuando quieres seguir el camino exacto que toma el programa.</p>
+  </aside>
+</section>
+
+<section id="excepciones" data-parada="try/catch y throw">
+  <h2>Capturar errores: try, catch y finally</h2>
+  <p>Hasta ahora, un error de ejecución detenía el programa. Mientras desarrollas, eso está bien: un fallo ruidoso se encuentra rápido. Pero hay errores que no son descuidos tuyos, sino situaciones que tu programa debe esperar: una partida guardada que se dañó, una persona que escribe letras donde iba su edad, un servidor que no responde. En esos casos el programa no debería cerrarse de golpe. Debería reaccionar: avisar, usar un valor por defecto, intentarlo de nuevo. Para eso existen <code>try</code> y <code>catch</code>.</p>
+  <pre><code class="language-js">try {
+  // código que puede fallar
+} catch (error) {
+  // qué hacer si falla
+}</code></pre>
+  <p>El bloque <strong>try</strong> («intentar») contiene el código protegido. Si una de sus líneas lanza una excepción, el resto del bloque se abandona y la ejecución salta al bloque <strong>catch</strong> («atrapar»), que recibe el error en una variable. Si no hay ningún error, el <code>catch</code> se salta entero. En los dos casos, el programa continúa después. Se dice que el error fue <strong>capturado</strong>: lo contrario del <code>Uncaught</code> («no capturado») que ves en la consola.</p>
+  <figure class="capsula" data-titulo="El camino de un error capturado">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: un programa intenta leer una partida guardada dañada. Dentro de try se imprime Cargando partida; JSON.parse lanza un SyntaxError; la línea siguiente se salta y la ejecución salta al catch, que imprime Dañada: SyntaxError. Después se ejecuta finally, que imprime Listo, y el programa sigue con El juego sigue.">
+        <rect class="d-codigo" x="10" y="10" width="440" height="274" rx="8"/>
+        <text class="d-codigo-tenue" x="24" y="31" style="font-size:13px">partida.js</text>
+        <rect class="d-resalte" x="14" y="41" width="432" height="21" rx="4" data-mover="2:translate(0px,42px); 3:translate(0px,63px); 4:translate(0px,126px); 5:translate(0px,168px); 6:translate(0px,210px)"/>
+        <rect class="d-mal-trazo" x="14" y="104" width="432" height="21" rx="4" data-pasos="3"/>
+        <g style="font-size:13px">
+          <text class="d-codigo-tenue" x="40" y="56" text-anchor="end" style="font-size:13px">1</text>
+          <text class="d-codigo-tenue" x="40" y="77" text-anchor="end" style="font-size:13px">2</text>
+          <text class="d-codigo-tenue" x="40" y="98" text-anchor="end" style="font-size:13px">3</text>
+          <text class="d-codigo-tenue" x="40" y="119" text-anchor="end" style="font-size:13px">4</text>
+          <text class="d-codigo-tenue" x="40" y="140" text-anchor="end" style="font-size:13px">5</text>
+          <text class="d-codigo-tenue" x="40" y="161" text-anchor="end" style="font-size:13px">6</text>
+          <text class="d-codigo-tenue" x="40" y="182" text-anchor="end" style="font-size:13px">7</text>
+          <text class="d-codigo-tenue" x="40" y="203" text-anchor="end" style="font-size:13px">8</text>
+          <text class="d-codigo-tenue" x="40" y="224" text-anchor="end" style="font-size:13px">9</text>
+          <text class="d-codigo-tenue" x="40" y="245" text-anchor="end" style="font-size:13px">10</text>
+          <text class="d-codigo-tenue" x="40" y="266" text-anchor="end" style="font-size:13px">11</text>
+        </g>
+        <text class="d-codigo-texto" x="52" y="56" style="font-size:14px">const guardado = '{"nivel": 4';</text>
+        <text class="d-codigo-texto" x="52" y="77" style="font-size:14px">try {</text>
+        <text class="d-codigo-texto" x="68.8" y="98" style="font-size:14px">console.log("Cargando partida…");</text>
+        <text class="d-codigo-texto" x="68.8" y="119" style="font-size:14px">const datos = JSON.parse(guardado);</text>
+        <text class="d-codigo-texto" x="68.8" y="140" style="font-size:14px">console.log("Nivel:", datos.nivel);</text>
+        <text class="d-codigo-texto" x="52" y="161" style="font-size:14px">} catch (error) {</text>
+        <text class="d-codigo-texto" x="68.8" y="182" style="font-size:14px">console.log("Dañada:", error.name);</text>
+        <text class="d-codigo-texto" x="52" y="203" style="font-size:14px">} finally {</text>
+        <text class="d-codigo-texto" x="68.8" y="224" style="font-size:14px">console.log("Listo.");</text>
+        <text class="d-codigo-texto" x="52" y="245" style="font-size:14px">}</text>
+        <text class="d-codigo-texto" x="52" y="266" style="font-size:14px">console.log("El juego sigue.");</text>
+        <rect class="d-codigo" x="14" y="125" width="432" height="21" style="fill-opacity:.75" data-pasos="3-"/>
+        <g data-pasos="3">
+          <path class="d-acento-trazo" d="M380 112C428 112 428 156 380 156H218"/>
+          <path class="d-acento" d="M218 149l-12 7 12 7z"/>
+        </g>
+
+        <rect class="d-codigo" x="470" y="10" width="240" height="170" rx="8"/>
+        <text class="d-codigo-tenue" x="484" y="31" style="font-size:13px">Consola</text>
+        <text class="d-codigo-texto" x="484" y="60" style="font-size:14px" data-pasos="2-">Cargando partida…</text>
+        <text class="d-codigo-texto" x="484" y="86" style="font-size:14px" data-pasos="4-">Dañada: SyntaxError</text>
+        <text class="d-codigo-texto" x="484" y="112" style="font-size:14px" data-pasos="5-">Listo.</text>
+        <text class="d-codigo-texto" x="484" y="138" style="font-size:14px" data-pasos="6-">El juego sigue.</text>
+
+        <rect class="d-caja-suave" x="470" y="196" width="240" height="88" rx="8"/>
+        <text class="d-rotulo" x="484" y="220">Qué pasa</text>
+        <text x="484" y="246" style="font-size:14px" data-texto="2:dentro de try; 3:¡excepción! salto al catch; 4:error guarda el SyntaxError; 5:finally se ejecuta siempre; 6:el programa no se detuvo">texto dañado: falta la }</text>
+        <text class="d-tenue" x="484" y="270" style="font-size:13px" data-pasos="3-">datos nunca llegó a crearse</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li><code>guardado</code> contiene una partida guardada en JSON, pero dañada: le falta la llave de cierre. Veamos qué hace <code>try</code> con ella.</li>
+        <li>La ejecución entra en el bloque <code>try</code>. La línea 3 funciona sin problema e imprime «Cargando partida…».</li>
+        <li data-duracion="7"><code>JSON.parse</code> no puede leer el texto y lanza un <code>SyntaxError</code>. En ese instante se abandona el resto del <code>try</code>: la línea 5 no se ejecuta y <code>datos</code> nunca llega a existir. La ejecución salta al <code>catch</code>.</li>
+        <li data-duracion="6">El <code>catch</code> recibe el error en la variable <code>error</code> (el nombre lo eliges tú). Aquí decides qué hacer: la línea 7 avisa con el tipo de error.</li>
+        <li>El bloque <code>finally</code> («finalmente») se ejecuta siempre, haya habido error o no. Sirve para tareas de cierre, como ocultar un aviso de «cargando».</li>
+        <li data-duracion="6">Y lo más importante: el programa sigue. Sin <code>try</code>, el error habría detenido todo en la línea 4. Con él, el juego continúa y puede, por ejemplo, ofrecer una partida nueva.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Ejecuta el mismo programa. Después <strong>modifícalo</strong>: completa el texto guardado para que sea JSON válido (<code>'{"nivel": 4}'</code>) y, antes de volver a ejecutar, predice qué líneas saldrán ahora.</p>
+  <div class="taller" id="taller-trycatch" data-titulo="Una partida dañada (error capturado)">
+    <textarea class="taller-codigo">const guardado = '{"nivel": 4';
+
+try {
+  console.log("Cargando partida…");
+  const datos = JSON.parse(guardado);
+  console.log("Nivel:", datos.nivel);
+} catch (error) {
+  console.log("Dañada:", error.name);
+  console.log("Detalle:", error.message);
+} finally {
+  console.log("Listo.");
+}
+console.log("El juego sigue.");</textarea>
+  </div>
+  <p>Con el texto corregido, el <code>catch</code> no se ejecuta: salen «Cargando partida…», «Nivel: 4», «Listo.» y «El juego sigue.». El <code>finally</code> aparece en los dos casos.</p>
+
+  <h3>Qué trae el objeto error</h3>
+  <p>Lo que recibe el <code>catch</code> es un objeto con tres propiedades que ya sabes leer:</p>
+  <ul>
+    <li><code>error.name</code>: el tipo, como <code>"TypeError"</code> o <code>"SyntaxError"</code>.</li>
+    <li><code>error.message</code>: el mensaje, como <code>"Cannot read properties of undefined (reading 'nombre')"</code>.</li>
+    <li><code>error.stack</code>: un texto con el tipo, el mensaje y la traza de la pila. No forma parte del estándar oficial de JavaScript, pero todos los navegadores y Node la tienen. Su formato cambia según el motor: V8 escribe <code>at precioDe (carrito.js:7:28)</code> y Firefox escribe <code>precioDe@carrito.js:7:28</code>.</li>
+  </ul>
+  <p>Si solo quieres que el programa siga y no te importa el error, puedes omitir la variable: <code>catch { … }</code>. Úsalo con moderación, por lo que verás en el error común de más abajo.</p>
+
+  <h3>Lanzar tus propios errores: throw</h3>
+  <p>También puedes provocar un error a propósito con <strong>throw</strong> («lanzar»). ¿Para qué querrías eso? Para <strong>fallar pronto y con claridad</strong>. Si una función recibe un dato imposible, es mejor detenerse ahí mismo con un mensaje que explique el problema que seguir calculando con basura y que el fallo aparezca diez funciones más lejos, como un <code>NaN</code> misterioso.</p>
+  <pre><code class="language-js">throw new Error("Mensaje que explica qué pasó");</code></pre>
+  <p><code>new Error(...)</code> crea el objeto error con su mensaje y su traza, y <code>throw</code> lo lanza. Desde ese momento se comporta como cualquier excepción: si nadie lo captura, detiene el programa; si hay un <code>try</code> alrededor, salta a su <code>catch</code>. También puedes lanzar los tipos que ya conoces, para ser más preciso: <code>new TypeError(...)</code> si el dato es del tipo equivocado, o <code>new RangeError(...)</code> si está fuera de rango. Predice qué imprime este programa, línea a línea:</p>
+  <div class="taller" id="taller-throw" data-titulo="Predice: lanzar y capturar errores">
+    <textarea class="taller-codigo">function crearPersonaje(nombre, nivel) {
+  if (typeof nivel !== "number" || nivel < 1 || nivel > 100) {
+    throw new RangeError("El nivel debe ser un número del 1 al 100 y llegó: " + JSON.stringify(nivel));
+  }
+  return { nombre: nombre, nivel: nivel };
+}
+
+const lyra = crearPersonaje("Lyra", 7);
+console.log(lyra.nombre, "creada con nivel", lyra.nivel);
+
+try {
+  const tom = crearPersonaje("Tom", 250);
+  console.log(tom.nombre, "creado");
+} catch (error) {
+  console.log("No se pudo crear a Tom.", error.name + ":", error.message);
+}
+
+const sol = crearPersonaje("Sol", "5");
+console.log("¿Llega aquí?");</textarea>
+  </div>
+  <p>Lyra se crea sin problemas. Tom falla, pero su error se captura y el programa sigue. Sol también falla (su nivel es el texto <code>"5"</code>, no un número) y, como nadie captura ese error, el programa se detiene con un <code>RangeError</code> y nunca imprime «¿Llega aquí?». Fíjate en el mensaje: dice qué se esperaba y qué llegó, y gracias a <code>JSON.stringify</code> el texto aparece entre comillas (<code>llegó: "5"</code>), así que se ve que el problema es el tipo. Con un mensaje así, quien use tu función encuentra su error en segundos.</p>
+  <aside class="senal error">
+    <p>Lanzar un texto en lugar de un error: <code>throw "nivel inválido"</code>. JavaScript lo permite, pero ese valor no tiene <code>name</code> ni <code>stack</code>: pierdes la traza que te diría de dónde vino. Lanza siempre un objeto error: <code>throw new Error("nivel inválido")</code>.</p>
+  </aside>
+
+  <h3>Errores con nombre propio</h3>
+  <p>En programas grandes conviene distinguir tus errores de los demás. La forma habitual es crear un tipo de error propio. Usa una <strong>clase</strong>, una herramienta que estudiarás en la <a href="21-paradigmas.html">Estación 21</a>. Por ahora úsala como plantilla: copia la estructura y cambia los dos nombres.</p>
+  <pre><code class="language-js">class SaldoInsuficienteError extends Error {
+  constructor(mensaje) {
+    super(mensaje);
+    this.name = "SaldoInsuficienteError";
+  }
+}
+
+function retirar(saldo, monto) {
+  if (monto &gt; saldo) {
+    throw new SaldoInsuficienteError("Quieres retirar " + monto + " y tienes " + saldo);
+  }
+  return saldo - monto;
+}
+
+try {
+  retirar(100, 300);
+} catch (error) {
+  if (error instanceof SaldoInsuficienteError) {
+    console.log("Aviso para el jugador:", error.message);
+  } else {
+    throw error; // un error que no sé manejar: que siga su camino
+  }
+}</code></pre>
+  <p><code>error instanceof SaldoInsuficienteError</code> pregunta «¿este error es de ese tipo?». Así el <code>catch</code> maneja solo los errores que entiende. Los demás los vuelve a lanzar con <code>throw error</code>, para que no queden escondidos. Si al capturar un error quieres lanzar otro más descriptivo sin perder el original, usa la opción <code>cause</code>: <code>throw new Error("No se pudo cargar la partida", { cause: error })</code>. El error original queda guardado en la propiedad <code>cause</code> del nuevo.</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Tragarse el error</p>
+      <pre><code class="language-js">try {
+  const datos = JSON.parse(guardado);
+  iniciarPartida(datos);
+} catch (error) {
+  // no pasa nada...
+}</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Reaccionar y dejar rastro</p>
+      <pre><code class="language-js">try {
+  const datos = JSON.parse(guardado);
+  iniciarPartida(datos);
+} catch (error) {
+  console.error("Partida dañada:", error);
+  iniciarPartida(partidaNueva());
+}</code></pre>
+    </div>
+  </div>
+  <aside class="senal error">
+    <p>Un <code>catch</code> vacío es de los peores bugs que puedes escribir, porque es invisible. Además del error esperado (la partida dañada), se traga cualquier otro: si <code>iniciarPartida</code> tiene un <code>TypeError</code> por un nombre mal escrito, nunca lo sabrás; el programa hará cosas raras sin ningún mensaje. Como mínimo, registra el error con <code>console.error</code>.</p>
+  </aside>
+  <aside class="senal ojo">
+    <p>Dos límites de <code>try</code>. Primero, no captura los errores de sintaxis de tu propio programa: si hay uno, el programa no llega a empezar. Sí captura los <code>SyntaxError</code> que ocurren al ejecutar, como los de <code>JSON.parse</code>. Segundo, solo captura errores que ocurren <em>mientras</em> se ejecuta su bloque. Si dentro programas algo para más tarde, por ejemplo con <code>setTimeout</code>, un error en ese código futuro ya no pasa por tu <code>catch</code>. Cómo manejar los errores de lo que ocurre «más tarde» (pedir datos a un servidor, por ejemplo) lo verás en la <a href="16-asincronia.html">Estación 16</a>.</p>
+  </aside>
+  <aside class="senal clave">
+    <p>Usa <code>try</code> y <code>catch</code> alrededor de lo que puede fallar por causas externas: datos que vienen de fuera, lo que escribe una persona, la red, los archivos. No envuelvas todo tu programa «por si acaso»: un error causado por un descuido tuyo debe verse, y cuanto antes, mejor.</p>
+  </aside>
+  <p>Ordena este fragmento, con su sangría, para que cargue una partida y avise si está dañada:</p>
+  <div class="parsons" data-titulo="Ordena el try, catch y finally" data-lenguaje="js">
+    <ol>
+      <li>try {</li>
+      <li data-sangria="1">const partida = JSON.parse(texto);</li>
+      <li data-sangria="1">console.log("Nivel:", partida.nivel);</li>
+      <li>} catch (error) {</li>
+      <li data-sangria="1">console.error("Partida dañada:", error.message);</li>
+      <li>} finally {</li>
+      <li data-sangria="1">console.log("Carga terminada");</li>
+      <li>}</li>
+    </ol>
+  </div>
+</section>
+
+<section id="ayuda" data-parada="Pedir ayuda e IA">
+  <h2>Cuando te atascas: ejemplo mínimo, buscadores e IA</h2>
+  <p>A veces aplicas el método, lees el error, pones <code>console.log</code>, usas el depurador… y sigues atascado. Es normal y le pasa a todo el mundo. En ese momento toca pedir ayuda, y hacerlo bien es una habilidad en sí misma: una buena pregunta recibe respuesta en minutos; una mala, nunca.</p>
+
+  <h3>El ejemplo mínimo reproducible</h3>
+  <p>Un <strong>ejemplo mínimo reproducible</strong> es la versión más pequeña posible de tu programa que todavía muestra el fallo. <a href="https://es.stackoverflow.com/help/minimal-reproducible-example">Stack Overflow en español</a>, un sitio de preguntas y respuestas de programación, pide que sea:</p>
+  <ul>
+    <li><strong>Mínimo:</strong> la menor cantidad de código que reproduce el problema. Nada de tu proyecto que no haga falta.</li>
+    <li><strong>Completo:</strong> que incluya todo lo necesario para que otra persona lo ejecute tal cual, con datos de ejemplo.</li>
+    <li><strong>Verificable:</strong> que lo hayas probado y de verdad muestre el problema, y que digas qué esperabas y qué obtuviste.</li>
+  </ul>
+  <p>Para construirlo, copia el código que falla en un archivo nuevo (o en un taller) y ve quitando partes: si al quitar algo el fallo sigue, esa parte sobraba; si desaparece, vuelve a ponerla, porque es parte del problema. Cambia tus datos reales por dos o tres datos inventados. Es la bisección aplicada a recortar. Y ocurre muy a menudo que, mientras reduces el ejemplo, encuentras tú mismo el fallo: al quedar solo cinco líneas, ya no tiene dónde esconderse.</p>
+  <p>Pruébalo. Esta tabla de récords ordena mal los puntos. Reduce el programa a un ejemplo mínimo que siga mostrando el problema: como mucho 4 líneas de código (los comentarios no cuentan).</p>
+  <div class="taller" id="taller-minimo" data-titulo="Reduce el error a un ejemplo mínimo">
+    <textarea class="taller-codigo">// Tabla de récords de un juego. Algo falla: el orden no es el esperado.
+const partidas = [
+  { jugador: "Ana", puntos: 900 },
+  { jugador: "Leo", puntos: 85 },
+  { jugador: "Sol", puntos: 1200 },
+  { jugador: "Tom", puntos: 150 },
+];
+
+function soloPuntos(lista) {
+  return lista.map((p) => p.puntos);
+}
+
+function ordenar(numeros) {
+  return numeros.sort();
+}
+
+function formatear(numeros) {
+  return numeros.join(" < ");
+}
+
+const puntos = soloPuntos(partidas);
+const ordenados = ordenar(puntos);
+console.log("Récords de menor a mayor:", formatear(ordenados));</textarea>
+    <script type="text/plain" class="taller-verificar">
+var lineas = codigo.split("\n").filter(function (l) { var t = l.trim(); return t && t.indexOf("//") !== 0; });
+if (codigo.indexOf(".sort(") === -1) return "Tu ejemplo tiene que usar .sort(): es la operación sospechosa.";
+if (lineas.length > 4) return "Todavía hay " + lineas.length + " líneas de código. Un buen ejemplo mínimo de este fallo cabe en 1 a 3 líneas: un array de números, sort y un console.log.";
+var reproduce = salida.some(function (s) {
+  var m = s.match(/\[ (.+) \]/);
+  if (!m) return false;
+  var n = m[1].split(", ").map(Number);
+  if (n.some(isNaN)) return false;
+  for (var i = 1; i < n.length; i++) if (n[i] < n[i - 1]) return true;
+  return false;
+});
+return reproduce || "Tu ejemplo es corto, pero ya no muestra el fallo. Imprime el array ordenado con console.log: debería salir mal ordenado, como en el programa original.";
+    </script>
+  </div>
+  <p>Una solución es <code>console.log([900, 85, 1200, 150].sort());</code>, que imprime <code>[ 1200, 150, 85, 900 ]</code>. Con el ejemplo reducido, el problema salta a la vista: sin argumentos, <code>sort</code> ordena como si fueran textos, letra por letra. Es la trampa que viste en la <a href="11-colecciones.html">Estación 11</a>, y se arregla con <code>sort((a, b) =&gt; a - b)</code>.</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Una pregunta que nadie puede responder</p>
+      <pre><code class="language-text">Hola, mi juego no funciona, ayuda!!
+(adjunto captura de pantalla de 300 líneas de código)</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Una pregunta que se responde sola</p>
+      <pre><code class="language-text">Ordeno números con sort y salen desordenados.
+Código (Node.js 24):
+  console.log([900, 85, 1200, 150].sort());
+Esperaba: [ 85, 150, 900, 1200 ]
+Obtengo:  [ 1200, 150, 85, 900 ]
+Probé a ordenar solo dos números y sale bien.
+¿Por qué sort ordena así?</code></pre>
+    </div>
+  </div>
+  <aside class="senal ojo">
+    <p>Nunca compartas el código como captura de pantalla: nadie puede copiarlo para probarlo. Pégalo como texto. Y antes de compartirlo, quita contraseñas, claves de acceso y datos personales.</p>
+  </aside>
+
+  <h3>Buscar el error en internet</h3>
+  <p>Casi cualquier mensaje de error que veas ya lo vio antes otra persona, y es muy probable que la respuesta esté escrita. Para encontrarla:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Copia la parte general del mensaje</strong> y quita lo que es solo tuyo: nombres de tus variables, rutas de tus archivos, números de línea. De <code>TypeError: Cannot read properties of undefined (reading 'precio') at precioDe (/home/ana/tienda/carrito.js:7:28)</code> te quedas con <code>Cannot read properties of undefined</code>.</p></div></li>
+    <li><div><p><strong>Añade el contexto</strong>: el lenguaje y el entorno (<code>javascript</code>, <code>node</code>, <code>chrome</code>) y, si usas una librería, su nombre.</p></div></li>
+    <li><div><p><strong>Usa comillas</strong> para buscar la frase exacta: <code>javascript "Cannot read properties of undefined"</code>.</p></div></li>
+    <li><div><p><strong>Elige bien las fuentes.</strong> Empieza por la documentación oficial (MDN tiene una <a href="https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Errors">página por cada mensaje de error de JavaScript</a>) y por las respuestas de Stack Overflow con más votos. Mira la fecha: una respuesta de hace diez años puede usar formas de escribir JavaScript que hoy no se recomiendan, como <code>var</code>.</p></div></li>
+    <li><div><p><strong>Entiende antes de copiar.</strong> Lee por qué funciona la solución. Si pegas código que no entiendes, cambias un bug que conoces por otro que no.</p></div></li>
+  </ol>
+  <aside class="senal nota" data-titulo="¿En inglés o en español?">
+    <p>Los mensajes de error están en inglés, y buscarlos en inglés da muchos más resultados. No hace falta que entiendas todo: la mayoría de respuestas se reducen a un fragmento de código y dos o tres frases, y el traductor del navegador te ayuda con el resto. Si prefieres empezar en español, Stack Overflow en español y MDN en español son buenas fuentes.</p>
+  </aside>
+
+  <h3>Depurar con IA sin dejar de aprender</h3>
+  <p>Los asistentes de inteligencia artificial pueden explicar un error en segundos. El riesgo es que te lo resuelvan tan rápido que no aprendas a hacerlo tú, y depurar es justo la habilidad que más necesitas desarrollar.</p>
+  <aside class="senal nota" data-titulo="Lo que dice la investigación">
+    <p>En enero de 2026, Anthropic (la empresa que desarrolla el asistente Claude) publicó <a href="https://www.anthropic.com/research/AI-assistance-coding-skills">un experimento con 52 programadores</a>, en su mayoría con poca experiencia, que aprendían una librería nueva. Quienes usaron un asistente de IA sacaron de media un 50 % en un examen posterior, frente al 67 % de quienes programaron a mano. La mayor diferencia estuvo en las preguntas de depuración. Pero no todas las formas de usar la IA dieron igual: quienes delegaron todo el código obtuvieron los peores resultados, y quienes usaron la IA para hacer preguntas conceptuales o pedir explicaciones conservaron mucho mejor lo aprendido.</p>
+  </aside>
+  <p>La conclusión práctica es usar la IA como un tutor, no como alguien que hace el trabajo por ti:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Primero, tú.</strong> Lee el mensaje, reproduce el fallo y formula al menos una hipótesis. Si le preguntas a la IA sin haber pensado, no podrás juzgar si su respuesta tiene sentido.</p></div></li>
+    <li><div><p><strong>Pide explicaciones y pistas, no soluciones.</strong> «Explícame qué significa este error», «¿qué debería revisar?» o «dame una pista sin darme el código».</p></div></li>
+    <li><div><p><strong>Dale contexto de verdad:</strong> el mensaje completo, tu ejemplo mínimo, qué esperabas, qué obtuviste y qué probaste. Es lo mismo que necesitaría una persona.</p></div></li>
+    <li><div><p><strong>Desconfía y comprueba.</strong> La IA puede equivocarse con total seguridad, e incluso inventar funciones u opciones que no existen: a eso se le llama <strong>alucinar</strong>. Ejecuta lo que te proponga, pruébalo con varios datos y contrástalo con la documentación.</p></div></li>
+    <li><div><p><strong>No aceptes líneas que no sepas explicar.</strong> Si no podrías explicarle la solución al patito de goma, todavía no la entendiste.</p></div></li>
+    <li><div><p><strong>Protege lo privado.</strong> No pegues contraseñas, claves de acceso ni datos personales de otras personas.</p></div></li>
+  </ol>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Delegar</p>
+      <pre><code class="language-text">arregla esto
+(pega 200 líneas de código)</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Aprender</p>
+      <pre><code class="language-text">Estoy aprendiendo JavaScript. Esta función da
+"TypeError: Cannot read properties of undefined
+(reading 'precio')" en la línea 7 (te pego un
+ejemplo mínimo de 10 líneas). Creo que el índice
+se sale del array porque el carrito tiene 2
+productos y pido 3. ¿Mi hipótesis tiene sentido?
+Explícame el error y dame una pista, sin el código
+de la solución.</code></pre>
+    </div>
+  </div>
+  <p>Como viste en la <a href="06-primeros-pasos.html#errores">Estación 6</a>, Chrome incluso ofrece un botón que usa IA para explicar errores de la consola, si tu cuenta cumple ciertos requisitos. Úsalo con las mismas reglas. Y en la <a href="37-ia.html">Estación 37</a> aprenderás a trabajar con un agente de programación como Claude Code con criterio profesional.</p>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Un error no es un juicio sobre ti: es información. Hay tres familias. <strong>Sintaxis</strong>: no se ejecuta nada. <strong>Ejecución</strong>: el programa se detiene en la línea del problema. <strong>Lógico</strong>: no hay mensaje, pero el resultado está mal.</li>
+    <li>Un mensaje de error tiene tipo, mensaje y ubicación (<code>archivo:línea:columna</code>). La línea es donde JavaScript notó el problema; si parece correcta, mira las anteriores. Arregla los errores de uno en uno.</li>
+    <li>La <strong>traza de la pila</strong> es una foto de la pila de llamadas en el momento del error. La primera línea <code>at</code> es donde explotó; las siguientes, quién llamó. Donde explota no siempre es donde está el fallo: sigue el dato hacia atrás.</li>
+    <li><code>ReferenceError</code>: un nombre que no existe. <code>TypeError</code>: un valor que no sirve para lo que pides (el más común: leer de <code>undefined</code>, y el problema está <em>antes</em> del punto). <code>SyntaxError</code>: código mal escrito o JSON inválido. <code>RangeError</code>: un número fuera de lo permitido.</li>
+    <li>JavaScript a veces no se queja: <code>undefined</code>, <code>NaN</code>, <code>[object Object]</code> o números pegados son síntomas de errores lógicos.</li>
+    <li>El método: reproducir, observar, formular una hipótesis, experimentar prediciendo el resultado, concluir, y arreglar la causa comprobando después. Cambia una sola cosa cada vez. El patito de goma y la bisección te ayudan cuando no sabes por dónde empezar.</li>
+    <li><code>console.log</code> con etiqueta y con llaves (<code>{ cuenta }</code>) para ver el tipo; <code>console.table</code> para arrays de objetos; <code>console.error</code> y <code>console.warn</code> para avisar con distinta gravedad. Borra las impresiones de prueba al terminar.</li>
+    <li>El depurador de las DevTools pausa el programa en un punto de interrupción (o en <code>debugger;</code>) y te deja avanzar con <em>Step over</em>, <em>Step into</em> y <em>Step out</em>, mirando Scope, Watch y Call Stack.</li>
+    <li><code>try</code>/<code>catch</code> captura los errores que puedes esperar (datos externos, red, lo que escribe una persona); <code>finally</code> se ejecuta siempre; <code>throw new Error("…")</code> lanza tus propios errores con mensajes claros. Nunca dejes un <code>catch</code> vacío.</li>
+    <li>Para pedir ayuda, reduce el problema a un ejemplo mínimo reproducible, busca la parte general del mensaje entre comillas y usa la IA como tutora: explicaciones y pistas, no soluciones que no entiendas.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Casi todos estos ejercicios son de «encuentra y arregla». No te lances a cambiar cosas: ejecuta primero, lee el mensaje o compara el resultado con lo esperado, formula una hipótesis y compruébala. Usa las pistas solo después de intentarlo unos minutos. La solución está para comparar, no para copiar.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-sintaxis">
+    <h3>Tres errores de sintaxis</h3>
+    <p>Este programa tiene tres errores de sintaxis. Arréglalos de uno en uno: ejecuta, lee el mensaje y la línea, corrige solo ese error y vuelve a ejecutar. Cuando esté bien, imprimirá exactamente:</p>
+    <pre class="consola"><code>Jugadora: Lyra
+Nivel avanzado</code></pre>
+    <div class="taller" id="taller-ej1" data-titulo="Ejercicio 1" data-esperado="Jugadora: Lyra
+Nivel avanzado">
+      <textarea class="taller-codigo">// Este programa tiene TRES errores de sintaxis.
+// Arréglalos de uno en uno: ejecuta, lee el mensaje, corrige y repite.
+const nombre = "Lyra;
+const nivel = 7;
+console.log("Jugadora: " + nombre;
+if (nivel > 5 {
+  console.log("Nivel avanzado");
+}</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El primer mensaje es <code>Invalid or unexpected token</code> en la línea 3. Suele significar unas comillas sin cerrar.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Después verás <code>missing ) after argument list</code> y <code>Unexpected token '{'</code>. Cuenta los paréntesis que abren y los que cierran en las líneas 5 y 6.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const nombre = "Lyra";
+const nivel = 7;
+console.log("Jugadora: " + nombre);
+if (nivel &gt; 5) {
+  console.log("Nivel avanzado");
+}</code></pre>
+      <p>Fíjate en que los errores aparecieron de uno en uno, siempre el primero que JavaScript encontraba al leer. Por eso conviene corregir, ejecutar y volver a leer, en lugar de adivinar todos de golpe.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-propiedades">
+    <h3>Nombres que casi coinciden</h3>
+    <p>Este programa tiene tres errores de nombres. Dos producen un mensaje de error; el tercero no da error, pero imprime algo raro. Arréglalos para que imprima exactamente:</p>
+    <pre class="consola"><code>Jugador: Tom
+Vidas: 3
+Objetos: 2</code></pre>
+    <div class="taller" id="taller-ej2" data-titulo="Ejercicio 2" data-esperado="Jugador: Tom
+Vidas: 3
+Objetos: 2">
+      <textarea class="taller-codigo">const jugador = { nombre: "Tom", vidas: 3, inventario: ["espada", "poción"] };
+
+console.log("Jugador: " + Jugador.nombre);
+console.log("Vidas: " + jugador.vida.toString());
+console.log("Objetos: " + jugador.inventario.lenght);</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>ReferenceError: Jugador is not defined</code>: JavaScript distingue mayúsculas y minúsculas. ¿Cómo se llama exactamente la constante?</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>Cannot read properties of undefined (reading 'toString')</code>: lo que está antes de <code>.toString</code> vale <code>undefined</code>. ¿Existe una propiedad llamada <code>vida</code>? Y si la tercera línea imprime <code>undefined</code>, compara letra a letra el nombre de la propiedad con el que conoces de la Estación 11.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const jugador = { nombre: "Tom", vidas: 3, inventario: ["espada", "poción"] };
+
+console.log("Jugador: " + jugador.nombre);
+console.log("Vidas: " + jugador.vidas.toString());
+console.log("Objetos: " + jugador.inventario.length);</code></pre>
+      <p>Los tres fallos son de escritura, pero se manifiestan distinto: un nombre de variable inexistente da <code>ReferenceError</code>; una propiedad inexistente da <code>undefined</code> en silencio, y el error solo aparece si intentas usar ese <code>undefined</code>. Por eso <code>lenght</code> no dio error: solo imprimió <code>undefined</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-indice">
+    <h3>El índice fantasma</h3>
+    <p>Este programa cuenta las tareas pendientes de un proyecto de videojuego, pero se detiene con un error después de imprimir dos líneas. Arréglalo sin quitar el bucle <code>for</code>. Debe imprimir exactamente:</p>
+    <pre class="consola"><code>Pendiente: Programar el salto
+Pendiente: Añadir sonidos
+Total pendientes: 2</code></pre>
+    <div class="taller" id="taller-ej3" data-titulo="Ejercicio 3">
+      <textarea class="taller-codigo">const tareas = [
+  { titulo: "Diseñar el nivel 1", hecha: true },
+  { titulo: "Programar el salto", hecha: false },
+  { titulo: "Añadir sonidos", hecha: false },
+];
+
+let pendientes = 0;
+for (let i = 0; i &lt;= tareas.length; i++) {
+  if (!tareas[i].hecha) {
+    pendientes++;
+    console.log("Pendiente: " + tareas[i].titulo);
+  }
+}
+console.log("Total pendientes: " + pendientes);</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/for\s*\(/.test(codigo)) return "Mantén el bucle for: el reto es arreglarlo, no quitarlo.";
+if (/Total pendientes: 2/.test(codigo)) return "No escribas el 2 a mano: cuéntalo con la variable pendientes.";
+var esperado = ["Pendiente: Programar el salto", "Pendiente: Añadir sonidos", "Total pendientes: 2"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+if (salida.length > 3) return "Sobran líneas: borra las impresiones de prueba y deja solo las tres que se piden.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El mensaje es <code>Cannot read properties of undefined (reading 'hecha')</code> en la línea 9. ¿Qué <code>tareas[i]</code> vale <code>undefined</code>? Imprime <code>i</code> al principio de cada vuelta para averiguarlo.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El array tiene 3 tareas, en las posiciones 0, 1 y 2. ¿Qué valor de <code>i</code> alcanza el bucle con <code>&lt;=</code>?</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const tareas = [
+  { titulo: "Diseñar el nivel 1", hecha: true },
+  { titulo: "Programar el salto", hecha: false },
+  { titulo: "Añadir sonidos", hecha: false },
+];
+
+let pendientes = 0;
+for (let i = 0; i &lt; tareas.length; i++) {
+  if (!tareas[i].hecha) {
+    pendientes++;
+    console.log("Pendiente: " + tareas[i].titulo);
+  }
+}
+console.log("Total pendientes: " + pendientes);</code></pre>
+      <p>Con <code>&lt;=</code> el bucle da una vuelta de más y lee <code>tareas[3]</code>, que no existe. Es el error de «uno de más» que viste en la <a href="09-bucles.html">Estación 9</a>. También se puede escribir <code>for (const tarea of tareas)</code>, que nunca se sale del array.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-suma">
+    <h3>Puntos que no suman</h3>
+    <p>Este programa debería imprimir <code>Suma: 360</code> y <code>Promedio: 120</code>, pero imprime números enormes y ningún error. Investiga: añade un <code>console.table(jugadores)</code> y un <code>console.log</code> dentro del bucle con la etiqueta y el valor de <code>suma</code> en cada vuelta. Cuando encuentres la causa, arregla el cálculo <strong>sin cambiar los datos</strong> (en la vida real no controlas cómo llegan) y borra tus impresiones de prueba.</p>
+    <div class="taller" id="taller-ej4" data-titulo="Ejercicio 4">
+      <textarea class="taller-codigo">const jugadores = [
+  { nombre: "Ana", puntos: 120 },
+  { nombre: "Leo", puntos: "90" },
+  { nombre: "Sol", puntos: 150 },
+];
+
+let suma = 0;
+for (const j of jugadores) {
+  suma = suma + j.puntos;
+}
+const promedio = suma / jugadores.length;
+console.log("Suma: " + suma);
+console.log("Promedio: " + promedio);</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/puntos:\s*"90"/.test(codigo)) return "Deja el dato de Leo como está (\"90\", un texto): arregla el cálculo, no los datos.";
+if (/console\.log\([^)]*\b(360|120)\b/.test(codigo)) return "No escribas los resultados a mano: calcúlalos.";
+var suma = salida.filter(function (l) { return l.indexOf("Suma:") === 0; }).pop();
+var prom = salida.filter(function (l) { return l.indexOf("Promedio:") === 0; }).pop();
+if (suma !== "Suma: 360") return "Debería imprimirse «Suma: 360» y se imprime «" + (suma || "(nada)") + "». Mira cómo cambia suma en cada vuelta.";
+if (prom !== "Promedio: 120") return "Debería imprimirse «Promedio: 120» y se imprime «" + (prom || "(nada)") + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>En la tabla, los puntos de Leo aparecen con comillas: <code>'90'</code>. Dentro del bucle verás que <code>suma</code> pasa de <code>120</code> a <code>12090</code>. ¿Qué hace <code>+</code> cuando uno de los lados es un texto?</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Convierte cada valor a número justo al usarlo: <code>Number(j.puntos)</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const jugadores = [
+  { nombre: "Ana", puntos: 120 },
+  { nombre: "Leo", puntos: "90" },
+  { nombre: "Sol", puntos: 150 },
+];
+
+let suma = 0;
+for (const j of jugadores) {
+  suma = suma + Number(j.puntos);
+}
+const promedio = suma / jugadores.length;
+console.log("Suma: " + suma);
+console.log("Promedio: " + promedio);</code></pre>
+      <p>Los números absurdos (<code>12090150</code>) eran la pista: parecían números pegados. Con <code>120 + "90"</code>, el <code>+</code> concatena y <code>suma</code> se convierte en texto para siempre. El promedio no dio <code>NaN</code> porque <code>/</code> sí convierte el texto a número; por eso el resultado parecía un número normal, solo que enorme.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-partidas">
+    <h3>Partidas guardadas</h3>
+    <p>Un juego carga tres partidas guardadas, pero la segunda está dañada y el programa se detiene en seco. Usa <code>try</code> y <code>catch</code> para que la partida dañada no impida cargar las demás. Debe imprimir exactamente:</p>
+    <pre class="consola"><code>Ana va por el nivel 3
+Partida dañada: no se pudo leer
+Sol va por el nivel 7
+Carga terminada</code></pre>
+    <div class="taller" id="taller-ej5" data-titulo="Ejercicio 5">
+      <textarea class="taller-codigo">const guardadas = [
+  '{"jugador": "Ana", "nivel": 3}',
+  '{"jugador": "Leo", "nivel": }',
+  '{"jugador": "Sol", "nivel": 7}',
+];
+
+for (const texto of guardadas) {
+  const partida = JSON.parse(texto);
+  console.log(partida.jugador + " va por el nivel " + partida.nivel);
+}
+console.log("Carga terminada");</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/try\s*\{/.test(codigo) || !/catch\s*(\(|\{)/.test(codigo)) return "Usa try y catch alrededor de lo que puede fallar: JSON.parse.";
+var esperado = ["Ana va por el nivel 3", "Partida dañada: no se pudo leer", "Sol va por el nivel 7", "Carga terminada"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+if (salida.length > 4) return "Sobran líneas: deja solo las cuatro que se piden.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>¿Dónde tiene que ir el <code>try</code>: fuera del bucle o dentro? Si lo pones fuera, el primer error abandona el bucle entero y Sol nunca se carga.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Mete dentro del <code>try</code> las dos líneas que dependen de la partida: el <code>JSON.parse</code> y el <code>console.log</code> que la usa.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const guardadas = [
+  '{"jugador": "Ana", "nivel": 3}',
+  '{"jugador": "Leo", "nivel": }',
+  '{"jugador": "Sol", "nivel": 7}',
+];
+
+for (const texto of guardadas) {
+  try {
+    const partida = JSON.parse(texto);
+    console.log(partida.jugador + " va por el nivel " + partida.nivel);
+  } catch (error) {
+    console.log("Partida dañada: no se pudo leer");
+  }
+}
+console.log("Carga terminada");</code></pre>
+      <p>El <code>try</code> va dentro del bucle, así cada partida tiene su propia protección. En un juego real, además del aviso, guardarías el error con <code>console.error(error)</code> para poder investigarlo.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-throw">
+    <h3>Lanza tus propios errores</h3>
+    <p>Completa la función <code>retirar(saldo, monto)</code> de un cajero del juego. Debe lanzar un error con <code>throw</code> en cada caso inválido, con estos mensajes exactos, y devolver el saldo nuevo si todo está bien:</p>
+    <ul>
+      <li>Si <code>monto</code> no es de tipo número: <code>El monto debe ser un número</code>.</li>
+      <li>Si <code>monto</code> es 0 o menos: <code>El monto debe ser mayor que 0</code>.</li>
+      <li>Si <code>monto</code> es mayor que <code>saldo</code>: <code>Saldo insuficiente</code>.</li>
+    </ul>
+    <p>Las pruebas de abajo ya están escritas: no las cambies. Deben imprimir:</p>
+    <pre class="consola"><code>Retiro de 30: te quedan 70
+Retiro de 20: El monto debe ser un número
+Retiro de -5: El monto debe ser mayor que 0
+Retiro de 500: Saldo insuficiente</code></pre>
+    <div class="taller" id="taller-ej6" data-titulo="Ejercicio 6">
+      <textarea class="taller-codigo">function retirar(saldo, monto) {
+  // Tu código aquí: comprueba los tres casos inválidos con throw
+  // y, si todo está bien, devuelve el saldo nuevo.
+}
+
+// Pruebas (no cambies esto)
+const pruebas = [30, "20", -5, 500];
+for (const monto of pruebas) {
+  try {
+    const nuevo = retirar(100, monto);
+    console.log("Retiro de " + monto + ": te quedan " + nuevo);
+  } catch (error) {
+    console.log("Retiro de " + monto + ": " + error.message);
+  }
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (codigo.indexOf('const pruebas = [30, "20", -5, 500];') === -1) return "No cambies la lista de pruebas.";
+if (!/throw\s+new\s+\w*Error\(/.test(codigo)) return "Lanza cada error con throw new Error(\"...\") (o TypeError, RangeError).";
+var esperado = ["Retiro de 30: te quedan 70", "Retiro de 20: El monto debe ser un número", "Retiro de -5: El monto debe ser mayor que 0", "Retiro de 500: Saldo insuficiente"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Para saber si algo es un número usa <code>typeof monto !== "number"</code>. Ojo: <code>"20"</code>, con comillas, es un texto.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El orden de las comprobaciones importa: primero el tipo, después si es positivo y al final si alcanza el saldo. Cada una es un <code>if</code> con su <code>throw</code>; si ninguna se cumple, <code>return saldo - monto;</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function retirar(saldo, monto) {
+  if (typeof monto !== "number") {
+    throw new TypeError("El monto debe ser un número");
+  }
+  if (monto &lt;= 0) {
+    throw new RangeError("El monto debe ser mayor que 0");
+  }
+  if (monto &gt; saldo) {
+    throw new Error("Saldo insuficiente");
+  }
+  return saldo - monto;
+}
+
+// Pruebas (no cambies esto)
+const pruebas = [30, "20", -5, 500];
+for (const monto of pruebas) {
+  try {
+    const nuevo = retirar(100, monto);
+    console.log("Retiro de " + monto + ": te quedan " + nuevo);
+  } catch (error) {
+    console.log("Retiro de " + monto + ": " + error.message);
+  }
+}</code></pre>
+      <p>Usar <code>TypeError</code> y <code>RangeError</code> no es obligatorio (un <code>Error</code> normal también pasa), pero dice más: quien capture el error sabrá qué clase de problema fue. Sin la primera comprobación, <code>"20"</code> se colaría: <code>"20" &lt;= 0</code> es falso y <code>"20" &gt; 100</code> también, así que devolvería <code>100 - "20"</code>, que da 80 por conversión implícita. Un fallo silencioso más.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-biseccion">
+    <h3>Bisección en la fábrica de pociones</h3>
+    <p>Esta receta calcula el precio de una poción en ocho pasos. Cada comentario dice cuánto <em>debería</em> valer <code>precio</code> después de ese paso. El precio final debería ser 52, pero sale otra cosa. Solo un paso está mal. Encuéntralo con bisección: pon un <code>console.log</code> después del paso 4, compara con el valor esperado, decide qué mitad descartar y repite. Arregla ese paso (sin tocar los demás) y borra tus impresiones de prueba.</p>
+    <div class="taller" id="taller-ej7" data-titulo="Ejercicio 7">
+      <textarea class="taller-codigo">// Receta para calcular el precio de venta de una poción.
+// Cada comentario dice cuánto DEBERÍA valer precio después de ese paso.
+let precio = 10;                  // coste de los ingredientes: 10
+
+precio = precio * 3;              // paso 1: triple de margen        -> 30
+precio = precio + 6;              // paso 2: frasco de cristal       -> 36
+precio = precio / 4;              // paso 3: ración individual       -> 9
+precio = precio * precio;         // paso 4: efecto al cuadrado      -> 81
+precio = precio - 1;              // paso 5: descuento de 1          -> 80
+precio = precio + 20 / 2;         // paso 6: media con el bono de 20 -> 50
+precio = precio * 0.9;            // paso 7: 10 % de rebaja          -> 45
+precio = Math.round(precio) + 7;  // paso 8: redondeo y envío        -> 52
+
+console.log("Precio final: " + precio);</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (/precio\s*=\s*52\s*;/.test(codigo)) return "No asignes 52 a mano: encuentra el paso equivocado.";
+var intactos = ["precio = precio * 3;", "precio = precio + 6;", "precio = precio / 4;", "precio = precio * precio;", "precio = precio - 1;", "precio = precio * 0.9;", "precio = Math.round(precio) + 7;"];
+for (var i = 0; i < intactos.length; i++) {
+  if (codigo.indexOf(intactos[i]) === -1) return "Solo un paso está mal: deja los demás como estaban (falta «" + intactos[i] + "»).";
+}
+if (codigo.indexOf('console.log("Precio final: " + precio);') === -1) return "No cambies la última línea.";
+var final = salida.filter(function (l) { return l.indexOf("Precio final:") === 0; }).pop();
+if (final !== "Precio final: 52") return "El precio final debería ser 52 y es «" + (final || "(nada)") + "». Sigue partiendo por la mitad.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Después del paso 4, <code>precio</code> vale 81, como debe: los pasos 1 a 4 quedan descartados. Comprueba después del paso 6.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Después del paso 6 vale 90 en lugar de 50, y después del paso 5 vale 80, como debe. El culpable es el paso 6. ¿Qué operación se hace primero en <code>precio + 20 / 2</code>? Lo viste en la <a href="07-variables.html#numeros">Estación 7</a>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// Receta para calcular el precio de venta de una poción.
+// Cada comentario dice cuánto DEBERÍA valer precio después de ese paso.
+let precio = 10;                  // coste de los ingredientes: 10
+
+precio = precio * 3;              // paso 1: triple de margen        -&gt; 30
+precio = precio + 6;              // paso 2: frasco de cristal       -&gt; 36
+precio = precio / 4;              // paso 3: ración individual       -&gt; 9
+precio = precio * precio;         // paso 4: efecto al cuadrado      -&gt; 81
+precio = precio - 1;              // paso 5: descuento de 1          -&gt; 80
+precio = (precio + 20) / 2;       // paso 6: media con el bono de 20 -&gt; 50
+precio = precio * 0.9;            // paso 7: 10 % de rebaja          -&gt; 45
+precio = Math.round(precio) + 7;  // paso 8: redondeo y envío        -&gt; 52
+
+console.log("Precio final: " + precio);</code></pre>
+      <p>Tres comprobaciones bastaron: después del paso 4 (bien), del 6 (mal) y del 5 (bien). La clave de la bisección es saber qué valor <em>esperas</em> en cada punto; por eso los comentarios con los valores esperados son tan valiosos.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-pruebas">
+    <h3>Pruebas que fallan</h3>
+    <p>Dos reglas de un juego: con 100 puntos o más subes de nivel, y cada 3 niveles (3, 6, 9…) ganas una vida extra. Alguien programó las dos funciones y escribió seis pruebas que comparan lo que devuelven con lo que deberían devolver. Varias pruebas dicen <code>FALLA</code>. Arregla las <strong>funciones</strong> (no las pruebas) hasta que las seis digan <code>OK</code>.</p>
+    <div class="taller" id="taller-ej8" data-titulo="Ejercicio 8">
+      <textarea class="taller-codigo">function subeDeNivel(puntos) {
+  return puntos > 100;
+}
+
+function ganaVida(nivel) {
+  return nivel % 3 === 1;
+}
+
+// Mini pruebas: no las cambies.
+function comprobar(descripcion, obtenido, esperado) {
+  const estado = obtenido === esperado ? "OK   " : "FALLA";
+  console.log(estado + " " + descripcion + " (obtenido: " + obtenido + ", esperado: " + esperado + ")");
+}
+comprobar("99 puntos no sube", subeDeNivel(99), false);
+comprobar("100 puntos sube", subeDeNivel(100), true);
+comprobar("250 puntos sube", subeDeNivel(250), true);
+comprobar("nivel 3 da vida", ganaVida(3), true);
+comprobar("nivel 4 no da vida", ganaVida(4), false);
+comprobar("nivel 9 da vida", ganaVida(9), true);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var pruebas = ['comprobar("99 puntos no sube", subeDeNivel(99), false);', 'comprobar("100 puntos sube", subeDeNivel(100), true);', 'comprobar("250 puntos sube", subeDeNivel(250), true);', 'comprobar("nivel 3 da vida", ganaVida(3), true);', 'comprobar("nivel 4 no da vida", ganaVida(4), false);', 'comprobar("nivel 9 da vida", ganaVida(9), true);'];
+for (var i = 0; i < pruebas.length; i++) {
+  if (codigo.indexOf(pruebas[i]) === -1) return "No cambies las pruebas: arregla las funciones para que las cumplan.";
+}
+var resultados = salida.filter(function (l) { return /^(OK|FALLA)/.test(l); });
+if (resultados.length !== 6) return "Deberían verse 6 resultados de prueba y se ven " + resultados.length + ".";
+var fallan = resultados.filter(function (l) { return l.indexOf("FALLA") === 0; });
+if (fallan.length) return "Todavía falla " + fallan.length + ": «" + fallan[0] + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Lee cada línea <code>FALLA</code> como un experimento ya hecho: te dice el dato de entrada, lo obtenido y lo esperado. ¿Qué tienen en común los casos que fallan de <code>subeDeNivel</code>? Mira el valor exacto del límite.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Calcula a mano <code>3 % 3</code>, <code>4 % 3</code> y <code>9 % 3</code>. ¿Qué resto tienen los múltiplos de 3?</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function subeDeNivel(puntos) {
+  return puntos &gt;= 100;
+}
+
+function ganaVida(nivel) {
+  return nivel % 3 === 0;
+}
+
+// Mini pruebas: no las cambies.
+function comprobar(descripcion, obtenido, esperado) {
+  const estado = obtenido === esperado ? "OK   " : "FALLA";
+  console.log(estado + " " + descripcion + " (obtenido: " + obtenido + ", esperado: " + esperado + ")");
+}
+comprobar("99 puntos no sube", subeDeNivel(99), false);
+comprobar("100 puntos sube", subeDeNivel(100), true);
+comprobar("250 puntos sube", subeDeNivel(250), true);
+comprobar("nivel 3 da vida", ganaVida(3), true);
+comprobar("nivel 4 no da vida", ganaVida(4), false);
+comprobar("nivel 9 da vida", ganaVida(9), true);</code></pre>
+      <p>Los dos fallos están en los bordes: el caso exacto de 100 puntos y el resto de dividir entre 3. Los errores en los límites son de los más frecuentes, y las pruebas con casos justo en el borde son las que los atrapan. Así funcionan las pruebas automáticas que escribirás en la <a href="26-testing.html">Estación 26</a>: cada una es un experimento con su predicción.</p>
+    </details>
+  </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: detective en la tienda del juego</h2>
+  <p>La tienda de un juego de rol tiene cinco bugs escondidos de tipos distintos, y además se cierra de golpe cuando alguien pide un producto que no existe. Tu misión: dejarla funcionando con método y documentar cada bug en un diario de depuración, como se hace en los equipos profesionales. Cuando esté bien, imprimirá exactamente:</p>
+  <pre class="consola"><code>=== Tienda de Lyra ===
+Compraste: Espada de madera (quedan 49 monedas)
+Compraste: Poción de vida (quedan 37 monedas)
+No se pudo comprar «arco»: No existe el producto «arco»
+Compraste: Escudo ligero (quedan 12 monedas)
+Compraste: Poción de vida (quedan 0 monedas)
+No se pudo comprar «espada»: No te alcanza para Espada de madera
+Mochila: Espada de madera, Poción de vida, Escudo ligero, Poción de vida
+Gastaste 79 monedas. Te quedan 0.</code></pre>
+  <ol class="pasos">
+    <li><div><p><strong>Reproduce.</strong> Ejecuta el programa tal cual. Anota qué pasa.</p></div></li>
+    <li><div><p><strong>Errores con mensaje.</strong> Arregla uno cada vez: lee el tipo, el mensaje y la línea; formula una hipótesis antes de tocar nada; corrige y vuelve a ejecutar. Hay tres (uno de sintaxis, uno de referencia y uno de tipo).</p></div></li>
+    <li><div><p><strong>Errores esperados.</strong> Pedir un «arco» que no existe no es un bug del programa: es una situación normal. Envuelve cada compra del bucle en un <code>try</code>/<code>catch</code> que imprima <code>No se pudo comprar «id»: mensaje</code> y deje seguir a la tienda.</p></div></li>
+    <li><div><p><strong>Errores lógicos.</strong> Compara línea por línea la salida con la esperada. Quedan dos fallos sin mensaje: uno en una comparación y otro en una cuenta. Usa <code>console.log</code> con etiquetas o el depurador para encontrarlos.</p></div></li>
+    <li><div><p><strong>Diario.</strong> Completa una entrada por cada uno de los cinco bugs: síntoma, hipótesis, experimento y arreglo, en una línea cada uno. La verificación comprueba que haya cinco síntomas escritos.</p></div></li>
+    <li><div><p><strong>Limpia.</strong> Borra las impresiones de prueba y comprueba que la salida coincide exactamente.</p></div></li>
+  </ol>
+  <div class="taller" id="taller-proyecto" data-titulo="Proyecto: la tienda con errores" data-tiempo="6">
+    <textarea class="taller-codigo">// TIENDA DEL JUEGO
+// Tiene 5 errores escondidos y no maneja los errores esperados.
+// Arréglala con método y anota cada bug en el DIARIO DE DEPURACIÓN del final.
+
+const catalogo = [
+  { id: "espada", nombre: "Espada de madera", precio: 30 },
+  { id: "pocion", nombre: "Poción de vida", precio: 12 }
+  { id: "escudo", nombre: "Escudo ligero", precio: 25 },
+];
+
+function buscarProducto(id) {
+  return catalogo.find((p) => p.id === id);
+}
+
+function comprar(jugador, id) {
+  const producto = buscarProducto(id);
+  if (producto === undefined) {
+    throw new Error("No existe el producto «" + id + "»");
+  }
+  if (producto.precio >= jugador.monedas) {
+    throw new Error("No te alcanza para " + producto.nombre);
+  }
+  jugador.monedas = jugador.monedas - producto.precio;
+  jugador.mochila.push(producto.nombre);
+  return producto;
+}
+
+const jugador = { nombre: "Lyra", monedas: 79, mochilla: [] };
+const monedasIniciales = jugador.monedas;
+const pedidos = ["espada", "pocion", "arco", "escudo", "pocion", "espada"];
+
+console.log("=== Tienda de " + jugador.nombre + " ===");
+for (const id of pedidos) {
+  const producto = comprar(jugadora, id);
+  console.log("Compraste: " + producto.nombre + " (quedan " + jugador.monedas + " monedas)");
+}
+const gastado = jugador.monedas - monedasIniciales;
+console.log("Mochila: " + jugador.mochila.join(", "));
+console.log("Gastaste " + gastado + " monedas. Te quedan " + jugador.monedas + ".");
+
+// ===== DIARIO DE DEPURACIÓN =====
+// Bug 1
+//   Síntoma:
+//   Hipótesis:
+//   Experimento:
+//   Arreglo:
+</textarea>
+    <script type="text/plain" class="taller-verificar">
+var esperado = [
+  "=== Tienda de Lyra ===",
+  "Compraste: Espada de madera (quedan 49 monedas)",
+  "Compraste: Poción de vida (quedan 37 monedas)",
+  "No se pudo comprar «arco»: No existe el producto «arco»",
+  "Compraste: Escudo ligero (quedan 12 monedas)",
+  "Compraste: Poción de vida (quedan 0 monedas)",
+  "No se pudo comprar «espada»: No te alcanza para Espada de madera",
+  "Mochila: Espada de madera, Poción de vida, Escudo ligero, Poción de vida",
+  "Gastaste 79 monedas. Te quedan 0."
+];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+if (salida.length > esperado.length) return "Sobran líneas: borra las impresiones de prueba.";
+if (!/try\s*\{/.test(codigo) || !/catch\s*\(/.test(codigo)) return "Captura los errores de cada compra con try y catch dentro del bucle.";
+if (!/monedas:\s*79/.test(codigo)) return "No cambies las monedas iniciales (79).";
+var entradas = (codigo.match(/Síntoma:[ \t]*[^\s\/][^\n]*/g) || []).length;
+if (entradas < 5) return "¡La tienda funciona! Te falta el diario: hay " + entradas + " de 5 entradas con el síntoma escrito.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <pre><code class="language-js">// TIENDA DEL JUEGO
+
+const catalogo = [
+  { id: "espada", nombre: "Espada de madera", precio: 30 },
+  { id: "pocion", nombre: "Poción de vida", precio: 12 },
+  { id: "escudo", nombre: "Escudo ligero", precio: 25 },
+];
+
+function buscarProducto(id) {
+  return catalogo.find((p) =&gt; p.id === id);
+}
+
+function comprar(jugador, id) {
+  const producto = buscarProducto(id);
+  if (producto === undefined) {
+    throw new Error("No existe el producto «" + id + "»");
+  }
+  if (producto.precio &gt; jugador.monedas) {
+    throw new Error("No te alcanza para " + producto.nombre);
+  }
+  jugador.monedas = jugador.monedas - producto.precio;
+  jugador.mochila.push(producto.nombre);
+  return producto;
+}
+
+const jugador = { nombre: "Lyra", monedas: 79, mochila: [] };
+const monedasIniciales = jugador.monedas;
+const pedidos = ["espada", "pocion", "arco", "escudo", "pocion", "espada"];
+
+console.log("=== Tienda de " + jugador.nombre + " ===");
+for (const id of pedidos) {
+  try {
+    const producto = comprar(jugador, id);
+    console.log("Compraste: " + producto.nombre + " (quedan " + jugador.monedas + " monedas)");
+  } catch (error) {
+    console.log("No se pudo comprar «" + id + "»: " + error.message);
+  }
+}
+const gastado = monedasIniciales - jugador.monedas;
+console.log("Mochila: " + jugador.mochila.join(", "));
+console.log("Gastaste " + gastado + " monedas. Te quedan " + jugador.monedas + ".");
+
+// ===== DIARIO DE DEPURACIÓN =====
+// Bug 1
+//   Síntoma: SyntaxError: Unexpected token '{' en la línea 8; no se ejecutaba nada.
+//   Hipótesis: falta algo justo antes de la llave, en la línea 7.
+//   Experimento: comparé la línea 7 con la 6.
+//   Arreglo: faltaba la coma después del objeto de la poción.
+// Bug 2
+//   Síntoma: ReferenceError: jugadora is not defined en el bucle.
+//   Hipótesis: el nombre está mal escrito.
+//   Experimento: busqué dónde se declara: se llama jugador.
+//   Arreglo: comprar(jugador, id).
+// Bug 3
+//   Síntoma: TypeError: Cannot read properties of undefined (reading 'push').
+//   Hipótesis: jugador.mochila es undefined.
+//   Experimento: console.log({ mochila: jugador.mochila }) dio undefined.
+//   Arreglo: la propiedad se llamaba mochilla; la renombré a mochila.
+// Bug 4
+//   Síntoma: con 12 monedas no se podía comprar una poción de 12.
+//   Hipótesis: la comparación no deja gastar el dinero justo.
+//   Experimento: 12 &gt;= 12 da true, así que lanzaba el error.
+//   Arreglo: cambié &gt;= por &gt;.
+// Bug 5
+//   Síntoma: «Gastaste -79 monedas».
+//   Hipótesis: la resta está al revés.
+//   Experimento: 0 - 79 da -79.
+//   Arreglo: monedasIniciales - jugador.monedas.</code></pre>
+    <p>El orden en que aparecen los bugs importa: el de sintaxis bloquea todo, así que es el primero; los de ejecución salen de uno en uno; y los lógicos solo se ven cuando ya no hay mensajes, comparando la salida con la esperada. El «arco» no era un bug, sino un error esperado: la función <code>comprar</code> hace bien en lanzarlo, y quien la usa decide qué hacer con él.</p>
+  </details>
+  <p><strong>Para ir más allá:</strong> copia la tienda a un archivo <code>tienda.js</code> en tu computadora, ábrelo en una página o ejecútalo con la <em>JavaScript Debug Terminal</em> de Visual Studio Code y recorre una compra con el depurador, entrando en <code>comprar</code> con <em>Step into</em>. Después crea un tipo de error propio, <code>ProductoNoEncontradoError</code>, y haz que el <code>catch</code> trate de forma distinta un producto inexistente (por ejemplo, sugiriendo el catálogo) y la falta de monedas.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Si fallas alguna, lee la explicación: equivocarse aquí es la forma más barata de aprender, y además es exactamente lo que practicaste en esta estación.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Un programa de 20 líneas no imprime nada y muestra un <code>SyntaxError</code> en la línea 15. ¿Qué pasó?</p>
+      <ol class="opciones">
+        <li>Se ejecutaron las líneas 1 a 14 y el programa se detuvo en la 15.<p class="explica">Eso ocurre con los errores de ejecución. Con un error de sintaxis, JavaScript no llega a empezar.</p></li>
+        <li>JavaScript no pudo leer el programa y no ejecutó ninguna línea, ni siquiera las anteriores a la 15.<p class="explica">Correcto. El programa se lee entero antes de ejecutarse; una falta de escritura impide empezar.</p></li>
+        <li>Es un error lógico: el programa funciona, pero con un resultado equivocado.<p class="explica">Los errores lógicos no producen ningún mensaje. Aquí hay un <code>SyntaxError</code>.</p></li>
+        <li>El fallo está seguro en la línea 20, la última.<p class="explica">El mensaje señala la 15. El fallo está en esa línea o un poco antes, nunca después.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Qué significa <code>TypeError: Cannot read properties of undefined (reading 'nombre')</code>?</p>
+      <ol class="opciones">
+        <li>Lo que está antes de <code>.nombre</code> vale <code>undefined</code>, y hay que averiguar por qué.<p class="explica">Correcto. El problema no es <code>nombre</code>, sino el valor sobre el que intentas leerlo.</p></li>
+        <li>El objeto existe, pero no tiene ninguna propiedad llamada <code>nombre</code>.<p class="explica">Si solo faltara la propiedad, obtendrías <code>undefined</code> sin ningún error. El error aparece al leer algo <em>de</em> <code>undefined</code>.</p></li>
+        <li>La variable <code>nombre</code> no está declarada.<p class="explica">Eso sería un <code>ReferenceError: nombre is not defined</code>.</p></li>
+        <li>Hay un error de sintaxis en esa línea.<p class="explica">Es un <code>TypeError</code>, un error de ejecución: el código está bien escrito.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Una traza dice: <code>TypeError: …</code>, <code>at calcularAtaque (juego.js:12:9)</code>, <code>at atacar (juego.js:30:5)</code>, <code>at juego.js:41:1</code>. ¿Dónde se produjo el error?</p>
+      <ol class="opciones">
+        <li>En <code>atacar</code>, línea 30.<p class="explica"><code>atacar</code> llamó a la función que falló. Está en la segunda línea de la traza.</p></li>
+        <li>En el código principal, línea 41.<p class="explica">Ahí empezó la cadena de llamadas, pero no es donde explotó.</p></li>
+        <li>En <code>calcularAtaque</code>, línea 12, columna 9.<p class="explica">Correcto. En JavaScript, la primera línea <code>at</code> es la más reciente: donde se produjo el error.</p></li>
+        <li>No se puede saber sin abrir el depurador.<p class="explica">La traza lo dice. El depurador ayuda a ver más, pero no hace falta para esto.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">En el ejemplo del carrito, el error aparecía dentro de <code>precioDe</code>, pero la causa estaba en la línea que pedía el total de tres productos. ¿Qué lección general se saca?</p>
+      <ol class="opciones">
+        <li>Los números de línea de los mensajes suelen estar mal.<p class="explica">La línea era exacta: es donde el problema se hizo visible.</p></li>
+        <li>Siempre hay que arreglar la última línea de la traza.<p class="explica">No siempre. Hay que recorrer la traza pensando en cada línea si el dato ya venía mal.</p></li>
+        <li>Si una función falla, hay que reescribirla entera.<p class="explica"><code>precioDe</code> estaba bien: hizo lo que pudo con un dato imposible.</p></li>
+        <li>Donde explota el programa no siempre es donde está el fallo: hay que seguir el dato hacia atrás por la pila.<p class="explica">Correcto. La traza te da el camino completo, desde el efecto hasta la causa.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Una función devuelve <code>NaN</code>. ¿Qué impresión te da más información?</p>
+      <ol class="opciones">
+        <li><code>console.log("aquí");</code><p class="explica">Solo te dice que el programa pasó por ahí.</p></li>
+        <li><code>console.log({ precio, cantidad });</code><p class="explica">Correcto. Muestra los nombres, los valores y, gracias a las comillas, si alguno es un texto o <code>undefined</code>.</p></li>
+        <li><code>console.log(resultado);</code><p class="explica">Ya sabes que es <code>NaN</code>. Lo que necesitas es ver los datos que lo produjeron.</p></li>
+        <li><code>console.log("NaN");</code><p class="explica">No aporta nada: imprime un texto fijo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Qué hace la instrucción <code>debugger;</code> si las DevTools están cerradas?</p>
+      <ol class="opciones">
+        <li>Detiene el programa hasta que pulses una tecla.<p class="explica">No: sin un depurador abierto no pausa nada.</p></li>
+        <li>Lanza un <code>ReferenceError: debugger is not defined</code>.<p class="explica"><code>debugger</code> es una palabra del propio lenguaje, no una variable.</p></li>
+        <li>Imprime todas las variables en la consola.<p class="explica">No imprime nada. Las variables se ven en el panel Scope cuando el programa está pausado.</p></li>
+        <li>Nada: solo pausa el programa cuando hay un depurador abierto.<p class="explica">Correcto. Por eso hay que borrarla antes de publicar: a quien abra las DevTools sí le pausará la página.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Estás pausado en la línea <code>const golpe = calcularAtaque(espada, nivel);</code> y sospechas de <code>calcularAtaque</code>. ¿Qué botón usas?</p>
+      <ol class="opciones">
+        <li><em>Step over</em> (<kbd>F10</kbd>).<p class="explica">Ejecutaría <code>calcularAtaque</code> entera sin entrar, y te quedarías sin ver qué pasa dentro.</p></li>
+        <li><em>Resume</em> (<kbd>F8</kbd>).<p class="explica">Seguiría hasta el siguiente punto de interrupción, saltándose lo que quieres ver.</p></li>
+        <li><em>Step into</em> (<kbd>F11</kbd>).<p class="explica">Correcto. Entra en la función y se detiene en su primera línea.</p></li>
+        <li><em>Step out</em> (<kbd>Mayús</kbd> + <kbd>F11</kbd>).<p class="explica">Terminaría la función en la que estás ahora, no entraría en la nueva.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Qué imprime este código? <code>try { console.log("A"); null.x; console.log("B"); } catch (e) { console.log("C"); } finally { console.log("D"); }</code></p>
+      <ol class="opciones">
+        <li>A, C y D.<p class="explica">Correcto. <code>null.x</code> lanza un <code>TypeError</code>: se abandona el <code>try</code>, se ejecuta el <code>catch</code> y después el <code>finally</code>.</p></li>
+        <li>A, B, C y D.<p class="explica">B no se imprime: el error ocurre antes y el resto del <code>try</code> se abandona.</p></li>
+        <li>A y C.<p class="explica">Falta D: <code>finally</code> se ejecuta siempre.</p></li>
+        <li>A, y luego un <code>TypeError</code> que detiene el programa.<p class="explica">El error ocurre dentro del <code>try</code>, así que el <code>catch</code> lo captura y el programa sigue.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Tu función recibe un nivel imposible, <code>-3</code>. ¿Qué es lo más recomendable?</p>
+      <ol class="opciones">
+        <li>Devolver el texto <code>"error"</code> y seguir.<p class="explica">Quien llama a la función puede no comprobarlo y seguir calculando con ese texto: un fallo silencioso.</p></li>
+        <li><code>throw new RangeError("El nivel debe estar entre 1 y 100 y llegó: -3")</code><p class="explica">Correcto. Falla pronto, con el tipo adecuado y un mensaje que dice qué se esperaba y qué llegó.</p></li>
+        <li><code>throw "nivel malo"</code><p class="explica">Funciona, pero un texto no tiene <code>name</code> ni <code>stack</code>: pierdes la traza.</p></li>
+        <li>Imprimir «nivel malo» con <code>console.log</code> y continuar.<p class="explica">El programa sigue con un dato imposible y el fallo aparecerá más tarde, lejos de su causa.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Cambiaste cinco cosas a la vez y ahora el programa funciona. ¿Cuál es el problema?</p>
+      <ol class="opciones">
+        <li>Ninguno: si funciona, está bien.<p class="explica">Puede que funcione con estos datos y falle con otros por alguno de los cambios que no hacían falta.</p></li>
+        <li>Que tardaste demasiado.<p class="explica">El tiempo no es el problema; lo es no saber qué pasó.</p></li>
+        <li>Que deberías haber usado el depurador.<p class="explica">El depurador ayuda, pero el problema es el método: varios cambios a la vez.</p></li>
+        <li>No sabes cuál de los cambios lo arregló, ni si alguno introdujo otro fallo.<p class="explica">Correcto. Por eso se cambia una sola cosa cada vez.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Un proceso de 64 pasos da un resultado equivocado y solo uno de los pasos está mal. Con bisección, ¿cuántas comprobaciones necesitas como máximo para encontrarlo?</p>
+      <ol class="opciones">
+        <li>64.<p class="explica">Eso sería revisarlos uno por uno.</p></li>
+        <li>32.<p class="explica">La bisección no revisa la mitad de los pasos: parte por la mitad una y otra vez.</p></li>
+        <li>6.<p class="explica">Correcto: 64, 32, 16, 8, 4, 2 y 1. Cada comprobación descarta la mitad.</p></li>
+        <li>1.<p class="explica">Con una sola comprobación solo sabes en qué mitad está.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Qué forma de usar la IA te ayuda a aprender a depurar?</p>
+      <ol class="opciones">
+        <li>Leer el error, formular una hipótesis y pedirle que la evalúe y te explique el error, sin darte la solución.<p class="explica">Correcto. Sigues pensando tú, y la IA hace de tutora.</p></li>
+        <li>Pegar todo el proyecto y copiar la respuesta sin leerla.<p class="explica">Es la forma de uso que peor resultado dio en el estudio que viste: delegar no enseña.</p></li>
+        <li>Pegar el código con la contraseña de la base de datos, para que tenga todo el contexto.<p class="explica">Nunca compartas secretos ni datos personales, tampoco con una IA.</p></li>
+        <li>Aceptar su respuesta porque suena muy segura.<p class="explica">La IA puede equivocarse, e incluso inventar funciones, con total seguridad. Compruébalo siempre.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Bug</dt><dd>Fallo en un programa que hace que no funcione como se esperaba. En inglés, «bicho».</dd>
+    <dt>Depurar</dt><dd>Encontrar la causa de un fallo y corregirla. En inglés, <em>debugging</em>.</dd>
+    <dt>Error de sintaxis</dt><dd>Error por código mal escrito según las reglas del lenguaje. Se detecta al leer el programa, así que no se ejecuta ninguna línea.</dd>
+    <dt>Error de ejecución</dt><dd>Error que ocurre mientras el programa se ejecuta, al pedir algo imposible. El programa se detiene en esa línea.</dd>
+    <dt>Excepción</dt><dd>En JavaScript, un error que se produce durante la ejecución y que puede capturarse con <code>try</code> y <code>catch</code>.</dd>
+    <dt>Error lógico</dt><dd>Error en el que el programa funciona sin mensajes, pero hace algo distinto de lo que se quería.</dd>
+    <dt>Mensaje de error</dt><dd>Texto que muestra la computadora cuando algo falla: tipo, descripción y ubicación (archivo, línea y columna).</dd>
+    <dt>Pila de llamadas</dt><dd>Lista de las funciones que están en marcha en un momento dado, con la más reciente arriba. En inglés, <em>call stack</em>.</dd>
+    <dt>Traza de la pila</dt><dd>Foto de la pila de llamadas en el momento de un error, que se imprime junto al mensaje. En inglés, <em>stack trace</em>.</dd>
+    <dt>ReferenceError</dt><dd>Tipo de error que aparece al usar un nombre que no existe en ese punto del programa.</dd>
+    <dt>TypeError</dt><dd>Tipo de error que aparece al usar un valor de una forma que su tipo no permite, como leer una propiedad de <code>undefined</code>.</dd>
+    <dt>SyntaxError</dt><dd>Tipo de error del código mal escrito. También lo lanza <code>JSON.parse</code> cuando recibe un texto que no es JSON válido.</dd>
+    <dt>RangeError</dt><dd>Tipo de error que aparece cuando un número está fuera del rango que acepta una operación.</dd>
+    <dt>Depurador</dt><dd>Herramienta que pausa un programa en una línea y permite ver sus variables y avanzar paso a paso. En inglés, <em>debugger</em>.</dd>
+    <dt>DevTools</dt><dd>Herramientas para desarrolladores que traen los navegadores: consola, depurador, inspector de la página y más. Se abren con <kbd>F12</kbd>.</dd>
+    <dt>Punto de interrupción</dt><dd>Marca que le dice al depurador que pause el programa justo antes de ejecutar una línea. En inglés, <em>breakpoint</em>.</dd>
+    <dt>Paso a paso</dt><dd>Avanzar un programa pausado de línea en línea: pasando por encima de una llamada (<em>step over</em>), entrando en ella (<em>step into</em>) o saliendo de la función actual (<em>step out</em>).</dd>
+    <dt>try...catch</dt><dd>Estructura que ejecuta un bloque protegido (<code>try</code>) y, si en él ocurre una excepción, salta a otro bloque (<code>catch</code>) que la maneja.</dd>
+    <dt>finally</dt><dd>Bloque opcional tras <code>try</code>/<code>catch</code> que se ejecuta siempre, haya habido error o no.</dd>
+    <dt>throw</dt><dd>Instrucción que lanza una excepción, normalmente un objeto creado con <code>new Error("mensaje")</code>.</dd>
+    <dt>Reproducir un error</dt><dd>Encontrar los pasos y datos exactos que hacen que un fallo ocurra siempre, para poder investigarlo y comprobar el arreglo.</dd>
+    <dt>Bisección</dt><dd>Técnica que encuentra un fallo comprobando en la mitad del código o del proceso y descartando cada vez la mitad que funciona.</dd>
+    <dt>Patito de goma</dt><dd>Técnica que consiste en explicar el código línea a línea en voz alta, a un objeto o a una persona, para descubrir lo que dabas por supuesto.</dd>
+    <dt>Ejemplo mínimo reproducible</dt><dd>La versión más pequeña de un programa que todavía muestra un fallo, con todo lo necesario para que otra persona lo ejecute.</dd>
+    <dt>Alucinación</dt><dd>Respuesta de una IA que suena segura pero es falsa, como una función u opción que no existe.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación, no antes: te servirán para repasar y ver las mismas ideas explicadas por otras personas. Algunos tienen unos años; el panel de las DevTools ha cambiado de aspecto, pero los botones y los atajos hacen lo mismo.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=SPVL8uAezaw" data-canal="jonmircha" data-idioma="es" data-nivel="intro" data-por-que="try, catch, finally y throw explicados con ejemplos en la consola.">Curso JavaScript: 16. Manejo de Errores - #jonmircha</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=DVY4S32zhiY" data-canal="Desarrollo Útil" data-idioma="es" data-nivel="profundo" data-duracion="28 min" data-por-que="Profundiza en lanzar tus propios errores y crear tipos de error personalizados.">Manejo de ERRORES TRY CATCH THROW de excepciones CUSTOM Curso de JAVASCRIPT desde CERO #14</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=I388w3wDkjc" data-canal="Facultad Autodidacta" data-idioma="es" data-nivel="intro" data-duracion="8 min" data-por-que="Puntos de interrupción y avance paso a paso en el panel de fuentes de Chrome.">Depurar o hacer debug a javascript con google chrome</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=H0XScE08hy8" data-canal="Chrome for Developers" data-idioma="en" data-nivel="intro" data-duracion="7 min" data-por-que="El tutorial oficial del equipo de Chrome: breakpoints, Scope, Watch y el arreglo de un bug real.">Debugging JavaScript - Chrome DevTools 101</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Core/Scripting/What_went_wrong">¿Qué ha salido mal? Corrigiendo JavaScript (MDN)</a><p>La guía de Mozilla para encontrar y corregir errores de sintaxis y lógicos, con un juego de ejemplo.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Errors">Referencia de errores de JavaScript (MDN, en inglés)</a><p>Una página por cada mensaje de error, con sus causas, ejemplos y cómo lo escribe cada navegador.</p></li>
+    <li><a href="https://es.javascript.info/debugging-chrome">Debugging en el navegador (javascript.info)</a><p>Un recorrido por el depurador de Chrome, con ejercicios.</p></li>
+    <li><a href="https://es.javascript.info/try-catch">Manejo de errores, «try...catch» (javascript.info)</a><p>try, catch, finally y throw a fondo, incluidos los casos límite.</p></li>
+    <li><a href="https://es.javascript.info/custom-errors">Errores personalizados, extendiendo Error (javascript.info)</a><p>Cómo crear tus propios tipos de error y cuándo conviene hacerlo.</p></li>
+    <li><a href="https://developer.chrome.com/docs/devtools/javascript?hl=es">Cómo depurar JavaScript (Chrome for Developers)</a><p>El tutorial oficial de las DevTools de Chrome, con una página de demostración para practicar.</p></li>
+  </ul>
+</section>

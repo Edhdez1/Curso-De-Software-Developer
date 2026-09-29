@@ -1,0 +1,2223 @@
+<section id="ruta" data-parada="Lo que vas a lograr">
+  <h2>Lo que vas a lograr</h2>
+  <p class="entradilla">Cada página que visitas, desde una tienda en línea hasta la ficha de un videojuego o el perfil de una red social, empieza siendo un archivo de texto con HTML. HTML le dice al navegador qué es cada cosa: esto es un título, esto un párrafo, esto un enlace, esto un campo para escribir tu correo. Si lo haces bien, tu página funciona en cualquier pantalla, la entienden los buscadores y la puede usar también una persona ciega o que navega solo con el teclado.</p>
+  <ul class="objetivos">
+    <li>Explicar qué es HTML, qué es un lenguaje de marcado y en qué se diferencia de JavaScript.</li>
+    <li>Escribir el esqueleto completo de una página (<code>doctype</code>, <code>html</code>, <code>head</code>, <code>body</code>, <code>meta</code> y <code>title</code>) y abrirla en tu navegador.</li>
+    <li>Estructurar texto con encabezados en orden, párrafos, énfasis y listas.</li>
+    <li>Enlazar páginas con rutas absolutas y relativas sin perderte entre carpetas.</li>
+    <li>Insertar imágenes con un texto alternativo que de verdad sirva.</li>
+    <li>Organizar una página con elementos semánticos (<code>header</code>, <code>nav</code>, <code>main</code>, <code>article</code>…) y presentar datos en tablas.</li>
+    <li>Construir formularios accesibles con validación del navegador (<code>required</code>, <code>pattern</code>, <code>min</code>, <code>max</code>).</li>
+    <li>Revisar tu HTML con el validador del W3C, la pestaña Elementos de las DevTools y una lista básica de accesibilidad.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="Antes de empezar">
+    <p>Necesitas saber crear carpetas y archivos, y moverte entre ellas con rutas como <code>../</code>: lo viste en la <a href="05-herramientas.html">Estación 5: Tu taller</a>. También te ayudará recordar qué es una URL y qué hace el navegador cuando pide una página (<a href="03-internet.html">Estación 3: Internet</a>). De JavaScript solo usarás <code>console.log</code> y un par de funciones en algunos ejercicios; lo demás lo harás en HTML puro, aquí mismo, con vista previa.</p>
+  </aside>
+</section>
+
+<section id="que-es" data-parada="Qué es HTML">
+  <h2>Qué es HTML</h2>
+  <p>Imagina que recibes este texto sin ningún formato:</p>
+  <pre><code class="language-text">Tarta de manzana Lista en 40 minutos Ingredientes 3 manzanas 200 g de harina Pasos Pela las manzanas</code></pre>
+  <p>Tú adivinas que «Tarta de manzana» es el título y que «3 manzanas» es un ingrediente, porque ya has visto muchas recetas. La computadora no adivina: para ella todo es una fila de caracteres. Hace falta <em>marcar</em> cada trozo para decir qué es. Eso hace <strong>HTML</strong>: son las siglas en inglés de <em>HyperText Markup Language</em>, «lenguaje de marcado de hipertexto».</p>
+  <ul>
+    <li>Un <strong>lenguaje de marcado</strong> es un sistema de marcas que se ponen alrededor del texto para indicar qué es cada parte: un título, un párrafo, una lista.</li>
+    <li><strong>Hipertexto</strong> es texto con enlaces a otros textos. Es la idea que dio origen a la web: páginas que te llevan a otras páginas.</li>
+  </ul>
+  <aside class="senal analogia">
+    <p>Piensa en una receta impresa que alguien marca con rotuladores: en verde el título, en amarillo los ingredientes, en azul los pasos. Las marcas no cambian las palabras; dicen qué papel cumple cada una. HTML hace lo mismo con etiquetas. La analogía tiene un límite: algunas marcas de HTML además <em>hacen</em> cosas, como un enlace que te lleva a otra página o un campo donde puedes escribir.</p>
+  </aside>
+
+  <h3>HTML no es un lenguaje de programación</h3>
+  <p>En la Línea 2 aprendiste JavaScript, que es un <strong>lenguaje de programación</strong>: tiene variables, decisiones, bucles y funciones, y sirve para calcular y decidir. HTML no tiene nada de eso. No puede sumar dos números ni decidir si muestra un mensaje. Solo <em>describe</em> el contenido y su estructura. Por eso se dice que HTML es <strong>declarativo</strong>: declaras qué hay, y el navegador decide cómo mostrarlo.</p>
+  <p>En la web trabajan tres lenguajes juntos, cada uno con su tarea:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Lenguaje</th><th scope="col">Responde a…</th><th scope="col">Ejemplo</th><th scope="col">Dónde lo aprendes</th></tr></thead>
+      <tbody>
+        <tr><td>HTML</td><td>¿Qué es cada cosa?</td><td>«Esto es un encabezado y esto es un botón.»</td><td>Esta estación</td></tr>
+        <tr><td>CSS</td><td>¿Cómo se ve?</td><td>«Los encabezados van en azul y el botón tiene esquinas redondeadas.»</td><td><a href="14-css.html">Estación 14</a></td></tr>
+        <tr><td>JavaScript</td><td>¿Qué pasa cuando…?</td><td>«Cuando pulses el botón, suma un producto al carrito.»</td><td><a href="15-dom.html">Estación 15</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Separar las tareas tiene una ventaja enorme: puedes cambiar todo el aspecto de una página sin tocar su HTML, y el contenido sigue teniendo sentido aunque el CSS no cargue.</p>
+
+  <h3>Etiquetas, elementos y atributos</h3>
+  <p>Una marca de HTML se llama <strong>etiqueta</strong> (en inglés, <em>tag</em>). Se escribe entre los signos <code>&lt;</code> y <code>&gt;</code>. Casi siempre van en pareja: una <strong>etiqueta de apertura</strong> como <code>&lt;p&gt;</code> y una <strong>etiqueta de cierre</strong> con barra, como <code>&lt;/p&gt;</code>. Todo el conjunto, con lo que queda en medio, es un <strong>elemento</strong>.</p>
+  <p>Las etiquetas de apertura pueden llevar <strong>atributos</strong>: datos extra con la forma <code>nombre="valor"</code> que ajustan el elemento. Por ejemplo, un enlace necesita saber adónde lleva:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 210" role="img" aria-label="Anatomía del elemento a href igual a contacto.html con el texto Escríbeme: la etiqueta de apertura contiene el atributo href, después va el contenido y al final la etiqueta de cierre; todo junto forma el elemento">
+      <rect class="d-caja-suave" x="101" y="46" width="334" height="38" rx="6"/>
+      <rect class="d-resalte" x="146" y="50" width="277" height="30" rx="4"/>
+      <rect class="d-caja-suave" x="556" y="46" width="62" height="38" rx="6"/>
+      <text class="d-mono" x="107" y="72" style="font-size:22px">&lt;a</text>
+      <text class="d-mono" x="148" y="72" style="font-size:22px">href="contacto.html"</text>
+      <text class="d-mono" x="421.4" y="72" style="font-size:22px">&gt;</text>
+      <text class="d-mono" x="435.1" y="72" style="font-size:22px">Escríbeme</text>
+      <text class="d-mono" x="558.1" y="72" style="font-size:22px">&lt;/a&gt;</text>
+      <path class="d-linea" d="M148 40v-6h273v6"/>
+      <text class="d-rotulo" x="284.5" y="24" text-anchor="middle">atributo: nombre="valor"</text>
+      <path class="d-linea" d="M107 92v6h328v-6"/>
+      <text class="d-rotulo" x="271" y="120" text-anchor="middle">etiqueta de apertura</text>
+      <path class="d-linea" d="M441 92v6h112v-6"/>
+      <text class="d-rotulo" x="497" y="120" text-anchor="middle">contenido</text>
+      <path class="d-linea" d="M558 92v6h55v-6"/>
+      <path class="d-linea" d="M585.5 98v28"/>
+      <text class="d-rotulo" x="585.5" y="146" text-anchor="middle">etiqueta de cierre</text>
+      <path class="d-linea" d="M107 164v6h506v-6"/>
+      <text class="d-rotulo" x="360" y="196" text-anchor="middle">elemento completo</text>
+    </svg>
+    <figcaption>Un elemento <code>a</code> (enlace). El atributo <code>href</code> va siempre en la etiqueta de apertura; el contenido es lo que ves en la página; la etiqueta de cierre repite el nombre con una barra delante.</figcaption>
+  </figure>
+  <p>Algunas reglas que conviene saber desde ya:</p>
+  <ul>
+    <li><strong>Escribe las etiquetas en minúsculas.</strong> HTML no distingue mayúsculas (<code>&lt;P&gt;</code> funciona), pero todo el mundo usa minúsculas y así se lee mejor.</li>
+    <li><strong>Pon los valores de los atributos entre comillas dobles</strong>: <code>href="contacto.html"</code>. Sin comillas funciona a veces, y el día que el valor tenga un espacio, falla.</li>
+    <li><strong>Separa los atributos con espacios</strong>: <code>&lt;img src="tarta.jpg" alt="Tarta de manzana"&gt;</code>. El orden de los atributos no importa.</li>
+    <li>Hay <strong>elementos vacíos</strong> (en inglés, <em>void elements</em>) que no tienen contenido ni etiqueta de cierre, como <code>&lt;br&gt;</code> (salto de línea), <code>&lt;img&gt;</code> (imagen) o <code>&lt;input&gt;</code> (campo de formulario). Verás código que los escribe con barra final, <code>&lt;br /&gt;</code>: es válido, pero el navegador ignora esa barra. Elige un estilo y sé constante.</li>
+  </ul>
+
+  <h3>Elementos dentro de elementos</h3>
+  <p>Los elementos se pueden meter unos dentro de otros. A eso se le llama <strong>anidar</strong>. Un párrafo puede contener un texto importante, una lista contiene elementos de lista, y toda la página vive dentro de un elemento <code>html</code>. La regla de oro: <strong>lo último que abres es lo primero que cierras</strong>, como las cajas que se guardan unas dentro de otras.</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Etiquetas cruzadas</p>
+      <pre><code class="language-html">&lt;p&gt;Hornea &lt;strong&gt;40 minutos&lt;/p&gt;&lt;/strong&gt;</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Bien anidadas</p>
+      <pre><code class="language-html">&lt;p&gt;Hornea &lt;strong&gt;40 minutos&lt;/strong&gt;&lt;/p&gt;</code></pre>
+    </div>
+  </div>
+  <p>Al elemento que contiene a otro se le llama <strong>padre</strong>, y al contenido, <strong>hijo</strong>. En el ejemplo bueno, <code>p</code> es el padre de <code>strong</code>. Esta forma de hablar en familia la usarás mucho en CSS y JavaScript.</p>
+  <p>Mira qué hace el navegador con un archivo HTML, desde que lo lee hasta que lo ves:</p>
+  <figure class="capsula" data-titulo="Del archivo a la pantalla">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: un archivo receta.html con etiquetas; el navegador distingue las etiquetas del texto, construye un árbol de elementos con body, h1, p, ul y dos li, dibuja la página con el título, el párrafo y la lista, y un lector de pantalla lee el mismo árbol en voz alta">
+        <rect class="d-codigo" x="10" y="20" width="318" height="196" rx="8"/>
+        <text class="d-codigo-tenue" x="26" y="44" style="font-size:13px">receta.html</text>
+        <g data-pasos="2">
+          <rect class="d-resalte" x="24" y="56" width="38" height="20" rx="3"/>
+          <rect class="d-resalte" x="198" y="56" width="47" height="20" rx="3"/>
+          <rect class="d-resalte" x="24" y="82" width="30" height="20" rx="3"/>
+          <rect class="d-resalte" x="224" y="82" width="39" height="20" rx="3"/>
+          <rect class="d-resalte" x="24" y="108" width="38" height="20" rx="3"/>
+          <rect class="d-resalte" x="41" y="134" width="38" height="20" rx="3"/>
+          <rect class="d-resalte" x="163" y="134" width="47" height="20" rx="3"/>
+          <rect class="d-resalte" x="41" y="160" width="38" height="20" rx="3"/>
+          <rect class="d-resalte" x="207" y="160" width="47" height="20" rx="3"/>
+          <rect class="d-resalte" x="24" y="186" width="47" height="20" rx="3"/>
+        </g>
+        <text class="d-codigo-texto" x="26" y="71" style="font-size:14px">&lt;h1&gt;Tarta de manzana&lt;/h1&gt;</text>
+        <text class="d-codigo-texto" x="26" y="97" style="font-size:14px">&lt;p&gt;Lista en 40 minutos.&lt;/p&gt;</text>
+        <text class="d-codigo-texto" x="26" y="123" style="font-size:14px">&lt;ul&gt;</text>
+        <text class="d-codigo-texto" x="43.4" y="149" style="font-size:14px">&lt;li&gt;3 manzanas&lt;/li&gt;</text>
+        <text class="d-codigo-texto" x="43.4" y="175" style="font-size:14px">&lt;li&gt;200 g de harina&lt;/li&gt;</text>
+        <text class="d-codigo-texto" x="26" y="201" style="font-size:14px">&lt;/ul&gt;</text>
+        <g data-pasos="1">
+          <text class="d-tenue" x="527" y="112" text-anchor="middle">¿Qué hace el navegador</text>
+          <text class="d-tenue" x="527" y="136" text-anchor="middle">con este texto?</text>
+        </g>
+        <g data-pasos="3">
+          <text class="d-rotulo" x="345" y="44">Árbol de elementos</text>
+          <path class="d-linea" d="M560 76L420 106M560 76L540 106M560 76L640 106M640 136L600 166M640 136L680 166"/>
+          <rect class="d-acento" x="525" y="46" width="70" height="30" rx="6"/>
+          <text class="d-sobre-acento d-mono" x="560" y="66" text-anchor="middle" style="font-size:15px">body</text>
+          <rect class="d-caja" x="385" y="106" width="70" height="30" rx="6"/>
+          <text class="d-mono" x="420" y="126" text-anchor="middle" style="font-size:15px">h1</text>
+          <rect class="d-caja" x="505" y="106" width="70" height="30" rx="6"/>
+          <text class="d-mono" x="540" y="126" text-anchor="middle" style="font-size:15px">p</text>
+          <rect class="d-caja" x="605" y="106" width="70" height="30" rx="6"/>
+          <text class="d-mono" x="640" y="126" text-anchor="middle" style="font-size:15px">ul</text>
+          <rect class="d-caja" x="565" y="166" width="70" height="30" rx="6"/>
+          <text class="d-mono" x="600" y="186" text-anchor="middle" style="font-size:15px">li</text>
+          <rect class="d-caja" x="645" y="166" width="70" height="30" rx="6"/>
+          <text class="d-mono" x="680" y="186" text-anchor="middle" style="font-size:15px">li</text>
+        </g>
+        <g data-pasos="4-">
+          <rect class="d-caja" x="345" y="20" width="365" height="196" rx="8"/>
+          <rect class="d-caja-suave" x="346" y="21" width="363" height="28" rx="7"/>
+          <circle class="d-tinta" cx="362" cy="35" r="4"/>
+          <circle class="d-tinta" cx="376" cy="35" r="4"/>
+          <circle class="d-tinta" cx="390" cy="35" r="4"/>
+          <text class="d-tenue d-peq" x="408" y="40">receta.html</text>
+          <text class="d-rotulo" x="365" y="88" style="font-size:25px">Tarta de manzana</text>
+          <text x="365" y="120">Lista en 40 minutos.</text>
+          <circle class="d-tinta" cx="375" cy="148" r="3.5"/>
+          <text x="388" y="154">3 manzanas</text>
+          <circle class="d-tinta" cx="375" cy="176" r="3.5"/>
+          <text x="388" y="182">200 g de harina</text>
+        </g>
+        <g data-pasos="5">
+          <rect class="d-caja-suave" x="10" y="232" width="700" height="62" rx="8"/>
+          <text class="d-rotulo" x="26" y="258">Lector de pantalla</text>
+          <text class="d-rotulo d-tenue d-peq" x="26" y="280">(lo que dice)</text>
+          <text x="180" y="258">«Encabezado, nivel 1: Tarta de manzana»</text>
+          <text x="180" y="282">«Lista, 2 elementos: 3 manzanas…»</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Un archivo HTML es texto plano. Lo puedes abrir con cualquier editor, y el navegador lo recibe tal cual, carácter por carácter.</li>
+        <li>El navegador lee el texto de arriba abajo y separa las <strong>etiquetas</strong> (resaltadas) del contenido. Cada etiqueta de apertura le dice «empieza un elemento» y cada cierre, «termina».</li>
+        <li data-duracion="7">Con esas marcas construye un <strong>árbol de elementos</strong>: <code>body</code> contiene un <code>h1</code>, un <code>p</code> y una lista <code>ul</code> con dos <code>li</code>. A este árbol se le llama <strong>DOM</strong> y lo manejarás con JavaScript en la <a href="15-dom.html">Estación 15</a>.</li>
+        <li>Con el árbol dibuja la página. Nadie le dijo que el título fuera grande ni que los ingredientes llevaran viñetas: son los estilos que el navegador aplica por defecto a <code>h1</code> y a <code>li</code>.</li>
+        <li data-duracion="7">Un <strong>lector de pantalla</strong>, el programa que lee la página en voz alta a personas ciegas, usa el mismo árbol. Por eso anuncia «encabezado» o «lista»: esa información sale de tus etiquetas. Si las eliges mal, la escucha mal.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Tu primer taller de HTML</h3>
+  <p>Este taller tiene un editor de HTML y, debajo, una <strong>vista previa</strong>: una ventana que dibuja tu código como lo haría el navegador. Antes de pulsar «Ejecutar», <strong>predice</strong>: ¿cuántas líneas de texto verás? ¿Se respetarán los espacios de más? ¿Aparecerá la línea que empieza con <code>&lt;!--</code>?</p>
+  <div class="taller" id="taller-primera-pagina" data-modo="web" data-titulo="Predice y ejecuta" data-alto="17rem">
+    <textarea class="taller-codigo" data-lenguaje="html"><h1>Mi primera página</h1>
+<p>Esto es un párrafo. Tiene <strong>una parte importante</strong> y otra normal.</p>
+<p>Este     texto tiene      muchos espacios
+y un salto de línea en el código.</p>
+<!-- Esto es un comentario: el navegador no lo muestra -->
+<p>¿Ves el comentario en la página?</p></textarea>
+  </div>
+  <p>Tres cosas que sorprenden la primera vez:</p>
+  <ul>
+    <li><strong>Los espacios se juntan.</strong> Varios espacios seguidos, tabulaciones o saltos de línea dentro del texto se muestran como un solo espacio. Para separar párrafos se usan elementos (<code>&lt;p&gt;</code>), no líneas en blanco.</li>
+    <li><strong>Los comentarios no se ven</strong> en la página. Se escriben entre <code>&lt;!--</code> y <code>--&gt;</code> y sirven para dejar notas a quien lea el código. Pero cualquiera puede leerlos con «Ver código fuente», así que nunca escribas en un comentario algo privado, como una contraseña.</li>
+    <li><strong><code>strong</code> se ve en negrita</strong> porque el navegador tiene estilos por defecto. Pero su significado es «esto es importante», no «ponlo en negrita». Enseguida verás por qué esa diferencia importa.</li>
+  </ul>
+  <p>Ahora <strong>modifica</strong>: cambia el título, añade un tercer párrafo y marca una palabra con <code>&lt;em&gt;</code> en lugar de <code>&lt;strong&gt;</code>. ¿Qué cambia en la vista previa?</p>
+
+  <h3>El navegador perdona (y eso no siempre es bueno)</h3>
+  <p>JavaScript se detiene con un error rojo si escribes algo mal. HTML no: el navegador intenta adivinar qué quisiste decir y sigue adelante. Es una decisión de diseño de la web, para que una página con errores se vea de todos modos. El problema es que adivina en silencio, y a veces adivina distinto de lo que esperabas.</p>
+  <p>En este taller hay un párrafo con una caja <code>div</code> dentro. Un párrafo no puede contener elementos de bloque (lo verás en la sección de texto), así que el navegador lo «arregla» a su manera. El JavaScript de la pestaña JS solo imprime cómo quedó el HTML después de que el navegador lo leyera; no hace falta que lo entiendas todavía.</p>
+  <div class="taller" id="taller-navegador-corrige" data-modo="web" data-titulo="El navegador corrige en silencio" data-alto="12rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html"><main>
+<p>Primer párrafo <div>una caja dentro&lt;/div&gt; y fin del párrafo.</p>
+</main></textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// Ayudante del curso: muestra el HTML tal como lo dejó el navegador.
+const html = document.querySelector("main").innerHTML;
+html.split("\n").filter((l) => l.trim()).forEach((l) => console.log(l));</textarea>
+  </div>
+  <p>El navegador cerró el párrafo antes de la caja, dejó «y fin del párrafo.» suelto, y al encontrar el <code>&lt;/p&gt;</code> final sin pareja creó un párrafo vacío. Nada avisa del error. Por eso existen los validadores de HTML, que verás en la sección <a href="#revisar">Revisa tu HTML</a>.</p>
+  <aside class="senal nota" data-titulo="¿HTML5?">
+    <p>Seguro que has oído «HTML5». Fue la gran revisión de HTML que se completó en 2014 y el nombre se quedó como etiqueta de marketing. Hoy HTML no tiene números de versión: es un <strong>estándar vivo</strong> (<em>HTML Living Standard</em>) que mantiene el grupo WHATWG, formado por los fabricantes de navegadores, y que el W3C respalda desde un acuerdo de 2019. Se le añaden cosas poco a poco y cada navegador las incorpora a su ritmo. Para saber si puedes usar algo nuevo, busca el elemento en MDN y mira la tabla «Compatibilidad con navegadores» o la etiqueta <strong>Baseline</strong>, que indica si ya funciona en todos los navegadores principales.</p>
+  </aside>
+</section>
+
+<section id="documento" data-parada="El esqueleto">
+  <h2>El esqueleto de una página</h2>
+  <p>En los talleres escribes trozos sueltos de HTML y el curso añade el resto por ti. Un archivo de verdad, el que subirás a internet, necesita un <strong>esqueleto</strong>: unas pocas líneas fijas que le dicen al navegador qué tipo de documento es, en qué idioma está y cómo leer sus caracteres. Es siempre el mismo, así que en una semana lo escribirás de memoria.</p>
+  <pre><code class="language-html">&lt;!doctype html&gt;
+&lt;html lang="es"&gt;
+  &lt;head&gt;
+    &lt;meta charset="utf-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+    &lt;title&gt;Tarta de manzana · Recetas de Ana&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;h1&gt;Tarta de manzana&lt;/h1&gt;
+    &lt;p&gt;Lista en 40 minutos.&lt;/p&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+  <p>Línea por línea:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Línea</th><th scope="col">Qué hace</th></tr></thead>
+      <tbody>
+        <tr><td><code>&lt;!doctype html&gt;</code></td><td>La <strong>declaración de tipo de documento</strong>. No es un elemento: avisa al navegador de que es HTML moderno. Sin ella, el navegador entra en <strong>modo peculiar</strong> (<em>quirks mode</em>), que imita errores de navegadores de los años noventa y hace que tu CSS se comporte raro.</td></tr>
+        <tr><td><code>&lt;html lang="es"&gt;</code></td><td>El elemento <strong>raíz</strong>: contiene todo lo demás. El atributo <code>lang</code> indica el idioma. Con él, un lector de pantalla elige la voz y la pronunciación correctas, y el navegador sabe cuándo ofrecerte traducir.</td></tr>
+        <tr><td><code>&lt;head&gt;</code></td><td>La <strong>cabeza</strong>: información <em>sobre</em> la página que no se dibuja en la ventana.</td></tr>
+        <tr><td><code>&lt;meta charset="utf-8"&gt;</code></td><td>Dice que el texto usa la <strong>codificación</strong> UTF-8, la forma de convertir letras en bytes que incluye tildes, eñes, emojis y cualquier alfabeto. Va la primera dentro de <code>head</code>.</td></tr>
+        <tr><td><code>&lt;meta name="viewport" …&gt;</code></td><td>Le pide al móvil que use el ancho real de la pantalla. Sin esta línea, los navegadores móviles dibujan la página como si la pantalla fuera mucho más ancha (a menudo unos 980 píxeles) y la encogen: todo sale diminuto.</td></tr>
+        <tr><td><code>&lt;title&gt;</code></td><td>El título del documento. Aparece en la pestaña, en los marcadores, en los resultados de los buscadores y es lo primero que anuncia un lector de pantalla al abrir la página.</td></tr>
+        <tr><td><code>&lt;body&gt;</code></td><td>El <strong>cuerpo</strong>: todo lo que se ve. Encabezados, textos, imágenes, formularios.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 320" role="img" aria-label="Diagrama del esqueleto: la declaración doctype va primero; el elemento html contiene dos cajas, head con meta charset, meta viewport y title, que no se ven, y body con h1, p e img, que es lo que se ve en la ventana">
+      <text class="d-mono" x="20" y="26" style="font-size:16px">&lt;!doctype html&gt;</text>
+      <text class="d-tenue d-peq" x="190" y="25">va antes de todo: activa el modo estándar</text>
+      <rect class="d-caja" x="20" y="42" width="680" height="262" rx="10"/>
+      <text class="d-mono" x="36" y="68" style="font-size:16px">&lt;html lang="es"&gt;</text>
+      <rect class="d-caja-suave" x="40" y="84" width="300" height="204" rx="8"/>
+      <text class="d-mono" x="56" y="110" style="font-size:16px">&lt;head&gt;</text>
+      <text class="d-tenue d-peq" x="56" y="130">Información sobre la página (no se ve)</text>
+      <rect class="d-caja" x="56" y="146" width="268" height="34" rx="6"/>
+      <text class="d-mono" x="68" y="168" style="font-size:14px">&lt;meta charset="utf-8"&gt;</text>
+      <rect class="d-caja" x="56" y="192" width="268" height="34" rx="6"/>
+      <text class="d-mono" x="68" y="214" style="font-size:14px">&lt;meta name="viewport"…&gt;</text>
+      <rect class="d-caja" x="56" y="238" width="268" height="34" rx="6"/>
+      <text class="d-mono" x="68" y="260" style="font-size:14px">&lt;title&gt;…&lt;/title&gt;</text>
+      <rect class="d-caja-suave" x="360" y="84" width="320" height="204" rx="8"/>
+      <text class="d-mono" x="376" y="110" style="font-size:16px">&lt;body&gt;</text>
+      <text class="d-tenue d-peq" x="376" y="130">Lo que se ve en la ventana</text>
+      <rect class="d-acento" x="376" y="146" width="288" height="34" rx="6"/>
+      <text class="d-mono d-sobre-acento" x="388" y="168" style="font-size:14px">&lt;h1&gt;Tarta de manzana&lt;/h1&gt;</text>
+      <rect class="d-acento" x="376" y="192" width="288" height="34" rx="6"/>
+      <text class="d-mono d-sobre-acento" x="388" y="214" style="font-size:14px">&lt;p&gt;Lista en 40 minutos.&lt;/p&gt;</text>
+      <rect class="d-acento" x="376" y="238" width="288" height="34" rx="6"/>
+      <text class="d-mono d-sobre-acento" x="388" y="260" style="font-size:14px">&lt;img src="…" alt="…"&gt;</text>
+    </svg>
+    <figcaption>El esqueleto como cajas dentro de cajas. <code>head</code> y <code>body</code> son hermanos: los dos son hijos de <code>html</code>, y nunca van uno dentro del otro.</figcaption>
+  </figure>
+  <aside class="senal error">
+    <p>Tres confusiones muy comunes: <code>&lt;head&gt;</code> no es lo mismo que <code>&lt;header&gt;</code> (la cabecera visible de la página, que verás en la sección de semántica); <code>&lt;title&gt;</code> no es lo mismo que <code>&lt;h1&gt;</code> (el título visible dentro de la página); y el contenido visible nunca va dentro de <code>head</code>.</p>
+  </aside>
+  <aside class="senal ojo" data-titulo="Letras raras: Ã± en vez de ñ">
+    <p>Si tu página muestra «EspaÃ±a» en lugar de «España», hay un desacuerdo de codificación: el archivo se guardó en UTF-8 pero el navegador lo leyó con otra codificación. Revisa dos cosas: que la línea <code>&lt;meta charset="utf-8"&gt;</code> esté al principio del <code>head</code> (debe aparecer dentro de los primeros 1024 bytes del archivo) y que tu editor guarde en UTF-8. VS Code lo muestra abajo a la derecha, en la barra de estado.</p>
+  </aside>
+  <aside class="senal ojo" data-titulo="No bloquees el zoom">
+    <p>En internet verás plantillas con <code>user-scalable=no</code> o <code>maximum-scale=1</code> dentro del viewport. Eso impide ampliar la página con los dedos, y deja fuera a quien ve poco. Las pautas de accesibilidad exigen que el texto se pueda ampliar al menos al doble. Usa solo <code>width=device-width, initial-scale=1</code>.</p>
+  </aside>
+  <p>Hay más cosas que pueden ir en el <code>head</code>: una descripción para los buscadores (<code>&lt;meta name="description" content="…"&gt;</code>), el enlace a tu hoja de estilos (<code>&lt;link rel="stylesheet" href="estilos.css"&gt;</code>, en la <a href="14-css.html">Estación 14</a>) o tus programas de JavaScript (<code>&lt;script src="app.js" defer&gt;&lt;/script&gt;</code>, en la <a href="15-dom.html">Estación 15</a>).</p>
+
+  <h3>Ordena el esqueleto</h3>
+  <p>Pon estas líneas en orden y dales la sangría correcta: cada elemento que está dentro de otro va un nivel más a la derecha. Recuerda que <code>meta charset</code> es siempre lo primero dentro de <code>head</code>.</p>
+  <div class="parsons" data-titulo="Ordena el esqueleto de la página" data-lenguaje="html">
+    <ol>
+      <li>&lt;!doctype html&gt;</li>
+      <li>&lt;html lang="es"&gt;</li>
+      <li data-sangria="1">&lt;head&gt;</li>
+      <li data-sangria="2">&lt;meta charset="utf-8"&gt;</li>
+      <li data-sangria="2">&lt;title&gt;Mis recetas&lt;/title&gt;</li>
+      <li data-sangria="1">&lt;/head&gt;</li>
+      <li data-sangria="1">&lt;body&gt;</li>
+      <li data-sangria="2">&lt;h1&gt;Mis recetas&lt;/h1&gt;</li>
+      <li data-sangria="1">&lt;/body&gt;</li>
+      <li>&lt;/html&gt;</li>
+    </ol>
+  </div>
+  <aside class="senal oficio">
+    <p>La <strong>sangría</strong> (los espacios al principio de cada línea) no cambia nada para el navegador. Es para las personas: con un vistazo ves qué está dentro de qué. En los equipos se usa un formateador automático como Prettier, que viste en la <a href="05-herramientas.html">Estación 5</a>, para que todo el código tenga la misma sangría sin discutirlo.</p>
+  </aside>
+
+  <h3>Cómo lee el navegador tu archivo</h3>
+  <p>Sigue la lectura paso a paso. El navegador lleva la cuenta de qué elementos tiene <strong>abiertos</strong> en cada momento, como una pila de cajas: cuando encuentra un cierre, cierra la caja de arriba. En esta traza, el panel «Consola» hace de pantalla: muestra el texto que va apareciendo en la ventana.</p>
+  <div class="traza" data-titulo="El navegador lee una página" data-rotulo-memoria="Lo que el navegador lleva abierto" data-inicio="Antes de empezar: el navegador recibió el archivo y todavía no ha leído nada. Aquí, «Consola» muestra lo que aparece en la ventana. Pulsa «Siguiente».">
+    <pre><code class="language-html">&lt;!doctype html&gt;
+&lt;html lang="es"&gt;
+  &lt;head&gt;
+    &lt;title&gt;Receta&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;h1&gt;Tarta de manzana&lt;/h1&gt;
+    &lt;p&gt;Lista en &lt;strong&gt;40&lt;/strong&gt; minutos.&lt;/p&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"modo": "estándar"}, "nota": "El doctype no crea ningún elemento. Solo le dice al navegador que use el modo estándar, el de la web moderna."},
+      {"linea": 2, "vars": {"modo": "estándar", "abiertos": "html", "idioma": "es"}, "nota": "Se abre html, la raíz. Anota que el idioma es español: lo usarán el lector de pantalla y el traductor."},
+      {"linea": 3, "vars": {"modo": "estándar", "abiertos": "html › head", "idioma": "es"}, "nota": "Se abre head dentro de html. Lo que venga ahora es información sobre la página, no contenido visible."},
+      {"linea": 4, "vars": {"modo": "estándar", "abiertos": "html › head", "idioma": "es", "pestaña": "Receta"}, "nota": "title se abre y se cierra en la misma línea. Su texto no va a la ventana: va a la pestaña del navegador."},
+      {"linea": 5, "vars": {"modo": "estándar", "abiertos": "html", "idioma": "es", "pestaña": "Receta"}, "nota": "Se cierra head. Vuelve a quedar abierto solo html."},
+      {"linea": 6, "vars": {"modo": "estándar", "abiertos": "html › body", "idioma": "es", "pestaña": "Receta"}, "nota": "Se abre body. A partir de aquí, todo se dibuja en la ventana."},
+      {"linea": 7, "vars": {"modo": "estándar", "abiertos": "html › body", "idioma": "es", "pestaña": "Receta"}, "salida": "Tarta de manzana", "nota": "h1 se abre, recibe su texto y se cierra. Aparece en la ventana como encabezado principal."},
+      {"linea": 8, "vars": {"modo": "estándar", "abiertos": "html › body › p", "idioma": "es", "pestaña": "Receta"}, "nota": "Se abre p y empieza su texto: «Lista en ». La línea todavía no terminó."},
+      {"linea": 8, "vars": {"modo": "estándar", "abiertos": "html › body › p › strong", "idioma": "es", "pestaña": "Receta"}, "nota": "strong se abre DENTRO de p. Ahora hay cuatro cajas abiertas, una dentro de otra."},
+      {"linea": 8, "vars": {"modo": "estándar", "abiertos": "html › body", "idioma": "es", "pestaña": "Receta"}, "salida": "Lista en 40 minutos.", "nota": "Primero se cierra strong, que fue lo último en abrirse, y después p. Si cerraras p antes que strong, el navegador tendría que adivinar qué quisiste decir."},
+      {"linea": 9, "vars": {"modo": "estándar", "abiertos": "html", "idioma": "es", "pestaña": "Receta"}, "nota": "Se cierra body."},
+      {"linea": 10, "vars": {"modo": "estándar", "abiertos": "(ninguno)", "idioma": "es", "pestaña": "Receta"}, "nota": "Se cierra html. No queda nada abierto: el documento está completo y bien anidado."}
+    ]</script>
+  </div>
+
+  <h3>Tu primer archivo de verdad</h3>
+  <p>Ahora hazlo fuera del curso, en tu computadora, con el editor que instalaste en la <a href="05-herramientas.html">Estación 5</a>:</p>
+  <ol class="pasos">
+    <li><div><p>Crea una carpeta llamada <code>mi-web</code> y ábrela en VS Code (menú <em>Archivo › Abrir carpeta</em>).</p></div></li>
+    <li><div><p>Crea dentro un archivo llamado <code>index.html</code>. El nombre <code>index</code> es especial: cuando alguien visita una carpeta de un sitio web, el servidor le entrega el archivo <code>index.html</code> de esa carpeta.</p></div></li>
+    <li><div><p>En el archivo vacío escribe un signo de exclamación, <code>!</code>, y elige la primera sugerencia de la lista. Es un atajo de <strong>Emmet</strong>, una herramienta que viene incluida en VS Code, y genera el esqueleto completo.</p></div></li>
+    <li><div><p>Revisa lo que generó: pone <code>lang="en"</code> (inglés). Cámbialo a <code>lang="es"</code> y cambia el texto de <code>&lt;title&gt;</code>. Si quieres que Emmet ponga español siempre, puedes cambiar la variable <code>lang</code> en el ajuste <code>emmet.variables</code> de VS Code.</p></div></li>
+    <li><div><p>Dentro de <code>body</code> escribe un <code>h1</code> y un párrafo. Guarda con <kbd>Ctrl</kbd> + <kbd>S</kbd> (en Mac, <kbd>Cmd</kbd> + <kbd>S</kbd>).</p></div></li>
+    <li><div><p>Abre el archivo en el navegador: haz doble clic sobre él en tu explorador de archivos o arrástralo a una ventana del navegador. En la barra de direcciones verás algo como <code>file:///C:/Users/ana/mi-web/index.html</code>: el navegador está leyendo un archivo de tu disco, no de internet.</p></div></li>
+    <li><div><p>Cambia algo en el editor, guarda y recarga el navegador con <kbd>F5</kbd> (o <kbd>Cmd</kbd> + <kbd>R</kbd>). Este ciclo, <em>editar, guardar, recargar</em>, es tu día a día con HTML. Hay extensiones de VS Code que recargan la página solas al guardar, pero no las necesitas para esta estación.</p></div></li>
+  </ol>
+  <p>Practica el mismo ajuste aquí. Este esqueleto es el que genera Emmet. Cambia el idioma a español, pon un título que describa la página y añade un <code>h1</code> dentro de <code>body</code>. Pulsa «Ejecutar» para comprobarlo.</p>
+  <div class="taller" id="taller-esqueleto" data-modo="web" data-exito="¡Correcto! Tu página cumple lo que se pedía." data-titulo="Ajusta el esqueleto" data-alto="10rem">
+    <textarea class="taller-codigo" data-lenguaje="html"><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+</body>
+</html></textarea>
+    <script type="text/plain" class="taller-verificar">
+if (!/<html[^>]*\slang\s*=\s*["']?es(-[a-z]+)?["'\s>]/i.test(codigo.html)) return "Cambia el atributo lang de la etiqueta html a \"es\".";
+var t = document.title.trim();
+if (!t || t === "Document") return "Escribe un título propio dentro de <title>, que describa la página.";
+var h1 = document.querySelector("h1");
+if (!h1 || !h1.textContent.trim()) return "Añade un <h1> con texto dentro de <body>.";
+return true;
+    </script>
+  </div>
+  <aside class="senal nota">
+    <p>Fíjate en que Emmet escribe <code>&lt;!DOCTYPE html&gt;</code> y <code>UTF-8</code> en mayúsculas. Da igual: el doctype y el nombre de la codificación no distinguen mayúsculas de minúsculas. En este curso los escribimos en minúsculas.</p>
+  </aside>
+</section>
+
+<section id="texto" data-parada="Texto y listas">
+  <h2>Texto con estructura: encabezados, párrafos y listas</h2>
+  <p>Casi todo lo que hay en una página es texto. Un texto largo sin estructura cansa y se abandona: nadie lee un muro de palabras. Con unos pocos elementos le das forma, y esa forma sirve a la vez para leer con los ojos, para escuchar con un lector de pantalla y para que un buscador entienda de qué trata la página.</p>
+
+  <h3>Encabezados: el índice de tu página</h3>
+  <p>HTML tiene seis niveles de <strong>encabezado</strong> (en inglés, <em>heading</em>): de <code>&lt;h1&gt;</code>, el más importante, a <code>&lt;h6&gt;</code>, el menos. Funcionan como el índice de un libro:</p>
+  <pre><code class="language-html">&lt;h1&gt;Recetas de Ana&lt;/h1&gt;             &lt;!-- el título del libro --&gt;
+  &lt;h2&gt;Postres&lt;/h2&gt;                  &lt;!-- un capítulo --&gt;
+    &lt;h3&gt;Tarta de manzana&lt;/h3&gt;       &lt;!-- una sección del capítulo --&gt;
+    &lt;h3&gt;Flan de huevo&lt;/h3&gt;
+  &lt;h2&gt;Platos salados&lt;/h2&gt;
+    &lt;h3&gt;Tortilla de patatas&lt;/h3&gt;</code></pre>
+  <p>La sangría del ejemplo es solo para que veas la jerarquía; en un archivo real los encabezados no van unos dentro de otros. Tres reglas:</p>
+  <ul>
+    <li><strong>Un solo <code>h1</code> por página</strong>, que diga de qué trata, parecido al <code>title</code>. HTML permite varios, pero la recomendación general es uno.</li>
+    <li><strong>No te saltes niveles</strong> al bajar: después de un <code>h2</code> viene un <code>h3</code>, no un <code>h4</code>. Al subir sí puedes saltar: de un <code>h4</code> puedes volver a un <code>h2</code> cuando empieza un capítulo nuevo.</li>
+    <li><strong>Elige el nivel por su lugar en el índice, nunca por su tamaño.</strong> Si un <code>h2</code> te parece demasiado grande, se cambia con CSS. Usar <code>h4</code> «porque se ve más pequeño» rompe el índice.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>En la encuesta de 2024 de WebAIM a usuarios de lectores de pantalla, el 71,6 % dijo que, en una página larga, lo primero que hace para encontrar información es saltar de encabezado en encabezado. Y en el análisis de 2026 de WebAIM sobre el millón de páginas de inicio más visitadas, el 41,8 % se saltaba niveles de encabezado. Un índice roto deja a mucha gente a oscuras.</p>
+  </aside>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Encabezados elegidos por tamaño</p>
+      <pre><code class="language-html">&lt;h3&gt;Tarta de manzana&lt;/h3&gt;
+&lt;h1&gt;Ingredientes&lt;/h1&gt;
+&lt;h5&gt;Para 6 personas&lt;/h5&gt;
+&lt;h1&gt;Pasos&lt;/h1&gt;</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Encabezados elegidos por jerarquía</p>
+      <pre><code class="language-html">&lt;h1&gt;Tarta de manzana&lt;/h1&gt;
+&lt;h2&gt;Ingredientes&lt;/h2&gt;
+&lt;p&gt;Para 6 personas.&lt;/p&gt;
+&lt;h2&gt;Pasos&lt;/h2&gt;</code></pre>
+    </div>
+  </div>
+  <p>Fíjate en «Para 6 personas»: no es un título de nada, es un dato. Su lugar es un párrafo, aunque quieras que se vea pequeño.</p>
+  <aside class="senal nota">
+    <p>Hasta 2025, los navegadores dibujaban más pequeño un <code>h1</code> colocado dentro de ciertos elementos como <code>section</code> o <code>article</code>, por una idea antigua de la especificación que nunca llegó a funcionar en los lectores de pantalla. Esa regla se eliminó del estándar en 2025 y los navegadores la están retirando. Otra razón para elegir el nivel por jerarquía y dejar el tamaño a CSS.</p>
+  </aside>
+
+  <h3>Párrafos, saltos de línea y separadores</h3>
+  <ul>
+    <li><code>&lt;p&gt;</code> es un <strong>párrafo</strong>: un bloque de texto con una idea. Es el elemento que más vas a escribir.</li>
+    <li><code>&lt;br&gt;</code> es un <strong>salto de línea</strong> dentro de un mismo texto. Úsalo solo cuando el salto forma parte del contenido: las líneas de una dirección postal o los versos de un poema. Nunca lo uses para separar párrafos o para dejar espacio: eso se hace con <code>&lt;p&gt;</code> y con CSS.</li>
+    <li><code>&lt;hr&gt;</code> es un <strong>cambio de tema</strong> entre párrafos, como los asteriscos que separan escenas en una novela. El navegador lo dibuja como una línea horizontal.</li>
+  </ul>
+  <pre><code class="language-html">&lt;p&gt;
+  Panadería La Espiga&lt;br&gt;
+  Calle Mayor 12&lt;br&gt;
+  Montevideo
+&lt;/p&gt;</code></pre>
+
+  <h3>Importancia y énfasis</h3>
+  <p>Hay dos parejas de elementos que se ven igual pero significan cosas distintas:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Elemento</th><th scope="col">Significa</th><th scope="col">Se ve (por defecto)</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td><code>&lt;strong&gt;</code></td><td>Importancia, seriedad o urgencia</td><td>Negrita</td><td><code>&lt;strong&gt;No abras el horno&lt;/strong&gt; durante los primeros 20 minutos.</code></td></tr>
+        <tr><td><code>&lt;em&gt;</code></td><td>Énfasis: la palabra que acentuarías al hablar, que puede cambiar el sentido</td><td>Cursiva</td><td>Yo <code>&lt;em&gt;no&lt;/em&gt;</code> dije eso.</td></tr>
+        <tr><td><code>&lt;b&gt;</code></td><td>Llamar la atención sin añadir importancia: palabras clave, nombres de producto</td><td>Negrita</td><td>Lleva <code>&lt;b&gt;harina de fuerza&lt;/b&gt;</code>.</td></tr>
+        <tr><td><code>&lt;i&gt;</code></td><td>Otra voz o registro: palabras en otro idioma, términos técnicos, pensamientos</td><td>Cursiva</td><td>Una <code>&lt;i lang="fr"&gt;tarte tatin&lt;/i&gt;</code> es una tarta invertida.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La regla práctica: si solo quieres que <em>se vea</em> en negrita o cursiva, es trabajo de CSS; si el texto de verdad es importante o enfático, usa <code>strong</code> o <code>em</code>. Ten en cuenta que muchos lectores de pantalla no cambian la voz con estos elementos en su configuración por defecto, así que nunca confíes en la negrita sola para transmitir algo vital: dilo también con palabras.</p>
+  <p>Otros elementos de texto útiles, todos en línea:</p>
+  <ul>
+    <li><code>&lt;code&gt;</code> para fragmentos de código: <code>&lt;code&gt;console.log&lt;/code&gt;</code>.</li>
+    <li><code>&lt;mark&gt;</code> para resaltar, como un rotulador: los resultados de una búsqueda.</li>
+    <li><code>&lt;small&gt;</code> para la letra pequeña: avisos legales, derechos de autor.</li>
+    <li><code>&lt;sub&gt;</code> y <code>&lt;sup&gt;</code> para subíndices y superíndices: H<sub>2</sub>O, 20 m<sup>2</sup>.</li>
+    <li><code>&lt;blockquote&gt;</code> para una cita larga en su propio bloque y <code>&lt;q&gt;</code> para una cita corta dentro de una frase (el navegador añade las comillas).</li>
+  </ul>
+
+  <h3>Elementos de bloque y elementos en línea</h3>
+  <p>Ya habrás notado que un <code>h1</code> o un <code>p</code> siempre empiezan en una línea nueva, mientras que <code>strong</code> se queda dentro de la frase. Por defecto, los elementos se muestran de dos maneras:</p>
+  <ul>
+    <li><strong>De bloque</strong>: empiezan en una línea nueva y ocupan todo el ancho disponible, como los párrafos de un libro. Ejemplos: <code>h1</code>…<code>h6</code>, <code>p</code>, <code>ul</code>, <code>ol</code>, <code>li</code>, <code>blockquote</code>, <code>div</code>.</li>
+    <li><strong>En línea</strong> (en inglés, <em>inline</em>): fluyen dentro del texto, uno detrás de otro, como palabras. Ejemplos: <code>a</code> (los enlaces), <code>strong</code>, <code>em</code>, <code>mark</code>, <code>code</code>, <code>img</code>, <code>span</code>.</li>
+  </ul>
+  <p>Hay dos elementos sin ningún significado, que existen para agrupar cuando nada más encaja: <code>&lt;div&gt;</code> (una caja genérica de bloque) y <code>&lt;span&gt;</code> (un trozo genérico en línea). Los usarás sobre todo para darles estilo con CSS. En este taller, el CSS dibuja un borde continuo alrededor de los elementos de bloque y uno punteado alrededor de los elementos en línea. Míralo antes de tocar nada:</p>
+  <div class="taller" id="taller-bloque-linea" data-modo="web" data-titulo="Bloque y en línea" data-alto="19rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html"><h1>Tarta de manzana</h1>
+<p>Una receta <strong>para toda la familia</strong> con <em>solo</em> cinco ingredientes.
+Lleva <mark>tres pasos</mark> y un poco de <code>paciencia</code>.</p>
+<ul>
+  <li>3 manzanas</li>
+  <li>200 g de harina</li>
+</ul>
+<div>Soy un div: una caja genérica.</div>
+<p>Y yo tengo un <span>span</span> en medio.</p></textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">/* Bloque: borde continuo. En línea: borde punteado. */
+h1, p, ul, li, div { outline: 2px solid #4a7fd4; margin: 6px; }
+strong, em, mark, code, span { outline: 2px dashed #d4574a; }</textarea>
+  </div>
+  <p>Ahora <strong>investiga</strong>: agranda o achica mentalmente la ventana, o escribe una frase muy larga en el primer párrafo. Los bloques ocupan todo el ancho aunque su texto sea corto; los elementos en línea solo ocupan lo que mide su contenido. Si quieres cambiar cómo se muestra un elemento, eso se hace con la propiedad <code>display</code> de CSS, que verás en la <a href="14-css.html">Estación 14</a>.</p>
+  <aside class="senal error">
+    <p>Un párrafo solo puede contener elementos en línea. Si metes un bloque dentro de <code>&lt;p&gt;</code> (otro párrafo, una lista, un <code>div</code>), el navegador cierra el párrafo antes, como viste en el taller «El navegador corrige en silencio». Al revés sí vale: los bloques contienen elementos en línea sin problema.</p>
+  </aside>
+  <aside class="senal nota" data-titulo="Un matiz técnico">
+    <p>El estándar actual de HTML ya no habla de «bloque» y «en línea», sino de <em>categorías de contenido</em>: el «contenido de flujo» (casi todo) y el «contenido de frase» (el texto y los elementos que van dentro de él). Para empezar, la idea de bloque y en línea te sirve y es la que usa CSS.</p>
+  </aside>
+
+  <h3>Listas</h3>
+  <p>Las listas están por todas partes: los ingredientes de una receta, los pasos de una instalación, el menú de un sitio. HTML tiene tres tipos:</p>
+  <ul>
+    <li><code>&lt;ul&gt;</code>, <strong>lista sin orden</strong> (<em>unordered list</em>): el orden no importa. Se dibuja con viñetas.</li>
+    <li><code>&lt;ol&gt;</code>, <strong>lista ordenada</strong> (<em>ordered list</em>): el orden importa. Se numera sola.</li>
+    <li><code>&lt;dl&gt;</code>, <strong>lista de descripciones</strong>: pares de término (<code>&lt;dt&gt;</code>) y descripción (<code>&lt;dd&gt;</code>), como un glosario.</li>
+  </ul>
+  <p>Dentro de <code>ul</code> y <code>ol</code>, cada elemento va en un <code>&lt;li&gt;</code> (<em>list item</em>). Y solo <code>li</code>: nada de texto suelto ni párrafos directamente dentro de la lista. Para hacer una sublista, métela <em>dentro</em> de un <code>li</code>. Predice cómo se verá este código y después ejecútalo:</p>
+  <div class="taller" id="taller-listas" data-modo="web" data-titulo="Predice: listas" data-alto="22rem">
+    <textarea class="taller-codigo" data-lenguaje="html"><h2>Ingredientes</h2>
+<ul>
+  <li>3 manzanas</li>
+  <li>Para la masa:
+    <ul>
+      <li>200 g de harina</li>
+      <li>100 g de mantequilla</li>
+    </ul>
+  </li>
+</ul>
+<h2>Pasos</h2>
+<ol start="3">
+  <li>Pela las manzanas.</li>
+  <li>Estira la masa.</li>
+</ol>
+<dl>
+  <dt>Masa quebrada</dt>
+  <dd>Masa de harina y mantequilla que se desmigaja al morderla.</dd>
+</dl></textarea>
+  </div>
+  <p>El atributo <code>start="3"</code> hizo que la lista empezara en 3. También existe <code>reversed</code>, que cuenta hacia atrás, ideal para un «top 10». Ahora <strong>modifica</strong>: añade un cuarto ingrediente, un tercer paso, y quita <code>start</code>.</p>
+  <aside class="senal oficio">
+    <p>Los menús de navegación de casi todos los sitios profesionales son listas de enlaces: un <code>&lt;ul&gt;</code> con un <code>&lt;li&gt;</code> por enlace. Así un lector de pantalla anuncia «lista, 5 elementos» y la persona sabe cuántas opciones hay antes de recorrerlas. Con CSS se pone en horizontal y se le quitan las viñetas.</p>
+  </aside>
+
+  <h3>Caracteres especiales y entidades</h3>
+  <p>¿Cómo escribes en una página el texto «usa &lt;p&gt; para los párrafos»? Si escribes <code>&lt;p&gt;</code> tal cual, el navegador cree que abres un párrafo. Para eso existen las <strong>entidades</strong> (en inglés, <em>character references</em>): códigos que empiezan con <code>&amp;</code> y terminan con <code>;</code> y que el navegador cambia por un carácter.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Escribes</th><th scope="col">Se ve</th><th scope="col">Cuándo la necesitas</th></tr></thead>
+      <tbody>
+        <tr><td><code>&amp;lt;</code></td><td>&lt;</td><td>Siempre que quieras mostrar el signo «menor que».</td></tr>
+        <tr><td><code>&amp;gt;</code></td><td>&gt;</td><td>Para el signo «mayor que» (por simetría con <code>&amp;lt;</code>).</td></tr>
+        <tr><td><code>&amp;amp;</code></td><td>&amp;</td><td>Para mostrar el propio signo <code>&amp;</code>, sobre todo si le sigue texto que parece una entidad.</td></tr>
+        <tr><td><code>&amp;quot;</code></td><td>"</td><td>Comillas dobles dentro del valor de un atributo que ya va entre comillas dobles.</td></tr>
+        <tr><td><code>&amp;nbsp;</code></td><td>(espacio)</td><td>Un <strong>espacio de no separación</strong>: une dos palabras para que nunca queden en líneas distintas, como en <code>10&amp;nbsp;km</code>.</td></tr>
+        <tr><td><code>&amp;copy;</code> o <code>&amp;#169;</code></td><td>©</td><td>Opcional: con UTF-8 puedes escribir © directamente.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Como tu página usa UTF-8, las tildes, la ñ, el símbolo del euro o los emojis se escriben tal cual; no necesitas entidades para ellos. En la práctica, las que usarás siempre son <code>&amp;lt;</code> y <code>&amp;amp;</code>. Predice qué se verá:</p>
+  <div class="taller" id="taller-entidades" data-modo="web" data-titulo="Predice: entidades" data-alto="13rem">
+    <textarea class="taller-codigo" data-lenguaje="html"><p>Usa <p> para los párrafos.</p>
+<p>Usa &amp;lt;p&amp;gt; para los párrafos.</p>
+<p>Tom &amp;amp; Jerry corrieron 10&amp;nbsp;km.</p>
+<p>Precio: 25 € · © 2026 Recetas de Ana</p></textarea>
+  </div>
+  <p>En la primera línea, el <code>&lt;p&gt;</code> desapareció: el navegador lo tomó por una etiqueta de verdad. La segunda muestra el texto que querías.</p>
+</section>
+
+<section id="enlaces" data-parada="Enlaces y rutas">
+  <h2>Enlaces y rutas</h2>
+  <p>Sin enlaces no hay web: habría páginas sueltas, como folletos sin dirección. Un <strong>enlace</strong> (en inglés, <em>link</em> o <em>hyperlink</em>) se crea con el elemento <code>&lt;a&gt;</code>, de <em>anchor</em>, «ancla», y su atributo <code>href</code>, que indica el destino:</p>
+  <pre><code class="language-html">&lt;a href="https://developer.mozilla.org/es/"&gt;Documentación de MDN en español&lt;/a&gt;</code></pre>
+  <p>El texto entre las etiquetas es lo que la persona ve y pulsa. El <code>href</code> puede ser de dos tipos: una <strong>URL absoluta</strong> o una <strong>ruta relativa</strong>.</p>
+
+  <h3>URL absolutas: la dirección completa</h3>
+  <p>Una <strong>URL absoluta</strong> incluye todo: protocolo, dominio y ruta, como <code>https://es.wikipedia.org/wiki/Tarta</code>. La anatomía de una URL la viste en la <a href="03-internet.html">Estación 3</a>. Úsalas para enlazar a <em>otros</em> sitios. Si olvidas el protocolo y escribes <code>href="es.wikipedia.org"</code>, el navegador lo toma por una ruta relativa y busca una carpeta llamada «es.wikipedia.org» dentro de tu sitio.</p>
+
+  <h3>Rutas relativas: el camino desde donde estás</h3>
+  <p>Para enlazar páginas de tu propio sitio se usan <strong>rutas relativas</strong>: indicaciones que parten de la carpeta donde está la página que contiene el enlace. Es la misma idea de las rutas de la terminal que practicaste en la <a href="05-herramientas.html">Estación 5</a>: <code>..</code> sube una carpeta y un nombre seguido de <code>/</code> entra en ella. Primero, crea la estructura de carpetas de un sitio de recetas en esta terminal de práctica:</p>
+  <p><strong>Misión:</strong> dentro de tu carpeta personal, crea la carpeta <code>mi-sitio</code> con los archivos <code>index.html</code> y <code>contacto.html</code>, una carpeta <code>img</code> con un archivo <code>logo.png</code>, y una carpeta <code>recetas</code> con <code>tarta.html</code> y <code>flan.html</code>. Usa <code>mkdir</code>, <code>cd</code>, <code>touch</code> y <code>ls</code>.</p>
+  <div class="terminal-sim" data-titulo="La estructura de tu sitio" data-inicio="/home/tu">
+    <script type="application/json" class="terminal-sistema">{}</script>
+    <script type="text/plain" class="terminal-mision">
+var s = sistema["mi-sitio"];
+if (!s || typeof s !== "object") return "Empieza creando la carpeta mi-sitio con mkdir mi-sitio.";
+if (s["index.html"] === undefined) return "Entra en mi-sitio (cd mi-sitio) y crea index.html con touch.";
+if (s["contacto.html"] === undefined) return "Falta contacto.html dentro de mi-sitio.";
+if (!s.img || typeof s.img !== "object") return "Crea la carpeta img dentro de mi-sitio.";
+if (s.img["logo.png"] === undefined) return "Crea logo.png dentro de img. Puedes escribir: touch img/logo.png";
+if (!s.recetas || typeof s.recetas !== "object") return "Crea la carpeta recetas dentro de mi-sitio.";
+if (s.recetas["tarta.html"] === undefined) return "Crea tarta.html dentro de recetas.";
+if (s.recetas["flan.html"] === undefined) return "Solo falta flan.html dentro de recetas.";
+return true;
+    </script>
+  </div>
+  <p>Ahora imagina que ese sitio está publicado en <code>https://ana.dev</code> y que, dentro de <code>tarta.html</code>, escribes enlaces a otros archivos. Mira cómo resuelve el navegador cada ruta:</p>
+  <figure class="capsula" data-titulo="Cómo se recorre una ruta relativa">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: árbol de carpetas de mi-sitio. Desde recetas/tarta.html, el enlace flan.html lleva a la misma carpeta; el enlace ../img/logo.png sube a mi-sitio, entra en img y llega a logo.png">
+        <rect class="d-resalte" x="52" y="215" width="200" height="28" rx="5" data-mover="2:translate(0px,32px); 3:translate(0px,-32px); 4:translate(0px,-192px); 5:translate(0px,-96px); 6:translate(0px,-64px)"/>
+        <path class="d-linea" d="M70 50V199M70 71H86M70 103H86M70 135H86M70 199H86M102 146V167H118M102 210V263M102 231H118M102 263H118" style="opacity:.55"/>
+        <text class="d-mono" x="60" y="44" style="font-size:15px;font-weight:600">mi-sitio/</text>
+        <text class="d-mono" x="92" y="76" style="font-size:15px">index.html</text>
+        <text class="d-mono" x="92" y="108" style="font-size:15px">contacto.html</text>
+        <text class="d-mono" x="92" y="140" style="font-size:15px;font-weight:600">img/</text>
+        <text class="d-mono" x="124" y="172" style="font-size:15px">logo.png</text>
+        <text class="d-mono" x="92" y="204" style="font-size:15px;font-weight:600">recetas/</text>
+        <text class="d-mono" x="124" y="236" style="font-size:15px">tarta.html</text>
+        <text class="d-mono" x="124" y="268" style="font-size:15px">flan.html</text>
+        <rect class="d-acento" x="262" y="219" width="56" height="22" rx="11"/>
+        <text class="d-sobre-acento d-rotulo d-peq" x="290" y="235" text-anchor="middle">aquí</text>
+        <text class="d-rotulo" x="330" y="40">Enlace escrito en tarta.html</text>
+        <rect class="d-codigo" x="330" y="54" width="380" height="44" rx="8"/>
+        <text class="d-codigo-texto" x="346" y="82" style="font-size:16px" data-texto="2:&lt;a href=&quot;flan.html&quot;&gt;; 3:&lt;a href=&quot;../img/logo.png&quot;&gt;">&lt;a href="…"&gt;</text>
+        <g data-pasos="3-">
+          <rect class="d-caja" x="330" y="120" width="56" height="34" rx="6" data-clases="4:d-acento; 5:"/>
+          <text class="d-mono" x="358" y="143" text-anchor="middle" style="font-size:17px" data-clases="4:d-sobre-acento; 5:">..</text>
+          <text class="d-mono d-tenue" x="392" y="143" text-anchor="middle" style="font-size:17px">/</text>
+          <rect class="d-caja" x="398" y="120" width="64" height="34" rx="6" data-clases="5:d-acento; 6:"/>
+          <text class="d-mono" x="430" y="143" text-anchor="middle" style="font-size:17px" data-clases="5:d-sobre-acento; 6:">img</text>
+          <text class="d-mono d-tenue" x="468" y="143" text-anchor="middle" style="font-size:17px">/</text>
+          <rect class="d-caja" x="474" y="120" width="104" height="34" rx="6" data-clases="6:d-acento"/>
+          <text class="d-mono" x="526" y="143" text-anchor="middle" style="font-size:17px" data-clases="6:d-sobre-acento">logo.png</text>
+          <text class="d-tenue d-peq" x="358" y="174" text-anchor="middle">sube</text>
+          <text class="d-tenue d-peq" x="430" y="174" text-anchor="middle">entra</text>
+          <text class="d-tenue d-peq" x="526" y="174" text-anchor="middle">archivo</text>
+        </g>
+        <text x="330" y="206" data-texto="2:Sin barras ni puntos: la misma carpeta.; 3:Se parte de la carpeta de la página: recetas/; 4:«..» sube un nivel, hasta mi-sitio/; 5:«img/» entra en la carpeta img.; 6:«logo.png» es el archivo buscado.">Se parte de la carpeta donde está la página.</text>
+        <g data-pasos="2-">
+          <rect class="d-caja" x="330" y="224" width="380" height="60" rx="8"/>
+          <text class="d-rotulo d-peq" x="344" y="246">Llega a</text>
+          <text class="d-mono" x="344" y="272" style="font-size:15px" data-texto="2:https://ana.dev/recetas/flan.html; 3:…; 6:https://ana.dev/img/logo.png">https://ana.dev/recetas/flan.html</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>El sitio está publicado en <code>https://ana.dev</code>. Estás en <code>recetas/tarta.html</code>. Toda ruta relativa que escribas en esta página parte de <em>su</em> carpeta: <code>recetas/</code>.</li>
+        <li><code>href="flan.html"</code> no tiene barras ni puntos, así que el navegador busca en la misma carpeta que la página: llega a <code>recetas/flan.html</code>.</li>
+        <li>Ahora el enlace es <code>href="../img/logo.png"</code>. El navegador lo parte en trozos separados por <code>/</code> y los recorre en orden, empezando otra vez en <code>recetas/</code>.</li>
+        <li><code>..</code> significa «la carpeta de arriba». Desde <code>recetas/</code> sube a <code>mi-sitio/</code>.</li>
+        <li><code>img</code> es una carpeta que está dentro de <code>mi-sitio/</code>: el navegador entra en ella.</li>
+        <li data-duracion="6">Por último, <code>logo.png</code> es el archivo que buscaba. El resultado es <code>https://ana.dev/img/logo.png</code>. Si cualquier trozo del camino no existe, la imagen no carga.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Estas son las formas de ruta que vas a usar:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Ruta</th><th scope="col">Significa</th><th scope="col">Desde <code>recetas/tarta.html</code> lleva a</th></tr></thead>
+      <tbody>
+        <tr><td><code>flan.html</code></td><td>Un archivo en la misma carpeta</td><td><code>recetas/flan.html</code></td></tr>
+        <tr><td><code>./flan.html</code></td><td>Lo mismo: <code>.</code> es «esta carpeta»</td><td><code>recetas/flan.html</code></td></tr>
+        <tr><td><code>../index.html</code></td><td>Sube una carpeta y busca el archivo</td><td><code>index.html</code> (la raíz del sitio)</td></tr>
+        <tr><td><code>../img/logo.png</code></td><td>Sube una carpeta, entra en <code>img</code></td><td><code>img/logo.png</code></td></tr>
+        <tr><td><code>/img/logo.png</code></td><td>Con barra al principio: parte de la <strong>raíz del sitio</strong>, esté donde esté la página</td><td><code>img/logo.png</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Compruébalo tú. <code>new URL(ruta, pagina)</code> es una herramienta de JavaScript que hace el mismo cálculo que el navegador cuando pulsas un enlace. Predice cada línea antes de ejecutar:</p>
+  <div class="taller" id="taller-rutas-predice" data-titulo="Predice: ¿adónde lleva cada ruta?">
+    <textarea class="taller-codigo">// Imagina que la página está publicada en esta dirección:
+const pagina = "https://ana.dev/recetas/tarta.html";
+
+// new URL(ruta, pagina) calcula adónde lleva un enlace escrito en esa página.
+console.log(new URL("flan.html", pagina).href);
+console.log(new URL("../index.html", pagina).href);
+console.log(new URL("../img/logo.png", pagina).href);
+console.log(new URL("/img/logo.png", pagina).href);
+console.log(new URL("#pasos", pagina).href);
+console.log(new URL("https://developer.mozilla.org/es/", pagina).href);</textarea>
+  </div>
+  <p>Fíjate en las dos últimas: <code>#pasos</code> lleva a un punto de la misma página (ahora verás cómo), y una URL absoluta ignora por completo dónde estás. Modifica <code>pagina</code> para que sea <code>"https://ana.dev/index.html"</code> y vuelve a ejecutar: ¿qué pasa con <code>../index.html</code> cuando ya estás en la raíz?</p>
+  <aside class="senal ojo" data-titulo="La barra inicial y tu disco">
+    <p>Las rutas que empiezan con <code>/</code> funcionan bien en un servidor, pero fallan cuando abres el archivo con doble clic desde tu disco. Con <code>file:///</code>, la «raíz» es la raíz de tu disco (<code>C:\</code> o <code>/</code>), no la carpeta de tu sitio. Mientras trabajes con archivos sueltos, usa rutas relativas sin barra inicial.</p>
+  </aside>
+
+  <h3>Saltos dentro de la página, correo y teléfono</h3>
+  <ul>
+    <li><strong>Fragmentos</strong>: si un elemento tiene un atributo <code>id</code>, puedes enlazar directo a él con <code>#</code>: <code>&lt;h2 id="pasos"&gt;Pasos&lt;/h2&gt;</code> y <code>&lt;a href="#pasos"&gt;Ir a los pasos&lt;/a&gt;</code>. También desde otra página: <code>href="tarta.html#pasos"</code>. Un <code>id</code> debe ser único en la página, no puede tener espacios y distingue mayúsculas.</li>
+    <li><strong>Correo</strong>: <code>href="mailto:ana@ejemplo.com"</code> abre el programa de correo de quien pulsa.</li>
+    <li><strong>Teléfono</strong>: <code>href="tel:+59899123456"</code> ofrece llamar, muy útil en móviles. Escribe el número con el prefijo internacional y sin espacios.</li>
+  </ul>
+
+  <h3>Abrir en otra pestaña: con moderación</h3>
+  <p>El atributo <code>target="_blank"</code> abre el enlace en una pestaña nueva. Úsalo poco: quien navega ya sabe abrir pestañas si quiere (con la rueda del ratón o <kbd>Ctrl</kbd> + clic), y una pestaña que aparece sin aviso desorienta, sobre todo a quien usa un lector de pantalla o tiene dificultades cognitivas. Si lo usas, avísalo en el texto del enlace: «(se abre en otra pestaña)».</p>
+  <aside class="senal nota">
+    <p>Antes se recomendaba añadir siempre <code>rel="noopener"</code> junto a <code>target="_blank"</code>, porque la página nueva podía controlar la tuya con JavaScript. Desde 2021, todos los navegadores principales aplican ese comportamiento solos. Añadirlo no hace daño, y lo verás en mucho código existente.</p>
+  </aside>
+  <p>En este taller, un pequeño ayudante de JavaScript evita que los enlaces saquen la vista previa de su sitio: al hacer clic, la consola te dice adónde irías. <strong>Predice</strong> qué dirá cada enlace y compruébalo:</p>
+  <div class="taller" id="taller-enlaces" data-modo="web" data-titulo="Haz clic en cada enlace" data-alto="19rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html"><h1>Tarta de manzana</h1>
+<ul>
+  <li><a href="../index.html">Volver al inicio</a></li>
+  <li><a href="flan.html">Receta de flan de huevo</a></li>
+  <li><a href="https://es.wikipedia.org/wiki/Tarta_de_manzana" target="_blank">La tarta de manzana en Wikipedia (se abre en otra pestaña)</a></li>
+  <li><a href="#pasos">Ir directo a los pasos</a></li>
+</ul>
+<p>¿Dudas? <a href="mailto:ana@ejemplo.com">Escríbeme un correo</a>.</p>
+<h2>Ingredientes</h2>
+<p>3 manzanas, 200 g de harina, 100 g de mantequilla.</p>
+<h2 id="pasos">Pasos</h2>
+<p>Pela las manzanas, estira la masa y hornea 40 minutos.</p></textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// Ayudante del curso: en la vista previa los enlaces no te llevan a otra página.
+// Al hacer clic, la consola te dice adónde irías. Lo entenderás en la Estación 15.
+document.addEventListener("click", (evento) => {
+  const enlace = evento.target.closest("a[href]");
+  if (!enlace) return;
+  evento.preventDefault();
+  const destino = enlace.getAttribute("href");
+  if (destino.startsWith("#")) {
+    const parte = document.getElementById(destino.slice(1));
+    if (parte) parte.scrollIntoView();
+    console.log("Salto dentro de esta misma página, a: " + destino);
+    return;
+  }
+  const pestana = enlace.target === "_blank" ? " (en una pestaña nueva)" : "";
+  console.log("Irías a: " + destino + pestana);
+});</textarea>
+  </div>
+
+  <h3>Qué texto poner en un enlace</h3>
+  <p>El texto de un enlace debe decir adónde lleva, incluso leído fuera de contexto. Los lectores de pantalla pueden mostrar una lista con todos los enlaces de la página, y una lista con diez «haz clic aquí» no sirve de nada. Los buscadores también usan ese texto para entender la página de destino.</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Texto que no dice nada</p>
+      <pre><code class="language-html">&lt;p&gt;Para ver la receta del flan,
+  &lt;a href="flan.html"&gt;haz clic aquí&lt;/a&gt;.&lt;/p&gt;</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Texto que describe el destino</p>
+      <pre><code class="language-html">&lt;p&gt;También te puede gustar la
+  &lt;a href="flan.html"&gt;receta del flan de huevo&lt;/a&gt;.&lt;/p&gt;</code></pre>
+    </div>
+  </div>
+  <aside class="senal clave">
+    <p>Un enlace <em>lleva a otro sitio</em>; un botón <em>hace algo</em> (enviar un formulario, abrir un menú, añadir al carrito). Si lo que quieres es una acción, usa <code>&lt;button&gt;</code>, que verás en los formularios. Confundirlos hace que el teclado y los lectores de pantalla se comporten de forma inesperada.</p>
+  </aside>
+  <aside class="senal error">
+    <p>Los errores de rutas más comunes al publicar una web: usar la barra invertida de Windows (<code>img\logo.png</code>): en las URL siempre es <code>/</code>. Poner espacios, tildes o eñes en los nombres de archivo: usa minúsculas y guiones, como <code>tarta-de-manzana.html</code>. Y fiarse de las mayúsculas: en Windows y macOS <code>Logo.PNG</code> y <code>logo.png</code> suelen ser el mismo archivo, pero la mayoría de servidores web usan Linux, donde son dos archivos distintos. La página funciona en tu computadora y falla al publicarla.</p>
+  </aside>
+</section>
+
+<section id="imagenes" data-parada="Imágenes">
+  <h2>Imágenes que todos pueden entender</h2>
+  <p>Una foto del plato terminado hace que una receta dé ganas de cocinarla. Pero no todo el mundo ve las imágenes: una persona ciega las escucha, alguien con una conexión lenta puede no recibirlas y un buscador no «mira» fotos como tú. Para todos ellos, HTML tiene un texto que sustituye a la imagen.</p>
+
+  <h3>El elemento img</h3>
+  <pre><code class="language-html">&lt;img src="img/tarta.jpg"
+     alt="Tarta de manzana recién horneada, con las láminas de manzana en espiral"
+     width="800" height="600"&gt;</code></pre>
+  <ul>
+    <li><code>img</code> es un elemento vacío: no tiene etiqueta de cierre.</li>
+    <li><code>src</code> (<em>source</em>, «origen») es la ruta de la imagen. Sigue las mismas reglas de rutas que los enlaces.</li>
+    <li><code>alt</code> es el <strong>texto alternativo</strong>: lo que sustituye a la imagen cuando no se puede ver. Es obligatorio.</li>
+    <li><code>width</code> y <code>height</code> son el ancho y el alto originales en píxeles, sin escribir «px». Con ellos, el navegador reserva el hueco antes de que la imagen llegue y el texto no da saltos mientras lees. Con CSS podrás mostrarla más pequeña sin deformarla.</li>
+  </ul>
+  <p>Ejecuta este taller. Las imágenes no existen en la vista previa, así que verás exactamente lo que ve alguien a quien no le cargan:</p>
+  <div class="taller" id="taller-alt" data-modo="web" data-titulo="Cuando la imagen no llega" data-alto="21rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html"><h1>Tarta de manzana</h1>
+<img src="img/tarta.jpg" alt="Tarta de manzana recién horneada, con la masa dorada" width="320" height="120">
+<p>Arriba: una imagen con texto alternativo. Si no carga, al menos sabes qué había.</p>
+<img src="img/IMG_20260312_1847.jpg" width="320" height="80">
+<p>Arriba: una imagen sin alt. No queda nada que la explique; un lector de pantalla podría leer en voz alta su nombre de archivo, «IMG_20260312_1847.jpg».</p></textarea>
+  </div>
+  <p><strong>Modifica</strong>: añade un <code>alt</code> útil a la segunda imagen (inventa qué foto es) y vuelve a ejecutar.</p>
+
+  <h3>Cómo escribir un buen texto alternativo</h3>
+  <p>La pregunta clave no es «¿qué se ve?», sino <strong>«¿qué aporta esta imagen aquí?»</strong>. La misma foto puede necesitar textos distintos según dónde esté. Estos son los casos típicos:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Tipo de imagen</th><th scope="col">Qué escribir</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Informativa</strong>: aporta contenido (una foto del plato, un producto)</td><td>Lo importante de la imagen para esa página, en una frase</td><td><code>alt="Tarta de manzana recién horneada, con la masa dorada"</code></td></tr>
+        <tr><td><strong>Decorativa</strong>: solo adorna (un separador, un fondo, un icono junto a un texto que ya lo dice)</td><td>Un <code>alt</code> vacío. Así el lector de pantalla la salta</td><td><code>alt=""</code></td></tr>
+        <tr><td><strong>Funcional</strong>: está dentro de un enlace o un botón (un logo que lleva a la portada, una lupa para buscar)</td><td>Adónde lleva o qué hace, no cómo es</td><td><code>alt="Recetas de Ana, inicio"</code></td></tr>
+        <tr><td><strong>Con texto</strong>: un cartel, un menú en foto</td><td>El texto que contiene</td><td><code>alt="Oferta: 2 por 1 en todas las tartas"</code></td></tr>
+        <tr><td><strong>Compleja</strong>: un gráfico, un mapa, un diagrama</td><td>Un resumen breve en <code>alt</code> y la información completa en el texto de la página (por ejemplo, en una tabla)</td><td><code>alt="Gráfico de calorías por porción; los datos están en la tabla siguiente"</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal error">
+    <p>Errores típicos: empezar con «imagen de» o «foto de» (el lector de pantalla ya anuncia que es una imagen); dejar el nombre del archivo; escribir un párrafo entero; repetir palabra por palabra el texto que ya está al lado. Y el peor: olvidar el atributo. Un <code>alt=""</code> vacío dice «esta imagen es decorativa»; un <code>alt</code> que falta dice «no sé», y cada lector de pantalla lo resuelve a su manera.</p>
+  </aside>
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>En el análisis de WebAIM de 2026 sobre el millón de páginas de inicio más visitadas, más de la mitad (el 53,1 %) tenía al menos una imagen sin texto alternativo. Es uno de los errores de accesibilidad más frecuentes de la web, y se evita con un solo atributo.</p>
+  </aside>
+
+  <h3>Imágenes con pie de foto</h3>
+  <p>Si una imagen necesita un pie visible para todo el mundo, usa <code>&lt;figure&gt;</code> y <code>&lt;figcaption&gt;</code>. El pie no sustituye al <code>alt</code>: el <code>alt</code> describe la imagen y el pie la comenta, así que no repitas lo mismo en los dos.</p>
+  <pre><code class="language-html">&lt;figure&gt;
+  &lt;img src="img/abuela.jpg" alt="Mujer mayor amasando sobre una mesa de madera enharinada"
+       width="800" height="600"&gt;
+  &lt;figcaption&gt;Mi abuela Rosa, que me enseñó esta receta en 1998.&lt;/figcaption&gt;
+&lt;/figure&gt;</code></pre>
+
+  <h3>Formatos y otros detalles</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Formato</th><th scope="col">Úsalo para</th></tr></thead>
+      <tbody>
+        <tr><td>JPEG (<code>.jpg</code>)</td><td>Fotografías. Es el formato clásico, con archivos pequeños y alguna pérdida de calidad.</td></tr>
+        <tr><td>PNG (<code>.png</code>)</td><td>Capturas de pantalla, gráficos con bordes nítidos, imágenes con transparencia.</td></tr>
+        <tr><td>SVG (<code>.svg</code>)</td><td>Logos, iconos y diagramas: son dibujos vectoriales que se ven nítidos a cualquier tamaño.</td></tr>
+        <tr><td>WebP y AVIF</td><td>Formatos modernos que comprimen más que JPEG y PNG con la misma calidad. Los navegadores actuales los entienden; con el elemento <code>&lt;picture&gt;</code> puedes ofrecer una alternativa para navegadores antiguos.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Para imágenes que están muy abajo en una página larga, el atributo <code>loading="lazy"</code> le pide al navegador que no las descargue hasta que la persona se acerque a ellas. No lo pongas en la primera imagen grande de la página, la que se ve al abrir: esa debe cargar cuanto antes. Estos temas de rendimiento, junto con <code>&lt;picture&gt;</code> y las imágenes adaptables, se ven en la <a href="17-diseno-ux.html">Estación 17</a>.</p>
+  <aside class="senal nota" data-titulo="Video y audio">
+    <p>HTML también tiene <code>&lt;video&gt;</code> y <code>&lt;audio&gt;</code>. Con el atributo <code>controls</code>, el navegador añade los botones de reproducir, pausa y volumen: <code>&lt;video src="video/receta.mp4" controls width="640" height="360"&gt;&lt;/video&gt;</code>. Los subtítulos se añaden con un elemento <code>&lt;track&gt;</code> dentro del video. Si tu video tiene diálogo o narración, los subtítulos son el equivalente del texto alternativo.</p>
+  </aside>
+</section>
+
+<section id="semantica" data-parada="HTML semántico">
+  <h2>HTML semántico: cada cosa con su nombre</h2>
+  <p>Con <code>div</code> y CSS puedes construir cualquier diseño. Muchas páginas están hechas así, cajas dentro de cajas sin ningún significado. A eso se le llama, con humor, «sopa de divs». Se ven bien, pero para un lector de pantalla, un buscador o la persona de tu equipo que abre el código, todas las cajas son iguales. <strong>Semántica</strong> significa «relativo al significado»: HTML semántico es elegir, para cada parte de la página, el elemento que dice qué es.</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Sopa de divs</p>
+      <pre><code class="language-html">&lt;div class="cabecera"&gt;…&lt;/div&gt;
+&lt;div class="menu"&gt;…&lt;/div&gt;
+&lt;div class="contenido"&gt;
+  &lt;div class="receta"&gt;…&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="pie"&gt;…&lt;/div&gt;</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Elementos semánticos</p>
+      <pre><code class="language-html">&lt;header&gt;…&lt;/header&gt;
+&lt;nav&gt;…&lt;/nav&gt;
+&lt;main&gt;
+  &lt;article&gt;…&lt;/article&gt;
+&lt;/main&gt;
+&lt;footer&gt;…&lt;/footer&gt;</code></pre>
+    </div>
+  </div>
+  <p>Los dos se pueden ver idénticos. La diferencia está en lo que entienden las máquinas. El atributo <code>class</code> de la izquierda es una etiqueta para CSS, que verás en la <a href="14-css.html">Estación 14</a>; el navegador no sabe que «cabecera» significa cabecera.</p>
+
+  <h3>Los elementos que organizan una página</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Elemento</th><th scope="col">Qué representa</th><th scope="col">Ejemplos</th></tr></thead>
+      <tbody>
+        <tr><td><code>&lt;header&gt;</code></td><td>La cabecera: lo introductorio de la página o de una sección</td><td>Logo, nombre del sitio, buscador</td></tr>
+        <tr><td><code>&lt;nav&gt;</code></td><td>Un bloque de enlaces de navegación importantes</td><td>Menú principal, índice de la página</td></tr>
+        <tr><td><code>&lt;main&gt;</code></td><td>El contenido principal, lo que es único de esta página. Solo uno visible por página</td><td>La receta, el artículo, la ficha del producto</td></tr>
+        <tr><td><code>&lt;article&gt;</code></td><td>Un contenido completo e independiente, que tendría sentido por sí solo fuera de la página</td><td>Una entrada de blog, una receta, un comentario, la tarjeta de un producto</td></tr>
+        <tr><td><code>&lt;section&gt;</code></td><td>Un grupo temático de contenido, normalmente con su propio encabezado</td><td>«Ingredientes», «Pasos», «Opiniones»</td></tr>
+        <tr><td><code>&lt;aside&gt;</code></td><td>Contenido relacionado pero secundario, que se podría quitar sin perder lo principal</td><td>Recetas relacionadas, una nota al margen, publicidad</td></tr>
+        <tr><td><code>&lt;footer&gt;</code></td><td>El pie: información sobre la página o la sección</td><td>Autoría, derechos, enlaces legales, contacto</td></tr>
+        <tr><td><code>&lt;search&gt;</code></td><td>Una zona de búsqueda o de filtros</td><td>El formulario para buscar recetas</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 330" role="img" aria-label="Esquema de una página semántica: header arriba, nav debajo, main a la izquierda con un article que contiene dos section, aside a la derecha y footer abajo. Cada zona indica el rol que anuncian los lectores de pantalla: banner, navigation, main, complementary y contentinfo">
+      <rect class="d-caja" x="20" y="16" width="680" height="50" rx="8"/>
+      <text class="d-mono" x="36" y="47" style="font-size:16px">&lt;header&gt;</text>
+      <text class="d-tenue d-peq" x="684" y="46" text-anchor="end">rol: banner</text>
+      <rect class="d-caja" x="20" y="76" width="680" height="40" rx="8"/>
+      <text class="d-mono" x="36" y="102" style="font-size:16px">&lt;nav&gt;</text>
+      <text class="d-tenue d-peq" x="684" y="101" text-anchor="end">rol: navigation</text>
+      <rect class="d-caja" x="20" y="126" width="480" height="150" rx="8"/>
+      <text class="d-mono" x="36" y="150" style="font-size:16px">&lt;main&gt;</text>
+      <text class="d-tenue d-peq" x="484" y="149" text-anchor="end">rol: main</text>
+      <rect class="d-caja-suave" x="36" y="160" width="448" height="104" rx="6"/>
+      <text class="d-mono" x="50" y="182" style="font-size:14px">&lt;article&gt;</text>
+      <text class="d-rotulo d-peq" x="140" y="182">h1: Tarta de manzana</text>
+      <rect class="d-caja" x="50" y="194" width="206" height="56" rx="6"/>
+      <text class="d-mono" x="62" y="216" style="font-size:14px">&lt;section&gt;</text>
+      <text class="d-peq" x="62" y="238">h2: Ingredientes</text>
+      <rect class="d-caja" x="266" y="194" width="206" height="56" rx="6"/>
+      <text class="d-mono" x="278" y="216" style="font-size:14px">&lt;section&gt;</text>
+      <text class="d-peq" x="278" y="238">h2: Pasos</text>
+      <rect class="d-caja" x="512" y="126" width="188" height="150" rx="8"/>
+      <text class="d-mono" x="528" y="150" style="font-size:16px">&lt;aside&gt;</text>
+      <text class="d-peq" x="528" y="176">Recetas relacionadas</text>
+      <text class="d-tenue d-peq" x="528" y="262">rol: complementary</text>
+      <rect class="d-caja" x="20" y="286" width="680" height="40" rx="8"/>
+      <text class="d-mono" x="36" y="312" style="font-size:16px">&lt;footer&gt;</text>
+      <text class="d-tenue d-peq" x="684" y="311" text-anchor="end">rol: contentinfo</text>
+    </svg>
+    <figcaption>Una página de receta organizada con elementos semánticos. A la derecha de cada zona, el <strong>rol</strong> que el navegador comunica a los lectores de pantalla. La posición en pantalla la decide CSS: <code>aside</code> podría ir debajo en un móvil.</figcaption>
+  </figure>
+
+  <h3>Regiones: el mapa para quien no ve</h3>
+  <p>Varios de estos elementos crean <strong>regiones</strong> (en inglés, <em>landmarks</em>): zonas con nombre a las que un lector de pantalla puede saltar directamente, como los carteles de las salidas de una estación de metro. <code>main</code>, <code>nav</code>, <code>aside</code> y <code>search</code> siempre son regiones. <code>header</code> y <code>footer</code> lo son cuando pertenecen a toda la página, no cuando están dentro de un <code>article</code> o un <code>section</code>. Y un <code>section</code> solo se convierte en región si le das un nombre accesible, algo que verás en la <a href="17-diseno-ux.html">Estación 17</a>.</p>
+  <figure class="capsula" data-titulo="Recorrer una página sin verla">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Animación: un lector de pantalla recorre una página semántica. Con la tecla D salta a la cabecera, a la navegación y al contenido principal; con la tecla H salta al encabezado de nivel 1 y al de nivel 2. Al final, la misma página hecha solo con div no ofrece ni regiones ni encabezados">
+        <rect class="d-caja" x="20" y="20" width="340" height="38" rx="6"/>
+        <text class="d-mono d-peq" x="34" y="44" data-texto="7:div">header</text>
+        <rect class="d-caja" x="20" y="66" width="340" height="32" rx="6"/>
+        <text class="d-mono d-peq" x="34" y="87" data-texto="7:div">nav</text>
+        <rect class="d-caja-suave" x="120" y="76" width="46" height="12" rx="4"/>
+        <rect class="d-caja-suave" x="176" y="76" width="46" height="12" rx="4"/>
+        <rect class="d-caja-suave" x="232" y="76" width="46" height="12" rx="4"/>
+        <rect class="d-caja-suave" x="288" y="76" width="46" height="12" rx="4"/>
+        <rect class="d-caja" x="20" y="106" width="244" height="146" rx="6"/>
+        <text class="d-mono d-peq" x="34" y="126" data-texto="7:div">main</text>
+        <text class="d-rotulo" x="34" y="158" style="font-size:17px">Tarta de manzana</text>
+        <text class="d-mono d-tenue d-peq" x="250" y="157" text-anchor="end" data-texto="7:div">h1</text>
+        <rect class="d-caja-suave" x="34" y="168" width="212" height="8" rx="4"/>
+        <text class="d-rotulo" x="34" y="198" style="font-size:15px">Ingredientes</text>
+        <text class="d-mono d-tenue d-peq" x="250" y="197" text-anchor="end" data-texto="7:div">h2</text>
+        <rect class="d-caja-suave" x="34" y="208" width="212" height="8" rx="4"/>
+        <text class="d-rotulo" x="34" y="240" style="font-size:15px">Pasos</text>
+        <text class="d-mono d-tenue d-peq" x="250" y="239" text-anchor="end" data-texto="7:div">h2</text>
+        <rect class="d-caja" x="272" y="106" width="88" height="146" rx="6"/>
+        <text class="d-mono d-peq" x="284" y="126" data-texto="7:div">aside</text>
+        <rect class="d-caja-suave" x="284" y="140" width="64" height="8" rx="4"/>
+        <rect class="d-caja-suave" x="284" y="156" width="52" height="8" rx="4"/>
+        <rect class="d-caja" x="20" y="260" width="340" height="26" rx="6"/>
+        <text class="d-mono d-peq" x="34" y="278" data-texto="7:div">footer</text>
+        <rect class="d-acento-trazo" x="14" y="14" width="352" height="50" rx="9" data-pasos="2"/>
+        <rect class="d-acento-trazo" x="14" y="61" width="352" height="42" rx="9" data-pasos="3"/>
+        <rect class="d-acento-trazo" x="14" y="100" width="256" height="158" rx="9" data-pasos="4"/>
+        <rect class="d-acento-trazo" x="27" y="138" width="231" height="28" rx="6" data-pasos="5"/>
+        <rect class="d-acento-trazo" x="27" y="180" width="231" height="26" rx="6" data-pasos="6"/>
+        <text class="d-rotulo" x="384" y="40">Lector de pantalla</text>
+        <rect class="d-caja" x="384" y="56" width="120" height="34" rx="6"/>
+        <text class="d-mono" x="444" y="79" text-anchor="middle" style="font-size:16px" data-texto="2:Tecla D; 5:Tecla H; 7:D o H">Sin tecla</text>
+        <text class="d-tenue" x="518" y="79" data-texto="2:siguiente región; 5:siguiente encabezado; 7:no encuentra nada"> </text>
+        <text class="d-rotulo d-peq" x="384" y="124">Lo que oye la persona</text>
+        <rect class="d-caja-suave" x="384" y="134" width="326" height="64" rx="10"/>
+        <text x="400" y="172" data-texto="2:«Región: cabecera»; 3:«Navegación, lista de 4 enlaces»; 4:«Región principal»; 5:«Encabezado nivel 1: Tarta de manzana»; 6:«Encabezado nivel 2: Ingredientes»; 7:«No hay regiones ni encabezados»">(todavía nada)</text>
+        <text class="d-tenue d-peq" x="384" y="226" data-texto="2:Las palabras exactas cambian según el lector.; 7:Solo queda escucharla entera, línea a línea."> </text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Una página de receta hecha con elementos semánticos. Imagina que no puedes verla: la recorres con un lector de pantalla, que habla y responde al teclado.</li>
+        <li>En el lector NVDA, la tecla <kbd>D</kbd> salta a la siguiente región. La primera es la cabecera. VoiceOver, en Mac y iPhone, ofrece lo mismo desde su menú «rotor».</li>
+        <li>Otra vez <kbd>D</kbd>: la navegación. Como el menú es una lista, el lector avisa de cuántos enlaces tiene antes de recorrerlos.</li>
+        <li>Otra vez <kbd>D</kbd>: el contenido principal. En tres pulsaciones, la persona se saltó todo lo que se repite en cada página.</li>
+        <li>La tecla <kbd>H</kbd> salta de encabezado en encabezado. El primero es el <code>h1</code>: ya sabe de qué trata la página.</li>
+        <li>Otra <kbd>H</kbd>: «Ingredientes», de nivel 2. El nivel le dice que es una parte de la receta y no una receta nueva. Así se hace una idea de toda la página en segundos.</li>
+        <li data-duracion="7">Ahora la misma página hecha solo con <code>div</code> y encabezados falsos (texto grande con CSS). Se ve igual, pero <kbd>D</kbd> y <kbd>H</kbd> no encuentran nada. Para llegar a los pasos, la persona tiene que escuchar todo lo anterior.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>¿article, section o div?</h3>
+  <p>Es la duda más común. Hazte estas preguntas en orden:</p>
+  <ol>
+    <li>¿Tendría sentido por sí solo, fuera de esta página, por ejemplo compartido en una red social o en un lector de noticias? Entonces es un <code>article</code>.</li>
+    <li>¿Es un grupo temático de contenido, con su propio encabezado, dentro de algo más grande? Entonces es un <code>section</code>.</li>
+    <li>¿Solo necesitas una caja para darle estilo o para agrupar cosas sin un significado propio? Entonces es un <code>div</code>. No está prohibido: úsalo sin culpa cuando ningún otro elemento encaje.</li>
+  </ol>
+  <p>Una receta completa es un <code>article</code>; sus «Ingredientes» y «Pasos» son <code>section</code>; y la caja que usas para poner la foto al lado del texto es un <code>div</code>.</p>
+
+  <h3>Por qué importa</h3>
+  <ul>
+    <li><strong>Para las personas.</strong> Los lectores de pantalla, los programas de control por voz y la navegación por teclado dependen de la semántica. Es la base de la <strong>accesibilidad</strong>: que cualquier persona, con o sin discapacidad, pueda usar lo que construyes.</li>
+    <li><strong>Para los buscadores.</strong> Google y los demás leen tu HTML para entender la página: el <code>title</code>, el texto de los enlaces y el <code>alt</code> de las imágenes les dicen de qué trata. Seamos honestos: la propia guía de Google dice que el orden de los encabezados es genial para los lectores de pantalla, pero que para su buscador da igual. La razón principal para escribir buen HTML son las personas.</li>
+    <li><strong>Para otras herramientas.</strong> El modo lectura del navegador, los traductores automáticos y los asistentes que resumen páginas funcionan mejor cuando encuentran <code>main</code>, <code>article</code> y encabezados claros.</li>
+    <li><strong>Para tu equipo.</strong> <code>&lt;nav&gt;</code> se entiende de un vistazo; <code>&lt;div class="menu-top-2"&gt;</code> hay que investigarlo.</li>
+  </ul>
+  <aside class="senal oficio">
+    <p>Existe un conjunto de atributos llamado <strong>ARIA</strong> (<code>role</code>, <code>aria-label</code>…) que sirve para añadir significado a elementos que no lo tienen. La primera regla que da el propio W3C para usarlo es: si existe un elemento HTML nativo con el significado y el comportamiento que necesitas, usa ese elemento. Un <code>&lt;button&gt;</code> de verdad siempre es mejor que un <code>&lt;div role="button"&gt;</code>. ARIA se ve en la <a href="17-diseno-ux.html">Estación 17</a>.</p>
+  </aside>
+  <p>En este taller, el CSS muestra el nombre de cada elemento semántico y dibuja su borde, para que veas la estructura. <strong>Investiga</strong> el código y luego <strong>modifica</strong>: añade una tercera <code>section</code> llamada «Consejos» dentro del <code>article</code>, y un enlace más en el menú.</p>
+  <div class="taller" id="taller-semantica" data-modo="web" data-titulo="Una página semántica por dentro" data-alto="30rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html"><header>
+  <p><strong>Recetas de Ana</strong></p>
+</header>
+<nav>
+  <ul>
+    <li><a href="index.html">Inicio</a></li>
+    <li><a href="postres.html">Postres</a></li>
+    <li><a href="contacto.html">Contacto</a></li>
+  </ul>
+</nav>
+<main>
+  <article>
+    <h1>Tarta de manzana</h1>
+    <p>Lista en 40 minutos.</p>
+    <section>
+      <h2>Ingredientes</h2>
+      <ul>
+        <li>3 manzanas</li>
+        <li>200 g de harina</li>
+      </ul>
+    </section>
+    <section>
+      <h2>Pasos</h2>
+      <ol>
+        <li>Pela las manzanas.</li>
+        <li>Hornea 40 minutos.</li>
+      </ol>
+    </section>
+  </article>
+</main>
+<aside>
+  <h2>También te puede gustar</h2>
+  <p><a href="flan.html">Flan de huevo</a></p>
+</aside>
+<footer>
+  <p><small>© 2026 Recetas de Ana</small></p>
+</footer></textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">/* Dibuja el borde y el nombre de cada elemento semántico */
+header, nav, main, article, section, aside, footer {
+  border: 2px dashed #8795a8;
+  padding: 4px 10px;
+  margin: 6px 0;
+}
+header::before, nav::before, main::before, article::before,
+section::before, aside::before, footer::before {
+  display: block;
+  font: 12px monospace;
+  color: #5b6573;
+}
+header::before { content: "<header>"; }
+nav::before { content: "<nav>"; }
+main::before { content: "<main>"; }
+article::before { content: "<article>"; }
+section::before { content: "<section>"; }
+aside::before { content: "<aside>"; }
+footer::before { content: "<footer>"; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// Ayudante del curso: en la vista previa los enlaces solo avisan adónde irían.
+document.addEventListener("click", (evento) => {
+  const enlace = evento.target.closest("a[href]");
+  if (!enlace) return;
+  evento.preventDefault();
+  console.log("Irías a: " + enlace.getAttribute("href"));
+});</textarea>
+  </div>
+</section>
+
+<section id="tablas" data-parada="Tablas de datos">
+  <h2>Tablas de datos</h2>
+  <p>Algunos datos tienen forma de cuadrícula: la clasificación de un torneo, el horario de clases, la información nutricional de un alimento. Cada valor tiene sentido por su fila <em>y</em> por su columna: «12» no dice nada, pero «Lu, victorias: 12» sí. Para eso existen las <strong>tablas</strong>.</p>
+  <pre><code class="language-html">&lt;table&gt;
+  &lt;caption&gt;Torneo de karts: clasificación tras 5 carreras&lt;/caption&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th scope="col"&gt;Piloto&lt;/th&gt;
+      &lt;th scope="col"&gt;Victorias&lt;/th&gt;
+      &lt;th scope="col"&gt;Puntos&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;th scope="row"&gt;Lu&lt;/th&gt;
+      &lt;td&gt;3&lt;/td&gt;
+      &lt;td&gt;71&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;th scope="row"&gt;Nico&lt;/th&gt;
+      &lt;td&gt;2&lt;/td&gt;
+      &lt;td&gt;64&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Elemento</th><th scope="col">Qué es</th></tr></thead>
+      <tbody>
+        <tr><td><code>&lt;table&gt;</code></td><td>La tabla entera.</td></tr>
+        <tr><td><code>&lt;caption&gt;</code></td><td>El título de la tabla. Va justo después de <code>&lt;table&gt;</code>. Un lector de pantalla lo anuncia al entrar.</td></tr>
+        <tr><td><code>&lt;thead&gt;</code>, <code>&lt;tbody&gt;</code>, <code>&lt;tfoot&gt;</code></td><td>Agrupan las filas de cabecera, de datos y de totales. <code>tfoot</code> es opcional.</td></tr>
+        <tr><td><code>&lt;tr&gt;</code></td><td>Una fila (<em>table row</em>).</td></tr>
+        <tr><td><code>&lt;th&gt;</code></td><td>Una celda de encabezado (<em>table header</em>). Con <code>scope="col"</code> es el encabezado de su columna; con <code>scope="row"</code>, de su fila.</td></tr>
+        <tr><td><code>&lt;td&gt;</code></td><td>Una celda de datos (<em>table data</em>).</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>¿Por qué tanto detalle con <code>th</code> y <code>scope</code>? Porque una persona que escucha la tabla no ve las columnas. Cuando llega a la celda «64», el lector de pantalla puede decirle «Nico, Puntos, 64» gracias a esos encabezados. Sin ellos, solo oiría un número suelto.</p>
+  <p>Las tablas no tienen bordes por defecto; el CSS de este taller se los pone. <strong>Predice</strong> cuántas filas y columnas verás, ejecuta, y después <strong>modifica</strong>: añade una fila para una tercera jugadora, Sol, con 0 victorias y 58 puntos, y una columna «Carreras» con el valor 5 para todos.</p>
+  <div class="taller" id="taller-tabla" data-modo="web" data-titulo="Una tabla de datos" data-alto="15rem">
+    <textarea class="taller-codigo" data-lenguaje="html"><table>
+  <caption>Torneo de karts: clasificación tras 5 carreras</caption>
+  <thead>
+    <tr>
+      <th scope="col">Piloto</th>
+      <th scope="col">Victorias</th>
+      <th scope="col">Puntos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Lu</th>
+      <td>3</td>
+      <td>71</td>
+    </tr>
+    <tr>
+      <th scope="row">Nico</th>
+      <td>2</td>
+      <td>64</td>
+    </tr>
+  </tbody>
+</table></textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">table { border-collapse: collapse; font-family: sans-serif; }
+caption { font-weight: bold; padding: 6px; }
+th, td { border: 1px solid #999; padding: 6px 12px; }
+thead th { background: #e8edf3; }
+td { text-align: right; }</textarea>
+  </div>
+  <p>Una celda puede ocupar varias columnas con <code>colspan="2"</code> o varias filas con <code>rowspan="2"</code>, como en un horario donde una clase dura dos horas. Úsalos con moderación: cuanto más irregular es una tabla, más difícil es de entender, sobre todo escuchándola.</p>
+  <aside class="senal error">
+    <p>Durante años, las páginas se maquetaban con tablas: una celda para el menú, otra para el contenido. No lo hagas. Una tabla anuncia «aquí hay datos en filas y columnas», y el lector de pantalla leerá tu menú como si fuera una hoja de cálculo. Para colocar cosas en pantalla se usa CSS (flexbox y grid, en la <a href="14-css.html">Estación 14</a>).</p>
+  </aside>
+</section>
+
+<section id="formularios" data-parada="Formularios">
+  <h2>Formularios: pedir datos a las personas</h2>
+  <p>Buscar un producto, iniciar sesión, dejar un comentario, pagar una compra, apuntarte a un torneo: todo eso pasa por un <strong>formulario</strong>. Es la parte de HTML donde la página deja de solo mostrar y empieza a <em>preguntar</em>. También es donde más errores de accesibilidad se cometen, así que conviene aprenderlo bien desde el principio.</p>
+
+  <h3>El formulario más pequeño</h3>
+  <pre><code class="language-html">&lt;form action="/buscar" method="get"&gt;
+  &lt;label for="busqueda"&gt;¿Qué receta buscas?&lt;/label&gt;
+  &lt;input id="busqueda" name="q" type="search"&gt;
+  &lt;button type="submit"&gt;Buscar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+  <ul>
+    <li><code>&lt;form&gt;</code> agrupa los campos. Su atributo <code>action</code> dice adónde se envían los datos (una dirección de un <strong>servidor</strong>, el programa que los recibe y que aprenderás a escribir en la <a href="29-backend.html">Estación 29</a>). <code>method</code> dice cómo: <code>get</code> pone los datos en la URL (<code>/buscar?q=tarta</code>), útil para búsquedas que se pueden compartir; <code>post</code> los envía por dentro de la petición, lo adecuado para datos personales o que cambian algo.</li>
+    <li><code>&lt;label&gt;</code> es la <strong>etiqueta visible</strong> del campo: el texto que dice qué hay que escribir.</li>
+    <li><code>&lt;input&gt;</code> es el <strong>campo</strong> donde se escribe. Es un elemento vacío.</li>
+    <li><code>&lt;button&gt;</code> es el botón que envía el formulario.</li>
+  </ul>
+
+  <h3>label, id y name: tres piezas que se confunden</h3>
+  <p>Cada campo necesita tres cosas, y cada una tiene un trabajo distinto:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Atributo</th><th scope="col">Va en</th><th scope="col">Sirve para</th></tr></thead>
+      <tbody>
+        <tr><td><code>for="busqueda"</code></td><td><code>label</code></td><td>Decir a qué campo pertenece la etiqueta. Su valor debe ser el <code>id</code> del campo.</td></tr>
+        <tr><td><code>id="busqueda"</code></td><td>el campo</td><td>Identificar el campo dentro de la página. Único en toda la página.</td></tr>
+        <tr><td><code>name="q"</code></td><td>el campo</td><td>Ponerle nombre al dato cuando se envía: el servidor recibe <code>q=tarta</code>. <strong>Sin <code>name</code>, el dato no se envía.</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Cuando <code>for</code> y <code>id</code> coinciden, pasan dos cosas buenas: al hacer clic en el texto de la etiqueta, el cursor salta al campo (y en una casilla pequeña, marcarla es mucho más fácil), y el lector de pantalla anuncia la etiqueta al llegar al campo: «¿Qué receta buscas?, campo de búsqueda». También puedes meter el campo dentro de la etiqueta, <code>&lt;label&gt;Nombre &lt;input name="nombre"&gt;&lt;/label&gt;</code>, y no necesitas <code>for</code>.</p>
+  <aside class="senal error">
+    <p>El <code>placeholder</code>, ese texto gris de ejemplo dentro del campo, <strong>no es una etiqueta</strong>. Desaparece en cuanto empiezas a escribir (y ya no recuerdas qué pedía el campo), suele tener poco contraste y no todos los lectores de pantalla lo anuncian. Úsalo, si quieres, para un ejemplo: <code>placeholder="ana@ejemplo.com"</code>, pero siempre con un <code>label</code> visible. En el análisis de WebAIM de 2026, el 51 % de las páginas de inicio más visitadas tenía campos sin etiqueta.</p>
+  </aside>
+
+  <h3>Tipos de campo</h3>
+  <p>El atributo <code>type</code> de <code>input</code> cambia qué se puede escribir y cómo se ve. En el móvil, además, cambia el teclado: con <code>type="email"</code> aparece la <kbd>@</kbd> y con <code>type="tel"</code>, el teclado numérico. Si no escribes <code>type</code>, el campo es de texto.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">type</th><th scope="col">Para</th><th scope="col">Detalle</th></tr></thead>
+      <tbody>
+        <tr><td><code>text</code></td><td>Texto de una línea</td><td>El tipo por defecto.</td></tr>
+        <tr><td><code>email</code></td><td>Un correo</td><td>El navegador comprueba que tenga forma de correo.</td></tr>
+        <tr><td><code>password</code></td><td>Contraseñas</td><td>Oculta lo que escribes con puntos.</td></tr>
+        <tr><td><code>tel</code></td><td>Teléfonos</td><td>No valida nada (los formatos cambian por país), pero muestra el teclado numérico.</td></tr>
+        <tr><td><code>url</code></td><td>Direcciones web</td><td>Exige que empiece con un protocolo, como <code>https://</code>.</td></tr>
+        <tr><td><code>number</code></td><td>Números</td><td>Admite <code>min</code>, <code>max</code> y <code>step</code>. Para códigos postales o tarjetas usa <code>text</code>: no son cantidades.</td></tr>
+        <tr><td><code>range</code></td><td>Un valor aproximado</td><td>Una barra deslizante: volumen, dificultad.</td></tr>
+        <tr><td><code>date</code>, <code>time</code></td><td>Fechas y horas</td><td>El navegador muestra un calendario o un selector.</td></tr>
+        <tr><td><code>checkbox</code></td><td>Sí o no, o varias opciones</td><td>Cada casilla se marca por separado.</td></tr>
+        <tr><td><code>radio</code></td><td>Una opción entre varias</td><td>Las opciones de un grupo comparten el mismo <code>name</code>.</td></tr>
+        <tr><td><code>color</code>, <code>file</code>, <code>search</code></td><td>Un color, un archivo, una búsqueda</td><td>Cada uno con su control propio.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Textos largos, listas desplegables y opciones</h3>
+  <ul>
+    <li><code>&lt;textarea&gt;</code> es un campo de varias líneas, para mensajes o comentarios. A diferencia de <code>input</code>, tiene etiqueta de cierre, y su atributo <code>rows</code> indica cuántas líneas se ven.</li>
+    <li><code>&lt;select&gt;</code> es una lista desplegable. Cada opción es un <code>&lt;option&gt;</code>: su <code>value</code> es lo que se envía y su contenido, lo que se ve.</li>
+    <li>Los grupos de <code>radio</code> y de <code>checkbox</code> se envuelven en un <code>&lt;fieldset&gt;</code> con una <code>&lt;legend&gt;</code>: la leyenda es la pregunta del grupo, y el lector de pantalla la anuncia al entrar en él.</li>
+  </ul>
+  <pre><code class="language-html">&lt;label for="dificultad"&gt;Dificultad&lt;/label&gt;
+&lt;select id="dificultad" name="dificultad"&gt;
+  &lt;option value="facil"&gt;Fácil&lt;/option&gt;
+  &lt;option value="media" selected&gt;Media&lt;/option&gt;
+  &lt;option value="dificil"&gt;Difícil&lt;/option&gt;
+&lt;/select&gt;
+
+&lt;fieldset&gt;
+  &lt;legend&gt;¿Para cuántas personas?&lt;/legend&gt;
+  &lt;input type="radio" id="p2" name="personas" value="2"&gt;
+  &lt;label for="p2"&gt;2&lt;/label&gt;
+  &lt;input type="radio" id="p4" name="personas" value="4" checked&gt;
+  &lt;label for="p4"&gt;4&lt;/label&gt;
+  &lt;input type="radio" id="p6" name="personas" value="6"&gt;
+  &lt;label for="p6"&gt;6&lt;/label&gt;
+&lt;/fieldset&gt;</code></pre>
+  <p>Fíjate en que los tres <code>radio</code> tienen el mismo <code>name</code> (así el navegador sabe que son un grupo y solo deja marcar uno) pero distinto <code>id</code> (cada uno necesita su etiqueta). <code>selected</code> y <code>checked</code> marcan la opción elegida al cargar.</p>
+  <aside class="senal ojo" data-titulo="Atributos de sí o no">
+    <p><code>required</code>, <code>checked</code>, <code>selected</code> o <code>disabled</code> son <strong>atributos booleanos</strong>: basta con que estén para que valgan «sí». Por eso <code>required="false"</code> sigue siendo obligatorio. Para desactivarlos, quita el atributo entero.</p>
+  </aside>
+
+  <h3>Botones</h3>
+  <p><code>&lt;button&gt;</code> tiene tres tipos. <code>type="submit"</code> envía el formulario; <code>type="reset"</code> lo vacía (casi nunca es buena idea: se pulsa sin querer y se pierde todo lo escrito); <code>type="button"</code> no hace nada por sí solo y espera a que JavaScript le dé una tarea. Ojo: dentro de un formulario, un <code>button</code> sin <code>type</code> es de envío. Si pones un botón «Mostrar contraseña» sin <code>type="button"</code>, al pulsarlo enviarás el formulario.</p>
+
+  <h3>Validación: el navegador revisa antes de enviar</h3>
+  <p>Validar es comprobar que los datos tienen sentido antes de aceptarlos. HTML trae una <strong>validación nativa</strong>: con unos atributos, el navegador revisa el formulario al pulsar «Enviar» y, si algo falla, lo detiene y muestra un aviso junto al campo.</p>
+  <figure class="capsula" data-titulo="Un formulario de principio a fin">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: un formulario con los campos Correo y Mensaje. Al pulsar la etiqueta, el cursor va al campo. Al enviar vacío, el navegador avisa que el campo es obligatorio; con un correo sin arroba, avisa del formato; con un correo correcto, empaqueta los datos como pares nombre igual a valor y los envía al servidor, que vuelve a validarlos">
+        <rect class="d-resalte" x="24" y="27" width="70" height="24" rx="4" data-pasos="2"/>
+        <text class="d-rotulo" x="30" y="44">Correo</text>
+        <rect class="d-caja" x="30" y="56" width="300" height="38" rx="6"/>
+        <text class="d-mono" x="42" y="81" style="font-size:15px" data-texto="4:ana.correo.com; 5:ana@correo.com"> </text>
+        <rect class="d-acento-trazo" x="25" y="51" width="310" height="48" rx="9" data-pasos="2-" data-clases="3:d-mal-trazo; 5:d-ok-trazo"/>
+        <g data-pasos="3-4">
+          <path class="d-aviso" d="M150 105l10-10 10 10z"/>
+          <rect class="d-caja" x="120" y="104" width="220" height="34" rx="6"/>
+          <rect class="d-aviso" x="121" y="105" width="10" height="32" rx="3"/>
+          <text x="142" y="127" style="font-size:15px" data-texto="4:Incluye un signo @">Completa este campo</text>
+        </g>
+        <text class="d-rotulo" x="30" y="160">Mensaje</text>
+        <rect class="d-caja" x="30" y="170" width="300" height="58" rx="6"/>
+        <text x="42" y="195" style="font-size:15px">Hola, ¿me pasas la receta?</text>
+        <rect class="d-acento" x="30" y="244" width="110" height="38" rx="6"/>
+        <text class="d-sobre-acento d-rotulo" x="85" y="269" text-anchor="middle">Enviar</text>
+        <rect class="d-acento-trazo" x="25" y="239" width="120" height="48" rx="9" data-pasos="3-5"/>
+        <text class="d-rotulo" x="400" y="40" data-texto="5:Lo que se envía; 6:Lo que se envía">El código del campo Correo</text>
+        <g data-pasos="1-4">
+          <rect class="d-codigo" x="400" y="56" width="310" height="116" rx="8"/>
+          <rect class="d-resalte" x="471" y="72" width="100" height="22" rx="3" data-pasos="2"/>
+          <rect class="d-resalte" x="471" y="98" width="92" height="22" rx="3" data-pasos="2"/>
+          <rect class="d-resalte" x="535" y="124" width="68" height="22" rx="3" data-pasos="3"/>
+          <rect class="d-resalte" x="430" y="124" width="100" height="22" rx="3" data-pasos="4"/>
+          <text class="d-codigo-texto" x="416" y="88" style="font-size:13px">&lt;label for="correo"&gt;Correo&lt;/label&gt;</text>
+          <text class="d-codigo-texto" x="416" y="114" style="font-size:13px">&lt;input id="correo" name="correo"</text>
+          <text class="d-codigo-texto" x="432" y="140" style="font-size:13px">type="email" required&gt;</text>
+        </g>
+        <g data-pasos="5-">
+          <rect class="d-codigo" x="400" y="56" width="310" height="116" rx="8"/>
+          <text class="d-codigo-tenue" x="416" y="82" style="font-size:13px">name = valor</text>
+          <text class="d-codigo-texto" x="416" y="112" style="font-size:14px">correo = ana@correo.com</text>
+          <text class="d-codigo-texto" x="416" y="140" style="font-size:14px">mensaje = Hola, ¿me pasas…</text>
+        </g>
+        <g data-pasos="6">
+          <path class="d-linea" d="M555 172v34"/>
+          <path class="d-tinta" d="M547 202l8 12 8-12z"/>
+          <rect class="d-caja" x="455" y="220" width="200" height="62" rx="8"/>
+          <text class="d-rotulo" x="555" y="246" text-anchor="middle">Servidor</text>
+          <text class="d-tenue d-peq" x="555" y="268" text-anchor="middle">vuelve a validar todo</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Un formulario de contacto con dos campos y un botón. A la derecha, el código del campo «Correo».</li>
+        <li>Al hacer clic en la palabra «Correo», el cursor salta al campo. Funciona porque el <code>for</code> de la etiqueta coincide con el <code>id</code> del campo.</li>
+        <li>Pulsas «Enviar» con el correo vacío. Como el campo tiene <code>required</code>, el navegador detiene el envío y muestra un aviso junto al campo. El texto exacto depende del navegador y del idioma.</li>
+        <li>Escribes «ana.correo.com» y vuelves a enviar. Ahora el problema es otro: <code>type="email"</code> exige un signo <kbd>@</kbd>.</li>
+        <li data-duracion="6">Con «ana@correo.com» todo es válido. El navegador empaqueta cada campo como un par <code>name = valor</code>. Por eso un campo sin <code>name</code> no se envía: no tendría nombre en el paquete.</li>
+        <li data-duracion="6">Los datos viajan al servidor indicado en <code>action</code>. El servidor debe volver a validarlos, porque cualquiera puede saltarse la validación del navegador.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Atributo</th><th scope="col">Comprueba</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td><code>required</code></td><td>Que el campo no esté vacío (o que la casilla esté marcada)</td><td><code>&lt;input name="nombre" required&gt;</code></td></tr>
+        <tr><td><code>type</code></td><td>El formato de <code>email</code>, <code>url</code>, <code>number</code>…</td><td><code>&lt;input type="email" name="correo"&gt;</code></td></tr>
+        <tr><td><code>minlength</code>, <code>maxlength</code></td><td>La cantidad de caracteres de un texto</td><td><code>&lt;textarea name="mensaje" minlength="10"&gt;</code></td></tr>
+        <tr><td><code>min</code>, <code>max</code>, <code>step</code></td><td>El rango de un número o una fecha, y de cuánto en cuánto sube</td><td><code>&lt;input type="number" name="edad" min="12" max="99"&gt;</code></td></tr>
+        <tr><td><code>pattern</code></td><td>Que el texto encaje con un patrón (una expresión regular)</td><td><code>&lt;input name="cp" pattern="[0-9]{5}"&gt;</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El atributo <code>pattern</code> usa <strong>expresiones regulares</strong>, un minilenguaje para describir formas de texto. <code>[0-9]{5}</code> significa «exactamente cinco caracteres del 0 al 9», el formato de un código postal de España o de México. El patrón tiene que encajar con <em>todo</em> el valor, no con una parte. Cuando uses <code>pattern</code>, explica el formato en un texto visible junto al campo; el atributo <code>title</code> ayuda, pero no todos los navegadores lo muestran.</p>
+  <pre><code class="language-html">&lt;label for="usuario"&gt;Nombre de usuario&lt;/label&gt;
+&lt;input id="usuario" name="usuario" required pattern="[A-Za-z0-9_]{3,15}"
+       title="De 3 a 15 letras sin tilde, números o guion bajo"&gt;
+&lt;p&gt;De 3 a 15 caracteres: letras sin tilde, números o guion bajo.&lt;/p&gt;</code></pre>
+  <aside class="senal ojo" data-titulo="Tres sorpresas de la validación">
+    <p>Primera: un campo con <code>pattern</code> o <code>type="email"</code> pero <em>sin</em> <code>required</code> se acepta vacío; si es obligatorio, añade <code>required</code>. Segunda: <code>type="email"</code> solo revisa la forma; «ana@correo» sin punto se considera válido, así que la única prueba real de que un correo existe es enviarle un mensaje. Tercera: si tu <code>pattern</code> tiene un error de escritura, el navegador lo ignora en silencio y acepta cualquier cosa. Pruébalo siempre con datos buenos y malos.</p>
+  </aside>
+  <aside class="senal clave">
+    <p>La validación del navegador es una <strong>ayuda para la persona</strong> que llena el formulario, no una medida de seguridad. Cualquiera puede desactivarla con las DevTools o enviar datos sin pasar por tu página. El servidor siempre debe volver a comprobar todo. Lo verás en la <a href="29-backend.html">Estación 29</a> y en la <a href="31-seguridad.html">Estación 31</a>.</p>
+  </aside>
+  <aside class="senal oficio">
+    <p>Añade el atributo <code>autocomplete</code> a los campos de datos personales: <code>autocomplete="name"</code>, <code>"email"</code>, <code>"tel"</code>, <code>"street-address"</code>. El navegador ofrecerá rellenarlos con los datos guardados. Ahorra tiempo a todo el mundo y es especialmente útil para personas con dificultades motoras o de memoria; las pautas de accesibilidad lo piden para los datos de la propia persona.</p>
+  </aside>
+
+  <h3>Pruébalo: un formulario de contacto</h3>
+  <p>La vista previa del curso no puede enviar formularios de verdad a ningún servidor. Por eso este taller tiene un ayudante en la pestaña JS: al pulsar «Enviar», le pide al navegador que revise el formulario y, si todo está bien, muestra en la consola los pares <code>name = valor</code> que se enviarían. <strong>Predice</strong> primero: ¿qué pasará si pulsas «Enviar» sin escribir nada? ¿Y si escribes un mensaje de 5 letras? ¿Aparecerá la casilla del boletín en los datos si no la marcas?</p>
+  <div class="taller" id="taller-formulario" data-modo="web" data-titulo="Formulario de contacto" data-alto="28rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html"><form action="/contacto" method="post">
+  <p>
+    <label for="nombre">Nombre</label>
+    <input id="nombre" name="nombre" type="text" required autocomplete="name">
+  </p>
+  <p>
+    <label for="correo">Correo electrónico</label>
+    <input id="correo" name="correo" type="email" required autocomplete="email">
+  </p>
+  <p>
+    <label for="motivo">Motivo</label>
+    <select id="motivo" name="motivo">
+      <option value="receta">Pedir una receta</option>
+      <option value="error">Avisar de un error</option>
+      <option value="otro">Otro</option>
+    </select>
+  </p>
+  <p>
+    <label for="mensaje">Mensaje (mínimo 10 caracteres)</label>
+    <textarea id="mensaje" name="mensaje" rows="3" minlength="10" required>&lt;/textarea&gt;
+  </p>
+  <p>
+    <input id="boletin" name="boletin" type="checkbox" value="si">
+    <label for="boletin">Quiero recibir una receta nueva cada semana</label>
+  </p>
+  <button type="submit">Enviar</button>
+</form></textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">label { display: block; font-weight: bold; margin-bottom: 2px; }
+input[type="checkbox"] + label { display: inline; font-weight: normal; }
+input:not([type="checkbox"]), select, textarea { width: 100%; max-width: 22rem; padding: 4px; font: inherit; }
+button { font: inherit; padding: 6px 16px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// Ayudante del curso. No necesitas entenderlo todavía (lo verás en la Estación 15).
+// La vista previa no puede enviar formularios, así que al pulsar un botón de envío
+// este código pide al navegador que revise el formulario y muestra lo que se enviaría.
+document.addEventListener("click", (evento) => {
+  const boton = evento.target.closest("button, input[type=submit]");
+  if (!boton || !boton.form || boton.type !== "submit") return;
+  evento.preventDefault();
+  if (!boton.form.reportValidity()) {
+    console.log("El navegador frenó el envío: mira el aviso junto al campo marcado.");
+    return;
+  }
+  console.log("Todo válido. Se enviaría esto:");
+  for (const [nombre, valor] of new FormData(boton.form)) {
+    console.log("  " + nombre + " = " + valor);
+  }
+});</textarea>
+  </div>
+  <p>Ahora <strong>modifica</strong>: añade un campo <code>tel</code> opcional con su etiqueta y <code>autocomplete="tel"</code>, y un campo «¿Cuántas veces has hecho la receta?» de tipo <code>number</code> con <code>min="0"</code> y <code>max="50"</code>. Prueba a escribir 80 y a enviar.</p>
+  <aside class="senal error">
+    <p>Los fallos de formulario más comunes, que el navegador no te va a señalar: un <code>for</code> que no coincide con ningún <code>id</code> (por ejemplo, <code>for="email"</code> e <code>id="correo"</code>); dos campos con el mismo <code>id</code>; un campo sin <code>name</code>, cuyo dato se pierde sin avisar; un grupo de <code>radio</code> con <code>name</code> distintos, donde se pueden marcar todas las opciones a la vez; y un botón sin <code>type</code> que envía el formulario cuando no debía.</p>
+  </aside>
+</section>
+
+<section id="revisar" data-parada="Revisa tu HTML">
+  <h2>Revisa tu HTML: accesibilidad, validador y DevTools</h2>
+  <p>Como el navegador perdona los errores sin avisar, necesitas otras formas de encontrarlos. En esta sección tienes tres: una lista de accesibilidad que puedes repasar en cinco minutos, el validador oficial del W3C y la pestaña Elementos de las herramientas para desarrolladores.</p>
+
+  <h3>Accesibilidad básica: la lista de cinco minutos</h3>
+  <p>La <strong>accesibilidad</strong> (en inglés se abrevia <em>a11y</em>: la «a», once letras y la «y») es que cualquier persona pueda usar tu página: quien no ve, quien ve poco, quien no oye, quien no puede usar un ratón, quien tiene dificultades para concentrarse o quien navega con el móvil al sol. Con HTML bien escrito ya tienes la mayor parte del camino hecho. Repasa esta lista en cada página:</p>
+  <ol>
+    <li><strong>Idioma</strong>: <code>&lt;html lang="es"&gt;</code>.</li>
+    <li><strong>Título</strong>: un <code>&lt;title&gt;</code> único que describa la página.</li>
+    <li><strong>Encabezados</strong>: un solo <code>h1</code> y niveles sin saltos al bajar.</li>
+    <li><strong>Regiones</strong>: <code>header</code>, <code>nav</code>, <code>main</code> y <code>footer</code> donde corresponda, y todo el contenido dentro de alguna.</li>
+    <li><strong>Imágenes</strong>: todas con <code>alt</code>; vacío solo si son decorativas.</li>
+    <li><strong>Enlaces</strong>: textos que dicen adónde llevan; nada de «haz clic aquí».</li>
+    <li><strong>Formularios</strong>: cada campo con su <code>label</code> visible y bien conectado; grupos de opciones en <code>fieldset</code> con <code>legend</code>.</li>
+    <li><strong>Teclado</strong>: recorre la página solo con <kbd>Tab</kbd> (y <kbd>Mayús</kbd> + <kbd>Tab</kbd> para volver). Debes poder llegar a todos los enlaces, botones y campos, en un orden lógico, y ver siempre dónde estás. Los elementos nativos (<code>a</code> con <code>href</code>, <code>button</code>, <code>input</code>, <code>select</code>, <code>textarea</code>) ya funcionan con el teclado; un <code>div</code> con aspecto de botón, no.</li>
+    <li><strong>Zoom</strong>: amplía la página al 200 % con <kbd>Ctrl</kbd> + <kbd>+</kbd> (en Mac, <kbd>Cmd</kbd> + <kbd>+</kbd>) y comprueba que todo se sigue leyendo.</li>
+  </ol>
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>Según la Organización Mundial de la Salud, unas 1300 millones de personas, una de cada seis en el mundo, viven con una discapacidad importante. A esto se suman las situaciones temporales (un brazo roto) y las de contexto (una pantalla al sol, un tren ruidoso). Además, en muchos países la accesibilidad es una obligación legal: en la Unión Europea, la Ley Europea de Accesibilidad se aplica desde el 28 de junio de 2025 a muchos productos y servicios digitales, como las tiendas en línea y la banca.</p>
+  </aside>
+
+  <h3>Escucha tu página con un lector de pantalla</h3>
+  <p>La mejor forma de entender la accesibilidad es probarla. Todos los sistemas traen un lector de pantalla o tienen uno gratuito:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Sistema</th><th scope="col">Lector</th><th scope="col">Cómo empezar</th></tr></thead>
+      <tbody>
+        <tr><td>Windows</td><td>NVDA (gratuito, de código abierto) o Narrador (incluido)</td><td>Con NVDA en una página: <kbd>H</kbd> salta entre encabezados, <kbd>D</kbd> entre regiones, <kbd>K</kbd> entre enlaces y <kbd>F</kbd> entre campos de formulario. <kbd>Insert</kbd> + <kbd>Q</kbd> lo cierra.</td></tr>
+        <tr><td>macOS</td><td>VoiceOver (incluido)</td><td><kbd>Cmd</kbd> + <kbd>F5</kbd> lo enciende y lo apaga. <kbd>Control</kbd> + <kbd>Opción</kbd> + <kbd>U</kbd> abre el «rotor», con listas de encabezados, enlaces y regiones.</td></tr>
+        <tr><td>iPhone y iPad</td><td>VoiceOver (incluido)</td><td>Ajustes › Accesibilidad › VoiceOver.</td></tr>
+        <tr><td>Android</td><td>TalkBack (incluido)</td><td>Ajustes › Accesibilidad › TalkBack.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Dedica diez minutos a escuchar una página tuya con los ojos cerrados. Vas a descubrir enseguida el enlace que dice «aquí», la imagen sin <code>alt</code> o el campo sin etiqueta. Las herramientas automáticas detectan solo una parte de los problemas; siempre hace falta probar a mano.</p>
+
+  <h3>El validador del W3C</h3>
+  <p>Un <strong>validador</strong> es un programa que revisa si tu HTML cumple el estándar. El oficial es el <strong>Nu Html Checker</strong> del W3C, en <code>validator.w3.org/nu</code>. Tiene tres formas de uso: poner la dirección de una página publicada, subir un archivo o pegar el código directamente (<em>text input</em>). Está en inglés, pero sus mensajes siguen unos pocos patrones que se repiten. Esto es lo que respondió el validador a un archivo de prueba con errores típicos:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Mensaje del validador</th><th scope="col">Qué significa</th><th scope="col">Cómo se arregla</th></tr></thead>
+      <tbody>
+        <tr><td><code>End tag “p” seen, but there were open elements.</code></td><td>Cerraste un <code>p</code> mientras quedaba algo abierto dentro.</td><td>Revisa el anidado: cierra primero lo último que abriste.</td></tr>
+        <tr><td><code>An “img” element must have an “alt” attribute…</code></td><td>Falta el texto alternativo.</td><td>Añade <code>alt</code> con una descripción útil, o vacío si es decorativa.</td></tr>
+        <tr><td><code>Element “p” not allowed as child of element “ul” in this context.</code></td><td>Dentro de una lista solo puede haber <code>li</code>.</td><td>Mete el párrafo en un <code>li</code> o sácalo de la lista.</td></tr>
+        <tr><td><code>Duplicate ID “nota”.</code></td><td>Dos elementos tienen el mismo <code>id</code>.</td><td>Cambia uno: los <code>id</code> son únicos.</td></tr>
+        <tr><td><code>Stray end tag “div”.</code></td><td>Una etiqueta de cierre sin su apertura («perdida»).</td><td>Bórrala o añade la apertura que faltaba.</td></tr>
+        <tr><td><code>The value of the “for” attribute of the “label” element must be the ID of a non-hidden form control.</code></td><td>El <code>for</code> de una etiqueta no coincide con ningún campo.</td><td>Haz que <code>for</code> y el <code>id</code> del campo sean iguales.</td></tr>
+        <tr><td><code>Consider adding a “lang” attribute to the “html” start tag…</code></td><td>Es una advertencia, no un error: falta el idioma.</td><td>Añade <code>lang="es"</code> a <code>&lt;html&gt;</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Cada mensaje indica la línea y la columna donde lo encontró. Empieza siempre por el <strong>primer</strong> error: a menudo un solo cierre mal puesto provoca una cascada de errores posteriores, igual que te pasaba con los errores de sintaxis de JavaScript en la <a href="12-depuracion.html">Estación 12</a>. Corrige uno, vuelve a validar y repite.</p>
+  <aside class="senal oficio">
+    <p>En los equipos profesionales, estas revisiones se automatizan: el editor marca los errores mientras escribes y cada cambio pasa por herramientas que revisan el HTML y la accesibilidad antes de publicarse. Lo verás en la <a href="26-testing.html">Estación 26</a>. Pero el criterio de qué es un buen <code>alt</code> o un buen texto de enlace sigue siendo humano.</p>
+  </aside>
+
+  <h3>La pestaña Elementos de las DevTools</h3>
+  <p>Las <strong>DevTools</strong> (herramientas para desarrolladores) vienen dentro del navegador. Ya usaste su Consola en la Línea 2. La pestaña <strong>Elementos</strong> (<em>Elements</em> en Chrome y Edge; en Firefox se llama <em>Inspector</em>) muestra el árbol de elementos de la página que estás viendo.</p>
+  <ol class="pasos">
+    <li><div><p>Abre cualquier página, haz clic derecho sobre un título y elige <strong>Inspeccionar</strong>. También puedes pulsar <kbd>Ctrl</kbd> + <kbd>Mayús</kbd> + <kbd>C</kbd> (en Mac, <kbd>Cmd</kbd> + <kbd>Opción</kbd> + <kbd>C</kbd>) y pasar el ratón por la página: cada elemento se ilumina y muestra su nombre.</p></div></li>
+    <li><div><p>En el árbol, haz clic en los triángulos para abrir y cerrar elementos. Cada línea es un elemento con sus atributos; el que tienes seleccionado se ilumina en la página.</p></div></li>
+    <li><div><p>Haz doble clic en un texto o en un atributo para cambiarlo, o clic derecho › <em>Edit as HTML</em> para editar un trozo entero. Pulsa <kbd>Supr</kbd> para borrar un elemento. Los cambios se ven al momento, pero son temporales: al recargar, vuelve el archivo original. Es perfecto para experimentar sin miedo.</p></div></li>
+    <li><div><p>Busca el panel <strong>Accesibilidad</strong> junto a los estilos: muestra el <em>rol</em> y el <em>nombre</em> que el navegador comunica a los lectores de pantalla para el elemento seleccionado. Si un botón no tiene nombre, ahí lo verás.</p></div></li>
+  </ol>
+  <aside class="senal clave">
+    <p>La pestaña Elementos no muestra tu archivo: muestra el árbol que el navegador construyó <em>después</em> de leerlo y corregirlo, y después de que JavaScript lo cambiara. Para ver el archivo tal cual llegó, usa «Ver código fuente» (<kbd>Ctrl</kbd> + <kbd>U</kbd>; en Chrome para Mac, <kbd>Cmd</kbd> + <kbd>Opción</kbd> + <kbd>U</kbd>). Si los dos no coinciden, el navegador arregló algo por ti, como el párrafo con la caja dentro del principio de la estación.</p>
+  </aside>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>HTML es un lenguaje de marcado: describe qué es cada parte del contenido. No calcula ni decide; de eso se encarga JavaScript, y del aspecto, CSS.</li>
+    <li>Un elemento es etiqueta de apertura (con sus atributos <code>nombre="valor"</code>), contenido y etiqueta de cierre. Lo último que abres es lo primero que cierras. Algunos elementos, como <code>img</code> o <code>input</code>, son vacíos.</li>
+    <li>Toda página lleva el esqueleto: <code>&lt;!doctype html&gt;</code>, <code>&lt;html lang="es"&gt;</code>, un <code>head</code> con <code>meta charset="utf-8"</code>, <code>meta viewport</code> y <code>title</code>, y un <code>body</code> con lo visible.</li>
+    <li>Los encabezados son el índice: un <code>h1</code>, niveles sin saltos, elegidos por jerarquía y no por tamaño. <code>strong</code> y <code>em</code> dan significado; la negrita y la cursiva son cosa de CSS.</li>
+    <li>Las rutas relativas parten de la carpeta de la página: <code>archivo.html</code> es la misma carpeta, <code>../</code> sube un nivel y <code>/</code> al principio parte de la raíz del sitio. Los textos de enlace dicen adónde llevan.</li>
+    <li>Toda imagen lleva <code>alt</code>: qué aporta en ese contexto, o vacío si es decorativa. <code>width</code> y <code>height</code> evitan saltos.</li>
+    <li>Los elementos semánticos (<code>header</code>, <code>nav</code>, <code>main</code>, <code>article</code>, <code>section</code>, <code>aside</code>, <code>footer</code>) crean regiones por las que se navega sin ver la pantalla. <code>div</code> y <code>span</code> son para cuando nada más encaja.</li>
+    <li>Las tablas son para datos en filas y columnas, con <code>caption</code>, <code>th</code> y <code>scope</code>; nunca para maquetar.</li>
+    <li>En un formulario, cada campo tiene su <code>label</code> (unido por <code>for</code> e <code>id</code>) y su <code>name</code>. <code>required</code>, <code>type</code>, <code>minlength</code>, <code>min</code>, <code>max</code> y <code>pattern</code> validan en el navegador, pero el servidor debe volver a validar.</li>
+    <li>El navegador corrige errores en silencio: revisa con el validador del W3C, la pestaña Elementos, el teclado y un lector de pantalla.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Resuelve los ejercicios en orden: van de más guiados a más libres. Cada uno tiene un botón «Ejecutar» que muestra tu página en la vista previa y comprueba si cumple lo pedido. Intenta cada ejercicio unos minutos antes de abrir las pistas; la solución está para comparar, no para copiar. Casi todos se comprueban con la vista previa de HTML; uno usa JavaScript para calcular rutas.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-esqueleto">
+    <h3>Completa el esqueleto</h3>
+    <p>A esta página le faltan piezas del esqueleto. Añade la declaración de tipo de documento, el idioma español en <code>html</code>, la codificación UTF-8, la meta <code>viewport</code> y un título que diga <em>Mis recetas favoritas</em>. Recuerda: la meta <code>charset</code> es lo primero dentro de <code>head</code>.</p>
+    <div class="taller" id="taller-ej-esqueleto" data-modo="web" data-exito="¡Correcto! Tu página cumple lo que se pedía." data-titulo="Ejercicio 1" data-alto="9rem">
+      <textarea class="taller-codigo" data-lenguaje="html"><html>
+<head>
+  <title></title>
+</head>
+<body>
+  <h1>Mis recetas favoritas</h1>
+  <p>Aquí guardo las recetas de mi familia.</p>
+</body>
+</html></textarea>
+      <script type="text/plain" class="taller-verificar">
+var h = codigo.html;
+if (!/^\s*<!doctype html>/i.test(h)) return "La primera línea del archivo debe ser <!doctype html>.";
+if (!/<html[^>]*\slang\s*=\s*["']?es(-[a-z]+)?["'\s>]/i.test(h)) return "Añade el atributo lang=\"es\" a la etiqueta <html>.";
+var metas = h.match(/<meta\b[^>]*>/gi) || [];
+var charset = metas.filter(function (m) { return /charset\s*=\s*["']?utf-8/i.test(m); });
+if (!charset.length) return "Falta <meta charset=\"utf-8\"> dentro de <head>.";
+if (!metas.some(function (m) { return /name\s*=\s*["']?viewport/i.test(m) && /width\s*=\s*device-width/i.test(m); })) return "Falta la meta viewport: <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">.";
+var cabeza = (h.match(/<head[^>]*>([\s\S]*?)<\/head>/i) || [])[1] || "";
+if (cabeza.indexOf(charset[0]) === -1) return "Las etiquetas meta van dentro de <head>.";
+if (h.search(/<meta\b[^>]*charset/i) > h.search(/<title/i)) return "Pon la meta charset antes del title: es lo primero dentro de head.";
+if (!document.title.trim()) return "Escribe el título dentro de <title>: Mis recetas favoritas.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Son cuatro líneas nuevas y un atributo. Repasa el esqueleto completo de la sección <a href="#documento">El esqueleto de una página</a>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Orden dentro de <code>head</code>: primero <code>&lt;meta charset="utf-8"&gt;</code>, después la meta <code>viewport</code> y al final <code>&lt;title&gt;</code> con su texto.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-html">&lt;!doctype html&gt;
+&lt;html lang="es"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+  &lt;title&gt;Mis recetas favoritas&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Mis recetas favoritas&lt;/h1&gt;
+  &lt;p&gt;Aquí guardo las recetas de mi familia.&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+      <p>Este esqueleto es igual en todas tus páginas: solo cambian el <code>title</code> y el contenido de <code>body</code>. Guárdalo como plantilla.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-encabezados">
+    <h3>Encabezados en orden</h3>
+    <p>Alguien eligió estos encabezados por su tamaño. Arréglalos para que formen un índice correcto: la guía es el título principal (<code>h1</code>), «Inscripción» y «Reglas» son sus capítulos, y «Qué necesitas llevar» y «Puntos por posición» son partes de esos capítulos. No cambies los textos ni los párrafos.</p>
+    <div class="taller" id="taller-ej-encabezados" data-modo="web" data-exito="¡Correcto! Tu página cumple lo que se pedía." data-titulo="Ejercicio 2" data-alto="22rem">
+      <textarea class="taller-codigo" data-lenguaje="html"><h3>Guía para tu primer torneo de karts</h3>
+<p>Todo lo que necesitas antes de la primera carrera.</p>
+<h1>Inscripción</h1>
+<p>Apúntate antes del viernes.</p>
+<h5>Qué necesitas llevar</h5>
+<p>Tu mando y muchas ganas.</p>
+<h1>Reglas</h1>
+<p>Cinco carreras, con puntos según la posición.</p>
+<h4>Puntos por posición</h4>
+<p>Quien gana la carrera se lleva 15 puntos.</p></textarea>
+      <script type="text/plain" class="taller-verificar">
+var hs = Array.prototype.slice.call(document.querySelectorAll("h1, h2, h3, h4, h5, h6"));
+var niveles = hs.map(function (x) { return Number(x.tagName.charAt(1)); });
+var nivelDe = function (t) { var e = hs.filter(function (x) { return x.textContent.indexOf(t) !== -1; })[0]; return e ? Number(e.tagName.charAt(1)) : 0; };
+if (hs.length !== 5) return "Debería haber 5 encabezados, los mismos del principio. No borres ni añadas encabezados.";
+if (niveles.filter(function (n) { return n === 1; }).length !== 1) return "Debe haber exactamente un h1 en la página.";
+if (nivelDe("Guía") !== 1) return "El h1 es el título de toda la página: «Guía para tu primer torneo de karts».";
+for (var i = 1; i < niveles.length; i++) { if (niveles[i] > niveles[i - 1] + 1) return "Hay un salto de nivel: después de un h" + niveles[i - 1] + " no puede venir un h" + niveles[i] + "."; }
+if (nivelDe("Inscripción") !== 2 || nivelDe("Reglas") !== 2) return "«Inscripción» y «Reglas» son capítulos de la guía: deberían ser h2.";
+if (nivelDe("Qué necesitas") !== 3 || nivelDe("Puntos por") !== 3) return "«Qué necesitas llevar» y «Puntos por posición» son partes de un capítulo: deberían ser h3.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Haz primero el índice en papel: título, capítulo 1 con su parte, capítulo 2 con su parte. Los títulos quedan en niveles 1, 2, 3, 2, 3.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Cambia la etiqueta de apertura <em>y</em> la de cierre: <code>&lt;h1&gt;Inscripción&lt;/h1&gt;</code> pasa a <code>&lt;h2&gt;Inscripción&lt;/h2&gt;</code>. Si solo cambias una, el navegador verá etiquetas cruzadas.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-html">&lt;h1&gt;Guía para tu primer torneo de karts&lt;/h1&gt;
+&lt;p&gt;Todo lo que necesitas antes de la primera carrera.&lt;/p&gt;
+&lt;h2&gt;Inscripción&lt;/h2&gt;
+&lt;p&gt;Apúntate antes del viernes.&lt;/p&gt;
+&lt;h3&gt;Qué necesitas llevar&lt;/h3&gt;
+&lt;p&gt;Tu mando y muchas ganas.&lt;/p&gt;
+&lt;h2&gt;Reglas&lt;/h2&gt;
+&lt;p&gt;Cinco carreras, con puntos según la posición.&lt;/p&gt;
+&lt;h3&gt;Puntos por posición&lt;/h3&gt;
+&lt;p&gt;Quien gana la carrera se lleva 15 puntos.&lt;/p&gt;</code></pre>
+      <p>Si ahora el <code>h1</code> te parece enorme, no bajes su nivel: cambia su tamaño con CSS en la próxima estación.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-listas">
+    <h3>De párrafos a listas</h3>
+    <p>La receta de panqueques tiene los ingredientes y los pasos en párrafos sueltos. Convierte los ingredientes en una lista sin orden y los pasos en una lista ordenada. Los encabezados se quedan como están.</p>
+    <div class="taller" id="taller-ej-listas" data-modo="web" data-exito="¡Correcto! Tu página cumple lo que se pedía." data-titulo="Ejercicio 3" data-alto="22rem">
+      <textarea class="taller-codigo" data-lenguaje="html"><h1>Panqueques</h1>
+<h2>Ingredientes</h2>
+<p>1 taza de harina</p>
+<p>1 huevo</p>
+<p>1 taza de leche</p>
+<p>1 cucharada de azúcar</p>
+<h2>Pasos</h2>
+<p>Mezcla todo en un bol.</p>
+<p>Calienta una sartén con un poco de aceite.</p>
+<p>Cocina cada panqueque hasta que salgan burbujas y dale la vuelta.</p></textarea>
+      <script type="text/plain" class="taller-verificar">
+var ul = document.querySelector("ul"), ol = document.querySelector("ol");
+if (!ul) return "Los ingredientes van en una lista sin orden: <ul>.";
+if (!ol) return "Los pasos van en una lista ordenada: <ol>, porque el orden importa.";
+var soloLi = function (lista) { return Array.prototype.every.call(lista.children, function (x) { return x.tagName === "LI"; }); };
+if (!soloLi(ul) || !soloLi(ol)) return "Dentro de <ul> y <ol> solo puede haber elementos <li>.";
+if (ul.children.length !== 4) return "La lista de ingredientes debería tener 4 elementos <li>; tiene " + ul.children.length + ".";
+if (ol.children.length !== 3) return "La lista de pasos debería tener 3 elementos <li>; tiene " + ol.children.length + ".";
+if (ul.querySelector("p") || ol.querySelector("p")) return "Dentro de cada <li> no hacen falta párrafos: quita los <p>.";
+if (!/harina/i.test(ul.textContent) || !/Mezcla/.test(ol.textContent)) return "Revisa que los ingredientes estén en <ul> y los pasos en <ol>, y no al revés.";
+if (document.querySelectorAll("body > p").length) return "Todavía quedan párrafos sueltos: pásalos a las listas.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Cada <code>&lt;p&gt;</code> se convierte en un <code>&lt;li&gt;</code>. Después envuelve el grupo con <code>&lt;ul&gt;</code> y <code>&lt;/ul&gt;</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para los pasos, lo mismo con <code>&lt;ol&gt;</code>. No escribas los números a mano: la lista ordenada numera sola.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-html">&lt;h1&gt;Panqueques&lt;/h1&gt;
+&lt;h2&gt;Ingredientes&lt;/h2&gt;
+&lt;ul&gt;
+  &lt;li&gt;1 taza de harina&lt;/li&gt;
+  &lt;li&gt;1 huevo&lt;/li&gt;
+  &lt;li&gt;1 taza de leche&lt;/li&gt;
+  &lt;li&gt;1 cucharada de azúcar&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Pasos&lt;/h2&gt;
+&lt;ol&gt;
+  &lt;li&gt;Mezcla todo en un bol.&lt;/li&gt;
+  &lt;li&gt;Calienta una sartén con un poco de aceite.&lt;/li&gt;
+  &lt;li&gt;Cocina cada panqueque hasta que salgan burbujas y dale la vuelta.&lt;/li&gt;
+&lt;/ol&gt;</code></pre>
+      <p>Ahora un lector de pantalla anunciará «lista, 4 elementos» y «lista, 3 elementos»: quien escucha sabe cuánto le queda antes de empezar.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-rutas">
+    <h3>Escribe las rutas relativas</h3>
+    <p>Este sitio tiene esta estructura, y estás escribiendo enlaces dentro de <code>recetas/tarta.html</code>:</p>
+    <pre><code class="language-text">mi-sitio/
+├── index.html
+├── img/
+│   └── logo.png
+└── recetas/
+    ├── tarta.html        ← estás aquí
+    └── postres/
+        └── flan.html</code></pre>
+    <p>Completa las tres constantes con <strong>rutas relativas</strong> (sin <code>https://</code> y sin barra al principio) para que lleven a la portada, al logo y al flan. El programa imprime adónde lleva cada una.</p>
+    <div class="taller" id="taller-ej-rutas" data-titulo="Ejercicio 4" data-exito="¡Correcto! Las tres rutas llegan a su destino.">
+      <textarea class="taller-codigo">const pagina = "https://ana.dev/recetas/tarta.html";
+
+const alInicio = "";  // debe llevar a https://ana.dev/index.html
+const alLogo = "";    // debe llevar a https://ana.dev/img/logo.png
+const alFlan = "";    // debe llevar a https://ana.dev/recetas/postres/flan.html
+
+console.log(new URL(alInicio, pagina).href);
+console.log(new URL(alLogo, pagina).href);
+console.log(new URL(alFlan, pagina).href);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var leer = function (n) { var r = codigo.match(new RegExp("const " + n + "\\s*=\\s*[\"']([^\"']*)[\"']")); return r ? r[1] : null; };
+var nombres = ["alInicio", "alLogo", "alFlan"];
+var rutas = nombres.map(leer);
+if (rutas.some(function (r) { return r === null; })) return "No borres las constantes alInicio, alLogo y alFlan: solo cambia el texto entre comillas.";
+if (rutas.some(function (r) { return r === ""; })) return "Todavía hay rutas vacías. Una ruta vacía lleva a la misma página.";
+if (rutas.some(function (r) { return /^[a-z]+:/i.test(r) || r.indexOf("//") === 0; })) return "Usa rutas relativas, no direcciones completas con https://.";
+if (rutas.some(function (r) { return r.charAt(0) === "/"; })) return "Sin barra al principio: esa ruta parte de la raíz del sitio. Aquí queremos rutas relativas a la página.";
+var esperado = ["https://ana.dev/index.html", "https://ana.dev/img/logo.png", "https://ana.dev/recetas/postres/flan.html"];
+for (var i = 0; i < 3; i++) { if (salida[i] !== esperado[i]) return nombres[i] + " lleva a «" + (salida[i] || "(nada)") + "» y debería llevar a «" + esperado[i] + "»."; }
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Todas parten de la carpeta <code>recetas/</code>. Para llegar a la portada tienes que subir un nivel: <code>..</code></p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El flan está <em>debajo</em> de donde estás, en la carpeta <code>postres</code>: no hay que subir, sino entrar.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const pagina = "https://ana.dev/recetas/tarta.html";
+
+const alInicio = "../index.html";
+const alLogo = "../img/logo.png";
+const alFlan = "postres/flan.html";
+
+console.log(new URL(alInicio, pagina).href);
+console.log(new URL(alLogo, pagina).href);
+console.log(new URL(alFlan, pagina).href);</code></pre>
+      <p><code>"./postres/flan.html"</code> también vale: <code>./</code> significa «esta carpeta». Si la carpeta <code>recetas</code> se moviera dentro de otra, estas rutas seguirían funcionando mientras la estructura interna no cambie.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-alt">
+    <h3>Textos alternativos para tres imágenes</h3>
+    <p>Esta página tiene tres imágenes con textos alternativos malos o ausentes. Arréglalos según su función: el logo es un enlace a la portada; la foto del flan es informativa; la línea ondulada es decoración. Las imágenes no cargan en la vista previa, así que verás justo lo que tu <code>alt</code> comunica.</p>
+    <div class="taller" id="taller-ej-alt" data-modo="web" data-exito="¡Correcto! Tu página cumple lo que se pedía." data-titulo="Ejercicio 5" data-alto="24rem">
+      <textarea class="taller-codigo" data-lenguaje="html"><header>
+  <a href="index.html"><img src="img/logo.png" alt="logo.png" width="160" height="40"></a>
+</header>
+<h1>Flan de huevo</h1>
+<img src="img/flan.jpg" alt="imagen" width="400" height="120">
+<p>Un postre suave y dulce, con caramelo por encima.</p>
+<img src="img/linea-ondulada.svg" width="400" height="10">
+<p>Receta de la abuela Rosa.</p></textarea>
+      <textarea class="taller-codigo" data-lenguaje="js">// Ayudante del curso: los enlaces de la vista previa solo avisan adónde irían.
+document.addEventListener("click", (evento) => {
+  const enlace = evento.target.closest("a[href]");
+  if (enlace) { evento.preventDefault(); console.log("Irías a: " + enlace.getAttribute("href")); }
+});</textarea>
+      <script type="text/plain" class="taller-verificar">
+var imgs = document.querySelectorAll("img");
+if (imgs.length !== 3) return "Debería haber 3 imágenes, como al principio.";
+var logo = imgs[0].getAttribute("alt"), foto = imgs[1].getAttribute("alt"), linea = imgs[2].getAttribute("alt");
+if (logo === null || !/inicio|portada|principal/i.test(logo)) return "El logo está dentro de un enlace a la portada: su alt debe decir adónde lleva, por ejemplo «Recetas de Ana, inicio».";
+if (foto === null || foto.trim().length < 15) return "La foto del flan necesita un alt que la describa en una frase (al menos 15 caracteres).";
+if (/^\s*(imagen|foto|image|picture)/i.test(foto)) return "No empieces el alt con «imagen» o «foto»: el lector de pantalla ya anuncia que es una imagen.";
+if (/\.(jpe?g|png|svg|gif|webp)/i.test(foto + " " + logo)) return "No uses nombres de archivo como texto alternativo.";
+if (linea === null) return "La línea ondulada es decorativa, pero igual necesita el atributo alt, vacío: alt=\"\".";
+if (linea !== "") return "La línea ondulada es decorativa: su alt debe estar vacío, alt=\"\".";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Para cada imagen pregúntate: si desapareciera, ¿qué se perdería? Del logo, poder volver a la portada. De la foto, ver cómo es el flan. De la línea, nada.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Una imagen decorativa lleva el atributo con el valor vacío: <code>alt=""</code>. No es lo mismo que no ponerlo.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-html">&lt;header&gt;
+  &lt;a href="index.html"&gt;&lt;img src="img/logo.png" alt="Recetas de Ana, inicio" width="160" height="40"&gt;&lt;/a&gt;
+&lt;/header&gt;
+&lt;h1&gt;Flan de huevo&lt;/h1&gt;
+&lt;img src="img/flan.jpg" alt="Flan dorado en un plato blanco, cubierto de caramelo que cae por los lados" width="400" height="120"&gt;
+&lt;p&gt;Un postre suave y dulce, con caramelo por encima.&lt;/p&gt;
+&lt;img src="img/linea-ondulada.svg" alt="" width="400" height="10"&gt;
+&lt;p&gt;Receta de la abuela Rosa.&lt;/p&gt;</code></pre>
+      <p>El <code>alt</code> del logo no describe el dibujo («logo naranja con una cuchara»): dice qué pasa al pulsarlo. En una imagen funcional, lo que importa es la función.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-semantica">
+    <h3>De la sopa de divs a la semántica</h3>
+    <p>La página del club de lectura está hecha solo con <code>div</code>. Cambia cada <code>div</code> por el elemento semántico que le corresponde: cabecera, navegación, contenido principal, la reseña (que tiene sentido por sí sola) y el pie. Al terminar no debe quedar ningún <code>div</code>. Puedes borrar los atributos <code>class</code>.</p>
+    <div class="taller" id="taller-ej-semantica" data-modo="web" data-exito="¡Correcto! Tu página cumple lo que se pedía." data-titulo="Ejercicio 6" data-alto="20rem">
+      <textarea class="taller-codigo" data-lenguaje="html"><div class="cabecera">
+  <p><strong>Club de lectura</strong></p>
+&lt;/div&gt;
+<div class="menu">
+  <ul>
+    <li><a href="index.html">Inicio</a></li>
+    <li><a href="libros.html">Libros del mes</a></li>
+  </ul>
+&lt;/div&gt;
+<div class="contenido">
+  <div class="resena">
+    <h1>Reseña: «Cien años de soledad»</h1>
+    <p>Una saga familiar llena de magia, contada con un ritmo que atrapa.</p>
+  &lt;/div&gt;
+&lt;/div&gt;
+<div class="pie">
+  <p><small>© 2026 Club de lectura</small></p>
+&lt;/div&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="js">// Ayudante del curso: los enlaces de la vista previa solo avisan adónde irían.
+document.addEventListener("click", (evento) => {
+  const enlace = evento.target.closest("a[href]");
+  if (enlace) { evento.preventDefault(); console.log("Irías a: " + enlace.getAttribute("href")); }
+});</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (document.querySelectorAll("body div").length) return "Todavía quedan elementos div: cámbialos por elementos semánticos (apertura y cierre).";
+var header = document.querySelector("header"), nav = document.querySelector("nav"), mains = document.querySelectorAll("main"), footer = document.querySelector("footer");
+if (!header || !/Club de lectura/.test(header.textContent)) return "La cabecera con «Club de lectura» debería ser un <header>.";
+if (!nav || !nav.querySelector("a")) return "El menú de enlaces debería ir dentro de un <nav>.";
+if (mains.length !== 1) return "Debe haber exactamente un <main> con el contenido principal.";
+var articulo = mains[0].querySelector("article");
+if (!articulo || !articulo.querySelector("h1")) return "La reseña es un contenido completo e independiente: ponla en un <article> dentro de <main>.";
+if (!footer || !/2026/.test(footer.textContent)) return "El pie con los derechos debería ser un <footer>.";
+if (header.contains(mains[0]) || footer.contains(mains[0]) || mains[0].contains(footer)) return "main, header y footer son hermanos: ninguno va dentro de otro.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Hay cinco <code>div</code> y cinco elementos para elegir: <code>header</code>, <code>nav</code>, <code>main</code>, <code>article</code> y <code>footer</code>. El orden en que aparecen en el código te da la respuesta.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Cambia también cada cierre <code>&lt;/div&gt;</code> por el cierre que le corresponde. Ojo con los dos cierres seguidos del contenido: el primero es el del <code>article</code> y el segundo, el del <code>main</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-html">&lt;header&gt;
+  &lt;p&gt;&lt;strong&gt;Club de lectura&lt;/strong&gt;&lt;/p&gt;
+&lt;/header&gt;
+&lt;nav&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;a href="index.html"&gt;Inicio&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="libros.html"&gt;Libros del mes&lt;/a&gt;&lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/nav&gt;
+&lt;main&gt;
+  &lt;article&gt;
+    &lt;h1&gt;Reseña: «Cien años de soledad»&lt;/h1&gt;
+    &lt;p&gt;Una saga familiar llena de magia, contada con un ritmo que atrapa.&lt;/p&gt;
+  &lt;/article&gt;
+&lt;/main&gt;
+&lt;footer&gt;
+  &lt;p&gt;&lt;small&gt;© 2026 Club de lectura&lt;/small&gt;&lt;/p&gt;
+&lt;/footer&gt;</code></pre>
+      <p>En la vista previa no cambió nada visible, y eso es lo interesante: todo el cambio está en el significado. Un lector de pantalla ahora puede saltar a la navegación o al contenido principal con una tecla.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-tabla">
+    <h3>Una tabla de horarios accesible</h3>
+    <p>Crea desde cero una tabla con el título <em>Mis actividades de la semana</em> y tres columnas: Día, Actividad y Hora. Los datos: lunes, yoga, 18:00; miércoles, natación, 19:30; viernes, ajedrez, 17:00. Usa <code>caption</code>, una fila de encabezados en <code>thead</code> con <code>scope="col"</code>, y en cada fila de datos, el día como encabezado de fila con <code>scope="row"</code>.</p>
+    <div class="taller" id="taller-ej-tabla" data-modo="web" data-exito="¡Correcto! Tu página cumple lo que se pedía." data-titulo="Ejercicio 7" data-alto="14rem">
+      <textarea class="taller-codigo" data-lenguaje="html"><!-- Escribe aquí tu tabla -->
+</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">table { border-collapse: collapse; font-family: sans-serif; }
+caption { font-weight: bold; padding: 6px; }
+th, td { border: 1px solid #999; padding: 6px 12px; }
+thead th { background: #e8edf3; }</textarea>
+      <script type="text/plain" class="taller-verificar">
+var t = document.querySelector("table");
+if (!t) return "Crea un elemento <table>.";
+var cap = t.querySelector("caption");
+if (!cap || !cap.textContent.trim()) return "La tabla necesita un título dentro de <caption>.";
+if (t.firstElementChild !== cap) return "El <caption> va justo después de <table>, antes que nada.";
+var cols = t.querySelectorAll("thead th[scope=col]");
+if (!t.querySelector("thead") || cols.length !== 3) return "Pon una fila de encabezados en <thead> con 3 <th scope=\"col\">: Día, Actividad y Hora.";
+var filas = t.querySelectorAll("tbody tr");
+if (filas.length !== 3) return "El <tbody> debería tener 3 filas, una por día. Tiene " + filas.length + ".";
+for (var i = 0; i < filas.length; i++) {
+  var primera = filas[i].firstElementChild;
+  if (!primera || primera.tagName !== "TH" || primera.getAttribute("scope") !== "row") return "En la fila " + (i + 1) + " de datos, el día debería ser un <th scope=\"row\">.";
+  if (filas[i].querySelectorAll("td").length !== 2) return "Cada fila de datos necesita 2 celdas <td>: la actividad y la hora.";
+}
+if (!/nataci[oó]n/i.test(t.textContent) || t.textContent.indexOf("19:30") === -1) return "Revisa los datos: falta la natación del miércoles a las 19:30.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Escribe primero el armazón vacío: <code>table</code>, <code>caption</code>, <code>thead</code> con un <code>tr</code>, y <code>tbody</code>. Después rellena fila por fila.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Una fila de datos queda así: <code>&lt;tr&gt;&lt;th scope="row"&gt;Lunes&lt;/th&gt;&lt;td&gt;Yoga&lt;/td&gt;&lt;td&gt;18:00&lt;/td&gt;&lt;/tr&gt;</code></p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-html">&lt;table&gt;
+  &lt;caption&gt;Mis actividades de la semana&lt;/caption&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th scope="col"&gt;Día&lt;/th&gt;
+      &lt;th scope="col"&gt;Actividad&lt;/th&gt;
+      &lt;th scope="col"&gt;Hora&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;&lt;th scope="row"&gt;Lunes&lt;/th&gt;&lt;td&gt;Yoga&lt;/td&gt;&lt;td&gt;18:00&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;th scope="row"&gt;Miércoles&lt;/th&gt;&lt;td&gt;Natación&lt;/td&gt;&lt;td&gt;19:30&lt;/td&gt;&lt;/tr&gt;
+    &lt;tr&gt;&lt;th scope="row"&gt;Viernes&lt;/th&gt;&lt;td&gt;Ajedrez&lt;/td&gt;&lt;td&gt;17:00&lt;/td&gt;&lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+      <p>Con esta estructura, al llegar a «19:30» un lector de pantalla puede anunciar «Miércoles, Hora, 19:30».</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-inscripcion">
+    <h3>Formulario de inscripción a un torneo</h3>
+    <p>Construye el formulario de inscripción a un torneo de videojuegos. Necesita estos campos, todos con una etiqueta visible conectada por <code>for</code> e <code>id</code>:</p>
+    <ul>
+      <li>Nombre: <code>name="nombre"</code>, de texto, obligatorio.</li>
+      <li>Correo: <code>name="correo"</code>, de tipo correo, obligatorio.</li>
+      <li>Edad: <code>name="edad"</code>, numérico, obligatorio, entre 12 y 99.</li>
+      <li>Nombre de usuario: <code>name="usuario"</code>, obligatorio, de 3 a 15 caracteres entre letras sin tilde, números y guion bajo (usa <code>pattern</code>).</li>
+      <li>Juego: una lista desplegable con <code>name="juego"</code> y al menos 3 opciones.</li>
+      <li>Nivel: tres opciones de tipo <code>radio</code> con <code>name="nivel"</code> (principiante, intermedio, experto), agrupadas en un <code>fieldset</code> con su <code>legend</code>.</li>
+    </ul>
+    <p>Prueba tu formulario con el botón de la vista previa: el ayudante te dirá qué se enviaría.</p>
+    <div class="taller" id="taller-ej-inscripcion" data-modo="web" data-exito="¡Correcto! Tu página cumple lo que se pedía." data-titulo="Ejercicio 8" data-alto="30rem">
+      <textarea class="taller-codigo" data-lenguaje="html"><h1>Inscripción al torneo</h1>
+<form action="/inscripcion" method="post">
+  <!-- Tus campos aquí -->
+
+  <button type="submit">Inscribirme</button>
+</form></textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">label, legend { display: block; font-weight: bold; margin-top: 8px; }
+input[type="radio"] + label { display: inline; font-weight: normal; margin-right: 12px; }
+button { margin-top: 12px; font: inherit; padding: 6px 16px; }</textarea>
+      <textarea class="taller-codigo" data-lenguaje="js">// Ayudante del curso: revisa el formulario al pulsar el botón y muestra lo que se enviaría.
+document.addEventListener("click", (evento) => {
+  const boton = evento.target.closest("button, input[type=submit]");
+  if (!boton || !boton.form || boton.type !== "submit") return;
+  evento.preventDefault();
+  if (!boton.form.reportValidity()) {
+    console.log("El navegador frenó el envío: mira el aviso junto al campo marcado.");
+    return;
+  }
+  console.log("Todo válido. Se enviaría esto:");
+  for (const [nombre, valor] of new FormData(boton.form)) console.log("  " + nombre + " = " + valor);
+});</textarea>
+      <script type="text/plain" class="taller-verificar">
+var f = document.querySelector("form");
+if (!f) return "No borres el elemento <form>.";
+var nombre = f.querySelector("input[name=nombre]"), correo = f.querySelector("input[name=correo]"), edad = f.querySelector("input[name=edad]");
+var usuario = f.querySelector("input[name=usuario]"), juego = f.querySelector("select[name=juego]");
+var radios = f.querySelectorAll("input[type=radio][name=nivel]");
+if (!nombre || nombre.type !== "text" || !nombre.required) return "Falta el nombre: input de texto con name=\"nombre\" y required.";
+if (!correo || correo.type !== "email" || !correo.required) return "Falta el correo: input con type=\"email\", name=\"correo\" y required.";
+if (!edad || edad.type !== "number" || !edad.required) return "Falta la edad: input con type=\"number\", name=\"edad\" y required.";
+if (edad.getAttribute("min") !== "12" || edad.getAttribute("max") !== "99") return "La edad debe estar entre 12 y 99: usa min=\"12\" y max=\"99\".";
+if (!usuario || !usuario.required || !usuario.getAttribute("pattern")) return "Falta el usuario: input con name=\"usuario\", required y un pattern.";
+var prueba = function (v) { usuario.value = v; var ok = usuario.checkValidity(); usuario.value = ""; return ok; };
+if (prueba("ab") || prueba("mi usuario") || prueba("abcdefghijklmnop") || !prueba("Lu_2026") || !prueba("abc")) return "El pattern del usuario debe aceptar de 3 a 15 letras sin tilde, números o guion bajo (como «Lu_2026») y rechazar «ab», «mi usuario» o más de 15 caracteres.";
+if (!juego || juego.querySelectorAll("option").length < 3) return "Falta la lista desplegable: <select name=\"juego\"> con al menos 3 <option>.";
+if (radios.length !== 3) return "El nivel necesita 3 opciones: input type=\"radio\" con name=\"nivel\" en las tres.";
+var grupo = radios[0].closest("fieldset");
+if (!grupo || !grupo.querySelector("legend") || Array.prototype.some.call(radios, function (r) { return r.closest("fieldset") !== grupo; })) return "Agrupa los tres radio de nivel en un <fieldset> con su <legend>.";
+var todos = [nombre, correo, edad, usuario, juego].concat(Array.prototype.slice.call(radios));
+for (var i = 0; i < todos.length; i++) {
+  if (!todos[i].labels || !todos[i].labels.length) return "El campo «" + todos[i].name + (todos[i].type === "radio" ? " (" + todos[i].value + ")" : "") + "» no tiene un <label> conectado. Revisa que for e id coincidan.";
+}
+var boton = f.querySelector("button");
+if (!boton || boton.type !== "submit") return "Deja el botón de envío dentro del formulario.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Hazlo campo por campo y ejecuta después de cada uno: el mensaje te dirá cuál es el siguiente que falta. Cada campo sigue el patrón <code>&lt;label for="x"&gt;…&lt;/label&gt;</code> + <code>&lt;input id="x" name="x" …&gt;</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El patrón del usuario es <code>[A-Za-z0-9_]{3,15}</code>: entre corchetes, los caracteres permitidos; entre llaves, el mínimo y el máximo de repeticiones.</p></details>
+    <details class="pista"><summary>Pista 3</summary><p>Los tres <code>radio</code> comparten <code>name="nivel"</code>, pero cada uno tiene su propio <code>id</code>, su propio <code>value</code> y su propia etiqueta.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-html">&lt;h1&gt;Inscripción al torneo&lt;/h1&gt;
+&lt;form action="/inscripcion" method="post"&gt;
+  &lt;label for="nombre"&gt;Nombre&lt;/label&gt;
+  &lt;input id="nombre" name="nombre" type="text" required autocomplete="name"&gt;
+
+  &lt;label for="correo"&gt;Correo electrónico&lt;/label&gt;
+  &lt;input id="correo" name="correo" type="email" required autocomplete="email"&gt;
+
+  &lt;label for="edad"&gt;Edad (de 12 a 99 años)&lt;/label&gt;
+  &lt;input id="edad" name="edad" type="number" min="12" max="99" required&gt;
+
+  &lt;label for="usuario"&gt;Nombre de usuario&lt;/label&gt;
+  &lt;input id="usuario" name="usuario" required pattern="[A-Za-z0-9_]{3,15}"
+         title="De 3 a 15 letras sin tilde, números o guion bajo"&gt;
+  &lt;p&gt;De 3 a 15 caracteres: letras sin tilde, números o guion bajo.&lt;/p&gt;
+
+  &lt;label for="juego"&gt;Juego&lt;/label&gt;
+  &lt;select id="juego" name="juego"&gt;
+    &lt;option value="karts"&gt;Carreras de karts&lt;/option&gt;
+    &lt;option value="futbol"&gt;Fútbol&lt;/option&gt;
+    &lt;option value="ajedrez"&gt;Ajedrez en línea&lt;/option&gt;
+  &lt;/select&gt;
+
+  &lt;fieldset&gt;
+    &lt;legend&gt;Tu nivel&lt;/legend&gt;
+    &lt;input type="radio" id="principiante" name="nivel" value="principiante" checked&gt;
+    &lt;label for="principiante"&gt;Principiante&lt;/label&gt;
+    &lt;input type="radio" id="intermedio" name="nivel" value="intermedio"&gt;
+    &lt;label for="intermedio"&gt;Intermedio&lt;/label&gt;
+    &lt;input type="radio" id="experto" name="nivel" value="experto"&gt;
+    &lt;label for="experto"&gt;Experto&lt;/label&gt;
+  &lt;/fieldset&gt;
+
+  &lt;button type="submit"&gt;Inscribirme&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+      <p>El campo de usuario no lleva <code>type</code>, así que es de texto. Pruébalo en la vista previa: con «ab» o con un espacio, el navegador frena el envío; con «Lu_2026» lo deja pasar.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-arregla">
+    <h3>Encuentra y arregla seis errores</h3>
+    <p>Esta página de contacto se ve casi bien, pero tiene seis errores de los que el navegador no avisa: de anidado, de accesibilidad y de formulario. Encuéntralos y arréglalos. Pista general: repasa las listas de errores comunes de esta estación.</p>
+    <div class="taller" id="taller-ej-arregla" data-modo="web" data-exito="¡Correcto! Tu página cumple lo que se pedía." data-titulo="Ejercicio 9: arregla la página" data-alto="24rem">
+      <textarea class="taller-codigo" data-lenguaje="html"><h1>Contacto</h1>
+<p>Escríbenos y te respondemos en <strong>48 horas</p></strong>
+<p id="nota">Respondemos de lunes a viernes.</p>
+<img src="img/equipo.jpg" width="300" height="80">
+<p>¿Tienes una duda rápida? Lee antes las preguntas frecuentes: <a href="preguntas.html">haz clic aquí</a>.</p>
+<form action="/contacto" method="post">
+  <label for="email">Correo</label>
+  <input id="correo" name="correo" type="email" required>
+  <label for="texto">Mensaje</label>
+  <textarea id="texto" rows="3" required>&lt;/textarea&gt;
+  <p id="nota">Te contestamos desde una dirección que termina en @recetas.dev.</p>
+  <button type="submit">Enviar</button>
+</form></textarea>
+      <textarea class="taller-codigo" data-lenguaje="js">// Ayudante del curso: los enlaces de la vista previa solo avisan adónde irían.
+document.addEventListener("click", (evento) => {
+  const enlace = evento.target.closest("a[href]");
+  if (enlace) { evento.preventDefault(); console.log("Irías a: " + enlace.getAttribute("href")); }
+});</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (/<\/p>\s*<\/strong>/i.test(codigo.html)) return "Todavía hay etiquetas cruzadas: strong se abrió dentro de p, así que se cierra antes que p.";
+var img = document.querySelector("img");
+if (!img || !img.getAttribute("alt") || img.getAttribute("alt").trim().length < 10) return "La imagen del equipo necesita un alt que la describa.";
+var enlace = document.querySelector("a");
+if (!enlace || /clic|aqu[ií]/i.test(enlace.textContent) || enlace.textContent.trim().length < 8) return "El texto del enlace debe decir adónde lleva, no «haz clic aquí».";
+var ids = Array.prototype.map.call(document.querySelectorAll("[id]"), function (e) { return e.id; });
+var repetidos = ids.filter(function (x, i) { return ids.indexOf(x) !== i; });
+if (repetidos.length) return "El id «" + repetidos[0] + "» está repetido. Cada id debe ser único en la página.";
+var etiquetas = document.querySelectorAll("label");
+for (var i = 0; i < etiquetas.length; i++) {
+  var campo = document.getElementById(etiquetas[i].htmlFor);
+  if (!campo || !/^(INPUT|TEXTAREA|SELECT)$/.test(campo.tagName)) return "La etiqueta «" + etiquetas[i].textContent.trim() + "» apunta a un id que no existe (for=\"" + etiquetas[i].htmlFor + "\").";
+}
+var campos = document.querySelectorAll("form input, form textarea, form select");
+for (var j = 0; j < campos.length; j++) { if (!campos[j].name) return "Un campo del formulario no tiene name: su dato no se enviaría."; }
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Dos errores están en los dos primeros párrafos y la imagen. Uno está en el enlace.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En el formulario hay tres: mira si cada <code>for</code> coincide con un <code>id</code>, si cada campo tiene <code>name</code> y si algún <code>id</code> se repite en la página.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-html">&lt;h1&gt;Contacto&lt;/h1&gt;
+&lt;p&gt;Escríbenos y te respondemos en &lt;strong&gt;48 horas&lt;/strong&gt;&lt;/p&gt;
+&lt;p id="horario"&gt;Respondemos de lunes a viernes.&lt;/p&gt;
+&lt;img src="img/equipo.jpg" alt="Las tres personas del equipo de Recetas de Ana, sonriendo en la cocina" width="300" height="80"&gt;
+&lt;p&gt;¿Tienes una duda rápida? Lee antes las &lt;a href="preguntas.html"&gt;preguntas frecuentes&lt;/a&gt;.&lt;/p&gt;
+&lt;form action="/contacto" method="post"&gt;
+  &lt;label for="correo"&gt;Correo&lt;/label&gt;
+  &lt;input id="correo" name="correo" type="email" required&gt;
+  &lt;label for="texto"&gt;Mensaje&lt;/label&gt;
+  &lt;textarea id="texto" name="mensaje" rows="3" required&gt;&lt;/textarea&gt;
+  &lt;p id="remitente"&gt;Te contestamos desde una dirección que termina en @recetas.dev.&lt;/p&gt;
+  &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+      <p>Los seis errores: etiquetas cruzadas, imagen sin <code>alt</code>, enlace «haz clic aquí», <code>id="nota"</code> repetido, <code>for="email"</code> que no coincide con <code>id="correo"</code>, y <code>textarea</code> sin <code>name</code>. Si pegas el código original en el validador del W3C, encontrará cuatro de ellos; el texto del enlace y el <code>name</code> que falta los tienes que detectar tú.</p>
+    </details>
+  </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: la página de tu receta favorita</h2>
+  <p>Vas a construir una página completa para una receta que te guste (o una página personal, si lo prefieres: cambia la receta por tu presentación y tus aficiones). Usarás todo lo de esta estación: el esqueleto, encabezados, listas, una imagen con buen texto alternativo, elementos semánticos y un formulario de contacto accesible. En la próxima estación le darás estilo con CSS; por ahora, que la estructura sea impecable.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Esqueleto.</strong> Parte del esqueleto completo: doctype, <code>lang="es"</code>, <code>meta charset</code>, <code>meta viewport</code> y un <code>title</code> con el nombre de la receta y del sitio, por ejemplo «Guacamole · Recetas de Ana».</p></div></li>
+    <li><div><p><strong>Regiones.</strong> Dentro de <code>body</code>: un <code>header</code> con el nombre de tu sitio, un <code>nav</code> con una lista de al menos dos enlaces (Inicio, Recetas…), un único <code>main</code> y un <code>footer</code> con el año y tu nombre.</p></div></li>
+    <li><div><p><strong>La receta.</strong> Dentro de <code>main</code>, un <code>article</code> con el <code>h1</code> (el nombre del plato), un párrafo de introducción y al menos dos <code>section</code>, cada una con su <code>h2</code>: «Ingredientes» y «Preparación».</p></div></li>
+    <li><div><p><strong>Listas.</strong> Los ingredientes en una <code>ul</code> y los pasos en una <code>ol</code>. Marca con <code>strong</code> el paso en el que haya que tener cuidado.</p></div></li>
+    <li><div><p><strong>Imagen.</strong> Una foto del plato con <code>src</code> relativo (por ejemplo, <code>img/guacamole.jpg</code>), un <code>alt</code> que la describa en una frase, <code>width</code> y <code>height</code>. En la vista previa no cargará: comprobarás que el <code>alt</code> se entiende solo.</p></div></li>
+    <li><div><p><strong>Contacto.</strong> Después del <code>article</code>, dentro de <code>main</code>, una <code>section</code> con un <code>h2</code> «¿Preguntas?» y un formulario con nombre, correo (tipo <code>email</code> y obligatorio) y mensaje (<code>textarea</code> obligatorio con un mínimo de caracteres). Cada campo con su <code>label</code> y su <code>name</code>, y un botón de envío.</p></div></li>
+    <li><div><p><strong>Revisión.</strong> Ejecuta, prueba el formulario vacío y con datos, recorre la vista previa con <kbd>Tab</kbd> y repasa la lista de accesibilidad. Cuando pase la comprobación, cópialo a un archivo <code>index.html</code> en tu computadora, ábrelo en el navegador y pásalo por el validador del W3C.</p></div></li>
+  </ol>
+  <div class="taller" id="taller-proyecto" data-modo="web" data-exito="¡Correcto! Tu página cumple lo que se pedía." data-titulo="Proyecto: tu receta" data-alto="34rem">
+    <textarea class="taller-codigo" data-lenguaje="html"><!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+</head>
+<body>
+  <!-- Paso 2: header, nav, main y footer -->
+
+  <!-- Pasos 3 a 5: la receta en un article dentro de main -->
+
+  <!-- Paso 6: la sección de contacto con su formulario -->
+
+</body>
+</html></textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">/* Unos estilos mínimos para que la vista previa se lea mejor.
+   En la Estación 14 escribirás los tuyos. */
+body { font-family: sans-serif; line-height: 1.5; max-width: 40rem; margin: 0 auto; padding: 0 12px; }
+nav ul { padding-left: 1.2rem; }
+label { display: block; font-weight: bold; margin-top: 8px; }
+input, textarea { width: 100%; max-width: 24rem; font: inherit; padding: 4px; }
+button { margin-top: 12px; font: inherit; padding: 6px 16px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// Ayudante del curso: los enlaces avisan adónde irían y el formulario
+// se revisa al pulsar el botón, mostrando en la consola lo que se enviaría.
+document.addEventListener("click", (evento) => {
+  const enlace = evento.target.closest("a[href]");
+  if (enlace) {
+    evento.preventDefault();
+    console.log("Irías a: " + enlace.getAttribute("href"));
+    return;
+  }
+  const boton = evento.target.closest("button, input[type=submit]");
+  if (!boton || !boton.form || boton.type !== "submit") return;
+  evento.preventDefault();
+  if (!boton.form.reportValidity()) {
+    console.log("El navegador frenó el envío: mira el aviso junto al campo marcado.");
+    return;
+  }
+  console.log("Todo válido. Se enviaría esto:");
+  for (const [nombre, valor] of new FormData(boton.form)) console.log("  " + nombre + " = " + valor);
+});</textarea>
+    <script type="text/plain" class="taller-verificar">
+var h = codigo.html;
+if (!/^\s*<!doctype html>/i.test(h) || !/<meta\b[^>]*charset/i.test(h) || !/<meta\b[^>]*viewport/i.test(h)) return "Paso 1: revisa el esqueleto: doctype, meta charset y meta viewport.";
+if (!/<html[^>]*\slang\s*=\s*["']?es/i.test(h)) return "Paso 1: falta lang=\"es\" en la etiqueta html.";
+if (!document.title.trim()) return "Paso 1: escribe un título dentro de <title>.";
+var mains = document.querySelectorAll("main");
+if (!document.querySelector("header")) return "Paso 2: falta el <header> con el nombre de tu sitio.";
+if (!document.querySelector("nav") || document.querySelectorAll("nav a").length < 2) return "Paso 2: falta el <nav> con al menos dos enlaces.";
+if (mains.length !== 1) return "Paso 2: debe haber un único <main>.";
+if (!document.querySelector("footer")) return "Paso 2: falta el <footer>.";
+if (document.querySelectorAll("h1").length !== 1) return "Paso 3: la página debe tener exactamente un <h1>, con el nombre del plato.";
+var art = mains[0].querySelector("article");
+if (!art || !art.querySelector("h1")) return "Paso 3: la receta, con su h1, va en un <article> dentro de <main>.";
+if (art.querySelectorAll("section > h2").length < 2) return "Paso 3: divide la receta en al menos dos <section>, cada una con su <h2>.";
+if (!art.querySelector("ul li") || !art.querySelector("ol li")) return "Paso 4: los ingredientes van en una <ul> y los pasos en una <ol>.";
+var img = art.querySelector("img");
+if (!img) return "Paso 5: falta la foto del plato dentro del article.";
+if (!img.getAttribute("alt") || img.getAttribute("alt").trim().length < 10) return "Paso 5: la foto necesita un alt que la describa en una frase.";
+if (!img.getAttribute("width") || !img.getAttribute("height")) return "Paso 5: añade width y height a la imagen.";
+var f = mains[0].querySelector("form");
+if (!f) return "Paso 6: falta el formulario de contacto dentro de <main>.";
+var campos = f.querySelectorAll("input, textarea, select");
+if (campos.length < 3) return "Paso 6: el formulario necesita al menos 3 campos: nombre, correo y mensaje.";
+for (var i = 0; i < campos.length; i++) {
+  if (!campos[i].name) return "Paso 6: un campo no tiene name, así que su dato no se enviaría.";
+  if (!campos[i].labels || !campos[i].labels.length) return "Paso 6: el campo «" + campos[i].name + "» no tiene un <label> conectado.";
+}
+if (!f.querySelector("input[type=email][required]")) return "Paso 6: el correo debe ser type=\"email\" y obligatorio.";
+var mensaje = f.querySelector("textarea");
+if (!mensaje || !mensaje.required || !mensaje.getAttribute("minlength")) return "Paso 6: el mensaje debe ser un <textarea> obligatorio con minlength.";
+var boton = f.querySelector("button");
+if (!boton || boton.type !== "submit") return "Paso 6: falta el botón de envío.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <pre><code class="language-html">&lt;!doctype html&gt;
+&lt;html lang="es"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+  &lt;title&gt;Guacamole · Recetas de Ana&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header&gt;
+    &lt;p&gt;&lt;strong&gt;Recetas de Ana&lt;/strong&gt;&lt;/p&gt;
+  &lt;/header&gt;
+  &lt;nav&gt;
+    &lt;ul&gt;
+      &lt;li&gt;&lt;a href="index.html"&gt;Inicio&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href="recetas.html"&gt;Todas las recetas&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/nav&gt;
+  &lt;main&gt;
+    &lt;article&gt;
+      &lt;h1&gt;Guacamole&lt;/h1&gt;
+      &lt;p&gt;Una salsa fresca de aguacate que se prepara en 10 minutos y sin cocinar.&lt;/p&gt;
+      &lt;img src="img/guacamole.jpg"
+           alt="Guacamole en un cuenco de barro, con trocitos de tomate y cilantro por encima"
+           width="800" height="600"&gt;
+      &lt;section&gt;
+        &lt;h2&gt;Ingredientes&lt;/h2&gt;
+        &lt;ul&gt;
+          &lt;li&gt;2 aguacates maduros&lt;/li&gt;
+          &lt;li&gt;1 tomate&lt;/li&gt;
+          &lt;li&gt;Media cebolla&lt;/li&gt;
+          &lt;li&gt;1 limón&lt;/li&gt;
+          &lt;li&gt;Cilantro y sal al gusto&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/section&gt;
+      &lt;section&gt;
+        &lt;h2&gt;Preparación&lt;/h2&gt;
+        &lt;ol&gt;
+          &lt;li&gt;Pica el tomate, la cebolla y el cilantro muy finos.&lt;/li&gt;
+          &lt;li&gt;Aplasta los aguacates con un tenedor.&lt;/li&gt;
+          &lt;li&gt;Mezcla todo con el jugo del limón y la sal.&lt;/li&gt;
+          &lt;li&gt;&lt;strong&gt;Sírvelo enseguida&lt;/strong&gt;: el aguacate se oscurece en pocos minutos.&lt;/li&gt;
+        &lt;/ol&gt;
+      &lt;/section&gt;
+    &lt;/article&gt;
+    &lt;section&gt;
+      &lt;h2&gt;¿Preguntas?&lt;/h2&gt;
+      &lt;form action="/contacto" method="post"&gt;
+        &lt;label for="nombre"&gt;Nombre&lt;/label&gt;
+        &lt;input id="nombre" name="nombre" type="text" autocomplete="name"&gt;
+        &lt;label for="correo"&gt;Correo electrónico&lt;/label&gt;
+        &lt;input id="correo" name="correo" type="email" required autocomplete="email"&gt;
+        &lt;label for="mensaje"&gt;Mensaje (mínimo 10 caracteres)&lt;/label&gt;
+        &lt;textarea id="mensaje" name="mensaje" rows="4" minlength="10" required&gt;&lt;/textarea&gt;
+        &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/section&gt;
+  &lt;/main&gt;
+  &lt;footer&gt;
+    &lt;p&gt;&lt;small&gt;© 2026 Ana. Recetas de mi familia.&lt;/small&gt;&lt;/p&gt;
+  &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+  </details>
+  <p><strong>Para ir más allá:</strong> añade una tabla con la información nutricional por porción (con <code>caption</code>, <code>th</code> y <code>scope</code>); crea una segunda página, <code>recetas/flan.html</code>, y enlaza las dos en ambos sentidos con rutas relativas; añade un grupo de <code>radio</code> para que quien escribe indique si ya hizo la receta; o escucha tu página completa con NVDA o VoiceOver y corrige lo que suene raro.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Si fallas alguna, lee la explicación de cada opción: equivocarte aquí es la forma más barata de aprender.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Qué es HTML?</p>
+      <ol class="opciones">
+        <li>Un lenguaje de programación para hacer cálculos dentro de la página.<p class="explica">No. HTML no tiene variables, decisiones ni bucles. Los cálculos los hace JavaScript.</p></li>
+        <li>Un lenguaje de marcado que describe qué es cada parte del contenido.<p class="explica">Correcto. Marca el texto para decir «esto es un encabezado», «esto es un enlace», «esto es un campo».</p></li>
+        <li>Un lenguaje para elegir colores, tamaños y posiciones.<p class="explica">Eso es CSS, el tema de la próxima estación.</p></li>
+        <li>El programa que se instala para ver páginas web.<p class="explica">Ese programa es el navegador. HTML es lo que el navegador lee.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Dónde se ve el texto de <code>&lt;title&gt;</code>?</p>
+      <ol class="opciones">
+        <li>Como título grande al principio de la página.<p class="explica">Ese es el trabajo del <code>h1</code>, que va en el <code>body</code>.</p></li>
+        <li>En ningún sitio: solo lo lee quien abre el código.<p class="explica">Sí se usa, y mucho, aunque no dentro de la ventana.</p></li>
+        <li>En el pie de la página.<p class="explica">El pie es el <code>footer</code>, que va en el <code>body</code>.</p></li>
+        <li>En la pestaña del navegador, en los marcadores y en los resultados de los buscadores.<p class="explica">Correcto. Además, es lo primero que anuncia un lector de pantalla al abrir la página.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Una página tiene estos encabezados, en este orden: <code>h1</code> «Recetas», <code>h2</code> «Postres», <code>h4</code> «Flan». ¿Qué problema hay?</p>
+      <ol class="opciones">
+        <li>Se salta un nivel: «Flan» debería ser un <code>h3</code>.<p class="explica">Correcto. Al bajar en el índice no se saltan niveles; quien navega por encabezados se preguntaría dónde está el nivel 3.</p></li>
+        <li>Ninguno: <code>h4</code> hace el texto más pequeño, que es lo que se quería.<p class="explica">El nivel se elige por jerarquía, no por tamaño. El tamaño se cambia con CSS.</p></li>
+        <li>Falta un segundo <code>h1</code> para «Postres».<p class="explica">La recomendación es un solo <code>h1</code> por página.</p></li>
+        <li>El <code>h2</code> sobra: se puede pasar del <code>h1</code> al <code>h4</code>.<p class="explica">Justo al revés: el <code>h2</code> está bien; el problema es el salto posterior.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Estás escribiendo en <code>blog/entrada.html</code> y quieres mostrar <code>img/foto.jpg</code>. Las carpetas <code>blog</code> e <code>img</code> están, las dos, en la raíz del sitio. ¿Qué ruta relativa usas?</p>
+      <ol class="opciones">
+        <li><code>img/foto.jpg</code><p class="explica">Esa ruta busca una carpeta <code>img</code> dentro de <code>blog</code>, que no existe.</p></li>
+        <li><code>blog/img/foto.jpg</code><p class="explica">Partiendo de <code>blog/</code>, esto buscaría <code>blog/blog/img/foto.jpg</code>.</p></li>
+        <li><code>../img/foto.jpg</code><p class="explica">Correcto. <code>..</code> sube de <code>blog</code> a la raíz y desde ahí entra en <code>img</code>.</p></li>
+        <li><code>..\img\foto.jpg</code><p class="explica">En las URL la barra siempre es <code>/</code>. La barra invertida es costumbre de Windows y falla en los servidores.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Qué texto alternativo le pones a una línea ondulada que solo adorna la separación entre dos secciones?</p>
+      <ol class="opciones">
+        <li><code>alt="línea ondulada decorativa"</code><p class="explica">El lector de pantalla leería eso en voz alta cada vez: es ruido que no aporta nada.</p></li>
+        <li>Ninguno: quito el atributo <code>alt</code>.<p class="explica">Sin el atributo, el navegador no sabe si es decorativa, y algunos lectores leen el nombre del archivo.</p></li>
+        <li><code>alt=""</code><p class="explica">Correcto. Un <code>alt</code> vacío dice «esta imagen es decorativa» y el lector de pantalla la salta.</p></li>
+        <li><code>alt="imagen"</code><p class="explica">No describe nada, y el lector ya anuncia que es una imagen.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Una receta completa, con su título, ingredientes y pasos, que tendría sentido compartida por sí sola. ¿Con qué elemento la envuelves?</p>
+      <ol class="opciones">
+        <li><code>&lt;section&gt;</code><p class="explica"><code>section</code> es para un grupo temático dentro de algo mayor, como «Ingredientes» dentro de la receta.</p></li>
+        <li><code>&lt;article&gt;</code><p class="explica">Correcto. <code>article</code> es para contenido completo e independiente: una receta, una entrada de blog, un comentario.</p></li>
+        <li><code>&lt;div&gt;</code><p class="explica"><code>div</code> no dice nada. Úsalo solo cuando ningún elemento con significado encaje.</p></li>
+        <li><code>&lt;aside&gt;</code><p class="explica"><code>aside</code> es para contenido secundario, como las recetas relacionadas.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Tienes <code>&lt;label for="correo"&gt;Correo&lt;/label&gt;</code> y <code>&lt;input id="email" name="correo"&gt;</code>. ¿Qué pasa?</p>
+      <ol class="opciones">
+        <li>Todo funciona: <code>for</code> apunta al <code>name</code> del campo.<p class="explica"><code>for</code> apunta al <code>id</code>, no al <code>name</code>. Es una confusión muy común.</p></li>
+        <li>El navegador muestra un error en rojo.<p class="explica">HTML nunca muestra errores: los corrige o los ignora en silencio.</p></li>
+        <li>El campo no se envía.<p class="explica">Sí se envía, porque tiene <code>name="correo"</code>.</p></li>
+        <li>La etiqueta no queda conectada: al hacer clic en ella no se activa el campo, y el lector de pantalla no la anuncia.<p class="explica">Correcto. Para conectarlos, <code>for</code> e <code>id</code> deben tener el mismo valor.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Un campo tiene <code>id</code> y una etiqueta bien conectada, pero no tiene <code>name</code>. ¿Qué ocurre al enviar el formulario?</p>
+      <ol class="opciones">
+        <li>Su valor no se envía.<p class="explica">Correcto. El paquete de datos se arma con pares <code>name = valor</code>; sin <code>name</code>, el dato se pierde sin avisar.</p></li>
+        <li>Se envía usando el <code>id</code> como nombre.<p class="explica">El <code>id</code> sirve dentro de la página, no para enviar datos.</p></li>
+        <li>El navegador no deja enviar el formulario.<p class="explica">El envío sigue adelante; solo falta ese dato.</p></li>
+        <li>Se envía con el texto de la etiqueta como nombre.<p class="explica">La etiqueta es para las personas; el servidor nunca la recibe.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Qué hace <code>&lt;input name="apodo" required="false"&gt;</code>?</p>
+      <ol class="opciones">
+        <li>El campo es opcional.<p class="explica">Parece lógico, pero <code>required</code> es un atributo booleano: su valor no importa.</p></li>
+        <li>El campo es obligatorio: basta con que el atributo esté.<p class="explica">Correcto. Para que sea opcional hay que quitar el atributo entero.</p></li>
+        <li>Da un error y la página no carga.<p class="explica">HTML no se detiene por esto.</p></li>
+        <li>Es obligatorio solo en los móviles.<p class="explica">La validación funciona igual en cualquier dispositivo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Tu formulario usa <code>required</code>, <code>type="email"</code> y <code>pattern</code>. ¿Hace falta validar también en el servidor?</p>
+      <ol class="opciones">
+        <li>No: el navegador ya impide que lleguen datos incorrectos.<p class="explica">Solo lo impide a quien usa tu página normalmente. Cualquiera puede desactivarlo o enviar datos sin pasar por ella.</p></li>
+        <li>Solo si el formulario pide contraseñas.<p class="explica">Todos los datos que llegan de fuera deben revisarse.</p></li>
+        <li>Sí, siempre: la validación del navegador ayuda a la persona, pero se puede saltar.<p class="explica">Correcto. Es comodidad, no seguridad. Lo verás en las estaciones 29 y 31.</p></li>
+        <li>No, porque las expresiones regulares de <code>pattern</code> son seguras.<p class="explica">El problema no es el patrón, sino que el control está en la computadora de quien envía.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Cuándo es correcto usar <code>&lt;table&gt;</code>?</p>
+      <ol class="opciones">
+        <li>Para poner el menú a la izquierda y el contenido a la derecha.<p class="explica">Eso es maquetar, y se hace con CSS. Una tabla de maquetación confunde a los lectores de pantalla.</p></li>
+        <li>Para cualquier lista de más de cinco elementos.<p class="explica">Una lista larga sigue siendo una lista: <code>ul</code> u <code>ol</code>.</p></li>
+        <li>Para alinear las etiquetas y los campos de un formulario.<p class="explica">También es trabajo de CSS.</p></li>
+        <li>Para datos que se leen por filas y columnas, como la clasificación de un torneo.<p class="explica">Correcto. Cada valor tiene sentido por su fila y su columna.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Escribiste un <code>p</code> con un <code>div</code> dentro. En la pestaña Elementos de las DevTools ves el párrafo cerrado antes del <code>div</code>. ¿Por qué?</p>
+      <ol class="opciones">
+        <li>Elementos muestra el árbol que construyó el navegador después de corregir tu HTML, no tu archivo tal cual.<p class="explica">Correcto. Un párrafo no puede contener bloques, así que el navegador lo cerró. «Ver código fuente» muestra el original.</p></li>
+        <li>Las DevTools tienen un error de visualización.<p class="explica">Muestran exactamente lo que el navegador está usando para dibujar la página.</p></li>
+        <li>Tu editor guardó mal el archivo.<p class="explica">El archivo está como lo escribiste; lo cambió el navegador al leerlo.</p></li>
+        <li>Un <code>p</code> no puede contener nada, ni siquiera texto.<p class="explica">Un párrafo contiene texto y elementos en línea; lo que no admite son bloques como <code>div</code>.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>HTML</dt><dd>Siglas de <em>HyperText Markup Language</em>, «lenguaje de marcado de hipertexto». Describe la estructura y el significado del contenido de una página web.</dd>
+    <dt>Lenguaje de marcado</dt><dd>Sistema de marcas que se ponen alrededor del texto para indicar qué es cada parte. No calcula ni decide, a diferencia de un lenguaje de programación.</dd>
+    <dt>Etiqueta (tag)</dt><dd>Marca de HTML entre <code>&lt;</code> y <code>&gt;</code>. La de apertura (<code>&lt;p&gt;</code>) empieza un elemento y la de cierre (<code>&lt;/p&gt;</code>) lo termina.</dd>
+    <dt>Elemento</dt><dd>Una pieza de la página: etiqueta de apertura, contenido y etiqueta de cierre.</dd>
+    <dt>Atributo</dt><dd>Dato extra de un elemento con la forma <code>nombre="valor"</code>, escrito en la etiqueta de apertura. Por ejemplo, <code>href</code> o <code>alt</code>.</dd>
+    <dt>Elemento vacío</dt><dd>Elemento sin contenido ni etiqueta de cierre, como <code>img</code>, <code>br</code>, <code>input</code> o <code>meta</code>. En inglés, <em>void element</em>.</dd>
+    <dt>Anidar</dt><dd>Meter elementos dentro de otros. Lo último que se abre es lo primero que se cierra.</dd>
+    <dt>Doctype</dt><dd>La declaración <code>&lt;!doctype html&gt;</code> al principio del archivo. Hace que el navegador use el modo estándar y no el modo peculiar (<em>quirks mode</em>).</dd>
+    <dt>Codificación (UTF-8)</dt><dd>Forma de convertir los caracteres en bytes. UTF-8 incluye tildes, eñes, emojis y todos los alfabetos, y es la única válida en HTML actual.</dd>
+    <dt>Viewport</dt><dd>La zona visible de la página. La meta <code>viewport</code> pide a los móviles que usen el ancho real de la pantalla.</dd>
+    <dt>Encabezado</dt><dd>Título de una parte de la página, de <code>h1</code> (el principal) a <code>h6</code>. Los encabezados forman el índice de la página.</dd>
+    <dt>Elemento de bloque y en línea</dt><dd>Los de bloque empiezan en una línea nueva y ocupan todo el ancho (<code>p</code>, <code>h1</code>); los en línea fluyen dentro del texto (<code>a</code>, <code>strong</code>).</dd>
+    <dt>Entidad</dt><dd>Código que empieza con <code>&amp;</code> y termina con <code>;</code> para escribir caracteres especiales, como <code>&amp;lt;</code> para <code>&lt;</code>.</dd>
+    <dt>URL absoluta</dt><dd>Dirección completa, con protocolo y dominio: <code>https://ana.dev/index.html</code>. Se usa para enlazar a otros sitios.</dd>
+    <dt>Ruta relativa</dt><dd>Camino hacia un archivo que parte de la carpeta de la página actual, como <code>../img/logo.png</code>.</dd>
+    <dt>Texto alternativo</dt><dd>El atributo <code>alt</code> de una imagen: el texto que la sustituye cuando no se puede ver. Vacío (<code>alt=""</code>) si es decorativa.</dd>
+    <dt>HTML semántico</dt><dd>Usar para cada contenido el elemento que dice qué es (<code>nav</code>, <code>main</code>, <code>article</code>…) en lugar de cajas genéricas.</dd>
+    <dt>Región (landmark)</dt><dd>Zona de la página con un rol reconocible, como la navegación o el contenido principal, a la que un lector de pantalla puede saltar directamente.</dd>
+    <dt>Lector de pantalla</dt><dd>Programa que lee en voz alta (o en braille) el contenido de la pantalla y permite navegar con el teclado. Ejemplos: NVDA, VoiceOver, TalkBack.</dd>
+    <dt>Accesibilidad</dt><dd>Que cualquier persona, con o sin discapacidad, pueda usar lo que construyes. Se abrevia <em>a11y</em>.</dd>
+    <dt>Formulario</dt><dd>Parte de la página que pide datos a la persona (<code>form</code>) y los envía a un servidor como pares <code>name = valor</code>.</dd>
+    <dt>Validación nativa</dt><dd>Revisión que hace el navegador antes de enviar un formulario, según atributos como <code>required</code>, <code>type</code>, <code>min</code>, <code>max</code> o <code>pattern</code>.</dd>
+    <dt>Validador</dt><dd>Programa que comprueba si un código cumple el estándar. El de HTML más usado es el Nu Html Checker del W3C.</dd>
+    <dt>DOM</dt><dd>El árbol de elementos que construye el navegador al leer el HTML. Es lo que muestra la pestaña Elementos y lo que JavaScript puede cambiar.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación, no antes: te servirán para repasar y para ver las mismas ideas explicadas por otras personas.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=3nYLTiY5skU" data-canal="midulive" data-idioma="es" data-nivel="curso" data-duracion="1 h 54 min" data-por-que="Un curso completo de HTML en vivo, con semántica y buenas prácticas para buscadores.">Curso COMPLETO de HTML GRATIS desde cero: SEO, semántica y más</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=wx92etmlHtc" data-canal="Carpi Coder" data-idioma="es" data-nivel="intro" data-duracion="22 min" data-por-que="Qué son las etiquetas semánticas y por qué mejoran la legibilidad, la accesibilidad y el SEO.">HTML SEMÁNTICO y etiquetas semánticas ¿Qué significa? ¿Para qué sirve?</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=e9OqSy_WuM8" data-canal="Dostin Hurtado" data-idioma="es" data-nivel="intro" data-duracion="13 min" data-por-que="Validación de formularios solo con atributos de HTML, sin CSS ni JavaScript.">Aprende a Validar Formularios en HTML (Sin CSS ni JavaScript) - ¡Muy Fácil!</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=VGm4v4fTFaw" data-canal="Gobierno Digital Chile" data-idioma="es" data-nivel="intro" data-duracion="4 min" data-por-que="Una explicación breve y oficial de qué es el texto alternativo y cómo escribirlo.">Texto alternativo: Una imágen en pocas palabras</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Core/Structuring_content">Estructurando la web con HTML (MDN)</a><p>El módulo de aprendizaje de Mozilla, en español: sintaxis, texto, enlaces, imágenes, tablas y estructura, con ejercicios.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Extensions/Forms">Pilares de los formularios web (MDN)</a><p>Todo sobre formularios: controles, estructura, validación y cómo se envían los datos.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Core/Accessibility/HTML">HTML: Una buena base para la accesibilidad (MDN)</a><p>Por qué la semántica, los textos de enlace, las etiquetas y el <code>alt</code> son la base de una web accesible.</p></li>
+    <li><a href="https://validator.w3.org/nu/">Nu Html Checker, el validador del W3C</a><p>Pega tu código o la dirección de tu página y revisa los errores. Úsalo con cada página que publiques.</p></li>
+    <li><a href="https://www.w3.org/WAI/tutorials/images/decision-tree/">An alt Decision Tree (W3C WAI, en inglés)</a><p>Un árbol de preguntas para decidir qué texto alternativo lleva cada imagen, de la Iniciativa de Accesibilidad Web del W3C.</p></li>
+    <li><a href="https://web.dev/learn/html">Learn HTML (web.dev, en inglés)</a><p>Curso gratuito del equipo de Chrome, muy completo, para cuando quieras ir más a fondo en cada elemento.</p></li>
+  </ul>
+</section>

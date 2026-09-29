@@ -1,0 +1,298 @@
+<section id="ruta" data-parada="Lo que vas a lograr">
+  <h2>Lo que vas a lograr</h2>
+  <p class="entradilla">Pulsas «Ejecutar» y tu programa funciona. Pero ¿qué pasó en medio? ¿Por qué un <code>setTimeout</code> de 0 milisegundos no se ejecuta enseguida, por qué un bucle largo congela la página y por qué una app que funcionaba bien empieza a gastar cada vez más memoria? En esta estación abres el capó: vas a ver cómo tu texto se convierte en instrucciones de máquina, dónde se guardan tus datos, quién los borra cuando ya no sirven y en qué orden exacto ocurre cada cosa.</p>
+  <ul class="objetivos">
+    <li>Explicar qué diferencia a un lenguaje compilado, uno interpretado y uno con compilación JIT, y qué gana y pierde cada estrategia.</li>
+    <li>Describir el camino del código fuente a la máquina: tokens, árbol sintáctico, bytecode y código máquina.</li>
+    <li>Distinguir un motor (V8, SpiderMonkey, JavaScriptCore) de un entorno de ejecución (navegador, Node.js, Deno, Bun).</li>
+    <li>Explicar qué se guarda en la pila y qué en el montículo, y por qué eso hace que los objetos se compartan por referencia.</li>
+    <li>Entender cómo trabaja el recolector de basura y reconocer las fugas de memoria más comunes.</li>
+    <li>Diferenciar procesos e hilos, y concurrencia y paralelismo, con ejemplos de apps y juegos.</li>
+    <li>Predecir el orden exacto en que se ejecuta un programa con <code>setTimeout</code>, promesas y <code>await</code>.</li>
+    <li>Mover un cálculo pesado a un Web Worker para que la página no se congele.</li>
+    <li>Dividir un programa en módulos con <code>import</code> y <code>export</code>, y reconocer el <code>require</code> de CommonJS.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="Antes de empezar">
+    <p>Esta estación se apoya en varias anteriores. Conviene que recuerdes cómo se traduce el código y qué es un proceso (<a href="02-computadora.html#del-codigo">Estación 2</a>), la pila de llamadas y los closures (<a href="10-funciones.html#pila">Estación 10</a>), las referencias y copias (<a href="11-colecciones.html#referencias">Estación 11</a>), las promesas y <code>async</code>/<code>await</code> (<a href="16-asincronia.html#promesas">Estación 16</a>), las pilas, colas y árboles (<a href="19-estructuras-datos.html#pilas-colas">Estación 19</a>) y la recursión (<a href="20-algoritmos.html#recursion">Estación 20</a>). Si alguna te suena lejana, dale un repaso rápido: aquí se usan como piezas.</p>
+  </aside>
+</section>
+
+<section id="traducir" data-parada="Compilar o interpretar">
+  <h2>Compilar, interpretar y compilar «justo a tiempo»</h2>
+  <p>La CPU solo entiende código máquina: patrones de bits que significan cosas como «suma estos dos registros» o «salta a esta dirección». Tú escribes <code>precio * cantidad</code>. Alguien tiene que traducir. En la <a href="02-computadora.html#del-codigo">Estación 2</a> viste las dos grandes estrategias a vista de pájaro: el compilador, que traduce todo antes, y el intérprete, que traduce mientras ejecuta. Ahora vas a ver lo que quedó fuera de esa foto: el código intermedio, las máquinas virtuales y por qué JavaScript usa una mezcla de todo.</p>
+
+  <h3>Tres formas de llegar a la CPU</h3>
+  <p>La <strong>compilación anticipada</strong> (en inglés, <em>ahead of time</em>, AOT) traduce el programa entero a código máquina antes de que nadie lo use. El resultado es un <strong>ejecutable</strong>: un archivo que el sistema operativo puede poner en marcha directamente, como el <code>.exe</code> de un juego en Windows. Así trabajan C, C++, Rust, Go y Swift. El programa arranca al instante y corre muy rápido, porque ya está traducido. A cambio, hay que compilar una versión distinta para cada sistema operativo y cada procesador, y en proyectos grandes compilar puede tardar minutos.</p>
+  <p>La <strong>interpretación</strong> deja la traducción para el momento de ejecutar. Un <strong>intérprete</strong> es un programa que lee tu código y hace lo que dice. Aquí va el primer matiz: casi ningún intérprete moderno lee el texto «línea a línea» como en la analogía de la Estación 2. Primero lo convierte en <strong>bytecode</strong>, un código intermedio compacto, más sencillo que tu texto pero que ninguna CPU entiende. Después, un programa llamado <strong>máquina virtual</strong> ejecuta ese bytecode instrucción por instrucción. Python hace exactamente eso: si alguna vez ves una carpeta <code>__pycache__</code> con archivos <code>.pyc</code>, ahí está el bytecode que Python guardó para no tener que regenerarlo la próxima vez.</p>
+  <p>La <strong>compilación JIT</strong> (del inglés <em>just in time</em>, «justo a tiempo») mezcla las dos ideas. El programa empieza interpretándose, para arrancar enseguida. Mientras corre, el sistema observa qué partes se ejecutan muchas veces (se dice que esas partes están <strong>calientes</strong>) y las compila a código máquina en ese momento, sin detener el programa. Así lo hacen los motores de JavaScript, la máquina virtual de Java y la de C#.</p>
+  <aside class="senal analogia">
+    <p>Imagina una cocinera que recibe una receta nueva. Las primeras veces la lee paso a paso: es lento, pero puede empezar en seguida (intérprete). Si le piden ese plato cien veces en una noche, se aprende una rutina rápida y ya no mira el papel (código compilado por el JIT). Y si un día el pedido cambia, por ejemplo «sin gluten», la rutina ya no sirve: vuelve a la receta escrita (eso se llama desoptimizar, y lo verás enseguida). La analogía tiene un límite: la cocinera recuerda para siempre, pero el motor de JavaScript vuelve a empezar de cero cada vez que cierras la pestaña o el programa.</p>
+  </aside>
+
+  <h3>Qué se gana y qué se pierde</h3>
+  <p>Ninguna estrategia es la mejor en todo. Cada una elige un punto entre dos deseos que chocan: arrancar pronto y correr rápido.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 310" role="img" aria-label="Gráfica cualitativa de velocidad frente al tiempo desde que arranca un programa. Un programa compilado antes corre rápido desde el principio. Uno solo interpretado corre lento todo el tiempo. JavaScript con JIT empieza lento, sube por escalones a medida que el motor compila las partes calientes con Sparkplug, Maglev y TurboFan, cae un momento cuando desoptimiza y vuelve a subir">
+      <path class="d-linea" d="M80 30V250H700"/>
+      <path class="d-tinta" d="M72 34l8-14 8 14z"/>
+      <path class="d-tinta" d="M696 242l14 8-14 8z"/>
+      <text class="d-peq d-tenue" x="70" y="40" text-anchor="end">más</text>
+      <text class="d-peq d-tenue" x="70" y="56" text-anchor="end">rápido</text>
+      <g transform="rotate(-90 30 150)"><text class="d-rotulo" x="30" y="150" text-anchor="middle">Velocidad</text></g>
+      <text class="d-rotulo" x="390" y="276" text-anchor="middle">Tiempo desde que arranca el programa</text>
+      <path class="d-linea" d="M82 62H690" style="stroke-width:3"/>
+      <path class="d-punteada" d="M82 228H690" style="stroke-width:3"/>
+      <path class="d-acento-trazo" d="M82 228H200V190H320V145H440V100H560V190H600V100H690" style="stroke-width:4"/>
+      <text class="d-peq" x="140" y="218" text-anchor="middle">Ignition</text>
+      <text class="d-peq" x="260" y="180" text-anchor="middle">Sparkplug</text>
+      <text class="d-peq" x="380" y="135" text-anchor="middle">Maglev</text>
+      <text class="d-peq" x="500" y="90" text-anchor="middle">TurboFan</text>
+      <text class="d-peq" x="580" y="210" text-anchor="middle">desoptimiza</text>
+      <path class="d-linea" d="M90 298h36" style="stroke-width:3"/>
+      <text class="d-peq" x="132" y="302">Compilado antes (C, Rust)</text>
+      <path class="d-acento-trazo" d="M330 298h36" style="stroke-width:4"/>
+      <text class="d-peq" x="372" y="302">JavaScript con JIT</text>
+      <path class="d-punteada" d="M520 298h36" style="stroke-width:3"/>
+      <text class="d-peq" x="562" y="302">Solo intérprete</text>
+    </svg>
+    <figcaption>Esquema cualitativo, sin escala real. El JIT empieza como un intérprete y sube de nivel en las partes que se ejecutan mucho. Los nombres de los escalones son los del motor V8, que verás en la sección <a href="#motores">Motores y entornos</a>.</figcaption>
+  </figure>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Lenguaje</th><th scope="col">Cómo llega a la CPU</th><th scope="col">Qué se entrega a quien lo usa</th></tr></thead>
+      <tbody>
+        <tr><td>C, C++, Rust, Go, Swift</td><td>Compilación anticipada a código máquina</td><td>Un ejecutable para cada sistema y procesador</td></tr>
+        <tr><td>Python (CPython)</td><td>Bytecode que ejecuta una máquina virtual; desde Python 3.13 hay además un JIT experimental</td><td>El código fuente; hace falta tener Python instalado</td></tr>
+        <tr><td>Java, Kotlin, C#</td><td>Se compilan antes a bytecode, y una máquina virtual lo ejecuta con JIT</td><td>El bytecode (archivos <code>.class</code>, <code>.jar</code> o <code>.dll</code>)</td></tr>
+        <tr><td>JavaScript</td><td>El motor genera bytecode al cargar y compila con JIT las partes calientes</td><td>El código fuente, que ejecuta el navegador o Node.js</td></tr>
+        <tr><td>GDScript (Godot)</td><td>Bytecode que ejecuta la máquina virtual del motor Godot</td><td>El juego exportado, con el motor incluido</td></tr>
+        <tr><td>TypeScript</td><td>Se traduce a JavaScript, y desde ahí sigue el camino de JavaScript</td><td>El JavaScript resultante</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La última fila tiene nombre propio. Traducir de un lenguaje de alto nivel a otro de alto nivel, como de TypeScript a JavaScript, se suele llamar <strong>transpilar</strong>. Lo harás en la <a href="23-typescript.html">Estación 23</a>.</p>
+  <aside class="senal nota" data-titulo="WebAssembly">
+    <p>Los navegadores entienden un segundo formato además de JavaScript: <strong>WebAssembly</strong> (Wasm), un código binario de bajo nivel pensado para ser un destino de compilación. Se puede compilar C, C++ o Rust a WebAssembly y ejecutarlo en una página casi a la velocidad de un programa nativo. Así funcionan muchos juegos web exportados desde Godot o Unity, y editores de imagen o video que corren en el navegador.</p>
+  </aside>
+
+  <h3>Cuándo se detectan los errores</h3>
+  <p>La estrategia de traducción también decide <em>cuándo</em> te enteras de un error. Un compilador revisa todo el programa antes de producir el ejecutable: si hay una llave de más, no hay ejecutable. En JavaScript pasa algo parecido a pequeña escala: antes de ejecutar la primera línea, el motor lee y analiza el archivo entero. Si encuentra un error de sintaxis en cualquier parte, no ejecuta nada. Predice qué imprime este programa antes de pulsar «Ejecutar»:</p>
+  <div class="taller" id="taller-sintaxis" data-titulo="Predice: un error de sintaxis en la última línea">
+    <textarea class="taller-codigo">console.log("Primera línea");
+console.log("Segunda línea");
+console.log("Tercera línea";</textarea>
+  </div>
+  <p>No se imprime nada, ni siquiera la primera línea: el motor encontró el paréntesis sin cerrar al analizar el archivo y se negó a empezar. Ahora <strong>modifica</strong>: cierra el paréntesis de la tercera línea y cambia <code>console.log</code> por <code>console.lg</code> (una letra menos). Ejecuta otra vez. Esta vez sí aparecen las dos primeras líneas, y el error llega al final. Es un <code>TypeError</code>: el código está bien escrito, pero al ejecutar la línea 3 el motor descubre que <code>console.lg</code> no existe. Los errores de sintaxis se detectan <em>antes</em> de ejecutar; los demás, <em>al llegar</em> a la línea. Esa diferencia la conociste en la <a href="12-depuracion.html#tipos">Estación 12</a>, y ahora sabes de dónde viene.</p>
+  <aside class="senal error">
+    <p>«JavaScript es interpretado, por eso es lento» y «un lenguaje compilado siempre es más rápido». Las dos frases son medias verdades. JavaScript se compila a código máquina constantemente gracias al JIT, y en muchas tareas queda cerca de los lenguajes compilados. Y un programa compilado pero con un mal algoritmo pierde contra un programa interpretado con uno bueno: la <a href="20-algoritmos.html">Estación 20</a> lo mostró con números. Compilado o interpretado es una propiedad de <em>cómo se ejecuta</em> un lenguaje, no una etiqueta de calidad.</p>
+  </aside>
+</section>
+
+<section id="del-texto" data-parada="Tokens, árbol y bytecode">
+  <h2>Del texto a la máquina, paso a paso</h2>
+  <p>Para el motor, tu programa es al principio lo mismo que para un editor de texto: una fila de caracteres. <code>r</code>, <code>e</code>, <code>t</code>, <code>u</code>, <code>r</code>, <code>n</code>, un espacio… Nada de eso significa todavía «devuelve» ni «multiplica». Convertir esa fila de letras en acciones es un trabajo en cadena, y cada etapa tiene un nombre. Todos los lenguajes siguen un camino parecido: lo que aprendas aquí vale también para Python, C# o GDScript.</p>
+
+  <h3>Etapa 1: el análisis léxico agrupa letras en tokens</h3>
+  <p>La primera etapa se llama <strong>análisis léxico</strong>, y el programa que la hace, <strong>analizador léxico</strong> (en inglés, <em>lexer</em> o <em>tokenizer</em>). Recorre el texto carácter a carácter y lo agrupa en <strong>tokens</strong>: las «palabras» del lenguaje. Cada token tiene un tipo y un texto. En <code>let total = precio * 2 + 10;</code> hay una palabra clave (<code>let</code>), dos nombres (<code>total</code> y <code>precio</code>), dos números, tres operadores y un punto y coma. Los espacios y los comentarios se descartan en esta etapa: por eso da igual si pones un espacio o diez.</p>
+  <aside class="senal analogia">
+    <p>Cuando lees «elgatoduerme», tu cerebro separa «el», «gato» y «duerme» antes de entender la frase. El analizador léxico hace eso: no sabe todavía si la frase tiene sentido, solo corta las palabras. La diferencia es que tú puedes adivinar palabras mal escritas; el analizador léxico no adivina nada, y si encuentra un carácter que no conoce, se detiene con un error.</p>
+  </aside>
+  <p>Aquí tienes un analizador léxico de verdad, en miniatura, escrito en JavaScript. Usa solo cosas que ya conoces: un bucle <code>while</code>, condiciones y un array. Antes de ejecutarlo, <strong>predice</strong> cuántos tokens va a encontrar.</p>
+  <div class="taller" id="taller-tokens" data-titulo="Predice y modifica: un analizador léxico">
+    <textarea class="taller-codigo">function esDigito(c) {
+  return c >= "0" && c <= "9";
+}
+function esLetra(c) {
+  return (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c === "_";
+}
+const CLAVES = ["let", "const", "return", "if", "function"];
+
+function tokenizar(texto) {
+  const tokens = [];
+  let i = 0;
+  while (i < texto.length) {
+    const c = texto[i];
+    if (c === " ") {
+      i++;                                    // los espacios se descartan
+    } else if (esDigito(c)) {
+      let numero = "";
+      while (i < texto.length && esDigito(texto[i])) {
+        numero += texto[i];
+        i++;
+      }
+      tokens.push("NUMERO " + numero);
+    } else if (esLetra(c)) {
+      let palabra = "";
+      while (i < texto.length && (esLetra(texto[i]) || esDigito(texto[i]))) {
+        palabra += texto[i];
+        i++;
+      }
+      const tipo = CLAVES.includes(palabra) ? "CLAVE" : "NOMBRE";
+      tokens.push(tipo + " " + palabra);
+    } else if ("=+-*/();".includes(c)) {
+      tokens.push("SIGNO " + c);
+      i++;
+    } else {
+      throw new SyntaxError(`Carácter inesperado «${c}» en la posición ${i}`);
+    }
+  }
+  return tokens;
+}
+
+const tokens = tokenizar("let total = precio * 2 + 10;");
+console.log(tokens.length + " tokens:");
+for (const token of tokens) console.log("  " + token);</textarea>
+  </div>
+  <p>Son 9 tokens. Fíjate en que <code>10</code> es un solo token, aunque tenga dos caracteres: el bucle interior sigue leyendo dígitos mientras los haya. <strong>Modifica</strong> el texto de la penúltima línea y observa: cambia <code>10</code> por <code>1000</code> (sigue habiendo 9 tokens), cambia <code>precio</code> por <code>precio2</code> (sigue siendo un solo nombre, porque un nombre puede contener dígitos si no empieza por uno) y, por último, añade una arroba <code>@</code> en cualquier parte. El analizador se detiene con un <code>SyntaxError</code>, como haría el motor real con un carácter que no pertenece al lenguaje.</p>
+
+  <h3>Etapa 2: el análisis sintáctico construye un árbol</h3>
+  <p>Una lista de tokens todavía no dice qué se hace primero. En <code>precio * 2 + 10</code>, ¿se suma antes o se multiplica antes? La segunda etapa, el <strong>análisis sintáctico</strong>, responde a eso. El <strong>analizador sintáctico</strong> (en inglés, <em>parser</em>) comprueba que los tokens formen frases válidas según la gramática del lenguaje y construye un <strong>árbol de sintaxis abstracta</strong> (en inglés, <em>abstract syntax tree</em>, AST): un árbol, como los de la <a href="19-estructuras-datos.html#arboles">Estación 19</a>, donde cada nodo es una construcción del lenguaje (una declaración, una suma, un nombre, un número) y sus hijos son sus partes.</p>
+  <p>El árbol guarda la precedencia de los operadores en su forma: la multiplicación queda <em>más abajo</em> que la suma, así que se calcula primero. Los paréntesis desaparecen, porque su trabajo ya está hecho: <code>(precio * 2) + 10</code> produce exactamente el mismo árbol. Si los tokens no encajan en ninguna frase válida, por ejemplo <code>let = 5 total;</code>, aquí nace el <code>SyntaxError</code>.</p>
+  <aside class="senal oficio">
+    <p>Muchas herramientas que usarás trabajan con el árbol de tu código, no con el texto. Prettier, que formatea tu código (<a href="05-herramientas.html">Estación 5</a>), lo analiza a un árbol y lo vuelve a escribir con un estilo uniforme. ESLint busca problemas recorriendo el árbol. TypeScript comprueba tipos sobre él. En la web <a href="https://astexplorer.net/">AST Explorer</a> puedes pegar cualquier código y ver su árbol real, nodo por nodo. Pruébalo con <code>let total = precio * 2 + 10;</code>: verás nodos llamados <code>VariableDeclaration</code>, <code>BinaryExpression</code> e <code>Identifier</code>.</p>
+  </aside>
+  <p>Python trae incluidos su propio analizador léxico (el módulo <code>tokenize</code>) y su propio analizador sintáctico (el módulo <code>ast</code>). Este taller los usa para mostrarte los tokens y el árbol reales de una línea de Python. Predice qué tipo de nodo queda a la izquierda de la suma:</p>
+  <div class="taller" id="taller-python-ast" data-modo="python" data-titulo="Los tokens y el árbol reales de Python">
+    <textarea class="taller-codigo">import io
+import tokenize
+import ast
+
+codigo = "total = precio * 2 + 10\n"
+
+print("Tokens:")
+for t in tokenize.generate_tokens(io.StringIO(codigo).readline):
+    print("  ", tokenize.tok_name[t.type], repr(t.string))
+
+print("Árbol:")
+arbol = ast.parse(codigo)
+asignacion = arbol.body[0]
+print("   instrucción:", type(asignacion).__name__)
+print("   se guarda en:", asignacion.targets[0].id)
+suma = asignacion.value
+print("   valor:", type(suma).__name__, "con operador", type(suma.op).__name__)
+print("   a la izquierda:", type(suma.left).__name__, "con operador", type(suma.left.op).__name__)
+print("   a la derecha:", suma.right.value)</textarea>
+  </div>
+  <p>Python llama <code>NAME</code> a los nombres, <code>OP</code> a los operadores y <code>NUMBER</code> a los números, y añade dos tokens que marcan el final de la línea y del archivo. En el árbol, la instrucción es una asignación (<code>Assign</code>), su valor es una operación binaria de suma (<code>BinOp</code> con <code>Add</code>) y a su izquierda cuelga otra operación binaria, la multiplicación (<code>Mult</code>). Es la misma forma de árbol que construye el motor de JavaScript, con otros nombres.</p>
+
+  <h3>Etapas 3 y 4: bytecode y código máquina</h3>
+  <p>Con el árbol listo, el motor de JavaScript V8 (el de Chrome y Node.js) genera bytecode con su intérprete, llamado <strong>Ignition</strong>, y empieza a ejecutarlo. Mientras lo hace, anota qué tipos de datos pasan por cada operación: si <code>precio</code> siempre es un número entero, si un objeto siempre tiene las mismas propiedades… Cuando una función se calienta, un compilador JIT usa esas notas para generar código máquina especializado. Mira cómo funciona toda la cadena con una función pequeña:</p>
+  <pre><code class="language-js">function calcularTotal(precio, cantidad) {
+  return precio * cantidad + 5;
+}</code></pre>
+  <figure class="capsula" data-titulo="De la línea al procesador">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 450" role="img" aria-label="Animación: la línea return precio * cantidad + 5 se convierte primero en siete tokens, después en un árbol con return arriba, una suma debajo, y bajo la suma una multiplicación de precio por cantidad y el número 5. Luego se genera el bytecode de V8: Ldar a1, Mul a0, AddSmi 5 y Return. Si la función se calienta, el JIT la compila a instrucciones de máquina x86-64 con una comprobación de tipo; si llega un texto en vez de un número, la comprobación falla y el motor vuelve al bytecode">
+        <text class="d-rotulo" x="20" y="42">1 Texto</text>
+        <rect class="d-codigo" x="150" y="14" width="560" height="44" rx="6"/>
+        <text class="d-codigo-texto" x="166" y="42" style="font-size:16px">return precio * cantidad + 5;</text>
+        <g data-pasos="2-">
+          <text class="d-rotulo" x="20" y="104">2 Tokens</text>
+          <rect class="d-caja" x="150" y="80" width="70" height="36" rx="6"/>
+          <text class="d-mono" x="185" y="104" text-anchor="middle" style="font-size:14px">return</text>
+          <rect class="d-caja" x="232" y="80" width="70" height="36" rx="6"/>
+          <text class="d-mono" x="267" y="104" text-anchor="middle" style="font-size:14px">precio</text>
+          <rect class="d-caja" x="314" y="80" width="30" height="36" rx="6"/>
+          <text class="d-mono" x="329" y="104" text-anchor="middle" style="font-size:14px">*</text>
+          <rect class="d-caja" x="356" y="80" width="88" height="36" rx="6"/>
+          <text class="d-mono" x="400" y="104" text-anchor="middle" style="font-size:14px">cantidad</text>
+          <rect class="d-caja" x="456" y="80" width="30" height="36" rx="6"/>
+          <text class="d-mono" x="471" y="104" text-anchor="middle" style="font-size:14px">+</text>
+          <rect class="d-caja" x="498" y="80" width="30" height="36" rx="6"/>
+          <text class="d-mono" x="513" y="104" text-anchor="middle" style="font-size:14px">5</text>
+          <rect class="d-caja" x="540" y="80" width="30" height="36" rx="6"/>
+          <text class="d-mono" x="555" y="104" text-anchor="middle" style="font-size:14px">;</text>
+          <text class="d-peq d-tenue" x="590" y="103">7 tokens</text>
+        </g>
+        <g data-pasos="3-">
+          <text class="d-rotulo" x="20" y="166">3 Árbol</text>
+          <path class="d-linea" d="M430 172V188M430 212L340 230M430 212L520 230M340 254L270 272M340 254L410 272"/>
+          <rect class="d-caja" x="390" y="148" width="80" height="24" rx="12"/>
+          <text class="d-mono" x="430" y="165" text-anchor="middle" style="font-size:14px">return</text>
+          <rect class="d-acento" x="410" y="188" width="40" height="24" rx="12"/>
+          <text class="d-sobre-acento d-mono" x="430" y="205" text-anchor="middle" style="font-size:15px">+</text>
+          <rect class="d-acento" x="320" y="230" width="40" height="24" rx="12"/>
+          <text class="d-sobre-acento d-mono" x="340" y="247" text-anchor="middle" style="font-size:15px">*</text>
+          <rect class="d-caja" x="490" y="230" width="60" height="24" rx="12"/>
+          <text class="d-mono" x="520" y="247" text-anchor="middle" style="font-size:14px">5</text>
+          <rect class="d-caja" x="230" y="272" width="80" height="24" rx="12"/>
+          <text class="d-mono" x="270" y="289" text-anchor="middle" style="font-size:14px">precio</text>
+          <rect class="d-caja" x="365" y="272" width="90" height="24" rx="12"/>
+          <text class="d-mono" x="410" y="289" text-anchor="middle" style="font-size:14px">cantidad</text>
+          <text class="d-peq d-tenue" x="568" y="200">la suma espera</text>
+          <text class="d-peq d-tenue" x="568" y="216">a la multiplicación</text>
+        </g>
+        <g data-pasos="4-">
+          <rect class="d-codigo" x="10" y="316" width="330" height="124" rx="6"/>
+          <text class="d-codigo-tenue" x="24" y="338" style="font-size:13px">4 Bytecode de V8 (Ignition)</text>
+          <text class="d-codigo-texto" x="24" y="362" style="font-size:14px">Ldar a1</text>
+          <text class="d-codigo-texto" x="24" y="384" style="font-size:14px">Mul a0, [1]</text>
+          <text class="d-codigo-texto" x="24" y="406" style="font-size:14px">AddSmi [5], [0]</text>
+          <text class="d-codigo-texto" x="24" y="428" style="font-size:14px">Return</text>
+          <text class="d-codigo-tenue" x="182" y="362" style="font-size:13px">trae cantidad</text>
+          <text class="d-codigo-tenue" x="182" y="384" style="font-size:13px">× precio</text>
+          <text class="d-codigo-tenue" x="182" y="406" style="font-size:13px">+ 5</text>
+          <text class="d-codigo-tenue" x="182" y="428" style="font-size:13px">devuelve</text>
+        </g>
+        <g data-pasos="5-">
+          <path class="d-linea" d="M344 368H368"/>
+          <path class="d-tinta" d="M366 362l10 6-10 6z"/>
+          <text class="d-peq" x="360" y="356" text-anchor="middle">JIT</text>
+          <rect class="d-codigo" x="380" y="316" width="330" height="124" rx="6" data-clases="6:d-mal-trazo"/>
+          <text class="d-codigo-tenue" x="394" y="338" style="font-size:13px">5 Código máquina x86-64 (resumido)</text>
+          <text class="d-codigo-texto" x="394" y="362" style="font-size:14px">test rdx, 1</text>
+          <text class="d-codigo-texto" x="394" y="384" style="font-size:14px">imul r8, rcx</text>
+          <text class="d-codigo-texto" x="394" y="406" style="font-size:14px">add r8, 5</text>
+          <text class="d-codigo-texto" x="394" y="428" style="font-size:14px">ret</text>
+          <text class="d-codigo-tenue" x="530" y="362" style="font-size:13px" data-texto="5:¿es un entero?; 6:¡no es entero!">¿es un entero?</text>
+          <text class="d-codigo-tenue" x="530" y="384" style="font-size:13px">multiplica</text>
+          <text class="d-codigo-tenue" x="530" y="406" style="font-size:13px">suma 5</text>
+          <text class="d-codigo-tenue" x="530" y="428" style="font-size:13px">vuelve</text>
+        </g>
+        <g data-pasos="6">
+          <path class="d-mal-trazo" d="M378 412H350"/>
+          <path class="d-tinta" d="M352 406l-10 6 10 6z"/>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Arriba, la línea que hay dentro de <code>calcularTotal</code>. Para el motor, de momento, es solo una fila de 29 caracteres. Todavía no sabe que <code>return</code> es una palabra especial.</li>
+        <li data-duracion="6">El analizador léxico agrupa los caracteres en 7 tokens: la palabra clave <code>return</code>, los nombres <code>precio</code> y <code>cantidad</code>, los operadores <code>*</code> y <code>+</code>, el número <code>5</code> y el punto y coma. Los espacios se descartaron.</li>
+        <li data-duracion="7">El analizador sintáctico construye el árbol. La suma está arriba y la multiplicación cuelga de ella: para sumar, primero hay que tener el resultado de <code>precio * cantidad</code>. La precedencia de los operadores quedó escrita en la forma del árbol.</li>
+        <li data-duracion="8">Ignition recorre el árbol y genera bytecode. Es la salida real de V8 para esta función: <code>a0</code> y <code>a1</code> son los argumentos (<code>precio</code> y <code>cantidad</code>). <code>Ldar</code> trae <code>cantidad</code> a un registro de trabajo llamado acumulador, <code>Mul</code> lo multiplica por <code>precio</code>, <code>AddSmi</code> le suma el entero pequeño 5 y <code>Return</code> devuelve el resultado. Los números entre corchetes son casillas donde el motor anota los tipos que va viendo.</li>
+        <li data-duracion="8">Si <code>calcularTotal</code> se ejecuta miles de veces siempre con enteros, se calienta. El compilador JIT apuesta a que seguirá así y genera código máquina para tu procesador: comprueba que el dato sea un entero, multiplica, suma 5 y vuelve. Aquí se muestra resumido; el real tiene unas cincuenta instrucciones, muchas de ellas comprobaciones de este tipo.</li>
+        <li data-duracion="8">Un día llega <code>calcularTotal("20", 3)</code>, con un texto. La comprobación del principio falla, la apuesta se pierde y el motor <strong>desoptimiza</strong>: descarta ese código máquina y vuelve al bytecode, que sabe manejar cualquier tipo. El programa sigue funcionando y da el resultado correcto, solo que un poco más lento durante un rato.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Todo lo que muestra la cápsula es real, y puedes verlo en tu computadora si tienes Node.js instalado (lo instalaste en la <a href="05-herramientas.html">Estación 5</a>). Guarda la función en un archivo <code>total.js</code> con una línea que la llame, por ejemplo <code>console.log(calcularTotal(20, 3));</code>, y pídele a V8 que te enseñe el bytecode:</p>
+  <pre class="consola"><code><span class="prompt">$</span> node --print-bytecode --print-bytecode-filter=calcularTotal total.js
+<span class="salida">[generated bytecode for function: calcularTotal (0x09b42ee1af81 &lt;SharedFunctionInfo calcularTotal&gt;)]
+Bytecode length: 9
+Parameter count 3
+Register count 0
+Frame size 0
+   45 S&gt; 0x3dce5c881ea8 @    0 : 0b 04             Ldar a1
+   59 E&gt; 0x3dce5c881eaa @    2 : 3d 03 01          Mul a0, [1]
+   70 E&gt; 0x3dce5c881ead @    5 : 47 05 00          AddSmi [5], [0]
+   74 S&gt; 0x3dce5c881eb0 @    8 : ae                Return
+…
+65</span></code></pre>
+  <p>No hace falta entender cada columna. A la derecha están las instrucciones que viste en la cápsula; en el centro, sus bytes (<code>0b 04</code>, <code>3d 03 01</code>…): el bytecode es, literalmente, una fila de bytes. Las direcciones que empiezan por <code>0x</code> cambian en cada ejecución, y los nombres de las instrucciones pueden cambiar entre versiones de Node.js, porque el bytecode es un detalle interno del motor, no parte del lenguaje. El <code>65</code> del final es lo que imprime tu <code>console.log</code>.</p>
+  <p>Ordena las etapas por las que pasa tu código desde que el motor lo recibe:</p>
+  <div class="parsons" data-titulo="Ordena: el camino de tu código" data-lenguaje="text">
+    <ol>
+      <li>El motor recibe el archivo como una fila de caracteres.</li>
+      <li>El analizador léxico agrupa los caracteres en tokens y descarta espacios y comentarios.</li>
+      <li>El analizador sintáctico comprueba la gramática y construye el árbol (aquí nacen los SyntaxError).</li>
+      <li>El intérprete genera bytecode a partir del árbol.</li>
+      <li>El intérprete ejecuta el bytecode y anota qué tipos de datos ve.</li>
+      <li>Las funciones que se calientan se compilan a código máquina con el JIT.</li>
+      <li>Si llega un tipo inesperado, el motor desoptimiza y vuelve al bytecode.</li>
+    </ol>
+  </div>
+  <aside class="senal error">
+    <p>«Si el error de sintaxis está en la línea 50, se ejecutan las 49 anteriores». No: el análisis léxico y el sintáctico recorren el archivo completo antes de ejecutar nada. Un detalle para curiosos: V8 no construye el árbol completo de cada función hasta que la llama por primera vez (hace una lectura rápida previa), pero esa lectura rápida también detecta los errores de sintaxis.</p>
+  </aside>
+</section>
