@@ -13,7 +13,8 @@ const require = createRequire(import.meta.url);
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const Motor = require(path.join(RAIZ, "assets/js/motor.js"));
 
-const desescapar = (t) => t.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+const desescapar = (t) => t.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+  .replace(/&#(\d+);/g, (m, n) => String.fromCodePoint(Number(n))).replace(/&#x([0-9a-f]+);/gi, (m, n) => String.fromCodePoint(parseInt(n, 16))).replace(/&amp;/g, "&");
 const atributo = (attrs, nombre) => {
   const m = attrs.match(new RegExp(`${nombre}="([^"]*)"`));
   return m ? desescapar(m[1]) : null;

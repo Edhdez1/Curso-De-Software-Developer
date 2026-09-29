@@ -51,6 +51,7 @@
       <li><a href="#editor">El editor</a></li>
       <li><a href="#terminal">La terminal</a></li>
       <li><a href="#rutas">Rutas y carpetas</a></li>
+      <li><a href="#archivos">Crear y mover archivos</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -316,7 +317,7 @@ caja.addEventListener("keydown", (evento) => {
     <li><strong>Barra de actividades.</strong> Los iconos de la izquierda cambian lo que muestra la barra lateral: Explorador (archivos), Buscar, Control de código fuente (Git), Ejecutar y depurar, y Extensiones.</li>
     <li><strong>Barra lateral.</strong> Con el Explorador activo, muestra los archivos y carpetas de la carpeta que abriste.</li>
     <li><strong>Editor.</strong> Donde escribes. Cada archivo abierto es una pestaña. Un círculo relleno en la pestaña significa «hay cambios sin guardar».</li>
-    <li><strong>Panel.</strong> Debajo del editor. Aquí vive la <strong>terminal integrada</strong>, una terminal dentro de VS Code que empieza en la carpeta de tu proyecto. Ábrela desde el menú <em>Terminal &gt; Nuevo terminal</em>. En teclados en español, el atajo suele ser <kbd>Ctrl</kbd> + <kbd>Ñ</kbd>.</li>
+    <li><strong>Panel.</strong> Debajo del editor. Aquí vive la <strong>terminal integrada</strong>, una terminal dentro de VS Code que empieza en la carpeta de tu proyecto. Ábrela desde el menú <em>Terminal &gt; Nuevo terminal</em>. En teclados en español, el atajo para mostrarla u ocultarla suele ser <kbd>Ctrl</kbd> + <kbd>Ñ</kbd> (en teclados de Estados Unidos es <kbd>Ctrl</kbd> + <kbd>`</kbd>); el menú <em>Ver</em> muestra junto a <em>Terminal</em> el atajo real de tu teclado.</li>
     <li><strong>Barra de estado.</strong> Abajo del todo: en qué línea y columna está el cursor, el lenguaje del archivo y, si usas Git, en qué rama estás.</li>
     <li><strong>Centro de comandos.</strong> Arriba, en la barra de título. Sirve para buscar archivos por nombre. Si escribes <code>&gt;</code> al principio, se convierte en la paleta de comandos.</li>
   </ol>
@@ -730,6 +731,105 @@ return true;
     </script>
   </div>
   <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>Antes de un comando que cambia o borra cosas, mira el prompt o escribe <code>pwd</code>. La mayoría de los desastres en la terminal no vienen de comandos raros, sino de comandos normales ejecutados en la carpeta equivocada.</p></div></aside>
+</section>
+
+<section id="archivos" data-parada="Crear y mover archivos">
+  <h2>Crear, leer, mover y borrar</h2>
+  <p>Ya sabes moverte. Ahora vas a cambiar cosas: crear carpetas para tus proyectos, crear archivos, copiarlos, cambiarles el nombre y borrar lo que sobra. Todo lo que harías con el explorador de archivos, pero escrito. Cuando te acostumbres, vas a ser más rápido así, y además podrás repetir lo mismo en cualquier computadora copiando los comandos.</p>
+
+  <h3>Los comandos</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Comando</th><th scope="col">Qué hace</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td><code>mkdir</code></td><td>Crea una carpeta (de <em>make directory</em>)</td><td><code>mkdir juego</code></td></tr>
+        <tr><td><code>mkdir -p</code></td><td>Crea varias carpetas anidadas de una vez</td><td><code>mkdir -p juego/niveles</code></td></tr>
+        <tr><td><code>touch</code></td><td>Crea un archivo vacío (si ya existe, no lo toca: solo actualiza su fecha)</td><td><code>touch index.html</code></td></tr>
+        <tr><td><code>echo</code></td><td>Repite en la pantalla el texto que le das</td><td><code>echo "Hola"</code></td></tr>
+        <tr><td><code>echo … &gt; archivo</code></td><td>Escribe el texto en un archivo. Si el archivo tenía algo, <strong>lo reemplaza</strong></td><td><code>echo "Nivel 1" &gt; notas.txt</code></td></tr>
+        <tr><td><code>echo … &gt;&gt; archivo</code></td><td>Añade el texto al final del archivo, sin borrar lo que había</td><td><code>echo "Nivel 2" &gt;&gt; notas.txt</code></td></tr>
+        <tr><td><code>cat</code></td><td>Muestra el contenido de un archivo</td><td><code>cat notas.txt</code></td></tr>
+        <tr><td><code>cp</code></td><td>Copia un archivo (de <em>copy</em>). Primero el original y después el destino</td><td><code>cp notas.txt copia.txt</code></td></tr>
+        <tr><td><code>mv</code></td><td>Mueve (de <em>move</em>) o cambia el nombre. Si el destino es una carpeta, lo mete dentro</td><td><code>mv copia.txt viejo.txt</code> · <code>mv viejo.txt juego/</code></td></tr>
+        <tr><td><code>rm</code></td><td>Borra un archivo (de <em>remove</em>)</td><td><code>rm viejo.txt</code></td></tr>
+        <tr><td><code>rm -r</code></td><td>Borra una carpeta con todo lo que tiene dentro</td><td><code>rm -r borradores</code></td></tr>
+        <tr><td><code>rmdir</code></td><td>Borra una carpeta, pero solo si está vacía</td><td><code>rmdir vacia</code></td></tr>
+        <tr><td><code>ls -a</code> · <code>ls -l</code></td><td>Lista también los archivos ocultos · lista con detalles (tamaño, permisos)</td><td><code>ls -a</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El símbolo <code>&gt;</code> se llama <strong>redirección</strong>: en vez de mostrar el resultado de un comando en la pantalla, lo manda a un archivo. <code>echo "Hola"</code> escribe <em>Hola</em> en la terminal; <code>echo "Hola" &gt; saludo.txt</code> no muestra nada, porque el texto fue a parar al archivo. Compruébalo con <code>cat saludo.txt</code>.</p>
+  <p>Los <strong>archivos ocultos</strong> son los que empiezan por un punto, como <code>.git</code> o <code>.gitignore</code>. No son secretos: el sistema los esconde para no llenar la vista con archivos de configuración. <code>ls</code> no los muestra; <code>ls -a</code> sí.</p>
+  <p>Para copiar una carpeta entera, en tu computadora se usa <code>cp -r carpeta copia</code>. La terminal de práctica no admite esa opción: en ella copia solo archivos.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">No hay papelera</p><p><code>rm</code> borra de verdad: el archivo no va a la papelera y no hay «deshacer». Con <code>rm -r</code> se va la carpeta entera con todo su contenido. Antes de borrar, mira con <code>ls</code> qué hay y con <code>pwd</code> dónde estás. En tu computadora, <code>rm -i</code> te pide confirmación archivo por archivo. Y nunca copies de internet un comando con <code>rm -rf</code> si no entiendes cada una de sus partes. Lo mismo vale para <code>&gt;</code>: si el archivo ya existía, su contenido anterior desaparece.</p></div></aside>
+
+  <h3>Si usas PowerShell o cmd</h3>
+  <p>PowerShell entiende la mayoría de estos comandos porque tiene <strong>alias</strong>, nombres alternativos que apuntan a sus propios comandos: cuando escribes <code>ls</code>, PowerShell ejecuta en realidad <code>Get-ChildItem</code>. Aun así, hay diferencias:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Tarea</th><th scope="col">bash, zsh y Git Bash</th><th scope="col">PowerShell</th><th scope="col">cmd</th></tr></thead>
+      <tbody>
+        <tr><td>Ver dónde estás</td><td><code>pwd</code></td><td><code>pwd</code></td><td><code>cd</code> (sin nada)</td></tr>
+        <tr><td>Listar</td><td><code>ls</code></td><td><code>ls</code></td><td><code>dir</code></td></tr>
+        <tr><td>Listar ocultos</td><td><code>ls -a</code></td><td><code>ls -Force</code></td><td><code>dir /a</code></td></tr>
+        <tr><td>Moverse</td><td><code>cd juego</code> · <code>cd ..</code></td><td>Igual</td><td>Igual</td></tr>
+        <tr><td>Crear carpeta</td><td><code>mkdir juego</code></td><td><code>mkdir juego</code></td><td><code>mkdir juego</code></td></tr>
+        <tr><td>Crear archivo vacío</td><td><code>touch main.js</code></td><td><code>New-Item main.js</code></td><td><code>type nul &gt; main.js</code></td></tr>
+        <tr><td>Ver un archivo</td><td><code>cat notas.txt</code></td><td><code>cat notas.txt</code></td><td><code>type notas.txt</code></td></tr>
+        <tr><td>Copiar · mover</td><td><code>cp</code> · <code>mv</code></td><td><code>cp</code> · <code>mv</code></td><td><code>copy</code> · <code>move</code></td></tr>
+        <tr><td>Borrar archivo</td><td><code>rm notas.txt</code></td><td><code>rm notas.txt</code></td><td><code>del notas.txt</code></td></tr>
+        <tr><td>Borrar carpeta con contenido</td><td><code>rm -r juego</code></td><td><code>rm -r juego</code></td><td><code>rmdir /s juego</code></td></tr>
+        <tr><td>Limpiar pantalla</td><td><code>clear</code></td><td><code>clear</code> o <code>cls</code></td><td><code>cls</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Archivos de código creados con echo en PowerShell</p><p>En Windows PowerShell (la versión 5.1 que viene con Windows), <code>&gt;</code> guarda el texto con una codificación llamada UTF-16, que Node.js no lee bien: un archivo <code>.js</code> creado así puede dar <code>SyntaxError: Invalid or unexpected token</code> aunque el código esté perfecto. Crea tus archivos de código con VS Code, o usa Git Bash, que guarda en UTF-8, la codificación estándar que viste en la Estación 2.</p></div></aside>
+
+  <h3>Abrir en VS Code desde la terminal</h3>
+  <p>El comando <code>code</code> une tus dos herramientas. <code>code .</code> abre la carpeta actual en VS Code (recuerda: el punto es «la carpeta actual»). <code>code notas.txt</code> abre un solo archivo. El flujo más común de un día de trabajo empieza así:</p>
+  <pre class="consola"><code><span class="prompt">$</span> cd ~/proyectos/juego
+<span class="prompt">$</span> code .</code></pre>
+
+  <div class="terminal-sim" data-titulo="Misión: prepara la carpeta de un juego" data-inicio="/home/tu">
+    <div class="terminal-instrucciones">
+      <p>Vas a montar la carpeta de un juego a partir de lo que tienes en <code>Descargas</code>:</p>
+      <ol>
+        <li>Crea una carpeta <code>juego</code> en tu carpeta personal y entra en ella.</li>
+        <li>Crea dentro un archivo vacío <code>index.html</code>.</li>
+        <li>Crea <code>notas.txt</code> con el texto <code>Nivel 1: el bosque</code> (usa <code>echo</code> y <code>&gt;</code>).</li>
+        <li>Crea una carpeta <code>recursos</code> dentro de <code>juego</code>.</li>
+        <li>Mueve <code>sprite.png</code> desde <code>Descargas</code> a <code>juego/recursos</code>.</li>
+        <li>Borra <code>basura.tmp</code>, que está en <code>Descargas</code>.</li>
+      </ol>
+    </div>
+    <script type="application/json" class="terminal-sistema">{"Descargas": {"sprite.png": "(imagen)", "basura.tmp": "", "manual.pdf": "(documento)"}}</script>
+    <script type="text/plain" class="terminal-mision">
+var j = sistema.juego;
+if (!j || typeof j !== "object") return "Paso 1: crea la carpeta juego con mkdir juego y entra con cd juego.";
+if (!("index.html" in j)) return "Paso 2: crea el archivo vacío index.html dentro de juego (touch index.html).";
+if (typeof j["notas.txt"] !== "string") return "Paso 3: crea notas.txt con echo \"Nivel 1: el bosque\" > notas.txt";
+if (j["notas.txt"].trim() !== "Nivel 1: el bosque") return "notas.txt debe contener exactamente «Nivel 1: el bosque». Ahora contiene «" + j["notas.txt"].trim() + "». Vuelve a escribirlo con > para reemplazarlo.";
+if (!j.recursos || typeof j.recursos !== "object") return "Paso 4: crea la carpeta recursos dentro de juego.";
+if (!("sprite.png" in j.recursos)) return "Paso 5: mueve el sprite. Si estás en juego: mv ../Descargas/sprite.png recursos/";
+if (sistema.Descargas && "sprite.png" in sistema.Descargas) return "sprite.png sigue en Descargas: usa mv (mover), no cp (copiar). Borra la copia de Descargas con rm o empieza de nuevo.";
+if (sistema.Descargas && "basura.tmp" in sistema.Descargas) return "Paso 6: borra basura.tmp de Descargas (rm ../Descargas/basura.tmp si estás en juego).";
+if (!sistema.Descargas || !("manual.pdf" in sistema.Descargas)) return "¡Cuidado! manual.pdf ya no está en Descargas. Solo había que borrar basura.tmp. Pulsa «Reiniciar» y repite.";
+return true;
+    </script>
+  </div>
+
+  <p>Antes de ejecutar comandos, hay que pensar en qué orden van. Ordena estos para conseguir lo siguiente: crear la carpeta <code>recetas</code> en tu carpeta personal, entrar, crear <code>tortilla.txt</code> con el texto «Huevos y papas», comprobar lo que quedó escrito y volver a tu carpeta personal.</p>
+  <div class="parsons" data-titulo="Ordena los comandos" data-lenguaje="bash">
+    <ol>
+      <li>cd ~</li>
+      <li>mkdir recetas</li>
+      <li>cd recetas</li>
+      <li>echo "Huevos y papas" &gt; tortilla.txt</li>
+      <li>cat tortilla.txt</li>
+      <li>cd ..</li>
+    </ol>
+  </div>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>Pon nombres en minúscula, sin espacios, sin tildes ni eñes, y separa las palabras con guiones: <code>mi-primer-juego</code>, <code>notas-clase-3.txt</code>. Es la costumbre en casi todos los equipos. Te ahorra comillas en la terminal y problemas cuando esos archivos terminen en un servidor o en una dirección web. Y no olvides la extensión (<code>.js</code>, <code>.html</code>, <code>.txt</code>): le dice a VS Code, y a ti, qué tipo de archivo es.</p></div></aside>
 </section>
   </main>
 </div>

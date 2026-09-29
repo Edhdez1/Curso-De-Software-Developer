@@ -1148,3 +1148,191 @@ p  { margin-top: 20px; }
     <p>En DevTools, los contenedores flex llevan una pequeña etiqueta «flex» junto a su etiqueta en el panel Elementos. Al pulsarla, el navegador dibuja sobre la página los elementos, los huecos y el espacio libre. Firefox muestra además por qué un elemento creció o encogió.</p>
   </aside>
 </section>
+
+<section id="grid" data-parada="Grid">
+  <h2>Grid: diseños en dos dimensiones</h2>
+  <p>Flexbox piensa en una sola línea: una fila o una columna. Pero la estructura de una página (cabecera arriba, menú lateral, contenido y pie) o una galería de fotos alineadas en filas y columnas son problemas en dos dimensiones. Para eso existe <strong>CSS Grid</strong>: divides el contenedor en una cuadrícula y colocas cada elemento en sus celdas.</p>
+
+  <h3>El vocabulario de la cuadrícula</h3>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Cuadrícula de tres columnas y dos filas con sus líneas numeradas: líneas de columna 1, 2, 3 y 4 arriba, y -4, -3, -2 y -1 abajo; líneas de fila 1, 2 y 3 a la izquierda. Un elemento ocupa desde la línea de columna 1 hasta la 3, es decir, dos celdas. Entre filas y columnas hay un hueco llamado gap.">
+      <text class="d-peq d-tenue" x="14" y="44">líneas de columna</text>
+      <text class="d-mono d-rotulo" x="160" y="44" text-anchor="middle">1</text>
+      <text class="d-mono d-rotulo" x="310" y="44" text-anchor="middle">2</text>
+      <text class="d-mono d-rotulo" x="470" y="44" text-anchor="middle">3</text>
+      <text class="d-mono d-rotulo" x="620" y="44" text-anchor="middle">4</text>
+      <text class="d-peq d-tenue" x="14" y="112">líneas de fila</text>
+      <text class="d-mono d-rotulo" x="146" y="66" text-anchor="end">1</text>
+      <text class="d-mono d-rotulo" x="146" y="166" text-anchor="end">2</text>
+      <text class="d-mono d-rotulo" x="146" y="266" text-anchor="end">3</text>
+      <path class="d-punteada" d="M160 52v216M310 52v216M470 52v216M620 52v216M152 60h476M152 160h476M152 260h476"/>
+      <rect class="d-acento" x="160" y="60" width="300" height="90" rx="4"/>
+      <text class="d-sobre-acento d-mono" x="310" y="100" text-anchor="middle" style="font-size:15px">grid-column: 1 / 3</text>
+      <text class="d-sobre-acento d-peq" x="310" y="124" text-anchor="middle">ocupa dos celdas: un área</text>
+      <rect class="d-caja" x="480" y="60" width="140" height="90" rx="4"/>
+      <text class="d-peq" x="550" y="110" text-anchor="middle">celda</text>
+      <rect class="d-caja" x="160" y="170" width="140" height="90" rx="4"/>
+      <text class="d-peq" x="230" y="220" text-anchor="middle">celda</text>
+      <rect class="d-caja" x="320" y="170" width="140" height="90" rx="4"/>
+      <text class="d-peq" x="390" y="220" text-anchor="middle">celda</text>
+      <rect class="d-caja" x="480" y="170" width="140" height="90" rx="4"/>
+      <text class="d-peq" x="550" y="220" text-anchor="middle">celda</text>
+      <path class="d-linea" d="M622 160h10"/>
+      <text class="d-peq" x="636" y="165">hueco (gap)</text>
+      <text class="d-peq d-tenue" x="14" y="290">desde el final</text>
+      <text class="d-mono d-peq" x="160" y="290" text-anchor="middle">-4</text>
+      <text class="d-mono d-peq" x="310" y="290" text-anchor="middle">-3</text>
+      <text class="d-mono d-peq" x="470" y="290" text-anchor="middle">-2</text>
+      <text class="d-mono d-peq" x="620" y="290" text-anchor="middle">-1</text>
+    </svg>
+    <figcaption>Una cuadrícula de tres columnas y dos filas. Las líneas se numeran desde 1, y también desde el final con números negativos. Cada columna o fila es una pista; el cruce de una fila y una columna es una celda; un grupo rectangular de celdas es un área.</figcaption>
+  </figure>
+  <ul>
+    <li>El <strong>contenedor grid</strong> es el elemento con <code>display: grid</code>. Sus hijos directos son los <strong>elementos grid</strong>.</li>
+    <li>Las <strong>líneas</strong> separan columnas y filas. Se numeran desde 1; la última también se puede llamar -1.</li>
+    <li>Una <strong>pista</strong> (<em>track</em>) es una columna o una fila entera.</li>
+    <li>Una <strong>celda</strong> es la intersección de una fila y una columna. Un <strong>área</strong> es un rectángulo de varias celdas.</li>
+    <li>El <strong>hueco</strong> (<code>gap</code>) es el espacio entre pistas. No hay hueco en los bordes exteriores.</li>
+  </ul>
+
+  <h3>Definir columnas y filas</h3>
+  <pre><code class="language-css">.galeria {
+  display: grid;
+  grid-template-columns: 200px 1fr 1fr;  /* tres columnas */
+  gap: 16px;
+}</code></pre>
+  <p>La unidad <code>fr</code> (de <em>fraction</em>) es exclusiva de grid: representa una parte del espacio que queda libre. En el ejemplo, la primera columna mide 200 píxeles, y lo que sobra, descontados los huecos, se divide en dos partes iguales. <code>1fr 2fr</code> haría la segunda columna el doble de ancha que la primera.</p>
+  <p>Tres herramientas más para las columnas:</p>
+  <ul>
+    <li><code>repeat(4, 1fr)</code> es lo mismo que escribir <code>1fr 1fr 1fr 1fr</code>.</li>
+    <li><code>minmax(150px, 1fr)</code> crea una pista que nunca baja de 150 píxeles y que crece hasta su parte del espacio libre.</li>
+    <li><code>grid-template-rows</code> define las filas igual que las columnas. Si hay más elementos que celdas, grid crea filas nuevas solo; su alto se controla con <code>grid-auto-rows</code>, por ejemplo <code>grid-auto-rows: minmax(120px, auto)</code>.</li>
+  </ul>
+  <aside class="senal error">
+    <p>Con porcentajes, <code>grid-template-columns: 33% 33% 33%</code> más un <code>gap</code> suma más del 100% y la cuadrícula se sale del contenedor. <code>1fr 1fr 1fr</code> reparte solo lo que queda después de descontar los huecos. Usa <code>fr</code>.</p>
+  </aside>
+
+  <h3>Colocar elementos</h3>
+  <p>Sin más instrucciones, grid coloca a los hijos en orden, llenando cada fila de izquierda a derecha. Esa colocación automática basta muchas veces. Cuando quieres que un elemento ocupe más espacio, le dices entre qué líneas va:</p>
+  <pre><code class="language-css">.destacada { grid-column: 1 / 3; }    /* de la línea 1 a la 3: dos columnas */
+.alta      { grid-row: span 2; }      /* ocupa dos filas desde donde caiga */
+.banner    { grid-column: 1 / -1; }   /* de la primera a la última línea: todo el ancho */</code></pre>
+  <p>Predice cómo quedará esta galería antes de ejecutar: ¿qué ocupará la foto 1?, ¿dónde caerá la foto 2?, ¿qué pasa con la 4?</p>
+  <div class="taller" id="taller-grid-galeria" data-modo="web" data-titulo="Predice: una galería con grid" data-alto="22rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div class="galeria"&gt;
+  &lt;div class="foto uno"&gt;1&lt;/div&gt;
+  &lt;div class="foto"&gt;2&lt;/div&gt;
+  &lt;div class="foto"&gt;3&lt;/div&gt;
+  &lt;div class="foto cuatro"&gt;4&lt;/div&gt;
+  &lt;div class="foto"&gt;5&lt;/div&gt;
+  &lt;div class="foto"&gt;6&lt;/div&gt;
+  &lt;div class="foto"&gt;7&lt;/div&gt;
+&lt;/div&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">.galeria {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 70px;
+  gap: 8px;
+}
+
+.foto {
+  background: #8ecae6;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font: bold 1.5rem system-ui, sans-serif;
+}
+
+.uno {
+  grid-column: 1 / 3;
+  background: #ffb703;
+}
+
+.cuatro {
+  grid-row: span 2;
+  background: #fb8500;
+}</textarea>
+  </div>
+  <p>La foto 1 ocupa dos columnas, así que la 2 cabe en la tercera columna de la primera fila. La 4 ocupa dos filas. <strong>Modifica</strong>: cambia <code>.uno</code> a <code>grid-column: 1 / -1</code>; después, a <code>.cuatro</code> añádele <code>grid-column: 2 / 4</code>. Observa cómo los demás elementos buscan hueco solos. (<code>place-items: center</code> centra el número en su caja: es el atajo de grid para <code>align-items</code> y <code>justify-items</code> a la vez.)</p>
+
+  <h3>Áreas con nombre: dibuja tu diseño</h3>
+  <p>Para la estructura de una página, grid tiene una forma muy visual: le pones nombre a cada zona y «dibujas» la cuadrícula con textos.</p>
+  <pre><code class="language-css">.pagina {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  grid-template-areas:
+    "cabecera cabecera"
+    "lateral  contenido"
+    "pie      pie";
+  gap: 1rem;
+}
+
+.cabecera  { grid-area: cabecera; }
+.lateral   { grid-area: lateral; }
+.contenido { grid-area: contenido; }
+.pie       { grid-area: pie; }</code></pre>
+  <p>Cada texto entre comillas es una fila, y cada palabra, una columna. Si un nombre se repite, esa zona ocupa varias celdas. Las zonas tienen que ser rectángulos, y un punto (<code>.</code>) deja una celda vacía. Los espacios de más dentro de las comillas no importan: sirven para alinear el dibujo.</p>
+  <div class="taller" id="taller-grid-areas" data-modo="web" data-titulo="Misión: mueve el lateral a la derecha" data-alto="16rem" data-exito="Cambiaste la estructura de la página sin tocar el HTML.">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div class="pagina"&gt;
+  &lt;header class="cabecera"&gt;Cabecera&lt;/header&gt;
+  &lt;nav class="lateral"&gt;Menú lateral&lt;/nav&gt;
+  &lt;main class="contenido"&gt;Contenido principal&lt;/main&gt;
+  &lt;footer class="pie"&gt;Pie de página&lt;/footer&gt;
+&lt;/div&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">.pagina {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  grid-template-areas:
+    "cabecera cabecera"
+    "lateral  contenido"
+    "pie      pie";
+  gap: 8px;
+  font-family: system-ui, sans-serif;
+}
+
+.pagina &gt; * {
+  padding: 16px;
+  border-radius: 6px;
+}
+
+.cabecera  { grid-area: cabecera;  background: #264653; color: white; }
+.lateral   { grid-area: lateral;   background: #e9c46a; }
+.contenido { grid-area: contenido; background: #edf2f4; min-height: 100px; }
+.pie       { grid-area: pie;       background: #2a9d8f; color: white; }</textarea>
+    <script type="text/plain" class="taller-verificar">
+var lat = document.querySelector(".lateral").getBoundingClientRect();
+var con = document.querySelector(".contenido").getBoundingClientRect();
+if (!/grid-template-areas/.test(codigo.css)) return "Resuélvelo con grid-template-areas: cambia el dibujo, no el HTML.";
+if (lat.left <= con.left) return "El menú lateral sigue a la izquierda. Cambia la fila del medio del dibujo y el orden de las columnas.";
+if (lat.width > con.width) return "El lateral quedó más ancho que el contenido. Cambia también grid-template-columns para que la columna estrecha sea la de la derecha.";
+return true;
+    </script>
+  </div>
+  <details class="pista"><summary>Pista para la misión</summary><p>La fila del medio debe decir <code>"contenido lateral"</code>, y las columnas deben ir al revés: <code>1fr 150px</code>.</p></details>
+  <p>Fíjate en que el selector <code>.pagina &gt; *</code> usa el combinador de hijo y el universal: da relleno y esquinas redondeadas a todos los hijos directos de la página.</p>
+
+  <h3>Cuadrículas que se adaptan solas</h3>
+  <p>Esta línea es una de las más útiles de todo CSS:</p>
+  <pre><code class="language-css">.productos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}</code></pre>
+  <p>Se lee así: «crea tantas columnas como quepan, cada una de al menos 180 píxeles, y reparte el espacio que sobre entre ellas». En un teléfono cabe una columna; en una tableta, tres; en un monitor, seis. Sin escribir ni una media query. La alternativa <code>auto-fill</code> se comporta igual cuando hay muchos elementos; la diferencia aparece cuando hay pocos: <code>auto-fill</code> deja pistas vacías al final y <code>auto-fit</code> estira los elementos para llenar la fila.</p>
+
+  <h3>¿Flexbox o grid?</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">Flexbox</th><th scope="col">Grid</th></tr></thead>
+      <tbody>
+        <tr><td>Dimensiones</td><td>Una: fila o columna.</td><td>Dos: filas y columnas a la vez.</td></tr>
+        <tr><td>Quién manda</td><td>El contenido: cada elemento ocupa lo que necesita y se reparte lo que sobra.</td><td>La cuadrícula: defines las pistas y los elementos se colocan en ellas.</td></tr>
+        <tr><td>Ideal para</td><td>Barras de navegación, grupos de botones, una tarjeta por dentro, centrar algo.</td><td>La estructura de la página, galerías, tableros, formularios con etiquetas alineadas.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>No compiten: se combinan. Lo más habitual es usar grid para la estructura general y flexbox dentro de cada componente. Una regla práctica: si piensas «pon estas cosas una detrás de otra», usa flexbox; si piensas «alinea esto en filas y columnas», usa grid.</p>
+  <aside class="senal oficio">
+    <p>En DevTools, los contenedores grid tienen la etiqueta «grid» en el panel Elementos. Al activarla, el navegador dibuja las líneas con sus números y los nombres de las áreas encima de la página. Cuando un elemento cae donde no esperabas, es lo primero que conviene mirar.</p>
+  </aside>
+</section>

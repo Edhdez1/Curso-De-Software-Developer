@@ -95,7 +95,7 @@ console.log("Promedio:", promedio);</textarea>
 
 <section id="leer" data-parada="Leer el mensaje">
   <h2>Leer un mensaje de error</h2>
-  <p>Mucha gente que empieza ve el texto rojo y no lo lee: pasa directamente a cambiar cosas a ver si se arregla. Es como ir al médico, que te dé el diagnóstico y taparte los oídos. El <strong>mensaje de error</strong> es el texto que la computadora escribe cuando algo falla, y está pensado para que lo leas. Casi siempre tiene las mismas piezas.</p>
+  <p>Mucha gente que empieza ve el texto rojo y no lo lee: pasa directamente a cambiar cosas a ver si se arregla. Es como ir al médico, que te dé el diagnóstico y taparte los oídos. El <strong>mensaje de error</strong> es el texto que la computadora escribe cuando algo falla, y está pensado para que lo leas. En la <a href="06-primeros-pasos.html#errores">Estación 6</a> desarmaste un error de Node.js en sus partes. Ahora vas a leer uno en la consola del navegador, con una pieza nueva: la columna.</p>
   <figure class="capsula" data-titulo="Anatomía de un mensaje de error">
     <div class="capsula-escena">
       <svg viewBox="0 0 720 300" role="img" aria-label="Animación: un mensaje de error de la consola se lee por partes. Uncaught significa que nadie lo capturó; ReferenceError es el tipo; puntuacion is not defined es el mensaje; puntos.js:4:26 es la ubicación. La línea 4 del código usa puntuacion en lugar de puntos; al corregirla, la consola muestra Puntos: 50.">
@@ -155,49 +155,29 @@ console.log("Promedio:", promedio);</textarea>
   <ul>
     <li><strong>En los talleres de este curso</strong> verás una línea roja con el tipo, el mensaje y el número de línea, por ejemplo <code>ReferenceError: puntuacion is not defined (línea 4)</code>. Debajo, el curso añade una «Pista» en español. Esa pista es una ayuda para aprender: las herramientas reales no la tienen, así que acostúmbrate a leer primero el mensaje original.</li>
     <li><strong>En la consola del navegador</strong> (la abres con <kbd>F12</kbd>, como viste en la <a href="06-primeros-pasos.html">Estación 6</a>) el mensaje empieza por <code>Uncaught</code> y a la derecha aparece un enlace con el archivo y la línea.</li>
-    <li><strong>En la terminal, con Node.js</strong>, el formato es más largo. Este es el mismo error ejecutado con <code>node puntos.js</code> (salida real de Node.js 24):</li>
+    <li><strong>En la terminal, con Node.js</strong>, con el formato que desarmaste en la Estación 6: archivo y línea, la línea de código copiada con un <code>^</code> debajo de la columna exacta, el tipo y el mensaje, y después la pila de llamadas (las líneas que empiezan por <code>at</code>), que aprenderás a leer en la próxima sección.</li>
   </ul>
-  <pre class="consola"><code><span class="prompt">$</span> node puntos.js
-<span class="salida">/home/ana/juego/puntos.js:4
-console.log("Puntos: " + puntuacion);
-                         ^
-
-ReferenceError: puntuacion is not defined
-    at Object.&lt;anonymous&gt; (/home/ana/juego/puntos.js:4:26)
-    at Module._compile (node:internal/modules/cjs/loader:1929:14)
-    at Object..js (node:internal/modules/cjs/loader:2060:10)
-    at Module.load (node:internal/modules/cjs/loader:1651:32)
-    at Module._load (node:internal/modules/cjs/loader:1443:12)
-    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
-    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
-    at node:internal/main/run_main_module:33:47
-
-Node.js v24.21.0</span></code></pre>
-  <p>Léelo de arriba abajo. La primera línea dice el archivo y la línea (<code>puntos.js:4</code>). Después Node copia esa línea de tu código y pone un acento circunflejo <code>^</code> justo debajo del punto exacto del problema. Luego vienen el tipo y el mensaje, y una lista de líneas que empiezan por <code>at</code> («en»), que es la pila de llamadas y verás en la próxima sección. Las líneas que dicen <code>node:internal</code> son el código interno de Node que puso en marcha tu programa: puedes ignorarlas. La última línea indica la versión de Node.</p>
-
-  <h3>Un diccionario de bolsillo</h3>
-  <p>Los mensajes están en inglés, pero usan siempre las mismas frases. Con esta tabla puedes descifrar la mayoría:</p>
-  <div class="tabla">
-    <table>
-      <thead><tr><th scope="col">Frase en el mensaje</th><th scope="col">Qué significa</th></tr></thead>
-      <tbody>
-        <tr><td><code>x is not defined</code></td><td>No existe nada llamado <code>x</code> (no se declaró, está mal escrito o no se ve desde ahí).</td></tr>
-        <tr><td><code>x is not a function</code></td><td>Intentaste llamar a <code>x</code> con paréntesis, pero <code>x</code> no es una función.</td></tr>
-        <tr><td><code>Cannot read properties of undefined (reading 'y')</code></td><td>No se pueden leer propiedades de <code>undefined</code>: lo que está antes de <code>.y</code> vale <code>undefined</code>.</td></tr>
-        <tr><td><code>Unexpected token</code></td><td>Símbolo inesperado: apareció un carácter donde las reglas no lo permiten.</td></tr>
-        <tr><td><code>Unexpected end of input</code></td><td>El código terminó antes de tiempo: algo quedó abierto (una llave, un paréntesis).</td></tr>
-        <tr><td><code>missing ) after argument list</code></td><td>Falta un <code>)</code> para cerrar los argumentos de una llamada.</td></tr>
-        <tr><td><code>Invalid or unexpected token</code></td><td>Hay un carácter no válido, casi siempre unas comillas sin cerrar o comillas «tipográficas» pegadas desde otro sitio.</td></tr>
-        <tr><td><code>has already been declared</code></td><td>Ya se había declarado: creaste dos veces la misma variable con <code>let</code> o <code>const</code>.</td></tr>
-        <tr><td><code>Cannot access 'x' before initialization</code></td><td>Usaste <code>x</code> antes de la línea donde se crea.</td></tr>
-        <tr><td><code>Assignment to constant variable</code></td><td>Intentaste cambiar el valor de una constante (<code>const</code>).</td></tr>
-        <tr><td><code>is not iterable</code></td><td>Quisiste recorrer con <code>for...of</code> algo que no se puede recorrer.</td></tr>
-        <tr><td><code>Maximum call stack size exceeded</code></td><td>Se superó el tamaño máximo de la pila de llamadas: una función se llama a sí misma sin parar.</td></tr>
-      </tbody>
-    </table>
+  <p>Practica en la terminal. La carpeta <code>juego</code> tiene un archivo de una sola línea con el mismo fallo. Esta terminal de práctica ejecuta <code>node</code> con el mismo motor que los talleres, así que el mensaje es más corto que el de Node real, pero tiene lo esencial: tipo, mensaje, archivo y línea.</p>
+  <div class="terminal-sim" data-titulo="Lee el error en la terminal" data-inicio="/home/tu">
+    <script type="application/json" class="terminal-sistema">{"juego": {"puntos.js": "let puntos = 50; console.log(\"Puntos: \" + puntuacion);\n"}}</script>
+    <div class="terminal-instrucciones">
+      <p><strong>Misión:</strong> entra en la carpeta <code>juego</code>, mira el archivo con <code>cat puntos.js</code> y ejecútalo con <code>node puntos.js</code>. Lee el error. Después reescribe el archivo corregido con <code>echo 'let puntos = 50; console.log("Puntos: " + puntos);' &gt; puntos.js</code> (fíjate en las comillas simples por fuera) y vuelve a ejecutarlo.</p>
+    </div>
+    <script type="text/plain" class="terminal-mision">
+var archivo = sistema.juego && sistema.juego["puntos.js"];
+if (archivo === undefined) return "No borres la carpeta juego ni el archivo puntos.js. Pulsa «Reiniciar» si hace falta.";
+var ejecuciones = historial.filter(function (h) { return /^node\s+puntos\.js$/.test(h); }).length;
+if (!ejecuciones) return "Entra en la carpeta (cd juego) y ejecuta el archivo con node puntos.js para ver el error.";
+if (archivo.indexOf("puntuacion") !== -1) return "Ya viste el error. Ahora reescribe el archivo con echo para que use puntos en lugar de puntuacion.";
+if (!/console\.log\("Puntos: " \+ puntos\)/.test(archivo)) return "El archivo debería quedar así: let puntos = 50; console.log(\"Puntos: \" + puntos);";
+var ultimoEcho = -1, ultimoNode = -1;
+historial.forEach(function (h, i) { if (/^echo /.test(h)) ultimoEcho = i; if (/^node\s+puntos\.js$/.test(h)) ultimoNode = i; });
+if (ultimoNode < ultimoEcho) return "Archivo corregido. Ejecútalo otra vez con node puntos.js para comprobarlo.";
+return true;
+    </script>
   </div>
   <aside class="senal nota" data-titulo="Cada navegador lo dice a su manera">
-    <p>Chrome, Edge y Node.js usan el mismo motor de JavaScript (V8), así que muestran los mismos mensajes. Firefox y Safari usan motores distintos y redactan otras frases para el mismo error. Si <code>jugador</code> vale <code>undefined</code> y escribes <code>jugador.nombre</code>, Chrome dice <code>Cannot read properties of undefined (reading 'nombre')</code>, Firefox dice <code>jugador is undefined</code> y Safari dice <code>undefined is not an object (evaluating 'jugador.nombre')</code>. El tipo, <code>TypeError</code>, es el mismo en los tres. En este curso usamos los mensajes de Chrome y Node.</p>
+    <p>Como viste en la Estación 6, Chrome, Edge y Node.js comparten motor (V8) y mensajes, mientras que Firefox y Safari redactan otras frases. Con el error más común de todos la diferencia es grande. Si <code>jugador</code> vale <code>undefined</code> y escribes <code>jugador.nombre</code>, Chrome dice <code>Cannot read properties of undefined (reading 'nombre')</code>, Firefox dice <code>jugador is undefined</code> y Safari dice <code>undefined is not an object (evaluating 'jugador.nombre')</code>. El tipo, <code>TypeError</code>, es el mismo en los tres. En este curso usamos los mensajes de Chrome y Node.</p>
   </aside>
 
   <h3>La línea del error no siempre es la línea del fallo</h3>

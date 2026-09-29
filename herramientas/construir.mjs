@@ -427,6 +427,15 @@ function glosario() {
     }
   }
   const norm = (t) => t.replace(/<[^>]+>/g, "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  // Un término que aparece en varias estaciones se muestra una vez (definición de la primera) con enlace a todas.
+  const unicos = new Map();
+  for (const t of terminos) {
+    const clave = norm(t.termino).replace(/\s*\(.*?\)\s*/g, " ").trim();
+    if (!unicos.has(clave)) unicos.set(clave, { ...t, otros: [] });
+    else if (unicos.get(clave).m !== t.m && !unicos.get(clave).otros.includes(t.m)) unicos.get(clave).otros.push(t.m);
+  }
+  terminos.length = 0;
+  terminos.push(...unicos.values());
   terminos.sort((a, b) => norm(a.termino).localeCompare(norm(b.termino), "es"));
   const grupos = {};
   for (const t of terminos) {
@@ -435,7 +444,7 @@ function glosario() {
   }
   const letras = Object.keys(grupos).sort((a, b) => a.localeCompare(b, "es"));
   const plantilla = leer("fuente/glosario.html");
-  const cuerpo = letras.map((l) => `<section id="letra-${l}" class="glosario-letra"><h2>${l}</h2><dl class="glosario">\n${grupos[l].map((t) => `<dt>${t.termino}</dt><dd>${t.definicion} <a class="glosario-origen" href="modulos/${archivoModulo(t.m)}#glosario" data-linea="${t.m.linea}"><span class="roundel" aria-hidden="true">${t.m.linea}</span>${esc(t.m.estacion)}</a></dd>`).join("\n")}\n</dl></section>`).join("\n");
+  const cuerpo = letras.map((l) => `<section id="letra-${l}" class="glosario-letra"><h2>${l}</h2><dl class="glosario">\n${grupos[l].map((t) => `<dt>${t.termino}</dt><dd>${t.definicion} ${[t.m, ...t.otros].map((m) => `<a class="glosario-origen" href="modulos/${archivoModulo(m)}#glosario" data-linea="${m.linea}"><span class="roundel" aria-hidden="true">${m.linea}</span>${esc(m.estacion)}</a>`).join("")}</dd>`).join("\n")}\n</dl></section>`).join("\n");
   return plantilla
     .replaceAll("{{FUENTES}}", FUENTES)
     .replaceAll("{{TEMA_TEMPRANO}}", TEMA_TEMPRANO)

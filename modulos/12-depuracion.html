@@ -81,11 +81,11 @@
   <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Un bicho de verdad</p><p>El 9 de septiembre de 1947, el equipo que operaba la computadora Harvard Mark II encontró una polilla atrapada en uno de sus relés. La pegaron con cinta en el cuaderno de registro con la nota <em>«First actual case of bug being found»</em>: «primer caso real de un bicho encontrado». Grace Hopper, una de las pioneras de la programación, trabajaba en ese equipo y contó la historia tantas veces que se hizo famosa. La palabra <em>bug</em> ya se usaba antes para hablar de fallos en máquinas; por eso la nota dice «caso <em>real</em>». El cuaderno, con la polilla, se conserva en el Museo Nacional de Historia Estadounidense, en Washington.</p></div></aside>
 
   <h3>Tres familias de errores</h3>
-  <p>Los errores de un programa se agrupan en tres familias. Saber a cuál pertenece el tuyo es el primer paso para encontrarlo, porque cada familia se busca de una forma distinta.</p>
+  <p>En la <a href="06-primeros-pasos.html#errores">Estación 6</a> viste que los errores se distinguen por el momento en que aparecen. Repasemos las tres familias, porque saber a cuál pertenece tu error es el primer paso para encontrarlo: cada familia se busca de una forma distinta.</p>
   <ol>
-    <li><strong>Error de sintaxis</strong> (<em>syntax error</em>). El código está mal escrito según las reglas del lenguaje, como una frase a la que le falta un signo. JavaScript lee todo el programa <strong>antes</strong> de ejecutarlo; si encuentra un error de sintaxis, se niega a empezar. Resultado: no se ejecuta ni una sola línea, ni siquiera las que estaban bien.</li>
-    <li><strong>Error de ejecución</strong> (<em>runtime error</em>). El código está bien escrito, pero al ejecutarse pide algo imposible: usar una variable que no existe, o leer una propiedad de algo que está vacío. El programa avanza normalmente hasta esa línea y <strong>se detiene ahí</strong>. Todo lo anterior sí se ejecutó. En JavaScript, estos errores se llaman <strong>excepciones</strong>, y verás cómo atraparlas más adelante.</li>
-    <li><strong>Error lógico</strong> (<em>logic error</em>). El programa se ejecuta de principio a fin sin quejarse, pero hace algo distinto de lo que querías. No aparece ningún mensaje rojo. Son los más difíciles, porque para la computadora todo va bien: hace exactamente lo que le dijiste, no lo que querías decir.</li>
+    <li><strong>Error de sintaxis</strong> (<em>syntax error</em>). El código está mal escrito según las reglas del lenguaje. JavaScript lee todo el programa <strong>antes</strong> de ejecutarlo y, si encuentra una falta de escritura, se niega a empezar: no se ejecuta ni una sola línea, ni siquiera las que estaban bien.</li>
+    <li><strong>Error de ejecución</strong> (<em>runtime error</em>). El código está bien escrito, pero al ejecutarse pide algo imposible, como usar una variable que no existe. El programa avanza hasta esa línea y <strong>se detiene ahí</strong>; lo anterior sí se ejecutó. En JavaScript, un error que se produce durante la ejecución se llama <strong>excepción</strong>, y en esta estación aprenderás a atraparlas.</li>
+    <li><strong>Error lógico</strong> (<em>logic error</em>). El programa se ejecuta de principio a fin sin quejarse, pero hace algo distinto de lo que querías. No aparece ningún mensaje rojo. Son los más difíciles, porque para la computadora todo va bien: hace exactamente lo que le dijiste, no lo que querías decir. Buena parte de esta estación trata de ellos.</li>
   </ol>
   <figure class="diagrama">
     <svg viewBox="0 0 720 320" role="img" aria-label="Diagrama: un programa pasa por cuatro etapas: escribes el código, JavaScript lo lee entero, lo ejecuta línea a línea y sale un resultado. Un error de sintaxis detiene todo en la etapa de lectura, antes de ejecutar nada. Un error de ejecución detiene el programa a mitad de la ejecución. Un error lógico deja que el programa llegue al final, pero con un resultado equivocado.">
@@ -129,24 +129,7 @@
   <aside class="senal analogia"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Para entenderlo</p><p>Piensa en una receta de cocina. Un error de sintaxis es una receta con frases que nadie entiende («bat1r lo h uevos»): el cocinero ni siquiera empieza. Un error de ejecución es una receta que pide «el azúcar del frasco azul» cuando no hay frasco azul: el cocinero empieza, llega a ese paso y se queda parado. Un error lógico es una receta que dice «una taza de sal» donde debía decir «una cucharadita»: el cocinero la sigue al pie de la letra y el pastel sale incomible. La analogía tiene un límite: un cocinero humano quizá sospecharía de la taza de sal. La computadora nunca sospecha.</p></div></aside>
 
   <h3>Compruébalo tú</h3>
-  <p>Antes de ejecutar este programa, <strong>predice</strong>: ¿qué líneas se van a imprimir? ¿Llegará a decir «Fin de la partida»?</p>
-  <div class="taller" id="taller-error-ejecucion" data-titulo="Predice: un error de ejecución">
-    <textarea class="taller-codigo">console.log("Empieza la partida");
-let vidas = 3;
-console.log("Vidas:", vidas);
-console.log("Puntos:", puntos);
-console.log("Fin de la partida");</textarea>
-  </div>
-  <p>Se imprimieron las dos primeras líneas y después apareció <code>ReferenceError: puntos is not defined</code>, con el número de línea (la 4). Nunca se llegó a «Fin de la partida». Eso es un error de ejecución: el programa corrió hasta tropezar con algo imposible (usar una variable que nadie creó) y se detuvo.</p>
-  <p>Ahora el mismo programa con otra equivocación: falta cerrar un paréntesis en la línea 3. Predice otra vez qué se imprime.</p>
-  <div class="taller" id="taller-error-sintaxis" data-titulo="Predice: un error de sintaxis">
-    <textarea class="taller-codigo">console.log("Empieza la partida");
-let vidas = 3;
-console.log("Vidas:", vidas;
-console.log("Fin de la partida");</textarea>
-  </div>
-  <p>Esta vez no se imprimió <em>nada</em>, ni siquiera «Empieza la partida», que estaba perfecta. Solo aparece <code>SyntaxError: missing ) after argument list</code> («falta un paréntesis después de la lista de argumentos»). JavaScript leyó el programa entero, encontró la frase mal escrita y se negó a empezar.</p>
-  <p>Y el tercer tipo. Este programa calcula el promedio de tres notas: 8, 6 y 10, que deberían dar 8.</p>
+  <p>Los errores de sintaxis y de ejecución ya los provocaste en la Estación 6. Ahora le toca al tercero. Este programa calcula el promedio de tres notas: 8, 6 y 10, que deberían dar 8. Antes de ejecutar, <strong>predice</strong> qué va a imprimir.</p>
   <div class="taller" id="taller-error-logico" data-titulo="Predice: un error lógico">
     <textarea class="taller-codigo">const nota1 = 8;
 const nota2 = 6;
@@ -161,7 +144,7 @@ console.log("Promedio:", promedio);</textarea>
 
 <section id="leer" data-parada="Leer el mensaje">
   <h2>Leer un mensaje de error</h2>
-  <p>Mucha gente que empieza ve el texto rojo y no lo lee: pasa directamente a cambiar cosas a ver si se arregla. Es como ir al médico, que te dé el diagnóstico y taparte los oídos. El <strong>mensaje de error</strong> es el texto que la computadora escribe cuando algo falla, y está pensado para que lo leas. Casi siempre tiene las mismas piezas.</p>
+  <p>Mucha gente que empieza ve el texto rojo y no lo lee: pasa directamente a cambiar cosas a ver si se arregla. Es como ir al médico, que te dé el diagnóstico y taparte los oídos. El <strong>mensaje de error</strong> es el texto que la computadora escribe cuando algo falla, y está pensado para que lo leas. En la <a href="06-primeros-pasos.html#errores">Estación 6</a> desarmaste un error de Node.js en sus partes. Ahora vas a leer uno en la consola del navegador, con una pieza nueva: la columna.</p>
   <figure class="capsula" data-titulo="Anatomía de un mensaje de error">
     <div class="capsula-escena">
       <svg viewBox="0 0 720 300" role="img" aria-label="Animación: un mensaje de error de la consola se lee por partes. Uncaught significa que nadie lo capturó; ReferenceError es el tipo; puntuacion is not defined es el mensaje; puntos.js:4:26 es la ubicación. La línea 4 del código usa puntuacion en lugar de puntos; al corregirla, la consola muestra Puntos: 50.">
@@ -221,46 +204,26 @@ console.log("Promedio:", promedio);</textarea>
   <ul>
     <li><strong>En los talleres de este curso</strong> verás una línea roja con el tipo, el mensaje y el número de línea, por ejemplo <code>ReferenceError: puntuacion is not defined (línea 4)</code>. Debajo, el curso añade una «Pista» en español. Esa pista es una ayuda para aprender: las herramientas reales no la tienen, así que acostúmbrate a leer primero el mensaje original.</li>
     <li><strong>En la consola del navegador</strong> (la abres con <kbd>F12</kbd>, como viste en la <a href="06-primeros-pasos.html">Estación 6</a>) el mensaje empieza por <code>Uncaught</code> y a la derecha aparece un enlace con el archivo y la línea.</li>
-    <li><strong>En la terminal, con Node.js</strong>, el formato es más largo. Este es el mismo error ejecutado con <code>node puntos.js</code> (salida real de Node.js 24):</li>
+    <li><strong>En la terminal, con Node.js</strong>, con el formato que desarmaste en la Estación 6: archivo y línea, la línea de código copiada con un <code>^</code> debajo de la columna exacta, el tipo y el mensaje, y después la pila de llamadas (las líneas que empiezan por <code>at</code>), que aprenderás a leer en la próxima sección.</li>
   </ul>
-  <pre class="consola"><code><span class="prompt">$</span> node puntos.js
-<span class="salida">/home/ana/juego/puntos.js:4
-console.log("Puntos: " + puntuacion);
-                         ^
-
-ReferenceError: puntuacion is not defined
-    at Object.&lt;anonymous&gt; (/home/ana/juego/puntos.js:4:26)
-    at Module._compile (node:internal/modules/cjs/loader:1929:14)
-    at Object..js (node:internal/modules/cjs/loader:2060:10)
-    at Module.load (node:internal/modules/cjs/loader:1651:32)
-    at Module._load (node:internal/modules/cjs/loader:1443:12)
-    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
-    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
-    at node:internal/main/run_main_module:33:47
-
-Node.js v24.21.0</span></code></pre>
-  <p>Léelo de arriba abajo. La primera línea dice el archivo y la línea (<code>puntos.js:4</code>). Después Node copia esa línea de tu código y pone un acento circunflejo <code>^</code> justo debajo del punto exacto del problema. Luego vienen el tipo y el mensaje, y una lista de líneas que empiezan por <code>at</code> («en»), que es la pila de llamadas y verás en la próxima sección. Las líneas que dicen <code>node:internal</code> son el código interno de Node que puso en marcha tu programa: puedes ignorarlas. La última línea indica la versión de Node.</p>
-
-  <h3>Un diccionario de bolsillo</h3>
-  <p>Los mensajes están en inglés, pero usan siempre las mismas frases. Con esta tabla puedes descifrar la mayoría:</p>
-  <div class="tabla">
-    <table>
-      <thead><tr><th scope="col">Frase en el mensaje</th><th scope="col">Qué significa</th></tr></thead>
-      <tbody>
-        <tr><td><code>x is not defined</code></td><td>No existe nada llamado <code>x</code> (no se declaró, está mal escrito o no se ve desde ahí).</td></tr>
-        <tr><td><code>x is not a function</code></td><td>Intentaste llamar a <code>x</code> con paréntesis, pero <code>x</code> no es una función.</td></tr>
-        <tr><td><code>Cannot read properties of undefined (reading 'y')</code></td><td>No se pueden leer propiedades de <code>undefined</code>: lo que está antes de <code>.y</code> vale <code>undefined</code>.</td></tr>
-        <tr><td><code>Unexpected token</code></td><td>Símbolo inesperado: apareció un carácter donde las reglas no lo permiten.</td></tr>
-        <tr><td><code>Unexpected end of input</code></td><td>El código terminó antes de tiempo: algo quedó abierto (una llave, un paréntesis).</td></tr>
-        <tr><td><code>missing ) after argument list</code></td><td>Falta un <code>)</code> para cerrar los argumentos de una llamada.</td></tr>
-        <tr><td><code>Invalid or unexpected token</code></td><td>Hay un carácter no válido, casi siempre unas comillas sin cerrar o comillas «tipográficas» pegadas desde otro sitio.</td></tr>
-        <tr><td><code>has already been declared</code></td><td>Ya se había declarado: creaste dos veces la misma variable con <code>let</code> o <code>const</code>.</td></tr>
-        <tr><td><code>Cannot access 'x' before initialization</code></td><td>Usaste <code>x</code> antes de la línea donde se crea.</td></tr>
-        <tr><td><code>Assignment to constant variable</code></td><td>Intentaste cambiar el valor de una constante (<code>const</code>).</td></tr>
-        <tr><td><code>is not iterable</code></td><td>Quisiste recorrer con <code>for...of</code> algo que no se puede recorrer.</td></tr>
-        <tr><td><code>Maximum call stack size exceeded</code></td><td>Se superó el tamaño máximo de la pila de llamadas: una función se llama a sí misma sin parar.</td></tr>
-      </tbody>
-    </table>
+  <p>Practica en la terminal. La carpeta <code>juego</code> tiene un archivo de una sola línea con el mismo fallo. Esta terminal de práctica ejecuta <code>node</code> con el mismo motor que los talleres, así que el mensaje es más corto que el de Node real, pero tiene lo esencial: tipo, mensaje, archivo y línea.</p>
+  <div class="terminal-sim" data-titulo="Lee el error en la terminal" data-inicio="/home/tu">
+    <script type="application/json" class="terminal-sistema">{"juego": {"puntos.js": "let puntos = 50; console.log(\"Puntos: \" + puntuacion);\n"}}</script>
+    <div class="terminal-instrucciones">
+      <p><strong>Misión:</strong> entra en la carpeta <code>juego</code>, mira el archivo con <code>cat puntos.js</code> y ejecútalo con <code>node puntos.js</code>. Lee el error. Después reescribe el archivo corregido con <code>echo 'let puntos = 50; console.log("Puntos: " + puntos);' &gt; puntos.js</code> (fíjate en las comillas simples por fuera) y vuelve a ejecutarlo.</p>
+    </div>
+    <script type="text/plain" class="terminal-mision">
+var archivo = sistema.juego && sistema.juego["puntos.js"];
+if (archivo === undefined) return "No borres la carpeta juego ni el archivo puntos.js. Pulsa «Reiniciar» si hace falta.";
+var ejecuciones = historial.filter(function (h) { return /^node\s+puntos\.js$/.test(h); }).length;
+if (!ejecuciones) return "Entra en la carpeta (cd juego) y ejecuta el archivo con node puntos.js para ver el error.";
+if (archivo.indexOf("puntuacion") !== -1) return "Ya viste el error. Ahora reescribe el archivo con echo para que use puntos en lugar de puntuacion.";
+if (!/console\.log\("Puntos: " \+ puntos\)/.test(archivo)) return "El archivo debería quedar así: let puntos = 50; console.log(\"Puntos: \" + puntos);";
+var ultimoEcho = -1, ultimoNode = -1;
+historial.forEach(function (h, i) { if (/^echo /.test(h)) ultimoEcho = i; if (/^node\s+puntos\.js$/.test(h)) ultimoNode = i; });
+if (ultimoNode < ultimoEcho) return "Archivo corregido. Ejecútalo otra vez con node puntos.js para comprobarlo.";
+return true;
+    </script>
   </div>
   <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cada navegador lo dice a su manera</p><p>Chrome, Edge y Node.js usan el mismo motor de JavaScript (V8), así que muestran los mismos mensajes. Firefox y Safari usan motores distintos y redactan otras frases para el mismo error. Si <code>jugador</code> vale <code>undefined</code> y escribes <code>jugador.nombre</code>, Chrome dice <code>Cannot read properties of undefined (reading 'nombre')</code>, Firefox dice <code>jugador is undefined</code> y Safari dice <code>undefined is not an object (evaluating 'jugador.nombre')</code>. El tipo, <code>TypeError</code>, es el mismo en los tres. En este curso usamos los mensajes de Chrome y Node.</p></div></aside>
 
