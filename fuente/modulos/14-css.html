@@ -219,7 +219,7 @@ return true;
 }
 
 .boton-principal {
-  background: seagreen;
+  background: darkgreen;
   color: white;
 }</code></pre>
   <p>Los dos botones comparten la forma de <code>.boton</code>, y solo el segundo recibe además el color de <code>.boton-principal</code>.</p>
@@ -701,7 +701,7 @@ for (const barra of document.querySelectorAll(".barra")) {
   <h3>Variables CSS: ponle nombre a tus valores</h3>
   <p>Imagina que el verde de tu marca aparece en 30 reglas y el equipo decide cambiarlo. Buscar y reemplazar 30 veces es lento y fácil de hacer mal. En la <a href="07-variables.html">Estación 7</a> aprendiste a guardar un valor con un nombre. CSS tiene su propia versión: las <strong>propiedades personalizadas</strong>, que casi todo el mundo llama <strong>variables CSS</strong> (en inglés, <em>custom properties</em>).</p>
   <pre><code class="language-css">:root {
-  --color-marca: #2a9d8f;
+  --color-marca: #1f7a6f;
   --color-texto: #1d1d1f;
   --radio: 10px;
   --espacio: 1rem;
@@ -731,7 +731,8 @@ for (const barra of document.querySelectorAll(".barra")) {
   &lt;button class="boton"&gt;Elegir&lt;/button&gt;
 &lt;/div&gt;</textarea>
     <textarea class="taller-codigo" data-lenguaje="css">:root {
-  --color-marca: #2a9d8f;
+  --color-marca: #1f7a6f;
+  --color-sobre-marca: white;
   --color-texto: #1d1d1f;
   --radio: 10px;
 }
@@ -756,7 +757,7 @@ body {
 
 .boton {
   background: var(--color-marca);
-  color: white;
+  color: var(--color-sobre-marca);
   border: 0;
   border-radius: var(--radio);
   padding: 8px 16px;
@@ -766,6 +767,7 @@ body {
 /* Una tarjeta oscura: solo redefine las variables */
 .oscura {
   --color-marca: #e9c46a;
+  --color-sobre-marca: #264653;
   --color-texto: white;
   background: #264653;
 }</textarea>
@@ -773,12 +775,12 @@ body {
 var raiz = getComputedStyle(document.documentElement);
 var marca = raiz.getPropertyValue("--color-marca").trim().toLowerCase();
 var radio = raiz.getPropertyValue("--radio").trim();
-if (marca === "#2a9d8f") return "Cambia el valor de --color-marca en :root por otro color, por ejemplo #e76f51 o oklch(60% 0.15 300).";
+if (marca === "#1f7a6f") return "Cambia el valor de --color-marca en :root por otro color, por ejemplo #6a4c93 o oklch(45% 0.15 300).";
 if (radio === "10px") return "Ahora cambia --radio, por ejemplo a 0 o a 24px, y mira las esquinas.";
 return true;
     </script>
   </div>
-  <p>La tarjeta oscura no repite ninguna regla: solo redefine dos variables, y el borde, el título y el botón las usan. Fíjate también en que <code>.tarjeta</code> lee <code>--color-texto</code> en su propio <code>color</code>. Si esa lectura estuviera solo en el <code>body</code>, la tarjeta oscura heredaría el color ya calculado del body y su texto seguiría oscuro. Una variable redefinida solo afecta a las declaraciones que la leen con <code>var()</code> en ese elemento o en sus descendientes.</p>
+  <p>La tarjeta oscura no repite ninguna regla: solo redefine tres variables, y el borde, el título y el botón las usan. Fíjate en <code>--color-sobre-marca</code>: el texto del botón cambia a oscuro sobre el amarillo, porque blanco sobre amarillo no tendría contraste suficiente. Fíjate también en que <code>.tarjeta</code> lee <code>--color-texto</code> en su propio <code>color</code>. Si esa lectura estuviera solo en el <code>body</code>, la tarjeta oscura heredaría el color ya calculado del body y su texto seguiría oscuro. Una variable redefinida solo afecta a las declaraciones que la leen con <code>var()</code> en ese elemento o en sus descendientes.</p>
   <aside class="senal nota" data-titulo="Variables CSS y JavaScript">
     <p>A diferencia de las variables de JavaScript, las de CSS no se «ejecutan» una vez: el navegador recalcula todo lo que las usa cada vez que cambian. Por eso son perfectas para temas claro y oscuro, y porque JavaScript puede cambiarlas en vivo, algo que harás en la <a href="15-dom.html">Estación 15</a>. Existen también herramientas como Sass, que tienen variables propias con <code>$</code>; esas se convierten en valores fijos antes de llegar al navegador.</p>
   </aside>
@@ -1298,7 +1300,7 @@ p  { margin-top: 20px; }
 .cabecera  { grid-area: cabecera;  background: #264653; color: white; }
 .lateral   { grid-area: lateral;   background: #e9c46a; }
 .contenido { grid-area: contenido; background: #edf2f4; min-height: 100px; }
-.pie       { grid-area: pie;       background: #2a9d8f; color: white; }</textarea>
+.pie       { grid-area: pie;       background: #1f7a6f; color: white; }</textarea>
     <script type="text/plain" class="taller-verificar">
 var lat = document.querySelector(".lateral").getBoundingClientRect();
 var con = document.querySelector(".contenido").getBoundingClientRect();
@@ -1436,12 +1438,12 @@ return true;
   <h3>Transiciones: cambios suaves</h3>
   <p>Cuando pasas el ratón por un botón y cambia de color, el cambio es instantáneo. Una <strong>transición</strong> hace que ese cambio dure un tiempo:</p>
   <pre><code class="language-css">.boton {
-  background-color: #2a9d8f;
+  background-color: #1f7a6f;
   transition: background-color 200ms ease, transform 200ms ease;
 }
 
 .boton:hover {
-  background-color: #1f7a6f;
+  background-color: #155e56;
   transform: translateY(-2px);
 }</code></pre>
   <p>Cada transición dice qué propiedad anima, cuánto dura (<code>200ms</code> o <code>0.2s</code>) y con qué curva de velocidad: <code>ease</code> (el valor por defecto: arranca rápido y frena al final), <code>linear</code>, <code>ease-in</code>, <code>ease-out</code> o <code>ease-in-out</code>. Opcionalmente, un retraso.</p>
@@ -1515,13 +1517,13 @@ return true;
   padding: 12px 20px;
   border: 0;
   border-radius: 8px;
-  background: #2a9d8f;
+  background: #1f7a6f;
   color: white;
   transition: background-color 200ms ease, transform 200ms ease;
 }
 
 .boton:hover {
-  background: #1f7a6f;
+  background: #155e56;
   transform: translateY(-3px);
 }</textarea>
   </div>
@@ -1798,4 +1800,1118 @@ body {
   <aside class="senal oficio" data-titulo="Un método para cuando algo se ve mal">
     <p>1. Selecciona el elemento en DevTools. 2. En Estilos, busca la propiedad: ¿aparece?, ¿está tachada?, ¿tiene un icono de advertencia? 3. En Calculado, mira el valor final y haz clic para ver qué regla lo puso. 4. Mira el modelo de caja: ¿el hueco es margen o relleno? 5. Si no entiendes dónde está cada caja, añade temporalmente <code>* { outline: 1px solid red; }</code>: el contorno no ocupa espacio y te dibuja todas las cajas de la página.</p>
   </aside>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>CSS describe cómo se ve el HTML. Una regla es un selector más un bloque de declaraciones <code>propiedad: valor;</code>. En proyectos reales va en un archivo externo enlazado con <code>&lt;link rel="stylesheet"&gt;</code>. Si una declaración no es válida, el navegador la ignora en silencio: DevTools te la muestra.</li>
+    <li>Los selectores eligen elementos por tipo, clase (<code>.</code>), id (<code>#</code>), atributo (<code>[ ]</code>), relación (espacio, <code>&gt;</code>, <code>+</code>, <code>~</code>), estado o posición (pseudoclases como <code>:hover</code> o <code>:nth-child()</code>) y partes (pseudoelementos como <code>::before</code>). Usa clases para dar estilo.</li>
+    <li>Cuando varias reglas chocan, gana la de mayor importancia y origen, después el estilo en línea, después la de mayor especificidad (ids-clases-tipos, comparadas de izquierda a derecha) y, si todo empata, la última. La herencia pasa propiedades de texto de padres a hijos, pero pierde contra cualquier regla que elija al elemento directamente.</li>
+    <li>Los colores se escriben con nombre, hex, <code>rgb()</code>, <code>hsl()</code> u <code>oklch()</code>. El texto necesita un contraste de al menos 4.5:1 (3:1 si es grande). Usa <code>rem</code> para tamaños de letra, <code>%</code> y <code>fr</code> para anchos fluidos y <code>ch</code> para limitar líneas.</li>
+    <li>Las variables CSS (<code>--nombre</code> y <code>var(--nombre)</code>) guardan colores y medidas en un solo lugar, se heredan y se pueden redefinir en un componente o una media query.</li>
+    <li>Cada elemento es una caja: contenido, <code>padding</code>, <code>border</code> y <code>margin</code>. Con <code>box-sizing: border-box</code>, <code>width</code> incluye relleno y borde. Los márgenes verticales entre bloques colapsan. <code>display</code> decide si la caja es de bloque, en línea o si desaparece.</li>
+    <li>Flexbox coloca a los hijos directos en una fila o columna: <code>justify-content</code> reparte en el eje principal y <code>align-items</code> alinea en el cruzado. <code>flex</code> decide cuánto crece o encoge cada elemento.</li>
+    <li>Grid divide el contenedor en filas y columnas con <code>grid-template-columns</code>, <code>fr</code>, <code>repeat()</code> y <code>minmax()</code>; los elementos se colocan por líneas o por áreas con nombre. Grid para la estructura, flexbox para los componentes.</li>
+    <li><code>position</code> mueve elementos o los saca del flujo: <code>absolute</code> se mide desde el antepasado posicionado más cercano, <code>fixed</code> desde la ventana y <code>sticky</code> se pega al hacer scroll. <code>z-index</code> ordena capas dentro de su contexto de apilamiento.</li>
+    <li>Mobile first: estilos base para el teléfono y media queries con <code>min-width</code>, de menor a mayor. <code>clamp()</code> hace tamaños fluidos con límites, las imágenes llevan <code>max-width: 100%</code>, y el movimiento se añade con transiciones y <code>@keyframes</code> respetando <code>prefers-reduced-motion</code>.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Resuelve los ejercicios en orden. Cada uno tiene una vista previa y un botón «Ejecutar» que comprueba tu solución midiendo lo que de verdad dibuja el navegador. Usa las pistas solo después de intentarlo unos minutos, y cuando algo no salga, abre DevTools (en la vista previa también funciona: clic derecho, «Inspeccionar»). La solución está para comparar, no para copiar.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-tarjeta">
+    <h3>Viste la tarjeta</h3>
+    <p>Escribe tres reglas en la pestaña CSS: el título <code>h2</code> con un color que no sea negro; el precio (clase <code>precio</code>) en negrita y con un tamaño de <code>1.5rem</code>; y la tarjeta (clase <code>tarjeta</code>) con un borde de 2 píxeles sólido y 16 píxeles de relleno.</p>
+    <div class="taller" id="taller-ej-tarjeta" data-modo="web" data-titulo="Ejercicio 1" data-alto="15rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;div class="tarjeta"&gt;
+  &lt;h2&gt;Auriculares Nube&lt;/h2&gt;
+  &lt;p&gt;Inalámbricos, con 30 horas de batería.&lt;/p&gt;
+  &lt;p class="precio"&gt;$59&lt;/p&gt;
+&lt;/div&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">/* 1. Da color al título con una regla para h2 */
+
+/* 2. El precio: negrita y 1.5rem de tamaño */
+
+/* 3. La tarjeta: borde de 2px sólido y 16px de relleno */
+</textarea>
+      <script type="text/plain" class="taller-verificar">
+var h2 = getComputedStyle(document.querySelector("h2"));
+var precio = getComputedStyle(document.querySelector(".precio"));
+var tarjeta = getComputedStyle(document.querySelector(".tarjeta"));
+if (h2.color === "rgb(0, 0, 0)") return "El título sigue negro. Escribe una regla h2 { color: ...; } con el color que quieras.";
+if (parseInt(precio.fontWeight, 10) < 700) return "El precio todavía no está en negrita. Usa font-weight: bold; en una regla .precio (con punto delante).";
+if (precio.fontSize !== "24px") return "El precio debe medir 1.5rem, que son 24px. Ahora mide " + precio.fontSize + ".";
+if (tarjeta.borderTopStyle !== "solid" || tarjeta.borderTopWidth !== "2px") return "A la tarjeta le falta el borde: border: 2px solid y un color, por ejemplo border: 2px solid #264653;";
+if (tarjeta.paddingTop !== "16px" || tarjeta.paddingLeft !== "16px") return "Falta el relleno: padding: 16px; en .tarjeta.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Son tres reglas separadas. Los selectores son <code>h2</code>, <code>.precio</code> y <code>.tarjeta</code>. Las clases llevan punto; las etiquetas, no.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El borde necesita tres datos en este orden: grosor, estilo y color. <code>border: 2px solid navy;</code></p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-css">h2 {
+  color: #264653;
+}
+
+.precio {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+.tarjeta {
+  border: 2px solid #264653;
+  padding: 16px;
+}</code></pre>
+      <p>Cualquier color sirve para el título. Fíjate en que el precio es un <code>&lt;p&gt;</code>, pero la regla usa su clase: así solo afecta a ese párrafo y no a los demás.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-arregla">
+    <h3>Arregla la hoja de estilos</h3>
+    <p>Esta hoja de estilos tiene cuatro errores y el navegador no avisa de ninguno. Encuéntralos hasta que la página tenga fondo crema (<code>#f4f1ea</code>), el título en azul marino (<code>navy</code>) y el botón dorado (<code>gold</code>) y en negrita. Ejecuta después de cada arreglo: el mensaje te dirá qué falta.</p>
+    <div class="taller" id="taller-ej-arregla" data-modo="web" data-titulo="Ejercicio 2: arregla los errores" data-alto="12rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;h1 class="titulo"&gt;Tienda de juegos&lt;/h1&gt;
+&lt;button class="boton"&gt;Añadir al carrito&lt;/button&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">// Fondo de la página
+body {
+  background: #f4f1ea;
+  font-family: system-ui, sans-serif;
+}
+
+.titulo {
+  colour: navy;
+}
+
+#boton {
+  background: gold
+  font-weight: bold;
+  padding: 8px 16px;
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var body = getComputedStyle(document.body);
+var t = getComputedStyle(document.querySelector(".titulo"));
+var b = getComputedStyle(document.querySelector(".boton"));
+if (body.backgroundColor !== "rgb(244, 241, 234)") return "El fondo de la página no se aplica. Mira la primera línea: ¿así se escribe un comentario en CSS?";
+if (t.color !== "rgb(0, 0, 128)") return "El título no es azul marino. Revisa cómo se escribe la propiedad del color: en CSS va en inglés de Estados Unidos.";
+if (b.backgroundColor !== "rgb(255, 215, 0)" || parseInt(b.fontWeight, 10) < 700) {
+  if (/#boton/.test(codigo.css)) return "El botón no recibe sus estilos. En el HTML tiene class=\"boton\", no id. ¿Con qué símbolo se elige una clase?";
+  return "El fondo dorado o la negrita del botón no se aplican. Revisa que cada declaración termine en punto y coma.";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Uno de los errores está en un comentario, otro en el nombre de una propiedad y otro en el símbolo de un selector.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El cuarto es el más escondido: falta un carácter al final de una línea. Sin él, el navegador junta dos declaraciones en una y descarta las dos.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-css">/* Fondo de la página */
+body {
+  background: #f4f1ea;
+  font-family: system-ui, sans-serif;
+}
+
+.titulo {
+  color: navy;
+}
+
+.boton {
+  background: gold;
+  font-weight: bold;
+  padding: 8px 16px;
+}</code></pre>
+      <p>Los cuatro errores: el comentario con <code>//</code> invalidaba la regla del <code>body</code>; <code>colour</code> no existe; <code>#boton</code> busca un id que no hay; y sin el <code>;</code> después de <code>gold</code>, el valor de <code>background</code> se convertía en <code>gold font-weight: bold</code>, que no es válido. En DevTools, los dos últimos aparecen tachados o con un icono de advertencia.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-especificidad">
+    <h3>Gana sin trampas</h3>
+    <p>Una regla de otra parte del proyecto pinta de gris todos los botones de la tienda. Haz que <strong>solo</strong> el botón «Comprar» tenga el fondo <code>darkgreen</code>. Condiciones: no cambies la regla <code>#tienda .boton</code>, no uses <code>!important</code> y no toques el HTML. El botón «Ver detalles» debe seguir gris.</p>
+    <div class="taller" id="taller-ej-especificidad" data-modo="web" data-titulo="Ejercicio 3" data-alto="9rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="tienda"&gt;
+  &lt;button class="boton"&gt;Ver detalles&lt;/button&gt;
+  &lt;button class="boton comprar"&gt;Comprar&lt;/button&gt;
+&lt;/div&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">/* No cambies esta regla: viene de otra parte del proyecto */
+#tienda .boton {
+  background: #555;
+  color: white;
+  border: 0;
+  padding: 8px 16px;
+}
+
+/* Tu regla: ¿por qué no funciona? */
+.comprar {
+  background: darkgreen;
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var botones = document.querySelectorAll(".boton");
+var ver = getComputedStyle(botones[0]);
+var comprar = getComputedStyle(document.querySelector(".comprar"));
+if (/!important/.test(codigo.css)) return "Sin !important: gana con un selector más específico.";
+if (/style\s*=/.test(codigo.html)) return "Sin atributo style en el HTML: resuélvelo en el CSS.";
+if (!/#tienda \.boton\s*\{[^}]*background:\s*#555/.test(codigo.css)) return "No cambies la regla #tienda .boton: imagina que es de otra persona del equipo.";
+if (ver.backgroundColor !== "rgb(85, 85, 85)") return "El botón «Ver detalles» debe seguir gris.";
+if (comprar.backgroundColor !== "rgb(0, 100, 0)") return "El botón Comprar sigue gris. Tu selector pesa 0-1-0 y el otro 1-1-0. ¿Cómo superas la columna de ids?";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Calcula los pesos: <code>#tienda .boton</code> es 1-1-0 y <code>.comprar</code> es 0-1-0. El primero gana en la columna de ids.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Tu selector también puede empezar con <code>#tienda</code>. Después, añade suficientes clases para empatar o superar a la otra regla.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-css">/* No cambies esta regla: viene de otra parte del proyecto */
+#tienda .boton {
+  background: #555;
+  color: white;
+  border: 0;
+  padding: 8px 16px;
+}
+
+#tienda .boton.comprar {
+  background: darkgreen;
+}</code></pre>
+      <p><code>#tienda .boton.comprar</code> pesa 1-2-0 y gana a 1-1-0 sin depender del orden. <code>#tienda .comprar</code> (1-1-0) también funciona, pero solo porque empata y está después: si alguien mueve las reglas, se rompe. La lección de fondo: la regla original usaba un id y obligó a subir la especificidad. Con solo clases no habría hecho falta.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-caja">
+    <h3>Una tarjeta de 300 píxeles exactos</h3>
+    <p>El diseño pide una tarjeta que mida exactamente 300 píxeles de ancho en pantalla, con 20 píxeles de relleno y un borde de 5. Ahora mide 350. Arréglalo sin quitar el relleno ni el borde, y además céntrala en horizontal.</p>
+    <div class="taller" id="taller-ej-caja" data-modo="web" data-titulo="Ejercicio 4" data-alto="11rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;h2&gt;Mi perfil&lt;/h2&gt;
+&lt;div class="tarjeta"&gt;Ana · Diseñadora de niveles&lt;/div&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">h2 {
+  font-family: system-ui, sans-serif;
+}
+
+.tarjeta {
+  width: 300px;
+  padding: 20px;
+  border: 5px solid #1d3557;
+  background: #f1faee;
+  font-family: system-ui, sans-serif;
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var t = document.querySelector(".tarjeta");
+var cs = getComputedStyle(t);
+if (cs.paddingLeft !== "20px" || cs.borderLeftWidth !== "5px") return "Mantén padding: 20px y el borde de 5px: la tarjeta debe medir 300px con ellos dentro.";
+if (t.offsetWidth !== 300) return "La tarjeta ocupa " + t.offsetWidth + "px de ancho en pantalla. Debe ocupar 300px con relleno y borde incluidos.";
+var r = t.getBoundingClientRect();
+var izq = r.left, der = document.documentElement.clientWidth - r.right;
+if (Math.abs(izq - der) > 1) return "Ya mide 300px. Ahora céntrala: le sobran " + Math.round(izq) + "px a la izquierda y " + Math.round(der) + "px a la derecha.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Ahora mide 300 + 20 + 20 + 5 + 5. Hay una propiedad que hace que <code>width</code> incluya el relleno y el borde.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para centrar un elemento de bloque con ancho definido, deja que los márgenes de los lados se repartan solos: <code>auto</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-css">h2 {
+  font-family: system-ui, sans-serif;
+}
+
+.tarjeta {
+  box-sizing: border-box;
+  width: 300px;
+  padding: 20px;
+  border: 5px solid #1d3557;
+  background: #f1faee;
+  font-family: system-ui, sans-serif;
+  margin-inline: auto;
+}</code></pre>
+      <p>También funcionaría <code>width: 250px</code> sin <code>box-sizing</code>, pero entonces cada vez que cambies el relleno tendrás que rehacer la cuenta. Con <code>border-box</code>, el número que escribes es el que ves. <code>margin: 0 auto</code> es equivalente a <code>margin-inline: auto</code> aquí.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-navbar">
+    <h3>La barra de navegación</h3>
+    <p>Convierte esta lista en una barra de navegación: el logo a la izquierda y los enlaces a la derecha, todo centrado en vertical. Los enlaces van en fila, sin viñetas, con 16 píxeles de hueco entre ellos, y sin el margen ni el relleno que el navegador pone a las listas.</p>
+    <div class="taller" id="taller-ej-navbar" data-modo="web" data-titulo="Ejercicio 5" data-alto="10rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;nav class="barra"&gt;
+  &lt;a class="logo" href="#"&gt;Píxel&lt;/a&gt;
+  &lt;ul class="enlaces"&gt;
+    &lt;li&gt;&lt;a href="#"&gt;Juegos&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="#"&gt;Ofertas&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="#"&gt;Ayuda&lt;/a&gt;&lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/nav&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}
+
+.barra {
+  background: #1d3557;
+  padding: 12px 16px;
+  /* Logo a la izquierda, lista a la derecha, centrados en vertical */
+}
+
+.barra a {
+  color: white;
+  text-decoration: none;
+}
+
+.logo {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.enlaces {
+  /* En fila, 16px de hueco, sin viñetas, sin margen ni relleno */
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var barraEl = document.querySelector(".barra");
+var ul = document.querySelector(".enlaces");
+var logo = document.querySelector(".logo").getBoundingClientRect();
+var lista = ul.getBoundingClientRect();
+var barra = barraEl.getBoundingClientRect();
+var lis = Array.prototype.slice.call(document.querySelectorAll(".enlaces li")).map(function (li) { return li.getBoundingClientRect(); });
+if (getComputedStyle(barraEl).display !== "flex") return "Empieza por el contenedor: display: flex en .barra.";
+if (lista.left < logo.right) return "La lista debe quedar a la derecha del logo.";
+if (Math.abs(barra.right - 16 - lista.right) > 2) return "La lista debe quedar pegada al lado derecho de la barra. Prueba justify-content: space-between en .barra.";
+if (Math.abs((logo.top + logo.bottom) / 2 - (lista.top + lista.bottom) / 2) > 2) return "El logo y la lista no están centrados en vertical. Usa align-items: center en .barra.";
+if (getComputedStyle(document.querySelector(".enlaces li")).listStyleType !== "none") return "Quita las viñetas: list-style: none en .enlaces.";
+if (Math.abs(lis[0].top - lis[2].top) > 1) return "Los enlaces deben ir en fila: display: flex en .enlaces.";
+if (lis[1].left - lis[0].right < 15.5) return "Separa los enlaces con gap: 16px en .enlaces.";
+var ucs = getComputedStyle(ul);
+if (parseFloat(ucs.marginTop) !== 0 || parseFloat(ucs.paddingLeft) !== 0) return "Quita el margen y el relleno que el navegador pone a las listas: margin: 0 y padding: 0 en .enlaces.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Hay dos contenedores flex: <code>.barra</code> (sus hijos son el logo y la lista) y <code>.enlaces</code> (sus hijos son los <code>li</code>).</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>.barra</code>: <code>justify-content: space-between</code> y <code>align-items: center</code>. En <code>.enlaces</code>: <code>display: flex</code>, <code>gap</code>, <code>list-style</code>, <code>margin</code> y <code>padding</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-css">body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}
+
+.barra {
+  background: #1d3557;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.barra a {
+  color: white;
+  text-decoration: none;
+}
+
+.logo {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.enlaces {
+  display: flex;
+  gap: 16px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}</code></pre>
+      <p>Otra forma de empujar la lista a la derecha es <code>margin-left: auto</code> en <code>.enlaces</code>, en lugar de <code>space-between</code>. Es útil cuando hay más de dos elementos y solo quieres separar el último grupo.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-galeria">
+    <h3>Galería con una foto destacada</h3>
+    <p>Crea una galería de tres columnas iguales con 12 píxeles de hueco. La foto destacada (la primera) debe ocupar dos columnas y dos filas; las fotos 2 y 3 quedan a su derecha, una encima de la otra, y las demás debajo.</p>
+    <div class="taller" id="taller-ej-galeria" data-modo="web" data-titulo="Ejercicio 6" data-alto="20rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;div class="galeria"&gt;
+  &lt;div class="foto destacada"&gt;1&lt;/div&gt;
+  &lt;div class="foto"&gt;2&lt;/div&gt;
+  &lt;div class="foto"&gt;3&lt;/div&gt;
+  &lt;div class="foto"&gt;4&lt;/div&gt;
+  &lt;div class="foto"&gt;5&lt;/div&gt;
+  &lt;div class="foto"&gt;6&lt;/div&gt;
+&lt;/div&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">.foto {
+  background: #8ecae6;
+  min-height: 80px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font: bold 1.25rem system-ui, sans-serif;
+}
+
+.destacada {
+  background: #ffb703;
+}
+
+.galeria {
+  /* Tu código */
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var g = getComputedStyle(document.querySelector(".galeria"));
+if (g.display !== "grid") return "La galería necesita display: grid.";
+var cols = g.gridTemplateColumns.split(" ").filter(Boolean);
+if (cols.length !== 3) return "Debe haber 3 columnas y hay " + cols.length + ". Usa grid-template-columns: repeat(3, 1fr).";
+if (Math.abs(parseFloat(cols[0]) - parseFloat(cols[2])) > 1) return "Las tres columnas deben medir lo mismo: usa 1fr en las tres.";
+if (g.columnGap !== "12px" || g.rowGap !== "12px") return "El hueco entre fotos debe ser de 12px: gap: 12px.";
+var f = Array.prototype.slice.call(document.querySelectorAll(".foto")).map(function (x) { return x.getBoundingClientRect(); });
+if (Math.abs(f[0].width - (2 * f[1].width + 12)) > 1.5) return "La foto destacada debe ocupar 2 columnas: grid-column: span 2 (o 1 / 3).";
+if (Math.abs(f[0].height - (f[1].height + 12 + f[2].height)) > 1.5) return "La foto destacada debe ocupar también 2 filas: grid-row: span 2.";
+if (Math.abs(f[1].left - f[2].left) > 1 || f[3].top < f[0].bottom) return "Las fotos 2 y 3 deben quedar a la derecha de la destacada, una encima de otra, y el resto debajo.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Primero la cuadrícula en <code>.galeria</code>: <code>display</code>, <code>grid-template-columns</code> y <code>gap</code>. Ejecuta y mira el resultado antes de tocar la destacada.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>.destacada</code>, <code>span</code> dice cuántas pistas ocupa: una propiedad para las columnas y otra para las filas. La colocación automática se encarga del resto.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-css">.foto {
+  background: #8ecae6;
+  min-height: 80px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font: bold 1.25rem system-ui, sans-serif;
+}
+
+.destacada {
+  background: #ffb703;
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.galeria {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}</code></pre>
+      <p>Con <code>grid-column: 1 / 3</code> y <code>grid-row: 1 / 3</code> obtienes lo mismo con líneas explícitas. La versión con <code>span</code> tiene una ventaja: si mañana la destacada es la tercera foto, sigue ocupando dos por dos donde le toque.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-etiqueta">
+    <h3>La etiqueta de oferta</h3>
+    <p>Coloca la etiqueta «-40%» en la esquina superior derecha de la tarjeta del producto, a 8 píxeles del borde de arriba y a 8 del borde derecho, por encima de la imagen. La etiqueta está al final del HTML: no la muevas de ahí.</p>
+    <div class="taller" id="taller-ej-etiqueta" data-modo="web" data-titulo="Ejercicio 7" data-alto="21rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;h1&gt;Ofertas&lt;/h1&gt;
+&lt;article class="producto"&gt;
+  &lt;div class="imagen"&gt;Imagen del juego&lt;/div&gt;
+  &lt;h2&gt;Galaxia Perdida&lt;/h2&gt;
+  &lt;p&gt;Aventura espacial para 1 o 2 jugadores.&lt;/p&gt;
+  &lt;span class="oferta"&gt;-40%&lt;/span&gt;
+&lt;/article&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">body {
+  font-family: system-ui, sans-serif;
+}
+
+.producto {
+  max-width: 280px;
+  border: 2px solid #1d3557;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.imagen {
+  height: 120px;
+  background: #a8dadc;
+  display: grid;
+  place-items: center;
+}
+
+.oferta {
+  background: crimson;
+  color: white;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 999px;
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var card = document.querySelector(".producto");
+var ofe = document.querySelector(".oferta");
+var c = card.getBoundingClientRect();
+var b = ofe.getBoundingClientRect();
+var bw = parseFloat(getComputedStyle(card).borderTopWidth);
+if (getComputedStyle(ofe).position !== "absolute") return "La etiqueta debe salir del flujo normal: position: absolute.";
+if (getComputedStyle(card).position === "static") return "La etiqueta se está midiendo desde la página, no desde la tarjeta. ¿Qué le falta a .producto para ser la referencia?";
+if (Math.abs(b.top - (c.top + bw) - 8) > 1) return "La etiqueta debe quedar a 8px del borde de arriba de la tarjeta (top: 8px).";
+if (Math.abs((c.right - bw) - b.right - 8) > 1) return "La etiqueta debe quedar a 8px del borde derecho de la tarjeta (right: 8px).";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Es la pareja de la sección de posición: el padre con un valor de <code>position</code> que no lo mueve, y el hijo con otro que lo saca del flujo.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>.oferta</code> necesitas tres declaraciones nuevas: <code>position</code>, <code>top</code> y <code>right</code>. ¿Por qué queda encima de la imagen sin <code>z-index</code>? Porque aparece después en el HTML.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-css">body {
+  font-family: system-ui, sans-serif;
+}
+
+.producto {
+  position: relative;
+  max-width: 280px;
+  border: 2px solid #1d3557;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.imagen {
+  height: 120px;
+  background: #a8dadc;
+  display: grid;
+  place-items: center;
+}
+
+.oferta {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: crimson;
+  color: white;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 999px;
+}</code></pre>
+      <p>Las distancias de un elemento con <code>absolute</code> se miden desde el borde interior de su referencia, justo por dentro del borde de 2 píxeles. Si quitas <code>position: relative</code> de la tarjeta, la etiqueta viaja a la esquina de la vista previa.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-mobile-first">
+    <h3>Catálogo mobile first</h3>
+    <p>Escribe el CSS de un catálogo adaptable con la estrategia mobile first. Estilos base: <code>.productos</code> en grid, una sola columna y 16 píxeles de hueco. Desde 600 píxeles de ancho: dos columnas. Desde 900: tres columnas. Usa media queries con <code>min-width</code> (o la sintaxis de rango con <code>&gt;=</code>), ninguna con <code>max-width</code>.</p>
+    <div class="taller" id="taller-ej-mobile-first" data-modo="web" data-titulo="Ejercicio 8" data-alto="22rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;h1&gt;Catálogo&lt;/h1&gt;
+&lt;div class="productos"&gt;
+  &lt;div class="producto"&gt;Mando&lt;/div&gt;
+  &lt;div class="producto"&gt;Auriculares&lt;/div&gt;
+  &lt;div class="producto"&gt;Teclado&lt;/div&gt;
+  &lt;div class="producto"&gt;Ratón&lt;/div&gt;
+  &lt;div class="producto"&gt;Micrófono&lt;/div&gt;
+  &lt;div class="producto"&gt;Cámara&lt;/div&gt;
+&lt;/div&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">body {
+  font-family: system-ui, sans-serif;
+  margin: 12px;
+}
+
+.producto {
+  background: #bde0fe;
+  padding: 24px 12px;
+  border-radius: 8px;
+}
+
+/* Tu código: base de una columna y dos media queries */
+</textarea>
+      <script type="text/plain" class="taller-verificar">
+var base = [], medias = [];
+function columnas(v) {
+  if (!v || v === "none") return 1;
+  var m = /repeat\(\s*(\d+)/.exec(v);
+  if (m) return parseInt(m[1], 10);
+  return v.replace(/\([^)]*\)/g, "()").trim().split(/\s+/).length;
+}
+for (var i = 0; i < document.styleSheets.length; i++) {
+  var reglas = document.styleSheets[i].cssRules;
+  for (var j = 0; j < reglas.length; j++) {
+    var r = reglas[j];
+    if (r.media && r.cssRules) {
+      var texto = r.media.mediaText;
+      if (/max-width|[<]/.test(texto)) return "En mobile first no hacen falta media queries con max-width: usa solo min-width.";
+      var n = /min-width:\s*(\d+)px/.exec(texto) || /width\s*>=?\s*(\d+)px/.exec(texto);
+      for (var k = 0; k < r.cssRules.length; k++) {
+        if (r.cssRules[k].selectorText === ".productos" && n) medias.push({ ancho: parseInt(n[1], 10), cols: columnas(r.cssRules[k].style.gridTemplateColumns) });
+      }
+    } else if (r.selectorText === ".productos") base.push(r.style);
+  }
+}
+if (!base.length || !base.some(function (s) { return s.display === "grid"; })) return "Empieza por la base, fuera de cualquier media query: .productos con display: grid.";
+if (!base.some(function (s) { return s.rowGap === "16px"; })) return "La base necesita 16px de hueco: gap: 16px.";
+if (base.some(function (s) { return columnas(s.gridTemplateColumns) > 1; })) return "Los estilos base son para teléfonos: una sola columna. Las columnas extra van en las media queries.";
+var m600 = medias.filter(function (m) { return m.ancho === 600; })[0];
+var m900 = medias.filter(function (m) { return m.ancho === 900; })[0];
+if (!m600) return "Falta la media query de 600px con una regla .productos dentro.";
+if (m600.cols !== 2) return "Desde 600px debe haber 2 columnas: grid-template-columns: repeat(2, 1fr).";
+if (!m900) return "Falta la media query de 900px con una regla .productos dentro.";
+if (m900.cols !== 3) return "Desde 900px debe haber 3 columnas.";
+if (medias.indexOf(m900) < medias.indexOf(m600)) return "Ordena las media queries de menor a mayor: primero la de 600px y después la de 900px.";
+var w = window.innerWidth;
+var esperadas = w >= 900 ? 3 : w >= 600 ? 2 : 1;
+var reales = getComputedStyle(document.querySelector(".productos")).gridTemplateColumns.split(" ").filter(Boolean).length;
+if (reales !== esperadas) return "La vista previa mide " + w + "px y debería mostrar " + esperadas + " columna(s), pero muestra " + reales + ". Revisa el orden de tus reglas.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Serán tres reglas para <code>.productos</code>: una fuera de toda media query (con <code>display: grid</code> y <code>gap</code>), otra dentro de <code>@media (min-width: 600px) { … }</code> y otra dentro de la de 900.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Dentro de las media queries solo cambia <code>grid-template-columns</code>. No hace falta repetir <code>display</code> ni <code>gap</code>: siguen aplicándose desde la regla base.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-css">body {
+  font-family: system-ui, sans-serif;
+  margin: 12px;
+}
+
+.producto {
+  background: #bde0fe;
+  padding: 24px 12px;
+  border-radius: 8px;
+}
+
+.productos {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 600px) {
+  .productos { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 900px) {
+  .productos { grid-template-columns: repeat(3, 1fr); }
+}</code></pre>
+      <p>Para ver las otras versiones en la vista previa, cambia temporalmente los números de corte como hiciste en el taller de media queries. Con la sintaxis de rango sería <code>@media (width &gt;= 600px)</code>. Y si te preguntas por qué no usar <code>repeat(auto-fit, minmax(…))</code>: también sería válido, pero aquí el diseño pedía cortes exactos.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-boton">
+    <h3>Un botón con movimiento accesible</h3>
+    <p>Dale vida al botón «Jugar ahora», con cuatro requisitos: una transición en <code>.boton</code> de entre 150 y 400 milisegundos; una regla <code>.boton:hover</code> que cambie el color de fondo y lo eleve con un <code>transform</code>; un contorno bien visible en <code>.boton:focus-visible</code> para quien navega con teclado; y una media query <code>prefers-reduced-motion: reduce</code> que quite la transición.</p>
+    <div class="taller" id="taller-ej-boton" data-modo="web" data-titulo="Ejercicio 9" data-alto="9rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;button class="boton"&gt;Jugar ahora&lt;/button&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">body {
+  font-family: system-ui, sans-serif;
+  padding: 24px;
+}
+
+.boton {
+  font: inherit;
+  font-weight: bold;
+  padding: 12px 24px;
+  border: 0;
+  border-radius: 8px;
+  background: #b5452b;
+  color: white;
+  cursor: pointer;
+}
+
+/* Tu código */
+</textarea>
+      <script type="text/plain" class="taller-verificar">
+var todas = [];
+function recorrer(lista, media) {
+  for (var i = 0; i < lista.length; i++) {
+    var r = lista[i];
+    if (r.cssRules && r.media) recorrer(r.cssRules, r.media.mediaText);
+    else if (r.selectorText) todas.push({ sel: r.selectorText.replace(/\s+/g, " "), st: r.style, media: media || "" });
+  }
+}
+for (var i = 0; i < document.styleSheets.length; i++) recorrer(document.styleSheets[i].cssRules, "");
+function segundos(v) {
+  return String(v || "").split(",").map(function (d) { var m = /([\d.]+)\s*(ms|s)/.exec(d); return m ? parseFloat(m[1]) * (m[2] === "ms" ? 0.001 : 1) : 0; });
+}
+var reduce = /prefers-reduced-motion:\s*reduce/;
+var conTransicion = todas.filter(function (r) { return r.sel === ".boton" && !reduce.test(r.media) && r.st.transitionDuration; });
+if (!conTransicion.length) return "Añade una transición a .boton, por ejemplo: transition: background-color 200ms ease, transform 200ms ease;";
+var d = Math.max.apply(null, segundos(conTransicion[conTransicion.length - 1].st.transitionDuration));
+if (d < 0.15 || d > 0.4) return "La transición dura " + d + "s. Para un botón, entre 150ms y 400ms se siente ágil.";
+var hover = todas.filter(function (r) { return /\.boton:hover/.test(r.sel); })[0];
+if (!hover || !hover.st.backgroundColor) return "Falta la regla .boton:hover que cambie el color de fondo.";
+if (!hover.st.transform || hover.st.transform === "none") return "En .boton:hover, añade también un transform, por ejemplo translateY(-2px).";
+var foco = todas.filter(function (r) { return /\.boton:focus-visible/.test(r.sel); })[0];
+if (!foco || !foco.st.outlineStyle || foco.st.outlineStyle === "none") return "Falta un contorno visible para el teclado, por ejemplo: .boton:focus-visible { outline: 3px solid #264653; outline-offset: 2px; }";
+var anula = todas.some(function (r) { return reduce.test(r.media) && /\.boton/.test(r.sel) && (r.st.transitionProperty === "none" || Math.max.apply(null, segundos(r.st.transitionDuration || "1s")) === 0); });
+var soloSinPreferencia = conTransicion.every(function (r) { return /no-preference/.test(r.media); });
+if (!anula && !soloSinPreferencia) return "Último paso: quita la transición para quien pidió menos movimiento: @media (prefers-reduced-motion: reduce) { .boton { transition: none; } }";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La transición va en <code>.boton</code>, no en <code>:hover</code>. Anima solo <code>background-color</code> y <code>transform</code>, no <code>all</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para comprobar el foco, haz clic dentro de la vista previa y pulsa <kbd>Tab</kbd>: el botón debería mostrar tu contorno.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-css">body {
+  font-family: system-ui, sans-serif;
+  padding: 24px;
+}
+
+.boton {
+  font: inherit;
+  font-weight: bold;
+  padding: 12px 24px;
+  border: 0;
+  border-radius: 8px;
+  background: #b5452b;
+  color: white;
+  cursor: pointer;
+  transition: background-color 200ms ease, transform 200ms ease;
+}
+
+.boton:hover {
+  background: #8f3521;
+  transform: translateY(-2px);
+}
+
+.boton:focus-visible {
+  outline: 3px solid #264653;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boton {
+    transition: none;
+  }
+}</code></pre>
+      <p>Otra estrategia válida es escribir la transición solo dentro de <code>@media (prefers-reduced-motion: no-preference)</code>. Fíjate también en el color: <code>#b5452b</code> con texto blanco tiene buen contraste; el naranja claro que suele usarse para botones de juego (<code>#e76f51</code>) no llega a 4.5:1 con blanco.</p>
+    </details>
+  </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: la página de tu videojuego</h2>
+  <p>Vas a maquetar la página de presentación de un videojuego indie, «Nébula», que se vea bien en un teléfono y en un monitor. El HTML ya está escrito y es semántico: tu trabajo es todo el CSS. Es el tipo de página que cualquier estudio pequeño publica antes de lanzar un juego, y usa casi todo lo que viste en esta estación.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Lee antes de escribir.</strong> Recorre el HTML de la pestaña HTML e identifica las zonas: cabecera, portada, características, precio y pie. En la pestaña CSS ya tienes las variables de color y espacio y un pequeño reinicio. Úsalas: nada de colores sueltos en tus reglas.</p></div></li>
+    <li><div><p><strong>Cabecera con flexbox.</strong> Logo a la izquierda y menú a la derecha, centrados en vertical, con <code>flex-wrap: wrap</code> para que en pantallas estrechas el menú pueda bajar. El menú (<code>.menu</code>) también es flex: enlaces en fila, sin viñetas ni márgenes de lista. Si quieres, hazla <code>sticky</code>.</p></div></li>
+    <li><div><p><strong>Portada.</strong> Relleno generoso, el título con un tamaño fluido hecho con <code>clamp()</code> y un interlineado apretado (alrededor de 1.1), y el párrafo limitado a unos <code>45ch</code>.</p></div></li>
+    <li><div><p><strong>Características con grid.</strong> En la base (teléfono), una sola columna con hueco entre tarjetas. Las tarjetas usan <code>--superficie</code> de fondo y <code>--radio</code> en las esquinas.</p></div></li>
+    <li><div><p><strong>El precio con su insignia.</strong> La tarjeta <code>.precio</code> centrada, con borde del color de la marca. La insignia «Lanzamiento» se coloca con <code>position: absolute</code> sobre el borde superior de la tarjeta.</p></div></li>
+    <li><div><p><strong>Botones con vida.</strong> <code>.boton</code> con fondo de la marca, texto oscuro, transición suave en <code>:hover</code>, contorno en <code>:focus-visible</code>, y una media query <code>prefers-reduced-motion</code> que quite la transición.</p></div></li>
+    <li><div><p><strong>Mobile first.</strong> Añade al final una media query con <code>min-width</code> (por ejemplo, 700px) que ponga las características en tres columnas y alinee la portada a la izquierda. Cambia el número de corte para ver las dos versiones en la vista previa.</p></div></li>
+    <li><div><p><strong>Revisa como un profesional.</strong> Comprueba el contraste de tus colores, navega con <kbd>Tab</kbd> por los enlaces y, cuando lo tengas en tu computadora, pruébalo con el modo dispositivo de DevTools y en tu teléfono.</p></div></li>
+  </ol>
+  <div class="taller" id="taller-proyecto" data-modo="web" data-titulo="Proyecto: página de «Nébula»" data-alto="32rem" data-exito="Tu página cumple todos los pasos. Revisa cómo se ve y dale tu toque: es tuya.">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;header class="cabecera"&gt;
+  &lt;a class="logo" href="#"&gt;Nébula&lt;/a&gt;
+  &lt;nav&gt;
+    &lt;ul class="menu"&gt;
+      &lt;li&gt;&lt;a href="#juego"&gt;El juego&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href="#caracteristicas"&gt;Características&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href="#comprar"&gt;Comprar&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/nav&gt;
+&lt;/header&gt;
+&lt;main&gt;
+  &lt;section class="portada" id="juego"&gt;
+    &lt;h1&gt;Nébula: el último faro&lt;/h1&gt;
+    &lt;p&gt;Un juego de exploración espacial en el que cada planeta esconde un puzle y una historia.&lt;/p&gt;
+    &lt;a class="boton" href="#comprar"&gt;Juega la demo&lt;/a&gt;
+  &lt;/section&gt;
+  &lt;section class="caracteristicas" id="caracteristicas"&gt;
+    &lt;article class="tarjeta"&gt;&lt;h2&gt;30 planetas&lt;/h2&gt;&lt;p&gt;Cada uno con sus propias reglas y su música.&lt;/p&gt;&lt;/article&gt;
+    &lt;article class="tarjeta"&gt;&lt;h2&gt;Cooperativo&lt;/h2&gt;&lt;p&gt;Juega con otra persona en la misma pantalla.&lt;/p&gt;&lt;/article&gt;
+    &lt;article class="tarjeta"&gt;&lt;h2&gt;Sin prisas&lt;/h2&gt;&lt;p&gt;No hay tiempo límite: piensa a tu ritmo.&lt;/p&gt;&lt;/article&gt;
+  &lt;/section&gt;
+  &lt;section class="compra" id="comprar"&gt;
+    &lt;article class="precio"&gt;
+      &lt;span class="insignia"&gt;Lanzamiento&lt;/span&gt;
+      &lt;h2&gt;Edición completa&lt;/h2&gt;
+      &lt;p class="cifra"&gt;$14.99&lt;/p&gt;
+      &lt;a class="boton" href="#"&gt;Comprar&lt;/a&gt;
+    &lt;/article&gt;
+  &lt;/section&gt;
+&lt;/main&gt;
+&lt;footer class="pie"&gt;
+  &lt;p&gt;Hecho por un equipo de tres personas.&lt;/p&gt;
+&lt;/footer&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">/* 1. Variables */
+:root {
+  --fondo: #0f172a;
+  --superficie: #1e293b;
+  --texto: #e2e8f0;
+  --texto-suave: #94a3b8;
+  --marca: #fbbf24;
+  --radio: 12px;
+  --espacio: 1rem;
+}
+
+/* 2. Reinicio */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+/* 3. Cabecera (paso 2) */
+
+/* 4. Portada (paso 3) */
+
+/* 5. Características (paso 4) */
+
+/* 6. Precio con insignia (paso 5) */
+
+/* 7. Botones (paso 6) */
+
+/* 8. Media queries (paso 7) */
+</textarea>
+    <script type="text/plain" class="taller-verificar">
+var css = codigo.css;
+function cs(sel) { return getComputedStyle(document.querySelector(sel)); }
+if (cs(".cabecera").display !== "flex") return "Paso 2: la cabecera debe usar flexbox (display: flex en .cabecera).";
+if (cs(".menu").display !== "flex") return "Paso 2: pon los enlaces del menú en fila con display: flex en .menu.";
+if (cs(".menu li").listStyleType !== "none") return "Paso 2: quita las viñetas del menú con list-style: none.";
+if (!/clamp\(/.test(css)) return "Paso 3: usa clamp() para el tamaño del título de la portada.";
+if (cs(".caracteristicas").display !== "grid") return "Paso 4: las características deben usar grid (display: grid en .caracteristicas).";
+if (cs(".insignia").position !== "absolute" || cs(".precio").position === "static") return "Paso 5: coloca la insignia con position: absolute dentro de .precio, que debe tener position: relative.";
+if (!/transition/.test(css)) return "Paso 6: añade una transición a .boton.";
+if (!/:focus-visible/.test(css)) return "Paso 6: añade un contorno visible en .boton:focus-visible.";
+if (!/@media[^{]*prefers-reduced-motion/.test(css)) return "Paso 6: respeta prefers-reduced-motion para la transición.";
+if (!/@media[^{]*(min-width|width\s*>)/.test(css)) return "Paso 7: añade al menos una media query con min-width (mobile first).";
+if ((css.match(/var\(--/g) || []).length < 10) return "Usa las variables de :root en tus reglas (var(--marca), var(--radio), var(--espacio)…). Todavía hay pocas.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <pre><code class="language-css">/* 1. Variables */
+:root {
+  --fondo: #0f172a;
+  --superficie: #1e293b;
+  --texto: #e2e8f0;
+  --texto-suave: #94a3b8;
+  --marca: #fbbf24;
+  --radio: 12px;
+  --espacio: 1rem;
+}
+
+/* 2. Reinicio */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+/* 3. Cabecera */
+.cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--espacio);
+  padding: var(--espacio);
+  background: var(--superficie);
+}
+
+.logo {
+  color: var(--marca);
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu a {
+  color: var(--texto);
+  text-decoration: none;
+}
+
+.menu a:hover {
+  color: var(--marca);
+}
+
+/* 4. Portada */
+.portada {
+  padding: calc(var(--espacio) * 3) var(--espacio);
+  text-align: center;
+}
+
+.portada h1 {
+  font-size: clamp(2rem, 1.2rem + 4vw, 3.5rem);
+  line-height: 1.1;
+  margin: 0 0 var(--espacio);
+}
+
+.portada p {
+  max-width: 45ch;
+  margin: 0 auto calc(var(--espacio) * 2);
+  color: var(--texto-suave);
+}
+
+/* 5. Características */
+.caracteristicas {
+  display: grid;
+  gap: var(--espacio);
+  max-width: 64rem;
+  margin-inline: auto;
+  padding: var(--espacio);
+}
+
+.tarjeta {
+  background: var(--superficie);
+  border-radius: var(--radio);
+  padding: var(--espacio);
+}
+
+.tarjeta h2 {
+  margin-top: 0;
+  font-size: 1.25rem;
+  color: var(--marca);
+}
+
+/* 6. Precio con insignia */
+.compra {
+  padding: calc(var(--espacio) * 3) var(--espacio);
+}
+
+.precio {
+  position: relative;
+  max-width: 22rem;
+  margin-inline: auto;
+  padding: calc(var(--espacio) * 2) var(--espacio);
+  border: 2px solid var(--marca);
+  border-radius: var(--radio);
+  text-align: center;
+}
+
+.insignia {
+  position: absolute;
+  top: -0.9rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.2rem 0.8rem;
+  border-radius: 999px;
+  background: var(--marca);
+  color: var(--fondo);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.cifra {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin: 0.5rem 0 1rem;
+}
+
+.pie {
+  padding: var(--espacio);
+  text-align: center;
+  color: var(--texto-suave);
+}
+
+/* 7. Botones */
+.boton {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radio);
+  background: var(--marca);
+  color: var(--fondo);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 200ms ease, background-color 200ms ease;
+}
+
+.boton:hover {
+  transform: translateY(-2px);
+  background: #fcd34d;
+}
+
+.boton:focus-visible {
+  outline: 3px solid var(--texto);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boton {
+    transition: none;
+  }
+}
+
+/* 8. Desde 700px */
+@media (min-width: 700px) {
+  .caracteristicas {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .portada {
+    text-align: left;
+    padding-inline: calc(var(--espacio) * 3);
+  }
+
+  .portada p {
+    margin-inline: 0;
+  }
+}</code></pre>
+    <p>Fíjate en el truco de la insignia: <code>left: 50%</code> coloca su borde izquierdo en el centro de la tarjeta, y <code>transform: translateX(-50%)</code> la desplaza la mitad de su propio ancho hacia la izquierda, así que queda centrada. Con <code>top</code> negativo se monta sobre el borde.</p>
+  </details>
+  <p><strong>Para ir más allá:</strong> lleva el proyecto a tu computadora con la estructura de carpetas de la primera sección (<code>index.html</code> y <code>css/estilos.css</code>); añade una fuente de Google Fonts para los títulos; crea un tema claro con <code>prefers-color-scheme: light</code> redefiniendo solo las variables; añade una galería de capturas con <code>repeat(auto-fit, minmax(200px, 1fr))</code>; o anima el logo con un <code>@keyframes</code> suave que solo se active con <code>prefers-reduced-motion: no-preference</code>. En la <a href="15-dom.html">Estación 15</a> le darás interactividad con JavaScript, y en la <a href="35-devops.html">Estación 35</a> aprenderás a publicarla en internet.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Si fallas alguna, lee la explicación: equivocarse aquí es la forma más barata de aprender.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Qué selector elige a todos los elementos que tienen <code>class="precio"</code>?</p>
+      <ol class="opciones">
+        <li><code>#precio</code><p class="explica">La almohadilla elige por id, no por clase.</p></li>
+        <li><code>.precio</code><p class="explica">Correcto. El punto indica una clase.</p></li>
+        <li><code>precio</code><p class="explica">Sin símbolo, el navegador buscaría etiquetas <code>&lt;precio&gt;</code>, que no existen.</p></li>
+        <li><code>[precio]</code><p class="explica">Eso elige elementos que tengan un atributo llamado <code>precio</code>, no la clase.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Un enlace cumple dos reglas: <code>#menu a { color: white; }</code> y <code>.menu .enlace:hover { color: gold; }</code>. Al pasar el ratón, ¿de qué color se ve?</p>
+      <ol class="opciones">
+        <li>Dorado, porque <code>:hover</code> siempre tiene prioridad.<p class="explica">Las pseudoclases no tienen prioridad especial: suman 1 en la columna de clases como cualquier clase.</p></li>
+        <li>Dorado, porque la segunda regla tiene más selectores.<p class="explica">No importa cuántos selectores haya, sino de qué tipo. Se compara columna por columna, empezando por los ids.</p></li>
+        <li>Blanco, porque la primera regla tiene un id.<p class="explica">Correcto. <code>#menu a</code> pesa 1-0-1 y <code>.menu .enlace:hover</code>, 0-3-0. Gana la columna de ids.</p></li>
+        <li>Depende de cuál esté escrita después.<p class="explica">El orden solo decide cuando la especificidad empata, y aquí no empata.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Qué elige el selector <code>.boton.grande</code>?</p>
+      <ol class="opciones">
+        <li>Los elementos que tienen a la vez la clase <code>boton</code> y la clase <code>grande</code>.<p class="explica">Correcto. Sin espacio, los dos selectores se refieren al mismo elemento.</p></li>
+        <li>Los elementos con clase <code>grande</code> que están dentro de un <code>.boton</code>.<p class="explica">Eso sería <code>.boton .grande</code>, con un espacio en medio.</p></li>
+        <li>Los elementos que tienen la clase <code>boton</code> o la clase <code>grande</code>.<p class="explica">Para «uno u otro» se usa una coma: <code>.boton, .grande</code>.</p></li>
+        <li>Nada: no se pueden escribir dos clases seguidas.<p class="explica">Sí se puede, y es muy habitual.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Una caja tiene <code>width: 200px; padding: 10px; border: 2px solid;</code> y el <code>box-sizing</code> por defecto. ¿Cuánto ocupa de ancho en pantalla?</p>
+      <ol class="opciones">
+        <li>200px<p class="explica">Eso sería con <code>box-sizing: border-box</code>. Por defecto, <code>width</code> solo mide el contenido.</p></li>
+        <li>212px<p class="explica">Sumaste el relleno y el borde de un solo lado. Hay que contar izquierda y derecha.</p></li>
+        <li>244px<p class="explica">Contaste el relleno dos veces por lado. Son 10 a cada lado, no 20.</p></li>
+        <li>224px<p class="explica">Correcto: 200 + 10 + 10 + 2 + 2 = 224.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Un párrafo tiene <code>color: crimson</code>, pero el enlace que hay dentro sigue azul. ¿Por qué?</p>
+      <ol class="opciones">
+        <li>Porque <code>color</code> no se hereda.<p class="explica"><code>color</code> sí se hereda: por eso el texto normal del párrafo es carmesí.</p></li>
+        <li>Porque el navegador tiene una regla propia para los enlaces, y una regla que elige al elemento directamente siempre gana a la herencia.<p class="explica">Correcto. La solución es <code>a { color: inherit; }</code> o una regla para esos enlaces.</p></li>
+        <li>Porque los enlaces siempre deben ser azules por accesibilidad.<p class="explica">Los enlaces pueden tener cualquier color, siempre que se distingan del texto que los rodea.</p></li>
+        <li>Porque falta <code>!important</code> en el párrafo.<p class="explica"><code>!important</code> no afecta a la herencia: el enlace seguiría recibiendo el color de su propia regla.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Un contenedor tiene <code>display: flex; flex-direction: column;</code>. ¿Qué propiedad centra a los hijos en horizontal?</p>
+      <ol class="opciones">
+        <li><code>align-items: center</code><p class="explica">Correcto. Con <code>column</code>, el eje principal es vertical y el cruzado, horizontal. <code>align-items</code> trabaja en el cruzado.</p></li>
+        <li><code>justify-content: center</code><p class="explica">Con <code>column</code>, <code>justify-content</code> trabaja en vertical: centraría de arriba abajo.</p></li>
+        <li><code>text-align: center</code><p class="explica">Centra el texto dentro de cada caja, no las cajas.</p></li>
+        <li><code>vertical-align: middle</code><p class="explica">Esa propiedad es para elementos en línea y celdas de tabla; no tiene efecto en flexbox.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">En una cuadrícula de 4 columnas, ¿qué hace <code>grid-column: 1 / -1</code>?</p>
+      <ol class="opciones">
+        <li>Ocupa solo la primera columna.<p class="explica">Para eso bastaría <code>grid-column: 1</code>.</p></li>
+        <li>Ocupa la última columna.<p class="explica">-1 no es una columna, es una línea: la última.</p></li>
+        <li>Ocupa todo el ancho, de la primera línea a la última.<p class="explica">Correcto. Es la forma de hacer un elemento de ancho completo sin contar columnas.</p></li>
+        <li>Da error, porque las líneas no pueden ser negativas.<p class="explica">Los números negativos cuentan desde el final y son válidos.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">El <code>&lt;html&gt;</code> mide 16px y un <code>&lt;div&gt;</code> mide 20px. Dentro del div, un párrafo tiene <code>font-size: 2rem</code>. ¿Cuánto mide su letra?</p>
+      <ol class="opciones">
+        <li>40px<p class="explica">Eso sería con <code>2em</code>, que se mide con el tamaño del padre.</p></li>
+        <li>20px<p class="explica">El párrafo no hereda el tamaño porque tiene su propia regla.</p></li>
+        <li>36px<p class="explica">rem no suma tamaños: multiplica el del elemento raíz.</p></li>
+        <li>32px<p class="explica">Correcto: rem siempre se mide con el elemento raíz, 2 × 16 = 32, esté donde esté.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Le pones <code>position: absolute; top: 0; right: 0;</code> a una insignia y aparece en la esquina de la pantalla en lugar de en la de su tarjeta. ¿Qué falta?</p>
+      <ol class="opciones">
+        <li><code>position: relative</code> en la tarjeta.<p class="explica">Correcto. <code>absolute</code> se mide desde el antepasado posicionado más cercano; sin él, desde la página.</p></li>
+        <li><code>z-index</code> en la insignia.<p class="explica"><code>z-index</code> decide qué queda encima, no desde dónde se miden las distancias.</p></li>
+        <li><code>display: flex</code> en la tarjeta.<p class="explica">Un contenedor flex no sirve de referencia para <code>absolute</code> si no está posicionado.</p></li>
+        <li>Cambiar <code>absolute</code> por <code>fixed</code>.<p class="explica"><code>fixed</code> se mide siempre desde la ventana: el problema empeoraría.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Escribes primero <code>@media (min-width: 1000px) { .grid { grid-template-columns: repeat(4, 1fr); } }</code> y después <code>@media (min-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); } }</code>. ¿Qué pasa en una ventana de 1200px?</p>
+      <ol class="opciones">
+        <li>Cuatro columnas, porque 1200 está más cerca de 1000.<p class="explica">CSS no elige la media query «más parecida»: aplica todas las que se cumplen.</p></li>
+        <li>Cuatro columnas, porque la media query más grande tiene prioridad.<p class="explica">Las media queries no añaden especificidad ni prioridad por su número.</p></li>
+        <li>Dos columnas, porque las dos se cumplen, empatan en especificidad y la de 600px está después.<p class="explica">Correcto. Por eso en mobile first se ordenan de menor a mayor.</p></li>
+        <li>Una columna, porque las dos se anulan.<p class="explica">Las reglas no se anulan entre sí: una gana y se aplica.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Según WCAG 2.2 nivel AA, ¿qué contraste mínimo necesita el texto de un párrafo normal con su fondo?</p>
+      <ol class="opciones">
+        <li>2:1<p class="explica">Es muy poco: un gris medio sobre blanco y ya no se lee bien.</p></li>
+        <li>3:1<p class="explica">Ese es el mínimo para texto grande y para elementos de la interfaz, no para texto normal.</p></li>
+        <li>7:1<p class="explica">Es el nivel AAA, más exigente. AA pide menos.</p></li>
+        <li>4.5:1<p class="explica">Correcto. Por ejemplo, <code>#767676</code> sobre blanco llega justo a 4.54:1.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Para qué sirve <code>@media (prefers-reduced-motion: reduce)</code>?</p>
+      <ol class="opciones">
+        <li>Para que las animaciones vayan más rápido en teléfonos lentos.<p class="explica">No mide la velocidad del dispositivo: lee una preferencia de la persona.</p></li>
+        <li>Para aplicar estilos cuando la persona ha pedido a su sistema que reduzca las animaciones.<p class="explica">Correcto. Así puedes quitar o suavizar el movimiento a quien le causa mareo o molestias.</p></li>
+        <li>Para desactivar todas las animaciones de la página en cualquier dispositivo.<p class="explica">Solo se aplica si la persona activó ese ajuste. Para el resto, las animaciones siguen.</p></li>
+        <li>Para reducir el tamaño de los archivos de animación.<p class="explica">No tiene relación con el peso de los archivos.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>CSS</dt><dd>Siglas de <em>Cascading Style Sheets</em>, «hojas de estilo en cascada». Lenguaje que describe cómo se ven los elementos de una página HTML.</dd>
+    <dt>Regla CSS</dt><dd>Un selector seguido de un bloque de declaraciones entre llaves: <code>h1 { color: navy; }</code>.</dd>
+    <dt>Selector</dt><dd>La parte de una regla que indica a qué elementos se aplica, como <code>p</code>, <code>.precio</code> o <code>#carrito</code>.</dd>
+    <dt>Declaración</dt><dd>Una pareja de propiedad y valor terminada en punto y coma, como <code>color: navy;</code>.</dd>
+    <dt>Pseudoclase</dt><dd>Selector que elige elementos por su estado o su posición, como <code>:hover</code>, <code>:focus-visible</code> o <code>:nth-child(2)</code>.</dd>
+    <dt>Pseudoelemento</dt><dd>Selector que elige una parte de un elemento o crea una caja dentro de él, como <code>::before</code> o <code>::placeholder</code>.</dd>
+    <dt>Cascada</dt><dd>El procedimiento con el que el navegador decide qué declaración gana cuando varias aplican al mismo elemento: importancia y origen, estilo en línea, especificidad y orden.</dd>
+    <dt>Especificidad</dt><dd>El peso de un selector, contado en tres columnas (ids, clases, tipos) que se comparan de izquierda a derecha.</dd>
+    <dt>Herencia</dt><dd>Mecanismo por el que algunas propiedades, sobre todo las de texto, pasan de un elemento a sus descendientes cuando estos no tienen un valor propio.</dd>
+    <dt>Modelo de caja</dt><dd>La forma en que CSS representa cada elemento: contenido, relleno (<code>padding</code>), borde (<code>border</code>) y margen (<code>margin</code>).</dd>
+    <dt>Padding (relleno)</dt><dd>Espacio entre el contenido de una caja y su borde. Comparte el fondo de la caja.</dd>
+    <dt>Margin (margen)</dt><dd>Espacio transparente fuera del borde de una caja, que la separa de las demás.</dd>
+    <dt>box-sizing</dt><dd>Propiedad que decide si <code>width</code> y <code>height</code> miden solo el contenido (<code>content-box</code>) o incluyen relleno y borde (<code>border-box</code>).</dd>
+    <dt>Flexbox</dt><dd>Sistema de CSS para colocar los hijos de un contenedor en una fila o una columna y repartir el espacio entre ellos.</dd>
+    <dt>Eje principal</dt><dd>En flexbox, la dirección en la que se colocan los elementos, definida por <code>flex-direction</code>. El perpendicular es el eje cruzado.</dd>
+    <dt>Grid</dt><dd>Sistema de CSS para organizar elementos en filas y columnas a la vez, sobre una cuadrícula.</dd>
+    <dt>fr</dt><dd>Unidad de grid que representa una fracción del espacio libre del contenedor.</dd>
+    <dt>rem</dt><dd>Unidad relativa al tamaño de letra del elemento raíz (<code>&lt;html&gt;</code>), normalmente 16px. Respeta el tamaño de letra que elige cada persona.</dd>
+    <dt>Viewport</dt><dd>La zona de la ventana del navegador donde se ve la página. Las unidades <code>vw</code> y <code>vh</code> son porcentajes de su ancho y su alto.</dd>
+    <dt>Media query</dt><dd>Bloque <code>@media</code> cuyas reglas solo se aplican si el dispositivo cumple una condición, como un ancho mínimo o una preferencia de la persona.</dd>
+    <dt>Mobile first</dt><dd>Estrategia de diseño adaptable que escribe primero los estilos para pantallas pequeñas y añade media queries con <code>min-width</code> para las grandes.</dd>
+    <dt>Variable CSS</dt><dd>Propiedad personalizada cuyo nombre empieza con <code>--</code> y que se lee con <code>var()</code>. Se hereda y se puede redefinir. En inglés, <em>custom property</em>.</dd>
+    <dt>Contexto de apilamiento</dt><dd>Grupo de capas dentro del cual se ordenan los elementos con <code>z-index</code>. Un elemento no puede salir por encima de su grupo.</dd>
+    <dt>Transición</dt><dd>Cambio gradual de una propiedad CSS entre dos valores, durante un tiempo, por ejemplo al pasar el ratón.</dd>
+    <dt>@keyframes</dt><dd>Regla que define los fotogramas clave de una animación CSS, que después se asigna a un elemento con <code>animation</code>.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación, no antes: te servirán para repasar y ver las mismas ideas explicadas por otras personas. Los dos cursos largos conviene verlos por partes, con el editor abierto para ir probando.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=tfeC1VQxNmU" data-canal="AlexCG Design" data-idioma="es" data-nivel="intro" data-duracion="15 min" data-por-que="Herencia, especificidad y cascada con ejemplos en el editor: un buen repaso de la sección más confusa.">DESCUBRE ESTO de CSS (Herencia, Especificidad y Cascada)</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=hEcrTFblhvU" data-canal="Kiko Palomares" data-idioma="es" data-nivel="intro" data-duracion="23 min" data-por-que="Flexbox y grid en poco tiempo, con ejemplos visuales de cuándo usar cada uno.">Aprende FLEXBOX y CSS Grid Layout desde cero [Curso exprés]</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=iwFEc6I8wSA" data-canal="freeCodeCamp Español" data-idioma="es" data-nivel="curso" data-duracion="1 h" data-por-que="Curso completo de flexbox, propiedad por propiedad, con diseños adaptables.">Aprende CSS Flexbox - Curso desde Cero</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=iTjkiI8QQsM" data-canal="midulive" data-idioma="es" data-nivel="profundo" data-duracion="1 h 36 min" data-por-que="Grid a fondo resolviendo ejercicios en directo: fr, repeat, minmax, áreas y auto-fit.">Aprende CSS Grid MUY FÁCIL con ejercicios</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Core/Styling_basics">Bloques de construcción CSS (MDN)</a><p>La guía de Mozilla en español: selectores, cascada, modelo de caja, valores y unidades, con ejercicios al final de cada tema.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Core/CSS_layout/Flexbox">Flexbox (MDN)</a><p>Todas las propiedades de flexbox explicadas con ejemplos editables.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Core/CSS_layout/Grids">Cuadrículas (MDN)</a><p>Grid paso a paso: pistas, líneas, áreas con nombre y colocación automática.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Core/CSS_layout/Responsive_Design">Diseño receptivo (MDN)</a><p>Media queries, imágenes y tipografía adaptables, y el porqué de cada técnica.</p></li>
+    <li><a href="https://flexboxfroggy.com/#es">Flexbox Froggy</a><p>Un juego en español: colocas ranas sobre nenúfares escribiendo CSS de flexbox. Veinticuatro niveles para fijar <code>justify-content</code> y <code>align-items</code>.</p></li>
+    <li><a href="https://cssgridgarden.com/#es">CSS Grid Garden</a><p>Del mismo estilo, para grid: riegas un huerto colocando áreas con <code>grid-column</code> y <code>grid-row</code>.</p></li>
+  </ul>
 </section>

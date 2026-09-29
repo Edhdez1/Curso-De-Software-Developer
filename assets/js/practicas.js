@@ -429,7 +429,16 @@
       var t = trocear(linea);
       if (t === null) return { error: "Falta cerrar unas comillas.", ayuda: "Si abres comillas \" tienes que cerrarlas." };
       if (!t.length) return [];
-      var cmd = t[0], args = t.slice(1);
+      var cmd = t[0], args = [];
+      // Comodines * y ?: se expanden con los nombres de la carpeta, como en bash (si no hay coincidencias, se deja el texto tal cual).
+      t.slice(1).forEach(function (arg) {
+        if (!/[*?]/.test(arg) || cmd === "echo" || cmd === "git" && /^-/.test(arg)) { args.push(arg); return; }
+        var corte = arg.lastIndexOf("/"), dirTxt = corte === -1 ? "" : arg.slice(0, corte + 1), patron = arg.slice(corte + 1);
+        var carpeta = obtener(normalizar(dirTxt || "."));
+        var re = new RegExp("^" + patron.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".") + "$");
+        var hits = carpeta && carpeta.tipo === "dir" ? Object.keys(carpeta.hijos).sort().filter(function (k) { return k.charAt(0) !== "." && re.test(k); }) : [];
+        if (hits.length) hits.forEach(function (h) { args.push(dirTxt + h); }); else args.push(arg);
+      });
       var red = args.indexOf(">") !== -1 ? ">" : args.indexOf(">>") !== -1 ? ">>" : null;
       var destino = null;
       if (red) { var ir = args.indexOf(red); destino = args[ir + 1]; args = args.slice(0, ir); if (!destino) return { error: "bash: error de sintaxis cerca del elemento inesperado «newline»" }; }
@@ -444,6 +453,23 @@
           var todo = args.indexOf("-a") !== -1 || args.indexOf("-la") !== -1 || args.indexOf("-al") !== -1;
           var larga = args.indexOf("-l") !== -1 || args.indexOf("-la") !== -1 || args.indexOf("-al") !== -1;
           var rutasLs = args.filter(function (a) { return a.charAt(0) !== "-"; });
+          if (rutasLs.length > 1) {
+            var archivosLs = [], carpetasLs = [], out = [];
+            for (var q = 0; q < rutasLs.length; q++) {
+              var nq = obtener(normalizar(rutasLs[q]));
+              if (!nq) return { error: "ls: no se puede acceder a '" + rutasLs[q] + "': No existe el archivo o el directorio" };
+              if (nq.tipo === "dir") carpetasLs.push(rutasLs[q]); else archivosLs.push(rutasLs[q]);
+            }
+            if (archivosLs.length) out.push(archivosLs.join("  "));
+            carpetasLs.forEach(function (c) {
+              var nc = obtener(normalizar(c));
+              if (out.length) out.push("");
+              out.push(c + ":");
+              var ks = Object.keys(nc.hijos).sort().filter(function (k) { return todo || k.charAt(0) !== "."; });
+              if (ks.length) out.push(ks.map(function (k) { return nc.hijos[k].tipo === "dir" ? k + "/" : k; }).join("  "));
+            });
+            res = out; break;
+          }
           var abs = normalizar(rutasLs[0] || ".");
           var n = obtener(abs);
           if (!n) return { error: "ls: no se puede acceder a '" + rutasLs[0] + "': No existe el archivo o el directorio" };
@@ -518,9 +544,20 @@
           var pnD = padreYNombre(normalizar(args[0])); delete pnD.padre.hijos[pnD.nombre]; res = []; break;
         }
         case "mv": case "cp": {
+          var recursivo = args.some(function (x) { return /^-[a-zA-Z]*[rR]/.test(x); });
+          args = args.filter(function (x) { return x.charAt(0) !== "-"; });
           if (args.length < 2) return { error: cmd + ": falta el archivo de destino" };
+          if (args.length > 2) {
+            var dDest = obtener(normalizar(args[args.length - 1]));
+            if (!dDest || dDest.tipo !== "dir") return { error: cmd + ": el destino '" + args[args.length - 1] + "' no es un directorio" };
+            var errores = [];
+            args.slice(0, -1).forEach(function (o) { var r = ejecutarLinea(cmd + (recursivo ? " -r" : "") + " \"" + o + "\" \"" + args[args.length - 1] + "\""); if (r && r.error) errores.push(r.error); });
+            if (errores.length) return { error: errores.join("\n") };
+            res = []; break;
+          }
           var origen = normalizar(args[0]), nO = obtener(origen);
           if (!nO) return { error: cmd + ": no se puede efectuar stat sobre '" + args[0] + "': No existe el archivo o el directorio" };
+          if (cmd === "cp" && nO.tipo === "dir" && !recursivo) return { error: "cp: se omite el directorio '" + args[0] + "'", ayuda: "Para copiar una carpeta con todo su contenido usa cp -r " + args[0] + " " + args[1] };
           var absDest = normalizar(args[1]), nDest = obtener(absDest);
           if (nDest && nDest.tipo === "dir") absDest = absDest + "/" + origen.split("/").pop();
           var pnDest = padreYNombre(absDest);
@@ -566,7 +603,11 @@
 
     function textoPrompt() { return usuario + "@terminal:" + mostrarRuta(cwd) + "$ "; }
     function actualizarPrompt() { prompt.textContent = textoPrompt(); }
-    function imprimir(texto, clase) { pantalla.insertBefore(crear("div", { "class": "terminal-linea" + (clase ? " " + clase : ""), texto: texto }), fila); }
+    var lineasSalida = [];
+    function imprimir(texto, clase) {
+      pantalla.insertBefore(crear("div", { "class": "terminal-linea" + (clase ? " " + clase : ""), texto: texto }), fila);
+      if (!clase || clase === "error") lineasSalida.push(String(texto));
+    }
     function bienvenida() {
       imprimir("Terminal de práctica. Escribe «help» para ver los comandos. Nada de lo que hagas aquí afecta a tu computadora.", "tenue");
     }
@@ -583,17 +624,17 @@
       var sistema = (function convertir(n) { var o = {}; Object.keys(n.hijos).forEach(function (k) { var h = n.hijos[k]; o[k] = h.tipo === "dir" ? convertir(h) : h.contenido; }); return o; })(obtener(inicio) || { hijos: {} });
       var e = git ? estadoGit() : null;
       var estadoRepo = git ? { raiz: git.raiz, rama: git.head, ramas: Object.keys(git.ramas), commits: Object.keys(git.commits).map(function (id) { return git.commits[id]; }), preparados: e.preparados.map(function (p) { return p.archivo; }), limpio: !e.preparados.length && !e.sinPreparar.length && !e.nuevos.length } : null;
-      var datos = { sistema: sistema, historial: historial.slice(), git: estadoRepo, cwd: cwd, n: ++ultimoPedido };
+      var datos = { sistema: sistema, historial: historial.slice(), git: estadoRepo, cwd: cwd, salida: lineasSalida.slice(-200), n: ++ultimoPedido };
       try {
         if (!verificador) {
-          var fuente = "onmessage=function(ev){var d=ev.data,r;try{r=(function(sistema,historial,git,cwd){\n" + mision + "\n})(d.sistema,d.historial,d.git,d.cwd);}catch(err){r=null;}postMessage({n:d.n,r:r===undefined?true:r});};";
+          var fuente = "onmessage=function(ev){var d=ev.data,r;try{r=(function(sistema,historial,git,cwd,salida){\n" + mision + "\n})(d.sistema,d.historial,d.git,d.cwd,d.salida);}catch(err){r=null;}postMessage({n:d.n,r:r===undefined?true:r});};";
           var url = URL.createObjectURL(new Blob([fuente], { type: "text/javascript" }));
           verificador = new Worker(url);
           verificador.onmessage = function (ev) { if (ev.data.n === ultimoPedido) mostrarMision(ev.data.r); };
         }
         verificador.postMessage(datos);
       } catch (err) {
-        try { mostrarMision(new Function("sistema", "historial", "git", "cwd", mision)(datos.sistema, datos.historial, datos.git, datos.cwd)); } catch (e2) { /* sin verificación */ }
+        try { mostrarMision(new Function("sistema", "historial", "git", "cwd", "salida", mision)(datos.sistema, datos.historial, datos.git, datos.cwd, datos.salida)); } catch (e2) { /* sin verificación */ }
       }
     }
     var VERSION_NODE = "v24.21.0";
@@ -681,6 +722,7 @@
     pantalla.addEventListener("click", function () { if (!window.getSelection().toString()) entrada.focus({ preventScroll: true }); });
     bReiniciar.addEventListener("click", function () {
       reiniciarEstado();
+      lineasSalida = [];
       $$(".terminal-linea", pantalla).forEach(function (l) { l.remove(); });
       veredicto.className = "taller-veredicto";
       bienvenida(); actualizarPrompt();

@@ -308,8 +308,8 @@ console.log(puntos);</code></pre>
         <rect class="d-resalte" x="16" y="121" width="298" height="25" rx="4" data-pasos="6"/>
         <text class="d-codigo-texto" x="24" y="61" style="font-size:15px">const pedido = pedirPizza();</text>
         <text class="d-codigo-texto" x="24" y="87" style="font-size:15px">pedido</text>
-        <text class="d-codigo-texto" x="24" y="113" style="font-size:15px">  .then(comer)</text>
-        <text class="d-codigo-texto" x="24" y="139" style="font-size:15px">  .catch(quejarse);</text>
+        <text class="d-codigo-texto" x="42" y="113" style="font-size:15px">.then(comer)</text>
+        <text class="d-codigo-texto" x="42" y="139" style="font-size:15px">.catch(quejarse);</text>
         <rect class="d-caja-suave" x="10" y="176" width="310" height="112" rx="8"/>
         <text class="d-rotulo" x="24" y="202">Cocina</text>
         <text class="d-mono d-tenue" x="24" y="236" style="font-size:14px" data-pasos="1-2">cocinando…</text>
@@ -336,7 +336,7 @@ console.log(puntos);</code></pre>
         <g data-pasos="5-" data-mover="6:translate(207px,72px)">
           <rect class="d-caja" x="345" y="122" width="150" height="56" rx="10"/>
           <text class="d-rotulo" x="420" y="145" text-anchor="middle">Promesa</text>
-          <text class="d-mono" x="420" y="168" text-anchor="middle" style="font-size:14px" data-texto="5:pendiente; 6:Error: sin horno">pendiente</text>
+          <text class="d-mono" x="420" y="168" text-anchor="middle" style="font-size:13px" data-texto="5:pendiente; 6:error: sin horno">pendiente</text>
         </g>
         <text class="d-peq" x="420" y="145" text-anchor="middle" data-pasos="7">Establecidas:</text>
         <text class="d-peq" x="420" y="165" text-anchor="middle" data-pasos="7">ya no cambian</text>
@@ -499,4 +499,445 @@ iniciarSesion("ana", "1234")
   <aside class="senal oficio">
     <p>Termina siempre una cadena con <code>catch</code>. Una promesa rechazada que nadie atiende produce un error «Uncaught (in promise)» en la consola del navegador y, en Node.js (desde la versión 15), detiene el programa entero. Los equipos profesionales configuran herramientas que avisan cuando una promesa queda sin manejar.</p>
   </aside>
+</section>
+
+<section id="async-await" data-parada="async y await">
+  <h2>async y await: código asíncrono que se lee de arriba abajo</h2>
+  <p>Las cadenas de <code>then</code> son mucho mejores que la pirámide, pero siguen llenas de funciones dentro de funciones. En 2017, JavaScript añadió dos palabras que permiten escribir código asíncrono con el mismo aspecto que el código síncrono de siempre: <code>async</code> y <code>await</code>. No reemplazan a las promesas: funcionan <em>con</em> promesas, por debajo todo sigue siendo lo mismo.</p>
+  <p>Tres reglas:</p>
+  <ol>
+    <li><strong><code>async</code></strong> delante de una función hace que <em>siempre</em> devuelva una promesa. Si la función hace <code>return 5</code>, quien la llama recibe una promesa que se cumple con 5. Si la función lanza un error con <code>throw</code>, la promesa se rechaza.</li>
+    <li><strong><code>await</code></strong> delante de una promesa pausa <em>esa función</em> hasta que la promesa se establezca. Si se cumple, <code>await</code> te entrega el valor. Si se rechaza, <code>await</code> lanza el error en esa misma línea, como un <code>throw</code>, así que lo atrapas con <code>try</code>/<code>catch</code>.</li>
+    <li><code>await</code> solo se puede usar dentro de funciones <code>async</code>, o en el nivel superior de un módulo (lo verás en la <a href="22-ejecucion.html">Estación 22</a>) y en la consola del navegador. En los talleres de este curso también puedes usarlo fuera de funciones, porque el taller envuelve tu código en una función <code>async</code> por ti.</li>
+  </ol>
+  <p>Así queda la historia de la sesión y las puntuaciones. Las funciones simuladas también están escritas con <code>async</code>: fíjate en que pueden hacer <code>return</code> de un valor o <code>throw</code> de un error, como cualquier función.</p>
+  <div class="taller" id="taller-async" data-titulo="La misma historia con async y await">
+    <textarea class="taller-codigo">function esperar(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function iniciarSesion(usuario, clave) {
+  await esperar(300);
+  if (clave !== "1234") throw new Error("Clave incorrecta");
+  return { token: "abc" };
+}
+async function pedirPerfil(token) {
+  await esperar(300);
+  return { id: 7, nombre: "Ana" };
+}
+async function pedirPartidas(idJugador) {
+  await esperar(300);
+  return [{ id: 91, juego: "Tetris" }];
+}
+async function pedirPuntuacion(idPartida) {
+  await esperar(300);
+  return 48200;
+}
+
+async function mostrarPuntuacion() {
+  try {
+    const sesion = await iniciarSesion("ana", "1234");
+    console.log("1. Sesión iniciada");
+    const perfil = await pedirPerfil(sesion.token);
+    console.log("2. Hola, " + perfil.nombre);
+    const partidas = await pedirPartidas(perfil.id);
+    console.log("3. Última partida: " + partidas[0].juego);
+    const puntos = await pedirPuntuacion(partidas[0].id);
+    console.log("4. Puntuación: " + puntos);
+  } catch (error) {
+    console.log("Error: " + error.message);
+  } finally {
+    console.log("Fin");
+  }
+}
+
+mostrarPuntuacion();</textarea>
+  </div>
+  <p><strong>Modifica:</strong> otra vez, prueba la clave <code>"0000"</code>. El error que lanza <code>iniciarSesion</code> sale por el <code>await</code> de la primera línea del <code>try</code> y cae en el <code>catch</code>, exactamente como un error síncrono. El <code>finally</code> se ejecuta siempre.</p>
+  <aside class="senal clave">
+    <p><code>await</code> no congela el programa: pausa solo la función donde está escrito. Mientras esa función espera, JavaScript queda libre para todo lo demás (clics, animaciones, otras funciones). Cuando la promesa se establece, la función continúa justo donde se quedó.</p>
+  </aside>
+  <p>Comprueba esa idea con este programa. <strong>Predice</strong> el orden de las letras antes de ejecutarlo:</p>
+  <div class="taller" id="taller-abcd" data-titulo="Predice: ¿en qué orden salen A, B, C y D?">
+    <textarea class="taller-codigo">function pedirPerfil() {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve({ nombre: "Ana" }), 300);
+  });
+}
+
+async function cargarPerfil() {
+  console.log("B. Pido el perfil");
+  const perfil = await pedirPerfil();
+  console.log("D. Llegó: " + perfil.nombre);
+}
+
+console.log("A. Antes");
+cargarPerfil();
+console.log("C. Después");</textarea>
+  </div>
+  <p>Sale A, B, C, D. Si esperabas A, B, D, C, no te preocupes: es la confusión más frecuente con <code>await</code>. Síguelo línea a línea:</p>
+  <div class="traza" data-titulo="await pausa la función, no el programa" data-inicio="pedirPerfil es la misma función de arriba: devuelve una promesa que se cumple a los 300 ms con { nombre: &quot;Ana&quot; }. Pulsa «Siguiente».">
+    <pre><code class="language-js">async function cargarPerfil() {
+  console.log("B. Pido el perfil");
+  const perfil = await pedirPerfil();
+  console.log("D. Llegó: " + perfil.nombre);
+}
+
+console.log("A. Antes");
+cargarPerfil();
+console.log("C. Después");</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"cargarPerfil": "función async"}, "nota": "Se define la función cargarPerfil. Definirla no la ejecuta."},
+      {"linea": 7, "vars": {"cargarPerfil": "función async"}, "salida": "A. Antes", "nota": "Se imprime A."},
+      {"linea": 8, "vars": {"cargarPerfil": "función async"}, "nota": "Se llama a cargarPerfil(): JavaScript entra en la función."},
+      {"linea": 2, "vars": {"cargarPerfil": "función async"}, "salida": "B. Pido el perfil", "nota": "Dentro de la función, se imprime B."},
+      {"linea": 3, "vars": {"cargarPerfil": "función async", "pedirPerfil()": "promesa pendiente"}, "nota": "pedirPerfil() devuelve una promesa pendiente y await pausa cargarPerfil en esta línea. La función devuelve el control a quien la llamó (la línea 8), y le entrega su propia promesa, también pendiente."},
+      {"linea": 9, "vars": {"cargarPerfil": "función async", "pedirPerfil()": "promesa pendiente"}, "salida": "C. Después", "nota": "Mientras cargarPerfil está en pausa, el resto del programa sigue: se imprime C. El programa principal terminó y JavaScript queda libre."},
+      {"linea": 3, "vars": {"cargarPerfil": "función async", "perfil": "{ nombre: \"Ana\" }"}, "nota": "Pasan 300 ms y la promesa se cumple. La función se reanuda justo en el await, que entrega el valor. Ahora sí se guarda en perfil."},
+      {"linea": 4, "vars": {"cargarPerfil": "función async", "perfil": "{ nombre: \"Ana\" }"}, "salida": "D. Llegó: Ana", "nota": "Se imprime D con el dato que llegó."},
+      {"linea": 5, "vars": {"cargarPerfil": "función async"}, "nota": "cargarPerfil termina. Su promesa se cumple con undefined, porque la función no tiene return. Las variables de la función desaparecen."}
+    ]</script>
+  </div>
+
+  <h3>Los errores más comunes con async y await</h3>
+  <p><strong>1. Olvidar el <code>await</code>.</strong> Sin <code>await</code> no recibes los datos, sino la promesa. Y una promesa no tiene la propiedad que buscas, así que obtienes <code>undefined</code>:</p>
+  <pre><code class="language-js">const perfil = pedirPerfil();   // falta await
+console.log(perfil);            // Promise { &lt;pending&gt; }
+console.log(perfil.nombre);     // undefined</code></pre>
+  <p>Cuando veas <code>Promise { &lt;pending&gt; }</code> o un <code>undefined</code> inesperado cerca de código asíncrono, busca primero un <code>await</code> que falta.</p>
+  <p><strong>2. Usar <code>await</code> fuera de una función <code>async</code>.</strong> El navegador responde con un error de sintaxis parecido a <code>SyntaxError: await is only valid in async functions and the top level bodies of modules</code>. La solución es añadir <code>async</code> a la función que contiene el <code>await</code>.</p>
+  <p><strong>3. Olvidar que una función <code>async</code> devuelve una promesa.</strong> Si <code>calcularTotal</code> es <code>async</code>, <code>const total = calcularTotal();</code> guarda una promesa, no un número. Lo asíncrono «contagia»: todo lo que necesita un resultado asíncrono también tiene que esperar (con <code>await</code> o con <code>then</code>).</p>
+  <p><strong>4. Usar <code>await</code> dentro de <code>forEach</code>.</strong> <code>forEach</code> llama a tu función para cada elemento, pero no espera a que termine, aunque sea <code>async</code>. Ejecuta este taller y mira qué mensaje sale primero:</p>
+  <div class="taller" id="taller-foreach" data-titulo="forEach no espera">
+    <textarea class="taller-codigo">function esperar(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+async function descargar(nivel) {
+  await esperar(200);
+  console.log("Descargado: " + nivel);
+}
+
+const niveles = ["bosque", "cueva", "castillo"];
+
+niveles.forEach(async (nivel) => {
+  await descargar(nivel);
+});
+console.log("¡Todos los niveles listos!");</textarea>
+  </div>
+  <p>«¡Todos los niveles listos!» sale <em>antes</em> que las descargas: es mentira. <strong>Modifica:</strong> reemplaza el <code>forEach</code> por un bucle <code>for...of</code>, que sí respeta el <code>await</code>:</p>
+  <pre><code class="language-js">for (const nivel of niveles) {
+  await descargar(nivel);
+}
+console.log("¡Todos los niveles listos!"); // ahora sí, al final</code></pre>
+  <p>Ese bucle descarga los niveles de uno en uno. En la próxima sección verás cómo descargarlos todos a la vez.</p>
+  <aside class="senal oficio" data-titulo="¿then o await?">
+    <p>El código moderno usa sobre todo <code>async</code>/<code>await</code>, porque se lee mejor y el manejo de errores es el mismo <code>try</code>/<code>catch</code> de siempre. Aun así, vas a leer <code>then</code> en documentación, tutoriales y proyectos más antiguos, y a veces una cadena corta queda más clara con <code>then</code>. Las dos son promesas: aprende a leer las dos y, dentro de una misma función, elige un estilo y no los mezcles.</p>
+  </aside>
+</section>
+
+<section id="varias" data-parada="Promise.all y race">
+  <h2>Varias promesas a la vez: Promise.all y Promise.race</h2>
+  <p>La pantalla principal de un juego en línea necesita tu perfil, tu lista de amigos y las noticias del día. Cada petición tarda alrededor de medio segundo. Si las pides una detrás de otra con tres <code>await</code>, la pantalla tarda la <em>suma</em> de las tres. Pero ninguna depende de las otras: puedes lanzarlas todas a la vez y esperar solo lo que tarde la más lenta.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 280" role="img" aria-label="Línea de tiempo: arriba, tres peticiones una detrás de otra de 0,6, 0,5 y 0,4 segundos suman 1,5 segundos; abajo, las mismas tres peticiones empiezan a la vez y todo termina a los 0,6 segundos, lo que tarda la más lenta">
+      <text class="d-rotulo" x="10" y="36">Uno tras otro</text>
+      <text class="d-peq d-tenue" x="10" y="56">await, await, await</text>
+      <rect class="d-acento" x="200" y="22" width="108" height="26" rx="4"/>
+      <text class="d-sobre-acento d-peq" x="208" y="40">perfil</text>
+      <rect class="d-acento" x="308" y="54" width="90" height="26" rx="4"/>
+      <text class="d-sobre-acento d-peq" x="316" y="72">amigos</text>
+      <rect class="d-acento" x="398" y="86" width="72" height="26" rx="4"/>
+      <text class="d-sobre-acento d-peq" x="405" y="104">noticias</text>
+      <path class="d-linea" d="M470 16v102"/>
+      <text class="d-peq" x="480" y="60">total: unos 1,5 s</text>
+      <text class="d-rotulo" x="10" y="160">A la vez</text>
+      <text class="d-peq d-tenue" x="10" y="180">Promise.all</text>
+      <rect class="d-acento" x="200" y="146" width="108" height="26" rx="4"/>
+      <text class="d-sobre-acento d-peq" x="208" y="164">perfil</text>
+      <rect class="d-acento" x="200" y="178" width="90" height="26" rx="4"/>
+      <text class="d-sobre-acento d-peq" x="208" y="196">amigos</text>
+      <rect class="d-acento" x="200" y="210" width="72" height="26" rx="4"/>
+      <text class="d-sobre-acento d-peq" x="207" y="228">noticias</text>
+      <path class="d-linea" d="M308 140v102"/>
+      <text class="d-peq" x="318" y="190">total: unos 0,6 s (lo que tarda la más lenta)</text>
+      <path class="d-linea" d="M200 258h500"/>
+      <path class="d-linea" d="M200 252v12M290 252v12M380 252v12M470 252v12M560 252v12M650 252v12"/>
+      <text class="d-peq d-tenue" x="200" y="278" text-anchor="middle">0 s</text>
+      <text class="d-peq d-tenue" x="290" y="278" text-anchor="middle">0,5 s</text>
+      <text class="d-peq d-tenue" x="380" y="278" text-anchor="middle">1 s</text>
+      <text class="d-peq d-tenue" x="470" y="278" text-anchor="middle">1,5 s</text>
+      <text class="d-peq d-tenue" x="560" y="278" text-anchor="middle">2 s</text>
+      <text class="d-peq d-tenue" x="650" y="278" text-anchor="middle">2,5 s</text>
+    </svg>
+    <figcaption>Tres peticiones independientes. En serie, los tiempos se suman; a la vez, el total es el de la más lenta.</figcaption>
+  </figure>
+  <p><code>Promise.all</code> recibe un array de promesas y devuelve una sola promesa que se cumple cuando <em>todas</em> se cumplen. Su valor es un array con los resultados, en el mismo orden en que pusiste las promesas (no en el orden en que llegaron). Con la desestructuración de la <a href="11-colecciones.html">Estación 11</a> queda muy limpio:</p>
+  <pre><code class="language-js">const [perfil, amigos, noticias] = await Promise.all([
+  pedirPerfil(),
+  pedirAmigos(),
+  pedirNoticias(),
+]);</code></pre>
+  <p>La clave está en un detalle: una operación empieza cuando <em>llamas</em> a la función, no cuando haces <code>await</code>. Al construir el array se llaman las tres funciones seguidas, así que las tres peticiones ya están en marcha antes de esperar a ninguna. Mide la diferencia:</p>
+  <div class="taller" id="taller-all" data-titulo="Uno tras otro contra a la vez">
+    <textarea class="taller-codigo">function esperar(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+async function pedirPerfil() { await esperar(600); return "Lyra"; }
+async function pedirAmigos() { await esperar(500); return ["Leo", "Mía", "Sol"]; }
+async function pedirNoticias() { await esperar(400); return ["Nuevo nivel", "Evento"]; }
+
+// Uno tras otro
+let inicio = Date.now();
+const perfil1 = await pedirPerfil();
+const amigos1 = await pedirAmigos();
+const noticias1 = await pedirNoticias();
+console.log("Uno tras otro: unos " + Math.round((Date.now() - inicio) / 100) * 100 + " ms");
+
+// A la vez
+inicio = Date.now();
+const [perfil2, amigos2, noticias2] = await Promise.all([
+  pedirPerfil(),
+  pedirAmigos(),
+  pedirNoticias(),
+]);
+console.log("A la vez: unos " + Math.round((Date.now() - inicio) / 100) * 100 + " ms");
+console.log(perfil2 + " tiene " + amigos2.length + " amigos y " + noticias2.length + " noticias");</textarea>
+  </div>
+  <p>Si <em>una</em> de las promesas se rechaza, <code>Promise.all</code> se rechaza enseguida con ese error, sin esperar a las demás (que siguen su curso, pero sus resultados se ignoran). Es lo que quieres cuando necesitas todos los datos o ninguno. Si prefieres recibir cada resultado aunque alguno falle, usa <code>Promise.allSettled</code>: se cumple cuando todas terminan y te da un objeto por cada una:</p>
+  <pre><code class="language-js">const resultados = await Promise.allSettled([pedirPerfil(), pedirAmigos()]);
+// [
+//   { status: 'fulfilled', value: 'Lyra' },
+//   { status: 'rejected', reason: Error: sin conexión }
+// ]
+for (const r of resultados) {
+  if (r.status === "fulfilled") console.log("Bien:", r.value);
+  else console.log("Falló:", r.reason.message);
+}</code></pre>
+  <p>Así se ve la misma comparación en una terminal, como la verás en tu computadora cuando uses Node.js. Entra en la carpeta <code>carga</code>, mira los archivos con <code>cat</code> y ejecuta los dos con <code>node</code>. Fíjate en el orden en que llegan las respuestas en cada caso.</p>
+  <div class="terminal-sim" data-titulo="Uno tras otro o a la vez, en Node.js" data-inicio="/home/tu">
+    <script type="application/json" class="terminal-sistema">{"carga":{"secuencial.mjs":"function esperar(ms) {\n  return new Promise((resolve) => setTimeout(resolve, ms));\n}\n\nasync function pedir(nombre, ms) {\n  await esperar(ms);\n  console.log(\"  llegó \" + nombre);\n  return nombre;\n}\n\nconst inicio = Date.now();\nawait pedir(\"perfil\", 600);\nawait pedir(\"amigos\", 500);\nawait pedir(\"noticias\", 400);\nconsole.log(\"Uno tras otro: unos \" + Math.round((Date.now() - inicio) / 100) * 100 + \" ms\");\n","paralelo.mjs":"function esperar(ms) {\n  return new Promise((resolve) => setTimeout(resolve, ms));\n}\n\nasync function pedir(nombre, ms) {\n  await esperar(ms);\n  console.log(\"  llegó \" + nombre);\n  return nombre;\n}\n\nconst inicio = Date.now();\nconst resultados = await Promise.all([\n  pedir(\"perfil\", 600),\n  pedir(\"amigos\", 500),\n  pedir(\"noticias\", 400),\n]);\nconsole.log(\"Resultados en orden:\", resultados);\nconsole.log(\"A la vez: unos \" + Math.round((Date.now() - inicio) / 100) * 100 + \" ms\");\n"}}</script>
+    <script type="text/plain" class="terminal-mision">
+      var ejecutados = historial.filter(function (h) { return /^node\s/.test(h); }).join(" ");
+      if (!/secuencial\.mjs/.test(ejecutados)) return "Entra en la carpeta (cd carga) y ejecuta el primer programa: node secuencial.mjs";
+      if (!/paralelo\.mjs/.test(ejecutados)) return "Ahora ejecuta el segundo: node paralelo.mjs, y compara los tiempos.";
+      return true;
+    </script>
+  </div>
+  <p>En <code>paralelo.mjs</code> las respuestas llegan en otro orden (la más rápida primero), pero el array que devuelve <code>Promise.all</code> respeta siempre el orden en que pediste las cosas.</p>
+
+  <h3>Promise.race: la primera que termine</h3>
+  <p><code>Promise.race</code> («carrera») se establece con la primera promesa que termine, bien o mal. Su uso más común es poner un <strong>tiempo límite</strong> (en inglés, <em>timeout</em>): haces competir tu petición contra una promesa que se rechaza pasado cierto tiempo.</p>
+  <div class="taller" id="taller-race" data-titulo="Un tiempo límite con Promise.race">
+    <textarea class="taller-codigo">function esperar(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+function limiteDeTiempo(ms) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => reject(new Error("Tiempo agotado")), ms);
+  });
+}
+async function servidorLento() {
+  await esperar(1500);
+  return "datos";
+}
+
+try {
+  const datos = await Promise.race([servidorLento(), limiteDeTiempo(1000)]);
+  console.log("Llegó a tiempo: " + datos);
+} catch (error) {
+  console.log("Error: " + error.message);
+}</textarea>
+  </div>
+  <p><strong>Modifica:</strong> cambia 1500 por 500 para que el servidor gane la carrera. Un detalle importante: <code>Promise.race</code> no cancela a la perdedora. Si el servidor es lento, su trabajo sigue en marcha aunque ya no te importe el resultado. Para cancelar de verdad una petición de red existe <code>AbortController</code>, que verás en la última sección de contenido.</p>
+  <p>Resumen de las cuatro formas de combinar promesas:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Método</th><th scope="col">Se cumple cuando…</th><th scope="col">Se rechaza cuando…</th><th scope="col">Úsalo para…</th></tr></thead>
+      <tbody>
+        <tr><td><code>Promise.all</code></td><td>todas se cumplen (array de valores, en orden)</td><td>una se rechaza</td><td>cargar varias cosas independientes que necesitas todas</td></tr>
+        <tr><td><code>Promise.allSettled</code></td><td>todas terminan, bien o mal</td><td>nunca</td><td>obtener cada resultado aunque alguno falle</td></tr>
+        <tr><td><code>Promise.race</code></td><td>la primera en terminar lo hace bien</td><td>la primera en terminar lo hace mal</td><td>tiempos límite</td></tr>
+        <tr><td><code>Promise.any</code></td><td>alguna se cumple (la primera)</td><td>todas se rechazan</td><td>pedir lo mismo a varios servidores y quedarte con el más rápido</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal error">
+    <p>Dos errores opuestos. El primero: encadenar <code>await</code> para cosas que no dependen entre sí, y hacer esperar a la persona sin motivo. El segundo: intentar lanzar a la vez cosas que sí dependen una de otra. No puedes pedir las partidas de un jugador antes de saber su identificador: ahí el orden importa y los <code>await</code> en serie son lo correcto.</p>
+  </aside>
+  <aside class="senal ojo">
+    <p>«A la vez» no significa «todas las que quieras». Si lanzas cientos de peticiones juntas a una API, lo más probable es que te bloquee por superar su límite de uso (lo verás en la próxima sección). Con listas largas se piden por tandas: por ejemplo, de diez en diez.</p>
+  </aside>
+</section>
+
+<section id="apis" data-parada="Qué es una API">
+  <h2>Qué es una API y cómo se lee su documentación</h2>
+  <p>Ya sabes esperar. Ahora, ¿a quién le pides los datos y cómo? Una <strong>API</strong> (del inglés <em>Application Programming Interface</em>, «interfaz de programación de aplicaciones») es un conjunto de reglas que dice cómo un programa puede pedirle cosas a otro: qué puedes pedir, cómo tienes que pedirlo y qué te van a responder.</p>
+  <aside class="senal analogia">
+    <p>Una API es como la carta de un restaurante. Te dice qué platos existen y cómo pedirlos, sin que tengas que entrar a la cocina ni saber cómo se preparan. El límite de la analogía: un camarero entiende «una de esas, pero sin cebolla»; una API no. Si escribes una letra mal o pides algo que no está en la carta, recibes un error.</p>
+  </aside>
+  <p>Ya usaste varias APIs sin llamarlas así: el DOM (<code>document.querySelector</code>), <code>localStorage</code> y la propia <code>console</code> son APIs que el navegador le ofrece a tu código. En esta estación hablamos de las <strong>APIs web</strong> (o APIs HTTP): las que usas a través de internet. Tu programa envía una petición HTTP a un servidor, como las que viste en la <a href="03-internet.html">Estación 3</a>, y el servidor responde con datos, casi siempre en formato JSON (<a href="11-colecciones.html">Estación 11</a>).</p>
+
+  <h3>Anatomía de una petición a una API</h3>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 190" role="img" aria-label="La dirección https://api.tvmaze.com/search/shows?q=arcane dividida en cuatro piezas: el protocolo https, el dominio api.tvmaze.com, el endpoint /search/shows y el parámetro de consulta q igual a arcane. El protocolo y el dominio juntos forman la URL base">
+      <path class="d-linea" d="M40 50v-10h306v10"/>
+      <text class="d-rotulo" x="193" y="28" text-anchor="middle">URL base</text>
+      <rect class="d-caja" x="40" y="60" width="110" height="44" rx="6"/>
+      <text class="d-mono" x="95" y="89" text-anchor="middle" style="font-size:18px">https://</text>
+      <rect class="d-caja" x="156" y="60" width="190" height="44" rx="6"/>
+      <text class="d-mono" x="251" y="89" text-anchor="middle" style="font-size:18px">api.tvmaze.com</text>
+      <rect class="d-acento" x="352" y="60" width="180" height="44" rx="6"/>
+      <text class="d-mono d-sobre-acento" x="442" y="89" text-anchor="middle" style="font-size:18px">/search/shows</text>
+      <rect class="d-caja" x="538" y="60" width="140" height="44" rx="6"/>
+      <text class="d-mono" x="608" y="89" text-anchor="middle" style="font-size:18px">?q=arcane</text>
+      <text x="95" y="130" text-anchor="middle">protocolo</text>
+      <text class="d-peq d-tenue" x="95" y="150" text-anchor="middle">conexión segura</text>
+      <text x="251" y="130" text-anchor="middle">dominio</text>
+      <text class="d-peq d-tenue" x="251" y="150" text-anchor="middle">el servidor</text>
+      <text x="442" y="130" text-anchor="middle">endpoint</text>
+      <text class="d-peq d-tenue" x="442" y="150" text-anchor="middle">qué recurso quieres</text>
+      <text x="608" y="130" text-anchor="middle">parámetro</text>
+      <text class="d-peq d-tenue" x="608" y="150" text-anchor="middle">q = el texto a buscar</text>
+      <text class="d-peq d-tenue" x="40" y="182">Otro endpoint de la misma API: /shows/55138 (una serie concreta, por su número de identificación)</text>
+    </svg>
+    <figcaption>Una dirección de la API de series TVmaze. La URL base es igual para toda la API; cada endpoint ofrece un servicio distinto.</figcaption>
+  </figure>
+  <ul>
+    <li>La <strong>URL base</strong> es la parte común a todas las peticiones de una API: <code>https://api.tvmaze.com</code>.</li>
+    <li>Un <strong>endpoint</strong> («punto de acceso») es cada dirección concreta que ofrece un servicio: <code>/search/shows</code> busca series, <code>/shows/55138</code> da los datos de una serie.</li>
+    <li>Los <strong>parámetros de consulta</strong> (<em>query parameters</em>) van después del <code>?</code>, en pares <code>nombre=valor</code> separados por <code>&amp;</code>. Sirven para afinar la petición: qué buscar, cuántos resultados, en qué idioma.</li>
+  </ul>
+  <p>Cuando el valor de un parámetro viene de lo que escribe una persona, no lo pegues a mano en la dirección: los espacios, las tildes y símbolos como <code>&amp;</code> o <code>?</code> tienen significado especial dentro de una URL. Deja que <code>URL</code> y <code>URLSearchParams</code> (que ya asomaron en la <a href="03-internet.html">Estación 3</a>) los codifiquen por ti:</p>
+  <div class="taller" id="taller-url" data-titulo="Armar la dirección de una petición">
+    <textarea class="taller-codigo">const url = new URL("https://api.tvmaze.com/search/shows");
+url.searchParams.set("q", "la casa de papel");
+console.log(url.toString());
+
+console.log(url.hostname);             // el dominio
+console.log(url.pathname);             // el endpoint
+console.log(url.searchParams.get("q")); // el parámetro, ya decodificado
+
+// Si armas la dirección con +, codifica el texto tú:
+const busqueda = "café & té";
+console.log("https://api.tvmaze.com/search/shows?q=" + encodeURIComponent(busqueda));</textarea>
+  </div>
+  <p>Fíjate en la última línea: sin <code>encodeURIComponent</code>, el <code>&amp;</code> de «café &amp; té» partiría el texto en dos parámetros y el servidor buscaría solo «café ».</p>
+
+  <h3>API REST: recursos y verbos</h3>
+  <p>Muchas APIs web siguen un estilo llamado <strong>REST</strong> (<em>Representational State Transfer</em>), que describió Roy Fielding en su tesis doctoral del año 2000. En la práctica, cuando alguien dice «una API REST» se refiere a una API HTTP organizada así:</p>
+  <ul>
+    <li>Los datos se organizan en <strong>recursos</strong>: usuarios, publicaciones, partidas, series. Cada recurso tiene su propia URL: <code>/posts</code> es la colección de publicaciones y <code>/posts/1</code> es la publicación número 1.</li>
+    <li>El <strong>método HTTP</strong> dice qué quieres hacer con el recurso. Es el verbo; la URL es el sustantivo.</li>
+    <li>Las respuestas usan los códigos de estado de HTTP para decir cómo fue todo, y casi siempre traen JSON.</li>
+  </ul>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Método</th><th scope="col">Para qué</th><th scope="col">Ejemplo</th><th scope="col">Respuesta típica</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td>Leer</td><td><code>GET /posts/1</code></td><td>200 y la publicación</td></tr>
+        <tr><td><code>POST</code></td><td>Crear</td><td><code>POST /posts</code> con los datos en el cuerpo</td><td>201 y lo que se creó</td></tr>
+        <tr><td><code>PUT</code></td><td>Reemplazar entero</td><td><code>PUT /posts/1</code> con la publicación completa</td><td>200</td></tr>
+        <tr><td><code>PATCH</code></td><td>Cambiar una parte</td><td><code>PATCH /posts/1</code> con solo el título</td><td>200</td></tr>
+        <tr><td><code>DELETE</code></td><td>Borrar</td><td><code>DELETE /posts/1</code></td><td>200 o 204</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Y los códigos de estado que más vas a ver, con lo que tu app debería hacer en cada caso:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Código</th><th scope="col">Nombre</th><th scope="col">Qué significa para tu app</th></tr></thead>
+      <tbody>
+        <tr><td>200</td><td>OK</td><td>Todo bien; en el cuerpo vienen los datos.</td></tr>
+        <tr><td>201</td><td>Created</td><td>Se creó lo que enviaste (típico después de un POST).</td></tr>
+        <tr><td>204</td><td>No Content</td><td>Bien, pero la respuesta no trae cuerpo. No intentes leer JSON.</td></tr>
+        <tr><td>400</td><td>Bad Request</td><td>Tu petición está mal: revisa los datos que envías.</td></tr>
+        <tr><td>401</td><td>Unauthorized</td><td>Falta identificarse (una clave o una sesión).</td></tr>
+        <tr><td>403</td><td>Forbidden</td><td>Te identificaste, pero no tienes permiso para eso.</td></tr>
+        <tr><td>404</td><td>Not Found</td><td>Ese recurso no existe: revisa la URL o muestra «no encontrado».</td></tr>
+        <tr><td>429</td><td>Too Many Requests</td><td>Superaste el límite de uso: espera un poco y vuelve a intentar.</td></tr>
+        <tr><td>500</td><td>Internal Server Error</td><td>Falló el servidor. No es culpa de tu petición; inténtalo más tarde.</td></tr>
+        <tr><td>503</td><td>Service Unavailable</td><td>El servidor está caído o saturado por un rato.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Los códigos 3xx (redirecciones) casi nunca los verás en tu código: el navegador sigue la redirección solo y te entrega la respuesta final.</p>
+  <aside class="senal nota" data-titulo="REST en sentido estricto">
+    <p>REST original es un conjunto de reglas de diseño bastante exigente, y muchas APIs que se llaman «REST» no las cumplen todas. La documentación de MDN lo dice así: para empezar, puedes entender «API REST» como un servicio HTTP que se usa con herramientas web estándar. Cómo <em>diseñar</em> tu propia API REST lo verás en la <a href="29-backend.html">Estación 29: Backend</a>.</p>
+  </aside>
+
+  <h3>Leer la documentación de una API</h3>
+  <p>Cada API es distinta, y todo lo que necesitas saber está en su documentación. Leerla bien antes de escribir código te ahorra horas. Así se lee la de TVmaze, la API de series que vas a usar en el proyecto (está en <code>https://www.tvmaze.com/api</code>, en inglés):</p>
+  <ol class="pasos">
+    <li><div><p><strong>URL base y endpoints.</strong> Busca la lista de servicios. Para buscar series: <code>GET https://api.tvmaze.com/search/shows?q=texto</code>.</p></div></li>
+    <li><div><p><strong>Autenticación.</strong> ¿Hace falta registrarse? TVmaze no pide nada para leer. Otras APIs piden una <strong>clave de API</strong> (<em>API key</em>): un código que te identifica y que envías en cada petición.</p></div></li>
+    <li><div><p><strong>Parámetros.</strong> Qué acepta cada endpoint y si son obligatorios. Aquí, <code>q</code> con el texto a buscar.</p></div></li>
+    <li><div><p><strong>Forma de la respuesta.</strong> Busca un ejemplo. TVmaze devuelve un array de objetos <code>{ score, show }</code>, donde <code>show</code> tiene los datos de la serie. Si no hay resultados, devuelve un array vacío <code>[]</code>.</p></div></li>
+    <li><div><p><strong>Límites de uso</strong> (<em>rate limit</em>). TVmaze permite «al menos 20 peticiones cada 10 segundos» por dirección IP; si te pasas, responde 429 y recomienda esperar y reintentar.</p></div></li>
+    <li><div><p><strong>Condiciones y licencia.</strong> Los datos de TVmaze usan la licencia CC BY-SA: puedes usarlos si enlazas a TVmaze desde tu app.</p></div></li>
+    <li><div><p><strong>Uso desde el navegador.</strong> La documentación dice que todos sus endpoints tienen CORS habilitado. Eso significa que una página web de otro dominio (la tuya) puede leer sus respuestas. Qué es CORS y por qué existe lo verás en la <a href="31-seguridad.html">Estación 31: Seguridad</a>.</p></div></li>
+  </ol>
+  <p>Así es una respuesta real de <code>/search/shows?q=arcane</code>, recortada (la real trae muchos más campos y diez resultados):</p>
+  <pre><code class="language-json">[
+  {
+    "score": 0.539,
+    "show": {
+      "id": 55138,
+      "name": "Arcane: League of Legends",
+      "language": "English",
+      "genres": ["Action", "Adventure", "Fantasy"],
+      "premiered": "2021-11-06",
+      "rating": { "average": 8.5 },
+      "image": { "medium": "https://static.tvmaze.com/uploads/…" },
+      "summary": "&lt;p&gt;…&lt;/p&gt;"
+    }
+  },
+  {
+    "score": 0.524,
+    "show": {
+      "id": 63633,
+      "name": "Arcane: Bridging the Rift",
+      "genres": [],
+      "premiered": "2022-08-04",
+      "rating": { "average": null },
+      "image": { "medium": "https://static.tvmaze.com/uploads/…" }
+    }
+  }
+]</code></pre>
+  <p>Observa los detalles que tu código tendrá que manejar: <code>genres</code> puede venir vacío, <code>rating.average</code> puede ser <code>null</code>, y en algunas series <code>image</code> es <code>null</code>. <code>summary</code> trae HTML: nunca lo metas con <code>innerHTML</code> en tu página, por el riesgo de seguridad que viste en la <a href="15-dom.html">Estación 15</a>. Y la búsqueda de TVmaze es aproximada: con «arcane» también devuelve series llamadas «Cane» o «Crane», con menos puntuación (<code>score</code>).</p>
+  <p>Recorrer una respuesta así es lo que aprendiste en la <a href="11-colecciones.html">Estación 11</a> con arrays de objetos y <code>JSON.parse</code>. Practícalo con la forma exacta de TVmaze:</p>
+  <div class="taller" id="taller-respuesta" data-titulo="Recorrer una respuesta de TVmaze">
+    <textarea class="taller-codigo">// Una respuesta recortada, tal como llega por la red: un texto JSON
+const texto = '[{"score":0.54,"show":{"name":"Arcane: League of Legends","premiered":"2021-11-06","rating":{"average":8.5}}},{"score":0.52,"show":{"name":"Arcane: Bridging the Rift","premiered":"2022-08-04","rating":{"average":null}}}]';
+
+const resultados = JSON.parse(texto);
+console.log(resultados.length + " resultados");
+
+for (const resultado of resultados) {
+  const serie = resultado.show;
+  const anio = serie.premiered.slice(0, 4);
+  // ?? usa el valor de la derecha si el de la izquierda es null o undefined
+  const nota = serie.rating.average ?? "sin valoración";
+  console.log(serie.name + " (" + anio + ") · " + nota);
+}</textarea>
+  </div>
+  <p>El operador <code>??</code> («fusión de nulos», <em>nullish coalescing</em>) es muy útil con APIs: pone un valor por defecto cuando el dato viene <code>null</code> o no viene.</p>
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>Las claves de API son como contraseñas: identifican a quien paga o responde por el uso. Todo lo que pones en el código de una página web lo puede ver cualquiera con las herramientas de desarrollo, así que una clave secreta nunca va en el código del navegador. Las APIs de esta estación no necesitan clave. Cómo se guardan los secretos en un servidor lo verás en la <a href="31-seguridad.html">Estación 31</a>.</p>
+  </aside>
+
+  <h3>APIs públicas para practicar</h3>
+  <p>Todas estas APIs son gratuitas, no piden clave y permiten peticiones desde el navegador. Las comprobamos en septiembre de 2026; si alguna dejara de responder, busca otra parecida: las APIs públicas cambian con el tiempo. Puedes abrir cualquiera de estas direcciones directamente en la barra del navegador: una petición GET es justo lo que hace el navegador cuando escribes una dirección.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">API</th><th scope="col">Pruébala con</th><th scope="col">Un detalle que conviene saber</th></tr></thead>
+      <tbody>
+        <tr><td>PokeAPI (Pokémon)</td><td><code>https://pokeapi.co/api/v2/pokemon/pikachu</code></td><td>Pide guardar lo que ya descargaste para no repetir peticiones. La altura viene en decímetros y el peso en hectogramos.</td></tr>
+        <tr><td>TVmaze (series)</td><td><code>https://api.tvmaze.com/search/shows?q=arcane</code></td><td>Al menos 20 peticiones cada 10 segundos. Licencia CC BY-SA: enlaza a TVmaze.</td></tr>
+        <tr><td>Rick and Morty API (personajes)</td><td><code>https://rickandmortyapi.com/api/character/?name=rick</code></td><td>Si la búsqueda no encuentra nada, responde 404 con <code>{"error": "There is nothing here"}</code> en lugar de una lista vacía.</td></tr>
+        <tr><td>Open-Meteo (clima)</td><td><code>https://api.open-meteo.com/v1/forecast?latitude=-12.05&amp;longitude=-77.04&amp;current=temperature_2m</code></td><td>Gratis para uso no comercial (hasta 10 000 peticiones al día). Su buscador de ciudades, <code>geocoding-api.open-meteo.com/v1/search?name=Lima&amp;language=es</code>, responde en español.</td></tr>
+        <tr><td>JSONPlaceholder (datos falsos)</td><td><code>https://jsonplaceholder.typicode.com/posts/1</code></td><td>Acepta POST, PUT, PATCH y DELETE para practicar, pero no guarda nada de verdad.</td></tr>
+        <tr><td>httpbin (respuestas a medida)</td><td><code>https://httpbin.org/status/404</code></td><td><code>/status/CÓDIGO</code> responde con ese código y <code>/delay/3</code> tarda 3 segundos: ideal para probar errores y tiempos límite.</td></tr>
+      </tbody>
+    </table>
+  </div>
 </section>

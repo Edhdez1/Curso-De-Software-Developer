@@ -284,7 +284,9 @@ Opcional: `data-exito="mensaje"` cambia el mensaje de acierto. Escribe las líne
 </div>
 ```
 
-Comandos: `pwd ls cd mkdir touch cat echo (con > y >>) rm rmdir mv cp clear help history`, `node archivo.js` (ejecuta el archivo con el motor de los talleres; `node -v`) y
+Instrucciones visibles dentro de la terminal (opcional): `<div class="terminal-instrucciones"><p>…</p></div>` dentro del
+`div.terminal-sim`. La misión recibe también `salida` (líneas que imprimieron los comandos y `node`).
+Comandos: `pwd ls cd mkdir touch cat echo (con > y >>) rm rmdir mv cp clear help history`, `node archivo.js` (ejecuta el archivo con el motor de los talleres; `node -v`), `cp -r`, comodines `*` y `?`, y
 `git init status add commit -m log --oneline branch switch checkout merge diff restore`.
 
 ### Objetivos, autoevaluación, glosario, videos, recursos

@@ -53,6 +53,8 @@
       <li><a href="#url">Anatomía de una URL</a></li>
       <li><a href="#http">HTTP</a></li>
       <li><a href="#https">HTTPS y el candado</a></li>
+      <li><a href="#navegador">Del Enter a la página</a></li>
+      <li><a href="#phishing">Que no te engañen</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -597,19 +599,21 @@ console.log("Fragmento:", direccion.hash);</textarea>
   <p>Si quitas el <code>https://</code>, obtienes un error: <code>TypeError: Invalid URL</code> (o un mensaje parecido, según el navegador). Para una computadora, <code>tienda.ejemplo.com/ofertas</code> no es una URL completa, porque no dice qué protocolo usar. La barra de direcciones te lo perdona y agrega <code>https://</code> por ti, pero en el código hay que ser exacto.</p>
   <p>Sigue ahora este otro programa paso a paso con el botón «Siguiente». Cada línea guarda una parte de la dirección en una variable (una caja con nombre, que estudiarás en la <a href="07-variables.html">Estación 7</a>), y la última arma una frase con ellas:</p>
   <div class="traza" data-titulo="Qué hace el navegador con una URL" data-rotulo-memoria="Memoria">
-    <pre><code class="language-js">const texto = "https://www.ejemplo.com/recetas/flan?porciones=4#pasos";
-const direccion = new URL(texto);
-const servidor = direccion.hostname;
-const ruta = direccion.pathname;
-const porciones = direccion.searchParams.get("porciones");
-console.log(`Pedir ${ruta} a ${servidor} para ${porciones} personas`);</code></pre>
+    <pre><code class="language-js">const texto = "https://ejemplo.com/flan?porciones=4#pasos";
+const url = new URL(texto);
+const servidor = url.hostname;
+const ruta = url.pathname;
+const porciones = url.searchParams.get("porciones");
+console.log(`Pedir ${ruta} a ${servidor}`);
+console.log(`Para ${porciones} personas`);</code></pre>
     <script type="application/json">[
-      {"linea": 1, "vars": {"texto": "\"https://www.ejemplo.com/recetas/flan?porciones=4#pasos\""}, "nota": "Se guarda la dirección como texto. Para la computadora, por ahora, es solo una fila de letras sin significado."},
-      {"linea": 2, "vars": {"texto": "\"https://www.ejemplo.com/recetas/flan?porciones=4#pasos\"", "direccion": "URL (ya separada en partes)"}, "nota": "new URL lee el texto de izquierda a derecha y lo separa en sus partes, igual que hace el navegador cuando pulsas Enter. Si el texto no fuera una URL válida, el programa se detendría aquí con un error."},
-      {"linea": 3, "vars": {"texto": "\"https://www.ejemplo.com/recetas/flan?porciones=4#pasos\"", "direccion": "URL (ya separada en partes)", "servidor": "\"www.ejemplo.com\""}, "nota": "hostname es el dominio: lo que va entre // y la siguiente /. Con este nombre, el navegador hará la consulta DNS."},
-      {"linea": 4, "vars": {"texto": "\"https://www.ejemplo.com/recetas/flan?porciones=4#pasos\"", "direccion": "URL (ya separada en partes)", "servidor": "\"www.ejemplo.com\"", "ruta": "\"/recetas/flan\""}, "nota": "pathname es la ruta: empieza en la / que sigue al dominio y termina antes del ? o del #."},
-      {"linea": 5, "vars": {"texto": "\"https://www.ejemplo.com/recetas/flan?porciones=4#pasos\"", "direccion": "URL (ya separada en partes)", "servidor": "\"www.ejemplo.com\"", "ruta": "\"/recetas/flan\"", "porciones": "\"4\""}, "nota": "searchParams.get busca la clave porciones en la consulta y devuelve su valor. Fíjate en las comillas: es el texto \"4\", no el número 4. Todo lo que viene en una URL es texto."},
-      {"linea": 6, "vars": {"texto": "\"https://www.ejemplo.com/recetas/flan?porciones=4#pasos\"", "direccion": "URL (ya separada en partes)", "servidor": "\"www.ejemplo.com\"", "ruta": "\"/recetas/flan\"", "porciones": "\"4\""}, "salida": "Pedir /recetas/flan a www.ejemplo.com para 4 personas", "nota": "Se arma la frase con las tres partes. El fragmento #pasos no aparece en el pedido: se queda en el navegador para saltar a la sección de los pasos."}
+      {"linea": 1, "vars": {"texto": "\"https://ejemplo.com/flan?porciones=4#pasos\""}, "nota": "Se guarda la dirección como texto. Para la computadora, por ahora, es solo una fila de letras sin significado."},
+      {"linea": 2, "vars": {"texto": "\"https://ejemplo.com/flan?porciones=4#pasos\"", "url": "URL (ya separada en partes)"}, "nota": "new URL lee el texto de izquierda a derecha y lo separa en sus partes, igual que hace el navegador cuando pulsas Enter. Si el texto no fuera una URL válida, el programa se detendría aquí con un error."},
+      {"linea": 3, "vars": {"texto": "\"https://ejemplo.com/flan?porciones=4#pasos\"", "url": "URL (ya separada en partes)", "servidor": "\"ejemplo.com\""}, "nota": "hostname es el dominio: lo que va entre // y la siguiente /. Con este nombre, el navegador hará la consulta DNS."},
+      {"linea": 4, "vars": {"texto": "\"https://ejemplo.com/flan?porciones=4#pasos\"", "url": "URL (ya separada en partes)", "servidor": "\"ejemplo.com\"", "ruta": "\"/flan\""}, "nota": "pathname es la ruta: empieza en la / que sigue al dominio y termina antes del ? o del #."},
+      {"linea": 5, "vars": {"texto": "\"https://ejemplo.com/flan?porciones=4#pasos\"", "url": "URL (ya separada en partes)", "servidor": "\"ejemplo.com\"", "ruta": "\"/flan\"", "porciones": "\"4\""}, "nota": "searchParams.get busca la clave porciones en la consulta y devuelve su valor. Fíjate en las comillas: es el texto \"4\", no el número 4. Todo lo que viene en una URL es texto."},
+      {"linea": 6, "vars": {"texto": "\"https://ejemplo.com/flan?porciones=4#pasos\"", "url": "URL (ya separada en partes)", "servidor": "\"ejemplo.com\"", "ruta": "\"/flan\"", "porciones": "\"4\""}, "salida": "Pedir /flan a ejemplo.com", "nota": "Se arma el pedido con la ruta y el servidor. El fragmento #pasos no aparece: se queda en el navegador para saltar a la sección de los pasos."},
+      {"linea": 7, "vars": {"texto": "\"https://ejemplo.com/flan?porciones=4#pasos\"", "url": "URL (ya separada en partes)", "servidor": "\"ejemplo.com\"", "ruta": "\"/flan\"", "porciones": "\"4\""}, "salida": "Para 4 personas", "nota": "La consulta sí viaja al servidor junto con la ruta, y el servidor puede usarla, por ejemplo, para calcular los ingredientes para 4 personas."}
     ]</script>
   </div>
 
@@ -720,7 +724,7 @@ Cache-Control: max-age=3600
         <g data-pasos="2-3" data-mover="3:translate(80px,0px)">
           <rect class="d-caja" x="222" y="44" width="210" height="74" rx="6"/>
           <g class="d-mono d-peq">
-            <text class="d-rotulo" x="232" y="66">GET /recetas HTTP/1.1</text>
+            <text x="232" y="66">GET /recetas HTTP/1.1</text>
             <text x="232" y="86">Host: www.ejemplo.com</text>
             <text x="232" y="106">Accept: text/html</text>
           </g>
@@ -925,6 +929,374 @@ console.log("Claves posibles con 128 bits:  ", 2 ** 128);</textarea>
   <p>Además, desde Chrome 154 (que se publica entre septiembre y octubre de 2026) la opción «Usar siempre conexiones seguras» viene activada: Chrome intenta primero HTTPS y, si un sitio público solo funciona con HTTP, te avisa antes de abrirlo. Hoy más del 95 % de las páginas que se cargan en Chrome usan HTTPS.</p>
   <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>El candado significa «nadie puede leer ni alterar lo que viaja entre tú y <em>este dominio</em>». No significa «este dominio es quien dice ser» ni «este sitio es honesto». Una web falsa de tu banco puede tener un candado perfecto. Lo que te protege es leer el dominio, y eso es lo que aprenderás en la <a href="#phishing">última sección</a>.</p></div></aside>
   <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Tampoco la navegación privada</p><p>El modo incógnito (o navegación privada) solo evita que tu propio navegador guarde el historial y las cookies de esa sesión. Los sitios que visitas, tu proveedor y quien administra la red (tu escuela o tu trabajo) pueden seguir viendo tu actividad igual que siempre.</p></div></aside>
+</section>
+
+<section id="navegador" data-parada="Del Enter a la página">
+  <h2>Del Enter a la página</h2>
+  <p>Ya tienes todas las piezas. Ahora vas a juntarlas para responder la pregunta de esta estación: ¿qué pasa desde que escribes una dirección y pulsas <kbd>Enter</kbd> hasta que ves la página? Es una pregunta clásica de las entrevistas de trabajo para programadores, y ahora puedes contestarla.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Entender lo que escribiste.</strong> El navegador decide si es una dirección o una búsqueda. «gatos negros» se convierte en una búsqueda en tu buscador; <code>ejemplo.com</code> se completa como <code>https://ejemplo.com/</code>.</p></div></li>
+    <li><div><p><strong>Mirar las cachés.</strong> Si visitaste el sitio hace poco, quizás ya tiene guardada la IP, o incluso partes de la página, y se ahorra pasos.</p></div></li>
+    <li><div><p><strong>DNS.</strong> Si no tiene la IP, la pide al resolvedor, como viste en la <a href="#dns">sección del DNS</a>.</p></div></li>
+    <li><div><p><strong>Conexión.</strong> Abre una conexión con la IP del servidor en el puerto 443: con el saludo de TCP o, si el sitio usa HTTP/3, con QUIC sobre UDP.</p></div></li>
+    <li><div><p><strong>TLS.</strong> Negocia el cifrado y comprueba el certificado del servidor. Si algo falla, se detiene y te avisa.</p></div></li>
+    <li><div><p><strong>Petición HTTP.</strong> Envía <code>GET /</code> con sus cabeceras.</p></div></li>
+    <li><div><p><strong>Respuesta.</strong> Recibe el código de estado, las cabeceras y el HTML. Si es una redirección (<code>301</code> o <code>302</code>), vuelve a empezar con la dirección de <code>Location</code>.</p></div></li>
+    <li><div><p><strong>Construir el DOM.</strong> Lee el HTML y, a medida que encuentra hojas de estilos, scripts, imágenes y fuentes, las pide en nuevas peticiones, a veces a otros dominios (con su propio DNS, conexión y TLS).</p></div></li>
+    <li><div><p><strong>Estilos y scripts.</strong> Aplica el CSS y ejecuta el JavaScript, que puede modificar la página.</p></div></li>
+    <li><div><p><strong>Diseño y pintado.</strong> Calcula dónde va cada cosa y la convierte en píxeles en tu pantalla. Las imágenes que llegan tarde se pintan cuando llegan.</p></div></li>
+  </ol>
+  <p>Todo eso suele durar entre unas décimas de segundo y un par de segundos. Según el informe Web Almanac de 2024, la página típica hace unas 70 peticiones y descarga unos 2,5 MB. Los pasos 3 a 7 ya los conoces. Veamos ahora qué hace el navegador con el HTML (pasos 8 a 10):</p>
+  <figure class="capsula" data-titulo="De texto HTML a píxeles">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: el HTML llega como texto; el navegador lo convierte en un árbol de nodos, el DOM, con html, head, body, title, h1, p e img; aplica el CSS; calcula el tamaño y la posición de cada caja; y pinta los píxeles de la página.">
+        <rect class="d-codigo" x="10" y="16" width="238" height="196" rx="8"/>
+        <g class="d-codigo-texto d-mono d-peq">
+          <text x="22" y="38">&lt;html&gt;</text>
+          <text x="39" y="55">&lt;head&gt;</text>
+          <text x="55" y="72">&lt;title&gt;Recetas&lt;/title&gt;</text>
+          <text x="39" y="89">&lt;/head&gt;</text>
+          <text x="39" y="106">&lt;body&gt;</text>
+          <text x="55" y="123">&lt;h1&gt;Flan&lt;/h1&gt;</text>
+          <text x="55" y="140">&lt;p&gt;Receta fácil&lt;/p&gt;</text>
+          <text x="55" y="157">&lt;img src="flan.jpg"&gt;</text>
+          <text x="39" y="174">&lt;/body&gt;</text>
+          <text x="22" y="191">&lt;/html&gt;</text>
+        </g>
+        <g data-pasos="4-">
+          <rect class="d-codigo" x="10" y="224" width="238" height="62" rx="8"/>
+          <rect class="d-resalte" x="16" y="234" width="226" height="20" rx="3" data-pasos="4"/>
+          <g class="d-codigo-texto d-mono d-peq">
+            <text x="22" y="249">h1 { color: deeppink; }</text>
+            <text x="22" y="273">img { width: 100%; }</text>
+          </g>
+        </g>
+        <text class="d-rotulo d-peq d-tenue" x="380" y="24" text-anchor="middle" data-pasos="2-">Árbol DOM</text>
+        <g data-pasos="2-">
+          <path class="d-linea" d="M380 65L320 95M380 65L440 95M320 121V151"/>
+          <rect class="d-caja" x="354" y="39" width="52" height="26" rx="13"/>
+          <text class="d-mono d-peq" x="380" y="57" text-anchor="middle">html</text>
+          <rect class="d-caja" x="294" y="95" width="52" height="26" rx="13" data-clases="5:d-caja-suave"/>
+          <text class="d-mono d-peq" x="320" y="113" text-anchor="middle">head</text>
+          <rect class="d-caja" x="414" y="95" width="52" height="26" rx="13"/>
+          <text class="d-mono d-peq" x="440" y="113" text-anchor="middle">body</text>
+          <rect class="d-caja" x="292" y="151" width="56" height="26" rx="13" data-clases="5:d-caja-suave"/>
+          <text class="d-mono d-peq" x="320" y="169" text-anchor="middle">title</text>
+        </g>
+        <g data-pasos="3-">
+          <path class="d-linea" d="M440 121L390 151M440 121V151M440 121L490 151"/>
+          <path class="d-punteada" d="M320 177V188M390 177V188M440 177V212"/>
+          <rect class="d-caja" x="368" y="151" width="44" height="26" rx="13" data-clases="4:d-acento"/>
+          <text class="d-mono d-peq" x="390" y="169" text-anchor="middle" data-clases="4:d-sobre-acento">h1</text>
+          <rect class="d-caja" x="418" y="151" width="44" height="26" rx="13"/>
+          <text class="d-mono d-peq" x="440" y="169" text-anchor="middle">p</text>
+          <rect class="d-caja" x="468" y="151" width="44" height="26" rx="13" data-clases="4:d-acento"/>
+          <text class="d-mono d-peq" x="490" y="169" text-anchor="middle" data-clases="4:d-sobre-acento">img</text>
+          <g class="d-peq d-tenue" text-anchor="middle">
+            <text x="320" y="202">«Recetas»</text>
+            <text x="390" y="202">«Flan»</text>
+            <text x="440" y="226">«Receta fácil»</text>
+          </g>
+        </g>
+        <text class="d-peq d-tenue" x="320" y="252" text-anchor="middle" data-pasos="5-">head no se dibuja</text>
+        <rect class="d-caja" x="520" y="16" width="190" height="268" rx="8"/>
+        <rect class="d-caja-suave" x="521" y="17" width="188" height="28" rx="7"/>
+        <text class="d-peq" x="534" y="36" data-pasos="2-">Recetas</text>
+        <text class="d-peq d-tenue" x="615" y="160" text-anchor="middle" data-pasos="1-4">(en blanco)</text>
+        <g data-pasos="5">
+          <rect class="d-punteada" x="532" y="58" width="166" height="40"/>
+          <rect class="d-punteada" x="532" y="106" width="166" height="24"/>
+          <rect class="d-punteada" x="532" y="138" width="166" height="132"/>
+          <g class="d-peq d-tenue">
+            <text x="538" y="74">h1</text>
+            <text x="538" y="122">p</text>
+            <text x="538" y="154">img: 100 % de ancho</text>
+          </g>
+        </g>
+        <g data-pasos="6">
+          <text class="d-rotulo d-acento" x="536" y="88" style="font-size:28px">Flan</text>
+          <text x="536" y="124" style="font-size:15px">Receta fácil</text>
+          <rect class="d-caja-suave" x="532" y="138" width="166" height="132" rx="4"/>
+          <path class="d-aviso" d="M580 244L590 196H640L650 244Z"/>
+          <path class="d-linea" d="M560 248H670"/>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>La respuesta del servidor trae el HTML. Para el navegador, por ahora, es solo texto: una fila de caracteres con etiquetas entre <code>&lt;</code> y <code>&gt;</code>. Todavía no puede dibujar nada.</li>
+        <li data-duracion="6">El <strong>analizador</strong> de HTML (en inglés, <em>parser</em>) lee el texto de arriba abajo y convierte cada etiqueta en un <strong>nodo</strong>: <code>html</code>, <code>head</code>, <code>body</code>, <code>title</code>. El título ya aparece en la pestaña.</li>
+        <li data-duracion="7">Al terminar tiene un árbol completo: el <strong>DOM</strong> (<em>Document Object Model</em>, modelo de objetos del documento). Cada elemento es un nodo con un padre y sus hijos, y los textos también son nodos. JavaScript podrá leer y cambiar este árbol en la <a href="15-dom.html">Estación 15</a>.</li>
+        <li data-duracion="6">Llega el CSS, en otra petición. El navegador calcula qué reglas afectan a cada nodo: el <code>h1</code> será rosa intenso y la imagen ocupará todo el ancho.</li>
+        <li data-duracion="6"><strong>Diseño</strong> (<em>layout</em>): calcula la posición y el tamaño de cada caja según el ancho de tu ventana. Lo que está dentro de <code>head</code> no se dibuja: son datos sobre la página.</li>
+        <li data-duracion="6"><strong>Pintado</strong> (<em>paint</em>): convierte cada caja en píxeles. Si la imagen tarda en llegar, se pinta cuando llega. El navegador repite estos pasos cada vez que algo cambia en la página.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>En este taller puedes ver el DOM de una página pequeña. La pestaña HTML tiene el contenido; la pestaña JS tiene un programa que recorre el árbol y lo imprime con sangría, un nivel por cada generación. Pulsa «Ejecutar». Después agrega un tercer ingrediente en el HTML (copia una línea que empiece por <code>&lt;li&gt;</code>) y vuelve a ejecutar: el árbol y la vista previa cambian a la vez.</p>
+  <div class="taller" id="taller-dom" data-modo="web" data-titulo="Mira el DOM" data-alto="13rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;h1&gt;Flan de la abuela&lt;/h1&gt;
+&lt;p&gt;Receta &lt;strong&gt;fácil&lt;/strong&gt; para 4 personas.&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;4 huevos&lt;/li&gt;
+  &lt;li&gt;1 lata de leche condensada&lt;/li&gt;
+&lt;/ul&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">h1 { color: deeppink; font-family: sans-serif; }
+body { font-family: sans-serif; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// Recorre el DOM y lo imprime con sangría. No hace falta entenderlo todavía.
+function mostrar(nodo, nivel) {
+  const sangria = "    ".repeat(nivel);
+  if (nodo.nodeType === Node.ELEMENT_NODE) {
+    if (nodo.tagName === "SCRIPT") return;          // los scripts del taller no cuentan
+    console.log(sangria + nodo.tagName.toLowerCase());
+    for (const hijo of nodo.childNodes) mostrar(hijo, nivel + 1);
+  } else if (nodo.nodeType === Node.TEXT_NODE && nodo.textContent.trim() !== "") {
+    console.log(sangria + "«" + nodo.textContent.trim() + "»");
+  }
+}
+mostrar(document.body, 0);</textarea>
+  </div>
+  <p>Fíjate en que <code>strong</code> es hijo de <code>p</code>, y que el texto del párrafo quedó partido en tres nodos: «Receta», «fácil» (dentro de <code>strong</code>) y «para 4 personas.». Así ve la página el navegador.</p>
+  <p>Ahora ordena tú el viaje completo, desde que pulsas <kbd>Enter</kbd>:</p>
+  <div class="parsons" data-titulo="Ordena el viaje de una página" data-lenguaje="text">
+    <ol>
+      <li>Decidir si lo escrito es una dirección o una búsqueda</li>
+      <li>Consultar el DNS para obtener la IP del servidor</li>
+      <li>Abrir la conexión con el servidor (TCP o QUIC)</li>
+      <li>Negociar TLS y comprobar el certificado</li>
+      <li>Enviar la petición HTTP GET</li>
+      <li>Recibir el código de estado, las cabeceras y el HTML</li>
+      <li>Construir el DOM y pedir CSS, imágenes y scripts</li>
+      <li>Calcular el diseño y pintar los píxeles</li>
+    </ol>
+  </div>
+
+  <h3>Míralo con tus ojos: la pestaña Red</h3>
+  <p>Todo lo anterior no es teoría: tu navegador te deja verlo. Las <strong>herramientas para desarrolladores</strong> (en inglés, <em>DevTools</em>) vienen incluidas en Chrome, Edge, Firefox y Safari, y su pestaña <strong>Red</strong> (<em>Network</em>) muestra cada petición que hace una página. Los nombres pueden aparecer en español o en inglés según el idioma de tu navegador; aquí van los dos.</p>
+  <ol class="pasos">
+    <li><div><p>En una computadora, abre Chrome o Edge y entra en <code>https://es.wikipedia.org/wiki/Internet</code>.</p></div></li>
+    <li><div><p>Abre las herramientas con <kbd>F12</kbd>, o con <kbd>Ctrl</kbd> + <kbd>Mayús</kbd> + <kbd>I</kbd> en Windows y Linux, o <kbd>Cmd</kbd> + <kbd>Opción</kbd> + <kbd>I</kbd> en Mac. En Firefox, <kbd>Ctrl</kbd> + <kbd>Mayús</kbd> + <kbd>E</kbd> abre directamente la pestaña Red. Safari pide activar antes las funciones para desarrolladores en sus ajustes avanzados.</p></div></li>
+    <li><div><p>Haz clic en la pestaña «Red» (<em>Network</em>). Si no la ves, está dentro del menú <code>»</code>.</p></div></li>
+    <li><div><p>Marca la casilla «Inhabilitar caché» (<em>Disable cache</em>) para ver la página como si fuera tu primera visita.</p></div></li>
+    <li><div><p>Recarga la página con <kbd>F5</kbd> (<kbd>Cmd</kbd> + <kbd>R</kbd> en Mac) y mira cómo se llena la lista.</p></div></li>
+  </ol>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Esquema de la pestaña Red de las herramientas para desarrolladores: arriba las pestañas con Red seleccionada; debajo la barra con la casilla Inhabilitar caché y el menú de limitación; luego los filtros por tipo; después una tabla de peticiones con las columnas Nombre, Estado, Tipo, Iniciador, Tamaño, Hora y Cascada, donde una fila tiene estado 404; y abajo el resumen con el número de solicitudes, lo transferido y los tiempos de carga.">
+      <rect class="d-caja" x="10" y="10" width="700" height="280" rx="6"/>
+      <path class="d-linea" d="M10 38H710M10 66H710M10 90H710M10 112H710M10 244H710" style="stroke-width:1"/>
+      <g class="d-peq">
+        <text x="24" y="29">Elementos</text>
+        <text x="104" y="29">Consola</text>
+        <text x="172" y="29">Fuentes</text>
+        <text class="d-rotulo" x="240" y="29">Red</text>
+        <text x="320" y="29">Rendimiento</text>
+      </g>
+      <rect class="d-acento" x="236" y="33" width="36" height="4"/>
+      <circle class="d-mal" cx="28" cy="52" r="6"/>
+      <circle class="d-linea" cx="50" cy="52" r="6"/>
+      <path class="d-linea" d="M46 56l8 -8"/>
+      <rect class="d-linea" x="72" y="46" width="12" height="12" rx="2"/>
+      <text class="d-peq" x="90" y="57">Conservar registro</text>
+      <rect class="d-acento" x="222" y="46" width="12" height="12" rx="2"/>
+      <path class="d-linea" d="M224 52l3 3 5 -6" style="stroke:var(--lc-on)"/>
+      <text class="d-peq" x="240" y="57">Inhabilitar caché</text>
+      <rect class="d-caja" x="400" y="44" width="130" height="18" rx="4" style="stroke-width:1"/>
+      <text class="d-peq" x="408" y="57">Sin limitaciones</text>
+      <path class="d-tinta" d="M516 50l5 6 5 -6z"/>
+      <g class="d-peq d-tenue">
+        <text class="d-rotulo" x="24" y="83">Todo</text>
+        <text x="66" y="83">Fetch/XHR</text>
+        <text x="140" y="83">Doc</text>
+        <text x="176" y="83">CSS</text>
+        <text x="214" y="83">JS</text>
+        <text x="242" y="83">Fuente</text>
+        <text x="298" y="83">Img</text>
+        <text x="334" y="83">Medios</text>
+      </g>
+      <g class="d-rotulo d-peq">
+        <text x="24" y="106">Nombre</text>
+        <text x="200" y="106">Estado</text>
+        <text x="262" y="106">Tipo</text>
+        <text x="348" y="106">Iniciador</text>
+        <text x="440" y="106">Tamaño</text>
+        <text x="506" y="106">Hora</text>
+        <text x="570" y="106">Cascada</text>
+      </g>
+      <path class="d-linea" d="M560 90V244" style="stroke-width:1"/>
+      <g class="d-peq">
+        <text x="24" y="132">Internet</text>
+        <text x="200" y="132">200</text>
+        <text x="262" y="132">document</text>
+        <text x="348" y="132">Otro</text>
+        <text x="440" y="132">98,4 kB</text>
+        <text x="506" y="132">210 ms</text>
+        <text x="24" y="160">load.php?modules=…</text>
+        <text x="200" y="160">200</text>
+        <text x="262" y="160">stylesheet</text>
+        <text x="348" y="160">Internet</text>
+        <text x="440" y="160">21,3 kB</text>
+        <text x="506" y="160">95 ms</text>
+        <text x="24" y="188">wikipedia.png</text>
+        <text x="200" y="188">200</text>
+        <text x="262" y="188">png</text>
+        <text x="348" y="188">Internet</text>
+        <text x="440" y="188">13,9 kB</text>
+        <text x="506" y="188">60 ms</text>
+        <text x="24" y="216">logo-antiguo.png</text>
+        <text class="d-mal d-rotulo" x="200" y="216">404</text>
+        <text x="262" y="216">png</text>
+        <text x="348" y="216">Internet</text>
+        <text x="440" y="216">0,5 kB</text>
+        <text x="506" y="216">40 ms</text>
+      </g>
+      <rect class="d-acento" x="570" y="124" width="46" height="10" rx="2"/>
+      <rect class="d-acento" x="616" y="152" width="24" height="10" rx="2"/>
+      <rect class="d-acento" x="620" y="180" width="18" height="10" rx="2"/>
+      <rect class="d-acento" x="622" y="208" width="12" height="10" rx="2"/>
+      <text class="d-peq" x="44" y="265">42 solicitudes · 1,1 MB transferidos · DOMContentLoaded: 620 ms · Carga: 1,5 s</text>
+      <g class="d-rotulo d-peq" text-anchor="middle">
+        <circle class="d-acento" cx="288" cy="24" r="10"/>
+        <text class="d-sobre-acento" x="288" y="29">1</text>
+        <circle class="d-acento" cx="362" cy="52" r="10"/>
+        <text class="d-sobre-acento" x="362" y="57">2</text>
+        <circle class="d-acento" cx="238" cy="211" r="10"/>
+        <text class="d-sobre-acento" x="238" y="216">3</text>
+        <circle class="d-acento" cx="26" cy="260" r="10"/>
+        <text class="d-sobre-acento" x="26" y="265">4</text>
+      </g>
+    </svg>
+    <figcaption>Esquema de la pestaña Red con datos de ejemplo (tus números serán otros). 1: la pestaña Red. 2: «Inhabilitar caché». 3: una petición que falló con 404. 4: el resumen de la carga.</figcaption>
+  </figure>
+  <p>Cada fila es una petición HTTP, y cada columna, un dato que ya sabes leer:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Columna</th><th scope="col">Qué muestra</th></tr></thead>
+      <tbody>
+        <tr><td>Nombre (<em>Name</em>)</td><td>El final de la URL pedida. Pasa el cursor por encima para ver la URL completa.</td></tr>
+        <tr><td>Estado (<em>Status</em>)</td><td>El código de estado HTTP: 200, 301, 304, 404…</td></tr>
+        <tr><td>Tipo (<em>Type</em>)</td><td>Qué clase de recurso es: <code>document</code> (el HTML), <code>stylesheet</code>, <code>script</code>, <code>png</code>, <code>font</code>…</td></tr>
+        <tr><td>Iniciador (<em>Initiator</em>)</td><td>Quién provocó la petición: normalmente el HTML o un script que la pidió.</td></tr>
+        <tr><td>Tamaño (<em>Size</em>)</td><td>Cuántos datos viajaron. Si dice «memory cache» o «disk cache», no viajó nada: salió de la caché.</td></tr>
+        <tr><td>Hora (<em>Time</em>)</td><td>A pesar del nombre en español, es la duración total de la petición.</td></tr>
+        <tr><td>Cascada (<em>Waterfall</em>)</td><td>Una barra por petición en una línea de tiempo: se ve qué empezó primero y qué se hizo en paralelo.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Haz clic en la primera fila, la del documento HTML. Se abre un panel con varias pestañas:</p>
+  <ul>
+    <li><strong>Encabezados</strong> (<em>Headers</em>): en «General» verás la URL de solicitud, el método, el código de estado y la <strong>dirección remota</strong> (<em>Remote Address</em>), que es la IP del servidor seguida de <code>:443</code>, el puerto. Debajo están los encabezados de respuesta y los de solicitud: <code>content-type</code>, <code>cache-control</code>, <code>user-agent</code>… todos los que viste en la sección de HTTP.</li>
+    <li><strong>Vista previa</strong> (<em>Preview</em>) y <strong>Respuesta</strong> (<em>Response</em>): el cuerpo recibido, dibujado o como texto.</li>
+    <li><strong>Tiempos</strong> (<em>Timing</em>): el desglose de la petición, que coincide con el viaje que estudiaste: «Petición de DNS» (<em>DNS Lookup</em>), «Conexión inicial» (<em>Initial connection</em>) y «SSL» (el saludo TLS), «Solicitud enviada», «Esperando la respuesta del servidor» (en inglés, <em>Waiting for server response</em>, también llamado TTFB, el tiempo hasta el primer byte) y «Descarga de contenido». Si el DNS y la conexión aparecen vacíos, es que se reutilizó lo que ya estaba abierto o en caché.</li>
+  </ul>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>Dos trucos que usan a diario los profesionales. Primero, haz clic derecho en los títulos de las columnas y activa «Protocolo»: verás <code>h2</code> (HTTP/2) o <code>h3</code> (HTTP/3) en cada fila. Segundo, en el menú «Limitación» (<em>Throttling</em>), que por defecto dice «Sin limitaciones», elige «3G» y recarga: así se ve tu sitio con una conexión móvil lenta, que es la que tienen muchas de las personas que lo usarán. Cuando algo «no carga» o «va lento», la pestaña Red es el primer lugar donde mirar. La usarás a fondo en la <a href="12-depuracion.html">Estación 12</a>.</p></div></aside>
+</section>
+
+<section id="phishing" data-parada="Que no te engañen">
+  <h2>Que no te engañen: el dominio real</h2>
+  <p>Te llega un mensaje: «Tu cuenta será bloqueada. Verifica tus datos aquí». El enlace parece de tu banco, la página es idéntica y tiene candado. Es <strong>phishing</strong> (suplantación de identidad): una trampa que imita a un banco, una tienda o una red social para robarte contraseñas, códigos o datos de tarjetas. Ya viste que el candado no te protege de esto. Lo que sí te protege es algo que ahora sabes hacer: leer la URL.</p>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>Lo único que dice de verdad con quién estás hablando es el <strong>dominio registrable</strong>: el nombre que alguien compró más su terminación, como <code>wikipedia.org</code>. Todo lo que está a su izquierda son subdominios, y el dueño del dominio puede escribir ahí lo que quiera, incluido el nombre de tu banco.</p></div></aside>
+  <p>Los nombres de esta sección son inventados. Usaremos un banco ficticio cuyo sitio auténtico es <code>bancocondor.com</code>.</p>
+
+  <h3>El método, paso a paso</h3>
+  <ol class="pasos">
+    <li><div><p>Busca el <code>//</code> que sigue al protocolo.</p></div></li>
+    <li><div><p>El host va desde ahí hasta el primer <code>/</code>, <code>?</code>, <code>#</code> o <code>:</code>. Lo que venga después (la ruta, la consulta) no importa para saber adónde vas: ahí también pueden escribir «bancocondor».</p></div></li>
+    <li><div><p>Si dentro de ese tramo hay una <code>@</code>, descarta todo lo que está antes de ella: es un nombre de usuario, no el destino.</p></div></li>
+    <li><div><p>Lee el host <strong>de derecha a izquierda</strong>: primero la terminación (<code>.com</code>, <code>.net</code>, <code>.mx</code>…) y luego el nombre que va justo antes. Esos dos juntos son el dominio real.</p></div></li>
+    <li><div><p>Compáralo, letra por letra, con el dominio que conoces de verdad: el que aparece en tu tarjeta, en la app oficial o en tus marcadores.</p></div></li>
+  </ol>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 250" role="img" aria-label="Dos enlaces analizados. En https://www.bancocondor.com.acceso-seguro-24h.net/login, la parte www.bancocondor.com son subdominios que elige el dueño y el dominio real es acceso-seguro-24h.net. En https://www.bancocondor.com@verificar-cuenta.example/login, lo que va antes de la arroba no cuenta y el dominio real es verificar-cuenta.example.">
+      <text class="d-peq d-tenue" x="345" y="16" text-anchor="middle">Lee el host de derecha a izquierda</text>
+      <path class="d-linea" d="M600 28H120"/>
+      <path class="d-tinta" d="M122 22l-12 6 12 6z"/>
+      <g class="d-mono" style="font-size:16px">
+        <text class="d-tenue" x="20" y="60" textLength="80" lengthAdjust="spacingAndGlyphs">https://</text>
+        <text x="100" y="60" textLength="200" lengthAdjust="spacingAndGlyphs">www.bancocondor.com.</text>
+        <text x="300" y="60" style="font-weight:700" textLength="210" lengthAdjust="spacingAndGlyphs">acceso-seguro-24h.net</text>
+        <text class="d-tenue" x="510" y="60" textLength="60" lengthAdjust="spacingAndGlyphs">/login</text>
+      </g>
+      <path class="d-punteada" d="M101 70v8h198v-8"/>
+      <path class="d-acento-trazo" d="M301 70v8h208v-8"/>
+      <text class="d-peq d-tenue" x="200" y="98" text-anchor="middle">Subdominios: los elige el dueño</text>
+      <text class="d-rotulo d-peq" x="405" y="98" text-anchor="middle">Dominio real</text>
+      <text class="d-peq d-tenue" x="405" y="116" text-anchor="middle">(no es tu banco)</text>
+      <path class="d-linea" d="M20 136H700" style="stroke-width:1"/>
+      <g class="d-mono" style="font-size:16px">
+        <text class="d-tenue" x="20" y="176" textLength="80" lengthAdjust="spacingAndGlyphs">https://</text>
+        <text class="d-tenue" x="100" y="176" textLength="200" lengthAdjust="spacingAndGlyphs">www.bancocondor.com@</text>
+        <text x="300" y="176" style="font-weight:700" textLength="240" lengthAdjust="spacingAndGlyphs">verificar-cuenta.example</text>
+        <text class="d-tenue" x="540" y="176" textLength="60" lengthAdjust="spacingAndGlyphs">/login</text>
+      </g>
+      <path class="d-mal-trazo" d="M100 170H300" style="stroke-width:2"/>
+      <path class="d-punteada" d="M101 186v8h198v-8"/>
+      <path class="d-acento-trazo" d="M301 186v8h238v-8"/>
+      <text class="d-peq d-tenue" x="200" y="214" text-anchor="middle">Antes de la @: no es el destino</text>
+      <text class="d-rotulo d-peq" x="420" y="214" text-anchor="middle">Dominio real</text>
+      <text class="d-peq d-tenue" x="420" y="232" text-anchor="middle">(tampoco es tu banco)</text>
+    </svg>
+    <figcaption>Dos trampas clásicas. En las dos, «bancocondor.com» aparece escrito, pero no es el destino.</figcaption>
+  </figure>
+
+  <h3>Los trucos más comunes</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Truco</th><th scope="col">Ejemplo</th><th scope="col">Dominio real</th></tr></thead>
+      <tbody>
+        <tr><td>El nombre auténtico como subdominio</td><td><code>bancocondor.com.acceso-seguro-24h.net</code></td><td><code>acceso-seguro-24h.net</code></td></tr>
+        <tr><td>El nombre auténtico dentro de la ruta</td><td><code>premios-app.net/bancocondor.com/login</code></td><td><code>premios-app.net</code></td></tr>
+        <tr><td>Nombre parecido con un guion o una palabra extra</td><td><code>bancocondor-soporte.com</code></td><td><code>bancocondor-soporte.com</code> (otro dueño)</td></tr>
+        <tr><td>Otra terminación</td><td><code>bancocondor.co</code> en vez de <code>.com</code></td><td><code>bancocondor.co</code></td></tr>
+        <tr><td>Letras que se confunden</td><td><code>bancoc0ndor.com</code> (un cero), <code>rnercado.com</code> («r» y «n» parecen «m»)</td><td>El que está escrito, no el que crees leer</td></tr>
+        <tr><td>Letras de otro alfabeto</td><td><code>bаncocondor.com</code> con una «а» cirílica, idéntica a la vista</td><td>Un dominio distinto: <code>xn--bncocondor-zqi.com</code></td></tr>
+        <tr><td>La arroba</td><td><code>bancocondor.com@verificar-cuenta.example</code></td><td><code>verificar-cuenta.example</code></td></tr>
+        <tr><td>Acortadores de enlaces</td><td>Un enlace corto que no deja ver el destino</td><td>Desconocido hasta que lo abres: desconfía</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El caso de las letras de otro alfabeto merece una explicación. Los dominios pueden llevar letras de cualquier idioma, pero por dentro el DNS solo usa letras inglesas, números y guiones. Así que el navegador traduce los nombres especiales a una forma que empieza por <code>xn--</code>, llamada <strong>punycode</strong>. Cuando un nombre mezcla alfabetos de forma sospechosa, los navegadores suelen mostrar esa forma <code>xn--</code> en la barra para que notes el engaño.</p>
+  <p>El navegador sabe encontrar el host de cualquier dirección, aunque intenten confundirte. <strong>Predice</strong> qué host mostrará cada línea y ejecuta:</p>
+  <div class="taller" id="taller-dominios" data-titulo="¿Adónde lleva cada enlace?">
+    <textarea class="taller-codigo">// Puedes añadir tus propios enlaces a la lista, entre comillas y separados por comas
+const enlaces = [
+  "https://www.bancocondor.com/acceso",
+  "https://www.bancocondor.com.acceso-seguro-24h.net/login",
+  "https://bancocondor.com@verificar-cuenta.example/login",
+  "https://bancocondor-soporte.com/ayuda",
+  "https://www.bаncocondor.com/",
+];
+
+for (const enlace of enlaces) {
+  console.log(new URL(enlace).hostname);
+}</textarea>
+  </div>
+  <p>Solo el primero lleva al banco. El último parece idéntico al primero, pero su «a» es cirílica y el navegador lo revela: <code>www.xn--bncocondor-zqi.com</code>.</p>
+  <p>Y este es el razonamiento de «leer de derecha a izquierda» convertido en programa. Síguelo paso a paso:</p>
+  <div class="traza" data-titulo="Encontrar el dominio real" data-rotulo-memoria="Memoria">
+    <pre><code class="language-js">const host = "bancocondor.com.clave-24h.net";
+const partes = host.split(".");
+const ultima = partes[partes.length - 1];
+const penultima = partes[partes.length - 2];
+console.log(penultima + "." + ultima);</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"host": "\"bancocondor.com.clave-24h.net\""}, "nota": "Partimos del host, que ya sabes sacar de una URL. A simple vista, lo primero que se lee es «bancocondor.com»."},
+      {"linea": 2, "vars": {"host": "\"bancocondor.com.clave-24h.net\"", "partes": "[ 'bancocondor', 'com', 'clave-24h', 'net' ]"}, "nota": "split(\".\") corta el texto en cada punto y guarda los trozos en una lista, en orden. La lista tiene 4 trozos, numerados del 0 al 3."},
+      {"linea": 3, "vars": {"host": "\"bancocondor.com.clave-24h.net\"", "partes": "[ 'bancocondor', 'com', 'clave-24h', 'net' ]", "ultima": "\"net\""}, "nota": "partes.length es 4, así que partes[3] es el último trozo: la terminación, \"net\". Empezamos a leer por la derecha."},
+      {"linea": 4, "vars": {"host": "\"bancocondor.com.clave-24h.net\"", "partes": "[ 'bancocondor', 'com', 'clave-24h', 'net' ]", "ultima": "\"net\"", "penultima": "\"clave-24h\""}, "nota": "partes[2] es el trozo anterior: el nombre que alguien registró. Lo que queda a la izquierda (bancocondor y com) son subdominios que eligió ese alguien."},
+      {"linea": 5, "vars": {"host": "\"bancocondor.com.clave-24h.net\"", "partes": "[ 'bancocondor', 'com', 'clave-24h', 'net' ]", "ultima": "\"net\"", "penultima": "\"clave-24h\""}, "salida": "clave-24h.net", "nota": "Se unen los dos trozos con un punto. El dominio real es clave-24h.net: el banco no tiene nada que ver con esta dirección."}
+    ]</script>
+  </div>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">La regla simple tiene excepciones</p><p>Algunos países usan terminaciones de dos niveles: <code>.com.mx</code>, <code>.com.ar</code>, <code>.gob.cl</code>, <code>.co.uk</code>. En <code>www.bancocondor.com.mx</code>, el dominio real es <code>bancocondor.com.mx</code>: tres trozos, no dos. El programa de arriba respondería <code>com.mx</code>, que es incorrecto. Por eso los navegadores usan una lista oficial de terminaciones llamada <a href="https://publicsuffix.org/">Public Suffix List</a>. Tú aplica el sentido común: si la terminación es de dos niveles, el dominio real incluye un trozo más.</p></div></aside>
+
+  <h3>Qué hacer en la práctica</h3>
+  <ul>
+    <li>No entres a tu banco, tu correo o tus redes desde enlaces que te llegan por mensaje, correo o redes sociales, sobre todo si meten prisa («tu cuenta será bloqueada hoy»). Escribe tú la dirección, usa la app oficial o un marcador guardado.</li>
+    <li>Antes de escribir una contraseña, mira el dominio en la barra de direcciones. En el celular, toca la barra para verla completa.</li>
+    <li>En una computadora, pasa el cursor por encima de un enlace sin hacer clic: el navegador muestra abajo la dirección real. El texto visible de un enlace puede decir una cosa y llevar a otra.</li>
+    <li>Usa un gestor de contraseñas: solo rellena tu contraseña en el dominio exacto donde la guardaste. Si en una página «de tu banco» no te la ofrece, sospecha.</li>
+    <li>Activa la verificación en dos pasos y, donde se pueda, las llaves de acceso (<em>passkeys</em>), que están atadas al dominio y no funcionan en un sitio falso. Las estudiarás en la <a href="31-seguridad.html">Estación 31</a>.</li>
+  </ul>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Impacto</p><p>El phishing es una de las formas de ataque más comunes del mundo, porque engañar a una persona suele ser más fácil que romper un sistema. Como futura persona desarrolladora, tú también tienes responsabilidad: usa siempre el mismo dominio para tu proyecto, no envíes a tus usuarios enlaces acortados ni a dominios desconocidos, y no les pidas datos sensibles por mensaje. Así les enseñas a desconfiar de quien sí lo hace.</p></div></aside>
 </section>
   </main>
 </div>
