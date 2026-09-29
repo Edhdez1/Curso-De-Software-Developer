@@ -216,14 +216,14 @@ return true;
   <div class="traza" data-titulo="Contraste de #767676 sobre blanco">
     <pre><code class="language-js">const canal = 118 / 255;
 const lineal = ((canal + 0.055) / 1.055) ** 2.4;
-const lGris = 0.2126 * lineal + 0.7152 * lineal + 0.0722 * lineal;
+const lGris = (0.2126 + 0.7152 + 0.0722) * lineal;
 const lBlanco = 1;
 const ratio = (lBlanco + 0.05) / (lGris + 0.05);
 console.log(ratio.toFixed(2));</code></pre>
     <script type="application/json">[
       {"linea": 1, "vars": {"canal": "0.4627…"}, "nota": "118 entre 255 da 0,4627… (la computadora guarda muchos más decimales; aquí los recortamos). Es el canal pasado a la escala de 0 a 1."},
       {"linea": 2, "vars": {"canal": "0.4627…", "lineal": "0.1812…"}, "nota": "Como 0,4627 es mayor que 0,04045, se usa la parte de la potencia: ((0,4627 + 0,055) / 1,055) elevado a 2,4 da 0,1812. El gris «a medias» emite bastante menos de la mitad de la luz del blanco."},
-      {"linea": 3, "vars": {"canal": "0.4627…", "lineal": "0.1812…", "lGris": "0.1812…"}, "nota": "Los tres pesos suman exactamente 1 (0,2126 + 0,7152 + 0,0722), así que en un gris la luminancia es igual al canal lineal: 0,1812."},
+      {"linea": 3, "vars": {"canal": "0.4627…", "lineal": "0.1812…", "lGris": "0.1812…"}, "nota": "En un gris, R, G y B valen lo mismo, así que la suma ponderada se puede agrupar: (0,2126 + 0,7152 + 0,0722) × lineal. Los tres pesos suman exactamente 1, y la luminancia queda igual al canal lineal: 0,1812."},
       {"linea": 4, "vars": {"canal": "0.4627…", "lineal": "0.1812…", "lGris": "0.1812…", "lBlanco": "1"}, "nota": "El blanco puro tiene luminancia 1, la máxima posible."},
       {"linea": 5, "vars": {"canal": "0.4627…", "lineal": "0.1812…", "lGris": "0.1812…", "lBlanco": "1", "ratio": "4.5422…"}, "nota": "El más claro va arriba: (1 + 0,05) / (0,1812 + 0,05) = 1,05 / 0,2312 = 4,54. Ese 0,05 que se suma representa el reflejo de luz ambiente en la pantalla, y evita dividir entre cero con el negro."},
       {"linea": 6, "vars": {"canal": "0.4627…", "lineal": "0.1812…", "lGris": "0.1812…", "lBlanco": "1", "ratio": "4.5422…"}, "salida": "4.54", "nota": "4,54:1. Pasa por muy poco el mínimo de 4,5:1 para texto normal. Por eso #767676 es famoso: es el gris más claro que puedes poner sobre blanco en texto normal."}
@@ -601,8 +601,8 @@ section      { padding-block: var(--espacio-8); }</code></pre>
           <path class="d-fondo" d="M78.5 189h3v9h-3zM78.5 200h3v3h-3z"/>
           <text x="100" y="202">No se pudo guardar: no hay conexión.</text>
           <text class="d-tenue" x="100" y="226">Tus cambios siguen aquí.</text>
-          <text class="d-rotulo" x="276" y="226">Reintentar</text>
-          <path class="d-linea" d="M276 230h74"/>
+          <text class="d-rotulo" x="100" y="252">Reintentar</text>
+          <path class="d-linea" d="M100 256h72"/>
         </g>
         <g data-pasos="7">
           <circle class="d-ok" cx="80" cy="196" r="11"/>
@@ -750,26 +750,31 @@ Guarda en cualquier puerto y aparecerá aquí.
   <p>Hay una frase que se repite en todos los equipos de producto: <em>tú no eres tu usuario</em>. Tú construiste la app, sabes qué hace cada botón y dónde está cada opción. Nunca vas a poder verla con ojos nuevos. Las personas que la usarán tienen otra edad, otro teléfono, otra prisa y otras palabras para las cosas. Los principios de las secciones anteriores evitan errores conocidos; para descubrir los que no conoces necesitas observar a gente real. Eso es el diseño de experiencia de usuario, y no hace falta un laboratorio: hace falta método.</p>
   <figure class="diagrama">
     <svg viewBox="0 0 720 220" role="img" aria-label="Ciclo de diseño centrado en las personas: investigar, definir, idear, prototipar y probar, en cinco cajas unidas por flechas; una flecha de vuelta va de probar a investigar y dice iterar">
-      <rect class="d-caja" x="20" y="60" width="118" height="64" rx="10"/>
-      <rect class="d-caja" x="164" y="60" width="118" height="64" rx="10"/>
-      <rect class="d-caja" x="308" y="60" width="118" height="64" rx="10"/>
-      <rect class="d-caja" x="452" y="60" width="118" height="64" rx="10"/>
-      <rect class="d-acento" x="596" y="60" width="104" height="64" rx="10"/>
-      <text class="d-rotulo" x="79" y="90" text-anchor="middle">Investigar</text>
-      <text class="d-peq d-tenue" x="79" y="110" text-anchor="middle">entrevistas</text>
-      <text class="d-rotulo" x="223" y="90" text-anchor="middle">Definir</text>
-      <text class="d-peq d-tenue" x="223" y="110" text-anchor="middle">personas, recorridos</text>
-      <text class="d-rotulo" x="367" y="90" text-anchor="middle">Idear</text>
-      <text class="d-peq d-tenue" x="367" y="110" text-anchor="middle">bocetos, wireframes</text>
-      <text class="d-rotulo" x="511" y="90" text-anchor="middle">Prototipar</text>
-      <text class="d-peq d-tenue" x="511" y="110" text-anchor="middle">papel, Figma, Penpot</text>
-      <text class="d-rotulo d-sobre-acento" x="648" y="90" text-anchor="middle">Probar</text>
-      <text class="d-peq d-sobre-acento" x="648" y="110" text-anchor="middle">5 personas</text>
-      <path class="d-linea" d="M138 92h16M282 92h16M426 92h16M570 92h16"/>
-      <path class="d-tinta" d="M152 86l10 6-10 6zM296 86l10 6-10 6zM440 86l10 6-10 6zM584 86l10 6-10 6z"/>
-      <path class="d-linea" d="M648 124v40H79v-28"/>
-      <path class="d-tinta" d="M73 138l6-12 6 12z"/>
-      <text class="d-rotulo" x="364" y="186" text-anchor="middle">Iterar: lo que aprendes al probar alimenta la siguiente vuelta</text>
+      <rect class="d-caja" x="20" y="56" width="118" height="76" rx="10"/>
+      <rect class="d-caja" x="164" y="56" width="118" height="76" rx="10"/>
+      <rect class="d-caja" x="308" y="56" width="118" height="76" rx="10"/>
+      <rect class="d-caja" x="452" y="56" width="118" height="76" rx="10"/>
+      <rect class="d-acento" x="596" y="56" width="104" height="76" rx="10"/>
+      <text class="d-rotulo" x="79" y="84" text-anchor="middle">Investigar</text>
+      <text class="d-peq d-tenue" x="79" y="104" text-anchor="middle">entrevistas,</text>
+      <text class="d-peq d-tenue" x="79" y="120" text-anchor="middle">observación</text>
+      <text class="d-rotulo" x="223" y="84" text-anchor="middle">Definir</text>
+      <text class="d-peq d-tenue" x="223" y="104" text-anchor="middle">personas,</text>
+      <text class="d-peq d-tenue" x="223" y="120" text-anchor="middle">recorridos</text>
+      <text class="d-rotulo" x="367" y="84" text-anchor="middle">Idear</text>
+      <text class="d-peq d-tenue" x="367" y="104" text-anchor="middle">bocetos,</text>
+      <text class="d-peq d-tenue" x="367" y="120" text-anchor="middle">wireframes</text>
+      <text class="d-rotulo" x="511" y="84" text-anchor="middle">Prototipar</text>
+      <text class="d-peq d-tenue" x="511" y="104" text-anchor="middle">papel, Figma</text>
+      <text class="d-peq d-tenue" x="511" y="120" text-anchor="middle">o Penpot</text>
+      <text class="d-rotulo d-sobre-acento" x="648" y="84" text-anchor="middle">Probar</text>
+      <text class="d-peq d-sobre-acento" x="648" y="104" text-anchor="middle">5 personas</text>
+      <text class="d-peq d-sobre-acento" x="648" y="120" text-anchor="middle">por ronda</text>
+      <path class="d-linea" d="M138 94h16M282 94h16M426 94h16M570 94h16"/>
+      <path class="d-tinta" d="M152 88l10 6-10 6zM296 88l10 6-10 6zM440 88l10 6-10 6zM584 88l10 6-10 6z"/>
+      <path class="d-linea" d="M648 132v34H79v-20"/>
+      <path class="d-tinta" d="M73 146l6-12 6 12z"/>
+      <text class="d-rotulo" x="364" y="194" text-anchor="middle">Iterar: lo que aprendes al probar alimenta la siguiente vuelta</text>
       <text class="d-peq d-tenue" x="20" y="36">Cada vuelta puede durar días, no meses. Lo importante es dar muchas vueltas pequeñas.</text>
     </svg>
     <figcaption>El ciclo de diseño centrado en las personas. No es una cascada que se recorre una vez: se vuelve a empezar con cada cosa que aprendes.</figcaption>
@@ -974,7 +979,7 @@ for (let n = 1; n <= 10; n++) {
   <p>La <strong>accesibilidad</strong> (en inglés, <em>accessibility</em>, que a veces se abrevia <strong>a11y</strong>: la «a», once letras y la «y») es que tu producto lo puedan usar personas con discapacidad: quien no ve y usa un lector de pantalla, quien no puede usar un ratón, quien no oye, quien tiene baja visión, dislexia o dificultades de atención. Según la Organización Mundial de la Salud, alrededor de una de cada seis personas en el mundo vive con una discapacidad significativa.</p>
   <p>Pero la discapacidad no es solo permanente. Puede ser <em>temporal</em> (un brazo enyesado) o <em>situacional</em> (sostener a un bebé con un brazo, mirar el teléfono bajo el sol, estar en un lugar ruidoso sin auriculares). Lo que diseñas para unas personas acaba ayudando a todas.</p>
   <aside class="senal analogia">
-    <p>Las rampas en las esquinas de las aceras se construyeron para sillas de ruedas. Hoy las usan también quienes empujan un cochecito, arrastran una maleta o reparten paquetes. Los subtítulos, pensados para personas sordas, los usa medio mundo en el transporte público. La accesibilidad digital funciona igual. El límite de la analogía: una rampa se ve, y una barrera digital no, porque quien la sufre simplemente se va sin avisarte.</p>
+    <p>Las rampas en las esquinas de las aceras se construyeron para sillas de ruedas. Hoy las usan también quienes empujan un cochecito, arrastran una maleta o reparten paquetes. Los subtítulos, pensados para personas sordas, los usa medio mundo en el transporte público. La accesibilidad digital funciona igual. El límite de la analogía: una rampa se ve, y una barrera digital no, porque quien la sufre se va sin avisarte.</p>
   </aside>
   <p>Además es, cada vez más, una obligación legal. En la Unión Europea, la Ley Europea de Accesibilidad obliga desde el 28 de junio de 2025 a que tiendas en línea, bancos, transporte y otros servicios digitales sean accesibles, y muchos países de América Latina tienen normas para los sitios públicos. Casi todas estas normas toman como referencia las mismas pautas: WCAG.</p>
 
@@ -1055,12 +1060,12 @@ for (let n = 1; n <= 10; n++) {
         <text class="d-sobre-acento d-rotulo" x="241" y="178" text-anchor="middle">Comprar</text>
         <text x="40" y="232">Para ver los requisitos,</text>
         <text x="40" y="256">haz</text>
-        <text class="d-rotulo" x="74" y="256">clic aquí</text>
-        <path class="d-linea" d="M74 261h62"/>
+        <text class="d-rotulo" x="80" y="256">clic aquí</text>
+        <path class="d-linea" d="M80 261h58"/>
         <rect class="d-linea" x="258" y="28" width="60" height="50" rx="12" style="stroke-width:3" data-pasos="2-3"/>
         <rect class="d-linea" x="32" y="92" width="136" height="106" rx="10" style="stroke-width:3" data-pasos="4"/>
         <rect class="d-linea" x="168" y="148" width="146" height="50" rx="12" style="stroke-width:3" data-pasos="5"/>
-        <rect class="d-linea" x="66" y="238" width="78" height="30" rx="6" style="stroke-width:3" data-pasos="6"/>
+        <rect class="d-linea" x="73" y="237" width="72" height="31" rx="6" style="stroke-width:3" data-pasos="6"/>
 
         <rect class="d-caja-suave" x="350" y="20" width="350" height="260" rx="10"/>
         <text class="d-rotulo" x="368" y="48">Lo que oye la persona</text>
@@ -1082,8 +1087,8 @@ for (let n = 1; n <= 10; n++) {
           <text class="d-peq d-tenue" x="368" y="124">Arreglado</text>
           <circle class="d-ok" cx="374" cy="141" r="6"/>
           <text x="388" y="146" data-texto="3:«Buscar, botón»; 4:«Portada de Nave Errante: una; 5:«Comprar, botón»; 6:«Ver requisitos del sistema, enlace»">«Buscar, botón»</text>
-          <text class="d-mono d-peq" x="368" y="212" data-texto="3:&lt;button aria-label=&quot;Buscar&quot;&gt;; 4:&lt;img alt=&quot;Portada de Nave…&quot;&gt;; 5:&lt;button&gt;Comprar&lt;/button&gt;; 6:&lt;a href=&quot;…&quot;&gt;Ver requisitos…&lt;/a&gt;">&lt;button aria-label="Buscar"&gt;</text>
-          <text class="d-peq d-tenue" x="368" y="190">En el código:</text>
+          <text class="d-mono d-peq" x="368" y="220" data-texto="3:&lt;button aria-label=&quot;Buscar&quot;&gt;; 4:&lt;img alt=&quot;Portada de Nave…&quot;&gt;; 5:&lt;button&gt;Comprar&lt;/button&gt;; 6:&lt;a href=&quot;…&quot;&gt;Ver requisitos…&lt;/a&gt;">&lt;button aria-label="Buscar"&gt;</text>
+          <text class="d-peq d-tenue" x="368" y="198">En el código:</text>
         </g>
         <text x="388" y="168" data-pasos="4">nave junto a un planeta, imagen»</text>
       </svg>
@@ -1237,7 +1242,11 @@ console.log("Haz clic en la vista previa y pulsa Tab.");</textarea>
           <rect class="d-caja" x="54" y="56" width="152" height="40" rx="4"/>
           <text class="d-peq" x="130" y="81" text-anchor="middle">Anuncio</text>
         </g>
-        <rect class="d-punteada" x="60" y="176" width="140" height="28" rx="6" data-pasos="4"/>
+        <g data-pasos="4">
+          <path class="d-linea" d="M245 108v48"/>
+          <path class="d-tinta" d="M239 154l6 12 6-12z"/>
+          <text class="d-peq" x="245" y="186" text-anchor="middle">48 px</text>
+        </g>
         <g data-mover="4:translate(0px,48px)">
           <rect class="d-punteada" x="60" y="58" width="140" height="70" rx="4" data-pasos="2"/>
           <g data-pasos="3-">
@@ -1255,7 +1264,7 @@ console.log("Haz clic en la vista previa y pulsa Tab.");</textarea>
             <rect class="d-acento" x="60" y="176" width="140" height="28" rx="6"/>
             <text class="d-sobre-acento d-rotulo" x="130" y="195" text-anchor="middle" style="font-size:15px">Comprar</text>
           </g>
-          <circle class="d-linea" cx="130" cy="190" r="15" style="stroke-width:3" data-pasos="5"/>
+          <circle class="d-linea" cx="182" cy="190" r="10" style="stroke-width:3" data-pasos="5"/>
         </g>
         <g data-pasos="5-">
           <rect class="d-tinta" x="60" y="255" width="140" height="15" rx="4"/>
@@ -1285,8 +1294,8 @@ console.log("Haz clic en la vista previa y pulsa Tab.");</textarea>
         <text class="d-mono d-peq" x="480" y="260" text-anchor="middle">2 s</text>
         <text class="d-mono d-peq" x="585" y="260" text-anchor="middle">3 s</text>
         <text class="d-mono d-peq" x="690" y="260" text-anchor="middle">4 s</text>
-        <path class="d-punteada" d="M532 196V236"/>
-        <text class="d-peq d-tenue" x="532" y="190" text-anchor="middle">2,5 s</text>
+        <path class="d-punteada" d="M532 214V236"/>
+        <text class="d-mono d-peq d-tenue" x="532" y="260" text-anchor="middle">2,5</text>
         <g data-pasos="1-5" data-mover="2:translate(84px,0px); 3:translate(200px,0px); 4:translate(252px,0px); 5:translate(378px,0px)">
           <path class="d-tinta" d="M264 214h12l-6 12z"/>
           <text class="d-mono d-peq" x="270" y="208" text-anchor="middle" data-texto="1:0 s; 2:0,8 s; 3:1,9 s; 4:2,4 s; 5:3,6 s">0 s</text>
