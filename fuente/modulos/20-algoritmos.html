@@ -1898,3 +1898,98 @@ console.log("Camino:", camino.join(" → "), "· costo:", distancia.Castillo);</
     </table>
   </div>
 </section>
+
+<section id="problemas" data-parada="Resolver problemas">
+  <h2>Cómo resolver un problema tipo entrevista</h2>
+  <p>Muchas empresas de software, sobre todo las grandes, incluyen en sus entrevistas un problema de algoritmos: te dan un enunciado corto y tienes entre 30 y 45 minutos para resolverlo mientras explicas lo que piensas. Aunque nunca hagas una de esas entrevistas, el método que se usa para prepararlas es el mismo que sirve para cualquier problema nuevo en tu trabajo diario. Tiene cinco pasos:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Entender.</strong> Repite el problema con tus palabras. Pregunta lo que no esté claro: ¿cómo es la entrada?, ¿qué tan grande puede ser?, ¿puede estar vacía?, ¿hay repetidos o negativos?, ¿qué devuelvo si no hay respuesta? El tamaño de la entrada te dice qué complejidad necesitas: con 100 datos, <code>O(n²)</code> está bien; con 10 millones, no.</p></div></li>
+    <li><div><p><strong>Ejemplos.</strong> Inventa dos o tres ejemplos pequeños y resuélvelos a mano, incluido algún caso raro (lista vacía, un solo elemento, todos iguales). Resolver a mano te enseña el algoritmo antes de escribirlo.</p></div></li>
+    <li><div><p><strong>Fuerza bruta.</strong> Escribe o describe la solución más directa que sea correcta, aunque sea lenta, y di su complejidad. Una solución lenta que funciona vale mucho más que una rápida que no existe.</p></div></li>
+    <li><div><p><strong>Optimizar.</strong> Busca el cuello de botella: ¿qué trabajo se repite? Prueba las herramientas de esta estación: ordenar primero, usar un <code>Set</code> o un <code>Map</code> para recordar, búsqueda binaria, dos punteros, programación dinámica. Casi siempre se cambia memoria por tiempo.</p></div></li>
+    <li><div><p><strong>Probar.</strong> Recorre tu código con los ejemplos del paso 2, como una traza. Después piensa en los casos borde. En tu trabajo, convierte esos ejemplos en pruebas automáticas (<a href="26-testing.html">Estación 26</a>).</p></div></li>
+  </ol>
+
+  <h3>Un ejemplo resuelto: la tarjeta de regalo</h3>
+  <p><em>Tienes una tarjeta de regalo con un saldo exacto y una lista de precios de una tienda. ¿Hay dos productos distintos cuyos precios sumen exactamente el saldo?</em></p>
+  <p><strong>1. Entender.</strong> Dos productos distintos: no puedo usar el mismo precio dos veces, salvo que aparezca dos veces en la lista. Devuelvo el par, o <code>null</code> si no existe. La tienda puede tener decenas de miles de productos, así que quiero algo mejor que <code>O(n²)</code>.</p>
+  <p><strong>2. Ejemplos.</strong> Precios <code>[12, 7, 30, 18, 5]</code> y saldo 25: sirve 7 + 18. Precios <code>[10, 20]</code> y saldo 20: no hay par (el 10 no puede usarse dos veces). Lista vacía: no hay par.</p>
+  <p><strong>3. Fuerza bruta.</strong> Probar todas las parejas con dos bucles anidados: <code>O(n²)</code> en tiempo, <code>O(1)</code> en memoria.</p>
+  <p><strong>4. Optimizar.</strong> Para cada precio <code>p</code>, lo que busco en realidad es <code>saldo − p</code>. La pregunta «¿ya vi ese número antes?» se responde en <code>O(1)</code> con un <code>Set</code>. Recorro la lista una vez, preguntando y apuntando: <code>O(n)</code> en tiempo, a cambio de <code>O(n)</code> en memoria. Otra opción, si la memoria importa: ordenar la lista y usar dos punteros, uno al principio y otro al final, que se acercan según la suma se pase o se quede corta: <code>O(n log n)</code> en tiempo y casi nada de memoria extra.</p>
+  <p><strong>5. Probar.</strong> Con <code>[10, 20]</code> y saldo 20: al ver el 10 busco el 10 en el Set, que está vacío; apunto el 10. Al ver el 20 busco el 0: no está. Resultado <code>null</code>. Correcto: el orden «primero pregunto, después apunto» evita usar el mismo producto dos veces.</p>
+  <div class="taller" id="taller-tarjeta" data-titulo="Fuerza bruta contra Set">
+    <textarea class="taller-codigo">function parFuerzaBruta(precios, saldo) {
+  let pasos = 0;
+  for (let i = 0; i < precios.length; i++) {
+    for (let j = i + 1; j < precios.length; j++) {
+      pasos++;
+      if (precios[i] + precios[j] === saldo) return { par: [precios[i], precios[j]], pasos: pasos };
+    }
+  }
+  return { par: null, pasos: pasos };
+}
+
+function parConSet(precios, saldo) {
+  let pasos = 0;
+  const vistos = new Set();
+  for (const precio of precios) {
+    pasos++;
+    const falta = saldo - precio;
+    if (vistos.has(falta)) return { par: [falta, precio], pasos: pasos };
+    vistos.add(precio);          // primero pregunto, después apunto
+  }
+  return { par: null, pasos: pasos };
+}
+
+console.log(parConSet([12, 7, 30, 18, 5], 25));
+console.log(parConSet([10, 20], 20));
+
+// Peor caso: 10 000 precios pares y un saldo impar (ningún par sirve)
+const muchos = [];
+for (let i = 0; i < 10000; i++) muchos.push(i * 2);
+console.log("Fuerza bruta:", parFuerzaBruta(muchos, 7).pasos, "pasos");
+console.log("Con Set:", parConSet(muchos, 7).pasos, "pasos");</textarea>
+  </div>
+  <p>Casi 50 millones de pasos contra 10 000. Y la versión con <code>Set</code> no es más larga ni más difícil de leer: solo hacía falta la idea.</p>
+
+  <h3>Pistas que da el enunciado</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Si el problema dice o sugiere…</th><th scope="col">Prueba con…</th></tr></thead>
+      <tbody>
+        <tr><td>«¿Existe…?», «¿ya apareció?», «contar repeticiones»</td><td>Un <code>Set</code> o un <code>Map</code> para recordar lo visto: <code>O(n)</code></td></tr>
+        <tr><td>La lista está ordenada, o puedes ordenarla</td><td>Búsqueda binaria o dos punteros</td></tr>
+        <tr><td>«k elementos seguidos», «el mejor tramo de…»</td><td>Una <strong>ventana deslizante</strong>: al avanzar, suma el que entra y resta el que sale, en vez de recalcular todo</td></tr>
+        <tr><td>«El camino más corto» en un mapa o red</td><td>BFS si todos los pasos cuestan igual; Dijkstra si no</td></tr>
+        <tr><td>«Mínimo», «máximo», «de cuántas formas», y la recursión repite cálculos</td><td>Programación dinámica: recursión con apuntes o tabla</td></tr>
+        <tr><td>Estructuras anidadas (carpetas, árboles, menús)</td><td>Recursión</td></tr>
+        <tr><td>Hay que probar todas las combinaciones</td><td>Fuerza bruta <code>O(2ⁿ)</code>: solo si n es muy pequeño; si no, busca estructura para usar DP o una estrategia voraz demostrada</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal oficio">
+    <p>Para practicar existen sitios como LeetCode, HackerRank, Exercism o el reto anual Advent of Code, con miles de problemas clasificados por dificultad. No intentes memorizar soluciones: reconoce patrones. Resuelve pocos problemas, pero con el método completo, y vuelve a ellos una semana después sin mirar. En la entrevista, piensa en voz alta: a quien entrevista le interesa tanto cómo razonas como el resultado. Y ten en cuenta que no todas las empresas hacen este tipo de pruebas; muchas prefieren un proyecto pequeño o programar en pareja.</p>
+  </aside>
+  <aside class="senal nota" data-titulo="¿Y la inteligencia artificial?">
+    <p>Los asistentes de IA de 2026 escriben una búsqueda binaria o un BFS en segundos. Precisamente por eso, lo valioso es saber <em>evaluar</em> lo que proponen: ¿es correcto en los bordes?, ¿qué complejidad tiene?, ¿aguantará con los datos reales? Un asistente puede entregarte, sin avisar, una solución <code>O(n²)</code> que funciona perfecto en la demo y congela la aplicación con datos de verdad. Lo verás en la <a href="37-ia.html">Estación 37</a>.</p>
+  </aside>
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>La eficiencia no es solo velocidad. Un algoritmo cuadrático en un servidor que atiende a millones de personas consume más electricidad y más máquinas, y en un teléfono gasta batería. Elegir bien el algoritmo es también una forma de hacer software que funcione en equipos modestos y cueste menos al planeta.</p>
+  </aside>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Para comparar algoritmos contamos operaciones en función del tamaño de la entrada n, porque el tiempo medido depende de la máquina. Medir con <code>Date.now()</code> o <code>performance.now()</code> sirve para encontrar lo lento en un programa real.</li>
+    <li>Big-O describe cómo crece el trabajo en el peor caso, ignorando constantes y términos pequeños: <code>O(1)</code> &lt; <code>O(log n)</code> &lt; <code>O(n)</code> &lt; <code>O(n log n)</code> &lt; <code>O(n²)</code> &lt; <code>O(2ⁿ)</code>. Bloques seguidos se suman; anidados se multiplican; partir a la mitad da <code>log n</code>.</li>
+    <li>La complejidad espacial mide la memoria extra. A menudo se cambia memoria por tiempo, por ejemplo con un <code>Set</code> de vistos.</li>
+    <li>La búsqueda lineal es <code>O(n)</code> y funciona siempre; la binaria es <code>O(log n)</code> pero exige la lista ordenada, y hay que cuidar los bordes (<code>inicio &lt;= fin</code>, <code>medio ± 1</code>).</li>
+    <li>Burbuja, selección e inserción son <code>O(n²)</code>; inserción es muy rápida con datos casi ordenados. Merge sort es <code>O(n log n)</code> siempre y estable; quicksort es rápido en promedio, pero cae a <code>O(n²)</code> con un mal pivote.</li>
+    <li>Un ordenamiento estable conserva el orden de los empates. <code>sort</code> es estable desde ECMAScript 2019, modifica el array y necesita un comparador para números; <code>toSorted</code> devuelve una copia.</li>
+    <li>Toda recursión necesita un caso base y un caso recursivo que se acerque a él. Cada llamada ocupa una caja en la pila; sin freno, llega el <code>RangeError: Maximum call stack size exceeded</code>.</li>
+    <li>Estrategias: divide y vencerás (partir, resolver, combinar), voraz (lo mejor de ahora; solo sirve si está demostrado) y programación dinámica (subproblemas repetidos: memoización o tabla).</li>
+    <li>BFS encuentra el camino con menos pasos usando una cola; Dijkstra, el de menor costo con pesos no negativos; A* añade una heurística para explorar menos.</li>
+    <li>Ante un problema nuevo: entender, ejemplos, fuerza bruta, optimizar y probar.</li>
+  </ul>
+</section>
