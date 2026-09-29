@@ -53,6 +53,8 @@
       <li><a href="#metodo">Un método</a></li>
       <li><a href="#consola">console.log y compañía</a></li>
       <li><a href="#devtools">DevTools y breakpoints</a></li>
+      <li><a href="#excepciones">try/catch y throw</a></li>
+      <li><a href="#ayuda">Pedir ayuda e IA</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -225,7 +227,7 @@ if (ultimoNode < ultimoEcho) return "Archivo corregido. Ejecútalo otra vez con 
 return true;
     </script>
   </div>
-  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cada navegador lo dice a su manera</p><p>Chrome, Edge y Node.js usan el mismo motor de JavaScript (V8), así que muestran los mismos mensajes. Firefox y Safari usan motores distintos y redactan otras frases para el mismo error. Si <code>jugador</code> vale <code>undefined</code> y escribes <code>jugador.nombre</code>, Chrome dice <code>Cannot read properties of undefined (reading 'nombre')</code>, Firefox dice <code>jugador is undefined</code> y Safari dice <code>undefined is not an object (evaluating 'jugador.nombre')</code>. El tipo, <code>TypeError</code>, es el mismo en los tres. En este curso usamos los mensajes de Chrome y Node.</p></div></aside>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cada navegador lo dice a su manera</p><p>Como viste en la Estación 6, Chrome, Edge y Node.js comparten motor (V8) y mensajes, mientras que Firefox y Safari redactan otras frases. Con el error más común de todos la diferencia es grande. Si <code>jugador</code> vale <code>undefined</code> y escribes <code>jugador.nombre</code>, Chrome dice <code>Cannot read properties of undefined (reading 'nombre')</code>, Firefox dice <code>jugador is undefined</code> y Safari dice <code>undefined is not an object (evaluating 'jugador.nombre')</code>. El tipo, <code>TypeError</code>, es el mismo en los tres. En este curso usamos los mensajes de Chrome y Node.</p></div></aside>
 
   <h3>La línea del error no siempre es la línea del fallo</h3>
   <p>El número de línea indica dónde JavaScript <em>se dio cuenta</em> del problema, que no siempre es donde te equivocaste. El caso más típico es olvidar cerrar una llave. En este archivo falta la <code>}</code> de la función (debería ir en la línea 3):</p>
@@ -490,7 +492,7 @@ for (const dato of jugador) { }
   <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuidado</p><p>En la <a href="11-colecciones.html">Estación 11</a> viste el encadenamiento opcional <code>?.</code>: <code>jugador.arma?.nombre</code> devuelve <code>undefined</code> en lugar de lanzar el error. Úsalo cuando que falte el dato sea normal (un jugador puede no tener arma). No lo uses para hacer callar un error que no entiendes: el fallo sigue ahí, solo que ahora aparecerá más tarde y más lejos de su causa.</p></div></aside>
 
   <h3>SyntaxError: «no entiendo lo que escribiste»</h3>
-  <p>Ya conoces el mecanismo: si hay un error de sintaxis, no se ejecuta nada. Estos son los mensajes típicos y su causa más probable:</p>
+  <p>Ya conoces el mecanismo: si hay un error de sintaxis, no se ejecuta nada. La tabla de la <a href="06-primeros-pasos.html#errores">Estación 6</a> recogía los mensajes de sintaxis más frecuentes al empezar; aquí los tienes junto con los que aparecen cuando el código crece, con funciones, bloques y objetos:</p>
   <div class="tabla">
     <table>
       <thead><tr><th scope="col">Mensaje</th><th scope="col">Causa más probable</th></tr></thead>
@@ -569,7 +571,7 @@ console.log(Number("cinco"));</textarea>
 <section id="metodo" data-parada="Un método">
   <h2>Un método, no a ciegas</h2>
   <p>Cuando no hay mensaje de error, o cuando el mensaje no basta, la tentación es cambiar algo «a ver si así funciona». Luego otra cosa. Luego otra. A veces funciona y no sabes por qué; casi siempre, el programa acaba peor que al principio. Las investigaciones sobre cómo depuran las personas que empiezan describen justo eso: prueba y error sin rumbo. Y recomiendan enseñar a depurar de forma explícita, formulando hipótesis y poniéndolas a prueba. Eso es lo que vas a aprender aquí.</p>
-  <p>El método que usan los buenos depuradores se parece mucho al método científico:</p>
+  <p>En la <a href="06-primeros-pasos.html#errores">Estación 6</a> aprendiste un método rápido para errores con mensaje: leer el tipo, ir a la línea, comparar, cambiar una sola cosa y volver a ejecutar. Para los errores de sintaxis casi siempre basta. Cuando no basta, porque no hay mensaje o porque el mensaje señala un lugar que parece correcto, necesitas el método completo, que se parece mucho al método científico:</p>
   <figure class="diagrama">
     <svg viewBox="0 0 720 300" role="img" aria-label="Diagrama del ciclo de depuración: 1 reproducir, 2 observar, 3 hipótesis, 4 experimento y 5 conclusión. Si la hipótesis no se confirma, se vuelve a la hipótesis. Si se confirma, se pasa a 6: arreglar y comprobar. Después, conviene escribir una prueba para que el fallo no vuelva.">
       <rect class="d-caja" x="10" y="30" width="120" height="64" rx="8"/>
@@ -727,13 +729,14 @@ return true;
   <div class="terminal-sim" data-titulo="Guarda, experimenta y deshaz" data-inicio="/home/tu">
     <script type="application/json" class="terminal-sistema">{"tienda": {"carrito.js": "const precio = 20;\nconsole.log(precio * 3);\n"}}</script>
     <div class="terminal-instrucciones">
-      <p><strong>Misión:</strong> entra en la carpeta <code>tienda</code> (<code>cd tienda</code>), crea un repositorio (<code>git init</code>) y guarda el punto de partida (<code>git add .</code> y <code>git commit -m "Antes de depurar"</code>). Después haz un experimento añadiendo una línea: <code>echo "console.log('prueba')" &gt;&gt; carrito.js</code>. Mira qué cambió con <code>git diff</code> y deshazlo con <code>git restore carrito.js</code>. Comprueba con <code>cat carrito.js</code> que volvió a su estado original.</p>
+      <p><strong>Misión:</strong> entra en la carpeta <code>tienda</code> (<code>cd tienda</code>), crea un repositorio (<code>git init</code>) y guarda el punto de partida (<code>git add .</code> y <code>git commit -m "Antes de depurar"</code>). Después haz un experimento añadiendo una impresión de prueba: <code>echo "console.log('prueba:', precio)" &gt;&gt; carrito.js</code>, y ejecuta el archivo con <code>node carrito.js</code> para ver su efecto. Mira qué cambió con <code>git diff</code> y deshazlo con <code>git restore carrito.js</code>. Comprueba con <code>cat carrito.js</code> que volvió a su estado original.</p>
     </div>
     <script type="text/plain" class="terminal-mision">
 if (!git) return "Entra en la carpeta tienda (cd tienda) y crea el repositorio con git init.";
 if (!git.commits.length) return "Guarda el punto de partida: git add . y después git commit -m \"Antes de depurar\".";
 var experimento = historial.some(function (h) { return /^echo .*>>\s*carrito\.js$/.test(h); });
-if (!experimento) return "Ahora haz un experimento: echo \"console.log('prueba')\" >> carrito.js";
+if (!experimento) return "Ahora haz un experimento: echo \"console.log('prueba:', precio)\" >> carrito.js";
+if (!historial.some(function (h) { return /^node\s+carrito\.js$/.test(h); })) return "Ejecuta el archivo con node carrito.js para ver el efecto del experimento.";
 if (!historial.some(function (h) { return /^git diff/.test(h); })) return "Mira qué cambió con git diff.";
 if (!git.limpio) return "Deshaz el experimento con git restore carrito.js.";
 return true;
@@ -1068,6 +1071,312 @@ console.log("Total:", resultado);</code></pre>
   </ul>
   <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">En otros navegadores y en Node</p><p>Firefox tiene las mismas ideas con otros nombres: su panel se llama <em>Debugger</em> (en español, «Depurador») y también se abre con <kbd>F12</kbd>. En Safari primero hay que activar las funciones para desarrolladores en los ajustes avanzados. Para programas de Node.js, Visual Studio Code trae su propio depurador: el más sencillo de usar es la <em>JavaScript Debug Terminal</em> (la creas desde el desplegable de la terminal o con el comando <em>Debug: Create JavaScript Debug Terminal</em>); todo lo que ejecutes con <code>node</code> en ella se para en tus puntos de interrupción. Los controles son los mismos que acabas de aprender.</p></div></aside>
   <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>¿<code>console.log</code> o depurador? Los dos. <code>console.log</code> es rápido para una pregunta concreta y funciona en cualquier sitio. El depurador gana cuando no sabes qué preguntar, cuando necesitas ver muchas variables a la vez o cuando quieres seguir el camino exacto que toma el programa.</p></div></aside>
+</section>
+
+<section id="excepciones" data-parada="try/catch y throw">
+  <h2>Capturar errores: try, catch y finally</h2>
+  <p>Hasta ahora, un error de ejecución detenía el programa. Mientras desarrollas, eso está bien: un fallo ruidoso es fácil de encontrar. Pero hay errores que no son descuidos tuyos, sino situaciones que tu programa debe esperar: una partida guardada que se dañó, una persona que escribe letras donde iba su edad, un servidor que no responde. En esos casos el programa no debería cerrarse de golpe. Debería reaccionar: avisar, usar un valor por defecto, intentarlo de nuevo. Para eso existen <code>try</code> y <code>catch</code>.</p>
+  <pre><code class="language-js">try {
+  // código que puede fallar
+} catch (error) {
+  // qué hacer si falla
+}</code></pre>
+  <p>El bloque <strong>try</strong> («intentar») contiene el código protegido. Si una de sus líneas lanza una excepción, el resto del bloque se abandona y la ejecución salta al bloque <strong>catch</strong> («atrapar»), que recibe el error en una variable. Si no hay ningún error, el <code>catch</code> se salta entero. En los dos casos, el programa continúa después. Se dice que el error fue <strong>capturado</strong>: lo contrario del <code>Uncaught</code> («no capturado») que ves en la consola.</p>
+  <figure class="capsula" data-titulo="El camino de un error capturado">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: un programa intenta leer una partida guardada dañada. Dentro de try se imprime Cargando partida; JSON.parse lanza un SyntaxError; la línea siguiente se salta y la ejecución salta al catch, que imprime Dañada: SyntaxError. Después se ejecuta finally, que imprime Listo, y el programa sigue con El juego sigue.">
+        <rect class="d-codigo" x="10" y="10" width="440" height="274" rx="8"/>
+        <text class="d-codigo-tenue" x="24" y="31" style="font-size:13px">partida.js</text>
+        <rect class="d-resalte" x="14" y="41" width="432" height="21" rx="4" data-mover="2:translate(0px,42px); 3:translate(0px,63px); 4:translate(0px,126px); 5:translate(0px,168px); 6:translate(0px,210px)"/>
+        <rect class="d-mal-trazo" x="14" y="104" width="432" height="21" rx="4" data-pasos="3"/>
+        <g style="font-size:13px">
+          <text class="d-codigo-tenue" x="40" y="56" text-anchor="end" style="font-size:13px">1</text>
+          <text class="d-codigo-tenue" x="40" y="77" text-anchor="end" style="font-size:13px">2</text>
+          <text class="d-codigo-tenue" x="40" y="98" text-anchor="end" style="font-size:13px">3</text>
+          <text class="d-codigo-tenue" x="40" y="119" text-anchor="end" style="font-size:13px">4</text>
+          <text class="d-codigo-tenue" x="40" y="140" text-anchor="end" style="font-size:13px">5</text>
+          <text class="d-codigo-tenue" x="40" y="161" text-anchor="end" style="font-size:13px">6</text>
+          <text class="d-codigo-tenue" x="40" y="182" text-anchor="end" style="font-size:13px">7</text>
+          <text class="d-codigo-tenue" x="40" y="203" text-anchor="end" style="font-size:13px">8</text>
+          <text class="d-codigo-tenue" x="40" y="224" text-anchor="end" style="font-size:13px">9</text>
+          <text class="d-codigo-tenue" x="40" y="245" text-anchor="end" style="font-size:13px">10</text>
+          <text class="d-codigo-tenue" x="40" y="266" text-anchor="end" style="font-size:13px">11</text>
+        </g>
+        <text class="d-codigo-texto" x="52" y="56" style="font-size:14px">const guardado = '{"nivel": 4';</text>
+        <text class="d-codigo-texto" x="52" y="77" style="font-size:14px">try {</text>
+        <text class="d-codigo-texto" x="68.8" y="98" style="font-size:14px">console.log("Cargando partida…");</text>
+        <text class="d-codigo-texto" x="68.8" y="119" style="font-size:14px">const datos = JSON.parse(guardado);</text>
+        <text class="d-codigo-texto" x="68.8" y="140" style="font-size:14px">console.log("Nivel:", datos.nivel);</text>
+        <text class="d-codigo-texto" x="52" y="161" style="font-size:14px">} catch (error) {</text>
+        <text class="d-codigo-texto" x="68.8" y="182" style="font-size:14px">console.log("Dañada:", error.name);</text>
+        <text class="d-codigo-texto" x="52" y="203" style="font-size:14px">} finally {</text>
+        <text class="d-codigo-texto" x="68.8" y="224" style="font-size:14px">console.log("Listo.");</text>
+        <text class="d-codigo-texto" x="52" y="245" style="font-size:14px">}</text>
+        <text class="d-codigo-texto" x="52" y="266" style="font-size:14px">console.log("El juego sigue.");</text>
+        <rect class="d-codigo" x="14" y="125" width="432" height="21" style="fill-opacity:.75" data-pasos="3-"/>
+        <g data-pasos="3">
+          <path class="d-acento-trazo" d="M380 112C428 112 428 156 380 156H218"/>
+          <path class="d-acento" d="M218 149l-12 7 12 7z"/>
+        </g>
+
+        <rect class="d-codigo" x="470" y="10" width="240" height="170" rx="8"/>
+        <text class="d-codigo-tenue" x="484" y="31" style="font-size:13px">Consola</text>
+        <text class="d-codigo-texto" x="484" y="60" style="font-size:14px" data-pasos="2-">Cargando partida…</text>
+        <text class="d-codigo-texto" x="484" y="86" style="font-size:14px" data-pasos="4-">Dañada: SyntaxError</text>
+        <text class="d-codigo-texto" x="484" y="112" style="font-size:14px" data-pasos="5-">Listo.</text>
+        <text class="d-codigo-texto" x="484" y="138" style="font-size:14px" data-pasos="6-">El juego sigue.</text>
+
+        <rect class="d-caja-suave" x="470" y="196" width="240" height="88" rx="8"/>
+        <text class="d-rotulo" x="484" y="220">Qué pasa</text>
+        <text x="484" y="246" style="font-size:14px" data-texto="2:dentro de try; 3:¡excepción! salto al catch; 4:error guarda el SyntaxError; 5:finally se ejecuta siempre; 6:el programa no se detuvo">texto dañado: falta la }</text>
+        <text class="d-tenue" x="484" y="270" style="font-size:13px" data-pasos="3-">datos nunca llegó a crearse</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li><code>guardado</code> contiene una partida guardada en JSON, pero dañada: le falta la llave de cierre. Veamos qué hace <code>try</code> con ella.</li>
+        <li>La ejecución entra en el bloque <code>try</code>. La línea 3 funciona sin problema e imprime «Cargando partida…».</li>
+        <li data-duracion="7"><code>JSON.parse</code> no puede leer el texto y lanza un <code>SyntaxError</code>. En ese instante se abandona el resto del <code>try</code>: la línea 5 no se ejecuta y <code>datos</code> nunca llega a existir. La ejecución salta al <code>catch</code>.</li>
+        <li data-duracion="6">El <code>catch</code> recibe el error en la variable <code>error</code> (el nombre lo eliges tú). Aquí decides qué hacer: la línea 7 avisa con el tipo de error.</li>
+        <li>El bloque <code>finally</code> («finalmente») se ejecuta siempre, haya habido error o no. Sirve para tareas de cierre, como ocultar un aviso de «cargando».</li>
+        <li data-duracion="6">Y lo más importante: el programa sigue. Sin <code>try</code>, el error habría detenido todo en la línea 4. Con él, el juego continúa y puede, por ejemplo, ofrecer una partida nueva.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Ejecuta el mismo programa. Después <strong>modifícalo</strong>: completa el texto guardado para que sea JSON válido (<code>'{"nivel": 4}'</code>) y, antes de volver a ejecutar, predice qué líneas saldrán ahora.</p>
+  <div class="taller" id="taller-trycatch" data-titulo="Una partida dañada (error capturado)">
+    <textarea class="taller-codigo">const guardado = '{"nivel": 4';
+
+try {
+  console.log("Cargando partida…");
+  const datos = JSON.parse(guardado);
+  console.log("Nivel:", datos.nivel);
+} catch (error) {
+  console.log("Dañada:", error.name);
+  console.log("Detalle:", error.message);
+} finally {
+  console.log("Listo.");
+}
+console.log("El juego sigue.");</textarea>
+  </div>
+  <p>Con el texto corregido, el <code>catch</code> no se ejecuta: salen «Cargando partida…», «Nivel: 4», «Listo.» y «El juego sigue.». El <code>finally</code> aparece en los dos casos.</p>
+
+  <h3>Qué trae el objeto error</h3>
+  <p>Lo que recibe el <code>catch</code> es un objeto con tres propiedades que ya sabes leer:</p>
+  <ul>
+    <li><code>error.name</code>: el tipo, como <code>"TypeError"</code> o <code>"SyntaxError"</code>.</li>
+    <li><code>error.message</code>: el mensaje, como <code>"Cannot read properties of undefined (reading 'nombre')"</code>.</li>
+    <li><code>error.stack</code>: un texto con el tipo, el mensaje y la traza de la pila. No forma parte del estándar oficial de JavaScript, pero todos los navegadores y Node la tienen. Su formato cambia según el motor: V8 escribe <code>at precioDe (carrito.js:7:28)</code> y Firefox escribe <code>precioDe@carrito.js:7:28</code>.</li>
+  </ul>
+  <p>Si solo quieres que el programa siga y no te importa el error, puedes omitir la variable: <code>catch { … }</code>. Úsalo con moderación, por lo que verás en el error común de más abajo.</p>
+
+  <h3>Lanzar tus propios errores: throw</h3>
+  <p>También puedes provocar un error a propósito con <strong>throw</strong> («lanzar»). ¿Para qué querrías eso? Para <strong>fallar pronto y con claridad</strong>. Si una función recibe un dato imposible, es mejor detenerse ahí mismo con un mensaje que explique el problema que seguir calculando con basura y que el fallo aparezca diez funciones más lejos, como un <code>NaN</code> misterioso.</p>
+  <pre><code class="language-js">throw new Error("Mensaje que explica qué pasó");</code></pre>
+  <p><code>new Error(...)</code> crea el objeto error con su mensaje y su traza, y <code>throw</code> lo lanza. Desde ese momento se comporta como cualquier excepción: si nadie lo captura, detiene el programa; si hay un <code>try</code> alrededor, salta a su <code>catch</code>. También puedes lanzar los tipos que ya conoces, para ser más preciso: <code>new TypeError(...)</code> si el dato es del tipo equivocado, o <code>new RangeError(...)</code> si está fuera de rango. Predice qué imprime este programa, línea a línea:</p>
+  <div class="taller" id="taller-throw" data-titulo="Predice: lanzar y capturar errores">
+    <textarea class="taller-codigo">function crearPersonaje(nombre, nivel) {
+  if (typeof nivel !== "number" || nivel < 1 || nivel > 100) {
+    throw new RangeError("El nivel debe ser un número del 1 al 100 y llegó: " + nivel);
+  }
+  return { nombre: nombre, nivel: nivel };
+}
+
+const lyra = crearPersonaje("Lyra", 7);
+console.log(lyra.nombre, "creada con nivel", lyra.nivel);
+
+try {
+  const tom = crearPersonaje("Tom", 250);
+  console.log(tom.nombre, "creado");
+} catch (error) {
+  console.log("No se pudo crear a Tom.", error.name + ":", error.message);
+}
+
+const sol = crearPersonaje("Sol", "5");
+console.log("¿Llega aquí?");</textarea>
+  </div>
+  <p>Lyra se crea sin problemas. Tom falla, pero su error se captura y el programa sigue. Sol también falla (su nivel es el texto <code>"5"</code>, no un número) y, como nadie captura ese error, el programa se detiene con un <code>RangeError</code> y nunca imprime «¿Llega aquí?». Fíjate en el mensaje: dice qué se esperaba y qué llegó. Con un mensaje así, quien use tu función encuentra su error en segundos.</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p>Lanzar un texto en lugar de un error: <code>throw "nivel inválido"</code>. JavaScript lo permite, pero ese valor no tiene <code>name</code> ni <code>stack</code>: pierdes la traza que te diría de dónde vino. Lanza siempre un objeto error: <code>throw new Error("nivel inválido")</code>.</p></div></aside>
+
+  <h3>Errores con nombre propio</h3>
+  <p>En programas grandes conviene distinguir tus errores de los demás. La forma habitual es crear un tipo de error propio. Usa una <strong>clase</strong>, una herramienta que estudiarás en la <a href="21-paradigmas.html">Estación 21</a>. Por ahora úsala como plantilla: copia la estructura y cambia los dos nombres.</p>
+  <pre><code class="language-js">class SaldoInsuficienteError extends Error {
+  constructor(mensaje) {
+    super(mensaje);
+    this.name = "SaldoInsuficienteError";
+  }
+}
+
+function retirar(saldo, monto) {
+  if (monto &gt; saldo) {
+    throw new SaldoInsuficienteError("Quieres retirar " + monto + " y tienes " + saldo);
+  }
+  return saldo - monto;
+}
+
+try {
+  retirar(100, 300);
+} catch (error) {
+  if (error instanceof SaldoInsuficienteError) {
+    console.log("Aviso para el jugador:", error.message);
+  } else {
+    throw error; // un error que no sé manejar: que siga su camino
+  }
+}</code></pre>
+  <p><code>error instanceof SaldoInsuficienteError</code> pregunta «¿este error es de ese tipo?». Así el <code>catch</code> maneja solo los errores que entiende. Los demás los vuelve a lanzar con <code>throw error</code>, para que no queden escondidos. Si al capturar un error quieres lanzar otro más descriptivo sin perder el original, usa la opción <code>cause</code>: <code>throw new Error("No se pudo cargar la partida", { cause: error })</code>. El error original queda guardado en la propiedad <code>cause</code> del nuevo.</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Tragarse el error</p>
+      <pre><code class="language-js">try {
+  const datos = JSON.parse(guardado);
+  iniciarPartida(datos);
+} catch (error) {
+  // no pasa nada...
+}</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Reaccionar y dejar rastro</p>
+      <pre><code class="language-js">try {
+  const datos = JSON.parse(guardado);
+  iniciarPartida(datos);
+} catch (error) {
+  console.error("Partida dañada:", error);
+  iniciarPartida(partidaNueva());
+}</code></pre>
+    </div>
+  </div>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p>Un <code>catch</code> vacío es de los peores bugs que puedes escribir, porque es invisible. Además del error esperado (la partida dañada), se traga cualquier otro: si <code>iniciarPartida</code> tiene un <code>TypeError</code> por un nombre mal escrito, nunca lo sabrás; el programa hará cosas raras sin ningún mensaje. Como mínimo, registra el error con <code>console.error</code>.</p></div></aside>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuidado</p><p>Dos límites de <code>try</code>. Primero, no captura los errores de sintaxis de tu propio programa: si hay uno, el programa no llega a empezar. Sí captura los <code>SyntaxError</code> que ocurren al ejecutar, como los de <code>JSON.parse</code>. Segundo, solo captura errores que ocurren <em>mientras</em> se ejecuta su bloque. Si dentro programas algo para más tarde, por ejemplo con <code>setTimeout</code>, un error en ese código futuro ya no pasa por tu <code>catch</code>. Cómo manejar los errores de lo que ocurre «más tarde» (pedir datos a un servidor, por ejemplo) lo verás en la <a href="16-asincronia.html">Estación 16</a>.</p></div></aside>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>Usa <code>try</code> y <code>catch</code> alrededor de lo que puede fallar por causas externas: datos que vienen de fuera, lo que escribe una persona, la red, los archivos. No envuelvas todo tu programa «por si acaso»: un error causado por un descuido tuyo debe verse, y cuanto antes, mejor.</p></div></aside>
+  <p>Ordena este fragmento, con su sangría, para que cargue una partida y avise si está dañada:</p>
+  <div class="parsons" data-titulo="Ordena el try, catch y finally" data-lenguaje="js">
+    <ol>
+      <li>try {</li>
+      <li data-sangria="1">const partida = JSON.parse(texto);</li>
+      <li data-sangria="1">console.log("Nivel:", partida.nivel);</li>
+      <li>} catch (error) {</li>
+      <li data-sangria="1">console.error("Partida dañada:", error.message);</li>
+      <li>} finally {</li>
+      <li data-sangria="1">console.log("Carga terminada");</li>
+      <li>}</li>
+    </ol>
+  </div>
+</section>
+
+<section id="ayuda" data-parada="Pedir ayuda e IA">
+  <h2>Cuando te atascas: ejemplo mínimo, buscadores e IA</h2>
+  <p>A veces aplicas el método, lees el error, pones <code>console.log</code>, usas el depurador… y sigues atascado. Es normal y le pasa a todo el mundo. En ese momento toca pedir ayuda, y hacerlo bien es una habilidad en sí misma: una buena pregunta recibe respuesta en minutos; una mala, nunca.</p>
+
+  <h3>El ejemplo mínimo reproducible</h3>
+  <p>Un <strong>ejemplo mínimo reproducible</strong> es la versión más pequeña posible de tu programa que todavía muestra el fallo. Stack Overflow en español, el mayor sitio de preguntas y respuestas de programación en nuestro idioma, pide que sea:</p>
+  <ul>
+    <li><strong>Mínimo:</strong> la menor cantidad de código que reproduce el problema. Nada de tu proyecto que no haga falta.</li>
+    <li><strong>Completo:</strong> que incluya todo lo necesario para que otra persona lo ejecute tal cual, con datos de ejemplo.</li>
+    <li><strong>Verificable:</strong> que lo hayas probado y de verdad muestre el problema, y que digas qué esperabas y qué obtuviste.</li>
+  </ul>
+  <p>Para construirlo, copia el código que falla en un archivo nuevo (o en un taller) y ve quitando partes: si al quitar algo el fallo sigue, esa parte sobraba; si desaparece, vuelve a ponerla, porque es parte del problema. Cambia tus datos reales por dos o tres datos inventados. Es la bisección aplicada a recortar. Y ocurre muy a menudo que, mientras reduces el ejemplo, encuentras tú mismo el fallo: al quedar solo cinco líneas, ya no tiene dónde esconderse.</p>
+  <p>Pruébalo. Esta tabla de récords ordena mal los puntos. Reduce el programa a un ejemplo mínimo que siga mostrando el problema: como mucho 4 líneas de código (los comentarios no cuentan).</p>
+  <div class="taller" id="taller-minimo" data-titulo="Reduce el error a un ejemplo mínimo">
+    <textarea class="taller-codigo">// Tabla de récords de un juego. Algo falla: el orden no es el esperado.
+const partidas = [
+  { jugador: "Ana", puntos: 900 },
+  { jugador: "Leo", puntos: 85 },
+  { jugador: "Sol", puntos: 1200 },
+  { jugador: "Tom", puntos: 150 },
+];
+
+function soloPuntos(lista) {
+  return lista.map((p) => p.puntos);
+}
+
+function ordenar(numeros) {
+  return numeros.sort();
+}
+
+function formatear(numeros) {
+  return numeros.join(" < ");
+}
+
+const puntos = soloPuntos(partidas);
+const ordenados = ordenar(puntos);
+console.log("Récords de menor a mayor:", formatear(ordenados));</textarea>
+    <script type="text/plain" class="taller-verificar">
+var lineas = codigo.split("\n").filter(function (l) { var t = l.trim(); return t && t.indexOf("//") !== 0; });
+if (codigo.indexOf(".sort(") === -1) return "Tu ejemplo tiene que usar .sort(): es la operación sospechosa.";
+if (lineas.length > 4) return "Todavía hay " + lineas.length + " líneas de código. Un buen ejemplo mínimo de este fallo cabe en 1 a 3 líneas: un array de números, sort y un console.log.";
+var reproduce = salida.some(function (s) {
+  var m = s.match(/\[ (.+) \]/);
+  if (!m) return false;
+  var n = m[1].split(", ").map(Number);
+  if (n.some(isNaN)) return false;
+  for (var i = 1; i < n.length; i++) if (n[i] < n[i - 1]) return true;
+  return false;
+});
+return reproduce || "Tu ejemplo es corto, pero ya no muestra el fallo. Imprime el array ordenado con console.log: debería salir mal ordenado, como en el programa original.";
+    </script>
+  </div>
+  <p>Una solución es <code>console.log([900, 85, 1200, 150].sort());</code>, que imprime <code>[ 1200, 150, 85, 900 ]</code>. Con el ejemplo reducido, el problema salta a la vista: sin argumentos, <code>sort</code> ordena como si fueran textos, letra por letra. Es la trampa que viste en la <a href="11-colecciones.html">Estación 11</a>, y se arregla con <code>sort((a, b) =&gt; a - b)</code>.</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Una pregunta que nadie puede responder</p>
+      <pre><code class="language-text">Hola, mi juego no funciona, ayuda!!
+(adjunto captura de pantalla de 300 líneas de código)</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Una pregunta que se responde sola</p>
+      <pre><code class="language-text">Ordeno números con sort y salen desordenados.
+Código (Node.js 24):
+  console.log([900, 85, 1200, 150].sort());
+Esperaba: [ 85, 150, 900, 1200 ]
+Obtengo:  [ 1200, 150, 85, 900 ]
+Probé a ordenar solo dos números y sale bien.
+¿Por qué sort ordena así?</code></pre>
+    </div>
+  </div>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuidado</p><p>Nunca compartas el código como captura de pantalla: nadie puede copiarlo para probarlo. Pégalo como texto. Y antes de compartirlo, quita contraseñas, claves de acceso y datos personales.</p></div></aside>
+
+  <h3>Buscar el error en internet</h3>
+  <p>Casi cualquier mensaje de error que veas ya lo vio antes otra persona, y es muy probable que la respuesta esté escrita. Para encontrarla:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Copia la parte general del mensaje</strong> y quita lo que es solo tuyo: nombres de tus variables, rutas de tus archivos, números de línea. De <code>TypeError: Cannot read properties of undefined (reading 'precio') at precioDe (/home/ana/tienda/carrito.js:7:28)</code> te quedas con <code>Cannot read properties of undefined</code>.</p></div></li>
+    <li><div><p><strong>Añade el contexto</strong>: el lenguaje y el entorno (<code>javascript</code>, <code>node</code>, <code>chrome</code>) y, si usas una librería, su nombre.</p></div></li>
+    <li><div><p><strong>Usa comillas</strong> para buscar la frase exacta: <code>javascript "Cannot read properties of undefined"</code>.</p></div></li>
+    <li><div><p><strong>Elige bien las fuentes.</strong> Empieza por la documentación oficial (MDN tiene una <a href="https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Errors">página por cada mensaje de error de JavaScript</a>) y por las respuestas de Stack Overflow con más votos. Mira la fecha: una respuesta de hace diez años puede usar formas de escribir JavaScript que hoy no se recomiendan, como <code>var</code>.</p></div></li>
+    <li><div><p><strong>Entiende antes de copiar.</strong> Lee por qué funciona la solución. Si pegas código que no entiendes, cambias un bug que conoces por otro que no.</p></div></li>
+  </ol>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">¿En inglés o en español?</p><p>Los mensajes de error están en inglés, y buscarlos en inglés da muchos más resultados. No hace falta que entiendas todo: la mayoría de respuestas se reducen a un fragmento de código y dos o tres frases, y el traductor del navegador te ayuda con el resto. Si prefieres empezar en español, Stack Overflow en español y MDN en español son buenas fuentes.</p></div></aside>
+
+  <h3>Depurar con IA sin dejar de aprender</h3>
+  <p>Los asistentes de inteligencia artificial pueden explicar un error en segundos. El riesgo es que te lo resuelvan tan rápido que no aprendas a hacerlo tú, y depurar es justo la habilidad que más necesitas desarrollar.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Lo que dice la investigación</p><p>En enero de 2026, Anthropic (la empresa que desarrolla el asistente Claude) publicó <a href="https://www.anthropic.com/research/AI-assistance-coding-skills">un experimento con 52 programadores</a>, en su mayoría con poca experiencia, que aprendían una librería nueva. Quienes usaron un asistente de IA sacaron de media un 50 % en un examen posterior, frente al 67 % de quienes programaron a mano. La mayor diferencia estuvo en las preguntas de depuración. Pero no todas las formas de usar la IA dieron igual: quienes delegaron todo el código obtuvieron los peores resultados, y quienes usaron la IA para hacer preguntas conceptuales o pedir explicaciones conservaron mucho mejor lo aprendido.</p></div></aside>
+  <p>La conclusión práctica es usar la IA como un tutor, no como alguien que hace el trabajo por ti:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Primero, tú.</strong> Lee el mensaje, reproduce el fallo y formula al menos una hipótesis. Si le preguntas a la IA sin haber pensado, no podrás juzgar si su respuesta tiene sentido.</p></div></li>
+    <li><div><p><strong>Pide explicaciones y pistas, no soluciones.</strong> «Explícame qué significa este error», «¿qué debería revisar?» o «dame una pista sin darme el código».</p></div></li>
+    <li><div><p><strong>Dale contexto de verdad:</strong> el mensaje completo, tu ejemplo mínimo, qué esperabas, qué obtuviste y qué probaste. Es lo mismo que necesitaría una persona.</p></div></li>
+    <li><div><p><strong>Desconfía y comprueba.</strong> La IA puede equivocarse con total seguridad, e incluso inventar funciones u opciones que no existen: a eso se le llama <strong>alucinar</strong>. Ejecuta lo que te proponga, pruébalo con varios datos y contrástalo con la documentación.</p></div></li>
+    <li><div><p><strong>No aceptes líneas que no sepas explicar.</strong> Si no podrías explicarle la solución al patito de goma, todavía no la entendiste.</p></div></li>
+    <li><div><p><strong>Protege lo privado.</strong> No pegues contraseñas, claves de acceso ni datos personales de otras personas.</p></div></li>
+  </ol>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Delegar</p>
+      <pre><code class="language-text">arregla esto
+(pega 200 líneas de código)</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Aprender</p>
+      <pre><code class="language-text">Estoy aprendiendo JavaScript. Esta función da
+"TypeError: Cannot read properties of undefined
+(reading 'precio')" en la línea 7 (te pego un
+ejemplo mínimo de 10 líneas). Creo que el índice
+se sale del array porque el carrito tiene 2
+productos y pido 3. ¿Mi hipótesis tiene sentido?
+Explícame el error y dame una pista, sin el código
+de la solución.</code></pre>
+    </div>
+  </div>
+  <p>Como viste en la <a href="06-primeros-pasos.html#errores">Estación 6</a>, Chrome incluso ofrece un botón que usa IA para explicar errores de la consola, si tu cuenta cumple ciertos requisitos. Úsalo con las mismas reglas. Y en la <a href="37-ia.html">Estación 37</a> aprenderás a trabajar con un agente de programación como Claude Code con criterio profesional.</p>
 </section>
   </main>
 </div>

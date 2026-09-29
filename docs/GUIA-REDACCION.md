@@ -163,7 +163,7 @@ console.log(b);</code></pre>
 
 `linea` es la línea que se acaba de ejecutar; `vars` es la memoria completa **después** de ejecutarla (valores como
 texto; los strings con comillas: `"\"Ana\""`); `salida` es lo que esa línea imprime. Para bucles, repite pasos por
-cada vuelta. `data-rotulo-memoria` cambia el título «Memoria (variables)». Si el primer paso tiene `"linea": 0`, se usa como estado inicial (por ejemplo, variables que ya existían).
+cada vuelta. `data-rotulo-memoria` cambia el título «Memoria (variables)». `data-rotulo-salida` cambia el título «Consola» (por ejemplo, «Pantalla»). Si el primer paso tiene `"linea": 0`, se usa como estado inicial (por ejemplo, variables que ya existían).
 
 ### Taller (editor que ejecuta código de verdad)
 
@@ -206,7 +206,7 @@ Página web (HTML/CSS/JS con vista previa):
 </div>
 ```
 
-`data-auto` ejecuta al cargar (útil para demos). El HTML puede cargar librerías con
+`data-auto` ejecuta al cargar (útil para demos). En la vista previa la validación nativa de formularios funciona (required, pattern…); al enviar un formulario válido o pulsar un enlace externo se muestra un aviso en la consola en vez de navegar; los enlaces `#id` desplazan dentro de la vista previa. El HTML puede cargar librerías con
 `<script src="https://cdnjs.cloudflare.com/ajax/libs/...">` (versiones exactas), por ejemplo React 18.3.1 UMD
 (`react/18.3.1/umd/react.development.js` y `react-dom/18.3.1/umd/react-dom.development.js`) con
 `babel-standalone/7.26.4/babel.min.js` para JSX, o `phaser/3.90.0/phaser.min.js`. Solo cdnjs, solo scripts.
@@ -270,7 +270,7 @@ el concepto.
 </div>
 ```
 
-Escribe las líneas **en el orden correcto**: la página las desordena y la persona las ordena. Usa solo algoritmos con un único orden válido (si dos líneas pueden intercambiarse sin cambiar el resultado, la corrección las marcaría como error).
+Opcional: `data-exito="mensaje"` cambia el mensaje de acierto. Escribe las líneas **en el orden correcto**: la página las desordena y la persona las ordena. Usa solo algoritmos con un único orden válido (si dos líneas pueden intercambiarse sin cambiar el resultado, la corrección las marcaría como error).
 
 ### Terminal simulada (comandos y Git sin instalar nada)
 

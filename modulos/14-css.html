@@ -53,6 +53,8 @@
       <li><a href="#caja">Modelo de caja</a></li>
       <li><a href="#flexbox">Flexbox</a></li>
       <li><a href="#grid">Grid</a></li>
+      <li><a href="#posicion">Posición y movimiento</a></li>
+      <li><a href="#adaptable">Diseño adaptable</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -1319,7 +1321,7 @@ return true;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
 }</code></pre>
-  <p>Se lee así: «crea tantas columnas como quepan, cada una de al menos 180 píxeles, y reparte el espacio que sobre entre ellas». En un teléfono cabe una columna; en una tableta, tres; en un monitor, seis. Sin escribir ni una media query. La alternativa <code>auto-fill</code> se comporta igual cuando hay muchos elementos; la diferencia aparece cuando hay pocos: <code>auto-fill</code> deja pistas vacías al final y <code>auto-fit</code> estira los elementos para llenar la fila.</p>
+  <p>Se lee así: «crea tantas columnas como quepan, cada una de al menos 180 píxeles, y reparte el espacio que sobre entre ellas». En un teléfono cabe una columna; en una tableta, tres o cuatro; en un monitor ancho, seis o más. Sin escribir ni una media query. La alternativa <code>auto-fill</code> se comporta igual cuando hay muchos elementos; la diferencia aparece cuando hay pocos: <code>auto-fill</code> deja pistas vacías al final y <code>auto-fit</code> estira los elementos para llenar la fila.</p>
 
   <h3>¿Flexbox o grid?</h3>
   <div class="tabla">
@@ -1334,6 +1336,453 @@ return true;
   </div>
   <p>No compiten: se combinan. Lo más habitual es usar grid para la estructura general y flexbox dentro de cada componente. Una regla práctica: si piensas «pon estas cosas una detrás de otra», usa flexbox; si piensas «alinea esto en filas y columnas», usa grid.</p>
   <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>En DevTools, los contenedores grid tienen la etiqueta «grid» en el panel Elementos. Al activarla, el navegador dibuja las líneas con sus números y los nombres de las áreas encima de la página. Cuando un elemento cae donde no esperabas, es lo primero que conviene mirar.</p></div></aside>
+</section>
+
+<section id="posicion" data-parada="Posición y movimiento">
+  <h2>Posición, capas y movimiento</h2>
+  <p>Una etiqueta de «oferta» en la esquina de una tarjeta. Una cabecera que se queda pegada arriba al hacer scroll. Una ventana emergente encima de todo. Una moneda que gira en la interfaz de tu juego. Nada de eso encaja en el orden normal de la página, y para eso están <code>position</code>, <code>z-index</code>, las transformaciones, las transiciones y las animaciones.</p>
+
+  <h3>El flujo normal y cómo salir de él</h3>
+  <p>Sin instrucciones especiales, el navegador coloca las cajas en el <strong>flujo normal</strong>: los elementos de bloque, uno debajo de otro; los elementos en línea, uno junto a otro como palabras. La propiedad <code>position</code> permite desplazar un elemento o sacarlo de ese flujo. Después, las propiedades <code>top</code>, <code>right</code>, <code>bottom</code> y <code>left</code> dicen a qué distancia colocarlo.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Valor</th><th scope="col">¿Sigue ocupando su hueco?</th><th scope="col">Se mide desde…</th><th scope="col">Uso típico</th></tr></thead>
+      <tbody>
+        <tr><td><code>static</code></td><td>Sí</td><td>No se mueve: ignora <code>top</code>, <code>left</code> y <code>z-index</code>. Es el valor por defecto.</td><td>Todo lo normal.</td></tr>
+        <tr><td><code>relative</code></td><td>Sí</td><td>Su propia posición normal. Los demás no se enteran de que se movió.</td><td>Pequeños ajustes y, sobre todo, servir de referencia a un hijo con <code>absolute</code>.</td></tr>
+        <tr><td><code>absolute</code></td><td>No: sale del flujo y los demás ocupan su sitio.</td><td>El antepasado más cercano que tenga un <code>position</code> distinto de <code>static</code>. Si no hay ninguno, la página.</td><td>Insignias, iconos sobre una imagen, menús desplegables.</td></tr>
+        <tr><td><code>fixed</code></td><td>No</td><td>La ventana (el viewport). No se mueve al hacer scroll.</td><td>Botón flotante de «volver arriba», avisos de cookies.</td></tr>
+        <tr><td><code>sticky</code></td><td>Sí</td><td>Se comporta como <code>relative</code> hasta que, al hacer scroll, llega a la distancia indicada; entonces se queda pegado.</td><td>Cabeceras de página o de tabla que no desaparecen.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El patrón que más vas a usar es la pareja <code>relative</code> + <code>absolute</code>: el padre se convierte en la referencia y el hijo se coloca respecto a él.</p>
+  <pre><code class="language-css">.tarjeta {
+  position: relative;       /* la referencia: no se mueve, solo «avisa» */
+}
+
+.tarjeta .insignia {
+  position: absolute;
+  top: 8px;                 /* 8px desde el borde de arriba de la tarjeta */
+  right: 8px;               /* 8px desde el borde derecho */
+}</code></pre>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p>Si olvidas el <code>position: relative</code> del padre, el elemento con <code>absolute</code> busca a otro antepasado posicionado y, si no hay ninguno, se coloca respecto a la página entera: la insignia termina en la esquina de la pantalla. Con <code>sticky</code>, los dos fallos típicos son olvidar <code>top</code> (sin una distancia no sabe cuándo pegarse) y que algún antepasado tenga <code>overflow: hidden</code> o <code>auto</code>, que lo encierra en esa caja.</p></div></aside>
+  <p>Predice: ¿dónde aparecerá la insignia «-30%»?, ¿qué hará la cabecera cuando hagas scroll dentro de la vista previa? Ejecuta y desplázate por la vista previa.</p>
+  <div class="taller" id="taller-posicion" data-modo="web" data-titulo="Predice y modifica: relative, absolute y sticky" data-alto="18rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;header class="cabecera"&gt;Mi tienda&lt;/header&gt;
+&lt;article class="tarjeta"&gt;
+  &lt;span class="insignia"&gt;-30%&lt;/span&gt;
+  &lt;h2&gt;Mando inalámbrico&lt;/h2&gt;
+  &lt;p&gt;Compatible con tu consola y tu PC.&lt;/p&gt;
+&lt;/article&gt;
+&lt;p class="relleno"&gt;Contenido largo para que puedas hacer scroll…&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}
+
+.cabecera {
+  position: sticky;
+  top: 0;
+  background: #1d3557;
+  color: white;
+  padding: 12px 16px;
+  font-weight: bold;
+}
+
+.tarjeta {
+  position: relative;
+  margin: 24px 16px;
+  padding: 16px;
+  border: 2px solid #1d3557;
+  border-radius: 10px;
+  max-width: 320px;
+}
+
+.insignia {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: crimson;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: bold;
+}
+
+.relleno {
+  height: 600px;
+  margin: 16px;
+  background: repeating-linear-gradient(#f1faee 0 40px, #e0ebe4 40px 80px);
+}</textarea>
+  </div>
+  <p>La insignia queda en la esquina superior derecha de la tarjeta y la cabecera se queda arriba al hacer scroll. <strong>Modifica</strong>: borra <code>position: relative;</code> de <code>.tarjeta</code> y mira adónde se va la insignia; cambia <code>top: 8px; right: 8px;</code> por <code>bottom: -12px; left: 16px;</code>; y cambia <code>sticky</code> por <code>fixed</code> en la cabecera (fíjate en que ahora tapa el principio del contenido, porque ya no ocupa su hueco). El fondo de rayas de <code>.relleno</code> es un degradado de CSS, solo decorativo.</p>
+
+  <h3>z-index: quién queda encima</h3>
+  <p>Cuando dos elementos se superponen, por defecto queda encima el que aparece después en el HTML. <code>z-index</code> cambia ese orden: un número mayor queda más cerca de ti. Solo funciona en elementos con <code>position</code> distinto de <code>static</code> y en los hijos de un contenedor flex o grid.</p>
+  <p>Hay una trampa: los <strong>contextos de apilamiento</strong>. Algunos elementos crean un grupo de capas propio; por ejemplo, uno posicionado con un <code>z-index</code> distinto de <code>auto</code>, o uno con <code>opacity</code> menor que 1 o con <code>transform</code>. Sus hijos solo pueden ordenarse dentro de ese grupo.</p>
+  <aside class="senal analogia"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Para entenderlo</p><p>Piensa en hojas de papel dentro de carpetas apiladas sobre una mesa. Puedes reordenar las hojas dentro de una carpeta como quieras, pero ninguna hoja puede quedar por encima de la carpeta de arriba, por mucho que le escribas un 9999. Cada carpeta es un contexto de apilamiento. Si un <code>z-index: 9999</code> «no funciona», revisa dos cosas: que el elemento tenga <code>position</code> y en qué carpeta está.</p></div></aside>
+
+  <h3>Transformaciones</h3>
+  <p><code>transform</code> mueve, gira o escala un elemento de forma visual, sin afectar al flujo: los demás elementos no se enteran y no se recolocan.</p>
+  <pre><code class="language-css">.a { transform: translate(20px, -10px); } /* desplaza 20px a la derecha y 10px hacia arriba */
+.b { transform: rotate(15deg); }          /* gira 15 grados */
+.c { transform: scale(1.2); }             /* agranda un 20% */
+.d { transform: translateY(-4px) rotate(-2deg); } /* se pueden combinar */</code></pre>
+
+  <h3>Transiciones: cambios suaves</h3>
+  <p>Cuando pasas el ratón por un botón y cambia de color, el cambio es instantáneo. Una <strong>transición</strong> hace que ese cambio dure un tiempo:</p>
+  <pre><code class="language-css">.boton {
+  background-color: #2a9d8f;
+  transition: background-color 200ms ease, transform 200ms ease;
+}
+
+.boton:hover {
+  background-color: #1f7a6f;
+  transform: translateY(-2px);
+}</code></pre>
+  <p>Cada transición dice qué propiedad anima, cuánto dura (<code>200ms</code> o <code>0.2s</code>) y con qué curva de velocidad: <code>ease</code> (el valor por defecto: arranca rápido y frena al final), <code>linear</code>, <code>ease-in</code>, <code>ease-out</code> o <code>ease-in-out</code>. Opcionalmente, un retraso.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuidado</p><p>Escribe la transición en el estado normal, no en el <code>:hover</code>. Así se anima al entrar y al salir. Solo se animan las propiedades que tienen valores intermedios (colores, medidas, <code>opacity</code>, <code>transform</code>); <code>display</code> no se puede animar así. Y para que las animaciones vayan fluidas, anima sobre todo <code>transform</code> y <code>opacity</code>: el navegador las mueve sin recalcular la posición de toda la página.</p></div></aside>
+
+  <h3>Animaciones con @keyframes</h3>
+  <p>Una transición va de un estado a otro cuando algo cambia. Una <strong>animación</strong> puede tener muchos pasos, repetirse y empezar sola. Primero defines los fotogramas clave con <code>@keyframes</code> y después se la asignas a un elemento con <code>animation</code>:</p>
+  <pre><code class="language-css">@keyframes latido {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.corazon {
+  animation: latido 1s ease-in-out infinite;
+}</code></pre>
+  <p><code>animation</code> junta varias propiedades: el nombre, la duración, la curva, el número de repeticiones (<code>infinite</code> o un número), y opcionalmente el retraso, la dirección (<code>alternate</code> va y vuelve) y <code>forwards</code>, que deja el elemento como quedó en el último fotograma. <code>from</code> y <code>to</code> son sinónimos de <code>0%</code> y <code>100%</code>.</p>
+
+  <h3>Respeta a quien prefiere menos movimiento</h3>
+  <p>Para algunas personas, sobre todo con trastornos vestibulares (del equilibrio), las animaciones grandes o constantes provocan mareo, náuseas o dolor de cabeza. Los sistemas operativos tienen un ajuste de accesibilidad para pedir menos movimiento, con nombres como «Reducir movimiento» o «Quitar animaciones». CSS puede leerlo con la media query <code>prefers-reduced-motion</code>. La estrategia más segura es añadir el movimiento solo si la persona no ha pedido lo contrario:</p>
+  <pre><code class="language-css">@media (prefers-reduced-motion: no-preference) {
+  .corazon {
+    animation: latido 1s ease-in-out infinite;
+  }
+}
+
+/* O al revés: anula el movimiento para quien lo pidió */
+@media (prefers-reduced-motion: reduce) {
+  .boton {
+    transition: none;
+  }
+}</code></pre>
+  <div class="taller" id="taller-animacion" data-modo="web" data-titulo="Modifica: transición y animación" data-alto="14rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div class="moneda"&gt;$&lt;/div&gt;
+&lt;button class="boton"&gt;Pasa el ratón por aquí&lt;/button&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body {
+  font-family: system-ui, sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 24px;
+}
+
+.moneda {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: gold;
+  border: 4px solid goldenrod;
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+@keyframes flotar {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-16px); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .moneda {
+    animation: flotar 0.8s ease-in-out infinite alternate;
+  }
+}
+
+.boton {
+  font: inherit;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: #2a9d8f;
+  color: white;
+  transition: background-color 200ms ease, transform 200ms ease;
+}
+
+.boton:hover {
+  background: #1f7a6f;
+  transform: translateY(-3px);
+}</textarea>
+  </div>
+  <p><strong>Modifica</strong>: cambia la duración de la transición a <code>1s</code> para verla a cámara lenta; cambia <code>alternate</code> por nada y observa el salto al reiniciar cada vuelta; crea un <code>@keyframes girar</code> que vaya de <code>rotate(0deg)</code> a <code>rotate(360deg)</code> y úsalo en la moneda con <code>linear</code>. Si en tu sistema tienes activado «Reducir movimiento», la moneda no se mueve: es lo que debe pasar. Puedes simularlo en Chrome desde DevTools, en el panel Rendering (en español, Renderización), con la opción que emula <code>prefers-reduced-motion</code>.</p>
+</section>
+
+<section id="adaptable" data-parada="Diseño adaptable">
+  <h2>Diseño adaptable, tipografía y orden</h2>
+  <p>Tu página se va a ver en un teléfono de 360 píxeles de ancho, en una tableta, en un portátil y en un monitor de 2560. No vas a escribir una página para cada uno. El <strong>diseño adaptable</strong> (en inglés, <em>responsive design</em>; también se dice «diseño responsivo») consiste en escribir un solo HTML y un CSS que se reorganiza según el espacio disponible.</p>
+
+  <h3>La base: el viewport y no romper lo que ya es fluido</h3>
+  <p>Sin la etiqueta <code>&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;</code> en el <code>&lt;head&gt;</code>, los navegadores móviles fingen tener una pantalla de unos 980 píxeles y encogen la página: todo se ve diminuto. Con ella, el ancho de la página es el ancho real del dispositivo. Ponla siempre.</p>
+  <p>La buena noticia es que el HTML, sin CSS, ya es adaptable: el texto se reparte en las líneas que caben. Somos nosotros quienes lo rompemos con anchos fijos. Por eso las primeras reglas del diseño adaptable son de sentido común: usa <code>max-width</code> en lugar de <code>width</code>, porcentajes y <code>fr</code> en lugar de píxeles fijos para los anchos, y <code>flex-wrap</code> o <code>auto-fit</code> para que las cosas bajen de línea cuando no caben.</p>
+
+  <h3>Mobile first y media queries</h3>
+  <p>Una <strong>media query</strong> es un bloque de CSS que solo se aplica si se cumple una condición sobre el dispositivo, normalmente el ancho de la ventana:</p>
+  <pre><code class="language-css">@media (min-width: 700px) {
+  /* Estas reglas solo se aplican si la ventana mide 700px o más */
+  .tarjetas { grid-template-columns: repeat(2, 1fr); }
+}</code></pre>
+  <p>La estrategia recomendada se llama <strong>mobile first</strong> («primero el móvil»). Escribes los estilos base para la pantalla más pequeña, que casi siempre es lo más sencillo (todo en una columna), y después añades media queries con <code>min-width</code> para ir agregando columnas y detalles a medida que hay espacio.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 290" role="img" aria-label="La misma página en tres anchos: a 360 píxeles, una columna de tarjetas con los estilos base; a 700 píxeles, dos columnas gracias a una media query con min-width de 700; a 1100 píxeles, un menú lateral y tres columnas con otra media query con min-width de 1100.">
+      <text class="d-rotulo" x="75" y="26" text-anchor="middle">360 px</text>
+      <text class="d-rotulo" x="270" y="26" text-anchor="middle">700 px</text>
+      <text class="d-rotulo" x="555" y="26" text-anchor="middle">1100 px</text>
+      <rect class="d-caja" x="20" y="40" width="110" height="212" rx="12"/>
+      <rect class="d-acento" x="30" y="52" width="90" height="16" rx="3"/>
+      <rect class="d-caja-suave" x="30" y="76" width="90" height="36" rx="4"/>
+      <rect class="d-caja-suave" x="30" y="118" width="90" height="36" rx="4"/>
+      <rect class="d-caja-suave" x="30" y="160" width="90" height="36" rx="4"/>
+      <rect class="d-caja-suave" x="30" y="202" width="90" height="36" rx="4"/>
+      <path class="d-flecha" d="M138 146h12"/>
+      <path class="d-tinta" d="M150 140l10 6-10 6z"/>
+      <rect class="d-caja" x="170" y="40" width="200" height="212" rx="12"/>
+      <rect class="d-acento" x="180" y="52" width="180" height="16" rx="3"/>
+      <rect class="d-caja-suave" x="180" y="76" width="86" height="76" rx="4"/>
+      <rect class="d-caja-suave" x="274" y="76" width="86" height="76" rx="4"/>
+      <rect class="d-caja-suave" x="180" y="160" width="86" height="76" rx="4"/>
+      <rect class="d-caja-suave" x="274" y="160" width="86" height="76" rx="4"/>
+      <path class="d-flecha" d="M378 146h12"/>
+      <path class="d-tinta" d="M390 140l10 6-10 6z"/>
+      <rect class="d-caja" x="410" y="40" width="290" height="212" rx="12"/>
+      <rect class="d-acento" x="420" y="52" width="270" height="16" rx="3"/>
+      <rect class="d-punteada" x="420" y="76" width="58" height="160" rx="4"/>
+      <text class="d-peq d-tenue" x="449" y="160" text-anchor="middle">menú</text>
+      <rect class="d-caja-suave" x="486" y="76" width="62" height="76" rx="4"/>
+      <rect class="d-caja-suave" x="557" y="76" width="62" height="76" rx="4"/>
+      <rect class="d-caja-suave" x="628" y="76" width="62" height="76" rx="4"/>
+      <rect class="d-caja-suave" x="486" y="160" width="62" height="76" rx="4"/>
+      <text class="d-mono d-peq" x="75" y="276" text-anchor="middle">base, sin @media</text>
+      <text class="d-mono d-peq" x="270" y="276" text-anchor="middle">@media (min-width: 700px)</text>
+      <text class="d-mono d-peq" x="555" y="276" text-anchor="middle">@media (min-width: 1100px)</text>
+    </svg>
+    <figcaption>Mobile first: los estilos base sirven para el teléfono, y cada media query con <code>min-width</code> añade algo cuando hay más espacio. Una ventana de 1100 píxeles cumple las dos condiciones y recibe las dos media queries; la segunda, al ir después, gana donde se contradicen.</figcaption>
+  </figure>
+  <pre><code class="language-css">/* Base: teléfonos. Todo en una columna. */
+.tarjetas {
+  display: grid;
+  gap: 1rem;
+}
+
+/* Desde 700px: dos columnas */
+@media (min-width: 700px) {
+  .tarjetas { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Desde 1100px: tres columnas */
+@media (min-width: 1100px) {
+  .tarjetas { grid-template-columns: repeat(3, 1fr); }
+}</code></pre>
+  <p>¿Por qué empezar por el móvil? Porque es más fácil añadir que quitar: la versión de una columna necesita pocas reglas, y las pantallas grandes suman cosas encima. Además te obliga a decidir qué es lo esencial de tu página. Y como hoy la mayoría de las visitas a la web llegan desde teléfonos, es la versión que más gente verá.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">El orden importa</p><p>Las media queries no suman especificidad: una regla dentro de <code>@media</code> pesa lo mismo que fuera. Por eso, en mobile first, las media queries van <strong>después</strong> de los estilos base y ordenadas de menor a mayor <code>min-width</code>. Si pusieras la de 1100 antes que la de 700, en una ventana ancha ganaría la de 700 por aparecer después.</p></div></aside>
+  <p>Los números de corte (en inglés, <em>breakpoints</em>) no tienen que coincidir con modelos concretos de teléfono. Busca el ancho en el que tu diseño empieza a verse mal y pon el corte ahí. Muchos proyectos empiezan con valores cercanos a 600, 900 y 1200 píxeles y los ajustan después.</p>
+  <p>En documentación reciente verás la <strong>sintaxis de rango</strong>, más fácil de leer: <code>@media (width &gt;= 700px)</code> equivale a <code>@media (min-width: 700px)</code>. Funciona en todos los navegadores principales desde 2023. Las dos formas son correctas.</p>
+  <p>Las media queries no solo miran el ancho. Otras muy útiles: <code>(prefers-color-scheme: dark)</code> si la persona usa el tema oscuro del sistema, <code>(prefers-reduced-motion: reduce)</code>, que ya conoces, <code>(hover: hover)</code> si el dispositivo tiene un puntero que puede pasar por encima de las cosas, y <code>print</code> para cuando alguien imprime la página.</p>
+  <p>La vista previa de los talleres es una ventana pequeña, y las media queries de dentro miden su ancho, no el de tu pantalla. El JavaScript de este taller te dice cuánto mide. Ejecútalo, lee el número y predice cuántas columnas vas a ver.</p>
+  <div class="taller" id="taller-media" data-modo="web" data-titulo="Predice y modifica: mobile first" data-alto="18rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;h1&gt;Nuestros juegos&lt;/h1&gt;
+&lt;div class="tarjetas"&gt;
+  &lt;article&gt;Plataformas&lt;/article&gt;
+  &lt;article&gt;Puzles&lt;/article&gt;
+  &lt;article&gt;Carreras&lt;/article&gt;
+  &lt;article&gt;Estrategia&lt;/article&gt;
+&lt;/div&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body {
+  font-family: system-ui, sans-serif;
+  margin: 12px;
+}
+
+h1 {
+  font-size: 1.4rem;
+}
+
+/* Base: una columna */
+.tarjetas {
+  display: grid;
+  gap: 8px;
+}
+
+.tarjetas article {
+  background: #bde0fe;
+  padding: 24px 12px;
+  border-radius: 8px;
+}
+
+/* Desde 600px: dos columnas */
+@media (min-width: 600px) {
+  .tarjetas { grid-template-columns: repeat(2, 1fr); }
+  h1 { font-size: 2rem; }
+}
+
+/* Desde 900px: cuatro columnas */
+@media (min-width: 900px) {
+  .tarjetas { grid-template-columns: repeat(4, 1fr); }
+}</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">console.log("La vista previa mide " + window.innerWidth + " px de ancho.");</textarea>
+  </div>
+  <p>Ahora juega con los cortes para ver cada versión sin cambiar el tamaño de nada. Cambia <code>900px</code> por un número menor que el ancho que te imprimió (por ejemplo, <code>400px</code>): deberías ver cuatro columnas. Después pon <code>2000px</code> en las dos media queries: verás la versión de teléfono, con una columna y el título pequeño. En tu propio proyecto, DevTools tiene un <strong>modo dispositivo</strong> (<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>M</kbd>, o <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>M</kbd> en Mac, con DevTools abierto) para elegir el ancho de la ventana. Aun así, prueba siempre en un teléfono de verdad: el tacto y el tamaño real no se simulan.</p>
+
+  <h3>Tamaños fluidos con clamp()</h3>
+  <p>Un título de 48 píxeles queda bien en un monitor y enorme en un teléfono. En lugar de cambiarlo en cada media query, puedes pedirle que crezca con la ventana, pero dentro de unos límites. Eso hace <code>clamp(mínimo, preferido, máximo)</code>:</p>
+  <pre><code class="language-css">h1 {
+  font-size: clamp(1.75rem, 1rem + 3vw, 3rem);
+  /* nunca menos de 1.75rem (28px), nunca más de 3rem (48px),
+     y en medio, crece con el ancho de la ventana */
+}
+
+.contenedor {
+  width: min(100% - 2rem, 60rem);  /* el menor de los dos valores */
+  margin-inline: auto;
+}</code></pre>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Accesibilidad</p><p>En el valor preferido, mezcla <code>rem</code> con <code>vw</code> (<code>1rem + 3vw</code>), no uses solo <code>vw</code>. Un tamaño hecho solo de <code>vw</code> no crece cuando la persona hace zoom o sube el tamaño de letra de su navegador, y las pautas de accesibilidad piden que el texto se pueda ampliar hasta el doble.</p></div></aside>
+
+  <h3>Imágenes fluidas</h3>
+  <p>Una foto de 1600 píxeles de ancho, sin CSS, se sale de la pantalla de un teléfono. Esta regla está en casi todos los proyectos:</p>
+  <pre><code class="language-css">img {
+  max-width: 100%;   /* nunca más ancha que su contenedor */
+  height: auto;      /* el alto se ajusta para no deformarla */
+  display: block;    /* quita el pequeño hueco que deja debajo por ser «en línea» */
+}
+
+.miniatura {
+  width: 100%;
+  aspect-ratio: 16 / 9;  /* proporción fija, sea cual sea la foto */
+  object-fit: cover;     /* recorta la foto para llenar la caja sin deformarla */
+}</code></pre>
+  <p><code>object-fit: cover</code> es ideal para tarjetas y galerías donde las fotos tienen proporciones distintas. Para mandar archivos más pequeños a los teléfonos existen los atributos HTML <code>srcset</code> y <code>sizes</code>, y el elemento <code>&lt;picture&gt;</code>; eso es HTML y rendimiento, y lo retomarás en la <a href="17-diseno-ux.html">Estación 17</a>.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consultas de contenedor</p><p>Las media queries preguntan por el ancho de la ventana. A veces lo que importa es el ancho del hueco donde está un componente: la misma tarjeta puede estar en una columna estrecha o en una ancha. Para eso existen las <strong>consultas de contenedor</strong> (<code>@container</code>), disponibles en todos los navegadores principales desde 2023. Cuando domines las media queries, son el siguiente paso natural.</p></div></aside>
+
+  <h3>Tipografía web</h3>
+  <p>La mayor parte de una página es texto, así que la tipografía decide si se lee con gusto o con esfuerzo. Lo primero es la familia de letra, con <code>font-family</code>. Se escribe una lista de opciones: si la primera no está disponible, el navegador prueba la siguiente. Termina siempre con una <strong>familia genérica</strong>: <code>serif</code> (con remates, como Georgia), <code>sans-serif</code> (sin remates), <code>monospace</code> (todas las letras igual de anchas) o <code>system-ui</code> (la letra del sistema operativo).</p>
+  <pre><code class="language-css">body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+h1, h2 {
+  font-family: Georgia, "Times New Roman", serif;  /* los nombres con espacios, entre comillas */
+}</code></pre>
+  <p>Para usar una fuente que no viene en las computadoras, lo más común es <strong>Google Fonts</strong> (<a href="https://fonts.google.com/">fonts.google.com</a>), un catálogo gratuito de más de mil familias. Eliges una, marcas los grosores que necesitas y el sitio te da unas líneas para pegar en el <code>&lt;head&gt;</code>, parecidas a estas:</p>
+  <pre><code class="language-html">&lt;link rel="preconnect" href="https://fonts.googleapis.com"&gt;
+&lt;link rel="preconnect" href="https://fonts.gstatic.com" crossorigin&gt;
+&lt;link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;display=swap"&gt;</code></pre>
+  <pre><code class="language-css">body {
+  font-family: "Inter", system-ui, sans-serif;
+}</code></pre>
+  <p>Las dos primeras líneas adelantan la conexión con los servidores de Google para ganar tiempo. En la tercera, <code>wght@400;700</code> pide solo los grosores normal y negrita (cada grosor es un archivo más que descargar, así que pide solo los que uses) y <code>display=swap</code> hace que el texto se muestre enseguida con una fuente de respaldo y se cambie a la definitiva cuando termine de llegar.</p>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Fuentes en tu propio servidor</p><p>Cada visita que carga una fuente desde Google conecta con servidores de Google, y eso tiene implicaciones de privacidad que algunas normativas miran con lupa. Por eso muchos equipos descargan los archivos de la fuente (formato <code>.woff2</code>) y los sirven desde su propio sitio con la regla <code>@font-face</code>:</p>
+    <pre><code class="language-css">@font-face {
+  font-family: "Inter";
+  src: url("../fuentes/inter.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}</code></pre></div></aside>
+  <p>Después de la familia, cuatro decisiones hacen casi toda la diferencia:</p>
+  <ul>
+    <li><strong>Tamaño</strong>: para texto corrido, al menos <code>1rem</code> (16 píxeles). Los títulos, en una escala clara por encima.</li>
+    <li><strong>Interlineado</strong> (<code>line-height</code>): alrededor de <code>1.5</code> para párrafos y entre <code>1.1</code> y <code>1.3</code> para títulos. Escríbelo <strong>sin unidad</strong>: así cada elemento lo multiplica por su propio tamaño de letra. Con <code>1.5em</code>, los hijos heredarían los píxeles ya calculados del padre, aunque su letra sea más grande.</li>
+    <li><strong>Largo de línea</strong>: las líneas de entre 45 y 75 caracteres se leen mejor. <code>max-width: 65ch</code> en los párrafos lo consigue.</li>
+    <li><strong>Grosor</strong> (<code>font-weight</code>): 400 es normal y 700 es negrita. Solo funcionan los grosores que cargaste.</li>
+  </ul>
+  <p>Este texto es difícil de leer a propósito. Tu misión: arreglarlo solo con CSS.</p>
+  <div class="taller" id="taller-tipografia" data-modo="web" data-titulo="Misión: haz que este texto se lea bien" data-alto="20rem" data-exito="Ahora se lee sin esfuerzo: tamaño, interlineado, largo de línea y contraste en su sitio.">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;article&gt;
+  &lt;h1&gt;Diario de desarrollo, semana 12&lt;/h1&gt;
+  &lt;p&gt;Esta semana terminamos el sistema de guardado. Ahora la partida se guarda al llegar a cada hoguera, y si el juego se cierra de golpe, al volver apareces en la última que tocaste. Probamos con doce personas y ninguna perdió su progreso.&lt;/p&gt;
+  &lt;p&gt;La próxima semana toca el menú de opciones: volumen, controles y un modo con menos destellos en pantalla para quien lo necesite.&lt;/p&gt;
+&lt;/article&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body {
+  font-family: system-ui, sans-serif;
+  margin: 16px;
+}
+
+p {
+  font-size: 12px;
+  line-height: 1;
+  color: #b0b0b0;
+}</textarea>
+    <script type="text/plain" class="taller-verificar">
+var p = document.querySelector("p");
+var cs = getComputedStyle(p);
+var fs = parseFloat(cs.fontSize);
+if (fs < 16) return "El texto mide " + fs + "px. Súbelo a 1rem (16px) como mínimo.";
+var lh = cs.lineHeight === "normal" ? fs * 1.2 : parseFloat(cs.lineHeight);
+if (lh / fs < 1.4) return "El interlineado es muy apretado. Prueba con line-height: 1.5 (sin unidad).";
+function lum(c) {
+  var n = c.match(/[\d.]+/g).slice(0, 3).map(function (v) { v = v / 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+  return 0.2126 * n[0] + 0.7152 * n[1] + 0.0722 * n[2];
+}
+var ratio = 1.05 / (lum(cs.color) + 0.05);
+if (ratio < 4.5) return "El contraste del texto con el fondo blanco es " + ratio.toFixed(1) + ":1. Necesita 4.5:1 como mínimo: oscurece el color, por ejemplo a #333.";
+var ch = document.createElement("span");
+ch.textContent = "0";
+p.appendChild(ch);
+var anchoCero = ch.getBoundingClientRect().width;
+p.removeChild(ch);
+if (p.getBoundingClientRect().width > anchoCero * 80) return "Las líneas son demasiado largas. Limita el ancho de los párrafos, por ejemplo con max-width: 65ch.";
+return true;
+    </script>
+  </div>
+  <details class="pista"><summary>Pista para la misión</summary><p>Hay que cambiar tres valores de <code>p</code> (tamaño, interlineado y color) y añadir uno (<code>max-width</code> en <code>ch</code>). Si la vista previa es estrecha, las líneas ya son cortas por sí solas; añade el límite igualmente, porque en una pantalla ancha sí hará falta.</p></details>
+
+  <h3>Tema claro y oscuro con variables</h3>
+  <p>Las variables CSS y las media queries se combinan muy bien. Si toda tu página usa variables para los colores, el tema oscuro es redefinir unas pocas:</p>
+  <pre><code class="language-css">:root {
+  --fondo: #ffffff;
+  --texto: #1d1d1f;
+  --marca: #2a9d8f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #121417;
+    --texto: #e8e8ea;
+    --marca: #5cc8b8;
+  }
+}
+
+body {
+  background: var(--fondo);
+  color: var(--texto);
+}</code></pre>
+  <p>Así funciona este mismo curso: el botón de tema de la cabecera y tu preferencia del sistema cambian unas cuantas variables, y todo lo demás las sigue.</p>
+
+  <h3>Buenas prácticas y organización</h3>
+  <p>Un archivo de CSS crece deprisa. Estas costumbres lo mantienen manejable:</p>
+  <ul>
+    <li><strong>Un orden fijo en el archivo</strong>: primero las variables, después un pequeño reinicio (<code>box-sizing</code>, márgenes del <code>body</code>, imágenes fluidas), luego los estilos base de las etiquetas, la estructura de la página, los componentes y, al final de cada bloque o del archivo, las media queries de menor a mayor. Separa las secciones con comentarios.</li>
+    <li><strong>Clases para dar estilo</strong> y especificidad baja. Evita los ids en los selectores, las cadenas largas como <code>.pagina .contenido .lista li a</code> y el <code>!important</code>. Si todas tus reglas pesan poco, cambiar algo nunca es una guerra.</li>
+    <li><strong>Nombres que describen qué es</strong>, no cómo se ve. Muchos equipos usan la convención <strong>BEM</strong> (bloque, elemento, modificador): <code>.tarjeta</code>, <code>.tarjeta__titulo</code>, <code>.tarjeta--destacada</code>.</li>
+    <li><strong>No te repitas</strong>: colores, espacios y radios, en variables.</li>
+    <li><strong>Anidamiento con moderación</strong>: el CSS actual permite escribir una regla dentro de otra (<code>.tarjeta { &amp; h2 { … } }</code>), y funciona en los navegadores principales desde finales de 2023. Es cómodo, pero anidar muchos niveles crea selectores largos y pesados.</li>
+    <li><strong>Herramientas</strong>: Prettier da formato a tu CSS al guardar y Stylelint avisa de errores; los verás en la <a href="25-codigo-limpio.html">Estación 25</a>. Frameworks como Tailwind CSS o Bootstrap aceleran el trabajo, pero están hechos de CSS: aprende primero la base y los entenderás de verdad.</li>
+  </ul>
+  <p>Pon en orden esta hoja de estilos mobile first. Piensa en qué necesita estar antes para que lo de después funcione y en qué debe ganar en caso de empate:</p>
+  <div class="parsons" data-titulo="Ordena la hoja de estilos" data-lenguaje="css">
+    <ol>
+      <li>:root { --marca: #2a9d8f; --espacio: 1rem; }</li>
+      <li>*, *::before, *::after { box-sizing: border-box; }</li>
+      <li>body { margin: 0; font-family: system-ui, sans-serif; line-height: 1.5; }</li>
+      <li>.tarjetas { display: grid; gap: var(--espacio); }</li>
+      <li>@media (min-width: 600px) { .tarjetas { grid-template-columns: repeat(2, 1fr); } }</li>
+      <li>@media (min-width: 1000px) { .tarjetas { grid-template-columns: repeat(4, 1fr); } }</li>
+    </ol>
+  </div>
+  <p>Las variables van primero para que todo lo demás pueda leerlas (aunque técnicamente funcionarían en cualquier lugar, es la convención). El reinicio y los estilos base van antes que los componentes. Y las media queries van al final, de menor a mayor, porque en mobile first cada una debe ganar a lo anterior en caso de empate.</p>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Un método para cuando algo se ve mal</p><p>1. Selecciona el elemento en DevTools. 2. En Estilos, busca la propiedad: ¿aparece?, ¿está tachada?, ¿tiene un icono de advertencia? 3. En Calculado, mira el valor final y haz clic para ver qué regla lo puso. 4. Mira el modelo de caja: ¿el hueco es margen o relleno? 5. Si no entiendes dónde está cada caja, añade temporalmente <code>* { outline: 1px solid red; }</code>: el contorno no ocupa espacio y te dibuja todas las cajas de la página.</p></div></aside>
 </section>
   </main>
 </div>

@@ -52,6 +52,9 @@
       <li><a href="#terminal">La terminal</a></li>
       <li><a href="#rutas">Rutas y carpetas</a></li>
       <li><a href="#archivos">Crear y mover archivos</a></li>
+      <li><a href="#node">Node.js</a></li>
+      <li><a href="#git">Git: guardar versiones</a></li>
+      <li><a href="#problemas">Si algo falla</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -830,6 +833,414 @@ return true;
     </ol>
   </div>
   <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>Pon nombres en minúscula, sin espacios, sin tildes ni eñes, y separa las palabras con guiones: <code>mi-primer-juego</code>, <code>notas-clase-3.txt</code>. Es la costumbre en casi todos los equipos. Te ahorra comillas en la terminal y problemas cuando esos archivos terminen en un servidor o en una dirección web. Y no olvides la extensión (<code>.js</code>, <code>.html</code>, <code>.txt</code>): le dice a VS Code, y a ti, qué tipo de archivo es.</p></div></aside>
+</section>
+
+<section id="node" data-parada="Node.js">
+  <h2>Node.js: JavaScript fuera del navegador</h2>
+  <p>JavaScript nació para dar vida a las páginas web, y durante años solo funcionaba dentro de un navegador. Pero quienes programan querían usar el mismo lenguaje para todo: para herramientas que trabajan con archivos, para servidores, para automatizar tareas. En 2009, Ryan Dahl tomó el motor de JavaScript de Chrome y lo sacó del navegador. Así nació <strong>Node.js</strong>: un programa que ejecuta archivos de JavaScript en tu computadora, con acceso a tus archivos y a la red. A ese tipo de programa se le llama <strong>entorno de ejecución</strong> (en inglés, <em>runtime</em>); en la <a href="06-primeros-pasos.html">Estación 6</a> verás la idea con calma.</p>
+  <p>Con Node.js viene <strong>npm</strong> (<em>Node Package Manager</em>, «gestor de paquetes de Node»): una herramienta para descargar e instalar código que otras personas publicaron, como Prettier, ESLint o las librerías de videojuegos. La usarás a fondo en la <a href="29-backend.html">Estación 29</a>; hoy solo comprobarás que está instalada.</p>
+
+  <h3>Qué versión instalar</h3>
+  <p>Node.js publica versiones nuevas a menudo, y no todas son iguales. Las <strong>LTS</strong> (de <em>Long Term Support</em>, «soporte a largo plazo») reciben correcciones de seguridad durante unos 30 meses y son las que usan las empresas. Las <em>Current</em> («actuales») traen lo último, pero durante seis meses sirven para que las herramientas se pongan al día. Esta es la situación a finales de septiembre de 2026, según la página oficial de versiones de Node.js:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Versión</th><th scope="col">Nombre</th><th scope="col">Estado</th></tr></thead>
+      <tbody>
+        <tr><td>Node.js 26</td><td>(todavía sin nombre)</td><td>Current. Pasa a LTS el 28 de octubre de 2026</td></tr>
+        <tr><td><strong>Node.js 24</strong></td><td>Krypton</td><td><strong>LTS activa: la que debes instalar</strong> (24.21.0 es la más reciente al escribir esto)</td></tr>
+        <tr><td>Node.js 22</td><td>Jod</td><td>LTS en mantenimiento: solo recibe arreglos importantes</td></tr>
+        <tr><td>Node.js 20 y anteriores</td><td>—</td><td>Sin soporte: no las instales</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La regla que no caduca: instala <strong>la LTS más reciente</strong>, la que la página de descarga marca como LTS. Si lees esto en 2027, puede que sea la 26. Desde Node.js 27 el calendario cambia: habrá una versión mayor al año y todas pasarán a LTS.</p>
+
+  <h3>Instalarlo</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Windows</th><th scope="col">macOS</th><th scope="col">Linux</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>En <code>nodejs.org</code>, ve a la página de descarga, elige la versión LTS y descarga el <strong>instalador de Windows (.msi)</strong>: x64 para la mayoría de computadoras, ARM64 si la tuya tiene procesador ARM. Ejecútalo y acepta las opciones por defecto; deja activada <em>Add to PATH</em>. En la pantalla <em>Tools for Native Modules</em> puedes dejar la casilla sin marcar: instalaría Python, las herramientas de compilación de Visual Studio y Chocolatey, que no necesitas en este curso.</td>
+          <td>En <code>nodejs.org</code>, descarga el <strong>instalador de macOS (.pkg)</strong> de la versión LTS, ábrelo y sigue los pasos. Te pedirá la contraseña de tu usuario.</td>
+          <td>En <code>nodejs.org/es/download</code>, elige Linux y el método <strong>nvm</strong>. La página te muestra unos pocos comandos para copiar: instalan nvm (un gestor de versiones de Node) y después la versión elegida. Evita el paquete <code>nodejs</code> de tu distribución si es antiguo: compruébalo con <code>node --version</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Gestores de versiones</p><p>Un <strong>gestor de versiones</strong> (como nvm, fnm, nvm-windows o Volta) permite tener varias versiones de Node.js y cambiar entre ellas, algo útil cuando trabajas en proyectos antiguos. Microsoft, por ejemplo, recomienda nvm-windows para trabajar en Windows. Para empezar, el instalador oficial es suficiente. Lo que no debes hacer es mezclar: si ya instalaste Node.js con un gestor, no instales también el <code>.msi</code> o el <code>.pkg</code>, porque las dos instalaciones chocan.</p></div></aside>
+
+  <h3>Comprueba que funciona</h3>
+  <p>Cierra todas las terminales que tuvieras abiertas (y VS Code, si lo estabas usando) y abre una nueva. Es importante: una terminal que ya estaba abierta antes de instalar no se entera de los programas nuevos. Después escribe:</p>
+  <pre class="consola"><code><span class="prompt">$</span> node --version
+<span class="salida">v24.21.0</span>
+<span class="prompt">$</span> npm --version
+<span class="salida">11.19.0</span></code></pre>
+  <p>Tus números pueden ser algo mayores si salió una actualización: lo que importa es que <code>node</code> empiece por <code>v24</code> (o por la LTS del momento). Si en vez de un número ves «command not found» o «no se reconoce», ve a <a href="#problemas">Si algo falla</a>. Y si en Windows <code>node</code> funciona pero <code>npm</code> da un error rojo sobre la «ejecución de scripts», es la política de ejecución de PowerShell: la solución también está allí.</p>
+
+  <h3>Tu primer archivo ejecutado con Node</h3>
+  <ol class="pasos">
+    <li><div><p>Crea una carpeta para la prueba y entra en ella:</p>
+      <pre class="consola"><code><span class="prompt">$</span> mkdir -p ~/proyectos/prueba-node
+<span class="prompt">$</span> cd ~/proyectos/prueba-node</code></pre></div></li>
+    <li><div><p>Ábrela en VS Code con <code>code .</code> y responde que confías en la carpeta.</p></div></li>
+    <li><div><p>En el Explorador, pulsa el icono de <em>Nuevo archivo</em>, llámalo <code>prueba.js</code> y escribe estas dos líneas. Guarda.</p>
+      <pre><code class="language-js">console.log("¡Hola, Node!");
+console.log(2 + 3);</code></pre></div></li>
+    <li><div><p>Abre la terminal integrada (<em>Terminal &gt; Nuevo terminal</em>), que ya está en la carpeta del proyecto, y ejecuta el archivo:</p>
+      <pre class="consola"><code><span class="prompt">$</span> node prueba.js
+<span class="salida">¡Hola, Node!
+5</span></code></pre></div></li>
+  </ol>
+  <p><code>console.log</code> es la instrucción que escribe una línea en la consola; la estudiarás en la <a href="06-primeros-pasos.html">Estación 6</a>. Esto es lo que pasó por dentro:</p>
+  <figure class="capsula" data-titulo="De tu archivo a la pantalla">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: escribes prueba.js en VS Code y lo guardas en el disco; en la terminal escribes node prueba.js; el shell arranca Node.js; Node lee el archivo del disco; su motor V8 ejecuta las líneas y console.log escribe en la terminal; el programa termina y vuelve el prompt.">
+        <rect class="d-codigo" x="10" y="14" width="310" height="112" rx="8"/>
+        <text class="d-codigo-tenue" x="24" y="36" style="font-size:13px">prueba.js (en VS Code)</text>
+        <text class="d-codigo-texto" x="24" y="70" style="font-size:15px">console.log("¡Hola, Node!");</text>
+        <text class="d-codigo-texto" x="24" y="98" style="font-size:15px">console.log(2 + 3);</text>
+        <path class="d-linea" d="M322 62H342"/>
+        <path class="d-tinta" d="M342 54l10 8-10 8z"/>
+        <rect class="d-caja-suave" x="354" y="24" width="150" height="76" rx="10" data-clases="4:d-acento-trazo; 5:"/>
+        <text class="d-rotulo" x="429" y="54" text-anchor="middle">Disco</text>
+        <text class="d-peq d-mono" x="429" y="80" text-anchor="middle">prueba.js</text>
+        <path class="d-linea" d="M506 62H528" data-pasos="4-"/>
+        <path class="d-tinta" d="M528 54l10 8-10 8z" data-pasos="4-"/>
+        <rect class="d-caja" x="540" y="14" width="170" height="150" rx="10" data-clases="3:d-acento-trazo; 6:"/>
+        <text class="d-rotulo" x="625" y="42" text-anchor="middle">Node.js</text>
+        <rect class="d-caja-suave" x="560" y="60" width="130" height="86" rx="8" data-clases="5:d-acento; 6:"/>
+        <text class="d-rotulo" x="625" y="96" text-anchor="middle" data-clases="5:d-sobre-acento; 6:">V8</text>
+        <text class="d-peq" x="625" y="122" text-anchor="middle" data-clases="5:d-sobre-acento; 6:">ejecuta el código</text>
+        <rect class="d-codigo" x="10" y="170" width="500" height="124" rx="8"/>
+        <text class="d-codigo-tenue" x="24" y="192" style="font-size:13px">Terminal</text>
+        <text class="d-codigo-texto" x="24" y="218" style="font-size:16px" data-pasos="2-">$ node prueba.js</text>
+        <text class="d-codigo-texto" x="24" y="242" style="font-size:16px" data-pasos="5-">¡Hola, Node!</text>
+        <text class="d-codigo-texto" x="24" y="264" style="font-size:16px" data-pasos="5-">5</text>
+        <text class="d-codigo-texto" x="24" y="286" style="font-size:16px" data-pasos="6">$</text>
+        <path class="d-linea" d="M512 212H625V178" data-pasos="3-"/>
+        <path class="d-tinta" d="M617 178l8-12 8 12z" data-pasos="3-"/>
+        <text class="d-peq d-tenue" x="522" y="202" data-pasos="3">arranca node</text>
+        <path class="d-linea" d="M690 166V250H524" data-pasos="5-"/>
+        <path class="d-tinta" d="M524 242l-10 8 10 8z" data-pasos="5-"/>
+        <text class="d-peq d-tenue" x="530" y="274" data-pasos="5">console.log escribe aquí</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>En VS Code escribes dos líneas de JavaScript y guardas. El archivo <code>prueba.js</code> queda en el disco, dentro de la carpeta del proyecto.</li>
+        <li>En la terminal, situada en esa misma carpeta, escribes <code>node prueba.js</code> y pulsas Enter.</li>
+        <li data-duracion="6">El shell busca un programa llamado <code>node</code> en las carpetas de su lista PATH, lo encuentra porque lo instalaste, y lo pone en marcha pasándole el argumento <code>prueba.js</code>.</li>
+        <li>Node.js lee <code>prueba.js</code> del disco. Como la ruta es relativa, lo busca en la carpeta actual: por eso tenías que estar en la carpeta del proyecto.</li>
+        <li data-duracion="6">V8, el motor de JavaScript que Node lleva dentro (el mismo que usa Chrome), ejecuta las líneas de arriba abajo. Cada <code>console.log</code> escribe una línea en la terminal: primero el texto y después el resultado de <code>2 + 3</code>.</li>
+        <li>Al llegar al final del archivo, el programa termina y vuelve el prompt. El archivo no cambió: puedes ejecutarlo tantas veces como quieras.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Ahora predice. Este programa tiene una línea más. ¿Qué imprimirá la tercera? Decídelo antes de pulsar «Ejecutar».</p>
+  <div class="taller" id="taller-predice-node" data-titulo="Predice y ejecuta">
+    <textarea class="taller-codigo">console.log("¡Hola, Node!");
+console.log(2 + 3);
+console.log("2 + 3");</textarea>
+  </div>
+  <p>La tercera línea imprime <code>2 + 3</code> tal cual, sin calcular nada. Las comillas convierten lo que encierran en texto, y el texto se muestra como está escrito. Es la misma diferencia entre un número y un texto que estudiarás en la <a href="07-variables.html">Estación 7</a>. Estos talleres del curso funcionan igual que Node: lo que ves en el cuadro «Consola» es lo que verías en tu terminal.</p>
+  <p>La terminal de práctica también sabe ejecutar archivos con <code>node</code>. Crea uno con <code>echo</code> y ejecútalo:</p>
+  <div class="terminal-sim" data-titulo="Misión: crea y ejecuta un archivo .js" data-inicio="/home/tu">
+    <div class="terminal-instrucciones">
+      <ol>
+        <li>Comprueba la versión de Node con <code>node -v</code>.</li>
+        <li>Crea la carpeta <code>proyectos/prueba-node</code> y entra en ella.</li>
+        <li>Crea el archivo con esta línea exacta (las comillas simples de fuera protegen a las dobles de dentro):<br><code>echo 'console.log("Taller listo")' &gt; prueba.js</code></li>
+        <li>Mira el archivo con <code>cat prueba.js</code> y ejecútalo con <code>node prueba.js</code>.</li>
+      </ol>
+    </div>
+    <script type="application/json" class="terminal-sistema">{"proyectos": {}}</script>
+    <script type="text/plain" class="terminal-mision">
+var h = historial.map(function (c) { return c.replace(/\s+/g, " ").trim(); });
+if (!h.some(function (c) { return c === "node -v" || c === "node --version"; })) return "Paso 1: escribe node -v para ver la versión de Node.";
+var p = sistema.proyectos && sistema.proyectos["prueba-node"];
+if (!p || typeof p !== "object") return "Paso 2: crea la carpeta con mkdir -p proyectos/prueba-node y entra con cd proyectos/prueba-node.";
+if (typeof p["prueba.js"] !== "string") return "Paso 3: crea prueba.js dentro de prueba-node con el comando echo que aparece arriba.";
+if (p["prueba.js"].indexOf("console.log(") === -1) return "prueba.js no contiene console.log(...). Revisa las comillas: fuera van simples y dentro dobles. Vuelve a escribir el echo.";
+if (!h.some(function (c) { return /^node (\.\/)?prueba\.js$/.test(c); })) return "Paso 4: ejecútalo con node prueba.js (estando dentro de prueba-node).";
+return true;
+    </script>
+  </div>
+
+  <h3>El modo interactivo de Node</h3>
+  <p>Si escribes <code>node</code> sin nada más, Node.js entra en un modo interactivo llamado <strong>REPL</strong> (de <em>Read, Eval, Print, Loop</em>: «lee, evalúa, imprime y repite»). El prompt cambia a <code>&gt;</code> y cada línea que escribes se ejecuta al momento:</p>
+  <pre class="consola"><code><span class="prompt">$</span> node
+<span class="salida">Welcome to Node.js v24.21.0.
+Type ".help" for more information.</span>
+<span class="prompt">&gt;</span> 2 + 3
+<span class="salida">5</span>
+<span class="prompt">&gt;</span> .exit
+<span class="prompt">$</span></code></pre>
+  <p>Sirve para probar algo rápido. Para salir, escribe <code>.exit</code> o pulsa <kbd>Ctrl</kbd> + <kbd>C</kbd> dos veces. La terminal de práctica del curso no tiene este modo; tu computadora sí.</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Escribir comandos dentro de Node</p><p>Si el prompt es <code>&gt;</code>, estás dentro de Node, no en el shell. Si ahí escribes <code>node prueba.js</code> o <code>ls</code>, verás un <code>SyntaxError</code> o un <code>ReferenceError</code>: Node intenta entenderlo como JavaScript. Sal con <code>.exit</code> y vuelve a escribirlo en el shell.</p></div></aside>
+
+  <h3>El otro lugar donde vive JavaScript: la consola del navegador</h3>
+  <p>Tu navegador también ejecuta JavaScript, y tiene su propia consola dentro de las <strong>DevTools</strong> (las herramientas para desarrolladores que usaste en la <a href="03-internet.html">Estación 3</a> para ver la pestaña Red). Ábrela así:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Navegador</th><th scope="col">Windows y Linux</th><th scope="col">macOS</th></tr></thead>
+      <tbody>
+        <tr><td>Chrome y Edge</td><td><kbd>Ctrl</kbd> + <kbd>Mayús</kbd> + <kbd>J</kbd> (o <kbd>F12</kbd> y la pestaña <em>Consola</em>)</td><td><kbd>Cmd</kbd> + <kbd>Opción</kbd> + <kbd>J</kbd></td></tr>
+        <tr><td>Firefox</td><td><kbd>Ctrl</kbd> + <kbd>Mayús</kbd> + <kbd>K</kbd></td><td><kbd>Cmd</kbd> + <kbd>Opción</kbd> + <kbd>K</kbd></td></tr>
+        <tr><td>Safari</td><td>—</td><td>Primero activa las funciones para desarrolladores en <em>Ajustes &gt; Avanzado</em>; después <kbd>Cmd</kbd> + <kbd>Opción</kbd> + <kbd>C</kbd></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Escribe <code>2 + 3</code> y pulsa Enter: la consola responde <code>5</code>. Escribe <code>console.log("hola")</code>: aparece <code>hola</code>. Es la misma idea que el REPL de Node, pero dentro de una página web. La diferencia está en lo que cada entorno te deja tocar: desde la consola del navegador puedes cambiar la página que estás viendo; desde Node puedes leer y escribir archivos de tu computadora. El lenguaje es el mismo.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Impacto</p><p>Cuando intentes pegar texto en la consola por primera vez, Chrome te detendrá con un aviso y te pedirá que escribas a mano una frase (en inglés es <em>allow pasting</em>) para permitirlo. No es un error: es una protección. Hay estafas que piden a la víctima pegar «un código para conseguir premios» en la consola; ese código se ejecuta con tu sesión abierta y puede robar tus cuentas. A este engaño se le llama <em>self-XSS</em>. Regla para siempre: no pegues en la consola, ni en la terminal, código que no entiendes de alguien en quien no confías.</p></div></aside>
+</section>
+
+<section id="git" data-parada="Git: guardar versiones">
+  <h2>Git: puntos de guardado para tu código</h2>
+  <p>Seguro conoces esta carpeta: <code>trabajo.doc</code>, <code>trabajo-v2.doc</code>, <code>trabajo-final.doc</code>, <code>trabajo-final-AHORA-SI.doc</code>. Con el código pasa lo mismo, pero peor: un cambio pequeño puede romper algo que funcionaba y, una semana después, ya no recuerdas qué tocaste. Y si trabajan varias personas en los mismos archivos, el caos se multiplica.</p>
+  <p><strong>Git</strong> resuelve ese problema. Es un <strong>sistema de control de versiones</strong>: un programa que guarda, cuando se lo pides, una foto completa de tu proyecto con una descripción, y te deja ver todas las fotos anteriores, compararlas y volver a cualquiera de ellas. Lo creó en 2005 Linus Torvalds, el creador de Linux, y hoy lo usa casi todo el mundo que programa.</p>
+  <aside class="senal analogia"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Para entenderlo</p><p>Es como guardar la partida en un videojuego antes del jefe final: si algo sale mal, vuelves a ese punto. La analogía tiene dos límites. Git no guarda solo: guarda cuando tú se lo pides, así que tienes que acordarte. Y no es una copia de seguridad: las fotos se guardan dentro de la carpeta del proyecto, en tu disco. Si pierdes la computadora, pierdes también las fotos, salvo que las hayas subido a un servicio como GitHub (lo verás en la <a href="24-git.html">Estación 24</a>).</p></div></aside>
+
+  <h3>Instalarlo</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Windows</th><th scope="col">macOS</th><th scope="col">Linux</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>En <code>git-scm.com</code>, entra en la descarga para Windows y baja el instalador de 64 bits (o el de ARM64 si tu equipo tiene procesador ARM). El asistente hace muchas preguntas; las opciones por defecto están bien, salvo dos que conviene cambiar: en el editor por defecto elige <em>Use Visual Studio Code as Git's default editor</em>, y en el nombre de la rama inicial elige <em>Override the default branch name for new repositories</em> y escribe <code>main</code>. El instalador incluye <strong>Git Bash</strong>.</td>
+          <td>Abre la terminal y escribe <code>git --version</code>. Si Git no está, macOS te ofrecerá instalar las «herramientas de línea de comandos» (<em>Command Line Tools</em>): acepta y espera. También puedes pedirlas con <code>xcode-select --install</code>, o instalar Git con Homebrew (<code>brew install git</code>) si ya lo usas.</td>
+          <td>Usa el gestor de paquetes de tu distribución: <code>sudo apt install git</code> en Ubuntu, Debian o Mint; <code>sudo dnf install git</code> en Fedora. La palabra <code>sudo</code> ejecuta el comando con permisos de administrador y te pide tu contraseña.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Comprueba la instalación en una terminal nueva:</p>
+  <pre class="consola"><code><span class="prompt">$</span> git --version
+<span class="salida">git version 2.56.0</span></code></pre>
+  <p>En Windows verás algo como <code>git version 2.56.0.windows.1</code>, y en un Mac con las herramientas de Apple, un número algo más antiguo seguido de <code>(Apple Git-…)</code>. Cualquiera de ellas sirve para este curso.</p>
+  <p><strong>En Windows, a partir de ahora usa Git Bash.</strong> Puedes abrirlo desde el menú Inicio. Para que VS Code lo use en su terminal integrada, abre la paleta de comandos, ejecuta <em>Terminal: Select Default Profile</em> (en español, «Terminal: Seleccionar perfil predeterminado») y elige <em>Git Bash</em>. Las terminales nuevas que abras en VS Code serán de bash, con los mismos comandos que la terminal de práctica.</p>
+
+  <h3>Preséntate a Git</h3>
+  <p>Cada foto que guarda Git lleva el nombre y el correo de quien la hizo. Por eso, antes de usarlo, tienes que decirle quién eres. Esto se hace una sola vez por computadora, con <code>git config</code>:</p>
+  <pre class="consola"><code><span class="prompt">$</span> git config --global user.name "Ana Pérez"
+<span class="prompt">$</span> git config --global user.email "ana@ejemplo.com"
+<span class="prompt">$</span> git config --global init.defaultBranch main
+<span class="prompt">$</span> git config --global core.editor "code --wait"</code></pre>
+  <ul>
+    <li><code>--global</code> significa «para todos mis proyectos en esta computadora». Git guarda estos datos en un archivo oculto de tu carpeta personal llamado <code>.gitconfig</code>.</li>
+    <li><code>user.name</code> y <code>user.email</code>: tu nombre y tu correo, entre comillas. Aparecerán en cada foto que guardes.</li>
+    <li><code>init.defaultBranch main</code>: el nombre de la línea principal del historial, que se llama <strong>rama</strong>. Git 2 todavía la llama <code>master</code> si no configuras nada; GitHub y la mayoría de los equipos usan <code>main</code>, y el propio Git anunció que Git 3.0 usará <code>main</code> por defecto. Con este ajuste te adelantas.</li>
+    <li><code>core.editor "code --wait"</code>: cuando Git necesite que escribas un texto largo, abrirá VS Code y esperará (<em>wait</em>) a que cierres esa pestaña. Sin este ajuste, Git puede abrir Vim, un editor de terminal muy potente pero desconcertante la primera vez.</li>
+  </ul>
+  <p>Revisa lo que quedó guardado:</p>
+  <pre class="consola"><code><span class="prompt">$</span> git config --global --list
+<span class="salida">user.name=Ana Pérez
+user.email=ana@ejemplo.com
+init.defaultbranch=main
+core.editor=code --wait</span></code></pre>
+  <p>No te extrañe que <code>defaultBranch</code> aparezca en minúsculas: Git no distingue mayúsculas en los nombres de los ajustes.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Impacto</p><p>Si algún día publicas tus proyectos en GitHub, el correo que configures aquí será visible para cualquiera que mire el historial. Puedes usar tu correo real sin problema para practicar en tu computadora. En la <a href="24-git.html">Estación 24</a> verás cómo usar la dirección privada que GitHub te da para no exponer la tuya.</p></div></aside>
+
+  <h3>Las tres zonas de Git</h3>
+  <p>Para entender Git hay que conocer tres zonas. La <strong>carpeta de trabajo</strong> son tus archivos de siempre, los que editas en VS Code. El <strong>repositorio</strong> es la carpeta del proyecto cuando Git la vigila: guarda la historia de fotos en una carpeta oculta llamada <code>.git</code>. Cada foto es un <strong>commit</strong> (en inglés, «confirmación»): una instantánea de los archivos, con un mensaje, el autor, la fecha y un identificador único. Entre las dos hay una zona intermedia, el <strong>área de preparación</strong> (en inglés, <em>staging area</em>): ahí eliges qué cambios entrarán en la próxima foto.</p>
+  <figure class="capsula" data-titulo="Tres zonas y dos puntos de guardado">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Animación: el archivo receta.md está en la carpeta de trabajo. git add pone una copia en el área de preparación. git commit la guarda como el primer commit del repositorio. Después se modifica receta.md, se prepara otra vez y un segundo commit aparece encima del primero. git log muestra los dos.">
+        <rect class="d-caja-suave" x="10" y="10" width="220" height="206" rx="10"/>
+        <rect class="d-caja-suave" x="250" y="10" width="220" height="206" rx="10"/>
+        <rect class="d-caja-suave" x="490" y="10" width="220" height="206" rx="10"/>
+        <text class="d-rotulo" x="120" y="38" text-anchor="middle">Carpeta de trabajo</text>
+        <text class="d-rotulo" x="360" y="38" text-anchor="middle">Preparación (staging)</text>
+        <text class="d-rotulo" x="600" y="38" text-anchor="middle">Repositorio (.git)</text>
+        <text class="d-peq d-tenue" x="120" y="60" text-anchor="middle">tus archivos</text>
+        <text class="d-peq d-tenue" x="360" y="60" text-anchor="middle">lo que irá en la próxima foto</text>
+        <text class="d-peq d-tenue" x="600" y="60" text-anchor="middle">las fotos guardadas</text>
+        <rect class="d-caja" x="40" y="84" width="160" height="40" rx="6" data-clases="4:d-acento-trazo; 5:"/>
+        <text class="d-mono" x="120" y="110" text-anchor="middle">receta.md</text>
+        <text class="d-peq d-tenue" x="120" y="148" text-anchor="middle" data-texto="2:preparado; 3:sin cambios pendientes; 4:modificado; 5:cambio preparado; 6:sin cambios pendientes">nuevo: Git aún no lo sigue</text>
+        <path class="d-linea" d="M202 104H268" data-pasos="2,5"/>
+        <path class="d-tinta" d="M268 96l10 8-10 8z" data-pasos="2,5"/>
+        <rect class="d-caja" x="280" y="84" width="160" height="40" rx="6" data-pasos="2,5"/>
+        <text class="d-mono" x="360" y="110" text-anchor="middle" data-pasos="2,5">receta.md</text>
+        <text class="d-peq d-tenue" x="360" y="148" text-anchor="middle" data-pasos="2,5" data-texto="5:versión con ingredientes">versión inicial</text>
+        <path class="d-linea" d="M442 104H508" data-pasos="3,6"/>
+        <path class="d-tinta" d="M508 96l10 8-10 8z" data-pasos="3,6"/>
+        <path class="d-linea" d="M534 117V157" data-pasos="6-"/>
+        <g data-pasos="3-" data-mover="6:translate(0px,66px)">
+          <circle class="d-acento" cx="534" cy="104" r="13"/>
+          <text class="d-sobre-acento d-rotulo" x="534" y="109" text-anchor="middle" style="font-size:13px">1</text>
+          <text class="d-peq" x="556" y="109">Primera receta</text>
+        </g>
+        <g data-pasos="6-">
+          <circle class="d-acento" cx="534" cy="104" r="13"/>
+          <text class="d-sobre-acento d-rotulo" x="534" y="109" text-anchor="middle" style="font-size:13px">2</text>
+          <text class="d-peq" x="556" y="109">Añade ingredientes</text>
+        </g>
+        <text class="d-peq d-tenue" x="600" y="204" text-anchor="middle" data-pasos="7">el más nuevo, arriba</text>
+        <rect class="d-codigo" x="10" y="228" width="700" height="52" rx="8"/>
+        <text class="d-codigo-texto" x="26" y="260" style="font-size:16px" data-texto="2:$ git add receta.md; 3:$ git commit -m &quot;Primera receta&quot;; 4:(editas receta.md en VS Code y guardas); 5:$ git add receta.md; 6:$ git commit -m &quot;Añade ingredientes&quot;; 7:$ git log --oneline">$ git status   (receta.md aparece como «Untracked»)</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>En la carpeta de trabajo hay un archivo nuevo, <code>receta.md</code>. <code>git status</code> lo muestra como <em>Untracked</em> («sin seguimiento»): Git lo ve, pero todavía no lo guarda.</li>
+        <li><code>git add receta.md</code> pone una copia del archivo, tal como está ahora, en el área de preparación. Es como elegir quién sale en la foto antes de disparar.</li>
+        <li data-duracion="6"><code>git commit -m "Primera receta"</code> dispara la foto: todo lo preparado queda guardado en el repositorio como el primer commit, con su mensaje. El área de preparación ya no tiene cambios pendientes.</li>
+        <li>Editas <code>receta.md</code> en VS Code y guardas. Git detecta que el archivo es distinto del que está en la última foto: ahora está <em>modificado</em>.</li>
+        <li>Para guardar ese cambio hay que repetir el ciclo. Primero <code>git add</code>: la versión nueva pasa a la zona de preparación.</li>
+        <li data-duracion="6">Después <code>git commit</code> con un mensaje nuevo. Aparece un segundo commit encima del primero. El primero no se borra: sigue ahí, y podrías volver a él.</li>
+        <li><code>git log --oneline</code> muestra el historial, del más reciente al más antiguo: dos puntos de guardado, cada uno con su mensaje.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>¿Por qué existe la zona de preparación y no se guarda todo directamente? Porque a menudo cambias varias cosas a la vez y quieres guardarlas en fotos separadas, cada una con su explicación: «arregla el salto del personaje» por un lado y «añade el menú» por otro. La zona de preparación te deja elegir.</p>
+
+  <h3>Los cinco comandos básicos</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Comando</th><th scope="col">Qué hace</th><th scope="col">Cuándo</th></tr></thead>
+      <tbody>
+        <tr><td><code>git init</code></td><td>Convierte la carpeta actual en un repositorio: crea la carpeta oculta <code>.git</code></td><td>Una sola vez por proyecto, dentro de su carpeta</td></tr>
+        <tr><td><code>git status</code></td><td>Cuenta qué archivos son nuevos, cuáles cambiaron y cuáles están preparados</td><td>A todas horas: antes y después de cada paso</td></tr>
+        <tr><td><code>git add archivo</code></td><td>Prepara ese archivo para la próxima foto. <code>git add .</code> prepara todo lo de la carpeta actual</td><td>Cuando un cambio está listo</td></tr>
+        <tr><td><code>git commit -m "mensaje"</code></td><td>Guarda la foto con lo preparado y el mensaje entre comillas</td><td>Cada vez que llegas a un punto que funciona</td></tr>
+        <tr><td><code>git log</code> · <code>git log --oneline</code></td><td>Muestra el historial completo · uno por línea, resumido</td><td>Para ver qué se hizo y cuándo</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Así se ve el primer ciclo completo, paso a paso. A la derecha, el estado del repositorio después de cada comando:</p>
+  <div class="traza" data-titulo="Tu primer commit" data-rotulo-memoria="Estado del repositorio" data-inicio="Antes de empezar: estás en la carpeta recetas, que contiene receta.md. Todavía no es un repositorio. Pulsa «Siguiente».">
+    <pre><code class="language-bash">git init
+git status
+git add receta.md
+git commit -m "Primera receta"
+git log --oneline</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"Repositorio": "sí (carpeta .git)", "Rama": "main", "Sin seguimiento": "receta.md", "Preparados": "(nada)", "Commits": "0"}, "salida": "Initialized empty Git repository in /home/ana/recetas/.git/", "nota": "git init crea la carpeta oculta .git. Desde ahora Git vigila esta carpeta. La rama se llama main gracias a init.defaultBranch."},
+      {"linea": 2, "vars": {"Repositorio": "sí (carpeta .git)", "Rama": "main", "Sin seguimiento": "receta.md", "Preparados": "(nada)", "Commits": "0"}, "salida": "On branch main\n\nNo commits yet\n\nUntracked files:\n\treceta.md", "nota": "git status no cambia nada: informa. Dice que estás en la rama main, que aún no hay commits y que receta.md no tiene seguimiento."},
+      {"linea": 3, "vars": {"Repositorio": "sí (carpeta .git)", "Rama": "main", "Sin seguimiento": "(nada)", "Preparados": "receta.md", "Commits": "0"}, "nota": "git add copia receta.md, tal como está ahora, al área de preparación. No imprime nada: todo salió bien."},
+      {"linea": 4, "vars": {"Repositorio": "sí (carpeta .git)", "Rama": "main", "Sin seguimiento": "(nada)", "Preparados": "(nada)", "Commits": "1"}, "salida": "[main (root-commit) 3f2a9c1] Primera receta\n 1 file changed, 3 insertions(+)\n create mode 100644 receta.md", "nota": "git commit guarda la foto. 3f2a9c1 es el comienzo del identificador del commit (el tuyo será otro). root-commit significa que es el primero de la historia."},
+      {"linea": 5, "vars": {"Repositorio": "sí (carpeta .git)", "Rama": "main", "Sin seguimiento": "(nada)", "Preparados": "(nada)", "Commits": "1"}, "salida": "3f2a9c1 (HEAD -> main) Primera receta", "nota": "git log --oneline lista los commits, uno por línea. HEAD -> main indica dónde estás ahora: en el último commit de la rama main."}
+    ]</script>
+  </div>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Mensajes que no dicen nada</p>
+      <pre class="consola"><code><span class="prompt">$</span> git commit -m "cambios"
+<span class="prompt">$</span> git commit -m "asdf"
+<span class="prompt">$</span> git commit -m "ahora sí"</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Mensajes que se entienden en un mes</p>
+      <pre class="consola"><code><span class="prompt">$</span> git commit -m "Añade la receta de tortilla"
+<span class="prompt">$</span> git commit -m "Corrige la cantidad de huevos"
+<span class="prompt">$</span> git commit -m "Agrega foto del plato"</code></pre>
+    </div>
+  </div>
+  <p>Un buen mensaje dice qué cambió, en una frase corta. Dentro de un mes, cuando busques «¿en qué momento se rompió esto?», esos mensajes serán tu mapa.</p>
+
+  <div class="terminal-sim" data-titulo="Misión: tus dos primeros puntos de guardado" data-inicio="/home/tu">
+    <div class="terminal-instrucciones">
+      <ol>
+        <li>Entra en la carpeta <code>recetas</code> y conviértela en repositorio con <code>git init</code>.</li>
+        <li>Mira el estado con <code>git status</code>, prepara <code>tortilla.md</code> con <code>git add</code> y guarda el primer commit con <code>git commit -m "…"</code>.</li>
+        <li>Añade una línea a la receta: <code>echo "Sal al gusto" &gt;&gt; tortilla.md</code>. Mira qué dice <code>git status</code> ahora.</li>
+        <li>Prepara y guarda un segundo commit, y termina con <code>git log --oneline</code>.</li>
+      </ol>
+    </div>
+    <script type="application/json" class="terminal-sistema">{"recetas": {"tortilla.md": "# Tortilla\nHuevos y papas\n"}, "notas.txt": "Comprar huevos\n"}</script>
+    <script type="text/plain" class="terminal-mision">
+if (!git) return "Paso 1: entra en recetas (cd recetas) y escribe git init.";
+if (git.raiz !== "/home/tu/recetas") return "El repositorio se creó en " + git.raiz + ", pero debía estar en /home/tu/recetas. Pulsa «Reiniciar», entra primero en recetas y después haz git init.";
+if (!historial.some(function (c) { return /^git status/.test(c); })) return "Paso 2: antes de preparar nada, mira el estado con git status.";
+if (git.commits.length < 1) return "Paso 2: prepara el archivo (git add tortilla.md) y guarda el commit (git commit -m \"Primera receta\").";
+var t = sistema.recetas && sistema.recetas["tortilla.md"];
+if (!t || t.indexOf("Sal al gusto") === -1) return "Paso 3: añade la línea con echo \"Sal al gusto\" >> tortilla.md (dos signos >, para no borrar lo que había).";
+if (t.indexOf("Huevos y papas") === -1) return "¡Uy! tortilla.md perdió su contenido original: usaste > en vez de >>. No pasa nada: el primer commit lo tiene guardado. Pulsa «Reiniciar» y prueba otra vez con >>.";
+if (git.commits.length < 2 || !git.limpio) return "Paso 4: prepara el cambio con git add tortilla.md y guarda otro commit con un mensaje que diga qué cambió.";
+if (!historial.some(function (c) { return /^git log/.test(c); })) return "Último paso: mira tu historial con git log --oneline.";
+return true;
+    </script>
+  </div>
+
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Tres tropiezos típicos</p><p><strong>«Author identity unknown»</strong> al hacer commit: Git no sabe quién eres. Ejecuta los dos <code>git config</code> de <code>user.name</code> y <code>user.email</code>.</p>
+    <p><strong>«fatal: not a git repository»</strong>: estás en una carpeta que no es un repositorio. Mira con <code>pwd</code> dónde estás y entra en la carpeta del proyecto, o haz <code>git init</code> si todavía no lo hiciste.</p>
+    <p><strong><code>git init</code> en tu carpeta personal</strong>: si lo haces en <code>~</code> en vez de en la carpeta del proyecto, Git vigilará todos tus archivos, y <code>git status</code> mostrará una lista enorme. Compruébalo con <code>ls -a ~</code>: si ves una carpeta <code>.git</code> directamente en tu carpeta personal, bórrala con <code>rm -rf ~/.git</code>. Fíjate bien en que diga exactamente <code>~/.git</code> y no otra cosa.</p></div></aside>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>Haz commits pequeños y frecuentes, cada vez que algo funciona: terminaste un nivel, arreglaste un fallo, añadiste un botón. Es mucho más fácil volver atrás un paso pequeño que deshacer una tarde entera. VS Code tiene un panel de Control de código fuente que hace lo mismo con botones; úsalo cuando domines los comandos, así sabrás qué hace cada botón.</p></div></aside>
+</section>
+
+<section id="problemas" data-parada="Si algo falla">
+  <h2>Si algo falla: los problemas típicos</h2>
+  <p>Casi todas las personas que instalan estas herramientas por primera vez se tropiezan con alguno de estos problemas. No significa que lo estés haciendo mal: significa que estás en el mismo camino que todos. Esta tabla es tu primera parada; debajo tienes los detalles de los más importantes.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Lo que ves</th><th scope="col">Causa más probable</th><th scope="col">Qué hacer</th></tr></thead>
+      <tbody>
+        <tr><td><code>node</code>, <code>git</code> o <code>code</code> «no se reconoce» o <em>command not found</em> justo después de instalar</td><td>La terminal se abrió antes de la instalación</td><td>Cierra todas las terminales y VS Code, y ábrelos otra vez. Si sigue, lee <a href="#path">el PATH</a>.</td></tr>
+        <tr><td>En PowerShell: <em>«No se puede cargar el archivo …\npm.ps1 porque la ejecución de scripts está deshabilitada en este sistema»</em></td><td>La política de ejecución de PowerShell</td><td>Mira <a href="#powershell">PowerShell bloquea npm</a>.</td></tr>
+        <tr><td>Cambias el código, lo ejecutas y sale lo mismo que antes</td><td>No guardaste el archivo</td><td>Guarda con <kbd>Ctrl</kbd> + <kbd>S</kbd> o activa el guardado automático.</td></tr>
+        <tr><td><em>No such file or directory</em>, «No existe el archivo o el directorio» o <em>Cannot find module</em></td><td>Estás en otra carpeta o el nombre está mal escrito</td><td><code>pwd</code> para ver dónde estás, <code>ls</code> para ver qué hay y <kbd>Tab</kbd> para no escribir mal los nombres.</td></tr>
+        <tr><td><code>cd Mis juegos</code> falla</td><td>El espacio separa el nombre en dos</td><td><code>cd "Mis juegos"</code>, y en adelante usa nombres sin espacios.</td></tr>
+        <tr><td>La terminal no responde</td><td>Hay un programa en marcha esperando</td><td><kbd>Ctrl</kbd> + <kbd>C</kbd>.</td></tr>
+        <tr><td><code>git log</code> ocupa la pantalla y termina en <code>(END)</code> o en <code>:</code></td><td>Git abrió un visor de texto para mostrar la lista larga</td><td>Pulsa <kbd>q</kbd> para salir.</td></tr>
+        <tr><td>Tras <code>git commit</code> aparece una pantalla con <code>~</code> en cada línea y no sabes salir</td><td>Git abrió el editor Vim porque falta el mensaje</td><td>Pulsa <kbd>Esc</kbd>, escribe <code>:q!</code> y pulsa Enter. Después haz el commit con <code>-m "mensaje"</code> y configura <code>core.editor</code>.</td></tr>
+        <tr><td>Escribes tu contraseña en la terminal y no aparece nada</td><td>Es normal: la terminal no muestra las contraseñas, ni con asteriscos</td><td>Escríbela con cuidado y pulsa Enter.</td></tr>
+        <tr><td><code>SyntaxError: Invalid or unexpected token</code> en un archivo que se ve bien</td><td>Lo creaste con <code>echo</code> en Windows PowerShell, que usa otra codificación</td><td>Crea o guarda el archivo desde VS Code.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="path">«No se reconoce el comando»: el PATH</h3>
+  <p>Cuando escribes <code>node</code>, el shell no busca en todo el disco: mira en una lista corta de carpetas, una por una, hasta encontrar un programa con ese nombre. Esa lista se llama <strong>PATH</strong> («camino») y es una <strong>variable de entorno</strong>: un dato con nombre que el sistema operativo entrega a cada programa cuando arranca. Los instaladores de VS Code, Node.js y Git añaden su carpeta al PATH. Pero una terminal que ya estaba abierta conserva la lista vieja, por eso hay que abrir una nueva.</p>
+  <p>Para ver dónde encuentra el shell un programa (o si lo encuentra):</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Shell</th><th scope="col">¿Dónde está node?</th><th scope="col">Ver la lista PATH</th></tr></thead>
+      <tbody>
+        <tr><td>bash, zsh, Git Bash</td><td><code>which node</code></td><td><code>echo $PATH</code></td></tr>
+        <tr><td>PowerShell</td><td><code>Get-Command node</code> o <code>where.exe node</code></td><td><code>$env:Path</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Ojo: en PowerShell escribe <code>where.exe</code> completo, porque <code>where</code> a secas es otro comando. Si después de abrir una terminal nueva el programa sigue sin aparecer, reinicia la computadora. Si ni así, reinstálalo y comprueba que la opción de añadirlo al PATH esté marcada.</p>
+
+  <h3 id="powershell">PowerShell bloquea npm</h3>
+  <p>En Windows, <code>node --version</code> funciona pero <code>npm --version</code> responde en rojo con algo como <em>«No se puede cargar el archivo C:\Program Files\nodejs\npm.ps1 porque la ejecución de scripts está deshabilitada en este sistema»</em>. Pasa porque npm incluye un pequeño programa de PowerShell (un <em>script</em>, el archivo <code>npm.ps1</code>) y PowerShell, por seguridad, tiene una <strong>política de ejecución</strong> que decide qué scripts puede ejecutar. En las versiones de Windows para usuarios, si nadie la cambió, vale <code>Restricted</code>: no se ejecuta ningún script.</p>
+  <p>La solución que muestra la documentación de Microsoft es cambiar la política solo para tu usuario a <code>RemoteSigned</code>. Así se ejecutan los scripts que están en tu computadora, y los descargados de internet solo si llevan firma digital. No necesitas abrir PowerShell como administrador:</p>
+  <pre class="consola"><code><span class="prompt">PS&gt;</span> Get-ExecutionPolicy -List
+<span class="prompt">PS&gt;</span> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser</code></pre>
+  <p>El primer comando muestra la política en cada ámbito; el segundo la cambia para tu usuario (<code>CurrentUser</code>). Si te pide confirmación, responde que sí. Cierra la terminal, abre otra y prueba <code>npm --version</code>. En Windows 11 también puedes activar esta opción desde <em>Configuración</em>, en la página <em>Para desarrolladores</em>, en el apartado de PowerShell.</p>
+  <p>Si la computadora es del trabajo y un mensaje dice que la política está controlada por una directiva de grupo, no podrás cambiarla. En ese caso tienes dos salidas: usa Git Bash, donde este problema no existe, o escribe <code>npm.cmd</code> en lugar de <code>npm</code>.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuidado</p><p>En internet verás consejos de usar <code>Unrestricted</code> o <code>Bypass</code> para toda la computadora. No lo hagas: quitan una protección real sin necesidad. <code>RemoteSigned</code> para tu usuario es suficiente para todo este curso.</p></div></aside>
+
+  <h3>OneDrive, iCloud y otras carpetas sincronizadas</h3>
+  <p>Windows 11 suele ofrecer, al configurar la computadora, hacer copia de seguridad del Escritorio, Documentos e Imágenes en OneDrive. Si aceptaste, esas carpetas viven en realidad dentro de OneDrive, y sus rutas son como <code>C:\Users\Ana\OneDrive\Escritorio</code>. En macOS pasa algo parecido si activaste «Escritorio y Documentos» en iCloud Drive.</p>
+  <p>Para documentos está muy bien, pero para proyectos de programación da problemas. Un proyecto moderno puede tener decenas de miles de archivos pequeños (lo comprobarás cuando uses npm, que crea una carpeta <code>node_modules</code> enorme). El programa de sincronización intenta subirlos todos, bloquea archivos mientras los sube, a veces deja en el disco solo un «acceso» al archivo en lugar del archivo real y crea copias duplicadas cuando detecta conflictos. Eso puede estropear la carpeta <code>.git</code> de un repositorio.</p>
+  <p>La solución: guarda tus proyectos en <code>~/proyectos</code>, directamente dentro de tu carpeta personal, que no está sincronizada. En Windows es <code>C:\Users\Ana\proyectos</code>; en Git Bash, <code>/c/Users/Ana/proyectos</code>. Si <code>pwd</code> te muestra una ruta con <code>OneDrive</code>, <code>iCloud</code> o <code>Mobile Documents</code>, estás en una carpeta sincronizada. Para guardar una copia de tu código en internet, la herramienta adecuada es Git con GitHub, que verás en la <a href="24-git.html">Estación 24</a>.</p>
+
+  <h3>Espacios, tildes y eñes en las rutas</h3>
+  <p>Hoy casi todas las herramientas aceptan rutas con espacios y letras como <code>á</code> o <code>ñ</code>, pero cada espacio te obliga a usar comillas y alguna herramienta puede fallar de forma confusa. Para tus proyectos, las reglas son las de la sección anterior: minúsculas, guiones, sin tildes ni eñes.</p>
+  <p>¿Y si tu propio usuario de Windows tiene espacios o tildes, como <code>C:\Users\José Pérez</code>? No lo cambies: renombrar un usuario de Windows es complicado y arriesgado. Casi siempre funcionará bien. Si alguna herramienta falla por esa ruta, crea tus proyectos en una carpeta con un nombre simple en la raíz del disco, como <code>C:\proyectos</code>.</p>
+
+  <h3>Copiar y pegar en la terminal</h3>
+  <p>En la terminal, <kbd>Ctrl</kbd> + <kbd>C</kbd> interrumpe programas, así que copiar y pegar funciona algo distinto según el sistema:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Terminal</th><th scope="col">Copiar</th><th scope="col">Pegar</th></tr></thead>
+      <tbody>
+        <tr><td>Terminal de Windows (PowerShell) y terminal de VS Code en Windows</td><td>Selecciona y pulsa <kbd>Ctrl</kbd> + <kbd>C</kbd> (con texto seleccionado copia; sin selección, interrumpe)</td><td><kbd>Ctrl</kbd> + <kbd>V</kbd> o clic derecho</td></tr>
+        <tr><td>Git Bash (su propia ventana)</td><td>Seleccionar ya copia</td><td><kbd>Mayús</kbd> + <kbd>Insert</kbd> o clic derecho y <em>Paste</em></td></tr>
+        <tr><td>macOS</td><td><kbd>Cmd</kbd> + <kbd>C</kbd></td><td><kbd>Cmd</kbd> + <kbd>V</kbd></td></tr>
+        <tr><td>Linux</td><td><kbd>Ctrl</kbd> + <kbd>Mayús</kbd> + <kbd>C</kbd></td><td><kbd>Ctrl</kbd> + <kbd>Mayús</kbd> + <kbd>V</kbd></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Permisos: no todo se arregla siendo administrador</h3>
+  <p>Algunas instalaciones piden permisos de administrador, y es normal. Pero no abras la terminal «como administrador» ni escribas <code>sudo</code> para cualquier cosa: los archivos que se crean así quedan a nombre del administrador y luego tu usuario normal no puede modificarlos. Esto es un problema clásico con npm. Usa permisos elevados solo cuando unas instrucciones oficiales te lo pidan expresamente.</p>
+
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Impacto</p><p>La terminal es poderosa, y por eso los estafadores quieren que la uses por ellos. Hay un engaño muy extendido, que Microsoft ha analizado con el nombre de <em>ClickFix</em>: una página falsa te muestra un «verifica que eres humano» o «arregla este error» y te pide pulsar <kbd>Windows</kbd> + <kbd>R</kbd>, o abrir la terminal, y pegar un texto. Ese texto es un comando que instala un programa espía. Ninguna web legítima te pedirá nunca eso. La regla es la misma que con la consola del navegador: no ejecutes comandos que no entiendes de fuentes en las que no confías. Y cuando una documentación oficial te dé un comando para instalar algo, comprueba que estás en el sitio oficial.</p></div></aside>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>Cuando pidas ayuda, copia el error completo como texto (no una foto de la pantalla), di qué comando escribiste, en qué sistema operativo y con qué terminal. Con esos cuatro datos, cualquiera puede ayudarte mucho más rápido. Buscar el mensaje de error exacto, entre comillas, en un buscador también resuelve una gran parte de los problemas.</p></div></aside>
 </section>
   </main>
 </div>

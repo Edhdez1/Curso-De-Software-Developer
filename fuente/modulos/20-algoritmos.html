@@ -1345,3 +1345,183 @@ console.log(porPuntosYNombre.map((j) => j.nombre).join(", "));</textarea>
     </table>
   </div>
 </section>
+
+<section id="estrategias" data-parada="Voraz y dinámica">
+  <h2>Algoritmos voraces y programación dinámica</h2>
+  <p>Divide y vencerás es una <em>estrategia</em>: una forma de atacar problemas que sirve para muchos algoritmos distintos. Hay otras dos que aparecen una y otra vez, sobre todo en problemas de optimización, esos que piden «el mínimo», «el máximo» o «la mejor forma»: los algoritmos voraces y la programación dinámica.</p>
+
+  <h3>Voraz: lo mejor de ahora mismo</h3>
+  <p>Un <strong>algoritmo voraz</strong> (en inglés, <em>greedy</em>, «codicioso») toma en cada paso la decisión que parece mejor en ese momento, sin pensar en las consecuencias futuras y sin volver atrás. Es rápido y fácil de programar. El ejemplo clásico es dar el cambio con el menor número de monedas: usa la moneda más grande que quepa, réstala y repite.</p>
+  <div class="taller" id="taller-voraz" data-titulo="Dar el cambio de forma voraz">
+    <textarea class="taller-codigo">// monedas: ordenadas de mayor a menor
+function cambioVoraz(cantidad, monedas) {
+  const usadas = [];
+  for (const moneda of monedas) {
+    while (cantidad >= moneda) {    // mientras quepa, uso la más grande
+      usadas.push(moneda);
+      cantidad -= moneda;
+    }
+  }
+  return usadas;
+}
+
+console.log("38 con monedas de 20, 10, 5, 2 y 1:", cambioVoraz(38, [20, 10, 5, 2, 1]));
+console.log("6 con monedas de 4, 3 y 1:", cambioVoraz(6, [4, 3, 1]));</textarea>
+  </div>
+  <p>Con las monedas de 20, 10, 5, 2 y 1, parecidas a las de muchos países, la estrategia voraz da la respuesta óptima: 5 monedas para 38. Pero con un sistema de monedas inventado, el de un videojuego con gemas de 4, 3 y 1, falla: para pagar 6 da tres monedas (4 + 1 + 1), cuando bastan dos (3 + 3). Tomar la moneda de 4 parecía lo mejor en ese momento y resultó un error.</p>
+  <aside class="senal ojo">
+    <p>Un algoritmo voraz no siempre da la mejor respuesta. Funciona solo cuando el problema tiene una estructura especial que garantiza que las buenas decisiones locales llevan a la mejor solución global, y eso hay que <em>demostrarlo</em> o, al menos, buscar contraejemplos con cuidado. Los sistemas de monedas de casi todos los países están diseñados para que el método voraz funcione; por eso el cajero de una tienda puede dar el cambio sin pensar.</p>
+  </aside>
+  <p>Hay algoritmos voraces famosos que sí están demostrados: elegir siempre la reunión que termina antes para meter el máximo de reuniones en una sala, o el algoritmo de Dijkstra para caminos más cortos, que verás en la próxima sección.</p>
+
+  <h3>Programación dinámica: no calcular dos veces lo mismo</h3>
+  <p>Vuelve a los números de Fibonacci: cada número es la suma de los dos anteriores (0, 1, 1, 2, 3, 5, 8, 13…). La definición recursiva es directa:</p>
+  <pre><code class="language-js">function fib(n) {
+  if (n &lt;= 1) return n;                 // casos base: fib(0) = 0, fib(1) = 1
+  return fib(n - 1) + fib(n - 2);
+}</code></pre>
+  <p>Funciona, pero es terriblemente lenta. Mira el árbol de llamadas de <code>fib(5)</code>:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 280" role="img" aria-label="Árbol de llamadas de fib de 5. fib(5) llama a fib(4) y fib(3); fib(4) llama a fib(3) y fib(2); y así hasta llegar a fib(1) y fib(0). En total hay 15 llamadas. fib(3) aparece dos veces, resaltado, y fib(2) aparece tres veces, también resaltado.">
+      <path class="d-linea" d="M174 208 L143 230"/>
+      <path class="d-linea" d="M174 208 L205 230"/>
+      <path class="d-linea" d="M220.5 158 L174 180"/>
+      <path class="d-linea" d="M220.5 158 L267 180"/>
+      <path class="d-linea" d="M360 158 L329 180"/>
+      <path class="d-linea" d="M360 158 L391 180"/>
+      <path class="d-linea" d="M290.25 108 L220.5 130"/>
+      <path class="d-linea" d="M290.25 108 L360 130"/>
+      <path class="d-linea" d="M484 158 L453 180"/>
+      <path class="d-linea" d="M484 158 L515 180"/>
+      <path class="d-linea" d="M530.5 108 L484 130"/>
+      <path class="d-linea" d="M530.5 108 L577 130"/>
+      <path class="d-linea" d="M410.375 58 L290.25 80"/>
+      <path class="d-linea" d="M410.375 58 L530.5 80"/>
+      <rect class="d-caja" x="119" y="230" width="48" height="28" rx="6"/><text class="d-mono" x="143" y="249" text-anchor="middle" style="font-size:15px">f(1)</text>
+      <rect class="d-caja" x="181" y="230" width="48" height="28" rx="6"/><text class="d-mono" x="205" y="249" text-anchor="middle" style="font-size:15px">f(0)</text>
+      <rect class="d-aviso" x="150" y="180" width="48" height="28" rx="6"/><text class="d-mono" x="174" y="199" text-anchor="middle" style="font-size:15px">f(2)</text>
+      <rect class="d-caja" x="243" y="180" width="48" height="28" rx="6"/><text class="d-mono" x="267" y="199" text-anchor="middle" style="font-size:15px">f(1)</text>
+      <rect class="d-acento" x="196.5" y="130" width="48" height="28" rx="6"/><text class="d-mono d-sobre-acento" x="220.5" y="149" text-anchor="middle" style="font-size:15px">f(3)</text>
+      <rect class="d-caja" x="305" y="180" width="48" height="28" rx="6"/><text class="d-mono" x="329" y="199" text-anchor="middle" style="font-size:15px">f(1)</text>
+      <rect class="d-caja" x="367" y="180" width="48" height="28" rx="6"/><text class="d-mono" x="391" y="199" text-anchor="middle" style="font-size:15px">f(0)</text>
+      <rect class="d-aviso" x="336" y="130" width="48" height="28" rx="6"/><text class="d-mono" x="360" y="149" text-anchor="middle" style="font-size:15px">f(2)</text>
+      <rect class="d-caja" x="266.25" y="80" width="48" height="28" rx="6"/><text class="d-mono" x="290.25" y="99" text-anchor="middle" style="font-size:15px">f(4)</text>
+      <rect class="d-caja" x="429" y="180" width="48" height="28" rx="6"/><text class="d-mono" x="453" y="199" text-anchor="middle" style="font-size:15px">f(1)</text>
+      <rect class="d-caja" x="491" y="180" width="48" height="28" rx="6"/><text class="d-mono" x="515" y="199" text-anchor="middle" style="font-size:15px">f(0)</text>
+      <rect class="d-aviso" x="460" y="130" width="48" height="28" rx="6"/><text class="d-mono" x="484" y="149" text-anchor="middle" style="font-size:15px">f(2)</text>
+      <rect class="d-caja" x="553" y="130" width="48" height="28" rx="6"/><text class="d-mono" x="577" y="149" text-anchor="middle" style="font-size:15px">f(1)</text>
+      <rect class="d-acento" x="506.5" y="80" width="48" height="28" rx="6"/><text class="d-mono d-sobre-acento" x="530.5" y="99" text-anchor="middle" style="font-size:15px">f(3)</text>
+      <rect class="d-caja" x="386.375" y="30" width="48" height="28" rx="6"/><text class="d-mono" x="410.375" y="49" text-anchor="middle" style="font-size:15px">f(5)</text>
+    </svg>
+    <figcaption>Las 15 llamadas de <code>fib(5)</code>. El cálculo de <code>f(3)</code> (resaltado) se hace dos veces, completo, y el de <code>f(2)</code>, tres veces. Con n más grande, las repeticiones se multiplican: el número de llamadas crece de forma exponencial.</figcaption>
+  </figure>
+  <p>Cada llamada se divide en dos, y los mismos subproblemas se resuelven una y otra vez. El número de llamadas crece aproximadamente como 1.6ⁿ: es un algoritmo exponencial (se suele resumir como <code>O(2ⁿ)</code>). La solución es obvia en cuanto la ves: <strong>apuntar</strong> cada resultado la primera vez que lo calculas y consultarlo las siguientes. A esta técnica se le llama <strong>memoización</strong> (del inglés <em>memoization</em>, «tomar nota»; no es un error de escritura de «memorización»). Un <code>Map</code> es perfecto para apuntar:</p>
+  <div class="taller" id="taller-memo" data-titulo="Fibonacci con y sin memoria">
+    <textarea class="taller-codigo">let llamadas = 0;
+
+function fib(n) {
+  llamadas++;
+  if (n <= 1) return n;
+  return fib(n - 1) + fib(n - 2);
+}
+
+const apuntes = new Map();
+function fibMemo(n) {
+  llamadas++;
+  if (n <= 1) return n;
+  if (apuntes.has(n)) return apuntes.get(n);        // ¿ya lo calculé? lo reutilizo
+  const resultado = fibMemo(n - 1) + fibMemo(n - 2);
+  apuntes.set(n, resultado);                        // lo apunto para la próxima vez
+  return resultado;
+}
+
+for (const n of [10, 20, 30]) {
+  llamadas = 0;
+  const r = fib(n);
+  console.log(`Sin memoria: fib(${n}) = ${r} con ${llamadas} llamadas`);
+}
+
+for (const n of [30, 50, 78]) {
+  llamadas = 0;
+  apuntes.clear();
+  const r = fibMemo(n);
+  console.log(`Con memoria: fib(${n}) = ${r} con ${llamadas} llamadas`);
+}</textarea>
+  </div>
+  <p>Sin memoria, <code>fib(30)</code> necesita más de 2,6 millones de llamadas. Con memoria, 59. Y <code>fib(50)</code>, que sin memoria tardaría minutos (más de 40 000 millones de llamadas), sale al instante. Pasamos de exponencial a <code>O(n)</code> en tiempo, a cambio de <code>O(n)</code> en memoria: otra vez, memoria por tiempo.</p>
+  <aside class="senal nota">
+    <p>¿Por qué el taller se detiene en 78? A partir de <code>fib(79)</code>, el resultado supera <code>Number.MAX_SAFE_INTEGER</code> (9 007 199 254 740 991), el mayor entero que un <code>number</code> de JavaScript guarda con exactitud, y los últimos dígitos empiezan a ser incorrectos. Para números más grandes existe <code>BigInt</code>, que viste en la <a href="18-matematicas.html">Estación 18</a>.</p>
+  </aside>
+  <p>La <strong>programación dinámica</strong> es la estrategia que aprovecha esta idea. Sirve cuando un problema cumple dos condiciones:</p>
+  <ul>
+    <li><strong>Subproblemas que se repiten</strong>: al resolverlo, aparecen los mismos problemas pequeños muchas veces (como <code>fib(3)</code>).</li>
+    <li><strong>Subestructura óptima</strong>: la mejor solución del problema grande se construye con las mejores soluciones de los pequeños.</li>
+  </ul>
+  <p>Hay dos formas de aplicarla. <strong>De arriba abajo</strong> (<em>top-down</em>): la recursión de siempre más un <code>Map</code> de apuntes, como acabas de hacer. <strong>De abajo arriba</strong> (<em>bottom-up</em>, o «tabulación»): se rellena una tabla empezando por los casos más pequeños, con un bucle y sin recursión, así que no hay riesgo de desbordar la pila:</p>
+  <pre><code class="language-js">function fibTabla(n) {
+  if (n &lt;= 1) return n;
+  let anterior = 0;     // fib(0)
+  let actual = 1;       // fib(1)
+  for (let i = 2; i &lt;= n; i++) {
+    [anterior, actual] = [actual, anterior + actual];   // avanzar un paso
+  }
+  return actual;
+}</code></pre>
+  <p>Esta versión es <code>O(n)</code> en tiempo y <code>O(1)</code> en memoria: solo recuerda los dos últimos valores, que es todo lo que necesita.</p>
+
+  <h3>El cambio de monedas, bien resuelto</h3>
+  <p>Volvamos a las gemas de 4, 3 y 1, donde la estrategia voraz fallaba. Con programación dinámica de abajo arriba, construimos una tabla: para cada cantidad desde 0 hasta la que queremos pagar, apuntamos el mínimo de monedas necesario. La idea clave: la mejor forma de pagar 6 es «una moneda más» la mejor forma de pagar lo que queda (6 − 4 = 2, 6 − 3 = 3 o 6 − 1 = 5), y esas ya están en la tabla.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 222" role="img" aria-label="Tabla de programación dinámica para el cambio con monedas de 1, 3 y 4. Para las cantidades 0 a 6, el mínimo de monedas es 0, 1, 2, 1, 1, 2 y 2. Unas flechas muestran que la cantidad 6 se paga con una moneda de 3 más la mejor forma de pagar 3, que a su vez es una moneda de 3 más la cantidad 0.">
+      <text class="d-rotulo" x="96" y="64" text-anchor="end">cantidad</text>
+      <text class="d-rotulo" x="96" y="103" text-anchor="end">monedas</text>
+      <text class="d-mono d-tenue" x="138" y="64" text-anchor="middle">0</text>
+      <rect class="d-caja" x="107" y="76" width="62" height="42" rx="6"/><text class="d-mono" x="138" y="104" text-anchor="middle" style="font-size:19px">0</text>
+      <rect class="d-acento-trazo" x="103" y="72" width="70" height="50" rx="9"/>
+      <text class="d-mono d-tenue" x="212" y="64" text-anchor="middle">1</text>
+      <rect class="d-caja" x="181" y="76" width="62" height="42" rx="6"/><text class="d-mono" x="212" y="104" text-anchor="middle" style="font-size:19px">1</text>
+      <text class="d-mono d-tenue" x="286" y="64" text-anchor="middle">2</text>
+      <rect class="d-caja" x="255" y="76" width="62" height="42" rx="6"/><text class="d-mono" x="286" y="104" text-anchor="middle" style="font-size:19px">2</text>
+      <text class="d-mono d-tenue" x="360" y="64" text-anchor="middle">3</text>
+      <rect class="d-caja" x="329" y="76" width="62" height="42" rx="6"/><text class="d-mono" x="360" y="104" text-anchor="middle" style="font-size:19px">1</text>
+      <rect class="d-acento-trazo" x="325" y="72" width="70" height="50" rx="9"/>
+      <text class="d-mono d-tenue" x="434" y="64" text-anchor="middle">4</text>
+      <rect class="d-caja" x="403" y="76" width="62" height="42" rx="6"/><text class="d-mono" x="434" y="104" text-anchor="middle" style="font-size:19px">1</text>
+      <text class="d-mono d-tenue" x="508" y="64" text-anchor="middle">5</text>
+      <rect class="d-caja" x="477" y="76" width="62" height="42" rx="6"/><text class="d-mono" x="508" y="104" text-anchor="middle" style="font-size:19px">2</text>
+      <text class="d-mono d-tenue" x="582" y="64" text-anchor="middle">6</text>
+      <rect class="d-caja" x="551" y="76" width="62" height="42" rx="6"/><text class="d-mono" x="582" y="104" text-anchor="middle" style="font-size:19px">2</text>
+      <rect class="d-acento-trazo" x="547" y="72" width="70" height="50" rx="9"/>
+      <path class="d-linea" d="M582 124 Q471 176 370.9 129.1"/><path class="d-tinta" d="M360 124 L373.4 123.7 L368.3 134.5z"/>
+      <text class="d-peq" x="471" y="166" text-anchor="middle">usa una moneda de 3</text>
+      <path class="d-linea" d="M360 124 Q249 176 148.9 129.1"/><path class="d-tinta" d="M138 124 L151.4 123.7 L146.3 134.5z"/>
+      <text class="d-peq" x="249" y="166" text-anchor="middle">usa otra de 3</text>
+      <text class="d-mono" x="360" y="208" text-anchor="middle">tabla[6] = tabla[3] + 1 = tabla[0] + 2 = 2 monedas</text>
+    </svg>
+    <figcaption>Cada casilla se calcula con las anteriores. Para 6, la mejor opción es usar una moneda de 3 y mirar la casilla 3 (1 moneda): en total, 2 monedas. Siguiendo las flechas hacia atrás se reconstruye la solución: 3 + 3.</figcaption>
+  </figure>
+  <div class="taller" id="taller-cambio-dp" data-titulo="Cambio óptimo con programación dinámica">
+    <textarea class="taller-codigo">function cambioMinimo(cantidad, monedas) {
+  // tabla[a] = mínimo de monedas para pagar exactamente a
+  const tabla = [0];
+  for (let a = 1; a <= cantidad; a++) {
+    tabla[a] = Infinity;                       // todavía no sabemos pagarlo
+    for (const moneda of monedas) {
+      if (moneda <= a && tabla[a - moneda] + 1 < tabla[a]) {
+        tabla[a] = tabla[a - moneda] + 1;      // una moneda más lo que queda
+      }
+    }
+  }
+  console.log("Tabla:", tabla.join(" "));
+  return tabla[cantidad] === Infinity ? -1 : tabla[cantidad];
+}
+
+console.log("Pagar 6 con [4, 3, 1]:", cambioMinimo(6, [4, 3, 1]), "monedas");
+console.log("Pagar 38 con [20, 10, 5, 2, 1]:", cambioMinimo(38, [20, 10, 5, 2, 1]), "monedas");
+console.log("Pagar 7 con [2, 4]:", cambioMinimo(7, [2, 4]), "(-1 = imposible)");</textarea>
+  </div>
+  <p>El algoritmo hace, para cada cantidad, una vuelta por cada tipo de moneda: <code>O(cantidad × monedas)</code>. Siempre da el óptimo, sea cual sea el sistema de monedas, y detecta los casos imposibles (con monedas de 2 y 4 no se puede pagar un número impar).</p>
+  <aside class="senal clave">
+    <p>Cómo reconocer un problema de programación dinámica: te piden el mínimo, el máximo o «de cuántas formas», y al intentar la recursión descubres que calculas lo mismo muchas veces. Primero escribe la recursión sencilla. Después añade un <code>Map</code> de apuntes. Si la recursión es muy profunda, pásala a una tabla con un bucle.</p>
+  </aside>
+</section>

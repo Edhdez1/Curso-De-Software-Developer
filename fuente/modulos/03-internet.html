@@ -503,3 +503,421 @@ Address: 2620:0:861:ed1a::1</span></code></pre>
     <p>Tradicionalmente, las consultas DNS viajan sin cifrar, así que tu proveedor (y quien controle la red Wi-Fi a la que te conectas) puede ver qué nombres consultas, aunque no vea el contenido de las páginas. Los navegadores modernos ofrecen <strong>DNS cifrado</strong> (DNS sobre HTTPS); en Chrome, por ejemplo, está en la configuración de seguridad como «Usar DNS seguro».</p>
   </aside>
 </section>
+
+<section id="url" data-parada="Anatomía de una URL">
+  <h2>Anatomía de una URL</h2>
+  <p>Ya sabes cómo se encuentra un servidor. Pero a un servidor se le pueden pedir miles de cosas: la portada, una foto, el resultado de una búsqueda. La dirección que escribes en el navegador lo dice todo a la vez: con qué protocolo hablar, a qué servidor, qué cosa pedirle y con qué detalles. Esa dirección es la <strong>URL</strong> (<em>Uniform Resource Locator</em>, localizador uniforme de recursos). Un <strong>recurso</strong> es cualquier cosa que se puede pedir: una página, una imagen, un video, un PDF o unos datos.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 732 176" role="img" aria-label="Diagrama de la URL https://tienda.ejemplo.com:8443/ofertas/zapatos?talla=40&amp;color=azul#opiniones dividida en partes: protocolo https, dominio tienda.ejemplo.com, puerto 8443 (opcional), ruta /ofertas/zapatos, consulta ?talla=40&amp;color=azul (opcional) y fragmento #opiniones, que no se envía al servidor.">
+      <g class="d-mono" style="font-size:14px">
+        <text x="20" y="40" textLength="54" lengthAdjust="spacingAndGlyphs">https:</text>
+        <text class="d-tenue" x="74" y="40" textLength="18" lengthAdjust="spacingAndGlyphs">//</text>
+        <text x="92" y="40" textLength="162" lengthAdjust="spacingAndGlyphs">tienda.ejemplo.com</text>
+        <text x="254" y="40" textLength="45" lengthAdjust="spacingAndGlyphs">:8443</text>
+        <text x="299" y="40" textLength="144" lengthAdjust="spacingAndGlyphs">/ofertas/zapatos</text>
+        <text x="443" y="40" textLength="180" lengthAdjust="spacingAndGlyphs">?talla=40&amp;color=azul</text>
+        <text x="623" y="40" textLength="90" lengthAdjust="spacingAndGlyphs">#opiniones</text>
+      </g>
+      <path class="d-acento-trazo" d="M21 52v8h52v-8"/>
+      <path class="d-acento-trazo" d="M93 52v8h160v-8"/>
+      <path class="d-linea" d="M255 52v8h43v-8"/>
+      <path class="d-acento-trazo" d="M300 52v8h142v-8"/>
+      <path class="d-linea" d="M444 52v8h178v-8"/>
+      <path class="d-punteada" d="M624 52v8h88v-8"/>
+      <g class="d-rotulo d-peq" text-anchor="middle">
+        <text x="47" y="86">Protocolo</text>
+        <text x="173" y="86">Dominio (host)</text>
+        <text x="276" y="86">Puerto</text>
+        <text x="371" y="86">Ruta</text>
+        <text x="533" y="86">Consulta</text>
+        <text x="668" y="86">Fragmento</text>
+      </g>
+      <g class="d-peq d-tenue" text-anchor="middle">
+        <text x="47" y="108">cómo hablar</text>
+        <text x="173" y="108">a qué servidor</text>
+        <text x="276" y="108">qué puerta</text>
+        <text x="371" y="108">qué recurso</text>
+        <text x="533" y="108">detalles del pedido</text>
+        <text x="668" y="108">lugar de la página</text>
+        <text x="276" y="128">(opcional)</text>
+        <text x="533" y="128">(opcional)</text>
+        <text x="668" y="128">(no se envía)</text>
+      </g>
+      <path class="d-linea" d="M20 146H712"/>
+      <text class="d-peq" x="20" y="168">Lo que va hasta la primera «/» después de «//» dice adónde vas; lo que sigue dice qué pides.</text>
+    </svg>
+    <figcaption>Las seis partes de una URL. Solo el protocolo y el dominio son obligatorios para abrir una página.</figcaption>
+  </figure>
+  <p>Parte por parte:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Protocolo o esquema</strong> (<code>https:</code>): cómo se va a hablar con el servidor. En la web verás <code>https:</code> y, cada vez menos, <code>http:</code>. Hay otros: <code>mailto:</code> abre el correo, <code>tel:</code> llama por teléfono y <code>file:</code> abre un archivo de tu propia computadora.</p></div></li>
+    <li><div><p><strong>Dominio o host</strong> (<code>tienda.ejemplo.com</code>): el servidor al que le hablas. También puede ser una IP. No distingue mayúsculas: <code>EJEMPLO.com</code> y <code>ejemplo.com</code> son lo mismo.</p></div></li>
+    <li><div><p><strong>Puerto</strong> (<code>:8443</code>): casi nunca se escribe, porque cada protocolo tiene uno por defecto: 443 para <code>https</code> y 80 para <code>http</code>. Lo verás escrito sobre todo cuando programes en tu computadora, como en <code>http://localhost:3000</code>.</p></div></li>
+    <li><div><p><strong>Ruta</strong> (<code>/ofertas/zapatos</code>): qué recurso quieres dentro de ese servidor. Se parece a las rutas de carpetas que viste en la <a href="02-computadora.html">Estación 2</a>. A diferencia del dominio, la ruta puede distinguir mayúsculas: depende del servidor.</p></div></li>
+    <li><div><p><strong>Consulta</strong> (<code>?talla=40&amp;color=azul</code>): datos extra para el pedido, en pares <code>clave=valor</code> separados por <code>&amp;</code>. Cuando buscas algo en un buscador o filtras productos en una tienda, lo que eliges aparece aquí.</p></div></li>
+    <li><div><p><strong>Fragmento</strong> (<code>#opiniones</code>): un lugar dentro de la página. El navegador <strong>no lo envía al servidor</strong>: lo usa él mismo para saltar a esa parte. Este curso lo usa en el índice lateral: cada parada es un enlace como <code>#dns</code>.</p></div></li>
+  </ol>
+  <aside class="senal ojo" data-titulo="Espacios, eñes y acentos">
+    <p>Una URL solo puede llevar ciertos caracteres. Los demás se codifican con <code>%</code> seguido de los bytes del carácter en UTF-8 (recuerda la <a href="02-computadora.html">Estación 2</a>). Si buscas «café con leche», la dirección tendrá algo como <code>?q=caf%C3%A9%20con%20leche</code>: <code>%20</code> es un espacio y <code>%C3%A9</code> son los dos bytes de la «é». El navegador te lo muestra bonito en la barra, pero lo que viaja es la versión codificada.</p>
+  </aside>
+  <p>El navegador trae incorporada una herramienta para desarmar direcciones: <code>new URL(…)</code>. Antes de ejecutar, <strong>predice</strong> qué mostrará cada línea. Luego modifica la dirección: quita el puerto, cambia la talla o prueba con <code>https://es.wikipedia.org/wiki/Internet#Historia</code>. Por último, borra el <code>https://</code> del principio y mira qué pasa.</p>
+  <div class="taller" id="taller-url" data-titulo="Desarma una URL">
+    <textarea class="taller-codigo">// Cambia la dirección que está entre comillas y vuelve a ejecutar
+const direccion = new URL("https://tienda.ejemplo.com:8443/ofertas/zapatos?talla=40&color=azul#opiniones");
+
+console.log("Protocolo:", direccion.protocol);
+console.log("Dominio:", direccion.hostname);
+console.log("Puerto:", direccion.port || "(el de siempre)");
+console.log("Ruta:", direccion.pathname);
+console.log("Consulta:", direccion.search);
+console.log("Talla pedida:", direccion.searchParams.get("talla"));
+console.log("Fragmento:", direccion.hash);</textarea>
+  </div>
+  <p>Si quitas el <code>https://</code>, obtienes un error: <code>TypeError: Invalid URL</code> (o un mensaje parecido, según el navegador). Para una computadora, <code>tienda.ejemplo.com/ofertas</code> no es una URL completa, porque no dice qué protocolo usar. La barra de direcciones te lo perdona y agrega <code>https://</code> por ti, pero en el código hay que ser exacto.</p>
+  <p>Sigue ahora este otro programa paso a paso con el botón «Siguiente». Cada línea guarda una parte de la dirección en una variable (una caja con nombre, que estudiarás en la <a href="07-variables.html">Estación 7</a>), y la última arma una frase con ellas:</p>
+  <div class="traza" data-titulo="Qué hace el navegador con una URL" data-rotulo-memoria="Memoria">
+    <pre><code class="language-js">const texto = "https://www.ejemplo.com/recetas/flan?porciones=4#pasos";
+const direccion = new URL(texto);
+const servidor = direccion.hostname;
+const ruta = direccion.pathname;
+const porciones = direccion.searchParams.get("porciones");
+console.log(`Pedir ${ruta} a ${servidor} para ${porciones} personas`);</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"texto": "\"https://www.ejemplo.com/recetas/flan?porciones=4#pasos\""}, "nota": "Se guarda la dirección como texto. Para la computadora, por ahora, es solo una fila de letras sin significado."},
+      {"linea": 2, "vars": {"texto": "\"https://www.ejemplo.com/recetas/flan?porciones=4#pasos\"", "direccion": "URL (ya separada en partes)"}, "nota": "new URL lee el texto de izquierda a derecha y lo separa en sus partes, igual que hace el navegador cuando pulsas Enter. Si el texto no fuera una URL válida, el programa se detendría aquí con un error."},
+      {"linea": 3, "vars": {"texto": "\"https://www.ejemplo.com/recetas/flan?porciones=4#pasos\"", "direccion": "URL (ya separada en partes)", "servidor": "\"www.ejemplo.com\""}, "nota": "hostname es el dominio: lo que va entre // y la siguiente /. Con este nombre, el navegador hará la consulta DNS."},
+      {"linea": 4, "vars": {"texto": "\"https://www.ejemplo.com/recetas/flan?porciones=4#pasos\"", "direccion": "URL (ya separada en partes)", "servidor": "\"www.ejemplo.com\"", "ruta": "\"/recetas/flan\""}, "nota": "pathname es la ruta: empieza en la / que sigue al dominio y termina antes del ? o del #."},
+      {"linea": 5, "vars": {"texto": "\"https://www.ejemplo.com/recetas/flan?porciones=4#pasos\"", "direccion": "URL (ya separada en partes)", "servidor": "\"www.ejemplo.com\"", "ruta": "\"/recetas/flan\"", "porciones": "\"4\""}, "nota": "searchParams.get busca la clave porciones en la consulta y devuelve su valor. Fíjate en las comillas: es el texto \"4\", no el número 4. Todo lo que viene en una URL es texto."},
+      {"linea": 6, "vars": {"texto": "\"https://www.ejemplo.com/recetas/flan?porciones=4#pasos\"", "direccion": "URL (ya separada en partes)", "servidor": "\"www.ejemplo.com\"", "ruta": "\"/recetas/flan\"", "porciones": "\"4\""}, "salida": "Pedir /recetas/flan a www.ejemplo.com para 4 personas", "nota": "Se arma la frase con las tres partes. El fragmento #pasos no aparece en el pedido: se queda en el navegador para saltar a la sección de los pasos."}
+    ]</script>
+  </div>
+
+  <h3>Rutas y carpetas del servidor</h3>
+  <p>En los sitios más sencillos, llamados <strong>sitios estáticos</strong>, la ruta de la URL corresponde a carpetas y archivos reales del servidor. Si el sitio <code>recetas.ejemplo.com</code> guarda sus páginas en una carpeta, la URL <code>https://recetas.ejemplo.com/postres/flan.html</code> pide el archivo <code>flan.html</code> que está dentro de la carpeta <code>postres</code>. Y cuando la ruta es solo <code>/</code>, el servidor suele entregar un archivo llamado <code>index.html</code>.</p>
+  <p>Pruébalo en esta terminal de práctica, que simula la carpeta del sitio en el servidor. No te preocupes si nunca usaste una terminal: escribe cada comando tal cual y pulsa <kbd>Enter</kbd>. En la <a href="05-herramientas.html">Estación 5</a> aprenderás estos comandos a fondo.</p>
+  <div class="terminal-sim" data-titulo="El servidor de recetas" data-inicio="/srv/recetas" data-usuario="servidor">
+    <script type="application/json" class="terminal-sistema">{"index.html": "<h1>Recetas</h1>", "estilos.css": "h1 { color: crimson; }"}</script>
+    <div class="terminal-instrucciones">
+      <p><strong>Misión:</strong> que la dirección <code>https://recetas.ejemplo.com/postres/flan.html</code> tenga un archivo que entregar.</p>
+      <ol>
+        <li><code>ls</code> muestra lo que hay en la carpeta del sitio. <code>index.html</code> es lo que se entrega para la ruta <code>/</code>.</li>
+        <li><code>mkdir postres</code> crea la carpeta <code>postres</code>, que corresponde a la ruta <code>/postres/</code>.</li>
+        <li><code>touch postres/flan.html</code> crea el archivo vacío <code>flan.html</code> dentro de <code>postres</code>.</li>
+        <li><code>ls postres</code> comprueba que está ahí.</li>
+      </ol>
+    </div>
+    <script type="text/plain" class="terminal-mision">
+if (!sistema.postres) return "Crea la carpeta postres con: mkdir postres";
+if (typeof sistema.postres !== "object") return "postres debería ser una carpeta, no un archivo. Pulsa Reiniciar y usa mkdir postres.";
+if (!("flan.html" in sistema.postres)) return "Ahora crea el archivo con: touch postres/flan.html";
+return true;
+    </script>
+  </div>
+  <p>¿Qué URL tendría la hoja de estilos <code>estilos.css</code>? Exacto: <code>https://recetas.ejemplo.com/estilos.css</code>.</p>
+  <aside class="senal ojo">
+    <p>No todas las rutas son archivos. En los sitios dinámicos, como una red social o una tienda, un programa del servidor lee la ruta y fabrica la página en ese momento: <code>/usuarios/ana</code> no es un archivo llamado <code>ana</code>, es una página creada a partir de una base de datos. Programarás eso en la <a href="29-backend.html">Estación 29</a>. Para quien visita, la diferencia es invisible: pide una ruta y recibe una respuesta.</p>
+  </aside>
+  <aside class="senal nota" data-titulo="Direcciones completas y relativas">
+    <p>Todas las URL de esta sección son <strong>absolutas</strong>: llevan protocolo y dominio. Dentro de una misma web se usan también direcciones <strong>relativas</strong>, como <code>04-pensamiento.html</code>, que se interpretan a partir de la página actual. Las usarás al escribir enlaces en la <a href="13-html.html">Estación 13</a>.</p>
+  </aside>
+</section>
+
+<section id="http" data-parada="HTTP">
+  <h2>HTTP: pedir y responder</h2>
+  <p>Tu navegador ya sabe la IP del servidor y tiene la URL desarmada. Falta lo más importante: pedir la página de una forma que el servidor entienda. Navegadores y servidores de todo el mundo están hechos por empresas distintas, así que necesitan un idioma común. Ese idioma es <strong>HTTP</strong> (<em>HyperText Transfer Protocol</em>, protocolo de transferencia de hipertexto), el protocolo de la web.</p>
+  <p>HTTP funciona siempre igual: el cliente envía una <strong>petición</strong> (en inglés, <em>request</em>) y el servidor contesta con una <strong>respuesta</strong> (<em>response</em>). Una petición, una respuesta. Además, HTTP es un protocolo <strong>sin estado</strong>: cada petición se trata por separado y el servidor, por sí solo, no recuerda las anteriores. (Cómo hace una web para recordar que iniciaste sesión lo verás en la <a href="31-seguridad.html">Estación 31</a>.)</p>
+
+  <h3>Cómo es una petición</h3>
+  <p>Así se ve, en texto, la petición que hace tu navegador cuando abres <code>https://www.ejemplo.com/recetas/flan?porciones=4</code>:</p>
+  <pre><code class="language-http">GET /recetas/flan?porciones=4 HTTP/1.1
+Host: www.ejemplo.com
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) …
+Accept: text/html
+Accept-Language: es-419,es;q=0.9</code></pre>
+  <ul>
+    <li>La primera línea es la <strong>línea de petición</strong>: el <strong>método</strong> (<code>GET</code>, «dame»), la ruta con su consulta y la versión de HTTP. Fíjate en que el fragmento <code>#…</code> no aparece: nunca se envía.</li>
+    <li>Después vienen las <strong>cabeceras</strong> (<em>headers</em>): pares <code>Nombre: valor</code> con información extra. <code>Host</code> dice a qué sitio va la petición (un mismo servidor puede alojar muchos sitios). <code>User-Agent</code> describe tu navegador. <code>Accept</code> y <code>Accept-Language</code> dicen qué formatos e idiomas prefieres.</li>
+    <li>Algunas peticiones llevan además un <strong>cuerpo</strong> (<em>body</em>) después de una línea en blanco, por ejemplo los datos de un formulario que envías.</li>
+  </ul>
+
+  <h3>Cómo es una respuesta</h3>
+  <pre><code class="language-http">HTTP/1.1 200 OK
+Date: Tue, 29 Sep 2026 15:00:00 GMT
+Content-Type: text/html; charset=utf-8
+Content-Length: 5123
+Cache-Control: max-age=3600
+
+&lt;!doctype html&gt;
+&lt;html lang="es"&gt;
+  …</code></pre>
+  <ul>
+    <li>La <strong>línea de estado</strong> trae la versión, el <strong>código de estado</strong> (<code>200</code>) y una frase que lo explica (<code>OK</code>).</li>
+    <li>Las cabeceras de respuesta describen lo que viene: <code>Content-Type</code> dice qué tipo de contenido es (aquí, HTML en UTF-8), <code>Content-Length</code> cuántos bytes ocupa y <code>Cache-Control</code> cuánto tiempo se puede guardar en caché (3600 segundos: una hora).</li>
+    <li>Tras la línea en blanco llega el cuerpo: el HTML de la página, que aprenderás a escribir en la <a href="13-html.html">Estación 13</a>.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="HTTP/1.1, HTTP/2 y HTTP/3">
+    <p>HTTP/1.1 (1997) viaja como texto, tal como lo ves arriba. HTTP/2 (2015) y HTTP/3 (2022) envían la misma información en formato binario, más compacto y rápido, y escriben los nombres de las cabeceras en minúsculas. Pero el significado es idéntico: método, ruta, cabeceras, código de estado y cuerpo. Las herramientas del navegador te lo muestran siempre en forma legible.</p>
+  </aside>
+
+  <h3>El ciclo completo</h3>
+  <p>Una página casi nunca es un solo archivo. Mira qué pasa cuando el HTML necesita otras piezas:</p>
+  <figure class="capsula" data-titulo="Petición y respuesta">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Animación: el navegador envía la petición GET /recetas; el servidor encuentra recetas.html y responde 200 OK con el HTML. El navegador lee el HTML, pide estilos.css y logo.png; la hoja de estilos llega con 200 OK y el logo con 404 Not Found. La página se dibuja con un hueco donde iba el logo.">
+        <text class="d-rotulo d-peq d-tenue" x="367" y="20" text-anchor="middle">Peticiones</text>
+        <path class="d-linea" d="M222 32H500"/>
+        <path class="d-tinta" d="M498 26l12 6 -12 6z"/>
+        <text class="d-rotulo d-peq d-tenue" x="367" y="282" text-anchor="middle">Respuestas</text>
+        <path class="d-linea" d="M510 262H232"/>
+        <path class="d-tinta" d="M234 256l-12 6 12 6z"/>
+        <rect class="d-caja" x="12" y="40" width="200" height="210" rx="8"/>
+        <text class="d-rotulo d-peq" x="112" y="62" text-anchor="middle">Navegador (cliente)</text>
+        <rect class="d-caja-suave" x="24" y="72" width="176" height="22" rx="4"/>
+        <text class="d-mono d-peq" x="32" y="88">ejemplo.com/recetas</text>
+        <text class="d-peq d-tenue" x="112" y="170" text-anchor="middle" data-pasos="1-4">(página en blanco)</text>
+        <g class="d-peq" text-anchor="middle" data-pasos="5-7">
+          <text x="112" y="136">Leyendo el HTML…</text>
+          <text x="112" y="160">Necesita también:</text>
+          <text class="d-mono" x="112" y="184">estilos.css</text>
+          <text class="d-mono" x="112" y="206">logo.png</text>
+        </g>
+        <g data-pasos="8">
+          <rect class="d-acento" x="26" y="108" width="120" height="16" rx="3"/>
+          <rect class="d-caja-suave" x="26" y="134" width="170" height="8" rx="2"/>
+          <rect class="d-caja-suave" x="26" y="148" width="150" height="8" rx="2"/>
+          <rect class="d-caja-suave" x="26" y="162" width="160" height="8" rx="2"/>
+          <rect class="d-punteada" x="26" y="182" width="80" height="54" rx="3"/>
+          <path class="d-mal-trazo" d="M56 199l20 20M76 199l-20 20"/>
+          <text class="d-peq d-tenue" x="154" y="214" text-anchor="middle">sin logo</text>
+        </g>
+        <rect class="d-caja" x="520" y="40" width="188" height="210" rx="8"/>
+        <text class="d-rotulo d-peq" x="614" y="62" text-anchor="middle">Servidor</text>
+        <text class="d-mono d-peq d-tenue" x="614" y="82" text-anchor="middle">203.0.113.50</text>
+        <text class="d-peq d-tenue" x="534" y="112">Archivos:</text>
+        <rect class="d-resalte" x="528" y="122" width="172" height="22" rx="3" data-pasos="3-4"/>
+        <rect class="d-resalte" x="528" y="146" width="172" height="22" rx="3" data-pasos="7"/>
+        <g class="d-mono d-peq">
+          <text x="534" y="138">recetas.html</text>
+          <text x="534" y="162">estilos.css</text>
+          <text x="534" y="186">index.html</text>
+        </g>
+        <text class="d-peq d-mal" x="534" y="226" data-pasos="7">(no hay logo.png)</text>
+        <g data-pasos="2-3" data-mover="3:translate(80px,0px)">
+          <rect class="d-caja" x="222" y="44" width="210" height="74" rx="6"/>
+          <g class="d-mono d-peq">
+            <text class="d-rotulo" x="232" y="66">GET /recetas HTTP/1.1</text>
+            <text x="232" y="86">Host: www.ejemplo.com</text>
+            <text x="232" y="106">Accept: text/html</text>
+          </g>
+        </g>
+        <g data-pasos="4-5" data-mover="5:translate(-80px,0px)">
+          <rect class="d-caja" x="300" y="138" width="210" height="104" rx="6"/>
+          <g class="d-mono d-peq">
+            <text class="d-ok" x="310" y="160">HTTP/1.1 200 OK</text>
+            <text x="310" y="180">Content-Type: text/html</text>
+            <text class="d-tenue" x="310" y="204">(cuerpo)</text>
+            <text x="310" y="226">&lt;html&gt;…&lt;/html&gt;</text>
+          </g>
+        </g>
+        <g data-pasos="6-7" data-mover="7:translate(90px,0px)">
+          <rect class="d-caja" x="222" y="46" width="190" height="30" rx="6"/>
+          <text class="d-mono d-peq" x="232" y="66">GET /estilos.css</text>
+          <rect class="d-caja" x="222" y="84" width="190" height="30" rx="6"/>
+          <text class="d-mono d-peq" x="232" y="104">GET /logo.png</text>
+        </g>
+        <g data-pasos="7">
+          <rect class="d-caja" x="300" y="150" width="210" height="32" rx="6"/>
+          <text class="d-mono d-peq d-ok" x="310" y="171">200 OK (text/css)</text>
+          <rect class="d-caja" x="300" y="192" width="210" height="32" rx="6"/>
+          <rect class="d-mal-trazo" x="300" y="192" width="210" height="32" rx="6"/>
+          <text class="d-mono d-peq d-mal" x="310" y="213">404 Not Found</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Tu navegador ya conoce la IP del servidor y abrió una conexión con él. Ahora le toca pedir la página <code>/recetas</code>.</li>
+        <li data-duracion="7">El navegador escribe la petición: el método <code>GET</code> («dame»), la ruta y la versión de HTTP. Debajo, las cabeceras: <code>Host</code> dice a qué sitio va y <code>Accept</code> qué formatos entiende.</li>
+        <li>La petición llega al servidor, que busca qué corresponde a la ruta <code>/recetas</code>. En este sitio es el archivo <code>recetas.html</code>.</li>
+        <li data-duracion="7">El servidor arma la respuesta: el código <code>200 OK</code> (todo bien), cabeceras como <code>Content-Type</code>, que avisa de que es HTML, y después el cuerpo: el HTML de la página.</li>
+        <li data-duracion="6">El navegador recibe la respuesta y empieza a leer el HTML. Descubre que la página necesita dos recursos más: la hoja de estilos y el logo.</li>
+        <li data-duracion="6">Por cada recurso hace otra petición <code>GET</code>. Una página típica hace decenas: el informe Web Almanac de 2024 contó una mediana de unas 70 peticiones por página.</li>
+        <li data-duracion="7">La hoja de estilos llega con <code>200 OK</code>. El logo no existe en el servidor: la respuesta es <code>404 Not Found</code>. El servidor funciona perfectamente; solo que no tiene ese archivo.</li>
+        <li>El navegador dibuja la página con lo que tiene: el texto, los estilos y un hueco donde iba el logo. Que falle una petición no rompe toda la página.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Métodos: qué quieres hacer</h3>
+  <p>El método de la petición dice qué acción quieres hacer con el recurso. Al navegar, casi todo es <code>GET</code>; los demás aparecen cuando envías formularios o cuando una app habla con su servidor. Por ahora basta con reconocerlos al leerlos: los usarás desde código en la <a href="16-asincronia.html">Estación 16</a> y los programarás en un servidor en la <a href="29-backend.html">Estación 29</a>.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Método</th><th scope="col">Significa</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td>Dame este recurso</td><td>Abrir una página, cargar una imagen</td></tr>
+        <tr><td><code>POST</code></td><td>Toma estos datos nuevos</td><td>Enviar un formulario de registro, publicar un comentario</td></tr>
+        <tr><td><code>PUT</code></td><td>Reemplaza este recurso por completo</td><td>Guardar de nuevo tu perfil entero</td></tr>
+        <tr><td><code>PATCH</code></td><td>Cambia solo una parte</td><td>Actualizar solo tu foto de perfil</td></tr>
+        <tr><td><code>DELETE</code></td><td>Borra este recurso</td><td>Eliminar una publicación</td></tr>
+        <tr><td><code>HEAD</code></td><td>Como GET, pero solo las cabeceras</td><td>Comprobar si un archivo existe sin descargarlo</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Códigos de estado: cómo fue</h3>
+  <p>El código de estado es un número de tres cifras. La primera cifra ya te dice mucho:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Familia</th><th scope="col">Significa</th><th scope="col">Los que más verás</th></tr></thead>
+      <tbody>
+        <tr><td><code>1xx</code></td><td>Información: sigue, voy procesando</td><td>Casi nunca los verás directamente</td></tr>
+        <tr><td><code>2xx</code></td><td>Éxito</td><td><code>200 OK</code>; <code>201 Created</code> (se creó lo que enviaste); <code>204 No Content</code> (hecho, sin nada que devolver)</td></tr>
+        <tr><td><code>3xx</code></td><td>Redirección: está en otro sitio</td><td><code>301 Moved Permanently</code> (se mudó para siempre); <code>302 Found</code> (está en otro lado por ahora); <code>304 Not Modified</code> (no cambió: usa tu copia en caché)</td></tr>
+        <tr><td><code>4xx</code></td><td>Error del cliente: el pedido tiene un problema</td><td><code>400 Bad Request</code> (pedido mal formado); <code>401 Unauthorized</code> (falta identificarse); <code>403 Forbidden</code> (sabemos quién eres, pero no puedes); <code>404 Not Found</code> (no existe); <code>429 Too Many Requests</code> (demasiados pedidos seguidos)</td></tr>
+        <tr><td><code>5xx</code></td><td>Error del servidor: el pedido estaba bien, pero el servidor falló</td><td><code>500 Internal Server Error</code> (el programa del servidor falló); <code>502 Bad Gateway</code> y <code>503 Service Unavailable</code> (servidor saturado o en mantenimiento)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Con las redirecciones <code>3xx</code>, el servidor añade la cabecera <code>Location</code> con la nueva dirección, y el navegador hace otra petición allí sin preguntarte. Por eso a veces escribes una dirección y terminas en otra.</p>
+  <aside class="senal error">
+    <p><strong>Un 404 no significa que el sitio esté caído.</strong> Si recibes un 404, el servidor está vivo y te respondió: «eso que pides no lo tengo». Cuando un servidor está apagado o inalcanzable no hay ningún código de estado, porque nadie responde: el navegador muestra su propio error, como <code>ERR_CONNECTION_REFUSED</code> (nadie atiende en ese puerto) o <code>ERR_CONNECTION_TIMED_OUT</code> (nadie contestó a tiempo).</p>
+  </aside>
+
+  <h3>Cabeceras que conviene reconocer</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Cabecera</th><th scope="col">Va en</th><th scope="col">Para qué sirve</th></tr></thead>
+      <tbody>
+        <tr><td><code>Host</code></td><td>Petición</td><td>Qué sitio quieres, porque un servidor puede alojar muchos</td></tr>
+        <tr><td><code>User-Agent</code></td><td>Petición</td><td>Qué navegador y sistema usas</td></tr>
+        <tr><td><code>Accept-Language</code></td><td>Petición</td><td>En qué idiomas prefieres el contenido</td></tr>
+        <tr><td><code>Content-Type</code></td><td>Respuesta (y peticiones con cuerpo)</td><td>Qué tipo de contenido es: <code>text/html</code>, <code>text/css</code>, <code>image/png</code>, <code>application/json</code>…</td></tr>
+        <tr><td><code>Content-Length</code></td><td>Respuesta</td><td>Cuántos bytes mide el cuerpo</td></tr>
+        <tr><td><code>Location</code></td><td>Respuesta</td><td>Adónde ir, en las redirecciones <code>3xx</code></td></tr>
+        <tr><td><code>Cache-Control</code></td><td>Respuesta</td><td>Si se puede guardar en caché y cuánto tiempo</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal clave">
+    <p>El navegador decide qué hacer con una respuesta por su <code>Content-Type</code>, no por la terminación del nombre. Una ruta como <code>/foto</code> puede devolver una imagen, y un archivo <code>datos.txt</code> podría llegar como HTML. Estos tipos se llaman <strong>tipos MIME</strong>.</p>
+  </aside>
+  <p>Este taller imita a un servidor sencillo. No es un servidor de verdad (esos los construirás en la <a href="29-backend.html">Estación 29</a>), pero decide igual que uno. <strong>Predice</strong> qué código responderá a cada una de estas rutas y compruébalo cambiando la línea de la ruta pedida: <code>"/"</code>, <code>"/recetas"</code>, <code>"/Recetas"</code>, <code>"/postres"</code>, <code>"/admin"</code> y <code>"/pizza"</code>.</p>
+  <div class="taller" id="taller-servidor" data-titulo="Un servidor de juguete">
+    <textarea class="taller-codigo">// Cambia la ruta pedida y ejecuta
+const rutaPedida = "/recetas";
+
+// Lo que tiene este servidor (no hace falta que entiendas esta parte todavía)
+const paginas = { "/": "Portada", "/recetas": "Lista de recetas", "/recetas/flan": "Receta de flan" };
+const mudanzas = { "/postres": "/recetas" };   // páginas que cambiaron de dirección
+const privadas = ["/admin"];                    // páginas solo para el personal
+
+function responder(ruta) {
+  if (paginas[ruta]) return { estado: 200, frase: "OK", cuerpo: paginas[ruta] };
+  if (mudanzas[ruta]) return { estado: 301, frase: "Moved Permanently", location: mudanzas[ruta] };
+  if (privadas.includes(ruta)) return { estado: 403, frase: "Forbidden" };
+  return { estado: 404, frase: "Not Found" };
+}
+
+const r = responder(rutaPedida);
+console.log(`Petición:  GET ${rutaPedida} HTTP/1.1`);
+console.log(`Respuesta: HTTP/1.1 ${r.estado} ${r.frase}`);
+if (r.location) console.log(`Location: ${r.location}`);
+if (r.cuerpo) console.log(`Cuerpo: ${r.cuerpo}`);</textarea>
+  </div>
+  <p>¿Te sorprendió <code>/Recetas</code>? Para este servidor, la ruta con mayúscula es otra ruta distinta, y no existe. Muchos servidores reales se comportan así.</p>
+</section>
+
+<section id="https" data-parada="HTTPS y el candado">
+  <h2>HTTPS: qué protege y qué no</h2>
+  <p>En HTTP simple, las peticiones y respuestas viajan como texto legible. Cualquiera que esté en el camino (quien controla la red Wi-Fi de un café, un router comprometido, tu propio proveedor) podría leer tu contraseña o cambiar la página por el camino, por ejemplo para meterle publicidad o un programa malicioso. Por eso hoy casi toda la web usa HTTPS.</p>
+  <p><strong>HTTPS</strong> es HTTP dentro de un canal protegido por <strong>TLS</strong> (<em>Transport Layer Security</em>, seguridad de la capa de transporte). TLS es el sucesor de un protocolo antiguo llamado SSL, y por eso todavía oirás hablar de «certificados SSL». TLS da tres garantías:</p>
+  <ul>
+    <li><strong>Confidencialidad</strong>: los datos van <strong>cifrados</strong>, es decir, transformados para que solo pueda leerlos quien tenga la clave.</li>
+    <li><strong>Integridad</strong>: si alguien modifica un solo bit por el camino, el receptor lo detecta y descarta el mensaje.</li>
+    <li><strong>Autenticación</strong>: el servidor demuestra, con un certificado, que controla el dominio al que te conectaste.</li>
+  </ul>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 256" role="img" aria-label="Comparación de lo que ve alguien conectado a la misma red. Con HTTP ve el destino, la petición POST /login y los datos usuario=ana y clave=gato123. Con HTTPS ve el destino, es decir, la IP y normalmente el nombre del sitio, pero el resto son bytes ilegibles.">
+      <text class="d-titulo" x="16" y="52">HTTP</text>
+      <text class="d-peq d-tenue" x="16" y="74">sin cifrar</text>
+      <path class="d-linea" d="M85 50v-8a10 10 0 0 1 20 0" style="stroke-width:4"/>
+      <rect class="d-mal" x="76" y="58" width="36" height="28" rx="5"/>
+      <rect class="d-caja" x="140" y="14" width="568" height="104" rx="8"/>
+      <text class="d-peq d-tenue" x="156" y="38">Lo que ve alguien en la misma red Wi-Fi:</text>
+      <g class="d-mono d-peq">
+        <text x="156" y="62">Destino: 203.0.113.50 (tienda.ejemplo.com)</text>
+        <text x="156" y="84">POST /login HTTP/1.1</text>
+        <text class="d-mal" x="156" y="106">usuario=ana&amp;clave=gato123</text>
+      </g>
+      <text class="d-titulo" x="16" y="178">HTTPS</text>
+      <text class="d-peq d-tenue" x="16" y="200">con TLS</text>
+      <path class="d-linea" d="M85 184v-10a10 10 0 0 1 20 0v10" style="stroke-width:4"/>
+      <rect class="d-ok" x="76" y="184" width="36" height="28" rx="5"/>
+      <rect class="d-caja" x="140" y="140" width="568" height="104" rx="8"/>
+      <text class="d-peq d-tenue" x="156" y="164">Lo que ve alguien en la misma red Wi-Fi:</text>
+      <g class="d-mono d-peq">
+        <text x="156" y="188">Destino: 203.0.113.50 (tienda.ejemplo.com)</text>
+        <text x="156" y="210">17 03 03 00 5a 9f 3a c1 7e 02 b4 d8 55 aa 10 e4 …</text>
+      </g>
+      <text class="d-peq d-tenue" x="156" y="232">La ruta, los datos y la respuesta son ilegibles sin la clave.</text>
+    </svg>
+    <figcaption>HTTPS oculta el contenido, pero no a quién te conectas: la IP y, normalmente, el nombre del sitio siguen a la vista.</figcaption>
+  </figure>
+
+  <h3>Cifrar: la idea de clave</h3>
+  <p>Al empezar la conexión, navegador y servidor hacen un breve saludo TLS (en TLS 1.3, la versión actual, basta con un viaje de ida y vuelta) en el que acuerdan una clave secreta. Lo ingenioso es que la acuerdan usando matemáticas que funcionan aunque alguien esté escuchando toda la conversación. A partir de ahí, todo lo que envían va cifrado con esa clave.</p>
+  <p>Este taller usa un cifrado de juguete, el <strong>cifrado César</strong>, que desplaza cada letra del alfabeto unas posiciones. TLS usa algoritmos muchísimo más fuertes, pero la idea de clave es la misma. <strong>Predice</strong> qué verá quien use la clave equivocada, y después cambia la clave o el mensaje.</p>
+  <div class="taller" id="taller-cifrado" data-titulo="Un cifrado de juguete">
+    <textarea class="taller-codigo">const clave = 3;                       // cuántas posiciones se desplaza cada letra
+const mensaje = "mi clave es gato123";
+
+// Cifrado César: solo para entender la idea. TLS NO funciona así.
+const abc = "abcdefghijklmnopqrstuvwxyz";
+function cifrar(texto, desplazamiento) {
+  return [...texto].map((letra) => {
+    const i = abc.indexOf(letra);
+    if (i === -1) return letra;         // espacios y números quedan igual
+    return abc[(i + desplazamiento + 26) % 26];
+  }).join("");
+}
+
+const secreto = cifrar(mensaje, clave);
+console.log("Viaja por la red:      ", secreto);
+console.log("Quien tiene la clave:  ", cifrar(secreto, -clave));
+console.log("Quien prueba la clave 5:", cifrar(secreto, -5));
+console.log("Claves posibles en este juguete:", 26);
+console.log("Claves posibles con 128 bits:  ", 2 ** 128);</textarea>
+  </div>
+  <p>Con solo 26 claves, cualquiera puede probarlas todas en un instante. Las claves de TLS tienen 128 o 256 bits: probarlas todas llevaría a todas las computadoras del mundo muchísimo más tiempo que la edad del universo. Además, en el juguete los números quedaron sin cifrar; en TLS se cifra cada bit.</p>
+
+  <h3>Certificados: quién está al otro lado</h3>
+  <p>Cifrar no sirve de nada si estás hablando, cifradamente, con un impostor. Por eso el servidor presenta un <strong>certificado digital</strong>: un documento electrónico que asocia un nombre de dominio con una clave, firmado por una <strong>autoridad de certificación</strong> (en inglés, <em>CA</em>), una organización en la que los navegadores confían. La más usada es Let's Encrypt, que emite certificados gratis y de forma automática.</p>
+  <p>El navegador comprueba tres cosas: que la firma sea de una autoridad de confianza, que el certificado no haya caducado y que sea para el dominio exacto que visitas. Si algo falla, muestra un aviso a pantalla completa, como el de Chrome: «La conexión no es privada». <strong>No lo ignores</strong> en un sitio donde vayas a escribir datos.</p>
+  <aside class="senal nota" data-titulo="Certificados cada vez más cortos">
+    <p>Los certificados caducan a propósito, para limitar el daño si alguien roba una clave. Por acuerdo entre navegadores y autoridades (el CA/Browser Forum), desde el 15 de marzo de 2026 un certificado público dura como máximo 200 días; en 2027 bajará a 100 días y en 2029 a 47. Por eso los certificados se renuevan con programas automáticos, algo que harás al publicar tu sitio en la <a href="35-devops.html">Estación 35</a>.</p>
+  </aside>
+
+  <h3>Lo que HTTPS protege y lo que no</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">HTTPS sí protege</th><th scope="col">HTTPS no protege</th></tr></thead>
+      <tbody>
+        <tr><td>El contenido: páginas, formularios, contraseñas, mensajes</td><td>Que el dominio sea de quien crees: una estafa puede tener su certificado válido en minutos, gratis</td></tr>
+        <tr><td>La ruta y la consulta de la URL (lo que buscas dentro del sitio)</td><td>A quién te conectas: tu red ve la IP y, normalmente, el nombre del sitio</td></tr>
+        <tr><td>Contra cambios en el camino: nadie puede alterar la página sin que se note</td><td>Lo que el sitio hace con tus datos una vez que los recibe</td></tr>
+        <tr><td>Que hablas con el servidor que controla ese dominio</td><td>Los archivos maliciosos que descargues, o un sitio legítimo que haya sido hackeado</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Sobre el nombre del sitio: al conectarse, el navegador suele enviar el nombre del dominio sin cifrar para que el servidor sepa qué certificado presentar, y la consulta DNS también puede ir sin cifrar. Existen mejoras que lo ocultan (el DNS cifrado que viste antes y una extensión de TLS llamada <em>Encrypted Client Hello</em>, estandarizada en 2026), pero todavía no funcionan en todas partes. Supón que el nombre del sitio es visible.</p>
+
+  <h3>El candado no es un certificado de honradez</h3>
+  <p>Durante décadas los navegadores mostraron un candado junto a la dirección cuando la conexión usaba HTTPS. Firefox y Safari todavía lo muestran. Chrome lo reemplazó en 2023 (versión 117) por un icono neutro de ajustes, porque sus estudios mostraron que solo el 11 % de las personas entendía bien qué significaba el candado, y porque, en palabras de Google, «casi todos los sitios de phishing usan HTTPS». Las páginas sin cifrar sí se marcan: Chrome escribe «No seguro» al lado de la dirección.</p>
+  <p>Además, desde Chrome 154 (que se publica entre septiembre y octubre de 2026) la opción «Usar siempre conexiones seguras» viene activada: Chrome intenta primero HTTPS y, si un sitio público solo funciona con HTTP, te avisa antes de abrirlo. Hoy más del 95 % de las páginas que se cargan en Chrome usan HTTPS.</p>
+  <aside class="senal clave">
+    <p>El candado significa «nadie puede leer ni alterar lo que viaja entre tú y <em>este dominio</em>». No significa «este dominio es quien dice ser» ni «este sitio es honesto». Una web falsa de tu banco puede tener un candado perfecto. Lo que te protege es leer el dominio, y eso es lo que aprenderás en la <a href="#phishing">última sección</a>.</p>
+  </aside>
+  <aside class="senal ojo" data-titulo="Tampoco la navegación privada">
+    <p>El modo incógnito (o navegación privada) solo evita que tu propio navegador guarde el historial y las cookies de esa sesión. Los sitios que visitas, tu proveedor y quien administra la red (tu escuela o tu trabajo) pueden seguir viendo tu actividad igual que siempre.</p>
+  </aside>
+</section>

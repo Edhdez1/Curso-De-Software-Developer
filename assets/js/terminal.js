@@ -319,7 +319,7 @@
     var nota = crear("p", { "class": "traza-nota", "aria-live": "polite" });
     var panel = crear("div", { "class": "traza-panel" }, [
       crear("div", null, [crear("div", { "class": "traza-rotulo", texto: caja.getAttribute("data-rotulo-memoria") || "Memoria (variables)" }), memoria]),
-      crear("div", null, [crear("div", { "class": "traza-rotulo", texto: "Consola" }), salida]),
+      crear("div", null, [crear("div", { "class": "traza-rotulo", texto: caja.getAttribute("data-rotulo-salida") || "Consola" }), salida]),
       crear("div", null, [crear("div", { "class": "traza-rotulo", texto: "Qué está pasando" }), nota])
     ]);
     var cabeza = crear("div", { "class": "traza-cabeza", html: ICONOS.traza + "<span></span>" });
@@ -487,7 +487,7 @@
     var vista = null, iframe = null;
     if (enMarco) {
       vista = crear("div", { "class": "taller-vista" });
-      iframe = crear("iframe", { title: (modo === "web" ? "Vista previa — " : "Ejecución — ") + titulo, sandbox: "allow-scripts allow-modals", loading: "lazy" });
+      iframe = crear("iframe", { title: (modo === "web" ? "Vista previa — " : "Ejecución — ") + titulo, sandbox: "allow-scripts allow-modals allow-forms", loading: "lazy" });
       if (caja.getAttribute("data-alto")) iframe.style.height = caja.getAttribute("data-alto");
       vista.appendChild(iframe);
       if (modo !== "web") vista.hidden = true;
@@ -591,6 +591,9 @@
         "['log','info','warn','error'].forEach(function(k){var o=console[k];console[k]=function(){var a=[].slice.call(arguments).map(f).join(' ');" +
         "if(PY&&(k==='log'||k==='error')){buf[k]+=a;var partes=buf[k].split('\\n');buf[k]=partes.pop();partes.forEach(function(l){emitir(k,l);});}else emitir(k,a);o&&o.apply(console,arguments);};});" +
         "window.addEventListener('error',function(e){P.postMessage({terminalTaller:" + idJ + ",tipo:'excepcion',datos:{nombre:(e.error&&e.error.name)||'Error',mensaje:(e.error&&e.error.message)||e.message,linea:e.lineno||null}},'*');});" +
+        // En la vista previa los enlaces no navegan y los formularios no se envían a ningún sitio.
+        "document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a||e.defaultPrevented)return;var h=a.getAttribute('href');if(h.charAt(0)==='#'){e.preventDefault();var d=h.length>1&&document.getElementById(decodeURIComponent(h.slice(1)));if(d)d.scrollIntoView();return;}e.preventDefault();console.info('(Vista previa) Este enlace llevaría a: '+h);});" +
+        "window.addEventListener('submit',function(e){if(e.defaultPrevented)return;e.preventDefault();console.info('(Vista previa) El formulario pasó la validación y se enviaría. Aquí no se envía a ningún sitio.');});" +
         "window.__terminar=function(extra){window.__vaciar();var r=true;" + (verificacion ? "try{r=(function(salida,codigo,resultados){" + sinCierre(verificacion) + "\n})(window.__salida.slice()," + sinCierre(JSON.stringify(modo === "web" ? partes : (partes[modo] || ""))) + ",window.__resultados||[]);}catch(e){r='La verificación falló: '+e.message;}" : "") +
         "P.postMessage({terminalTaller:" + idJ + ",tipo:'fin',datos:" + (verificacion ? "(r===undefined?true:r)" : "null") + "},'*');};})();<\/script>";
       var cabeza = "<!doctype html><html lang='es'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" + puente;

@@ -36,6 +36,7 @@
     });
     if (fuente.length < 2) return;
     var leng = caja.getAttribute("data-lenguaje") || "text";
+    var exito = caja.getAttribute("data-exito");
     var conSangria = fuente.some(function (f) { return f.sangria > 0; });
     var titulo = caja.getAttribute("data-titulo") || "Ordena las líneas";
     // Barajado determinista que nunca deja el orden correcto.
@@ -49,6 +50,7 @@
     if (orden.every(function (o, k) { return o.id === k; })) orden.push(orden.shift());
 
     caja.innerHTML = "";
+    if (exito) caja.setAttribute("data-exito", exito);
     caja.classList.add("js");
     var cabeza = crear("div", { "class": "parsons-cabeza", html: ICO_PARSONS + "<span></span>" });
     cabeza.lastChild.textContent = titulo;
@@ -111,7 +113,7 @@
         if (ok) bien++;
       });
       if (bien === orden.length) {
-        veredicto.className = "parsons-veredicto ok"; veredicto.innerHTML = ICO_OK + "<span>¡Correcto! Así queda el orden de ejecución.</span>";
+        veredicto.className = "parsons-veredicto ok"; veredicto.innerHTML = ICO_OK + "<span></span>"; veredicto.lastChild.textContent = caja.getAttribute("data-exito") || "¡Correcto! Ese es el orden.";
       } else {
         veredicto.className = "parsons-veredicto mal"; veredicto.innerHTML = ICO_MAL + "<span></span>";
         veredicto.lastChild.textContent = bien + " de " + orden.length + " líneas están en su lugar" + (conSangria ? " (con la sangría correcta)" : "") + ". Las marcadas en rojo todavía no.";
