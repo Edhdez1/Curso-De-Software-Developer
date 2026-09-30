@@ -2384,3 +2384,272 @@ R N B . K . N R
     <p><strong>Una IA que alarga la derrota o retrasa la victoria</strong> sin sentido: falta sumar la profundidad a la utilidad.</p>
   </aside>
 </section>
+
+<section id="mcts" data-parada="Monte Carlo">
+  <h2>Monte Carlo Tree Search: decidir con partidas simuladas</h2>
+  <p>Minimax con alfa-beta necesita dos cosas: que el árbol no sea demasiado ancho y una buena función de evaluación. En el Go, un juego de tablero asiático de 19 × 19 casillas, hay unas 250 jugadas posibles por turno y durante décadas nadie supo escribir una evaluación decente: dos posiciones casi iguales pueden valer cosas opuestas. Alfa-beta no llegaba a ningún sitio. La solución que cambió el Go por ordenador en los años 2000 es sorprendentemente sencilla: jugar miles de partidas al azar y fijarse en qué jugadas suelen acabar bien.</p>
+
+  <h3>La idea: muestrear y concentrarse en lo prometedor</h3>
+  <p>Si desde una posición juegas mil partidas totalmente al azar y ganas 700, esa posición probablemente es buena, aunque nadie sepa explicar por qué. Eso es un método de <strong>Monte Carlo</strong>: estimar algo con muchas muestras aleatorias (el nombre viene del casino). La <strong>búsqueda en árbol de Monte Carlo</strong> (<em>Monte Carlo Tree Search</em>, MCTS) añade una mejora clave: no reparte las partidas por igual. Construye poco a poco un árbol y dedica más partidas a las jugadas que van pareciendo mejores, sin abandonar del todo las demás.</p>
+
+  <h3>Explorar o explotar: la fórmula UCB1</h3>
+  <p>Imagina una fila de máquinas tragamonedas, cada una con una probabilidad de premio distinta que no conoces. ¿Juegas en la que mejor te ha ido hasta ahora (<strong>explotar</strong>) o pruebas otras por si alguna es mejor (<strong>explorar</strong>)? Es el dilema de <strong>explorar o explotar</strong>, y aparece en todas partes: en qué restaurante cenar, qué anuncio mostrar, qué jugada estudiar. Una respuesta matemática muy usada es la fórmula <strong>UCB1</strong> (<em>Upper Confidence Bound</em>):</p>
+  <pre><code class="language-text">UCB1(hijo) = victorias / visitas  +  c · √( ln(visitas del padre) / visitas )
+             └── explotar ──────┘     └── explorar ─────────────────────┘</code></pre>
+  <p>El primer término es la media de victorias: premia lo que va bien. El segundo es grande cuando el hijo tiene pocas visitas comparado con su padre: premia lo poco probado. <code>ln</code> es el logaritmo natural (<code>Math.log</code> en JavaScript) y <code>c</code> regula el equilibrio; el valor teórico habitual es √2 ≈ 1,41. Con el tiempo, las jugadas buenas acumulan visitas y las malas se prueban cada vez menos, pero nunca se olvidan del todo.</p>
+
+  <h3>Las cuatro fases</h3>
+  <p>Cada iteración de MCTS repite cuatro fases. Mira una:</p>
+  <figure class="capsula" data-titulo="Las cuatro fases de MCTS">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: un árbol de MCTS. La raíz lleva 9 visitas. Sus hijos A, B y C tienen 3 victorias de 5, 1 de 3 y 1 de 1. En la selección, UCB1 vale 1,54 para A, 1,54 para B y 3,10 para C, que se elige porque tiene pocas visitas. En la expansión, C recibe un hijo nuevo, C1. En la simulación, desde C1 se juega una partida al azar que gana X, quien movió en C. En la retropropagación, C1 pasa a 0 de 1, C a 2 de 2 y la raíz a 10 visitas.">
+        <path class="d-linea" d="M300 74L150 118M300 74L300 116M300 74L450 118"/>
+        <path class="d-linea" d="M450 164V190" data-pasos="3-"/>
+        <path class="d-acento-trazo" d="M300 74L450 118" data-pasos="2"/>
+        <path class="d-punteada" d="M450 238l-14 12 28 10-28 10 14 10" data-pasos="4-"/>
+        <circle class="d-caja" cx="300" cy="50" r="24"/>
+        <circle class="d-caja" cx="150" cy="140" r="24"/>
+        <circle class="d-caja" cx="300" cy="140" r="24"/>
+        <circle class="d-caja" cx="450" cy="140" r="24" data-clases="2:d-acento-trazo; 3:"/>
+        <circle class="d-caja" cx="450" cy="214" r="24" data-pasos="3-" data-clases="3:d-acento-trazo; 4:"/>
+        <g class="d-mono d-peq" text-anchor="middle">
+          <text x="300" y="55" data-texto="1:N=9; 5:N=10">N=9</text>
+          <text x="150" y="145">3/5</text>
+          <text x="300" y="145">1/3</text>
+          <text x="450" y="145" data-texto="1:1/1; 5:2/2">1/1</text>
+          <text x="450" y="219" data-pasos="3-" data-texto="3:0/0; 5:0/1">0/0</text>
+        </g>
+        <g class="d-rotulo" text-anchor="middle">
+          <text x="112" y="126">A</text><text x="262" y="126">B</text><text x="488" y="126">C</text><text x="488" y="200" data-pasos="3-">C1</text>
+        </g>
+        <g class="d-mono d-peq" data-pasos="2" text-anchor="middle">
+          <text x="206" y="88">1,54</text><text x="322" y="98">1,54</text><text x="400" y="88">3,10</text>
+        </g>
+        <text class="d-peq" x="480" y="266" data-pasos="4-">partida al azar:</text>
+        <text class="d-peq" x="480" y="284" data-pasos="4-">gana X</text>
+        <text class="d-peq d-tenue" x="20" y="274">w/n: victorias de quien movió / visitas</text>
+        <text class="d-peq d-tenue" x="20" y="292">turno en la raíz: X</text>
+        <rect class="d-caja-suave" x="560" y="20" width="150" height="150" rx="8"/>
+        <text class="d-rotulo" x="574" y="46">Fase</text>
+        <text class="d-rotulo" x="574" y="76" data-texto="1:(árbol actual); 2:1. Selección; 3:2. Expansión; 4:3. Simulación; 5:4. Retropropagación">(árbol actual)</text>
+        <g class="d-peq">
+          <text x="574" y="104" data-texto="1:estadísticas de; 2:baja por el mayor; 3:añade un hijo; 4:juega al azar; 5:suma 1 visita a">estadísticas de</text>
+          <text x="574" y="124" data-texto="1:9 partidas; 2:valor UCB1; 3:nuevo a C; 4:hasta el final; 5:todo el camino y">9 partidas</text>
+          <text x="574" y="144" data-texto="1: ; 2: ; 3: ; 4: ; 5:1 victoria a C"> </text>
+        </g>
+      </svg>
+
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>El árbol después de 9 iteraciones. Cada nodo guarda victorias y visitas (w/n), contadas desde el punto de vista de quien hizo la jugada que lleva a ese nodo. La raíz se visitó 9 veces.</li>
+        <li data-duracion="7">Selección: desde la raíz se baja por el hijo con mayor UCB1. A tiene la mejor media (3/5), pero C, con una sola visita, recibe una bonificación de exploración enorme: 3,10 frente a 1,54. Se elige C.</li>
+        <li>Expansión: C todavía no tenía hijos. Se crean y se elige uno, C1, que empieza con 0 visitas.</li>
+        <li>Simulación: desde C1 se juega una partida completa con jugadas al azar, muy rápida y sin pensar. La gana X.</li>
+        <li data-duracion="7">Retropropagación: se sube de C1 a la raíz sumando una visita en cada nodo. Las victorias solo se suman en los nodos a los que llegó X con su jugada (C); en C1, que es jugada de O, se suma una visita sin victoria.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Cuando se acaban las iteraciones, se elige la jugada de la raíz <strong>más visitada</strong>, no la de mejor media. Una jugada con 1 visita y 1 victoria tiene media perfecta, pero no significa nada; una con 3 000 visitas es la que MCTS estudió a fondo y siguió eligiendo. Además, MCTS es un algoritmo <strong>anytime</strong> («en cualquier momento»): puedes detenerlo cuando quieras y siempre tiene una respuesta, mejor cuanto más tiempo le das. En un juego, se le da un presupuesto de milisegundos por jugada.</p>
+
+  <h3>Pruébalo: MCTS mínimo</h3>
+  <p>Este MCTS completo para el tres en raya ocupa unas 50 líneas. El taller trae cargados <code>crearAzar</code> (el generador con semilla de la <a href="18-matematicas.html#azar">Estación 18</a>, para que los resultados se puedan repetir) y las funciones del tres en raya: <code>ganador</code>, <code>libres</code>, <code>otro</code> y <code>simular</code> (una partida al azar hasta el final). Tú completas las dos piezas que hacen que funcione: <code>ucb1</code> y <code>retropropagar</code>. <strong>Predice</strong> antes: con el tablero vacío, ¿qué casilla preferirá? ¿Bloqueará la amenaza de O?</p>
+  <div class="taller" id="taller-mcts" data-titulo="MCTS mínimo" data-exponer="mcts, ucb1">
+    <script type="text/plain" class="taller-preparacion">
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const LINEAS = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+function ganador(t) {
+  for (const [a, b, c] of LINEAS) if (t[a] !== " " && t[a] === t[b] && t[a] === t[c]) return t[a];
+  return t.includes(" ") ? null : "empate";
+}
+function otro(jugador) { return jugador === "X" ? "O" : "X"; }
+function libres(t) { const r = []; for (let i = 0; i < 9; i++) if (t[i] === " ") r.push(i); return r; }
+function simular(tablero, turno, azar) {
+  const t = tablero.slice();
+  let resultado = ganador(t);
+  while (resultado === null) {
+    const opciones = libres(t);
+    t[opciones[Math.floor(azar() * opciones.length)]] = turno;
+    turno = otro(turno);
+    resultado = ganador(t);
+  }
+  return resultado;
+}
+    </script>
+    <textarea class="taller-codigo">function crearNodo(tablero, turno, padre, jugada) {
+  // turno: a quién le toca mover en este tablero
+  return { tablero, turno, padre, jugada, hijos: null, visitas: 0, victorias: 0 };
+}
+
+// UCB1: media de victorias + bonificación por explorar
+function ucb1(hijo, padre) {
+  // Completa: si el hijo no tiene visitas, devuelve Infinity.
+  // Si no: victorias / visitas + Math.SQRT2 * Math.sqrt(Math.log(padre.visitas) / visitas)
+  return 0;
+}
+
+// Sube desde el nodo hasta la raíz sumando la partida simulada.
+// resultado: "X", "O" o "empate". En cada nodo, las victorias cuentan
+// para quien MOVIÓ hasta ese nodo: otro(nodo.turno).
+function retropropagar(nodo, resultado) {
+  // Completa: +1 visita en cada nodo del camino; +1 victoria si ganó
+  // quien movió; +0.5 si fue empate.
+}
+
+function mcts(tablero, turno, iteraciones, azar) {
+  const raiz = crearNodo(tablero, turno, null, -1);
+  for (let k = 0; k < iteraciones; k++) {
+    // 1. Selección: baja por el hijo con mayor UCB1
+    let nodo = raiz;
+    while (nodo.hijos !== null && nodo.hijos.length > 0) {
+      let mejor = nodo.hijos[0];
+      for (const hijo of nodo.hijos) if (ucb1(hijo, nodo) > ucb1(mejor, nodo)) mejor = hijo;
+      nodo = mejor;
+    }
+    // 2. Expansión: si la partida no terminó, crea sus hijos y elige uno al azar
+    if (ganador(nodo.tablero) === null) {
+      nodo.hijos = libres(nodo.tablero).map((casilla) => {
+        const t = nodo.tablero.slice();
+        t[casilla] = nodo.turno;
+        return crearNodo(t, otro(nodo.turno), nodo, casilla);
+      });
+      nodo = nodo.hijos[Math.floor(azar() * nodo.hijos.length)];
+    }
+    // 3. Simulación: partida al azar hasta el final
+    const resultado = simular(nodo.tablero, nodo.turno, azar);
+    // 4. Retropropagación
+    retropropagar(nodo, resultado);
+  }
+  // Se elige la jugada MÁS VISITADA
+  let elegido = raiz.hijos[0];
+  for (const hijo of raiz.hijos) if (hijo.visitas > elegido.visitas) elegido = hijo;
+  const visitas = {};
+  for (const hijo of raiz.hijos) visitas[hijo.jugada] = hijo.visitas;
+  return { jugada: elegido.jugada, visitas };
+}
+
+// Casillas: 0 1 2 / 3 4 5 / 6 7 8
+const vacio = Array(9).fill(" ");
+const r1 = mcts(vacio, "X", 5000, crearAzar(38));
+console.log("Tablero vacío → casilla", r1.jugada, "| visitas:", JSON.stringify(r1.visitas));
+
+const amenaza = ["O", "O", " ",
+                 " ", "X", " ",
+                 " ", " ", "X"];   // O amenaza con completar la fila de arriba
+const r2 = mcts(amenaza, "X", 3000, crearAzar(38));
+console.log("Con amenaza de O → casilla", r2.jugada, "| visitas:", JSON.stringify(r2.visitas));</textarea>
+    <script type="text/plain" class="taller-verificar">
+var m = expuesto.mcts, u = expuesto.ucb1;
+if (typeof m !== "function" || typeof u !== "function") return "No encuentro mcts y ucb1: ¿se llaman así y el programa terminó sin errores?";
+if (u({ visitas: 0, victorias: 0 }, { visitas: 10 }) !== Infinity) return "ucb1 de un hijo sin visitas debe ser Infinity: así se prueba cada jugada al menos una vez (y no se divide entre cero).";
+var v = u({ visitas: 5, victorias: 3 }, { visitas: 9 });
+if (!(Math.abs(v - 1.537) < 0.01)) return "ucb1 de un hijo con 3 victorias en 5 visitas, con padre de 9 visitas, debería dar unos 1,54 y da " + v + ".";
+var r1 = m(Array(9).fill(" "), "X", 3000, crearAzar(7));
+if (r1.jugada !== 4) return "Con el tablero vacío y 3000 iteraciones, MCTS debería preferir el centro (4) y elige " + r1.jugada + ". ¿Sumas las victorias para quien movió, otro(n.turno)?";
+var r2 = m(["O", "O", " ", " ", "X", " ", " ", " ", "X"], "X", 3000, crearAzar(7));
+var total = 0; for (var k in r2.visitas) total += r2.visitas[k];
+if (r2.jugada !== 2) return "Con la amenaza de O en la fila de arriba, MCTS debería bloquear en la casilla 2 y elige " + r2.jugada + ".";
+if (!(total > 0 && r2.visitas[2] / total >= 0.5)) return "MCTS elige bloquear, pero la casilla 2 debería reunir al menos la mitad de las visitas. ¿Sumas una visita en cada nodo del camino hasta la raíz?";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">function crearNodo(tablero, turno, padre, jugada) {
+  // turno: a quién le toca mover en este tablero
+  return { tablero, turno, padre, jugada, hijos: null, visitas: 0, victorias: 0 };
+}
+
+function ucb1(hijo, padre) {
+  if (hijo.visitas === 0) return Infinity;
+  const explotar = hijo.victorias / hijo.visitas;
+  const explorar = Math.SQRT2 * Math.sqrt(Math.log(padre.visitas) / hijo.visitas);
+  return explotar + explorar;
+}
+
+function retropropagar(nodo, resultado) {
+  for (let n = nodo; n !== null; n = n.padre) {
+    n.visitas++;
+    const quienMovio = otro(n.turno);
+    if (resultado === quienMovio) n.victorias += 1;
+    else if (resultado === "empate") n.victorias += 0.5;
+  }
+}
+
+function mcts(tablero, turno, iteraciones, azar) {
+  const raiz = crearNodo(tablero, turno, null, -1);
+  for (let k = 0; k &lt; iteraciones; k++) {
+    // 1. Selección: baja por el hijo con mayor UCB1
+    let nodo = raiz;
+    while (nodo.hijos !== null &amp;&amp; nodo.hijos.length &gt; 0) {
+      let mejor = nodo.hijos[0];
+      for (const hijo of nodo.hijos) if (ucb1(hijo, nodo) &gt; ucb1(mejor, nodo)) mejor = hijo;
+      nodo = mejor;
+    }
+    // 2. Expansión: si la partida no terminó, crea sus hijos y elige uno al azar
+    if (ganador(nodo.tablero) === null) {
+      nodo.hijos = libres(nodo.tablero).map((casilla) =&gt; {
+        const t = nodo.tablero.slice();
+        t[casilla] = nodo.turno;
+        return crearNodo(t, otro(nodo.turno), nodo, casilla);
+      });
+      nodo = nodo.hijos[Math.floor(azar() * nodo.hijos.length)];
+    }
+    // 3. Simulación: partida al azar hasta el final
+    const resultado = simular(nodo.tablero, nodo.turno, azar);
+    // 4. Retropropagación
+    retropropagar(nodo, resultado);
+  }
+  // Se elige la jugada MÁS VISITADA
+  let elegido = raiz.hijos[0];
+  for (const hijo of raiz.hijos) if (hijo.visitas &gt; elegido.visitas) elegido = hijo;
+  const visitas = {};
+  for (const hijo of raiz.hijos) visitas[hijo.jugada] = hijo.visitas;
+  return { jugada: elegido.jugada, visitas };
+}
+
+// Casillas: 0 1 2 / 3 4 5 / 6 7 8
+const vacio = Array(9).fill(" ");
+const r1 = mcts(vacio, "X", 5000, crearAzar(38));
+console.log("Tablero vacío → casilla", r1.jugada, "| visitas:", JSON.stringify(r1.visitas));
+
+const amenaza = ["O", "O", " ",
+                 " ", "X", " ",
+                 " ", " ", "X"];   // O amenaza con completar la fila de arriba
+const r2 = mcts(amenaza, "X", 3000, crearAzar(38));
+console.log("Con amenaza de O → casilla", r2.jugada, "| visitas:", JSON.stringify(r2.visitas));</code></pre>
+    <p>Con la semilla 38, el tablero vacío da la casilla 4 (el centro) con unas 1 800 de las 5 000 visitas; las esquinas quedan por detrás y los lados, últimos, que es justo el orden de calidad de las jugadas del tres en raya. Con la amenaza, la casilla 2 se lleva más del 95 % de las visitas: las partidas al azar que no bloquean se pierden enseguida.</p>
+  </details>
+  <p><strong>Modifica</strong>: baja las iteraciones a 50 y ejecuta varias veces con semillas distintas (<code>crearAzar(1)</code>, <code>crearAzar(2)</code>…). ¿Sigue bloqueando? Con muy pocas iteraciones, MCTS es casi una ruleta. Después cambia <code>Math.SQRT2</code> por 0 (solo explotar) y por 10 (casi solo explorar) y mira cómo se reparten las visitas.</p>
+
+  <h3>Mejoras y costos</h3>
+  <p>Las partidas totalmente al azar son rápidas, pero tontas: nadie deja pasar una victoria en 1. Una mejora barata es jugar las simulaciones con reglas simples (ganar si se puede, bloquear si hace falta, y si no, al azar); las estimaciones mejoran mucho. La otra palanca es el tiempo: en Conecta 4, 10 000 iteraciones desde el tablero vacío tardan unos 200 ms en Node con un código como el de este taller. Para un juego a 60 fotogramas por segundo, eso se reparte entre fotogramas o se ejecuta en un Web Worker (<a href="22-ejecucion.html#workers">Estación 22</a>).</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">Alfa-beta</th><th scope="col">MCTS</th></tr></thead>
+      <tbody>
+        <tr><td>Necesita</td><td>Una buena función de evaluación</td><td>Solo las reglas: saber jugar partidas al azar hasta el final</td></tr>
+        <tr><td>Árboles anchos (muchas jugadas por turno)</td><td>Sufre: la anchura se multiplica en cada nivel</td><td>Se adapta: concentra el esfuerzo en pocas ramas</td></tr>
+        <tr><td>Trampas tácticas cortas</td><td>Las ve si caben en su profundidad</td><td>Puede no verlas si la jugada que las evita es rara al azar</td></tr>
+        <tr><td>Resultado</td><td>Exacto dentro de su horizonte</td><td>Estadístico: mejora con más iteraciones</td></tr>
+        <tr><td>Se usa en</td><td>Ajedrez (Stockfish), damas, Conecta 4</td><td>Go, juegos de estrategia con muchas unidades, juegos nuevos sin evaluación conocida</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal nota" data-titulo="MCTS con una red neuronal">
+    <p>En 2016, AlphaGo, de DeepMind, venció a Lee Sedol, uno de los mejores jugadores de Go del mundo. Combinaba MCTS con redes neuronales que sugerían qué jugadas explorar y cuánto valía una posición, en lugar de partidas al azar. Sus sucesores, AlphaZero, y el proyecto abierto Leela Chess Zero para ajedrez, siguen esa receta. Cómo aprende una red a evaluar posiciones se ve en la <a href="40-redes-neuronales.html">Estación 40</a>.</p>
+  </aside>
+  <p>Cuando hay información oculta (cartas en la mano del rival), una técnica habitual es la <strong>determinización</strong>: imaginar muchas repartijas posibles de lo que no ves, hacer MCTS en cada una y combinar los resultados. Aquí solo la mencionamos.</p>
+  <aside class="senal error" data-titulo="Errores típicos con MCTS">
+    <p><strong>Dividir entre cero.</strong> Un hijo sin visitas hace que <code>victorias / visitas</code> sea <code>NaN</code>. Por eso UCB1 devuelve <code>Infinity</code> para los hijos sin visitar: se prueban antes que nada.</p>
+    <p><strong>Sumar la victoria para el jugador equivocado.</strong> Cada nodo cuenta las victorias de quien movió hasta él. Si las cuentas para quien mueve después, MCTS elige con entusiasmo las peores jugadas.</p>
+    <p><strong>Muy pocas iteraciones.</strong> Con 50 partidas, las estadísticas son ruido. Mide cuántas iteraciones caben en tu presupuesto de tiempo.</p>
+    <p><strong>Confundir la jugada más visitada con la de mejor media.</strong> Elige la más visitada.</p>
+  </aside>
+</section>

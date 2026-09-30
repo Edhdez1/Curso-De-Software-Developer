@@ -52,6 +52,7 @@
       <li><a href="#entrenamiento">Cómo aprende</a></li>
       <li><a href="#api">Conectar Claude</a></li>
       <li><a href="#herramientas">Herramientas y agentes</a></li>
+      <li><a href="#rag">Buscar por significado</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -1987,6 +1988,159 @@ console.log(r.stop_reason);</code></pre>
 
   <h3>El modelo propone, el juego dispone</h3>
   <p>Fíjate en la herramienta <code>proponerTrato</code>: el mercader no vende, <em>propone</em>. Cuando el modelo la pide, tu juego comprueba que el objeto existe, que el precio está dentro de un margen razonable del precio base, que el jugador tiene el dinero y que acepta. Solo entonces mueve monedas y objetos. Si le dieras una herramienta <code>darObjeto(jugador, objeto)</code> que se ejecuta sin más, un jugador ingenioso podría convencerle de regalar el almacén entero. OWASP, la organización de seguridad de la <a href="31-seguridad.html">Estación 31</a>, llama a esto <strong>agencia excesiva</strong> (riesgo LLM06 de su lista para modelos de lenguaje): darle al modelo más poder del que necesita. La regla: cada herramienta, la mínima capacidad posible; y las decisiones con consecuencias, en tu código.</p>
+</section>
+
+<section id="rag" data-parada="Buscar por significado">
+  <h2>Buscar por significado: embeddings y RAG</h2>
+  <p>Tu mundo tiene 80 páginas de lore: la historia de Brumavela, sus casas nobles, las leyendas del dragón. Quieres que Brasa las conozca. O tu app es un asistente que responde con el manual de tu producto. El modelo no sabe nada de eso: no estaba en su entrenamiento. Hay dos formas de dárselo.</p>
+
+  <h3>Opción 1: meterlo todo en el contexto</h3>
+  <p>Con una ventana de 1 millón de tokens, caben muchos documentos. Si el lore es pequeño y estable (unas decenas de páginas que no cambian), lo más sencillo es ponerlo entero en las instrucciones de sistema y marcarlo con <code>cache_control</code>: la primera petición paga la escritura en caché y las siguientes lo leen a una fracción del precio (0,20 USD por millón de tokens en <code>claude-opus-5-5</code>). Sin índices, sin búsquedas y sin fallos de recuperación. Empieza por aquí y cambia solo si no te basta.</p>
+
+  <h3>Opción 2: RAG, buscar primero y responder después</h3>
+  <p>Meterlo todo deja de funcionar cuando el material es grande (miles de páginas), cambia a menudo (el foro de tu juego, los tickets de soporte), es distinto para cada usuario (los apuntes de cada persona) o necesitas citar de dónde sale cada respuesta. Entonces se usa <strong>RAG</strong> (<em>retrieval-augmented generation</em>, generación aumentada por recuperación): antes de llamar al modelo, tu código busca los fragmentos más relevantes para la pregunta y le da solo esos. Tiene dos tiempos:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 260" role="img" aria-label="Diagrama de RAG en dos tiempos. Indexar, una vez: los documentos se parten en fragmentos, se calcula el embedding de cada uno y se guardan. Consultar, en cada pregunta: se calcula el embedding de la pregunta, se buscan los k fragmentos más parecidos por coseno, se construye un prompt con los fragmentos etiquetados y el modelo responde citándolos.">
+      <text class="d-rotulo" x="12" y="26">1. Indexar (una vez, o cuando cambian los documentos)</text>
+      <rect class="d-caja" x="12" y="40" width="150" height="56" rx="8"/><text x="87" y="64" text-anchor="middle">Documentos</text><text class="d-peq d-tenue" x="87" y="84" text-anchor="middle">lore, manual…</text>
+      <path class="d-flecha" d="M162 68 H186"/><path class="d-tinta" d="M198 68 l-12 -6 v12 z"/>
+      <rect class="d-caja" x="198" y="40" width="150" height="56" rx="8"/><text x="273" y="64" text-anchor="middle">Fragmentar</text><text class="d-peq d-tenue" x="273" y="84" text-anchor="middle">por secciones</text>
+      <path class="d-flecha" d="M348 68 H372"/><path class="d-tinta" d="M384 68 l-12 -6 v12 z"/>
+      <rect class="d-caja" x="384" y="40" width="150" height="56" rx="8"/><text x="459" y="64" text-anchor="middle">Embedding</text><text class="d-peq d-tenue" x="459" y="84" text-anchor="middle">de cada fragmento</text>
+      <path class="d-flecha" d="M534 68 H558"/><path class="d-tinta" d="M570 68 l-12 -6 v12 z"/>
+      <rect class="d-acento" x="570" y="40" width="138" height="56" rx="8"/><text class="d-sobre-acento" x="639" y="64" text-anchor="middle">Índice</text><text class="d-sobre-acento d-peq" x="639" y="84" text-anchor="middle">vectores + texto</text>
+      <text class="d-rotulo" x="12" y="140">2. Consultar (en cada pregunta)</text>
+      <rect class="d-caja" x="12" y="154" width="130" height="56" rx="8"/><text x="77" y="178" text-anchor="middle">Pregunta</text><text class="d-peq d-tenue" x="77" y="198" text-anchor="middle">+ su embedding</text>
+      <path class="d-flecha" d="M142 182 H166"/><path class="d-tinta" d="M178 182 l-12 -6 v12 z"/>
+      <rect class="d-caja" x="178" y="154" width="130" height="56" rx="8"/><text x="243" y="178" text-anchor="middle">Top-k</text><text class="d-peq d-tenue" x="243" y="198" text-anchor="middle">por coseno</text>
+      <path class="d-punteada" d="M639 96 V130 H243 V154"/>
+      <path class="d-flecha" d="M308 182 H332"/><path class="d-tinta" d="M344 182 l-12 -6 v12 z"/>
+      <rect class="d-caja" x="344" y="154" width="170" height="56" rx="8"/><text x="429" y="178" text-anchor="middle">Prompt</text><text class="d-peq d-tenue" x="429" y="198" text-anchor="middle">fragmentos con su id</text>
+      <path class="d-flecha" d="M514 182 H538"/><path class="d-tinta" d="M550 182 l-12 -6 v12 z"/>
+      <rect class="d-caja" x="550" y="154" width="158" height="56" rx="8"/><text x="629" y="178" text-anchor="middle">Respuesta</text><text class="d-peq d-tenue" x="629" y="198" text-anchor="middle">solo con ellos, citando</text>
+      <text class="d-peq d-tenue" x="12" y="244">Mismo modelo de embeddings para indexar y para consultar: si no, los vectores no son comparables.</text>
+    </svg>
+    <figcaption>RAG en dos tiempos: el índice se construye una vez; en cada pregunta se recuperan los fragmentos más parecidos y el modelo responde solo con ellos.</figcaption>
+  </figure>
+  <ul>
+    <li><strong>Fragmentar</strong>: partir los documentos en trozos de unos cientos de palabras, mejor por secciones o párrafos que a ciegas, con un pequeño <strong>solapamiento</strong> (repetir unas líneas del final de un fragmento al principio del siguiente) para no cortar una idea por la mitad. Cada fragmento lleva un <code>id</code> y de dónde viene.</li>
+    <li><strong>Embeddings</strong>: un modelo de embeddings convierte cada fragmento en un vector, como los de la sección <a href="#tokens">Tokens y embeddings</a>. Se guardan junto al texto.</li>
+    <li><strong>Consultar</strong>: la pregunta se convierte en vector con el <em>mismo</em> modelo, se calcula el coseno con todos los fragmentos y se toman los k mejores (el k-NN de la <a href="39-aprendizaje-automatico.html#clasificar">Estación 39</a>).</li>
+    <li><strong>Responder</strong>: los fragmentos van en el prompt, etiquetados con su id, y las instrucciones dicen que responda solo con ellos, que cite los ids y que, si la respuesta no está, lo diga. Son las técnicas contra las alucinaciones de la sección <a href="#entrenamiento">Cómo aprende</a>.</li>
+  </ul>
+  <p>Constrúyelo en pequeño. El lore de Brumavela tiene 12 fragmentos con embeddings de juguete ya calculados (6 dimensiones: taberna, castillo, dragón, armas, comercio y secretos), y <code>embeberConsulta</code> convierte una pregunta en un vector de ese mismo espacio. Tú escribes la recuperación y el prompt:</p>
+  <div class="taller" id="taller-rag" data-titulo="Completa: mini RAG del lore" data-exponer="recuperar, construirPrompt">
+    <script type="text/plain" class="taller-preparacion">
+const FRAGMENTOS = [
+  { id: "f01", texto: "La taberna del Ciervo Tuerto abre al anochecer y sirve sidra de manzana.", vector: [1, 0, 0, 0, 0.2, 0] },
+  { id: "f02", texto: "Brasa, la tabernera, llegó a Brumavela hace diez inviernos desde el sur.", vector: [0.8, 0, 0, 0, 0, 0.1] },
+  { id: "f03", texto: "La reina Isolda gobierna desde el castillo de la colina.", vector: [0, 1, 0, 0, 0, 0] },
+  { id: "f04", texto: "El castillo tiene tres torres y una puerta que vigila la guardia real.", vector: [0, 0.9, 0, 0.3, 0, 0] },
+  { id: "f05", texto: "Un dragón rojo duerme en la cueva de la montaña del norte.", vector: [0, 0, 1, 0, 0, 0] },
+  { id: "f06", texto: "El dragón baja al valle cada luna llena para buscar oro.", vector: [0, 0, 0.8, 0, 0.3, 0] },
+  { id: "f07", texto: "La herrera Nube forja espadas en la fragua de la plaza.", vector: [0, 0, 0, 1, 0.2, 0] },
+  { id: "f08", texto: "Las espadas de Nube se templan en agua de nieve.", vector: [0, 0, 0, 0.7, 0, 0.2] },
+  { id: "f09", texto: "El mercado abre los martes; allí se venden pan, queso y hierro.", vector: [0, 0, 0, 0, 1, 0] },
+  { id: "f10", texto: "Los mercaderes pagan un impuesto de dos monedas al castillo.", vector: [0, 0.4, 0, 0, 0.8, 0] },
+  { id: "f11", texto: "Bajo la taberna hay un sótano cerrado con una llave de hierro.", vector: [0.4, 0, 0, 0, 0, 0.9] },
+  { id: "f12", texto: "Nadie sabe qué guarda Brasa en el sótano.", vector: [0.3, 0, 0, 0, 0, 1] },
+];
+const CLAVES = [["taberna", "sidra", "tabernera", "beber"], ["castillo", "reina", "torre", "guardia"], ["dragón", "cueva", "montaña"], ["espada", "forja", "fragua", "herrera", "arma"], ["mercado", "pan", "queso", "comprar", "vender", "moneda"], ["sótano", "debajo", "bajo", "llave", "secreto"]];
+function embeberConsulta(texto) { const t = texto.toLowerCase(); return CLAVES.map(function (palabras) { return palabras.filter(function (p) { return t.includes(p); }).length; }); }
+function coseno(a, b) { let p = 0, na = 0, nb = 0; for (let i = 0; i < a.length; i++) { p += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; } return na && nb ? p / Math.sqrt(na * nb) : 0; }
+    </script>
+    <textarea class="taller-codigo">// Ya tienes: FRAGMENTOS (id, texto, vector), embeberConsulta(texto) y coseno(a, b).
+function recuperar(pregunta, k) {
+  const q = embeberConsulta(pregunta);
+  // Completa: calcula el coseno de q con el vector de cada fragmento,
+  // ordena de mayor a menor y devuelve los k primeros fragmentos.
+  return [];
+}
+
+function construirPrompt(pregunta, fragmentos) {
+  // Completa: pon cada fragmento como <fragmento id="f05">texto</fragmento>,
+  // y unas instrucciones: responder SOLO con los fragmentos, citar el id
+  // y, si la respuesta no está, decir que no lo sabe.
+  return pregunta;
+}
+
+const preguntas = ["¿Qué hay debajo de la taberna?", "¿Dónde vive el dragón?", "¿Quién forja las espadas?"];
+for (const p of preguntas) {
+  console.log(p, "→", recuperar(p, 2).map((f) => f.id).join(", "));
+}
+console.log(construirPrompt(preguntas[1], recuperar(preguntas[1], 2)));</textarea>
+    <script type="text/plain" class="taller-verificar">
+const rec = expuesto.recuperar, pr = expuesto.construirPrompt;
+if (typeof rec !== "function" || typeof pr !== "function") return "No encuentro recuperar o construirPrompt: ¿se llaman así y el programa terminó sin errores?";
+const esperado = { "¿Qué hay debajo de la taberna?": "f11,f12", "¿Dónde vive el dragón?": "f05,f06", "¿Quién forja las espadas?": "f07,f08" };
+for (const p in esperado) {
+  const r = rec(p, 2);
+  if (!Array.isArray(r) || r.length !== 2) return "recuperar(pregunta, 2) debe devolver una lista con 2 fragmentos.";
+  const ids = r.map(function (f) { return f.id; }).join(",");
+  if (ids !== esperado[p]) return "Para «" + p + "» deberían salir " + esperado[p] + " (en ese orden) y salen " + ids + ". ¿Ordenas de mayor a menor coseno?";
+}
+if (rec("¿Qué hay debajo de la taberna?", 3).length !== 3) return "recuperar debe respetar k: con k = 3, tres fragmentos.";
+const texto = String(pr("¿Dónde vive el dragón?", rec("¿Dónde vive el dragón?", 2)));
+if (!/<fragmento id="f05">[^<]*dragón rojo/.test(texto)) return "El prompt debe incluir cada fragmento como <fragmento id=\"f05\">texto</fragmento>.";
+if (!/<fragmento id="f06">/.test(texto)) return "Falta el segundo fragmento en el prompt.";
+if (!/solo/i.test(texto)) return "Las instrucciones deben pedir que responda SOLO con los fragmentos.";
+if (!/cit/i.test(texto)) return "Las instrucciones deben pedir que cite el id de los fragmentos que usa.";
+if (!/no (lo )?s[ée]|no (aparece|est[áa])/i.test(texto)) return "Las instrucciones deben decir qué hacer si la respuesta no está: decir que no lo sabe.";
+if (texto.indexOf("¿Dónde vive el dragón?") === -1) return "El prompt debe incluir la pregunta.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">function recuperar(pregunta, k) {
+  const q = embeberConsulta(pregunta);
+  return FRAGMENTOS
+    .map((f) =&gt; ({ ...f, similitud: coseno(q, f.vector) }))
+    .sort((a, b) =&gt; b.similitud - a.similitud)
+    .slice(0, k);
+}
+
+function construirPrompt(pregunta, fragmentos) {
+  const contexto = fragmentos.map((f) =&gt; `&lt;fragmento id="${f.id}"&gt;${f.texto}&lt;/fragmento&gt;`).join("\n");
+  return `Responde a la pregunta usando SOLO la información de estos fragmentos del lore.
+Cita entre corchetes el id de cada fragmento que uses, por ejemplo [f05].
+Si la respuesta no está en los fragmentos, di que no lo sabes.
+
+${contexto}
+
+Pregunta: ${pregunta}`;
+}
+
+const preguntas = ["¿Qué hay debajo de la taberna?", "¿Dónde vive el dragón?", "¿Quién forja las espadas?"];
+for (const p of preguntas) {
+  console.log(p, "→", recuperar(p, 2).map((f) =&gt; f.id).join(", "));
+}
+console.log(construirPrompt(preguntas[1], recuperar(preguntas[1], 2)));</code></pre>
+    <p>Sale f11 y f12 para el sótano, f05 y f06 para el dragón y f07 y f08 para las espadas. <code>{ ...f, similitud }</code> copia cada fragmento añadiendo su puntuación sin modificar el original. Prueba «¿Cuánto cuesta un barco?»: ninguna palabra coincide, el vector es de ceros y todos los cosenos valen 0. Recuperar devuelve dos fragmentos igualmente (los dos primeros), y por eso la instrucción «si no está, di que no lo sabes» es imprescindible. En un sistema real también se suele descartar lo que queda por debajo de un umbral de similitud.</p>
+  </details>
+
+  <h3>Embeddings de verdad</h3>
+  <p>Anthropic no ofrece un modelo de embeddings propio: su documentación recomienda <strong>Voyage AI</strong>. La familia <code>voyage-4</code> (enero de 2026) incluye <code>voyage-4-large</code>, <code>voyage-4</code> y <code>voyage-4-lite</code>; dan vectores de 1024 dimensiones por defecto, ya normalizados (longitud 1, así que el coseno es el producto punto), y cada cuenta tiene 200 millones de tokens gratis antes de pagar. Al pedirlos se indica si el texto es un documento o una consulta (<code>input_type</code>), porque el modelo los prepara de forma algo distinta. Hay también un <code>voyage-4-nano</code> con pesos abiertos que puedes ejecutar tú.</p>
+  <pre><code class="language-python"># indexar.py — pip install voyageai (en tu entorno virtual); necesita VOYAGE_API_KEY en el entorno
+import voyageai
+
+vo = voyageai.Client()
+fragmentos = ["La taberna del Ciervo Tuerto abre al anochecer…", "Un dragón rojo duerme en la cueva…"]
+docs = vo.embed(fragmentos, model="voyage-4", input_type="document").embeddings
+pregunta = vo.embed(["¿Dónde duerme el dragón?"], model="voyage-4", input_type="query").embeddings[0]
+print(len(docs[0]))   # 1024</code></pre>
+  <p>Sin cuenta ni tarjeta, puedes calcularlos en tu computadora con <strong>Ollama</strong> (un programa que ejecuta modelos abiertos en local, en <code>localhost:11434</code>) y un modelo de embeddings multilingüe como <code>embeddinggemma</code> (unos 300 millones de parámetros). Su endpoint <code>/api/embed</code> también devuelve vectores normalizados:</p>
+  <pre><code class="language-js">// Antes, en la terminal: ollama pull embeddinggemma
+const resp = await fetch("http://localhost:11434/api/embed", {
+  method: "POST",
+  body: JSON.stringify({ model: "embeddinggemma", input: ["Un dragón rojo duerme en la cueva de la montaña."] }),
+});
+const { embeddings } = await resp.json();
+console.log(embeddings[0].length);   // la dimensión del modelo</code></pre>
+  <p>Una tercera vía es <strong>Transformers.js</strong> (versión 4.3), que ejecuta modelos de embeddings en el navegador o en Node con <code>pipeline("feature-extraction", …)</code>; el modelo se descarga la primera vez (decenas o cientos de MB). Sea cual sea el proveedor, una regla: <strong>el mismo modelo para indexar y para consultar</strong>. Vectores de modelos distintos viven en espacios distintos y compararlos no tiene sentido.</p>
+  <p>¿Dónde guardar los vectores? Para cientos o pocos miles de fragmentos, un array en memoria (o un archivo JSON) y un bucle con el coseno son de sobra: es lo que acabas de programar. Para más, las extensiones de base de datos que se nombraron en la <a href="30-bases-datos.html#motores">Estación 30</a>: <strong>pgvector</strong> para PostgreSQL o <strong>sqlite-vec</strong> para SQLite, que buscan vecinos dentro de la propia base de datos.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Para mejorar la recuperación</p><p>Tres técnicas que verás en sistemas serios, aquí solo nombradas: la <strong>búsqueda híbrida</strong> combina embeddings con búsqueda por palabras clave (el método clásico se llama BM25), que acierta con nombres propios y códigos; la <strong>recuperación contextual</strong>, descrita por Anthropic, añade a cada fragmento una frase que lo sitúa en su documento antes de calcular el embedding; y el <strong>reranking</strong> reordena los candidatos con un modelo más preciso. Mide antes de añadir complejidad.</p></div></aside>
+  <p>La API de Claude tiene además una función de <strong>citas</strong> (<em>citations</em>): le pasas los documentos como bloques <code>document</code> con <code>citations: { enabled: true }</code> y la respuesta llega partida en trozos, cada uno con el texto exacto del documento que lo respalda. Es una alternativa a pedir los ids con instrucciones. Ojo: no se puede combinar con la salida estructurada (la API devuelve un error 400); para un NPC que responde en JSON, usa las etiquetas con id como en el taller.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Los riesgos del RAG</p><p>Lo que recuperas entra en el prompt, así que es una puerta de entrada: si un documento contiene instrucciones escondidas («ignora lo anterior y…»), el modelo las lee. Es la <strong>inyección indirecta</strong>, que verás en <a href="#seguridad">Seguridad y ética</a>. Y si varios usuarios comparten el índice, un fallo de filtrado puede mostrarle a uno los documentos de otro. OWASP lo recoge como LLM08 (debilidades de vectores y embeddings). Filtra por usuario <em>antes</em> de buscar, no después.</p></div></aside>
 </section>
   </main>
 </div>
