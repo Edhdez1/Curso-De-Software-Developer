@@ -45,12 +45,1949 @@
   <nav class="paradas" aria-label="Paradas de esta estación">
     <p class="paradas-titulo">Paradas de esta estación</p>
     <ol>
-      <li><a href="#ruta">En construcción</a></li>
+      <li><a href="#ruta">Lo que vas a lograr</a></li>
+      <li><a href="#prediccion">Predecir y generar</a></li>
+      <li><a href="#tokens">Tokens y embeddings</a></li>
+      <li><a href="#transformer">Atención y transformer</a></li>
+      <li><a href="#entrenamiento">Cómo aprende</a></li>
+      <li><a href="#api">Conectar Claude</a></li>
+      <li><a href="#herramientas">Herramientas y agentes</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
   <main class="contenido" id="contenido">
-<section id="ruta" data-parada="En construcción"><h2>Estación en construcción</h2><p class="entradilla">Este módulo todavía se está escribiendo.</p></section>
+<section id="ruta" data-parada="Lo que vas a lograr">
+  <h2>Lo que vas a lograr</h2>
+  <p class="entradilla">En la taberna de tu juego hay una tabernera. Con un árbol de diálogo dice cinco frases fijas y, a la tercera visita, ya aburre. Con un modelo de lenguaje puede responder a cualquier cosa que le escribas… y también inventarse que regala la llave del sótano, gastarte cien dólares en una tarde o obedecer al jugador que le ordena «olvida tus reglas». Esta estación tiene dos mitades. En la primera abres la caja: programas modelos de lenguaje pequeños desde cero para entender qué hace uno grande. En la segunda lo conectas a tus apps y juegos con criterio: la clave a salvo, los costos medidos, la salida validada por tus reglas y las defensas puestas.</p>
+  <ul class="objetivos">
+    <li>Explicar qué hace un modelo de lenguaje: una función que recibe un texto y devuelve la probabilidad de cada posible siguiente token, y que genera repitiendo ese paso.</li>
+    <li>Programar desde cero un modelo de bigramas de palabras y otro de n-gramas de letras, y controlar lo que generan con semilla, temperatura, top-k y top-p.</li>
+    <li>Trocear texto en tokens con BPE y convertir palabras en vectores (embeddings) que se comparan por su significado.</li>
+    <li>Calcular a mano la atención de un transformer y contar cómo se entrena un modelo, qué es la fecha de corte y por qué alucina.</li>
+    <li>Llamar a la API de Claude desde tu servidor, con la clave fuera del navegador, respuestas en streaming, reintentos y el costo de cada turno medido.</li>
+    <li>Pedir salida estructurada, darle herramientas al modelo y escribir a mano el bucle de un agente.</li>
+    <li>Responder con tus propios documentos mediante búsqueda semántica y RAG, y decidir dónde vive el modelo: en la nube, en tu computadora o en el navegador.</li>
+    <li>Diseñar personajes y apps que conversan: ficha, estado del juego como fuente de verdad, reglas deterministas, memoria y latencia.</li>
+    <li>Defender tu app de la inyección de instrucciones, evaluarla con evals y tratar con honestidad la ética y los derechos.</li>
+  </ul>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Antes de empezar</p><p>Esta es la última estación de la Línea 8 y usa mucho de lo anterior. Te hará falta: vectores, producto punto, azar con semilla y logaritmos de la <a href="18-matematicas.html">Estación 18</a>; <code>Map</code> de la <a href="19-estructuras-datos.html#hash">Estación 19</a>; <code>fetch</code> y <code>async/await</code> de la <a href="16-asincronia.html">16</a>; un servidor con Express, <code>.env</code> y Zod de la <a href="29-backend.html">29</a>; secretos, XSS y limitación de intentos de la <a href="31-seguridad.html">31</a>; y un poco de Python de la <a href="36-python.html">36</a>. De la Línea 8 se usan las redes neuronales de la <a href="40-redes-neuronales.html">Estación 40</a> (softmax, pérdida, entrenamiento) y el aprendizaje automático de la <a href="39-aprendizaje-automatico.html">39</a> (similitud del coseno y vecinos más cercanos). Los personajes que se mueven y deciden son de la <a href="37-ia-personajes.html">37</a>; aquí aprenderán a hablar.</p></div></aside>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cómo recorrerla</p><p>Es una estación larga (unas 34 horas). Tómala en dos partes. <strong>Parte A, por dentro</strong>: las cuatro primeras secciones, de <a href="#prediccion">Predecir y generar</a> a <a href="#entrenamiento">Cómo aprende</a>. Todo se hace en esta página, sin cuentas ni tarjetas. <strong>Parte B, integrarlo</strong>: de <a href="#api">Conectar Claude</a> a <a href="#seguridad">Seguridad y ética</a>, más el proyecto. En la página usarás un modelo simulado; lo real lo harás en tu computadora, con tu propia clave o con un modelo local gratuito. Son opcionales la búsqueda con embeddings reales, los modelos que corren en el navegador y las notas marcadas «para ir más allá».</p></div></aside>
+  <p>Lo que no está aquí, y por qué: generar imágenes, audio o voz con IA (se nombra al final como ampliación); entrenar o ajustar un modelo de lenguaje en la práctica (solo verás el concepto y cuándo conviene); comparar proveedores en detalle; y usar Claude Code para programar, que es la <a href="42-ia.html">Estación 42</a>. Si alguno de esos temas te atrae como profesión, la <a href="44-carrera.html">Estación 44</a> tiene las rutas.</p>
+</section>
+
+<section id="prediccion" data-parada="Predecir y generar">
+  <h2>Predecir y generar: tu primer modelo de lenguaje</h2>
+  <p>Vuelve a la tabernera. En la <a href="37-ia-personajes.html">Estación 37</a> aprendiste a darle comportamiento con máquinas de estados y árboles: sabe ir a la barra, servir y huir del dragón. Para hablar, lo clásico es un <strong>árbol de diálogo</strong>: el jugador elige entre tres frases y ella responde con otra frase escrita por ti. Funciona, es predecible y no cuesta nada. Pero solo dice lo que escribiste. Si el jugador pregunta «¿qué opinas de la reina?» y no escribiste esa rama, no hay respuesta.</p>
+  <p>Un modelo de lenguaje resuelve eso de otra forma: no guarda respuestas, las <em>genera</em>. Para entender cómo, vas a construir uno de verdad, muy pequeño, con lo que ya sabes.</p>
+
+  <h3>Un modelo de lenguaje es una función</h3>
+  <p>Un <strong>modelo de lenguaje</strong> es una función que recibe un texto y devuelve, para cada posible trozo siguiente, la probabilidad de que venga a continuación. Esos trozos se llaman <strong>tokens</strong>: pueden ser palabras, partes de palabra o signos (en la sección <a href="#tokens">Tokens y embeddings</a> verás cómo se cortan). A la lista de «cada token con su probabilidad», que suma 1, se le llama <strong>distribución de probabilidad</strong>.</p>
+  <pre><code class="language-text">siguiente("la tabernera sirve")  →  { sidra: 0.41, vino: 0.22, la: 0.09, … }   (todo suma 1)</code></pre>
+  <p>Eso es todo lo que hace. Un <strong>modelo de lenguaje grande</strong> (en inglés, <em>large language model</em> o <strong>LLM</strong>), como Claude, hace exactamente eso, con una función enorme entrenada con muchísimo texto. Para <em>escribir</em> una respuesta, repite la función: elige un token, lo añade al texto y vuelve a preguntar. A ese bucle se le llama <strong>generación autorregresiva</strong>: «auto» porque cada paso usa lo que el propio modelo acaba de escribir.</p>
+  <figure class="capsula" data-titulo="El bucle autorregresivo">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Animación: un modelo de bigramas recibe la palabra la y muestra las probabilidades de la siguiente palabra. Un número al azar elige montaña, que se añade al contexto. El paso se repite con vive, en, la y taberna hasta que sale el punto final. La frase resultante, la montaña vive en la taberna, es fluida pero falsa.">
+        <text class="d-rotulo" x="12" y="39">Contexto</text>
+        <rect class="d-caja" x="100" y="18" width="40" height="30" rx="6"/>
+        <text xml:space="preserve" class="d-mono" x="120" y="39" text-anchor="middle">la</text>
+        <g data-pasos="2-">
+          <rect class="d-caja" x="146" y="18" width="84" height="30" rx="6" data-clases="2:d-acento; 3:"/>
+          <text xml:space="preserve" class="d-mono" x="188" y="39" text-anchor="middle" data-clases="2:d-sobre-acento; 3:">montaña</text>
+        </g>
+        <g data-pasos="3-">
+          <rect class="d-caja" x="236" y="18" width="56" height="30" rx="6" data-clases="3:d-acento; 4:"/>
+          <text xml:space="preserve" class="d-mono" x="264" y="39" text-anchor="middle" data-clases="3:d-sobre-acento; 4:">vive</text>
+        </g>
+        <g data-pasos="4-">
+          <rect class="d-caja" x="298" y="18" width="40" height="30" rx="6" data-clases="4:d-acento; 5:"/>
+          <text xml:space="preserve" class="d-mono" x="318" y="39" text-anchor="middle" data-clases="4:d-sobre-acento; 5:">en</text>
+        </g>
+        <g data-pasos="5-">
+          <rect class="d-caja" x="344" y="18" width="40" height="30" rx="6" data-clases="5:d-acento; 6:"/>
+          <text xml:space="preserve" class="d-mono" x="364" y="39" text-anchor="middle" data-clases="5:d-sobre-acento; 6:">la</text>
+        </g>
+        <g data-pasos="6-">
+          <rect class="d-caja" x="390" y="18" width="84" height="30" rx="6" data-clases="6:d-acento; 7:"/>
+          <text xml:space="preserve" class="d-mono" x="432" y="39" text-anchor="middle" data-clases="6:d-sobre-acento; 7:">taberna</text>
+        </g>
+        <g data-pasos="7-">
+          <rect class="d-acento" x="480" y="18" width="40" height="30" rx="6"/>
+          <text xml:space="preserve" class="d-mono d-sobre-acento" x="500" y="39" text-anchor="middle">.</text>
+        </g>
+        <text class="d-peq d-tenue" x="12" y="80" data-texto="1:Probabilidad de la siguiente palabra, según la última: «la»; 3:Probabilidad de la siguiente palabra, según la última: «montaña»; 4:Probabilidad de la siguiente palabra, según la última: «vive»; 5:Probabilidad de la siguiente palabra, según la última: «en»; 6:Probabilidad de la siguiente palabra, según la última: «la»; 7:Probabilidad de la siguiente palabra, según la última: «taberna»">Probabilidad de la siguiente palabra, según la última: «la»</text>
+        <g data-pasos="1-2,6" class="d-peq">
+          <text xml:space="preserve" class="d-mono" x="150" y="112" text-anchor="end">tabernera</text><rect class="d-caja-suave" x="160" y="101" width="42" height="13"/><text x="208" y="112">0,11</text>
+          <text xml:space="preserve" class="d-mono" x="150" y="131" text-anchor="end">taberna</text><rect class="d-caja-suave" x="160" y="120" width="63" height="13" data-clases="6:d-acento"/><text x="229" y="131">0,17</text>
+          <text xml:space="preserve" class="d-mono" x="150" y="150" text-anchor="end">reina</text><rect class="d-caja-suave" x="160" y="139" width="84" height="13"/><text x="250" y="150">0,22</text>
+          <text xml:space="preserve" class="d-mono" x="150" y="169" text-anchor="end">montaña</text><rect class="d-caja-suave" x="160" y="158" width="42" height="13" data-clases="2:d-acento; 3:"/><text x="208" y="169">0,11</text>
+          <text xml:space="preserve" class="d-mono" x="150" y="188" text-anchor="end">cueva</text><rect class="d-caja-suave" x="160" y="177" width="42" height="13"/><text x="208" y="188">0,11</text>
+          <text xml:space="preserve" class="d-mono" x="150" y="207" text-anchor="end">herrera</text><rect class="d-caja-suave" x="160" y="196" width="42" height="13"/><text x="208" y="207">0,11</text>
+          <text xml:space="preserve" class="d-mono" x="150" y="226" text-anchor="end">fragua</text><rect class="d-caja-suave" x="160" y="215" width="21" height="13"/><text x="187" y="226">0,06</text>
+          <text xml:space="preserve" class="d-mono" x="150" y="245" text-anchor="end">puerta</text><rect class="d-caja-suave" x="160" y="234" width="21" height="13"/><text x="187" y="245">0,06</text>
+          <text xml:space="preserve" class="d-mono" x="150" y="264" text-anchor="end">plaza</text><rect class="d-caja-suave" x="160" y="253" width="21" height="13"/><text x="187" y="264">0,06</text>
+        </g>
+        <g data-pasos="3" class="d-peq">
+          <text xml:space="preserve" class="d-mono" x="150" y="112" text-anchor="end">vive</text><rect class="d-acento" x="160" y="101" width="190" height="13"/><text x="356" y="112">0,50</text>
+          <text xml:space="preserve" class="d-mono" x="150" y="131" text-anchor="end">. (fin)</text><rect class="d-caja-suave" x="160" y="120" width="190" height="13"/><text x="356" y="131">0,50</text>
+        </g>
+        <g data-pasos="4" class="d-peq">
+          <text xml:space="preserve" class="d-mono" x="150" y="112" text-anchor="end">en</text><rect class="d-acento" x="160" y="101" width="380" height="13"/><text x="546" y="112">1,00</text>
+        </g>
+        <g data-pasos="5" class="d-peq">
+          <text xml:space="preserve" class="d-mono" x="150" y="112" text-anchor="end">la</text><rect class="d-acento" x="160" y="101" width="326" height="13"/><text x="492" y="112">0,86</text>
+          <text xml:space="preserve" class="d-mono" x="150" y="131" text-anchor="end">el</text><rect class="d-caja-suave" x="160" y="120" width="54" height="13"/><text x="220" y="131">0,14</text>
+        </g>
+        <g data-pasos="7" class="d-peq">
+          <text xml:space="preserve" class="d-mono" x="150" y="112" text-anchor="end">. (fin)</text><rect class="d-acento" x="160" y="101" width="380" height="13"/><text x="546" y="112">1,00</text>
+          <text x="160" y="170" style="font-size:15px">Frase terminada: «la montaña vive en la taberna.»</text>
+          <text class="d-tenue" x="160" y="194" style="font-size:15px">Suena a español. Y es falsa: la montaña no vive en ningún sitio.</text>
+        </g>
+        <rect class="d-caja-suave" x="596" y="96" width="112" height="170" rx="8"/>
+        <text class="d-rotulo d-peq" x="652" y="120" text-anchor="middle">azar()</text>
+        <text xml:space="preserve" class="d-mono" x="652" y="146" text-anchor="middle" data-texto="1:—; 2:0,601; 3:0,448; 4:0,852; 5:0,670; 6:0,175; 7:0,527">—</text>
+        <text class="d-rotulo d-peq" x="652" y="190" text-anchor="middle">elegido</text>
+        <text xml:space="preserve" class="d-mono" x="652" y="216" text-anchor="middle" data-texto="1:—; 2:montaña; 3:vive; 4:en; 5:la; 6:taberna; 7:. (fin)">—</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>El modelo recibe el contexto «la» y devuelve una distribución: la probabilidad de cada palabra que puede venir después. Todas juntas suman 1. Es un modelo tan pequeño que solo mira la última palabra.</li>
+        <li data-duracion="6">Para elegir, se tira un número al azar entre 0 y 1: salió 0,601. Se van sumando las probabilidades en orden (0,11, luego 0,28, 0,50, 0,61…) y gana la palabra en la que la suma supera ese número: «montaña». Se añade al contexto.</li>
+        <li>Se repite con el contexto nuevo. Después de «montaña» el modelo solo vio dos cosas: «vive» y el final de la frase. El azar (0,448) elige «vive».</li>
+        <li>Después de «vive» siempre vino «en»: probabilidad 1. Aquí el azar no importa.</li>
+        <li>Después de «en» casi siempre vino «la» (6 de 7 veces). Sale «la».</li>
+        <li>Otra vez «la»: la misma distribución del primer paso. Ahora el azar (0,175) cae en «taberna».</li>
+        <li data-duracion="7">Después de «taberna» siempre vino el punto: la señal de fin. El bucle se detiene. La frase suena bien porque cada par de palabras aparecía en el texto de entrenamiento, pero el conjunto no tiene sentido. Un LLM hace este mismo bucle, con una función muchísimo mejor.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>El modelo de bigramas: contar pares</h3>
+  <p>El modelo de la cápsula es un <strong>modelo de bigramas</strong>. Un <strong>n-grama</strong> es una secuencia de <em>n</em> tokens seguidos; un bigrama es una pareja (n = 2). La idea es contar, en un texto de entrenamiento, cuántas veces aparece cada palabra detrás de cada otra. Si «la» apareció 18 veces con algo detrás y 4 de ellas era «reina», el modelo dirá que después de «la» viene «reina» con probabilidad 4/18.</p>
+  <p>Para contar pares, la estructura natural es un <code>Map</code> de <code>Map</code>s (la tabla hash de la <a href="19-estructuras-datos.html#hash">Estación 19</a>): la primera clave es la palabra actual y su valor es otro <code>Map</code> con «palabra siguiente → cuántas veces». Sigue cómo se llena con dos frases muy cortas:</p>
+  <div class="traza" data-titulo="Contar bigramas con un Map de Maps">
+    <pre><code class="language-js">const frases = ["la reina vive", "la reina teme"];
+const conteo = new Map();
+for (const frase of frases) {
+  const p = frase.split(" ");
+  for (let i = 0; i &lt; p.length - 1; i++) {
+    if (!conteo.has(p[i])) conteo.set(p[i], new Map());
+    const siguientes = conteo.get(p[i]);
+    siguientes.set(p[i + 1], (siguientes.get(p[i + 1]) || 0) + 1);
+  }
+}
+console.log(conteo.get("reina"));</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"frases": "[ 'la reina vive', 'la reina teme' ]"}, "nota": "El texto de entrenamiento: dos frases."},
+      {"linea": 2, "vars": {"frases": "[ 'la reina vive', 'la reina teme' ]", "conteo": "Map(0) {}"}, "nota": "La tabla de conteos empieza vacía."},
+      {"linea": 3, "vars": {"frase": "'la reina vive'", "conteo": "Map(0) {}"}, "nota": "Primera frase."},
+      {"linea": 4, "vars": {"frase": "'la reina vive'", "p": "[ 'la', 'reina', 'vive' ]", "conteo": "Map(0) {}"}, "nota": "split corta la frase en palabras. Tres palabras dan dos pares: (la, reina) y (reina, vive)."},
+      {"linea": 5, "vars": {"p": "[ 'la', 'reina', 'vive' ]", "i": "0", "conteo": "Map(0) {}"}, "nota": "i llega solo hasta p.length - 2: la última palabra no tiene siguiente."},
+      {"linea": 6, "vars": {"p": "[ 'la', 'reina', 'vive' ]", "i": "0", "conteo": "Map(1) { 'la' => Map(0) {} }"}, "nota": "«la» no estaba: se crea su tabla de siguientes, vacía."},
+      {"linea": 7, "vars": {"p": "[ 'la', 'reina', 'vive' ]", "i": "0", "siguientes": "Map(0) {}", "conteo": "Map(1) { 'la' => Map(0) {} }"}, "nota": "siguientes apunta a la tabla de «la» (no es una copia: es la misma)."},
+      {"linea": 8, "vars": {"p": "[ 'la', 'reina', 'vive' ]", "i": "0", "siguientes": "Map(1) { 'reina' => 1 }", "conteo": "Map(1) { 'la' => Map(1) { 'reina' => 1 } }"}, "nota": "siguientes.get('reina') no existe (undefined), así que || 0 da 0; se guarda 0 + 1."},
+      {"linea": 5, "vars": {"p": "[ 'la', 'reina', 'vive' ]", "i": "1", "conteo": "Map(1) { 'la' => Map(1) { 'reina' => 1 } }"}, "nota": "Siguiente par: (reina, vive)."},
+      {"linea": 8, "vars": {"p": "[ 'la', 'reina', 'vive' ]", "i": "1", "siguientes": "Map(1) { 'vive' => 1 }", "conteo": "Map(2) { 'la' => Map(1) { 'reina' => 1 }, 'reina' => Map(1) { 'vive' => 1 } }"}, "nota": "Se creó la tabla de «reina» (línea 6) y se anotó que detrás vino «vive»."},
+      {"linea": 3, "vars": {"frase": "'la reina teme'", "conteo": "Map(2) { 'la' => Map(1) { 'reina' => 1 }, 'reina' => Map(1) { 'vive' => 1 } }"}, "nota": "Segunda frase."},
+      {"linea": 8, "vars": {"p": "[ 'la', 'reina', 'teme' ]", "i": "0", "siguientes": "Map(1) { 'reina' => 2 }", "conteo": "Map(2) { 'la' => Map(1) { 'reina' => 2 }, 'reina' => Map(1) { 'vive' => 1 } }"}, "nota": "«la» ya existía, así que la línea 6 no hace nada. El par (la, reina) sube a 2."},
+      {"linea": 8, "vars": {"p": "[ 'la', 'reina', 'teme' ]", "i": "1", "siguientes": "Map(2) { 'vive' => 1, 'teme' => 1 }", "conteo": "Map(2) { 'la' => Map(1) { 'reina' => 2 }, 'reina' => Map(2) { 'vive' => 1, 'teme' => 1 } }"}, "nota": "Detrás de «reina» ahora hay dos opciones, una vez cada una."},
+      {"linea": 11, "vars": {"conteo": "Map(2) { 'la' => Map(1) { 'reina' => 2 }, 'reina' => Map(2) { 'vive' => 1, 'teme' => 1 } }"}, "salida": "Map(2) { 'vive' => 1, 'teme' => 1 }", "nota": "Dividiendo cada conteo entre el total (2), el modelo dirá: después de «reina», «vive» con 0,5 y «teme» con 0,5."}
+    ]</script>
+  </div>
+  <p>Para pasar de conteos a probabilidades, se divide cada conteo entre el total de su fila. A eso se le llama <strong>normalizar</strong>. Ahora, con un texto de entrenamiento un poco más grande (doce frases del lore de Brumavela, la ciudad de tu juego), <strong>predice</strong> antes de ejecutar: ¿qué palabra es la más probable después de «la»? ¿Y después de «en»?</p>
+  <div class="taller" id="taller-bigramas" data-titulo="Predice: el modelo de bigramas de Brumavela">
+    <textarea class="taller-codigo">const corpus = [
+  "la tabernera sirve sidra en la taberna .",
+  "la reina de brumavela vive en el castillo .",
+  "el dragón de la montaña vive en la cueva .",
+  "la herrera forja espadas en la fragua .",
+  "el guardia vigila la puerta del castillo .",
+  "la tabernera conoce a la reina .",
+  "el dragón guarda oro en la cueva .",
+  "la herrera vende una espada al guardia .",
+  "el mercader vende pan en la plaza .",
+  "la reina de brumavela visita la taberna .",
+  "el guardia bebe sidra en la taberna .",
+  "la reina teme al dragón de la montaña .",
+];
+
+function contarBigramas(frases) {
+  const conteo = new Map();
+  for (const frase of frases) {
+    const p = frase.split(" ");
+    for (let i = 0; i < p.length - 1; i++) {
+      if (!conteo.has(p[i])) conteo.set(p[i], new Map());
+      const siguientes = conteo.get(p[i]);
+      siguientes.set(p[i + 1], (siguientes.get(p[i + 1]) || 0) + 1);
+    }
+  }
+  return conteo;
+}
+
+function aProbabilidades(conteo) {
+  const modelo = new Map();
+  for (const [palabra, siguientes] of conteo) {
+    let total = 0;
+    for (const n of siguientes.values()) total += n;
+    const dist = new Map();
+    for (const [sig, n] of siguientes) dist.set(sig, n / total);
+    modelo.set(palabra, dist);
+  }
+  return modelo;
+}
+
+const modelo = aProbabilidades(contarBigramas(corpus));
+for (const palabra of ["la", "en"]) {
+  console.log(`Después de «${palabra}»:`);
+  for (const [sig, p] of modelo.get(palabra)) {
+    console.log(`  ${sig.padEnd(10)} ${p.toFixed(3)}`);
+  }
+}</textarea>
+  </div>
+  <p>Después de «la» gana «reina» (4 de 18, 0,222) y después de «en» casi siempre viene «la» (6 de 7). El punto «.» funciona como un token más: es la señal de <strong>fin</strong>. Cuando el modelo lo elige, la frase termina. Los modelos reales tienen un token especial de fin de texto con la misma función.</p>
+  <aside class="senal analogia"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Para entenderlo</p><p>Es el autocompletado del teclado de tu teléfono: escribes «nos vemos» y te propone «mañana» porque lo has escrito muchas veces. El trie de la <a href="19-estructuras-datos.html#arboles">Estación 19</a> completaba <em>la misma palabra</em> por su prefijo; el bigrama propone <em>la palabra siguiente</em>. La analogía falla en algo importante: el teclado solo mira una o dos palabras atrás, igual que este bigrama, mientras que un LLM mira miles de tokens a la vez y sigue instrucciones. El mecanismo de base (predecir lo siguiente) es el mismo; la calidad, no.</p></div></aside>
+
+  <h3>Elegir el siguiente token: voraz o al azar</h3>
+  <p>Con la distribución en la mano, hay que elegir un token. La primera idea es tomar siempre el más probable. Es un <strong>algoritmo voraz</strong> como los de la <a href="20-algoritmos.html#estrategias">Estación 20</a>: decide lo mejor en cada paso sin mirar el conjunto. Aquí se llama <strong>decodificación voraz</strong> (<em>greedy decoding</em>). Predice qué escribe empezando por «la»:</p>
+  <div class="taller" id="taller-voraz" data-titulo="Predice: la trampa del voraz">
+    <script type="text/plain" class="taller-preparacion">
+const corpus = ["la tabernera sirve sidra en la taberna .","la reina de brumavela vive en el castillo .","el dragón de la montaña vive en la cueva .","la herrera forja espadas en la fragua .","el guardia vigila la puerta del castillo .","la tabernera conoce a la reina .","el dragón guarda oro en la cueva .","la herrera vende una espada al guardia .","el mercader vende pan en la plaza .","la reina de brumavela visita la taberna .","el guardia bebe sidra en la taberna .","la reina teme al dragón de la montaña ."];
+const modelo = new Map();
+for (const f of corpus) { const p = f.split(" "); for (let i = 0; i < p.length - 1; i++) { if (!modelo.has(p[i])) modelo.set(p[i], new Map()); const s = modelo.get(p[i]); s.set(p[i + 1], (s.get(p[i + 1]) || 0) + 1); } }
+for (const [w, s] of modelo) { let t = 0; for (const n of s.values()) t += n; for (const [k, n] of s) s.set(k, n / t); }
+    </script>
+    <textarea class="taller-codigo">// «modelo» ya está preparado: es el Map de Maps con probabilidades del taller anterior.
+function voraz(modelo, inicio, maxPalabras) {
+  const frase = [inicio];
+  let actual = inicio;
+  while (frase.length < maxPalabras) {
+    let mejor = null;
+    let pMejor = -1;
+    for (const [sig, p] of modelo.get(actual)) {
+      if (p > pMejor) { mejor = sig; pMejor = p; }
+    }
+    frase.push(mejor);
+    if (mejor === ".") break;
+    actual = mejor;
+  }
+  return frase.join(" ");
+}
+
+console.log(voraz(modelo, "la", 14));
+console.log(voraz(modelo, "el", 14));</textarea>
+  </div>
+  <p>Las dos frases caen en el mismo círculo: «la reina de brumavela vive en la reina de brumavela vive en la…». El voraz siempre toma el mismo camino y, en cuanto vuelve a una palabra ya vista, repite el bucle para siempre (se corta porque pusimos un máximo). Los modelos grandes también tienden a repetirse con la decodificación voraz. Y aunque no se repitiera, daría siempre la misma respuesta a la misma pregunta: una tabernera que dice siempre lo mismo.</p>
+  <p>La alternativa es el <strong>muestreo</strong> (<em>sampling</em>): elegir al azar, pero respetando las probabilidades. Es la tabla de botín ponderada de la <a href="18-matematicas.html#azar">Estación 18</a> (el ejercicio <a href="18-matematicas.html#ej-botin">del botín</a>): una espada legendaria sale el 5 % de las veces y una poción el 60 %. Se tira un número entre 0 y 1 y se recorre la lista sumando probabilidades hasta pasarlo:</p>
+  <div class="traza" data-titulo="Elegir un token con la suma acumulada">
+    <pre><code class="language-js">const probs = new Map([["reina", 0.5], ["taberna", 0.3], ["cueva", 0.2]]);
+const r = 0.62;          // lo que devolvió azar()
+let acumulado = 0;
+for (const [token, p] of probs) {
+  acumulado += p;
+  if (r &lt; acumulado) { console.log(token); break; }
+}</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"probs": "Map(3) { 'reina' => 0.5, 'taberna' => 0.3, 'cueva' => 0.2 }"}, "nota": "Una distribución pequeña: suma 1."},
+      {"linea": 2, "vars": {"probs": "Map(3) {…}", "r": "0.62"}, "nota": "Un número al azar entre 0 y 1. Imagina la recta del 0 al 1 cortada en tramos: reina ocupa de 0 a 0,5; taberna de 0,5 a 0,8; cueva de 0,8 a 1."},
+      {"linea": 3, "vars": {"r": "0.62", "acumulado": "0"}, "nota": "La suma acumulada empieza en 0."},
+      {"linea": 4, "vars": {"r": "0.62", "acumulado": "0", "token": "'reina'", "p": "0.5"}, "nota": "Primer token del Map."},
+      {"linea": 5, "vars": {"r": "0.62", "acumulado": "0.5", "token": "'reina'", "p": "0.5"}, "nota": "El tramo de reina termina en 0,5."},
+      {"linea": 6, "vars": {"r": "0.62", "acumulado": "0.5", "token": "'reina'", "p": "0.5"}, "nota": "¿0,62 &lt; 0,5? No: r cae más allá del tramo de reina. Seguimos."},
+      {"linea": 4, "vars": {"r": "0.62", "acumulado": "0.5", "token": "'taberna'", "p": "0.3"}, "nota": "Segundo token."},
+      {"linea": 5, "vars": {"r": "0.62", "acumulado": "0.8", "token": "'taberna'", "p": "0.3"}, "nota": "El tramo de taberna va de 0,5 a 0,8."},
+      {"linea": 6, "vars": {"r": "0.62", "acumulado": "0.8", "token": "'taberna'", "p": "0.3"}, "salida": "taberna", "nota": "¿0,62 &lt; 0,8? Sí: el azar cayó en el tramo de taberna. Si lo repites muchas veces con r distintos, taberna saldrá el 30 % de las veces."}
+    ]</script>
+  </div>
+  <p>Con el muestreo, la misma pregunta puede dar respuestas distintas. Eso es bueno para un personaje (variedad), pero malo para depurar y para las pruebas. La solución es la de la <a href="18-matematicas.html#azar">Estación 18</a>: un generador pseudoaleatorio con <strong>semilla</strong>. Con la misma semilla, la misma secuencia de «azares» y, por tanto, la misma frase. En la práctica escribirás <code>elegir</code> y el bucle completo con el generador <code>mulberry32</code> (<a href="#ej-semilla">ejercicio «Genera con semilla»</a>).</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p>«Si la IA dijo algo, lo volverá a decir». Con muestreo, no. Dos ejecuciones con la misma pregunta pueden responder distinto, y eso incluye equivocarse una vez sí y otra no. Por eso las pruebas de apps con modelos de lenguaje se repiten varias veces y se miden en porcentaje de aciertos (lo verás en <a href="#seguridad">las evals</a>).</p></div></aside>
+
+  <h3>Temperatura, top-k y top-p: moldear la distribución</h3>
+  <p>Entre «siempre lo más probable» y «azar puro» hay un control continuo: la <strong>temperatura</strong>. Se eleva cada probabilidad a la potencia 1/T y se vuelve a normalizar para que sume 1. Con T = 1 no cambia nada. Con T pequeña, lo probable se vuelve casi seguro (T → 0 equivale al voraz). Con T grande, todo se iguala y aparecen palabras raras. El nombre viene de la física: a más temperatura, más desorden.</p>
+  <figure class="capsula" data-titulo="La temperatura moldea la distribución">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 280" role="img" aria-label="Animación: cuatro barras con las probabilidades de sidra, agua, vino y leche. Con temperatura 1 son 0,60, 0,25, 0,10 y 0,05. Con temperatura 0,2 sidra sube a 0,99. Con temperatura 2 las barras se igualan. Con temperatura cercana a cero, sidra vale 1, como el voraz. Con top-p 0,9 se corta leche y el resto se renormaliza.">
+        <text class="d-rotulo" x="12" y="32" data-texto="1:Temperatura T = 1: sin cambios; 2:T = 0,2: más fría; 3:T = 2: más caliente; 4:T → 0: siempre el favorito (voraz); 5:Top-p = 0,9: se corta la cola">Temperatura T = 1: sin cambios</text>
+        <text class="d-peq d-tenue" x="12" y="56">Brasa te sirve una jarra de…</text>
+        <text xml:space="preserve" class="d-mono" x="150" y="97" text-anchor="end">sidra</text>
+        <text xml:space="preserve" class="d-mono" x="150" y="137" text-anchor="end">agua</text>
+        <text xml:space="preserve" class="d-mono" x="150" y="177" text-anchor="end">vino</text>
+        <text xml:space="preserve" class="d-mono" x="150" y="217" text-anchor="end">leche</text>
+        <path class="d-linea" d="M158 72 V232"/>
+        <g data-pasos="1">
+          <rect class="d-acento" x="160" y="80" width="264" height="24"/><text x="432" y="97">0,60</text>
+          <rect class="d-acento" x="160" y="120" width="110" height="24"/><text x="278" y="137">0,25</text>
+          <rect class="d-acento" x="160" y="160" width="44" height="24"/><text x="212" y="177">0,10</text>
+          <rect class="d-acento" x="160" y="200" width="22" height="24"/><text x="190" y="217">0,05</text>
+        </g>
+        <g data-pasos="2">
+          <rect class="d-acento" x="160" y="80" width="434" height="24"/><text x="602" y="97">0,99</text>
+          <rect class="d-acento" x="160" y="120" width="5" height="24"/><text x="173" y="137">0,01</text>
+          <rect class="d-acento" x="160" y="160" width="1" height="24"/><text x="169" y="177">0,00</text>
+          <rect class="d-acento" x="160" y="200" width="1" height="24"/><text x="169" y="217">0,00</text>
+        </g>
+        <g data-pasos="3">
+          <rect class="d-acento" x="160" y="80" width="188" height="24"/><text x="356" y="97">0,43</text>
+          <rect class="d-acento" x="160" y="120" width="121" height="24"/><text x="289" y="137">0,28</text>
+          <rect class="d-acento" x="160" y="160" width="77" height="24"/><text x="245" y="177">0,17</text>
+          <rect class="d-acento" x="160" y="200" width="54" height="24"/><text x="222" y="217">0,12</text>
+        </g>
+        <g data-pasos="4">
+          <rect class="d-acento" x="160" y="80" width="440" height="24"/><text x="608" y="97">1,00</text>
+          <text class="d-tenue" x="168" y="137">0</text><text class="d-tenue" x="168" y="177">0</text><text class="d-tenue" x="168" y="217">0</text>
+        </g>
+        <g data-pasos="5">
+          <rect class="d-acento" x="160" y="80" width="278" height="24"/><text x="446" y="97">0,63</text>
+          <rect class="d-acento" x="160" y="120" width="116" height="24"/><text x="284" y="137">0,26</text>
+          <rect class="d-acento" x="160" y="160" width="46" height="24"/><text x="214" y="177">0,11</text>
+          <rect class="d-punteada" x="160" y="200" width="22" height="24"/><text class="d-tenue" x="192" y="217">cortada</text>
+          <path class="d-linea" d="M150 196 H600" stroke-dasharray="4 5"/>
+        </g>
+        <rect class="d-codigo" x="12" y="240" width="696" height="32" rx="6"/>
+        <text xml:space="preserve" class="d-codigo-texto" x="24" y="261" style="font-size:14px" data-texto="1:nueva = p ^ (1/T), y luego dividir entre la suma. Con T = 1, p ^ 1 = p.; 2:1/T = 5: 0,6^5 = 0,078 y 0,25^5 = 0,001. El favorito se lo lleva casi todo.; 3:1/T = 0,5 (raíz cuadrada): 0,77 · 0,50 · 0,32 · 0,22. Las diferencias se achatan.; 4:Cuanto más baja T, más se parece al voraz: misma respuesta siempre.; 5:Ordenadas: 0,60 + 0,25 = 0,85 &lt; 0,9 · + 0,10 = 0,95 ≥ 0,9. Se quedan 3.">nueva = p ^ (1/T), y luego dividir entre la suma. Con T = 1, p ^ 1 = p.</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>La distribución original del modelo para completar «Brasa te sirve una jarra de…». Con temperatura 1 se muestrea tal cual: sidra 6 de cada 10 veces, leche 1 de cada 20.</li>
+        <li>Con T = 0,2 cada probabilidad se eleva a 5. Los números pequeños se hacen diminutos mucho más rápido que los grandes, así que al normalizar la sidra se queda con el 99 %. Respuestas más previsibles.</li>
+        <li>Con T = 2 se saca la raíz cuadrada, que acerca los números entre sí. La leche pasa del 5 % al 12 %: más variedad y más riesgo de rarezas.</li>
+        <li>Si la temperatura baja hacia 0, el favorito acaba con probabilidad 1: es la decodificación voraz del taller anterior, con su monotonía.</li>
+        <li data-duracion="7">Otro control, <strong>top-p</strong>: se ordenan los tokens de más a menos probable y se quedan los primeros hasta que su suma alcanza p (aquí 0,9). La cola de rarezas (leche) se descarta y lo que queda se renormaliza. <strong>Top-k</strong> es parecido, pero se queda con un número fijo de tokens, los k más probables.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Resumiendo los controles de la generación:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Control</th><th scope="col">Qué hace</th><th scope="col">Para qué sirve</th></tr></thead>
+      <tbody>
+        <tr><td>Temperatura</td><td>Afila (T &lt; 1) o aplana (T &gt; 1) la distribución antes de muestrear.</td><td>Menos o más variedad.</td></tr>
+        <tr><td>Top-k</td><td>Solo se muestrea entre los k tokens más probables.</td><td>Evitar rarezas con un corte fijo.</td></tr>
+        <tr><td>Top-p (muestreo por núcleo)</td><td>Solo entre los más probables hasta sumar p.</td><td>Un corte que se adapta: si el modelo está seguro, quedan pocos; si duda, quedan más.</td></tr>
+        <tr><td>Token de fin</td><td>Cuando sale, el bucle termina.</td><td>Que la respuesta acabe sola.</td></tr>
+        <tr><td><code>max_tokens</code></td><td>Tope de tokens generados: el bucle se corta al llegar, aunque la frase quede a medias.</td><td>Controlar costo y tiempo. Si se corta, la API te avisa (lo verás en <a href="#api">Conectar Claude</a>).</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">En Claude estos controles ya no se tocan</p><p>Muchos tutoriales antiguos ponen <code>temperature: 0.7</code> al llamar a la API. En septiembre de 2026, <code>claude-opus-5-5</code> (y todos los Opus desde el 4.7) devuelve un error 400 si envías <code>temperature</code>, <code>top_p</code> o <code>top_k</code>; <code>claude-sonnet-5-5</code> rechaza cualquier valor distinto del predeterminado; solo <code>claude-haiku-4-5</code> los acepta. La variedad y la precisión se controlan con las instrucciones y con otros parámetros que verás más adelante. Aun así, entender la temperatura te sirve para leer la documentación, para los modelos locales (Ollama la admite) y para entender por qué la misma pregunta puede dar respuestas distintas.</p></div></aside>
+
+  <h3>N-gramas de letras: nombres para tu mundo</h3>
+  <p>Los mismos n-gramas funcionan con letras en lugar de palabras, y ahí son útiles de verdad en un juego: generan nombres de pueblos, tabernas o personajes que «suenan» a tu mundo. Es la idea de <em>makemore</em>, el proyecto con el que Andrej Karpathy enseña modelos de lenguaje (está en los videos). Con n = 3, el modelo mira las dos letras anteriores para elegir la siguiente. Un punto marca el inicio y el final del nombre: «..brumavela.».</p>
+  <p>Entrenado con 40 topónimos inventados (Brumavela, Rocanegra, Valdeniebla…), esto es lo que genera según el tamaño de n, con la misma semilla:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">n</th><th scope="col">Mira atrás</th><th scope="col">Contextos distintos</th><th scope="col">Nombres generados (semilla 7)</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>nada</td><td>1</td><td>Bríoleealoamnlavalaz, Aiaumalnrsl, Of, Aa</td></tr>
+        <tr><td>2</td><td>1 letra</td><td>24</td><td>Brtobra, Mebrero, Va, Enonieblbrile, Nafuma</td></tr>
+        <tr><td>3</td><td>2 letras</td><td>133</td><td>Brezal, Valuz, Pieblave, Pieverdeafrío, Hontefría</td></tr>
+        <tr><td>4</td><td>3 letras</td><td>232</td><td>Brezales, Torreniebla, Honda, Salinar, Brerosa</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Con n = 1 es sopa de letras con las frecuencias del español. Con n = 3 ya salen nombres creíbles. Con n = 4 empieza a <em>copiar</em>: «Brezales» estaba en la lista de entrenamiento. Es el mismo equilibrio que viste con el sobreajuste en la <a href="39-aprendizaje-automatico.html#evaluar">Estación 39</a>: un modelo que memoriza no inventa. Así se entrena y se genera. Fíjate en que es el bigrama de antes con dos cambios: las «palabras» son letras y el contexto son las <code>n - 1</code> letras anteriores.</p>
+  <pre><code class="language-js">function entrenar(nombres, n) {
+  const conteo = new Map();
+  for (const nombre of nombres) {
+    const t = ".".repeat(n - 1) + nombre.toLowerCase() + ".";   // "..brumavela."
+    for (let i = 0; i + n &lt;= t.length; i++) {
+      const contexto = t.slice(i, i + n - 1);                   // "..", ".b", "br"…
+      const letra = t[i + n - 1];
+      if (!conteo.has(contexto)) conteo.set(contexto, new Map());
+      const m = conteo.get(contexto);
+      m.set(letra, (m.get(letra) || 0) + 1);
+    }
+  }
+  // …y se normaliza cada fila, como en aProbabilidades
+}
+
+function generarNombre(modelo, n, azar) {
+  let contexto = ".".repeat(n - 1);
+  let nombre = "";
+  while (nombre.length &lt; 20) {
+    const letra = elegir(modelo.get(contexto), azar);
+    if (letra === ".") break;                                    // fin del nombre
+    nombre += letra;
+    contexto = n &gt; 1 ? (contexto + letra).slice(-(n - 1)) : "";  // las últimas n - 1 letras
+  }
+  return nombre.charAt(0).toUpperCase() + nombre.slice(1);
+}</code></pre>
+  <p>En el taller ya tienes esas funciones preparadas. El bucle final genera cinco nombres, pero algunos salen demasiado cortos o copiados de la lista. Modifícalo para quedarte solo con los buenos:</p>
+  <div class="taller" id="taller-nombres" data-titulo="Modifica: nombres de pueblos con trigramas">
+    <script type="text/plain" class="taller-preparacion">
+const TOPONIMOS = ["Brumavela","Rocanegra","Valdeniebla","Aguasombra","Piedrahonda","Montefrío","Villaluz","Robledal","Peñalba","Castroverde","Fuentealba","Torrenieve","Salinas","Almenara","Vallescuro","Pinoalto","Lagoseco","Aldeafría","Cumbrerosa","Arenaluna","Sombravilla","Riomanso","Hondonada","Solanar","Brezales","Olmedilla","Robleda","Nieblaroja","Encinar","Cañadaluz","Portalba","Mirasombra","Torrealta","Villaverde","Brumadal","Valdelobos","Peñarroja","Hojaseca","Lunaverde","Aguaclara"];
+function crearAzar(semilla) { return function () { semilla = (semilla + 0x6D2B79F5) | 0; let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function elegir(probs, azar) { const r = azar(); let acum = 0, ultimo = null; for (const [tok, p] of probs) { acum += p; ultimo = tok; if (r < acum) return tok; } return ultimo; }
+function entrenar(nombres, n) { const conteo = new Map(); for (const nombre of nombres) { const t = ".".repeat(n - 1) + nombre.toLowerCase() + "."; for (let i = 0; i + n <= t.length; i++) { const ctx = t.slice(i, i + n - 1), letra = t[i + n - 1]; if (!conteo.has(ctx)) conteo.set(ctx, new Map()); const m = conteo.get(ctx); m.set(letra, (m.get(letra) || 0) + 1); } } const modelo = new Map(); for (const [ctx, m] of conteo) { let total = 0; for (const v of m.values()) total += v; const d = new Map(); for (const [k, v] of m) d.set(k, v / total); modelo.set(ctx, d); } return modelo; }
+function generarNombre(modelo, n, azar) { let ctx = ".".repeat(n - 1), nombre = ""; while (nombre.length < 20) { const letra = elegir(modelo.get(ctx), azar); if (letra === ".") break; nombre += letra; ctx = n > 1 ? (ctx + letra).slice(-(n - 1)) : ""; } return nombre.charAt(0).toUpperCase() + nombre.slice(1); }
+    </script>
+    <textarea class="taller-codigo">// Ya tienes: TOPONIMOS (40 nombres), crearAzar(semilla), elegir(probs, azar),
+// entrenar(nombres, n) y generarNombre(modelo, n, azar).
+const N = 3;
+const modelo = entrenar(TOPONIMOS, N);
+const azar = crearAzar(42);
+console.log("Contextos distintos:", modelo.size);
+
+// Modifica este bucle: quédate solo con nombres de 4 a 12 letras
+// que NO estén en TOPONIMOS ni repetidos, hasta tener 5.
+for (let i = 0; i < 5; i++) {
+  console.log(generarNombre(modelo, N, azar));
+}</textarea>
+    <script type="text/plain" class="taller-verificar">
+const nombres = salida.filter(function (l) { return !/^Contextos/.test(l); });
+if (nombres.length !== 5) return "Deberías imprimir exactamente 5 nombres, uno por línea (además de la línea de contextos). Imprimiste " + nombres.length + ".";
+const vistos = new Set();
+for (const nombre of TOPONIMOS) { const t = ".." + nombre.toLowerCase() + "."; for (let i = 0; i + 3 <= t.length; i++) vistos.add(t.slice(i, i + 3)); }
+for (const nombre of nombres) {
+  if (!/^[A-ZÁÉÍÓÚÑ]/.test(nombre)) return "«" + nombre + "» debería empezar con mayúscula.";
+  if (nombre.length < 4 || nombre.length > 12) return "«" + nombre + "» tiene " + nombre.length + " letras: filtra para quedarte con nombres de 4 a 12.";
+  const t = ".." + nombre.toLowerCase() + ".";
+  for (let i = 0; i + 3 <= t.length; i++) if (!vistos.has(t.slice(i, i + 3))) return "«" + nombre + "» contiene «" + t.slice(i, i + 3) + "», un trío de letras que no aparece en los topónimos: ¿sigue generando el modelo de trigramas?";
+  if (TOPONIMOS.includes(nombre)) return "«" + nombre + "» está copiado de la lista de entrenamiento. Descártalo.";
+}
+if (new Set(nombres).size !== 5) return "Hay nombres repetidos: descarta los que ya tengas.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">const N = 3;
+const modelo = entrenar(TOPONIMOS, N);
+const azar = crearAzar(42);
+console.log("Contextos distintos:", modelo.size);
+
+const nombres = [];
+let intentos = 0;
+while (nombres.length &lt; 5 &amp;&amp; intentos &lt; 200) {
+  intentos++;
+  const nombre = generarNombre(modelo, N, azar);
+  if (nombre.length &lt; 4 || nombre.length &gt; 12) continue;   // demasiado corto o largo
+  if (TOPONIMOS.includes(nombre)) continue;                  // copiado
+  if (nombres.includes(nombre)) continue;                    // repetido
+  nombres.push(nombre);
+}
+for (const nombre of nombres) console.log(nombre);</code></pre>
+    <p>Con la semilla 42 salen Cañada, Torta, Mira, Altorta y Villa en 10 intentos. El límite de 200 intentos evita un bucle infinito si pides algo imposible (por ejemplo, 5 nombres de 30 letras). Es el patrón de siempre con contenido procedural: generar, filtrar con reglas y quedarte con lo que pasa. Cambia <code>N</code> a 2 y a 4 y mira cómo cambian la cantidad de contextos y la calidad.</p>
+  </details>
+
+  <h3>Lo mismo en Python</h3>
+  <p>Contar pares es igual de natural con un diccionario de Python (<a href="36-python.html#colecciones">Estación 36</a>). Este programa no usa azar, así que da la misma salida aquí y en tu computadora. Predice las tres primeras líneas antes de ejecutar:</p>
+  <div class="taller" data-modo="python" id="taller-bigramas-python" data-titulo="Predice: bigramas con diccionarios">
+    <textarea class="taller-codigo">corpus = [
+    "la tabernera sirve sidra en la taberna .",
+    "la reina de brumavela vive en el castillo .",
+    "el dragón de la montaña vive en la cueva .",
+    "la herrera forja espadas en la fragua .",
+    "el guardia vigila la puerta del castillo .",
+    "la tabernera conoce a la reina .",
+    "el dragón guarda oro en la cueva .",
+    "la herrera vende una espada al guardia .",
+    "el mercader vende pan en la plaza .",
+    "la reina de brumavela visita la taberna .",
+    "el guardia bebe sidra en la taberna .",
+    "la reina teme al dragón de la montaña .",
+]
+
+conteo = {}
+for frase in corpus:
+    palabras = frase.split()
+    for i in range(len(palabras) - 1):
+        a, b = palabras[i], palabras[i + 1]
+        if a not in conteo:
+            conteo[a] = {}
+        conteo[a][b] = conteo[a].get(b, 0) + 1
+
+despues = conteo["la"]
+total = sum(despues.values())
+# de más a menos veces; si empatan, en orden alfabético
+orden = sorted(despues.items(), key=lambda par: (-par[1], par[0]))
+for palabra, n in orden[:3]:
+    print(f"{palabra}: {n}/{total} = {n / total:.3f}")
+print(len(conteo), "palabras tienen al menos un siguiente")</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (salida[0] !== "reina: 4/18 = 0.222") return "La primera línea debería ser «reina: 4/18 = 0.222». ¿Cambiaste el programa?";
+return true;
+    </script>
+  </div>
+  <p>Sale «reina: 4/18», «taberna: 3/18» y, empatadas a 2, gana «cueva» por orden alfabético: el <code>key</code> ordena primero por el conteo negado (de mayor a menor) y después por la palabra. Fijar el desempate así hace que el resultado no dependa del orden en que se insertaron las claves.</p>
+
+  <h3>Los límites de los n-gramas</h3>
+  <p>Si los n-gramas funcionan, ¿por qué no hacer uno enorme con todo internet? Por cuatro razones, y entenderlas es entender qué resolvieron los LLM:</p>
+  <ul>
+    <li><strong>La tabla explota.</strong> Con V palabras distintas hay V² bigramas posibles y V³ trigramas: crece como una potencia (<a href="18-matematicas.html#crecimiento">Estación 18</a>). Nuestro corpus tiene 38 tokens distintos: 1 444 pares posibles. Con un vocabulario real de 50 000 palabras, 2 500 millones de pares y 125 billones de tríos.</li>
+    <li><strong>Casi todo está sin ver.</strong> En nuestras 12 frases aparecen 61 pares distintos: el 4,2 % de los posibles. Cualquier par que no apareció tiene probabilidad 0: el modelo considera imposible «la herrera bebe sidra» aunque sea perfectamente normal. A esto se le llama <strong>dispersión</strong> de los datos. Se alivia con trucos como el suavizado (lo usarás en <a href="#entrenamiento">Cómo aprende</a>), pero no se resuelve.</li>
+    <li><strong>No generaliza.</strong> Para el modelo, «espada» y «sable» son tan distintas como «espada» y «queso». Lo que aprende de una palabra no ayuda con otra parecida. Los embeddings de la próxima sección atacan justo esto.</li>
+    <li><strong>Contexto corto.</strong> El bigrama solo ve la última palabra. En «la reina de la montaña…» ya olvidó que hablaba de la reina. Para mirar lejos hace falta la atención del <a href="#transformer">transformer</a>.</li>
+  </ul>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Fluidez no es verdad</p><p>El bigrama escribe con total naturalidad «la reina de la montaña vive en la cueva»: cada pareja de palabras está en el texto de entrenamiento. Pero en ese mismo texto la reina vive en el castillo, y quien vive en la cueva es el dragón. El modelo no guarda hechos: guarda qué suele venir detrás de qué. Un LLM es muchísimo mejor, pero conserva el origen del problema: genera lo que <em>suena</em> probable. Por eso alucina, y por eso en tu juego la verdad (quién vive dónde, qué objetos hay) la guarda tu código, no el modelo.</p></div></aside>
+
+  <h3>Dónde encaja esto en la Línea 8</h3>
+  <p>Un LLM moderno no cuenta pares: es una <strong>red neuronal</strong> como las de la <a href="40-redes-neuronales.html">Estación 40</a>, con miles de millones de parámetros, que aprende a predecir el siguiente token. Aprende con <strong>aprendizaje autosupervisado</strong> (<a href="39-aprendizaje-automatico.html#aprender">Estación 39</a>): el propio texto trae las respuestas, porque la «etiqueta» de cada posición es la palabra que de verdad venía después. Nadie tiene que anotar nada. Las tres secciones siguientes abren esa red: cómo convierte el texto en números, cómo mira lejos y cómo se entrena.</p>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuándo NO usar un modelo de lenguaje</p><p>Que un modelo pueda hablar no significa que deba decidirlo todo. Moverse por el mapa es A* (<a href="37-ia-personajes.html#caminos">37</a>); decidir si huye o ataca, un árbol de comportamiento o una función de utilidad (<a href="37-ia-personajes.html#arboles">37</a>); jugar bien al ajedrez, minimax (<a href="38-ia-busqueda.html#minimax">38</a>); calcular el daño de un golpe, una fórmula. Esas técnicas son exactas, gratis, instantáneas y se pueden probar. El modelo de lenguaje aporta lo que ellas no tienen: entender y producir lenguaje libre. En un buen diseño, el modelo habla y tu código decide.</p></div></aside>
+</section>
+
+<section id="tokens" data-parada="Tokens y embeddings">
+  <h2>Tokens y embeddings: el texto convertido en números</h2>
+  <p>Una red neuronal solo sabe multiplicar y sumar números (<a href="40-redes-neuronales.html#neurona">Estación 40</a>). Antes de que un modelo pueda leer «¿me sirves una sidra?», hay que resolver dos problemas: cortar el texto en piezas (tokens) y convertir cada pieza en números que signifiquen algo (embeddings).</p>
+
+  <h3>Ni palabras ni letras: subpalabras</h3>
+  <p>El bigrama usaba palabras enteras. Tiene un problema: el vocabulario no se acaba nunca. Están «espada», «espadas», «espadachín», «espadaaa» (con una errata), los nombres propios, los emojis, los demás idiomas y todos los lenguajes de programación. Una palabra que no está en el vocabulario no se puede ni leer. Con letras sueltas el vocabulario es pequeño, pero las secuencias se vuelven larguísimas y cada letra dice muy poco.</p>
+  <p>La solución que usan los modelos actuales está en medio: <strong>subpalabras</strong>. Las piezas frecuentes («es», «ada», «ción») son un token cada una, y cualquier palabra rara se puede escribir juntando piezas pequeñas, en el peor caso letra a letra (o byte a byte). Así nunca hay una palabra imposible de leer.</p>
+
+  <h3>BPE: fusionar el par más frecuente</h3>
+  <p>El método más usado para decidir las piezas se llama <strong>BPE</strong> (<em>byte-pair encoding</em>, codificación por pares de bytes). Es un algoritmo voraz, y lo vas a programar tú en la práctica (<a href="#ej-bpe">ejercicio «BPE desde cero»</a>):</p>
+  <ol class="pasos">
+    <li><div><p>Empieza con cada palabra partida en letras, con una marca <code>_</code> al final para saber dónde acaba.</p></div></li>
+    <li><div><p>Cuenta cuántas veces aparece cada par de tokens vecinos en todo el texto.</p></div></li>
+    <li><div><p>Fusiona el par más frecuente en un token nuevo, en todas partes. Si hay empate, gana el primero en orden alfabético (una regla fija, para que el resultado no dependa del azar).</p></div></li>
+    <li><div><p>Repite hasta tener el tamaño de vocabulario que quieres. Cada fusión añade un token al vocabulario.</p></div></li>
+  </ol>
+  <figure class="capsula" data-titulo="BPE fusión a fusión">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: las palabras de la frase las espadas de las guerreras y la espada de la guerrera empiezan partidas en letras. En cada paso se fusiona el par más frecuente: a con guion bajo, a con s, as con guion bajo, e con r, a con d, d con e, de con guion bajo y e con s. La frase pasa de 56 tokens a 32 y el vocabulario de 11 a 19 tokens, cada uno con un número.">
+        <text class="d-rotulo" x="12" y="30" data-texto="1:Paso 0: todo son letras; 2:Fusión 1: a + _ → a_ (4 veces); 3:Fusiones 2 y 3: a + s → as, y as + _ → as_; 4:Fusión 4: e + r → er (4 veces); 5:Fusiones 5, 6 y 7: ad, de y de_ (2 veces cada una); 6:Fusión 8: e + s → es; 7:Cada token recibe un número">Paso 0: todo son letras</text>
+        <text class="d-peq d-tenue" x="12" y="54">Texto: «las espadas de las guerreras y la espada de la guerrera»</text>
+        <rect class="d-caja" x="560" y="12" width="148" height="50" rx="8"/>
+        <text class="d-peq d-tenue" x="634" y="31" text-anchor="middle">tokens de la frase</text>
+        <text class="d-rotulo" x="634" y="53" text-anchor="middle" data-texto="1:56; 2:52; 3:44; 4:40; 5:34; 6:32">56</text>
+        <g class="d-peq d-tenue">
+          <text x="20" y="100">las (×2)</text>
+          <text x="20" y="135">espadas</text>
+          <text x="20" y="170">de (×2)</text>
+          <text x="20" y="205">guerreras</text>
+          <text x="370" y="100">y</text>
+          <text x="370" y="135">la (×2)</text>
+          <text x="370" y="170">espada</text>
+          <text x="370" y="205">guerrera</text>
+        </g>
+        <text xml:space="preserve" class="d-mono" x="130" y="100" data-texto="1:l|a|s|_; 3:l|as_">l|a|s|_</text>
+        <text xml:space="preserve" class="d-mono" x="130" y="135" data-texto="1:e|s|p|a|d|a|s|_; 3:e|s|p|a|d|as_; 5:e|s|p|ad|as_; 6:es|p|ad|as_">e|s|p|a|d|a|s|_</text>
+        <text xml:space="preserve" class="d-mono" x="130" y="170" data-texto="1:d|e|_; 5:de_">d|e|_</text>
+        <text xml:space="preserve" class="d-mono" x="130" y="205" data-texto="1:g|u|e|r|r|e|r|a|s|_; 3:g|u|e|r|r|e|r|as_; 4:g|u|er|r|er|as_">g|u|e|r|r|e|r|a|s|_</text>
+        <text xml:space="preserve" class="d-mono" x="470" y="100">y|_</text>
+        <text xml:space="preserve" class="d-mono" x="470" y="135" data-texto="1:l|a|_; 2:l|a_">l|a|_</text>
+        <text xml:space="preserve" class="d-mono" x="470" y="170" data-texto="1:e|s|p|a|d|a|_; 2:e|s|p|a|d|a_; 5:e|s|p|ad|a_; 6:es|p|ad|a_">e|s|p|a|d|a|_</text>
+        <text xml:space="preserve" class="d-mono" x="470" y="205" data-texto="1:g|u|e|r|r|e|r|a|_; 2:g|u|e|r|r|e|r|a_; 4:g|u|er|r|er|a_">g|u|e|r|r|e|r|a|_</text>
+        <rect class="d-codigo" x="12" y="228" width="696" height="62" rx="6"/>
+        <text xml:space="preserve" class="d-codigo-tenue" x="24" y="250" style="font-size:13px" data-texto="1:Vocabulario (11): _ a d e g l p r s u y; 2:Vocabulario (12): letras + a_; 3:Vocabulario (14): letras + a_ as as_; 4:Vocabulario (15): letras + a_ as as_ er; 5:Vocabulario (18): letras + a_ as as_ er ad de de_; 6:Vocabulario (19): letras + a_ as as_ er ad de de_ es; 7:Números: _=0 a=1 d=2 e=3 … y=10 · a_=11 as=12 as_=13 er=14 ad=15 de=16 de_=17 es=18">Vocabulario (11): _ a d e g l p r s u y</text>
+        <text xml:space="preserve" class="d-codigo-texto" x="24" y="276" style="font-size:14px" data-pasos="7">espadas → es | p | ad | as_ → [18, 6, 15, 13]</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Cada palabra empieza partida en letras, con <code>_</code> al final. La frase completa son 56 tokens y el vocabulario tiene 11 símbolos.</li>
+        <li>Se cuentan los pares vecinos. «a _», «a s» y «e r» aparecen 4 veces cada uno. Empatan, y gana el primero en orden alfabético: «a _». Donde había <code>a|_</code> ahora hay un solo token <code>a_</code>.</li>
+        <li>Siguen «a s» (4 veces) y, ya con <code>as</code> fusionado, «as _». El final <code>as_</code>, típico de los plurales femeninos, es ahora un token.</li>
+        <li>«e r» aparece dos veces en cada «guerrera»: se fusiona en <code>er</code>.</li>
+        <li>Con solo dos apariciones: <code>ad</code> (de espada), <code>de</code> y después <code>de_</code>, la palabra «de» completa.</li>
+        <li>La última fusión, <code>es</code>. La frase baja de 56 a 32 tokens. Un tokenizador real hace decenas de miles de fusiones sobre muchísimo texto, y las palabras comunes acaban siendo un solo token.</li>
+        <li data-duracion="6">Cada token del vocabulario recibe un número de identificación. El modelo nunca ve letras: ve listas de números como <code>[18, 6, 15, 13]</code>. Eso es lo que entra en la red.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Los tokens de verdad</h3>
+  <p>Cada familia de modelos tiene su propio tokenizador, entrenado con su propio texto. Unas reglas prácticas, a septiembre de 2026:</p>
+  <ul>
+    <li>En inglés, un token equivale de media a unos 4 caracteres (unas tres cuartas partes de una palabra). El español suele necesitar <em>más</em> tokens para decir lo mismo, porque los tokenizadores se entrenan con más texto en inglés.</li>
+    <li>Los modelos de Claude desde Opus 4.7 (incluidos <code>claude-opus-5-5</code> y <code>claude-sonnet-5-5</code>) usan un tokenizador nuevo que produce entre 1 y 1,35 veces los tokens del anterior para el mismo texto. Si cambias de modelo, vuelve a medir.</li>
+    <li>Para contar tokens de Claude no uses herramientas de otros proveedores (como <code>tiktoken</code>, que es de OpenAI): darían otra cifra. La API tiene un endpoint para eso, <code>count_tokens</code>, que es gratuito y no genera respuesta:</li>
+  </ul>
+  <pre><code class="language-js">// contar.mjs — para tu computadora (necesita tu clave; lo verás en «Conectar Claude»)
+import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic();
+const r = await client.messages.countTokens({
+  model: "claude-opus-5-5",
+  system: "Eres Brasa, la tabernera del Ciervo Tuerto.",
+  messages: [{ role: "user", content: "¿Cuántas erres tiene «ferrocarril»?" }],
+});
+console.log(r.input_tokens);   // un número entero; depende del modelo</code></pre>
+  <p>Si quieres <em>ver</em> cómo trocea el texto un tokenizador, <a href="https://huggingface.co/spaces/Xenova/the-tokenizer-playground">The Tokenizer Playground</a> muestra los de varios modelos abiertos. Sirve para hacerse una idea, pero no es el de Claude.</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">No son los tokens de la Estación 22</p><p>En la <a href="22-ejecucion.html#del-texto">Estación 22</a> viste que el analizador léxico de JavaScript corta el código en <em>tokens</em>: <code>const</code>, <code>edad</code>, <code>=</code>, <code>25</code>. Misma palabra, otra cosa. Aquellos tokens siguen las reglas fijas de un lenguaje de programación. Los de un modelo de lenguaje son trozos de texto aprendidos por frecuencia con BPE: «espadas» puede ser <code>es|p|ad|as_</code>, cosa que ningún analizador léxico haría.</p></div></aside>
+  <p>Que el modelo vea tokens y no letras tiene dos consecuencias prácticas:</p>
+  <ul>
+    <li><strong>Todo se mide en tokens.</strong> El precio, el tamaño máximo de la entrada, el límite de la respuesta (<code>max_tokens</code>) y los límites de uso por minuto. Si tu juego manda el historial entero en cada turno, pagas esos tokens cada vez.</li>
+    <li><strong>Contar letras le cuesta.</strong> Pregúntale a un modelo «¿cuántas erres tiene ferrocarril?». Para él, la palabra puede ser dos o tres tokens (algo como «ferro» y «carril»); las letras sueltas no están a la vista. Los modelos actuales suelen acertar porque lo razonan paso a paso, pero si tu juego necesita contar letras (un juego de palabras, un límite de caracteres), cuéntalas con código: <code>[..."ferrocarril"].filter(c =&gt; c === "r").length</code>.</li>
+  </ul>
+
+  <h3>Embeddings: palabras convertidas en vectores</h3>
+  <p>Ya tienes números (los identificadores), pero el 18 no está «más cerca» del 17 en significado. Hace falta otra representación: un <strong>embedding</strong> (en español, a veces «incrustación» o «representación vectorial»), que es un vector de números que representa un token, una palabra o un texto entero, de forma que textos con significado parecido tengan vectores parecidos. Un vector es una lista de números, como la posición o la velocidad de la <a href="18-matematicas.html#vectores">Estación 18</a>, solo que con muchas más dimensiones.</p>
+  <p>¿De dónde salen esos números? De una idea de la lingüística de los años cincuenta, la <strong>hipótesis distribucional</strong>: el significado de una palabra se conoce por las palabras que la acompañan. «Dime con quién andas y te diré quién eres». Si «espada» y «hacha» aparecen siempre cerca de «afila», «blande» y «guarda», deben de parecerse, aunque no compartan ni una letra.</p>
+  <p>Vas a construir los embeddings más sencillos que existen: <strong>vectores de coocurrencia</strong>. Para cada palabra, se cuenta cuántas veces aparece cada otra palabra a como mucho dos posiciones de distancia (una «ventana» de ±2), sin contar las <strong>palabras vacías</strong> («la», «el», «en»), que aparecen con todo y no aportan significado. Después se comparan los vectores con la <strong>similitud del coseno</strong>, que ya programaste en el recomendador de la <a href="39-aprendizaje-automatico.html#juegos-apps">Estación 39</a>: el producto punto dividido entre las longitudes, que mide el ángulo entre dos vectores (1 = misma dirección, 0 = nada en común). Aquí la tienes ya hecha en la preparación.</p>
+  <div class="taller" id="taller-coocurrencia" data-titulo="Completa: embeddings por coocurrencia" data-exponer="construirVectores">
+    <script type="text/plain" class="taller-preparacion">
+const corpus = ["la guerrera blande la espada contra el lobo","el guerrero blande el hacha contra el orco","la guerrera afila la espada en la fragua","el herrero afila el hacha en la fragua","el mercader vende pan en la plaza","la panadera vende pan y queso en la plaza","el mercader vende queso en el mercado","la guerrera guarda la espada en la vaina","el guerrero guarda el hacha en el cinto","la panadera hornea pan en el horno"];
+const VACIAS = new Set(["la", "el", "en", "y", "contra"]);
+function coseno(a, b) {
+  let punto = 0, na = 0, nb = 0;
+  for (const [k, v] of a) { na += v * v; if (b.has(k)) punto += v * b.get(k); }
+  for (const v of b.values()) nb += v * v;
+  if (na === 0 || nb === 0) return 0;
+  return punto / Math.sqrt(na * nb);
+}
+    </script>
+    <textarea class="taller-codigo">// Ya tienes: corpus (10 frases), VACIAS (palabras vacías) y coseno(a, b) para Maps.
+function construirVectores(frases, ventana) {
+  const vectores = new Map();
+  for (const frase of frases) {
+    const p = frase.split(" ");
+    for (let i = 0; i < p.length; i++) {
+      const palabra = p[i];
+      if (VACIAS.has(palabra)) continue;
+      if (!vectores.has(palabra)) vectores.set(palabra, new Map());
+      // Completa: recorre j desde i - ventana hasta i + ventana,
+      // sin salirte de la frase y sin contar j === i.
+      // Salta las palabras vacías y suma 1 a vectores.get(palabra) en la clave p[j].
+    }
+  }
+  return vectores;
+}
+
+const v = construirVectores(corpus, 2);
+console.log("espada:", v.get("espada"));
+const pares = [["espada", "hacha"], ["espada", "pan"], ["pan", "queso"], ["guerrera", "guerrero"], ["guerrera", "panadera"]];
+for (const [a, b] of pares) {
+  console.log(`coseno(${a}, ${b}) = ${coseno(v.get(a), v.get(b)).toFixed(3)}`);
+}</textarea>
+    <script type="text/plain" class="taller-verificar">
+const f = expuesto.construirVectores;
+if (typeof f !== "function") return "No encuentro la función construirVectores: ¿se llama así y el programa terminó sin errores?";
+const p = f(["a b c d"], 1);
+const b = p.get("b");
+if (!b || b.get("a") !== 1 || b.get("c") !== 1 || b.has("d") || b.has("b")) return "Con la frase «a b c d» y ventana 1, «b» debería tener como vecinas a «a» y «c», una vez cada una (y no a sí misma ni a «d»).";
+const v = f(corpus, 2);
+const e = v.get("espada");
+if (!e || e.get("blande") !== 1 || e.get("afila") !== 1 || e.has("la")) return "El vector de «espada» debería contar blande, afila y guarda (una vez cada una) y ninguna palabra vacía.";
+if (!(coseno(v.get("espada"), v.get("hacha")) > coseno(v.get("espada"), v.get("pan")))) return "espada debería parecerse más a hacha que a pan.";
+if (!(coseno(v.get("guerrera"), v.get("guerrero")) > coseno(v.get("guerrera"), v.get("panadera")))) return "guerrera debería parecerse más a guerrero que a panadera.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">function construirVectores(frases, ventana) {
+  const vectores = new Map();
+  for (const frase of frases) {
+    const p = frase.split(" ");
+    for (let i = 0; i &lt; p.length; i++) {
+      const palabra = p[i];
+      if (VACIAS.has(palabra)) continue;
+      if (!vectores.has(palabra)) vectores.set(palabra, new Map());
+      const desde = Math.max(0, i - ventana);
+      const hasta = Math.min(p.length - 1, i + ventana);
+      for (let j = desde; j &lt;= hasta; j++) {
+        if (j === i || VACIAS.has(p[j])) continue;
+        const vec = vectores.get(palabra);
+        vec.set(p[j], (vec.get(p[j]) || 0) + 1);
+      }
+    }
+  }
+  return vectores;
+}
+
+const v = construirVectores(corpus, 2);
+console.log("espada:", v.get("espada"));
+const pares = [["espada", "hacha"], ["espada", "pan"], ["pan", "queso"], ["guerrera", "guerrero"], ["guerrera", "panadera"]];
+for (const [a, b] of pares) {
+  console.log(`coseno(${a}, ${b}) = ${coseno(v.get(a), v.get(b)).toFixed(3)}`);
+}</code></pre>
+    <p>Sale espada–hacha 1,000 (aparecen con exactamente los mismos vecinos: blande, afila, guarda), espada–pan 0,000, pan–queso 0,522 y guerrera–guerrero 0,816, frente a guerrera–panadera 0,000. Nadie le dijo al programa que la espada y el hacha son armas: lo dedujo de cómo se usan. Con un texto tan pequeño los números son extremos; con millones de frases se vuelven graduales.</p>
+  </details>
+  <p>Los vectores de coocurrencia tienen una dimensión por cada palabra del vocabulario: decenas de miles de números, casi todos cero. Los modelos modernos <strong>aprenden</strong> vectores cortos y densos (cientos o miles de dimensiones, todas con valores). La idea se popularizó en 2013 con <em>word2vec</em>: una red pequeña que aprende, para cada palabra, el vector que mejor predice sus vecinas. En un LLM, la primera capa de la red es exactamente eso: una tabla con un vector por cada token del vocabulario, que se ajusta durante el entrenamiento como cualquier otro peso (<a href="40-redes-neuronales.html#capas">Estación 40</a>).</p>
+  <p>Hay también modelos que dan un solo embedding para una frase o un párrafo entero. Esos son los que se usan para <strong>buscar por significado</strong>: «¿dónde duerme el dragón?» queda cerca de «Un dragón rojo duerme en la cueva de la montaña», aunque no compartan todas las palabras. Es la base del RAG que verás en <a href="#rag">Buscar por significado</a>.</p>
+  <figure class="capsula" data-titulo="El espacio de los embeddings">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Animación: seis palabras dibujadas como flechas que salen del mismo origen. Las armas, espada, hacha y sable, apuntan en direcciones parecidas; pan y queso, en otra. El ángulo entre espada y hacha es pequeño y el ángulo entre espada y pan es grande. Una consulta, arma que corta, se dibuja y sus tres vecinos más cercanos son espada, hacha y sable. Al final, un aviso: los embeddings reales tienen más de mil dimensiones y este dibujo en dos dimensiones deforma las distancias.">
+        <path class="d-linea" d="M150 250 H400"/>
+        <path class="d-linea" d="M150 250 V120"/>
+        <g class="d-t8">
+          <path class="d-flecha" d="M150 250 L180 78" data-clases="4:d-acento-trazo"/>
+          <path class="d-flecha" d="M150 250 L217 67" data-clases="2:d-acento-trazo; 3:; 4:d-acento-trazo"/>
+          <path class="d-flecha" d="M150 250 L248 93" data-clases="2:d-acento-trazo; 3:; 4:d-acento-trazo"/>
+          <path class="d-flecha" d="M150 250 L308 127"/>
+          <path class="d-flecha" d="M150 250 L333 183" data-clases="2:d-acento-trazo; 3:"/>
+          <path class="d-flecha" d="M150 250 L327 219"/>
+        </g>
+        <circle class="d-tinta" cx="180" cy="78" r="4"/><text x="172" y="72" text-anchor="end">sable</text>
+        <circle class="d-tinta" cx="217" cy="67" r="4"/><text x="224" y="62">espada</text>
+        <circle class="d-tinta" cx="248" cy="93" r="4"/><text x="256" y="92">hacha</text>
+        <circle class="d-tinta" cx="308" cy="127" r="4"/><text x="316" y="126">guerrera</text>
+        <circle class="d-tinta" cx="333" cy="183" r="4"/><text x="341" y="182">pan</text>
+        <circle class="d-tinta" cx="327" cy="219" r="4"/><text x="335" y="222">queso</text>
+        <g data-pasos="2">
+          <path class="d-acento-trazo" d="M170.5 193.6 A60 60 0 0 1 181.8 199.1"/>
+          <path class="d-acento-trazo" d="M163.7 212.4 A40 40 0 0 1 187.6 236.3"/>
+        </g>
+        <g data-pasos="3-">
+          <path class="d-flecha" d="M150 250 L211 113" stroke-dasharray="6 5"/>
+          <rect class="d-acento" x="206" y="108" width="10" height="10"/>
+          <text class="d-rotulo d-peq" x="140" y="150" text-anchor="end">consulta:</text>
+          <text class="d-peq" x="140" y="168" text-anchor="end">«arma que corta»</text>
+        </g>
+        <rect class="d-caja-suave" x="430" y="20" width="278" height="250" rx="8"/>
+        <g data-pasos="1" class="d-peq">
+          <text x="446" y="48">Cada palabra es un vector.</text>
+          <text x="446" y="72">Aquí, dos números por palabra</text>
+          <text x="446" y="96">para poder dibujarlos.</text>
+          <text x="446" y="130">Las que se usan igual apuntan</text>
+          <text x="446" y="154">en direcciones parecidas.</text>
+        </g>
+        <g data-pasos="2" class="d-peq">
+          <text class="d-rotulo" x="446" y="48">Similitud = ángulo</text>
+          <text x="446" y="80">espada · hacha: 12°</text>
+          <text xml:space="preserve" class="d-mono" x="446" y="102">coseno = 0,98</text>
+          <text x="446" y="140">espada · pan: 50°</text>
+          <text xml:space="preserve" class="d-mono" x="446" y="162">coseno = 0,64</text>
+          <text class="d-tenue" x="446" y="200">La longitud no importa:</text>
+          <text class="d-tenue" x="446" y="222">solo la dirección.</text>
+        </g>
+        <g data-pasos="3-4" class="d-peq">
+          <text class="d-rotulo" x="446" y="48">coseno con la consulta</text>
+          <text xml:space="preserve" class="d-mono" x="446" y="80">espada    0,998</text>
+          <text xml:space="preserve" class="d-mono" x="446" y="104">hacha     0,990</text>
+          <text xml:space="preserve" class="d-mono" x="446" y="128">sable     0,970</text>
+          <text xml:space="preserve" class="d-mono" x="446" y="152">guerrera  0,883</text>
+          <text xml:space="preserve" class="d-mono" x="446" y="176">pan       0,695</text>
+          <text xml:space="preserve" class="d-mono" x="446" y="200">queso     0,559</text>
+          <rect class="d-acento-trazo" x="440" y="64" width="190" height="72" rx="4" data-pasos="4"/>
+          <text class="d-rotulo" x="446" y="238" data-pasos="4">Top 3: los vecinos más cercanos</text>
+        </g>
+        <g data-pasos="5" class="d-peq">
+          <text class="d-rotulo" x="446" y="48">Letra pequeña</text>
+          <text x="446" y="80">Los embeddings reales tienen</text>
+          <text x="446" y="102">cientos o miles de dimensiones</text>
+          <text x="446" y="124">(1024 en voyage-4).</text>
+          <text x="446" y="158">Para dibujarlos se proyectan a 2D,</text>
+          <text x="446" y="180">y eso deforma: dos puntos juntos</text>
+          <text x="446" y="202">en el dibujo pueden estar lejos</text>
+          <text x="446" y="224">en el espacio real. Mide, no mires.</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Cada palabra es una flecha que sale del mismo origen. Las armas apuntan hacia arriba y la comida hacia la derecha, porque aparecen en contextos distintos.</li>
+        <li>La similitud del coseno mide el ángulo entre dos flechas, no su longitud. Espada y hacha forman 12° (coseno 0,98); espada y pan, 50° (coseno 0,64).</li>
+        <li>Una consulta también se convierte en vector con el mismo modelo. Se calcula su coseno con todas las palabras (o fragmentos de texto).</li>
+        <li>Los tres con mayor coseno son los vecinos más cercanos: es el k-NN de la <a href="39-aprendizaje-automatico.html#clasificar">Estación 39</a>, con k = 3. Buscar por significado es exactamente esto.</li>
+        <li data-duracion="7">La letra pequeña: los embeddings reales tienen cientos o miles de dimensiones. Los dibujos en 2D (como este) son proyecciones que deforman distancias. Para decidir, calcula el coseno; no te fíes del dibujo.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Hay un ejemplo famoso de word2vec: con los vectores de «rey», «hombre» y «mujer», la operación rey − hombre + mujer da un vector cuyo vecino más cercano es «reina». Es cierto y es bonito, pero tiene letra pequeña: funciona con algunas relaciones y falla con muchas otras, se suele excluir a propósito las palabras de la pregunta de la lista de vecinos (si no, el más cercano sería el propio «rey») y los embeddings también aprenden los prejuicios del texto (por ejemplo, asociaciones entre profesiones y géneros). Úsalos como una medida de «se usan en contextos parecidos», no como un diccionario de significados.</p>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>Tokens y embeddings son las dos traducciones que hacen falta para que una red lea: texto → tokens (piezas con número) → embeddings (vectores que capturan cómo se usa cada pieza). Todo lo que viene después, la atención incluida, son operaciones con esos vectores.</p></div></aside>
+</section>
+
+<section id="transformer" data-parada="Atención y transformer">
+  <h2>Por dentro: la atención y el transformer</h2>
+  <p>Lee esta frase: «La herrera le dio la espada al guardia porque ella…». ¿Quién es «ella»? La herrera, que está cinco palabras atrás. Para continuar bien, el modelo tiene que mirar lejos y decidir qué palabras anteriores importan para la actual. Un bigrama solo ve la última palabra; un n-grama de 10 palabras sería una tabla imposible. En 2017, un artículo de Google con un título famoso, <em>Attention Is All You Need</em> («la atención es todo lo que necesitas»), presentó el <strong>transformer</strong>: una arquitectura de red neuronal construida alrededor de un mecanismo llamado <strong>atención</strong>. Todos los LLM actuales, Claude incluido, descienden de ella.</p>
+
+  <h3>La atención: una búsqueda blanda</h3>
+  <p>En la atención, cada token produce tres vectores a partir de su embedding (con tres tablas de pesos que se aprenden en el entrenamiento):</p>
+  <ul>
+    <li><strong>Consulta</strong> (<em>query</em>, Q): lo que este token está buscando. «ella» busca «a qué persona me refiero».</li>
+    <li><strong>Clave</strong> (<em>key</em>, K): lo que este token ofrece para ser encontrado. «herrera» ofrece «soy una persona, femenina».</li>
+    <li><strong>Valor</strong> (<em>value</em>, V): la información que este token entrega si lo eligen.</li>
+  </ul>
+  <p>Cada token compara su consulta con las claves de todos los tokens anteriores (y con la suya). Cuanto más se parecen, más peso recibe ese token. Después, el token se queda con una mezcla de los valores, ponderada por esos pesos. Así «ella» se «empapa» de la información de «herrera».</p>
+  <aside class="senal analogia"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Para entenderlo</p><p>Es como el mostrador de una biblioteca. Llegas con una consulta («busco algo sobre dragones»), cada libro tiene una etiqueta en el lomo (la clave) y un contenido (el valor). En una biblioteca te llevas el libro cuya etiqueta coincide. La atención es una búsqueda <em>blanda</em>: te llevas un poco de todos los libros, mucho del que mejor coincide y casi nada de los demás. La analogía falla en dos cosas: nadie escribe las etiquetas (Q, K y V se aprenden solas durante el entrenamiento) y el resultado no es un libro, sino una mezcla.</p></div></aside>
+  <p>Con números, para el token actual y cada token anterior:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Puntuación</strong> = Q · K / √d. El producto punto de la <a href="18-matematicas.html#vectores">Estación 18</a> mide cuánto se parecen, y se divide entre la raíz de la dimensión d para que los números no crezcan demasiado cuando los vectores son largos.</p></div></li>
+    <li><div><p><strong>Pesos</strong> = softmax(puntuaciones). La función <strong>softmax</strong>, que viste en la <a href="40-redes-neuronales.html#capas">Estación 40</a>, convierte una lista de números cualesquiera en números positivos que suman 1: exponencial de cada uno y dividir entre la suma.</p></div></li>
+    <li><div><p><strong>Salida</strong> = suma de pesoᵢ × Vᵢ: la media ponderada de los valores.</p></div></li>
+  </ol>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Un softmax que devuelve NaN</p><p>Si escribes el softmax tal cual, <code>Math.exp(1000)</code> da <code>Infinity</code> y <code>Infinity / Infinity</code> da <code>NaN</code>. Las puntuaciones reales pueden ser grandes, así que el softmax se programa <strong>restando primero el máximo</strong> a todas: <code>Math.exp(x - max)</code>. El resultado es exactamente el mismo (se multiplica arriba y abajo por el mismo número), pero el mayor exponente pasa a ser 0 y nada se desborda.</p></div></aside>
+  <pre><code class="language-js">function softmax(xs) {
+  const max = Math.max(...xs);
+  const e = xs.map((x) =&gt; Math.exp(x - max));   // el mayor pasa a ser exp(0) = 1
+  const suma = e.reduce((a, b) =&gt; a + b, 0);
+  return e.map((x) =&gt; x / suma);
+}
+console.log(softmax([1000, 999]));   // [ 0.7310585786300049, 0.2689414213699951 ]</code></pre>
+  <p>Falta una regla. Cuando el modelo genera, el token 3 todavía no puede ver el 4, porque no existe. Para entrenar igual que se usa, cada token solo mira hacia atrás: las puntuaciones de los tokens futuros se ponen a −∞ antes del softmax, y su peso queda en 0. A eso se le llama <strong>máscara causal</strong>. Míralo con vectores de juguete de 3 dimensiones, donde (por inventar un significado) la dimensión 0 es «persona femenina», la 1 «objeto» y la 2 «acción»:</p>
+  <figure class="capsula" data-titulo="Atención paso a paso">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: cinco tokens, la, herrera, forjó, espada y ella, con sus claves. La consulta de ella se compara con cada clave: las puntuaciones son 0, 2,31, 0, 0 y 1,15. Softmax las convierte en pesos 0,06, 0,62, 0,06, 0,06 y 0,20. El peso hacia herrera es el más grueso. La salida de ella es la media de los valores, casi toda de herrera. Al final se muestra la matriz completa con la máscara causal: por encima de la diagonal, todo vale 0.">
+        <g>
+          <rect class="d-caja" x="90" y="64" width="90" height="36" rx="6"/><text xml:space="preserve" class="d-mono" x="135" y="88" text-anchor="middle">la</text>
+          <rect class="d-caja" x="200" y="64" width="90" height="36" rx="6" data-clases="4:d-acento-trazo; 6:"/><text xml:space="preserve" class="d-mono" x="245" y="88" text-anchor="middle">herrera</text>
+          <rect class="d-caja" x="310" y="64" width="90" height="36" rx="6"/><text xml:space="preserve" class="d-mono" x="355" y="88" text-anchor="middle">forjó</text>
+          <rect class="d-caja" x="420" y="64" width="90" height="36" rx="6"/><text xml:space="preserve" class="d-mono" x="465" y="88" text-anchor="middle">espada</text>
+          <rect class="d-caja" x="530" y="64" width="90" height="36" rx="6" data-clases="2:d-acento; 6:"/><text xml:space="preserve" class="d-mono" x="575" y="88" text-anchor="middle" data-clases="2:d-sobre-acento; 6:">ella</text>
+        </g>
+        <g data-pasos="1-5" class="d-peq">
+          <text class="d-rotulo" x="12" y="122">clave K</text>
+          <text xml:space="preserve" class="d-mono" x="135" y="122" text-anchor="middle">[0,0,0]</text>
+          <text xml:space="preserve" class="d-mono" x="245" y="122" text-anchor="middle">[2,0,0]</text>
+          <text xml:space="preserve" class="d-mono" x="355" y="122" text-anchor="middle">[0,0,2]</text>
+          <text xml:space="preserve" class="d-mono" x="465" y="122" text-anchor="middle">[0,2,0]</text>
+          <text xml:space="preserve" class="d-mono" x="575" y="122" text-anchor="middle">[1,0,0]</text>
+        </g>
+        <g data-pasos="2-5" class="d-peq">
+          <text class="d-rotulo" x="632" y="88">Q de ella</text>
+          <text xml:space="preserve" class="d-mono" x="632" y="108">[2,0,0]</text>
+          <text class="d-rotulo" x="12" y="160">Q·K/√3</text>
+          <text xml:space="preserve" class="d-mono" x="135" y="160" text-anchor="middle">0,00</text>
+          <text xml:space="preserve" class="d-mono" x="245" y="160" text-anchor="middle">2,31</text>
+          <text xml:space="preserve" class="d-mono" x="355" y="160" text-anchor="middle">0,00</text>
+          <text xml:space="preserve" class="d-mono" x="465" y="160" text-anchor="middle">0,00</text>
+          <text xml:space="preserve" class="d-mono" x="575" y="160" text-anchor="middle">1,15</text>
+        </g>
+        <g data-pasos="3-5" class="d-peq">
+          <text class="d-rotulo" x="12" y="196">peso</text>
+          <text xml:space="preserve" class="d-mono" x="135" y="196" text-anchor="middle">0,06</text>
+          <text class="d-rotulo" x="245" y="196" text-anchor="middle">0,62</text>
+          <text xml:space="preserve" class="d-mono" x="355" y="196" text-anchor="middle">0,06</text>
+          <text xml:space="preserve" class="d-mono" x="465" y="196" text-anchor="middle">0,06</text>
+          <text xml:space="preserve" class="d-mono" x="575" y="196" text-anchor="middle">0,20</text>
+          <text class="d-tenue" x="632" y="196">suma 1</text>
+        </g>
+        <g data-pasos="4-5">
+          <path class="d-acento-trazo" d="M575 64 Q355 2 135 64" style="stroke-width:1.5"/>
+          <path class="d-acento-trazo" d="M575 64 Q410 18 245 64" style="stroke-width:10"/>
+          <path class="d-acento-trazo" d="M575 64 Q465 33 355 64" style="stroke-width:1.5"/>
+          <path class="d-acento-trazo" d="M575 64 Q520 49 465 64" style="stroke-width:1.5"/>
+        </g>
+        <g data-pasos="5" class="d-peq">
+          <text class="d-rotulo" x="12" y="232">valor V</text>
+          <text xml:space="preserve" class="d-mono" x="135" y="232" text-anchor="middle">[.1,0,0]</text>
+          <text xml:space="preserve" class="d-mono" x="245" y="232" text-anchor="middle">[1,0,0]</text>
+          <text xml:space="preserve" class="d-mono" x="355" y="232" text-anchor="middle">[0,0,1]</text>
+          <text xml:space="preserve" class="d-mono" x="465" y="232" text-anchor="middle">[0,1,0]</text>
+          <text xml:space="preserve" class="d-mono" x="575" y="232" text-anchor="middle">[.5,0,0]</text>
+          <rect class="d-codigo" x="12" y="250" width="696" height="40" rx="6"/>
+          <text xml:space="preserve" class="d-codigo-texto" x="24" y="275" style="font-size:14px">salida(ella) = 0,06·V(la) + 0,62·V(herrera) + … = [0,72; 0,06; 0,06]</text>
+        </g>
+        <g data-pasos="6" class="d-peq">
+          <text class="d-rotulo" x="12" y="134">pesos de cada fila (quién mira a quién)</text>
+          <text xml:space="preserve" class="d-mono" x="12" y="164">la</text>
+          <text xml:space="preserve" class="d-mono" x="12" y="192">herrera</text>
+          <text xml:space="preserve" class="d-mono" x="12" y="220">forjó</text>
+          <text xml:space="preserve" class="d-mono" x="12" y="248">espada</text>
+          <text xml:space="preserve" class="d-mono" x="12" y="276">ella</text>
+          <rect class="d-caja-suave" x="200" y="146" width="420" height="24" rx="3"/>
+          <rect class="d-caja-suave" x="310" y="174" width="310" height="24" rx="3"/>
+          <rect class="d-caja-suave" x="420" y="202" width="200" height="24" rx="3"/>
+          <rect class="d-caja-suave" x="530" y="230" width="90" height="24" rx="3"/>
+          <g class="d-mono" text-anchor="middle">
+            <text x="135" y="164">1,00</text><text class="d-tenue" x="245" y="164">0</text><text class="d-tenue" x="355" y="164">0</text><text class="d-tenue" x="465" y="164">0</text><text class="d-tenue" x="575" y="164">0</text>
+            <text x="135" y="192">0,50</text><text x="245" y="192">0,50</text><text class="d-tenue" x="355" y="192">0</text><text class="d-tenue" x="465" y="192">0</text><text class="d-tenue" x="575" y="192">0</text>
+            <text x="135" y="220">0,08</text><text x="245" y="220">0,83</text><text x="355" y="220">0,08</text><text class="d-tenue" x="465" y="220">0</text><text class="d-tenue" x="575" y="220">0</text>
+            <text x="135" y="248">0,08</text><text x="245" y="248">0,08</text><text x="355" y="248">0,77</text><text x="465" y="248">0,08</text><text class="d-tenue" x="575" y="248">0</text>
+            <text x="135" y="276">0,06</text><text x="245" y="276">0,62</text><text x="355" y="276">0,06</text><text x="465" y="276">0,06</text><text x="575" y="276">0,20</text>
+          </g>
+          <text class="d-tenue" x="632" y="190">futuro:</text>
+          <text class="d-tenue" x="632" y="208">peso 0</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Cinco tokens, cada uno con su clave K (lo que ofrece). En un modelo real, K, Q y V tienen cientos de dimensiones y salen de multiplicar el embedding por tablas de pesos aprendidas.</li>
+        <li>Toca calcular la atención para «ella». Su consulta Q = [2,0,0] busca «persona femenina». Se hace el producto punto con cada clave y se divide entre √3: herrera da 2,31, ella misma 1,15 y el resto 0.</li>
+        <li>Softmax convierte las puntuaciones en pesos que suman 1: 0,62 para herrera, 0,20 para ella misma y 0,06 para cada uno de los demás. Nadie queda en cero del todo: es una búsqueda blanda.</li>
+        <li>Dibujado como flechas: el grosor es el peso. «ella» presta atención sobre todo a «herrera», cinco palabras atrás. Ningún n-grama podría hacerlo.</li>
+        <li data-duracion="6">La salida de «ella» es la mezcla de los valores con esos pesos: [0,72; 0,06; 0,06], muy parecida al valor de herrera. A partir de aquí, el vector de «ella» lleva dentro información de a quién se refiere.</li>
+        <li data-duracion="7">Todos los tokens hacen lo mismo a la vez. Esta es la tabla de pesos completa: cada fila suma 1 y, por encima de la diagonal, todo es 0 porque ningún token puede mirar al futuro (la máscara causal). «forjó» mira a «herrera» (quién forja) y «espada» mira a «forjó» (qué le pasó).</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Ahora hazlo tú. Completa la función <code>atencion</code>: para cada fila <code>i</code>, calcula las puntuaciones de las columnas <code>j &lt;= i</code> (las demás, <code>-Infinity</code>), aplica <code>softmax</code> y mezcla los valores.</p>
+  <div class="taller" id="taller-atencion" data-titulo="Completa: atención a mano" data-exponer="atencion">
+    <textarea class="taller-codigo">const tokens = ["la", "herrera", "forjó", "espada", "ella"];
+const Q = [[0, 0, 0], [0, 0, 1], [2, 0, 0], [0, 0, 2], [2, 0, 0]];
+const K = [[0, 0, 0], [2, 0, 0], [0, 0, 2], [0, 2, 0], [1, 0, 0]];
+const V = [[0.1, 0, 0], [1, 0, 0], [0, 0, 1], [0, 1, 0], [0.5, 0, 0]];
+
+function punto(a, b) {
+  let s = 0;
+  for (let i = 0; i < a.length; i++) s += a[i] * b[i];
+  return s;
+}
+
+function softmax(xs) {
+  const max = Math.max(...xs);
+  const e = xs.map((x) => Math.exp(x - max));
+  const suma = e.reduce((a, b) => a + b, 0);
+  return e.map((x) => x / suma);
+}
+
+function atencion(Q, K, V) {
+  const d = K[0].length;
+  const pesos = [];
+  const salidas = [];
+  for (let i = 0; i < Q.length; i++) {
+    // 1. puntuaciones: para cada j, punto(Q[i], K[j]) / Math.sqrt(d) si j <= i; si no, -Infinity
+    const puntuaciones = [];
+    // 2. fila = softmax(puntuaciones)
+    const fila = puntuaciones;
+    // 3. salida = suma de fila[j] * V[j] (un vector del mismo tamaño que V[0])
+    const salida = [0, 0, 0];
+    pesos.push(fila);
+    salidas.push(salida);
+  }
+  return { pesos, salidas };
+}
+
+const { pesos, salidas } = atencion(Q, K, V);
+tokens.forEach((t, i) => {
+  console.log(t.padEnd(8), pesos[i].map((p) => p.toFixed(2)).join(" "));
+});
+console.log("salida de «ella»:", salidas[4].map((x) => x.toFixed(3)));</textarea>
+    <script type="text/plain" class="taller-verificar">
+const f = expuesto.atencion;
+if (typeof f !== "function") return "No encuentro la función atencion: ¿se llama así y el programa terminó sin errores?";
+const Qp = [[0,0,0],[0,0,1],[2,0,0],[0,0,2],[2,0,0]], Kp = [[0,0,0],[2,0,0],[0,0,2],[0,2,0],[1,0,0]], Vp = [[0.1,0,0],[1,0,0],[0,0,1],[0,1,0],[0.5,0,0]];
+const r = f(Qp, Kp, Vp);
+if (!r || !Array.isArray(r.pesos) || r.pesos.length !== 5) return "atencion debe devolver { pesos, salidas } con una fila de pesos por token.";
+for (let i = 0; i < 5; i++) {
+  const fila = r.pesos[i];
+  if (!Array.isArray(fila) || fila.length !== 5) return "La fila " + i + " de pesos debería tener 5 números (uno por token, incluidos los futuros con peso 0).";
+  const s = fila.reduce(function (a, b) { return a + b; }, 0);
+  if (Math.abs(s - 1) > 1e-9) return "La fila de «" + ["la","herrera","forjó","espada","ella"][i] + "» suma " + s.toFixed(3) + " y debería sumar 1. ¿Aplicaste softmax?";
+  for (let j = i + 1; j < 5; j++) if (fila[j] !== 0) return "El token " + i + " no debería mirar al futuro: su peso hacia el token " + j + " tiene que ser 0 (usa -Infinity antes del softmax).";
+}
+if (Math.abs(r.pesos[4][1] - 0.6202) > 0.001) return "«ella» debería dar a «herrera» un peso de unos 0,62 y da " + r.pesos[4][1].toFixed(3) + ". ¿Dividiste entre Math.sqrt(d)?";
+const sal = r.salidas && r.salidas[4];
+if (!sal || Math.abs(sal[0] - 0.7236) > 0.001) return "La salida de «ella» debería ser unos [0,724; 0,062; 0,062]: la media de los valores V ponderada por los pesos.";
+const r2 = f([[1, 0], [0, 1]], [[1, 0], [0, 1]], [[1, 2], [3, 4]]);
+if (Math.abs(r2.salidas[0][1] - 2) > 1e-9) return "Con dos tokens, el primero solo puede mirarse a sí mismo: su salida debe ser exactamente su valor.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">const tokens = ["la", "herrera", "forjó", "espada", "ella"];
+const Q = [[0, 0, 0], [0, 0, 1], [2, 0, 0], [0, 0, 2], [2, 0, 0]];
+const K = [[0, 0, 0], [2, 0, 0], [0, 0, 2], [0, 2, 0], [1, 0, 0]];
+const V = [[0.1, 0, 0], [1, 0, 0], [0, 0, 1], [0, 1, 0], [0.5, 0, 0]];
+
+function punto(a, b) {
+  let s = 0;
+  for (let i = 0; i &lt; a.length; i++) s += a[i] * b[i];
+  return s;
+}
+
+function softmax(xs) {
+  const max = Math.max(...xs);
+  const e = xs.map((x) =&gt; Math.exp(x - max));
+  const suma = e.reduce((a, b) =&gt; a + b, 0);
+  return e.map((x) =&gt; x / suma);
+}
+
+function atencion(Q, K, V) {
+  const d = K[0].length;
+  const pesos = [];
+  const salidas = [];
+  for (let i = 0; i &lt; Q.length; i++) {
+    const puntuaciones = K.map((k, j) =&gt; (j &lt;= i ? punto(Q[i], k) / Math.sqrt(d) : -Infinity));
+    const fila = softmax(puntuaciones);
+    const salida = new Array(V[0].length).fill(0);
+    for (let j = 0; j &lt; V.length; j++) {
+      for (let c = 0; c &lt; salida.length; c++) salida[c] += fila[j] * V[j][c];
+    }
+    pesos.push(fila);
+    salidas.push(salida);
+  }
+  return { pesos, salidas };
+}
+
+const { pesos, salidas } = atencion(Q, K, V);
+tokens.forEach((t, i) =&gt; {
+  console.log(t.padEnd(8), pesos[i].map((p) =&gt; p.toFixed(2)).join(" "));
+});
+console.log("salida de «ella»:", salidas[4].map((x) =&gt; x.toFixed(3)));</code></pre>
+    <p><code>Math.exp(-Infinity - max)</code> es exactamente 0, así que los futuros quedan con peso 0 sin ningún <code>if</code> más. Prueba a cambiar la clave de «herrera» por <code>[0, 0, 0]</code>: «ella» ya no sabe a quién referirse y reparte la atención.</p>
+  </details>
+
+  <h3>Del mecanismo al modelo: el bloque transformer</h3>
+  <p>Una sola atención no basta. Un transformer real añade varias piezas, que aquí basta con nombrar:</p>
+  <ul>
+    <li><strong>Varias cabezas</strong> (<em>multi-head attention</em>): varias atenciones en paralelo, cada una con sus propias tablas Q, K y V. Una puede especializarse en «quién hace qué» y otra en la concordancia de género o en la estructura del código. Sus salidas se juntan.</li>
+    <li><strong>Información de posición</strong>: la atención, tal cual, trata los tokens como una bolsa sin orden («perro muerde hombre» y «hombre muerde perro» darían lo mismo). Por eso se mezcla en cada embedding una señal que indica su posición.</li>
+    <li><strong>Red feed-forward</strong>: después de la atención, cada token pasa por una red de capas densas como las de la <a href="40-redes-neuronales.html#capas">Estación 40</a>. Si la atención mezcla información entre tokens, esta red la procesa dentro de cada token. Se cree que buena parte de lo que el modelo «sabe» está en estas capas.</li>
+    <li><strong>Conexiones residuales y normalización</strong>: a la salida de cada parte se le suma su entrada (así la información original no se pierde) y se normalizan los números para que el entrenamiento sea estable.</li>
+  </ul>
+  <p>Todo eso forma un <strong>bloque</strong>, y el modelo apila decenas de bloques iguales, cada uno con sus propios pesos. Al final, el vector del último token se convierte en un número por cada token del vocabulario, los <strong>logits</strong> (puntuaciones sin normalizar), y el softmax los convierte en la distribución del siguiente token. Es el mismo bucle del principio de la estación, con una función muchísimo mejor.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 310" role="img" aria-label="Diagrama del transformer: los tokens se convierten en embeddings más posición, pasan por un bloque que tiene atención de varias cabezas, suma y normalización, red feed-forward y otra suma y normalización, repetido N veces. La salida se convierte en logits, uno por token del vocabulario; softmax da la probabilidad del siguiente token; se elige uno, se añade a los tokens y se repite.">
+      <rect class="d-caja" x="12" y="40" width="124" height="64" rx="8"/>
+      <text class="d-rotulo" x="74" y="66" text-anchor="middle">Tokens</text>
+      <text xml:space="preserve" class="d-mono d-peq" x="74" y="90" text-anchor="middle">[18, 6, 15, 13]</text>
+      <path class="d-flecha" d="M136 72 H154"/><path class="d-tinta" d="M166 72 l-12 -6 v12 z"/>
+      <rect class="d-caja" x="166" y="40" width="130" height="64" rx="8"/>
+      <text class="d-rotulo" x="231" y="66" text-anchor="middle">Embedding</text>
+      <text class="d-peq" x="231" y="90" text-anchor="middle">+ posición</text>
+      <path class="d-flecha" d="M296 72 H314"/><path class="d-tinta" d="M326 72 l-12 -6 v12 z"/>
+      <rect class="d-caja-suave" x="326" y="12" width="250" height="214" rx="10"/>
+      <text class="d-rotulo d-peq" x="451" y="30" text-anchor="middle">Bloque transformer</text>
+      <rect class="d-acento" x="356" y="40" width="200" height="40" rx="6"/>
+      <text class="d-sobre-acento" x="456" y="65" text-anchor="middle">Atención (varias cabezas)</text>
+      <rect class="d-caja" x="356" y="92" width="200" height="26" rx="6"/>
+      <text class="d-peq" x="456" y="110" text-anchor="middle">suma + normalización</text>
+      <rect class="d-caja" x="356" y="130" width="200" height="40" rx="6"/>
+      <text x="456" y="155" text-anchor="middle">Red feed-forward</text>
+      <rect class="d-caja" x="356" y="182" width="200" height="26" rx="6"/>
+      <text class="d-peq" x="456" y="200" text-anchor="middle">suma + normalización</text>
+      <path class="d-punteada" d="M340 36 V105 H356"/>
+      <path class="d-punteada" d="M340 124 V195 H356"/>
+      <rect class="d-caja" x="596" y="96" width="112" height="44" rx="22"/>
+      <text class="d-rotulo" x="652" y="124" text-anchor="middle">× N bloques</text>
+      <path class="d-flecha" d="M451 226 V244"/><path class="d-tinta" d="M451 256 l-6 -12 h12 z"/>
+      <rect class="d-caja" x="370" y="256" width="200" height="46" rx="8"/>
+      <text class="d-rotulo" x="470" y="276" text-anchor="middle">Logits</text>
+      <text class="d-peq" x="470" y="294" text-anchor="middle">un número por token</text>
+      <path class="d-flecha" d="M370 279 H352"/><path class="d-tinta" d="M340 279 l12 -6 v12 z"/>
+      <rect class="d-caja" x="216" y="256" width="124" height="46" rx="8"/>
+      <text class="d-rotulo" x="278" y="284" text-anchor="middle">softmax</text>
+      <path class="d-flecha" d="M216 279 H198"/><path class="d-tinta" d="M186 279 l12 -6 v12 z"/>
+      <rect class="d-caja" x="12" y="256" width="174" height="46" rx="8"/>
+      <text class="d-peq" x="99" y="276" text-anchor="middle">probabilidad del</text>
+      <text class="d-peq" x="99" y="294" text-anchor="middle">siguiente token</text>
+      <path class="d-punteada" d="M74 256 V116"/><path class="d-tinta" d="M74 104 l-6 12 h12 z"/>
+      <text class="d-peq d-tenue" x="84" y="188">se elige uno,</text>
+      <text class="d-peq d-tenue" x="84" y="206">se añade y</text>
+      <text class="d-peq d-tenue" x="84" y="224">se repite</text>
+    </svg>
+    <figcaption>Un transformer que genera texto: embeddings con posición, N bloques iguales de atención y red feed-forward, logits, softmax y vuelta a empezar con un token más. Las líneas punteadas del bloque son las conexiones residuales: la entrada de cada parte se suma a su salida.</figcaption>
+  </figure>
+
+  <h3>Por qué la ventana de contexto tiene un límite</h3>
+  <p>En la atención, cada token se compara con todos los anteriores. Con n tokens son del orden de n² comparaciones: es un costo cuadrático, O(n²), como los de la <a href="20-algoritmos.html#big-o">Estación 20</a>. Con 1 000 tokens, un millón de pares; con un millón de tokens, un billón. Por eso cada modelo tiene un tamaño máximo de entrada, la <strong>ventana de contexto</strong>: todo el texto que el modelo puede tener delante a la vez (instrucciones, conversación, documentos y su propia respuesta). Los modelos actuales usan muchos trucos de ingeniería para estirarla, y las GPU hacen miles de estas multiplicaciones a la vez (la <a href="40-redes-neuronales.html#entrenar">Estación 40</a> explica por qué), pero el costo sigue creciendo con la longitud.</p>
+  <p>Un truco que sí conviene conocer: al generar, las claves y los valores de los tokens ya procesados no cambian. Se guardan en memoria (la <strong>caché KV</strong>) y cada token nuevo solo calcula lo suyo. Por eso el primer token de una respuesta tarda más (el modelo tiene que leer toda la entrada) y los siguientes salen a ritmo constante. La <a href="#api">caché de prompts</a> de la API aprovecha una idea parecida entre peticiones.</p>
+
+  <h3>Parámetros, y lo que no se sabe</h3>
+  <p>Los <strong>parámetros</strong> de un modelo son todos sus números aprendidos: la tabla de embeddings, las tablas Q, K y V de cada cabeza, los pesos de las redes feed-forward. Los modelos abiertos pequeños tienen desde cientos de millones hasta unos pocos miles de millones; los grandes, muchos más. Anthropic no publica el tamaño de sus modelos ni el detalle de sus datos de entrenamiento, así que cualquier cifra que leas sobre «los parámetros de Claude» es una suposición.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Honestidad: no se entiende del todo</p><p>Sabemos exactamente qué operaciones hace un transformer: acabas de programar la central. Lo que no se entiende del todo es <em>qué</em> ha aprendido a hacer con ellas. Es un campo de investigación activo, la <strong>interpretabilidad</strong>. En 2025, Anthropic publicó cómo había rastreado algunos «circuitos» dentro de Claude: por ejemplo, que al escribir un verso con rima el modelo elige antes la palabra final y después escribe hacia ella. Descubrimientos así muestran que «solo predice la siguiente palabra» es cierto como descripción del bucle, pero se queda corto para describir lo que pasa dentro.</p></div></aside>
+  <p>Para explorar con tus propios ojos: <a href="https://poloclub.github.io/transformer-explainer/">Transformer Explainer</a> ejecuta un GPT-2 en tu navegador y te deja ver la atención y mover la temperatura; <a href="https://bbycroft.net/llm">LLM Visualization</a> muestra en 3D cada multiplicación de un transformer pequeño; y los videos de 3Blue1Brown del final lo explican con animaciones.</p>
+</section>
+
+<section id="entrenamiento" data-parada="Cómo aprende">
+  <h2>Cómo aprende, qué recuerda y por qué alucina</h2>
+  <p>Ya sabes qué hace un transformer con los números. Falta de dónde salen esos números, y por qué un modelo que ha leído medio internet a veces se inventa cosas con total seguridad. Esta sección cierra la parte «por dentro» con lo que más vas a necesitar al integrarlo: sus límites.</p>
+
+  <h3>Preentrenamiento: predecir el siguiente token, muchísimas veces</h3>
+  <p>Un modelo empieza con todos sus parámetros al azar. En el <strong>preentrenamiento</strong> se le da muchísimo texto (páginas web, libros, código, artículos) y se le pide lo mismo en cada posición: predecir el siguiente token. Si la frase de entrenamiento es «la reina vive en el castillo», el modelo recibe «la reina vive en el» y se mide cuánta probabilidad le dio a «castillo», el token que de verdad venía.</p>
+  <p>Esa medida es la <strong>pérdida</strong>, y la que se usa aquí es la <strong>entropía cruzada</strong> que viste en la <a href="40-redes-neuronales.html#entrenar">Estación 40</a>: menos el logaritmo de la probabilidad que el modelo dio al token correcto, −log p. Si dio 0,9, la pérdida es pequeña (0,15 bits); si dio 0,01, es grande (6,6 bits). El logaritmo castiga mucho más equivocarse con seguridad que dudar (repasa los logaritmos en la <a href="18-matematicas.html#crecimiento">Estación 18</a>). Después, el descenso por gradiente y la retropropagación de la <a href="40-redes-neuronales.html#retropropagacion">Estación 40</a> ajustan todos los parámetros un poquito para que la próxima vez la pérdida sea menor. Repetido billones de veces, en miles de GPU durante semanas o meses.</p>
+  <p>Para comparar modelos de lenguaje se usa una medida derivada, la <strong>perplejidad</strong>: 2 elevado a la entropía cruzada media (en bits). Se interpreta como «entre cuántas opciones duda el modelo, de media, en cada token». Perplejidad 1: siempre acierta con seguridad. Perplejidad 38 con nuestro vocabulario de 38 tokens: no sabe nada, elige a ciegas. Cuanto más baja, mejor predice ese texto.</p>
+  <p>Para calcularla con el bigrama hay que resolver antes el problema de los pares nunca vistos: su probabilidad es 0 y el logaritmo de 0 es −∞. La solución clásica es el <strong>suavizado de Laplace</strong>: sumar 1 a todos los conteos, vistos o no. Así, P(b | a) = (conteo(a, b) + 1) / (total(a) + V), con V el tamaño del vocabulario. Ningún par es imposible, solo improbable.</p>
+  <div class="taller" id="taller-perplejidad" data-titulo="Completa: entropía cruzada y perplejidad" data-exponer="entropiaCruzada">
+    <script type="text/plain" class="taller-preparacion">
+const corpus = ["la tabernera sirve sidra en la taberna .","la reina de brumavela vive en el castillo .","el dragón de la montaña vive en la cueva .","la herrera forja espadas en la fragua .","el guardia vigila la puerta del castillo .","la tabernera conoce a la reina .","el dragón guarda oro en la cueva .","la herrera vende una espada al guardia .","el mercader vende pan en la plaza .","la reina de brumavela visita la taberna .","el guardia bebe sidra en la taberna .","la reina teme al dragón de la montaña ."];
+const conteo = new Map();
+const vocabulario = new Set();
+for (const f of corpus) { const p = f.split(" "); p.forEach(function (w) { vocabulario.add(w); }); for (let i = 0; i < p.length - 1; i++) { if (!conteo.has(p[i])) conteo.set(p[i], new Map()); const s = conteo.get(p[i]); s.set(p[i + 1], (s.get(p[i + 1]) || 0) + 1); } }
+    </script>
+    <textarea class="taller-codigo">// Ya tienes: corpus, conteo (Map de Maps con los pares) y vocabulario (Set de 38 tokens).
+const V = vocabulario.size;
+
+function pLaplace(a, b) {
+  const siguientes = conteo.get(a) || new Map();
+  let total = 0;
+  for (const n of siguientes.values()) total += n;
+  return ((siguientes.get(b) || 0) + 1) / (total + V);
+}
+
+function entropiaCruzada(frase) {
+  const p = frase.split(" ");
+  // Completa: para cada par (p[i], p[i + 1]) suma -Math.log2(pLaplace(p[i], p[i + 1])).
+  // Devuelve la media: la suma dividida entre el número de pares.
+  return 0;
+}
+
+const pruebas = [
+  "la tabernera sirve sidra en la taberna .",   // está en el corpus
+  "el guardia vende pan en la taberna .",       // nueva, pero verosímil
+  "taberna la en sidra sirve tabernera la .",   // palabras desordenadas
+];
+for (const frase of pruebas) {
+  const h = entropiaCruzada(frase);
+  console.log(`${h.toFixed(3)} bits/token · perplejidad ${(2 ** h).toFixed(3)} · ${frase}`);
+}</textarea>
+    <script type="text/plain" class="taller-verificar">
+const f = expuesto.entropiaCruzada;
+if (typeof f !== "function") return "No encuentro la función entropiaCruzada: ¿se llama así y el programa terminó sin errores?";
+const a = f("la tabernera sirve sidra en la taberna .");
+const b = f("el guardia vende pan en la taberna .");
+const c = f("taberna la en sidra sirve tabernera la .");
+if (!(a > 0)) return "La entropía cruzada de una frase debería ser un número positivo: suma -Math.log2(p) de cada par.";
+if (Math.abs(a - 3.774) > 0.0005) return "Para la frase del corpus deberías obtener 3,774 bits por token y sale " + a.toFixed(3) + ". ¿Divides la suma entre el número de pares (palabras - 1)?";
+if (Math.abs(b - 3.956) > 0.0005 || Math.abs(c - 5.485) > 0.0005) return "Las otras dos frases deberían dar 3,956 y 5,485 bits por token.";
+if (!(2 ** a < 2 ** c)) return "La frase del corpus debería tener menos perplejidad que la desordenada.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">const V = vocabulario.size;
+
+function pLaplace(a, b) {
+  const siguientes = conteo.get(a) || new Map();
+  let total = 0;
+  for (const n of siguientes.values()) total += n;
+  return ((siguientes.get(b) || 0) + 1) / (total + V);
+}
+
+function entropiaCruzada(frase) {
+  const p = frase.split(" ");
+  let suma = 0;
+  for (let i = 0; i &lt; p.length - 1; i++) {
+    suma += -Math.log2(pLaplace(p[i], p[i + 1]));
+  }
+  return suma / (p.length - 1);
+}
+
+const pruebas = [
+  "la tabernera sirve sidra en la taberna .",
+  "el guardia vende pan en la taberna .",
+  "taberna la en sidra sirve tabernera la .",
+];
+for (const frase of pruebas) {
+  const h = entropiaCruzada(frase);
+  console.log(`${h.toFixed(3)} bits/token · perplejidad ${(2 ** h).toFixed(3)} · ${frase}`);
+}</code></pre>
+    <p>Salen perplejidades de 13,677, 15,514 y 44,780. La frase conocida es la más fácil de predecir, la nueva pero verosímil queda cerca y la desordenada se dispara: el modelo «nota» que eso no es español. Las perplejidades son altas porque el suavizado reparte mucha probabilidad entre los 38 tokens posibles; con millones de frases, bajarían mucho. Para medir de verdad un modelo, la perplejidad se calcula con texto que <em>no</em> se usó al entrenar (la validación de la <a href="39-aprendizaje-automatico.html#evaluar">Estación 39</a>).</p>
+  </details>
+
+  <h3>Del texto de internet a un asistente</h3>
+  <p>Un modelo recién preentrenado, el <strong>modelo base</strong>, es un autocompletador formidable, pero no un asistente. Si le escribes una pregunta, puede continuarla con otras tres preguntas, porque en internet las preguntas suelen aparecer en listas. Para convertirlo en algo que conversa y ayuda hay un segundo entrenamiento, el <strong>post-entrenamiento</strong>, con varias etapas:</p>
+  <ul>
+    <li><strong>Ajuste por instrucciones</strong>: se entrena con miles de conversaciones de ejemplo escritas o revisadas por personas, con turnos marcados. Los <strong>roles</strong> que usarás en la API (<code>system</code>, <code>user</code>, <code>assistant</code>) son exactamente eso: texto marcado que el modelo aprendió a continuar. Las <strong>instrucciones de sistema</strong> (<em>system prompt</em>) son el texto del rol <code>system</code>: el contexto y las reglas que pone quien construye la app.</li>
+    <li><strong>Aprendizaje por refuerzo con preferencias humanas</strong> (<strong>RLHF</strong>, <em>reinforcement learning from human feedback</em>): personas comparan dos respuestas y eligen la mejor. Con esos datos se entrena un modelo de recompensa, y el modelo de lenguaje se ajusta con aprendizaje por refuerzo para conseguir más recompensa, como el agente de la <a href="40-redes-neuronales.html#refuerzo">Estación 40</a>. El artículo de referencia es InstructGPT (2022).</li>
+    <li><strong>IA constitucional</strong>: el método de Anthropic. En lugar de depender solo de etiquetas humanas, se escribe una lista de principios (la «constitución») y el propio modelo critica y corrige sus respuestas según ellos; esa retroalimentación de IA sustituye parte de la humana.</li>
+    <li><strong>Entrenamiento para razonar y usar herramientas</strong>: con aprendizaje por refuerzo sobre tareas que se pueden comprobar (problemas de matemáticas, programas con pruebas), el modelo aprende a pensar paso a paso antes de responder y a pedir herramientas. Por eso los modelos actuales de Claude «piensan» antes de contestar, algo que verás en la API.</li>
+  </ul>
+  <p>La misma pregunta, en cada etapa (respuestas ilustrativas, no copiadas de ningún modelo):</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Etapa</th><th scope="col">Pregunta: «¿Qué es una poción?»</th></tr></thead>
+      <tbody>
+        <tr><td>Modelo base (solo preentrenamiento)</td><td>«¿Qué es un elixir? ¿Y un tónico? Respuestas del foro de alquimia, página 3 de 12…» Continúa el texto como si fuera una página web.</td></tr>
+        <tr><td>Tras el ajuste por instrucciones</td><td>«Una poción es un líquido mágico que produce un efecto al beberlo, como curar heridas o dar invisibilidad.» Responde, con el formato de un asistente.</td></tr>
+        <tr><td>Tras RLHF o IA constitucional</td><td>«En los juegos de fantasía, una poción es un brebaje con efectos mágicos: curación, fuerza, invisibilidad… Si preguntas por remedios reales, consulta a un profesional de la salud.» Responde, se adapta al contexto probable y evita riesgos.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Qué recuerda y qué no</h3>
+  <ul>
+    <li><strong>Fecha de corte.</strong> Un modelo solo sabe lo que había en sus datos de entrenamiento, que se recogieron hasta una fecha: su <strong>fecha de corte</strong>. Lo que pasó después, no lo sabe, salvo que se lo des en el contexto o le des una herramienta para buscarlo. Si le preguntas por una biblioteca que cambió el mes pasado, te dará la forma antigua con total naturalidad. Cada modelo publica su fecha de corte en la página de modelos.</li>
+    <li><strong>No aprende de tus conversaciones mientras lo usas.</strong> Los parámetros quedan fijos después del entrenamiento. Cuando el tabernero «recuerda» lo que le dijiste hace tres turnos, es porque tu código le volvió a enviar esos turnos. La API no guarda estado entre peticiones: lo verás en la próxima sección. (Si un proveedor usa o no tus datos para entrenar modelos futuros es otra cuestión, que depende de sus condiciones: revísalas siempre.)</li>
+    <li><strong>Ventana de contexto.</strong> Todo lo que el modelo tiene delante en una petición cabe en su ventana de contexto: 1 millón de tokens en <code>claude-opus-5-5</code> y <code>claude-sonnet-5-5</code>, y 200 000 en <code>claude-haiku-4-5</code> (septiembre de 2026). Aunque todo quepa, un contexto largo cuesta más (se paga cada token de entrada) y puede rendir peor: cuanta más información irrelevante hay alrededor, más fácil es que el modelo se pierda. Dale lo que necesita, no todo lo que tienes.</li>
+  </ul>
+
+  <h3>Por qué alucina</h3>
+  <p>Una <strong>alucinación</strong> es una respuesta que suena segura y es falsa o no tiene respaldo. No es un fallo raro: es la consecuencia directa de cómo funciona. Las causas se entienden con lo que ya programaste:</p>
+  <ul>
+    <li><strong>Genera lo probable, no lo verdadero.</strong> Como el bigrama que hizo vivir a la reina en la cueva, cada token es una continuación plausible. No hay una base de datos de hechos detrás.</li>
+    <li><strong>No consulta nada</strong>, salvo que le des herramientas o documentos. Responde «de memoria», y esa memoria está comprimida en sus parámetros.</li>
+    <li><strong>Los datos raros se recuerdan mal.</strong> La capital de Francia aparece millones de veces en los textos; el nombre del tercer ministro de un pueblo pequeño, casi nunca.</li>
+    <li><strong>El empuje a responder algo.</strong> Si el entrenamiento premió dar respuestas útiles, «no lo sé» puede parecer la opción menos probable. Los modelos actuales están entrenados para admitir la duda, pero no siempre lo hacen.</li>
+  </ul>
+  <p>Míralo en pequeño. Este taller genera 300 frases con el bigrama y comprueba cuántas contradicen los dos hechos que sí dice el corpus: la reina vive en el castillo y el dragón en la cueva. Predice: ¿cuántas frases nuevas saldrán? ¿Alguna contradirá los hechos?</p>
+  <div class="taller" id="taller-fluido-falso" data-titulo="Predice: fluido pero falso">
+    <script type="text/plain" class="taller-preparacion">
+const corpus = ["la tabernera sirve sidra en la taberna .","la reina de brumavela vive en el castillo .","el dragón de la montaña vive en la cueva .","la herrera forja espadas en la fragua .","el guardia vigila la puerta del castillo .","la tabernera conoce a la reina .","el dragón guarda oro en la cueva .","la herrera vende una espada al guardia .","el mercader vende pan en la plaza .","la reina de brumavela visita la taberna .","el guardia bebe sidra en la taberna .","la reina teme al dragón de la montaña ."];
+const modelo = new Map();
+for (const f of corpus) { const p = f.split(" "); for (let i = 0; i < p.length - 1; i++) { if (!modelo.has(p[i])) modelo.set(p[i], new Map()); const s = modelo.get(p[i]); s.set(p[i + 1], (s.get(p[i + 1]) || 0) + 1); } }
+for (const [w, s] of modelo) { let t = 0; for (const n of s.values()) t += n; for (const [k, n] of s) s.set(k, n / t); }
+function crearAzar(semilla) { return function () { semilla = (semilla + 0x6D2B79F5) | 0; let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function elegir(probs, azar) { const r = azar(); let acum = 0, ultimo = null; for (const [tok, p] of probs) { acum += p; ultimo = tok; if (r < acum) return tok; } return ultimo; }
+function generar(modelo, inicio, azar, max) { max = max || 12; const frase = [inicio]; let actual = inicio; while (frase.length < max) { const sig = elegir(modelo.get(actual), azar); frase.push(sig); if (sig === ".") break; actual = sig; } return frase.join(" "); }
+    </script>
+    <textarea class="taller-codigo">// Ya tienes: corpus, modelo (el bigrama), crearAzar y generar(modelo, inicio, azar)
+// (generar la escribirás tú en la práctica).
+const hechos = { reina: "castillo", dragón: "cueva" };
+
+function dondeVive(frase, quien) {
+  const p = frase.split(" ");
+  const i = p.indexOf(quien);
+  if (i === -1) return null;
+  const v = p.indexOf("vive", i);
+  if (v === -1) return null;
+  return p[v + 3] || null;          // «vive en la X» → X
+}
+
+const vistas = new Set(corpus);
+const azar = crearAzar(2026);
+let terminadas = 0, nuevas = 0;
+const falsas = new Set();
+for (let k = 0; k < 300; k++) {
+  const frase = generar(modelo, k % 2 ? "el" : "la", azar);
+  if (!frase.endsWith(".")) continue;          // se cortó por el máximo
+  terminadas++;
+  if (vistas.has(frase)) continue;             // copiada del corpus
+  nuevas++;
+  for (const [quien, lugar] of Object.entries(hechos)) {
+    const dicho = dondeVive(frase, quien);
+    if (dicho && dicho !== lugar) falsas.add(frase);
+  }
+}
+console.log(`${terminadas} frases terminadas, ${nuevas} nuevas, ${falsas.size} contradicen el corpus:`);
+for (const f of [...falsas].slice(0, 5)) console.log("  " + f);</textarea>
+  </div>
+  <p>De 232 frases terminadas, 218 son nuevas, y 10 contradicen los hechos: «el dragón de brumavela vive en la taberna», «la reina de brumavela vive en la cueva». Todas son gramaticales y ninguna tiene respaldo. Con un LLM las alucinaciones son mucho menos frecuentes y mucho más convincentes, pero nacen igual.</p>
+  <p>Tipos de alucinación que verás en la práctica:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Tipo</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td>Datos inventados</td><td>Una fecha, una cifra o una biografía que no existen.</td></tr>
+        <tr><td>Citas y fuentes falsas</td><td>Un artículo con título, autores y enlace plausibles… que nadie escribió.</td></tr>
+        <tr><td>Funciones y paquetes inventados</td><td>Un método de una biblioteca que no existe, o un paquete de npm con un nombre verosímil (el riesgo que la <a href="42-ia.html#seguridad">Estación 42</a> llama <em>slopsquatting</em>).</td></tr>
+        <tr><td>Contradecir el contexto</td><td>Le das la ficha del personaje y responde algo que la contradice: la tabernera ofrece un objeto que no tiene.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La guía oficial de Anthropic, <a href="https://platform.claude.com/docs/es/test-and-evaluate/strengthen-guardrails/reduce-hallucinations">«Reducir las alucinaciones»</a> (en español), recomienda estas técnicas, que usarás en el resto de la estación:</p>
+  <ul>
+    <li><strong>Permitir que diga «no lo sé»</strong>: dale permiso explícito para admitir que no tiene información suficiente.</li>
+    <li><strong>Citas directas</strong>: con documentos largos, pídele que extraiga primero frases textuales y responda solo a partir de ellas.</li>
+    <li><strong>Verificar con referencias</strong>: que cite la fuente de cada afirmación y retire las que no pueda respaldar.</li>
+    <li><strong>Restringir al conocimiento dado</strong>: indícale que use solo los documentos que le das, no su conocimiento general.</li>
+    <li><strong>Comparar varias respuestas</strong> (<em>best-of-N</em>): si al repetir la misma pregunta se contradice, desconfía.</li>
+  </ul>
+  <p>Y la guía termina con una advertencia que merece subrayado: estas técnicas reducen las alucinaciones, pero no las eliminan; valida siempre la información crítica. En una app, eso se traduce en tres reglas de diseño: <strong>dale herramientas para comprobar</strong> (consultar tu base de datos en vez de recordar), <strong>pide la salida con estructura y valídala</strong> con código, y <strong>deja la lógica crítica fuera del modelo</strong> (el inventario, los precios y los permisos los decide tu programa).</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Otras limitaciones que conviene conocer</p><p><strong>Complacencia</strong>: tiende a darte la razón; si le dices «¿seguro? creo que es 7», puede cambiar una respuesta correcta. <strong>Sensibilidad a la redacción</strong>: dos formas de pedir lo mismo pueden dar resultados distintos. <strong>No determinismo</strong>: la misma petición puede dar respuestas distintas. <strong>Aritmética y conteo</strong>: mejor con código o con una herramienta. Ninguna es un motivo para no usarlo; todas son motivos para medir (lo harás con <a href="#seguridad">evals</a>).</p></div></aside>
+
+  <h3>¿Instrucciones, RAG o ajuste fino?</h3>
+  <p>Cuando el modelo no hace lo que quieres, hay tres palancas. El <strong>ajuste fino</strong> (<em>fine-tuning</em>) es seguir entrenando un modelo con tus propios ejemplos para cambiar su comportamiento. Suena a la solución obvia, y casi nunca es la primera:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Palanca</th><th scope="col">Qué cambia</th><th scope="col">Cuándo usarla</th><th scope="col">Costo</th></tr></thead>
+      <tbody>
+        <tr><td>Instrucciones y ejemplos en el prompt</td><td>Lo que el modelo tiene delante en cada petición.</td><td>Siempre primero: tono, formato, reglas, pocos ejemplos.</td><td>Bajo. Se cambia en minutos.</td></tr>
+        <tr><td>RAG (buscar y añadir documentos)</td><td>Los datos que ve: fragmentos relevantes de tus documentos.</td><td>Cuando necesita saber cosas que cambian o que no estaban en su entrenamiento, con citas.</td><td>Medio: un índice y embeddings.</td></tr>
+        <tr><td>Ajuste fino</td><td>Los parámetros del modelo.</td><td>Un estilo o formato muy específico con miles de ejemplos, o un modelo pequeño que imite a uno grande. No sirve bien para «enseñarle hechos».</td><td>Alto: datos, entrenamiento, evaluación y mantenimiento. Solo lo ofrecen algunos proveedores y modelos abiertos.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>Lo que aprendió en el entrenamiento es su conocimiento general; lo que le das en la petición es lo único que sabe de tu caso. Para una app, casi todo el trabajo está en lo segundo: qué instrucciones, qué datos y qué herramientas le das en cada petición, y cómo compruebas lo que devuelve.</p></div></aside>
+</section>
+
+<section id="api" data-parada="Conectar Claude">
+  <h2>Conectar Claude a tu código</h2>
+  <p>Empieza la segunda mitad. Ahora el modelo no lo programas tú: lo usas. Claude se ofrece a través de una <strong>API</strong>, un servicio web al que tu programa envía una petición HTTP con la conversación y del que recibe la respuesta (repasa las APIs y <code>fetch</code> en la <a href="16-asincronia.html">Estación 16</a>). Cada petición cuesta dinero y necesita una <strong>clave de API</strong>, una contraseña larga que identifica tu cuenta. Por eso lo primero no es el código, sino dónde vive esa clave.</p>
+
+  <h3>La arquitectura: el navegador nunca habla con la API</h3>
+  <p>Cualquier cosa que llegue al navegador del jugador se puede leer: el código de tu página, las peticiones que hace, las variables de tu bundle. Si la clave está ahí, alguien la copiará y gastará a tu cuenta. La regla no tiene excepciones: <strong>la clave vive solo en tu servidor</strong> (el de la <a href="29-backend.html">Estación 29</a>), en una variable de entorno cargada desde <code>.env</code>, nunca en el frontend, nunca en el repositorio (<a href="31-seguridad.html#secretos">Estación 31</a>). El navegador habla con tu servidor, y tu servidor habla con la API.</p>
+  <figure class="capsula" data-titulo="El viaje de una petición">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: el jugador escribe en el navegador. El navegador envía solo el mensaje a tu servidor. El servidor valida, aplica un límite por usuario y construye la petición con la clave de la API, la ficha del personaje y el historial, y la envía a la API de Claude. La API devuelve tokens en streaming al servidor, que reenvía solo el texto al navegador y registra el costo. Al final se remarca lo que nunca llega al navegador: la clave, la ficha completa y los datos de otros jugadores.">
+        <text class="d-rotulo" x="92" y="28" text-anchor="middle">Navegador</text>
+        <text class="d-rotulo" x="360" y="28" text-anchor="middle">Tu servidor</text>
+        <text class="d-rotulo" x="628" y="28" text-anchor="middle">API de Claude</text>
+        <rect class="d-caja" x="12" y="40" width="160" height="196" rx="8"/>
+        <rect class="d-caja" x="280" y="40" width="160" height="196" rx="8" data-clases="3:d-acento-trazo; 4:"/>
+        <rect class="d-caja" x="548" y="40" width="160" height="196" rx="8" data-clases="4:d-acento-trazo; 5:"/>
+        <g class="d-peq">
+          <text x="24" y="66">Tú: ¿Me sirves</text>
+          <text x="24" y="84">una sidra?</text>
+          <text class="d-tenue" x="24" y="120" data-pasos="3-4" data-texto="3:Brasa está pensando…; 4:Brasa: ¡Marchando…">Brasa está pensando…</text>
+          <g data-pasos="5-">
+            <text x="24" y="120">Brasa: ¡Marchando</text>
+            <text x="24" y="138">una jarra de sidra!</text>
+            <text x="24" y="156">Son dos monedas.</text>
+          </g>
+          <text class="d-tenue" x="24" y="222">sin clave</text>
+        </g>
+        <g class="d-peq">
+          <text xml:space="preserve" class="d-mono" x="292" y="66" data-clases="3:d-rotulo; 4:">.env → API_KEY</text>
+          <text x="292" y="92" data-clases="3:d-rotulo; 4:">ficha de Brasa</text>
+          <text x="292" y="118" data-clases="3:d-rotulo; 4:">historial</text>
+          <text x="292" y="144">validar (Zod)</text>
+          <text x="292" y="170">límite por usuario</text>
+          <text x="292" y="196" data-clases="5:d-rotulo">registro de costos</text>
+        </g>
+        <g class="d-peq">
+          <text x="560" y="66">Messages API</text>
+          <text xml:space="preserve" class="d-mono" x="560" y="92">claude-opus-5-5</text>
+          <text class="d-tenue" x="560" y="130" data-texto="1:esperando; 4:genera token a token…; 5:terminado">esperando</text>
+        </g>
+        <g data-pasos="2-">
+          <path class="d-flecha" d="M172 92 H268"/><path class="d-tinta" d="M280 92 l-12 -6 v12 z"/>
+          <text class="d-peq" x="226" y="82" text-anchor="middle">POST /hablar</text>
+          <text xml:space="preserve" class="d-mono d-peq" x="226" y="110" text-anchor="middle">{ mensaje }</text>
+        </g>
+        <g data-pasos="3-">
+          <path class="d-flecha" d="M440 92 H536"/><path class="d-tinta" d="M548 92 l-12 -6 v12 z"/>
+          <text class="d-peq" x="494" y="82" text-anchor="middle">clave + system</text>
+          <text class="d-peq" x="494" y="110" text-anchor="middle">+ historial</text>
+        </g>
+        <g data-pasos="4-">
+          <path class="d-flecha" d="M548 176 H452"/><path class="d-tinta" d="M440 176 l12 -6 v12 z"/>
+          <text class="d-peq" x="494" y="166" text-anchor="middle">tokens</text>
+          <text class="d-peq" x="494" y="194" text-anchor="middle">en streaming</text>
+        </g>
+        <g data-pasos="5-">
+          <path class="d-flecha" d="M280 176 H184"/><path class="d-tinta" d="M172 176 l12 -6 v12 z"/>
+          <text class="d-peq" x="226" y="166" text-anchor="middle">solo el texto</text>
+          <text class="d-peq" x="226" y="194" text-anchor="middle">(streaming)</text>
+        </g>
+        <g data-pasos="6">
+          <rect class="d-mal" x="12" y="250" width="696" height="40" rx="8"/>
+          <text class="d-sobre-mal d-peq" x="360" y="275" text-anchor="middle">Nunca llega al navegador: la clave · la ficha con sus secretos · los datos de otros jugadores</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>El jugador escribe en el chat del juego. En el navegador no hay ninguna clave: solo la página y el mensaje.</li>
+        <li>El navegador envía el mensaje a <em>tu</em> servidor con <code>fetch</code>, como cualquier otra petición de la Estación 16. Solo viaja el texto del jugador.</li>
+        <li data-duracion="7">Tu servidor valida el cuerpo con Zod, comprueba el límite de mensajes de ese jugador y construye la petición real: añade la clave (leída de <code>process.env</code>), las instrucciones de sistema con la ficha de Brasa y el historial. La envía a la API.</li>
+        <li>La API genera la respuesta token a token y los va enviando en <em>streaming</em>, sin esperar al final. El navegador muestra «Brasa está pensando…».</li>
+        <li>El servidor reenvía al navegador solo el texto, trozo a trozo, y al terminar anota los tokens usados y su costo.</li>
+        <li data-duracion="6">Lo que nunca debe cruzar la frontera: la clave, la ficha completa (con los secretos del personaje) y cualquier dato de otros jugadores. El navegador es territorio del usuario.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Antes de escribir una línea, tres protecciones en la <a href="https://platform.claude.com">Claude Console</a> (la web donde se gestionan las claves y el uso) y en tu servidor:</p>
+  <ul>
+    <li><strong>Un límite de gasto</strong> en <em>Settings → Billing</em>, por debajo del tope de tu nivel. Si algo se descontrola (un bucle, un abuso), la API deja de responder en vez de vaciarte la cuenta.</li>
+    <li><strong>Usuarios identificados</strong> y un <strong>límite de peticiones por usuario</strong> en tu servidor, como el limitador de intentos de la <a href="31-seguridad.html#ej-intentos">Estación 31</a>. Un endpoint abierto que llama a un modelo es una tarjeta de crédito pegada en la pared.</li>
+    <li><strong>Una clave por proyecto</strong>, que puedas anular sin romper nada más si se filtra.</li>
+  </ul>
+
+  <h3>Anatomía de una petición</h3>
+  <p>Todo pasa por un único endpoint, la <strong>Messages API</strong>: <code>POST https://api.anthropic.com/v1/messages</code>. Míralo primero en HTTP puro con <code>curl</code>, para ver que no hay magia (para tu computadora; la clave va en una variable de entorno, nunca escrita en el comando):</p>
+  <pre class="consola"><code><span class="prompt">$</span> curl https://api.anthropic.com/v1/messages \
+    -H "content-type: application/json" \
+    -H "x-api-key: $ANTHROPIC_API_KEY" \
+    -H "anthropic-version: 2023-06-01" \
+    -d '{
+      "model": "claude-opus-5-5",
+      "max_tokens": 1024,
+      "system": "Eres Brasa, la tabernera del Ciervo Tuerto. Respondes en español, en dos frases como mucho.",
+      "messages": [{ "role": "user", "content": "¿Me sirves una sidra?" }]
+    }'</code></pre>
+  <p>Dos cabeceras propias: <code>x-api-key</code> con tu clave y <code>anthropic-version</code> con la versión del formato de la API (esa fecha es la versión estable del formato, no la de los modelos). En el cuerpo, en formato JSON:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Campo</th><th scope="col">Qué es</th></tr></thead>
+      <tbody>
+        <tr><td><code>model</code></td><td>El identificador exacto del modelo, por ejemplo <code>"claude-opus-5-5"</code>.</td></tr>
+        <tr><td><code>max_tokens</code></td><td>Obligatorio. El máximo de tokens que puede generar (incluido su pensamiento). Si se alcanza, la respuesta se corta.</td></tr>
+        <tr><td><code>system</code></td><td>Opcional. Las instrucciones de sistema: quién es, qué sabe, cómo debe responder.</td></tr>
+        <tr><td><code>messages</code></td><td>La conversación: una lista de mensajes con <code>role</code> (<code>"user"</code> o <code>"assistant"</code>) y <code>content</code>. El primero siempre es de <code>user</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>En tu programa no escribirás HTTP a mano: usarás el <strong>SDK</strong> oficial, una biblioteca que envuelve la API con funciones y tipos, reintentos y errores bien hechos. En Node 24 es <code>@anthropic-ai/sdk</code> (versión 0.129.0 a finales de septiembre de 2026; compruébalo con <code>npm view @anthropic-ai/sdk version</code>). <code>new Anthropic()</code> lee la clave de la variable de entorno <code>ANTHROPIC_API_KEY</code>, así que no aparece en el código:</p>
+  <pre><code class="language-js">// hola-brasa.mjs — ejecútalo con: node --env-file=.env hola-brasa.mjs
+import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic();   // lee ANTHROPIC_API_KEY del entorno
+
+const respuesta = await client.messages.create({
+  model: "claude-opus-5-5",
+  max_tokens: 1024,
+  system: "Eres Brasa, la tabernera del Ciervo Tuerto. Respondes en español, en dos frases como mucho.",
+  messages: [{ role: "user", content: "¿Me sirves una sidra?" }],
+});
+
+const texto = respuesta.content
+  .filter((bloque) =&gt; bloque.type === "text")
+  .map((bloque) =&gt; bloque.text)
+  .join("");
+console.log(texto);
+console.log(respuesta.stop_reason, respuesta.usage);</code></pre>
+  <p>La respuesta es un objeto JSON. Este es un ejemplo de su forma (los textos y los números cambian en cada ejecución):</p>
+  <pre><code class="language-json">{
+  "id": "msg_01…",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-opus-5-5",
+  "content": [
+    { "type": "thinking", "thinking": "", "signature": "…" },
+    { "type": "text", "text": "¡Marchando una jarra de sidra de manzana! Son dos monedas, viajera." }
+  ],
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": { "input_tokens": 52, "output_tokens": 61, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0 }
+}</code></pre>
+  <ul>
+    <li><code>content</code> es una <strong>lista de bloques</strong>, no un texto. Puede traer bloques <code>thinking</code> (su razonamiento), <code>text</code> (la respuesta) y, si le das herramientas, <code>tool_use</code>.</li>
+    <li><code>stop_reason</code> dice por qué paró: <code>end_turn</code> (terminó), <code>max_tokens</code> (se cortó por tu límite), <code>tool_use</code> (quiere usar una herramienta) o <code>refusal</code> (se negó por seguridad; <code>stop_details</code> trae la categoría).</li>
+    <li><code>usage</code> son los tokens que vas a pagar: de entrada, de salida (el pensamiento incluido) y de caché, que verás enseguida.</li>
+  </ul>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">content[0].text</p><p>Muchos ejemplos antiguos leen <code>respuesta.content[0].text</code>. Con <code>claude-opus-5-5</code> el primer bloque suele ser uno de tipo <code>thinking</code>, que por defecto llega con el texto vacío (el razonamiento no se muestra salvo que lo pidas), así que <code>content[0].text</code> da <code>undefined</code>. Filtra siempre por <code>type === "text"</code>.</p></div></aside>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuando el modelo se niega</p><p>Si <code>stop_reason</code> es <code>"refusal"</code>, unos clasificadores de seguridad han detenido la respuesta. En <code>claude-opus-5-5</code> esos clasificadores cubren más categorías que en modelos anteriores, así que, aunque es raro en un juego, puede ocurrir con temas como venenos o armas de un mundo de fantasía. Compruébalo siempre antes de leer el texto y ten preparada la frase de reserva del personaje. La API ofrece además un mecanismo opcional (en beta, parámetro <code>fallbacks</code>) para que la petición se repita automáticamente con otro modelo; consulta la documentación si lo necesitas.</p></div></aside>
+  <p>La misma petición en Python, con el SDK <code>anthropic</code> (versión 1.9.0, que exige Python 3.10 o superior; instálalo en un entorno virtual como en la <a href="36-python.html#ecosistema">Estación 36</a>):</p>
+  <pre><code class="language-python"># hola_brasa.py — antes, en la terminal: export ANTHROPIC_API_KEY=... (o usa python-dotenv)
+import anthropic
+
+client = anthropic.Anthropic()  # lee ANTHROPIC_API_KEY del entorno
+
+respuesta = client.messages.create(
+    model="claude-opus-5-5",
+    max_tokens=1024,
+    system="Eres Brasa, la tabernera del Ciervo Tuerto. Respondes en español, en dos frases como mucho.",
+    messages=[{"role": "user", "content": "¿Me sirves una sidra?"}],
+)
+
+texto = "".join(b.text for b in respuesta.content if b.type == "text")
+print(texto)
+print(respuesta.stop_reason, respuesta.usage.input_tokens, respuesta.usage.output_tokens)</code></pre>
+  <p>En la página no hay claves reales ni acceso a la API. Los talleres usan un <strong>cliente simulado</strong>: un doble de prueba como los de la <a href="26-testing.html#dobles">Estación 26</a>, con la misma forma que el SDK (<code>new Anthropic()</code>, <code>client.messages.create(...)</code>, la misma respuesta), pero que responde con reglas fijas. No es inteligente; sirve para practicar la forma. Este taller copia un ejemplo de un tutorial de 2024 y falla. Arréglalo:</p>
+  <div class="taller" id="taller-primera-peticion" data-titulo="Arregla: tu primera petición">
+    <script type="text/plain" class="taller-preparacion">
+class APIError extends Error {
+  constructor(status, tipo, mensaje, cabeceras) { super(status + " " + JSON.stringify({ type: "error", error: { type: tipo, message: mensaje } })); this.name = "APIError"; this.status = status; this.error = { type: "error", error: { type: tipo, message: mensaje } }; this.headers = cabeceras || {}; }
+}
+const peticiones = [];
+function textoDe(c) { return typeof c === "string" ? c : c.map(function (b) { return b.text || ""; }).join(" "); }
+function contarTokens(t) { return Math.ceil(String(t).length / 4); }
+class Anthropic {
+  constructor(opciones) {
+    this.opciones = opciones || {};
+    this.messages = {
+      create: async function (p) {
+        peticiones.push(JSON.parse(JSON.stringify(p || {})));
+        await new Promise(function (r) { setTimeout(r, 20); });
+        if (!p || typeof p.model !== "string") throw new APIError(400, "invalid_request_error", "model: Field required");
+        if (!Number.isInteger(p.max_tokens) || p.max_tokens < 1) throw new APIError(400, "invalid_request_error", "max_tokens: Field required");
+        for (const k of ["temperature", "top_p", "top_k"]) if (k in p && /opus-5-5/.test(p.model)) throw new APIError(400, "invalid_request_error", k + " no se admite con " + p.model + " (simulador)");
+        if (!Array.isArray(p.messages) || !p.messages.length) throw new APIError(400, "invalid_request_error", "messages: Field required");
+        if (p.messages[0].role !== "user") throw new APIError(400, "invalid_request_error", "messages.0.role: el primer mensaje debe ser del rol user (simulador)");
+        const ultimo = textoDe(p.messages[p.messages.length - 1].content).toLowerCase();
+        let texto = "Bienvenida al Ciervo Tuerto, viajera. ¿Qué te sirvo?";
+        if (/sidra/.test(ultimo)) texto = "¡Marchando una jarra de sidra de manzana! Son dos monedas.";
+        else if (/drag/.test(ultimo)) texto = "¿El dragón? Duerme en la cueva de la montaña. Yo que tú no lo despertaba.";
+        const entrada = contarTokens((typeof p.system === "string" ? p.system : "") + " " + p.messages.map(function (m) { return textoDe(m.content); }).join(" "));
+        const salida = contarTokens(texto) + 12;
+        const cortado = salida > p.max_tokens;
+        return { id: "msg_sim_" + peticiones.length, type: "message", role: "assistant", model: p.model,
+          content: [{ type: "thinking", thinking: "", signature: "sim" }, { type: "text", text: cortado ? texto.slice(0, Math.max(0, p.max_tokens - 12) * 4) : texto }],
+          stop_reason: cortado ? "max_tokens" : "end_turn", stop_details: null,
+          usage: { input_tokens: entrada, output_tokens: Math.min(salida, p.max_tokens), cache_creation_input_tokens: 0, cache_read_input_tokens: 0 } };
+      }
+    };
+  }
+}
+Anthropic.APIError = APIError;
+    </script>
+    <textarea class="taller-codigo">// Cliente SIMULADO: misma forma que el SDK real, respuestas fijas.
+const client = new Anthropic();
+
+// Copiado de un tutorial de 2024:
+const respuesta = await client.messages.create({
+  model: "claude-opus-5-5",
+  temperature: 0.7,
+  messages: [
+    { role: "user", content: "¿Me sirves una sidra?" },
+  ],
+});
+
+console.log(respuesta.content[0].text);
+
+// Cuando funcione, añade:
+// 1. unas instrucciones de sistema (system) con quién es Brasa;
+// 2. filtra los bloques de tipo "text" en lugar de usar content[0];
+// 3. imprime también stop_reason y los tokens de usage, así:
+//    stop_reason: end_turn
+//    tokens: 40 de entrada, 27 de salida</textarea>
+    <script type="text/plain" class="taller-verificar">
+const p = peticiones[peticiones.length - 1];
+if (!p) return "No se llegó a hacer ninguna petición.";
+if (!Number.isInteger(p.max_tokens)) return "Falta max_tokens: es obligatorio. Pon, por ejemplo, max_tokens: 1024.";
+if ("temperature" in p || "top_p" in p || "top_k" in p) return "Quita temperature: claude-opus-5-5 la rechaza con un error 400.";
+if (p.model !== "claude-opus-5-5") return "Usa el modelo \"claude-opus-5-5\".";
+if (typeof p.system !== "string" || p.system.trim().length < 10) return "Añade unas instrucciones de sistema (system) que digan quién es Brasa.";
+if (/content\s*\[\s*0\s*\]/.test(codigo)) return "No leas content[0]: el primer bloque puede ser de tipo thinking. Filtra por type === \"text\".";
+if (salida[0] !== "¡Marchando una jarra de sidra de manzana! Son dos monedas.") return "La primera línea debería ser el texto de Brasa. Imprimiste: «" + (salida[0] || "(nada)") + "».";
+if (!salida.some(function (l) { return /stop_reason:\s*end_turn/.test(l); })) return "Imprime también «stop_reason: end_turn».";
+if (!salida.some(function (l) { return /tokens:\s*\d+ de entrada, \d+ de salida/.test(l); })) return "Imprime los tokens con la forma «tokens: 40 de entrada, 27 de salida» usando respuesta.usage.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">const client = new Anthropic();
+
+const respuesta = await client.messages.create({
+  model: "claude-opus-5-5",
+  max_tokens: 1024,
+  system: "Eres Brasa, la tabernera del Ciervo Tuerto, en la ciudad de Brumavela. Respondes en español, con calidez y en dos frases como mucho.",
+  messages: [
+    { role: "user", content: "¿Me sirves una sidra?" },
+  ],
+});
+
+const texto = respuesta.content
+  .filter((b) =&gt; b.type === "text")
+  .map((b) =&gt; b.text)
+  .join("");
+console.log(texto);
+console.log("stop_reason:", respuesta.stop_reason);
+console.log(`tokens: ${respuesta.usage.input_tokens} de entrada, ${respuesta.usage.output_tokens} de salida`);</code></pre>
+    <p>Tres errores de tutorial viejo: faltaba <code>max_tokens</code> (obligatorio), sobraba <code>temperature</code> (rechazada en los modelos actuales) y <code>content[0].text</code> leía el bloque equivocado. El simulador cuenta los tokens como «caracteres entre 4», redondeando hacia arriba, y suma 12 de pensamiento; la API real usa su tokenizador. Prueba a poner <code>max_tokens: 20</code>: verás <code>stop_reason: max_tokens</code> y la frase cortada.</p>
+  </details>
+
+  <h3>La API no tiene memoria</h3>
+  <p>La API no guarda ninguna conversación: cada petición empieza de cero. Si quieres que Brasa recuerde lo que dijiste antes, tienes que reenviar el historial completo en <code>messages</code>, alternando <code>user</code> y <code>assistant</code>. Es el mismo principio de los servidores sin estado de la <a href="28-arquitectura.html#escalar">Estación 28</a>: el estado lo guarda quien llama.</p>
+  <pre><code class="language-js">const historial = [];   // lo guarda TU servidor (en memoria, en una base de datos…)
+
+async function hablar(mensaje) {
+  historial.push({ role: "user", content: mensaje });
+  const r = await client.messages.create({ model: "claude-opus-5-5", max_tokens: 1024, system: FICHA, messages: historial });
+  const texto = r.content.filter((b) =&gt; b.type === "text").map((b) =&gt; b.text).join("");
+  historial.push({ role: "assistant", content: texto });
+  return texto;
+}</code></pre>
+  <p>La consecuencia está en la factura: en cada turno pagas de nuevo la ficha y todo el historial como tokens de entrada. Con una ficha de 3 000 tokens y turnos de 150 tokens, así crece el costo de cada turno con <code>claude-opus-5-5</code>:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Gráfico de barras: costo por turno de una conversación de 10 turnos con claude-opus-5-5. Sin caché, cada turno cuesta entre 1,42 y 1,96 centavos de dólar y crece con el historial. Con caché de la ficha, el primer turno cuesta 1,72 centavos por la escritura en caché y los siguientes entre 0,34 y 0,82. En total, 16,9 centavos sin caché frente a 6,9 con caché.">
+      <text class="d-rotulo" x="12" y="24">Costo de cada turno (centavos de dólar)</text>
+      <rect class="d-caja-suave" x="430" y="10" width="14" height="14"/><text class="d-peq" x="450" y="22">sin caché</text>
+      <rect class="d-acento" x="530" y="10" width="14" height="14"/><text class="d-peq" x="550" y="22">con caché de la ficha</text>
+      <path class="d-linea" d="M60 250 H705"/>
+      <path class="d-punteada" d="M60 160 H705"/><text class="d-peq d-tenue" x="52" y="164" text-anchor="end">1,0</text>
+      <path class="d-punteada" d="M60 70 H705"/><text class="d-peq d-tenue" x="52" y="74" text-anchor="end">2,0</text>
+      <text class="d-peq d-tenue" x="52" y="254" text-anchor="end">0</text>
+      <g>
+        <rect class="d-caja-suave" x="70" y="122.2" width="24" height="127.8"/><rect class="d-acento" x="96" y="95.2" width="24" height="154.8"/>
+        <rect class="d-caja-suave" x="134" y="116.8" width="24" height="133.2"/><rect class="d-acento" x="160" y="219.4" width="24" height="30.6"/>
+        <rect class="d-caja-suave" x="198" y="111.4" width="24" height="138.6"/><rect class="d-acento" x="224" y="214" width="24" height="36"/>
+        <rect class="d-caja-suave" x="262" y="106" width="24" height="144"/><rect class="d-acento" x="288" y="208.6" width="24" height="41.4"/>
+        <rect class="d-caja-suave" x="326" y="100.6" width="24" height="149.4"/><rect class="d-acento" x="352" y="203.2" width="24" height="46.8"/>
+        <rect class="d-caja-suave" x="390" y="95.2" width="24" height="154.8"/><rect class="d-acento" x="416" y="197.8" width="24" height="52.2"/>
+        <rect class="d-caja-suave" x="454" y="89.8" width="24" height="160.2"/><rect class="d-acento" x="480" y="192.4" width="24" height="57.6"/>
+        <rect class="d-caja-suave" x="518" y="84.4" width="24" height="165.6"/><rect class="d-acento" x="544" y="187" width="24" height="63"/>
+        <rect class="d-caja-suave" x="582" y="79" width="24" height="171"/><rect class="d-acento" x="608" y="181.6" width="24" height="68.4"/>
+        <rect class="d-caja-suave" x="646" y="73.6" width="24" height="176.4"/><rect class="d-acento" x="672" y="176.2" width="24" height="73.8"/>
+      </g>
+      <g class="d-peq" text-anchor="middle">
+        <text x="95" y="268">1</text><text x="159" y="268">2</text><text x="223" y="268">3</text><text x="287" y="268">4</text><text x="351" y="268">5</text>
+        <text x="415" y="268">6</text><text x="479" y="268">7</text><text x="543" y="268">8</text><text x="607" y="268">9</text><text x="671" y="268">10</text>
+      </g>
+      <text class="d-peq d-tenue" x="383" y="290" text-anchor="middle">turno · en total: 16,9 centavos sin caché, 6,9 con caché</text>
+    </svg>
+    <figcaption>Cada turno reenvía la ficha y el historial, así que cuesta un poco más que el anterior. Con la ficha en caché, el primer turno paga un poco más (escribirla en la caché) y los siguientes la leen a una fracción del precio. Cálculo con 3 000 tokens de ficha, 50 de mensaje, 100 de respuesta y precios de septiembre de 2026.</figcaption>
+  </figure>
+
+  <h3>Qué modelo, y cómo comprobarlo</h3>
+  <p>Estos son los modelos de Claude recomendados para empezar, a septiembre de 2026, con sus precios en dólares por millón de tokens (<abbr title="millón de tokens">MTok</abbr>):</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Modelo (ID)</th><th scope="col">Entrada / salida</th><th scope="col">Ventana de contexto</th><th scope="col">Cuándo</th></tr></thead>
+      <tbody>
+        <tr><td><code>claude-opus-5-5</code></td><td>4 / 20 USD</td><td>1 millón</td><td>El predeterminado en los ejemplos de esta estación. El más capaz de los tres.</td></tr>
+        <tr><td><code>claude-sonnet-5-5</code></td><td>2 / 10 USD</td><td>1 millón</td><td>La mitad de precio y más rápido. Muy bueno para chat y tareas del día a día.</td></tr>
+        <tr><td><code>claude-haiku-4-5</code></td><td>1 / 5 USD</td><td>200 000</td><td>El más barato y rápido: clasificar, filtrar, respuestas muy cortas.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Anthropic tiene además modelos más caros para tareas muy exigentes (la familia Fable). Los modelos y los precios cambian cada pocos meses. Compruébalos en la <a href="https://platform.claude.com/docs/es/about-claude/models/overview">página de modelos</a> (en español) o desde el código con <code>await client.models.list()</code>, que devuelve los modelos disponibles para tu cuenta con su ventana de contexto. Elige <strong>midiendo</strong>: prueba tu caso con dos modelos y compara calidad, costo y tiempo (lo harás con evals al final).</p>
+  <p>Dos parámetros más que cambian el comportamiento:</p>
+  <ul>
+    <li><strong>Effort</strong> (esfuerzo): <code>output_config: { effort: "low" }</code> admite <code>low</code>, <code>medium</code>, <code>high</code>, <code>xhigh</code> y <code>max</code>. <code>claude-opus-5-5</code> siempre piensa antes de responder (no se puede desactivar) y el esfuerzo decide cuánto: por defecto <code>medium</code>. El pensamiento se cobra como tokens de salida, así que para un personaje que charla, <code>low</code> suele bastar y responde antes. Ojo: <code>claude-haiku-4-5</code> no admite <code>effort</code> y da error si lo envías; si cambias de modelo para ahorrar, quítalo.</li>
+    <li><strong>Lo que ya no se usa</strong>: <code>temperature</code>, <code>top_p</code> y <code>top_k</code> dan error 400 en <code>claude-opus-5-5</code>; <code>claude-sonnet-5-5</code> solo acepta sus valores por defecto; <code>claude-haiku-4-5</code> los admite. Tampoco hay <em>prefill</em> (empezar tú la respuesta del asistente como último mensaje): da error 400. Para controlar el formato se usa la salida estructurada de la próxima sección.</li>
+  </ul>
+
+  <h3>Streaming: que el texto aparezca mientras se escribe</h3>
+  <p>Una respuesta de varias frases puede tardar varios segundos. Si esperas al final, el jugador mira una pantalla quieta. Con <strong>streaming</strong>, la API envía los tokens a medida que se generan, y lo que importa es el <strong>tiempo hasta el primer token</strong>, no el total. En el servidor, <code>client.messages.stream(...)</code> emite un evento <code>"text"</code> por cada trozo, y <code>finalMessage()</code> te da al final el mensaje completo con <code>usage</code>. Tu servidor lo reenvía al navegador con el formato <code>text/event-stream</code> (<em>server-sent events</em>): líneas <code>data: …</code> separadas por una línea en blanco.</p>
+  <pre><code class="language-js">// En servidor.js (Express, Estación 29)
+app.post("/api/npc/brasa/hablar", async (req, res) =&gt; {
+  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache");
+
+  const stream = client.messages.stream({
+    model: "claude-opus-5-5",
+    max_tokens: 1024,
+    output_config: { effort: "low" },
+    system: FICHA_BRASA,
+    messages: construirMensajes(req.body.mensaje),
+  });
+  stream.on("text", (trozo) =&gt; {
+    res.write(`data: ${JSON.stringify(trozo)}\n\n`);      // JSON: así los saltos de línea no rompen el formato
+  });
+  try {
+    const final = await stream.finalMessage();
+    registrarCosto(final.usage);
+    res.write("event: fin\ndata: {}\n\n");
+  } catch (err) {
+    res.write(`event: error\ndata: ${JSON.stringify("Brasa se aclara la garganta y no dice nada.")}\n\n`);
+  }
+  res.end();
+});</code></pre>
+  <p>En el navegador, lo nuevo respecto a la <a href="16-asincronia.html#fetch">Estación 16</a> es leer el cuerpo de la respuesta poco a poco, con <code>getReader()</code> y un <code>TextDecoder</code>, en vez de esperar a <code>resp.json()</code>. (<code>EventSource</code>, la API clásica para estos eventos, solo hace peticiones GET, y aquí hay que enviar el mensaje con POST.)</p>
+  <pre><code class="language-js">async function hablarConBrasa(mensaje, burbuja) {
+  const resp = await fetch("/api/npc/brasa/hablar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mensaje }),
+    signal: AbortSignal.timeout(30_000),               // no esperar para siempre (Estación 16)
+  });
+  const lector = resp.body.getReader();
+  const decodificador = new TextDecoder();
+  let pendiente = "";
+  while (true) {
+    const { value, done } = await lector.read();
+    if (done) break;
+    pendiente += decodificador.decode(value, { stream: true });
+    const eventos = pendiente.split("\n\n");
+    pendiente = eventos.pop();                         // el último puede llegar a medias
+    for (const ev of eventos) {
+      if (ev.startsWith("data: ")) burbuja.textContent += JSON.parse(ev.slice(6));
+      if (ev.startsWith("event: error")) burbuja.textContent = JSON.parse(ev.split("data: ")[1]);
+    }
+  }
+}</code></pre>
+  <p>Fíjate en <code>textContent</code>: el texto del modelo se trata como texto, nunca como HTML. Lo practicarás en el taller de la tabernera, en <a href="#npc">Personajes que conversan</a>. En Python, el equivalente es <code>with client.messages.stream(...) as stream:</code> y <code>for texto in stream.text_stream:</code>.</p>
+
+  <h3>Cuando algo falla</h3>
+  <p>Una API externa falla a veces, y tu juego no puede quedarse congelado. Estos son los errores que verás, con qué hacer en cada caso:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Código</th><th scope="col">Tipo</th><th scope="col">Causa habitual</th><th scope="col">¿Reintentar?</th></tr></thead>
+      <tbody>
+        <tr><td>400</td><td><code>invalid_request_error</code></td><td>Petición mal formada (falta <code>max_tokens</code>, sobra <code>temperature</code>, el primer mensaje no es <code>user</code>…). También si llegaste al límite de gasto que pusiste tú.</td><td>No: corrige la petición o sube tu límite.</td></tr>
+        <tr><td>401</td><td><code>authentication_error</code></td><td>Clave ausente, mal copiada o anulada.</td><td>No: revisa tu <code>.env</code>.</td></tr>
+        <tr><td>429</td><td><code>rate_limit_error</code></td><td>Demasiadas peticiones o tokens por minuto. Trae la cabecera <code>retry-after</code> (segundos que esperar).</td><td>Sí, después de <code>retry-after</code>.</td></tr>
+        <tr><td>429</td><td><code>rate_limit_error</code> sin <code>retry-after</code></td><td>Tu organización llegó al tope mensual de gasto de su nivel (<code>error.details.error_code</code> es <code>enforced_spend_limit_reached</code>).</td><td>No: no se arregla hasta el mes siguiente o subiendo de nivel.</td></tr>
+        <tr><td>500</td><td><code>api_error</code></td><td>Fallo interno del servicio.</td><td>Sí, con espera.</td></tr>
+        <tr><td>529</td><td><code>overloaded_error</code></td><td>La API está saturada en ese momento.</td><td>Sí, con espera creciente.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El SDK ya reintenta por ti: por defecto, <strong>2 veces</strong> los errores 408, 409, 429 y 5xx y los fallos de conexión, esperando cada vez un poco más (espera exponencial, como el ejercicio de reintentos de la <a href="16-asincronia.html#ej-reintentar">Estación 16</a>). Su tiempo límite por defecto es de 10 minutos, pensado para respuestas largas. En un juego conviene ajustarlo al configurar el cliente y tener siempre una <strong>frase de reserva</strong> del personaje:</p>
+  <pre><code class="language-js">const client = new Anthropic({ maxRetries: 1, timeout: 20_000 });   // en el SDK de Node, milisegundos
+
+try {
+  texto = await pedirABrasa(mensaje);
+} catch (err) {
+  if (err instanceof Anthropic.RateLimitError) registrar("limite", err);
+  else if (err instanceof Anthropic.APIError) registrar("api", err.status);
+  texto = "Brasa se rasca la cabeza: «Perdona, con este jaleo no te he oído. ¿Qué decías?»";
+}</code></pre>
+  <p>En la práctica escribirás tu propia política de reintentos, con el 429 de tope de gasto que no se debe reintentar (<a href="#ej-reintentos">ejercicio «Reintentos y frase de reserva»</a>).</p>
+
+  <h3>Costos: medir, cachear y agrupar</h3>
+  <p>El costo de una petición sale de <code>usage</code> y de la tabla de precios: tokens de entrada × precio de entrada + tokens de salida × precio de salida, más los de caché con sus propios precios, todo dividido entre un millón. Una petición típica de chat cuesta fracciones de centavo; el peligro está en multiplicar: miles de jugadores, historiales largos, bucles que se repiten. Tres herramientas para bajar la factura:</p>
+  <ul>
+    <li><strong>Caché de prompts</strong>: si el principio de tus peticiones se repite (la ficha, el lore, las herramientas), márcalo con <code>cache_control</code> y la API lo guarda unos minutos. Las siguientes peticiones que empiezan igual lo leen de la caché a una fracción del precio. Es distinta de la caché de la <a href="28-arquitectura.html#cache">Estación 28</a>: no guarda respuestas, guarda el trabajo de leer ese principio.</li>
+    <li><strong>Message Batches</strong>: si no necesitas la respuesta al momento (por ejemplo, pregenerar cien frases de ambiente para los NPC), envías un lote de peticiones que se procesan en segundo plano con un 50 % de descuento.</li>
+    <li><strong>Menos tokens</strong>: fichas concisas, historial resumido, respuestas cortas (<code>max_tokens</code> y una instrucción de brevedad) y el modelo más barato que cumpla tus evals.</li>
+  </ul>
+  <pre><code class="language-js">const r = await client.messages.create({
+  model: "claude-opus-5-5",
+  max_tokens: 512,
+  system: [
+    { type: "text", text: FICHA_Y_LORE, cache_control: { type: "ephemeral" } },   // 5 minutos por defecto
+  ],
+  messages: historial,
+});
+console.log(r.usage.cache_creation_input_tokens);   // 1.ª petición: tokens escritos en caché
+console.log(r.usage.cache_read_input_tokens);       // siguientes: tokens leídos de caché (&gt; 0 si funciona)</code></pre>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Modelo</th><th scope="col">Entrada</th><th scope="col">Salida</th><th scope="col">Escritura en caché (5 min)</th><th scope="col">Lectura de caché</th><th scope="col">Mínimo cacheable</th></tr></thead>
+      <tbody>
+        <tr><td><code>claude-opus-5-5</code></td><td>4</td><td>20</td><td>5 (1,25×)</td><td>0,20 (0,05×)</td><td>512 tokens</td></tr>
+        <tr><td><code>claude-sonnet-5-5</code></td><td>2</td><td>10</td><td>2,50 (1,25×)</td><td>0,20 (0,1×)</td><td>512 tokens</td></tr>
+        <tr><td><code>claude-haiku-4-5</code></td><td>1</td><td>5</td><td>1,25 (1,25×)</td><td>0,10 (0,1×)</td><td>4 096 tokens</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Precios en dólares por millón de tokens, septiembre de 2026. La caché de 1 hora (<code>ttl: "1h"</code>) cuesta el doble al escribir (2×). Si el prefijo es más corto que el mínimo cacheable del modelo, no se cachea y no da error: <code>cache_read_input_tokens</code> se queda en 0. Por eso se verifica siempre mirando <code>usage</code>. Y un detalle que rompe la caché sin avisar: cualquier cambio en el principio de la petición (una fecha, un número aleatorio en el <code>system</code>) hace que ya no coincida.</p>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Latencia: lo que el jugador nota</p><p>El tiempo de respuesta tiene tres partes: leer la entrada (más tokens, más espera; la caché ayuda), pensar (el esfuerzo decide cuánto) y escribir la salida (cuantos más tokens, más tarda). Para un personaje: entrada concisa y cacheada, <code>effort: "low"</code>, respuestas de una o dos frases y streaming. Mide el tiempo hasta el primer token en tus pruebas, no solo el total.</p></div></aside>
+
+  <h3>Un adaptador para cambiar de proveedor (o de doble)</h3>
+  <p>Otros proveedores y los modelos locales tienen APIs parecidas pero no iguales. Si tu juego llama a <code>client.messages.create</code> por todas partes, cambiar de modelo o probar sin gastar es un infierno. La solución es el patrón <strong>Adapter</strong> de la <a href="25-codigo-limpio.html#mas-patrones">Estación 25</a>: tu juego solo conoce una interfaz pequeña, y cada proveedor tiene su adaptador.</p>
+  <pre><code class="language-js">// adaptadores.js — el juego solo conoce responder({ system, mensajes }) → { texto, usage, stop }
+export function adaptadorClaude(client) {
+  return {
+    async responder({ system, mensajes }) {
+      const r = await client.messages.create({ model: "claude-opus-5-5", max_tokens: 1024, system, messages: mensajes });
+      const texto = r.content.filter((b) =&gt; b.type === "text").map((b) =&gt; b.text).join("");
+      return { texto, usage: r.usage, stop: r.stop_reason };
+    },
+  };
+}
+
+export function adaptadorSimulado(respuestas) {            // un doble de prueba (Estación 26)
+  let i = 0;
+  return {
+    async responder() {
+      return { texto: respuestas[i++ % respuestas.length], usage: { input_tokens: 0, output_tokens: 0 }, stop: "end_turn" };
+    },
+  };
+}</code></pre>
+  <p>Las pruebas usan el simulado (gratis, rápido, determinista); el juego en producción usa el de Claude; y un tercero para Ollama te deja jugar sin conexión (lo verás en <a href="#npc">Personajes que conversan</a>). El proyecto de la estación está construido así.</p>
+
+  <h3>Un proyecto sin secretos</h3>
+  <p>Antes de escribir el servidor real, deja la carpeta lista para que la clave nunca entre en Git. Es la costumbre de la <a href="31-seguridad.html#secretos">Estación 31</a>, aplicada al proyecto de esta estación. La clave de la misión es inventada.</p>
+  <div class="terminal-sim" data-titulo="Misión: npc-brasa sin secretos" data-inicio="/home/tu">
+    <script type="application/json" class="terminal-sistema">{"proyectos": {}}</script>
+    <div class="terminal-instrucciones">
+      <p>1. <code>mkdir npc-brasa</code> y <code>cd npc-brasa</code>.</p>
+      <p>2. La clave (inventada) en <code>.env</code>: <code>echo "ANTHROPIC_API_KEY=sk-ant-EJEMPLO-no-es-real" &gt; .env</code></p>
+      <p>3. La plantilla sin valor: <code>echo "ANTHROPIC_API_KEY=" &gt; .env.example</code>. Y el <code>.gitignore</code>: <code>echo ".env" &gt; .gitignore</code></p>
+      <p>4. Un servidor mínimo: <code>echo "console.log('Brasa escucha en el puerto 3000')" &gt; servidor.js</code></p>
+      <p>5. <code>git init</code>, <code>git add .</code>, comprueba con <code>git status</code> que <code>.env</code> no aparece y termina con <code>git commit -m "Esqueleto de npc-brasa"</code>.</p>
+    </div>
+    <script type="text/plain" class="terminal-mision">
+var repo = sistema["npc-brasa"];
+if (!repo) return "Crea la carpeta npc-brasa en /home/tu (paso 1).";
+if (repo[".env"] === undefined || !/ANTHROPIC_API_KEY=\S+/.test(repo[".env"])) return "Crea .env con la línea ANTHROPIC_API_KEY=... (paso 2).";
+if (repo[".env.example"] === undefined || !/ANTHROPIC_API_KEY=/.test(repo[".env.example"])) return "Crea .env.example con ANTHROPIC_API_KEY= sin valor (paso 3).";
+if (/sk-ant/.test(repo[".env.example"])) return ".env.example no debe llevar la clave, solo el nombre de la variable.";
+if (repo[".gitignore"] === undefined || !/(^|\n)\s*\/?\.env\s*(\n|$)/.test(repo[".gitignore"])) return "Crea un .gitignore con la línea .env (paso 3).";
+if (repo["servidor.js"] === undefined) return "Crea servidor.js (paso 4).";
+if (!git || !git.commits.length) return "Ahora git init, git add . y git commit -m \"Esqueleto de npc-brasa\" (paso 5).";
+var conEnv = git.commits.some(function (c) { return Object.keys(c.arbol).some(function (k) { return k === ".env" || /\/\.env$/.test(k); }); });
+if (conEnv) return "Un commit contiene .env: la clave quedó en el historial. En la vida real tendrías que anularla en la Console. Pulsa Reiniciar y crea el .gitignore antes del primer commit.";
+var ultimo = git.commits.reduce(function (a, b) { return (b.orden || 0) > (a.orden || 0) ? b : a; });
+var archivos = Object.keys(ultimo.arbol);
+var tiene = function (n) { return archivos.some(function (k) { return k === n || k.slice(-n.length - 1) === "/" + n; }); };
+if (!tiene("servidor.js") || !tiene(".gitignore") || !tiene(".env.example")) return "El commit debe incluir servidor.js, .gitignore y .env.example.";
+return true;
+    </script>
+  </div>
+  <p>En tu computadora, además, comprobarás que la clave no está en ningún commit con <code>git log -p | grep -c "sk-ant"</code>, que debe imprimir 0. Si alguna vez sale otro número, la clave está en el historial: anúlala en la Console y crea otra, porque borrar el archivo no la saca de los commits anteriores.</p>
+</section>
+
+<section id="herramientas" data-parada="Herramientas y agentes">
+  <h2>Salida estructurada, herramientas y agentes</h2>
+  <p>Un chat puede mostrar la respuesta tal cual. Un juego no: necesita <em>datos</em>. Cuando Brasa responde, tu código tiene que saber qué dijo (para mostrarlo), con qué emoción (para la animación de su cara) y qué quiere hacer (ofrecer un objeto, dar una pista, terminar la conversación). Si el modelo devuelve prosa, tendrías que adivinar todo eso con expresiones regulares. Esta sección trata de cómo pedirle datos, de cómo darle acciones y de dónde poner los límites.</p>
+
+  <h3>Salida estructurada: JSON que cumple un esquema</h3>
+  <p>Con la <strong>salida estructurada</strong> le das a la API un <strong>esquema JSON</strong> (una descripción de la forma que debe tener el JSON, como el esquema de validación de la <a href="29-backend.html#validar">Estación 29</a>) y la respuesta sale garantizada con esa forma: los campos obligatorios están, los tipos son los correctos y los valores de una lista cerrada (<code>enum</code>) son de esa lista. Se pide con <code>output_config.format</code>. Con el SDK de Node, lo cómodo es escribir el esquema con Zod 4 y usar <code>messages.parse</code>, que además te devuelve el objeto ya interpretado:</p>
+  <pre><code class="language-js">import Anthropic from "@anthropic-ai/sdk";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { z } from "zod";
+
+const RespuestaNPC = z.object({
+  dialogo: z.string(),
+  emocion: z.enum(["alegre", "neutral", "triste", "enfadada", "asustada"]),
+  accion: z.enum(["nada", "ofrecer_objeto", "dar_pista", "terminar"]),
+  objeto: z.string().nullable(),          // null si la acción no lleva objeto
+});
+
+const client = new Anthropic();
+const r = await client.messages.parse({
+  model: "claude-opus-5-5",
+  max_tokens: 1024,
+  system: FICHA_BRASA,
+  messages: [{ role: "user", content: "¿Tienes algo para el frío?" }],
+  output_config: { format: zodOutputFormat(RespuestaNPC) },
+});
+const respuesta = r.parsed_output;        // { dialogo, emocion, accion, objeto } o null si no se pudo interpretar</code></pre>
+  <p>En Python se hace igual con una clase de Pydantic:</p>
+  <pre><code class="language-python">from typing import Literal, Optional
+from pydantic import BaseModel
+
+class RespuestaNPC(BaseModel):
+    dialogo: str
+    emocion: Literal["alegre", "neutral", "triste", "enfadada", "asustada"]
+    accion: Literal["nada", "ofrecer_objeto", "dar_pista", "terminar"]
+    objeto: Optional[str]
+
+r = client.messages.parse(
+    model="claude-opus-5-5",
+    max_tokens=1024,
+    system=FICHA_BRASA,
+    messages=[{"role": "user", "content": "¿Tienes algo para el frío?"}],
+    output_format=RespuestaNPC,
+)
+print(r.parsed_output.accion)</code></pre>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Un JSON válido no es una jugada legal</p><p>El esquema garantiza la <em>forma</em>, no las <em>reglas de tu juego</em>. El JSON puede decir <code>"accion": "ofrecer_objeto", "objeto": "espada de fuego"</code> y ser perfectamente válido… aunque Brasa no tenga ninguna espada. Además, la garantía no siempre está: si la respuesta se corta por <code>max_tokens</code> o el modelo se niega, no hay JSON completo; y si usas un modelo local, puede que no respete el esquema. Por eso, después del esquema, tu código valida las reglas: la acción está permitida, el objeto existe en el inventario, el texto no se pasa de largo. Lo que no pasa, se degrada a una acción inofensiva.</p></div></aside>
+  <div class="taller" id="taller-validar" data-titulo="Completa: salida que el juego valida" data-exponer="validarRespuesta">
+    <script type="text/plain" class="taller-preparacion">
+const estado = { inventario: { farol: 1, cuerda: 2, pan: 5, llave: 0 }, confianza: 1 };
+const respuestasDelModelo = [
+  '{"dialogo":"Para el frío, nada como un farol encendido. Te lo dejo barato.","emocion":"alegre","accion":"ofrecer_objeto","objeto":"farol"}',
+  '{"dialogo":"Toma, la llave del sótano. No se lo digas a nadie.","emocion":"alegre","accion":"dar_llave","objeto":"llave"}',
+  '{"dialogo":"Tengo justo lo que buscas: una espada de fuego.","emocion":"alegre","accion":"ofrecer_objeto","objeto":"espada de fuego"}',
+  'Claro, aquí tienes tu respuesta: {"dialogo": "Hola',
+  JSON.stringify({ dialogo: "Érase una vez, en Brumavela, ".repeat(15), emocion: "nostálgica", accion: "nada", objeto: null }),
+];
+    </script>
+    <textarea class="taller-codigo">// Ya tienes: estado (inventario y confianza) y respuestasDelModelo (5 textos que devolvió un modelo).
+const EMOCIONES = ["alegre", "neutral", "triste", "enfadada", "asustada"];
+const ACCIONES = ["nada", "ofrecer_objeto", "dar_pista", "terminar"];
+
+function validarRespuesta(texto, estado) {
+  let r;
+  try {
+    r = JSON.parse(texto);
+  } catch {
+    console.warn("JSON inválido:", texto.slice(0, 30));
+    return { dialogo: "Brasa se queda pensativa.", emocion: "neutral", accion: "nada", objeto: null };
+  }
+  // Completa las reglas:
+  // 1. si r.emocion no está en EMOCIONES → "neutral"
+  // 2. si r.accion no está en ACCIONES → "nada" y objeto null (con console.warn)
+  // 3. si r.accion es "ofrecer_objeto" y el objeto no está en estado.inventario
+  //    o hay 0 unidades → "nada" y objeto null (con console.warn)
+  // 4. si r.dialogo tiene más de 300 caracteres → recórtalo a 300
+  return r;
+}
+
+for (const texto of respuestasDelModelo) {
+  const r = validarRespuesta(texto, estado);
+  console.log(`${r.accion.padEnd(15)} ${String(r.objeto).padEnd(8)} ${r.emocion.padEnd(9)} ${r.dialogo.length} caracteres`);
+}</textarea>
+    <script type="text/plain" class="taller-verificar">
+const v = expuesto.validarRespuesta;
+if (typeof v !== "function") return "No encuentro la función validarRespuesta: ¿se llama así y el programa terminó sin errores?";
+const est = { inventario: { farol: 1, cuerda: 2, llave: 0 }, confianza: 1 };
+const ok = v('{"dialogo":"Una cuerda, buena elección.","emocion":"alegre","accion":"ofrecer_objeto","objeto":"cuerda"}', est);
+if (!ok || ok.accion !== "ofrecer_objeto" || ok.objeto !== "cuerda") return "Una respuesta válida (ofrecer una cuerda que sí hay) debe pasar sin cambios.";
+const a = v('{"dialogo":"Toma la llave.","emocion":"alegre","accion":"dar_llave","objeto":"llave"}', est);
+if (a.accion !== "nada") return "La acción «dar_llave» no está en ACCIONES: debería quedar en \"nada\".";
+const b = v('{"dialogo":"Una espada.","emocion":"alegre","accion":"ofrecer_objeto","objeto":"espada de fuego"}', est);
+if (b.accion !== "nada" || b.objeto) return "Ofrecer un objeto que no está en el inventario debería degradarse a \"nada\" con objeto null.";
+const c = v('{"dialogo":"La llave.","emocion":"alegre","accion":"ofrecer_objeto","objeto":"llave"}', est);
+if (c.accion !== "nada") return "Si hay 0 unidades del objeto (la llave), tampoco se puede ofrecer.";
+const d = v(JSON.stringify({ dialogo: "x".repeat(500), emocion: "rara", accion: "nada", objeto: null }), est);
+if (d.dialogo.length > 300) return "El diálogo debe quedar en 300 caracteres como mucho.";
+if (d.emocion !== "neutral") return "Una emoción que no está en EMOCIONES debería pasar a \"neutral\".";
+if (errores.length < 3) return "Registra con console.warn cada respuesta que degradas (al menos las 3 inválidas de la lista).";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">const EMOCIONES = ["alegre", "neutral", "triste", "enfadada", "asustada"];
+const ACCIONES = ["nada", "ofrecer_objeto", "dar_pista", "terminar"];
+
+function validarRespuesta(texto, estado) {
+  let r;
+  try {
+    r = JSON.parse(texto);
+  } catch {
+    console.warn("JSON inválido:", texto.slice(0, 30));
+    return { dialogo: "Brasa se queda pensativa.", emocion: "neutral", accion: "nada", objeto: null };
+  }
+  if (typeof r.dialogo !== "string") r.dialogo = "…";
+  if (!EMOCIONES.includes(r.emocion)) r.emocion = "neutral";
+  if (!ACCIONES.includes(r.accion)) {
+    console.warn("Acción no permitida:", r.accion);
+    r.accion = "nada";
+    r.objeto = null;
+  }
+  if (r.accion === "ofrecer_objeto" &amp;&amp; !((estado.inventario[r.objeto] || 0) &gt; 0)) {
+    console.warn("Objeto que no tiene:", r.objeto);
+    r.accion = "nada";
+    r.objeto = null;
+  }
+  if (r.dialogo.length &gt; 300) r.dialogo = r.dialogo.slice(0, 300);
+  return r;
+}
+
+for (const texto of respuestasDelModelo) {
+  const r = validarRespuesta(texto, estado);
+  console.log(`${r.accion.padEnd(15)} ${String(r.objeto).padEnd(8)} ${r.emocion.padEnd(9)} ${r.dialogo.length} caracteres`);
+}</code></pre>
+    <p>La primera respuesta pasa entera; la llave, la espada inventada y el JSON roto acaban en <code>nada</code>, y el cuento largo se recorta a 300 caracteres con la emoción corregida a <code>neutral</code>. Fíjate en <code>(estado.inventario[r.objeto] || 0) &gt; 0</code>: cubre a la vez el objeto que no existe (<code>undefined</code>) y el que está agotado (0). En el juego, cada <code>console.warn</code> sería un registro que revisas para mejorar las instrucciones.</p>
+  </details>
+
+  <h3>Herramientas: el modelo pide, tu código ejecuta</h3>
+  <p>A veces el modelo necesita un dato que no tiene (¿cuántas cuerdas quedan en el almacén?) o quiere hacer algo en tu juego (proponer un trato). Para eso existe el <strong>uso de herramientas</strong> (<em>tool use</em>): le describes funciones de tu programa y el modelo puede pedir que las ejecutes. Una <strong>herramienta</strong> se define con un nombre, una descripción (que el modelo lee para decidir cuándo usarla) y un esquema de su entrada:</p>
+  <pre><code class="language-js">const herramientas = [
+  {
+    name: "consultarInventario",
+    description: "Devuelve cuántas unidades hay de un objeto en el almacén del mercader y su precio base en monedas. Úsala antes de ofrecer un precio.",
+    strict: true,                                   // la entrada cumplirá el esquema al pie de la letra
+    input_schema: {
+      type: "object",
+      properties: { objeto: { type: "string", description: "Nombre del objeto en singular, por ejemplo «cuerda»" } },
+      required: ["objeto"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "proponerTrato",
+    description: "Propone al jugador vender un objeto a un precio. El juego comprueba el trato y lo ejecuta si el jugador acepta; tú solo lo propones.",
+    strict: true,
+    input_schema: {
+      type: "object",
+      properties: { objeto: { type: "string" }, precio: { type: "integer" } },
+      required: ["objeto", "precio"],
+      additionalProperties: false,
+    },
+  },
+];</code></pre>
+  <p>El intercambio funciona así:</p>
+  <ol class="pasos">
+    <li><div><p>Envías la petición con <code>tools: herramientas</code>.</p></div></li>
+    <li><div><p>Si el modelo quiere una herramienta, la respuesta llega con <code>stop_reason: "tool_use"</code> y uno o varios bloques <code>tool_use</code>, cada uno con un <code>id</code>, el <code>name</code> y el <code>input</code>. El modelo no ejecuta nada: solo pide.</p></div></li>
+    <li><div><p>Tu código añade esa respuesta al historial como turno <code>assistant</code>, ejecuta cada herramienta (validando la entrada, como cualquier dato externo) y prepara un bloque <code>tool_result</code> por cada una, con el mismo <code>tool_use_id</code>. Si una falla, su resultado lleva <code>is_error: true</code> y el mensaje de error: no la omitas.</p></div></li>
+    <li><div><p>Todos los resultados van juntos en <strong>un único</strong> mensaje <code>user</code>. Vuelves a llamar a la API con el historial completo.</p></div></li>
+    <li><div><p>Repites hasta que <code>stop_reason</code> ya no es <code>"tool_use"</code>: entonces el modelo ha terminado y su texto es la respuesta final.</p></div></li>
+  </ol>
+  <div class="traza" data-titulo="Dos vueltas del bucle de herramientas" data-rotulo-memoria="Memoria (el historial de mensajes)">
+    <pre><code class="language-js">const mensajes = [{ role: "user", content: "¿Me vendes una cuerda?" }];
+let r = await client.messages.create({ model, max_tokens, tools, messages: mensajes });
+mensajes.push({ role: "assistant", content: r.content });
+const pedido = r.content.find((b) =&gt; b.type === "tool_use");
+const resultado = consultarInventario(pedido.input);
+mensajes.push({ role: "user", content: [
+  { type: "tool_result", tool_use_id: pedido.id, content: JSON.stringify(resultado) }] });
+r = await client.messages.create({ model, max_tokens, tools, messages: mensajes });
+mensajes.push({ role: "assistant", content: r.content });
+console.log(r.stop_reason);</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"mensajes": "[ user: «¿Me vendes una cuerda?» ]"}, "nota": "El historial empieza con el mensaje del jugador."},
+      {"linea": 2, "vars": {"mensajes": "[ user ]", "r.stop_reason": "'tool_use'", "r.content": "[ thinking, text «Déjame mirar…», tool_use { id: 'toolu_01', name: 'consultarInventario', input: { objeto: 'cuerda' } } ]"}, "nota": "El modelo no sabe cuántas cuerdas hay: pide la herramienta. Fíjate en el id: toolu_01."},
+      {"linea": 3, "vars": {"mensajes": "[ user, assistant(tool_use toolu_01) ]", "r.stop_reason": "'tool_use'"}, "nota": "La respuesta entera, con sus bloques, entra en el historial como turno del asistente. Sin esto, la API no sabría a qué pedido responde el resultado."},
+      {"linea": 4, "vars": {"mensajes": "[ user, assistant ]", "pedido": "{ id: 'toolu_01', name: 'consultarInventario', input: { objeto: 'cuerda' } }"}, "nota": "Buscamos el bloque tool_use (puede haber varios; aquí, uno)."},
+      {"linea": 5, "vars": {"mensajes": "[ user, assistant ]", "pedido": "{ id: 'toolu_01', … }", "resultado": "{ objeto: 'cuerda', unidades: 2, precio: 12 }"}, "nota": "TU código ejecuta la función, con los datos reales del juego. El modelo nunca toca el almacén."},
+      {"linea": 6, "vars": {"mensajes": "[ user, assistant, user(tool_result toolu_01) ]", "resultado": "{ objeto: 'cuerda', unidades: 2, precio: 12 }"}, "nota": "El resultado vuelve en un mensaje user, con el mismo tool_use_id. Si hubiera varios pedidos, todos sus resultados irían en este mismo mensaje."},
+      {"linea": 8, "vars": {"mensajes": "[ user, assistant, user(tool_result) ]", "r.stop_reason": "'tool_use'", "r.content": "[ tool_use { id: 'toolu_02', name: 'proponerTrato', input: { objeto: 'cuerda', precio: 12 } } ]"}, "nota": "Segunda vuelta con el historial completo. Ahora que sabe el precio, pide proponer el trato. Otra vuelta más (no está en el código) ejecutaría proponerTrato y devolvería su resultado."},
+      {"linea": 9, "vars": {"mensajes": "[ user, assistant, user(tool_result), assistant(tool_use toolu_02) ]"}, "nota": "El historial alterna user y assistant. Cada tool_use tiene su tool_result en el mensaje user siguiente."},
+      {"linea": 10, "vars": {"mensajes": "[ user, assistant, user, assistant ]"}, "salida": "tool_use", "nota": "Todavía quiere otra herramienta: por eso esto se escribe como un bucle que se repite mientras stop_reason sea «tool_use», con un máximo de vueltas."}
+    ]</script>
+  </div>
+  <p>Escrito como bucle, con un límite de vueltas (para que un error no se convierta en una factura infinita) y el costo acumulado:</p>
+  <pre><code class="language-js">async function atenderCliente(mensaje) {
+  const mensajes = [{ role: "user", content: mensaje }];
+  let costo = 0;
+  for (let vuelta = 0; vuelta &lt; 5; vuelta++) {
+    const r = await client.messages.create({
+      model: "claude-opus-5-5", max_tokens: 1024, system: FICHA_MERCADER, tools: herramientas, messages: mensajes,
+    });
+    costo += calcularCosto(r.usage);
+    mensajes.push({ role: "assistant", content: r.content });
+    if (r.stop_reason !== "tool_use") {                      // end_turn, max_tokens, refusal…
+      const texto = r.content.filter((b) =&gt; b.type === "text").map((b) =&gt; b.text).join("");
+      return { texto, costo };
+    }
+    const resultados = [];
+    for (const bloque of r.content) {
+      if (bloque.type !== "tool_use") continue;
+      try {
+        const salida = ejecutarHerramienta(bloque.name, bloque.input);    // valida la entrada dentro
+        resultados.push({ type: "tool_result", tool_use_id: bloque.id, content: JSON.stringify(salida) });
+      } catch (err) {
+        resultados.push({ type: "tool_result", tool_use_id: bloque.id, content: err.message, is_error: true });
+      }
+    }
+    mensajes.push({ role: "user", content: resultados });   // todos en UN mensaje
+  }
+  return { texto: "El mercader se rasca la barba: «Dejémoslo para otro día».", costo };
+}</code></pre>
+  <div class="parsons" data-titulo="Ordena el bucle de un agente" data-lenguaje="text">
+    <ol>
+      <li>mensajes = [ mensaje del jugador ]</li>
+      <li>repetir como mucho 5 veces:</li>
+      <li data-sangria="1">respuesta = pedir al modelo(mensajes, herramientas)</li>
+      <li data-sangria="1">añadir respuesta.content a mensajes como assistant</li>
+      <li data-sangria="1">si respuesta.stop_reason no es "tool_use": devolver su texto</li>
+      <li data-sangria="1">resultados = [ ]</li>
+      <li data-sangria="1">para cada bloque tool_use de la respuesta:</li>
+      <li data-sangria="2">salida = ejecutar la herramienta con bloque.input (validado)</li>
+      <li data-sangria="2">añadir a resultados un tool_result con tool_use_id = bloque.id</li>
+      <li data-sangria="1">añadir a mensajes UN mensaje user con todos los resultados</li>
+      <li>devolver la frase de reserva (se acabaron las vueltas)</li>
+    </ol>
+  </div>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">No se puede obligar a usar una herramienta</p><p>El parámetro <code>tool_choice</code> decide si el modelo puede usar herramientas. En modelos antiguos se podía forzar una concreta (<code>{ type: "tool", name: … }</code>); en <code>claude-opus-5-5</code> y <code>claude-sonnet-5-5</code> eso da error 400. Se deja en <code>auto</code> (el valor por defecto) y se guía con la instrucción: «antes de dar un precio, consulta siempre el inventario». Si lo que querías era obligarle a devolver JSON, usa la salida estructurada.</p></div></aside>
+  <p>Escribir el bucle a mano es la mejor forma de entenderlo, y lo harás contra un simulador en la práctica (<a href="#ej-herramientas">ejercicio «El bucle de herramientas»</a>). En proyectos reales, el SDK trae un ayudante en beta, el <em>Tool Runner</em>, que hace este bucle por ti (está en «Para profundizar»). Y ahora puedes entender qué es un <strong>agente</strong>: un modelo con herramientas dentro de un bucle, que decide él mismo qué paso dar después. Claude Code, la herramienta de la <a href="42-ia.html">Estación 42</a>, es exactamente este bucle con herramientas para leer y editar archivos y ejecutar comandos. <strong>MCP</strong> (<em>Model Context Protocol</em>) es un estándar para compartir herramientas entre aplicaciones; también lo verás allí. Anthropic ofrece además dos productos que te dan el bucle hecho: los <em>Managed Agents</em> (el bucle y el entorno donde se ejecutan las herramientas corren en sus servidores) y el <em>Claude Agent SDK</em> (el motor de Claude Code como biblioteca). Para un juego, con tu bucle basta.</p>
+
+  <h3>¿Un agente o un flujo fijo?</h3>
+  <p>El consejo de Anthropic en su guía sobre agentes es <strong>empezar simple</strong>: una sola llamada resuelve la mayoría de los casos; si hacen falta varios pasos que conoces de antemano, escribe un <strong>flujo</strong> en el que tu código decide el orden (por ejemplo: clasificar el mensaje, buscar en el lore, responder); y solo si los pasos no se pueden prever, deja que el modelo decida en un bucle. Antes de construir un agente, comprueba cuatro cosas: la tarea es <strong>compleja</strong> y difícil de especificar paso a paso; el resultado <strong>vale</strong> el costo y el tiempo extra; el modelo es <strong>capaz</strong> de hacerla bien; y el <strong>costo de un error</strong> es asumible o se puede detectar y deshacer. Si alguna respuesta es no, quédate en un nivel más simple.</p>
+
+  <h3>El modelo propone, el juego dispone</h3>
+  <p>Fíjate en la herramienta <code>proponerTrato</code>: el mercader no vende, <em>propone</em>. Cuando el modelo la pide, tu juego comprueba que el objeto existe, que el precio está dentro de un margen razonable del precio base, que el jugador tiene el dinero y que acepta. Solo entonces mueve monedas y objetos. Si le dieras una herramienta <code>darObjeto(jugador, objeto)</code> que se ejecuta sin más, un jugador ingenioso podría convencerle de regalar el almacén entero. OWASP, la organización de seguridad de la <a href="31-seguridad.html">Estación 31</a>, llama a esto <strong>agencia excesiva</strong> (riesgo LLM06 de su lista para modelos de lenguaje): darle al modelo más poder del que necesita. La regla: cada herramienta, la mínima capacidad posible; y las decisiones con consecuencias, en tu código.</p>
+</section>
   </main>
 </div>
 
@@ -69,6 +2006,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
 <script src="../assets/js/motor.js"></script>
 <script src="../assets/js/terminal.js"></script>
 <script src="../assets/js/practicas.js"></script>
