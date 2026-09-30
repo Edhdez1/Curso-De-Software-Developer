@@ -54,6 +54,9 @@
       <li><a href="#funciones">Funciones y módulos</a></li>
       <li><a href="#errores">Errores y archivos</a></li>
       <li><a href="#clases">Clases</a></li>
+      <li><a href="#ecosistema">Paquetes y librerías</a></li>
+      <li><a href="#resumen">Resumen</a></li>
+      <li><a href="#practica">Práctica</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -1225,6 +1228,713 @@ print(taza)                                  # Producto(nombre='Taza', precio=7.
 print(taza == Producto("Taza", 7.25, 4))     # True: compara los campos, no la identidad
 taza.stock -= 1</code></pre>
   <p>Las anotaciones (<code>nombre: str</code>) le dicen a <code>dataclass</code> qué campos tiene la clase, en qué orden van en el constructor y de qué tipo se esperan. Recuerda que Python no comprueba esos tipos al ejecutar; tu editor sí te avisará.</p>
+</section>
+
+<section id="ecosistema" data-parada="Paquetes y librerías">
+  <h2>Entornos, paquetes y librerías</h2>
+  <p>Llegamos a la columna derecha del diagrama del principio: el ecosistema. La biblioteca estándar es grande, pero la fuerza de Python está en los cientos de miles de paquetes que publica la comunidad en <strong>PyPI</strong> (<em>Python Package Index</em>, pypi.org), el equivalente del registro de npm que usaste en la <a href="29-backend.html#npm">Estación 29</a>. Para instalarlos sin romper nada necesitas una pieza que en Node.js no hacía falta pedir: el entorno virtual.</p>
+
+  <h3>Por qué un entorno virtual</h3>
+  <p>En Node.js, <code>npm install</code> guarda los paquetes en la carpeta <code>node_modules</code> de cada proyecto. Python, por defecto, los instalaría en una carpeta compartida por toda la computadora. Mira qué problema causa y cómo se resuelve:</p>
+  <figure class="capsula" data-titulo="Un entorno virtual por proyecto">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: arriba, el Python del sistema; abajo, dos proyectos, clima, que necesita requests 2.34, y tienda, que necesita requests 2.28. Si los dos instalan en el Python del sistema solo cabe una versión y tienda se rompe. Con python -m venv cada proyecto recibe su carpeta .venv con su propio python y pip; al activar cada entorno, requests 2.34 se instala en clima y requests 2.28 en tienda, y los dos funcionan.">
+        <rect class="d-caja" x="220" y="8" width="280" height="58" rx="8"/>
+        <text class="d-rotulo" x="360" y="32" text-anchor="middle">Python del sistema</text>
+        <text class="d-peq d-tenue" x="360" y="54" text-anchor="middle" data-texto="2:paquetes: requests 2.34 (solo cabe una)">solo lo que trae de serie</text>
+        <g data-pasos="2">
+          <path class="d-linea" d="M300 96V80"/>
+          <path class="d-tinta" d="M292 80l8-12 8 12z"/>
+          <path class="d-linea" d="M420 96V80"/>
+          <path class="d-tinta" d="M412 80l8-12 8 12z"/>
+        </g>
+        <rect class="d-caja" x="20" y="96" width="320" height="150" rx="10"/>
+        <text class="d-rotulo" x="36" y="120">clima/</text>
+        <text class="d-peq d-tenue" x="36" y="140">main.py · necesita requests 2.34</text>
+        <rect class="d-caja" x="380" y="96" width="320" height="150" rx="10"/>
+        <text class="d-rotulo" x="396" y="120">tienda/</text>
+        <text class="d-peq d-tenue" x="396" y="140">main.py · necesita requests 2.28</text>
+        <g data-pasos="2">
+          <rect class="d-ok" x="220" y="104" width="108" height="24" rx="12"/>
+          <text class="d-sobre-ok d-peq" x="274" y="121" text-anchor="middle">funciona</text>
+          <rect class="d-mal" x="580" y="104" width="108" height="24" rx="12"/>
+          <text class="d-sobre-mal d-peq" x="634" y="121" text-anchor="middle">se rompe</text>
+        </g>
+        <g data-pasos="3-">
+          <rect class="d-caja-suave" x="36" y="154" width="288" height="80" rx="8"/>
+          <text xml:space="preserve" class="d-mono" x="50" y="178" style="font-size:14px">.venv/</text>
+          <text class="d-peq d-tenue" x="50" y="198">su propio python, pip y paquetes</text>
+          <rect class="d-caja-suave" x="396" y="154" width="288" height="80" rx="8"/>
+          <text xml:space="preserve" class="d-mono" x="410" y="178" style="font-size:14px">.venv/</text>
+          <text class="d-peq d-tenue" x="410" y="198">su propio python, pip y paquetes</text>
+        </g>
+        <text xml:space="preserve" class="d-mono" x="50" y="222" style="font-size:14px" data-pasos="4-">requests 2.34</text>
+        <text xml:space="preserve" class="d-mono" x="410" y="222" style="font-size:14px" data-pasos="5-">requests 2.28</text>
+        <rect class="d-acento-trazo" x="36" y="154" width="288" height="80" rx="8" data-pasos="4"/>
+        <rect class="d-acento-trazo" x="396" y="154" width="288" height="80" rx="8" data-pasos="5"/>
+        <g data-pasos="5">
+          <rect class="d-ok" x="220" y="104" width="108" height="24" rx="12"/>
+          <text class="d-sobre-ok d-peq" x="274" y="121" text-anchor="middle">funciona</text>
+          <rect class="d-ok" x="580" y="104" width="108" height="24" rx="12"/>
+          <text class="d-sobre-ok d-peq" x="634" y="121" text-anchor="middle">funciona</text>
+        </g>
+        <rect class="d-codigo" x="20" y="256" width="680" height="36" rx="8"/>
+        <text xml:space="preserve" class="d-codigo-texto" x="34" y="279" style="font-size:14px" data-texto="2:$ pip install requests   (en el Python del sistema); 3:$ python -m venv .venv   (una vez en cada proyecto); 4:(.venv) clima$ python -m pip install requests==2.34; 5:(.venv) tienda$ python -m pip install requests==2.28">$ python main.py</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Tienes dos proyectos. <code>clima</code> es nuevo y usa la versión 2.34 de la librería requests; <code>tienda</code> es antiguo y solo funciona con la 2.28. En la computadora hay un único Python, el del sistema.</li>
+        <li data-duracion="7">Si instalas los paquetes en el Python del sistema, los dos proyectos comparten una sola carpeta de paquetes, y en ella solo cabe una versión de cada uno. Al instalar la 2.34, <code>tienda</code> se rompe. Además, en muchos Linux y en macOS con Homebrew, pip ni siquiera te deja intentarlo.</li>
+        <li><code>python -m venv .venv</code> crea dentro de cada proyecto una carpeta <code>.venv</code>: un <strong>entorno virtual</strong>, con su propio <code>python</code>, su propio <code>pip</code> y su propia carpeta de paquetes, vacía.</li>
+        <li data-duracion="6">Al activar el entorno de <code>clima</code>, la terminal lo indica con <code>(.venv)</code> al principio, y los comandos <code>python</code> y <code>pip</code> pasan a ser los de esa carpeta. requests 2.34 se instala solo ahí.</li>
+        <li>En <code>tienda</code> activas su entorno e instalas la 2.28. Cada proyecto tiene sus versiones y el Python del sistema queda intacto. Es la idea de <code>node_modules</code>, pero en Python tienes que pedirla tú.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>venv y pip, paso a paso</h3>
+  <p><strong>pip</strong> es el instalador de paquetes oficial: viene con Python y descarga paquetes de PyPI. <strong>venv</strong> es el módulo de la biblioteca estándar que crea entornos virtuales. Este es el ciclo completo, con la salida real en Linux y Python 3.14 (tus números de versión pueden ser otros):</p>
+  <ol class="pasos">
+    <li><div><p>Crea la carpeta del proyecto y, dentro, el entorno virtual. Se llama <code>.venv</code> por costumbre; el punto la oculta en macOS y Linux:</p>
+      <pre class="consola"><code><span class="prompt">$</span> mkdir clima
+<span class="prompt">$</span> cd clima
+<span class="prompt">$</span> python -m venv .venv</code></pre></div></li>
+    <li><div><p>Actívalo. El comando depende del sistema:</p>
+      <pre class="consola"><code><span class="prompt">$</span> source .venv/bin/activate          <span class="salida"># macOS y Linux</span>
+<span class="prompt">PS&gt;</span> .venv\Scripts\Activate.ps1        <span class="salida"># Windows, PowerShell</span>
+<span class="prompt">&gt;</span> .venv\Scripts\activate.bat          <span class="salida"># Windows, cmd</span></code></pre>
+      <p>Desde ese momento, el indicador empieza con <code>(.venv)</code>, y <code>python</code> y <code>pip</code> son los del entorno, en cualquier sistema. Si PowerShell se niega a ejecutar el script de activación, la documentación oficial indica ejecutar una vez <code>Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser</code>.</p></div></li>
+    <li><div><p>Instala lo que necesites:</p>
+      <pre class="consola"><code><span class="prompt">(.venv) $</span> python -m pip install requests
+<span class="salida">Collecting requests
+  Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+Collecting charset_normalizer&lt;4,&gt;=2 (from requests)
+...
+Installing collected packages: urllib3, idna, charset_normalizer, certifi, requests
+Successfully installed certifi-2026.7.22 charset_normalizer-3.5.2 idna-3.20 requests-2.34.2 urllib3-2.8.0</span></code></pre>
+      <p>Pediste un paquete y llegaron cinco: requests tiene sus propias dependencias, igual que los 68 paquetes que trajo Express en la Estación 29. Un <strong>wheel</strong> (<code>.whl</code>) es el formato de paquete ya preparado para instalar.</p></div></li>
+    <li><div><p>Anota las versiones exactas en un archivo para que otras personas (o tu servidor) instalen lo mismo:</p>
+      <pre class="consola"><code><span class="prompt">(.venv) $</span> python -m pip freeze &gt; requirements.txt
+<span class="prompt">(.venv) $</span> cat requirements.txt
+<span class="salida">certifi==2026.7.22
+charset-normalizer==3.5.2
+idna==3.20
+requests==2.34.2
+urllib3==2.8.0</span></code></pre>
+      <p>Quien descargue tu proyecto crea su propio entorno y ejecuta <code>python -m pip install -r requirements.txt</code>.</p></div></li>
+    <li><div><p>Cuando termines, <code>deactivate</code> devuelve la terminal a la normalidad. El entorno no se sube a Git: se puede borrar y recrear en cualquier momento a partir de <code>requirements.txt</code>.</p></div></li>
+  </ol>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>Escribe <code>python -m pip</code> en lugar de <code>pip</code> a secas. La <code>-m</code> ejecuta el módulo pip <em>del mismo Python</em> que estás usando, así que el paquete se instala donde tú crees. Con varios Pythons en la computadora, <code>pip</code> a secas puede pertenecer a otro, y entonces instalas en un sitio y ejecutas en otro: «lo instalé, pero me dice <code>ModuleNotFoundError</code>». Es el problema de instalación más común de Python.</p></div></aside>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">error: externally-managed-environment</p><p>Si intentas <code>pip install</code> fuera de un entorno virtual en Ubuntu, Debian, Fedora o macOS con Homebrew, verás esto:</p>
+    <pre class="consola"><code><span class="salida">error: externally-managed-environment
+
+× This environment is externally managed
+╰─&gt; To install Python packages system-wide, try apt install
+    python3-xyz, where xyz is the package you are trying to
+    install.</span></code></pre>
+    <p>No es un fallo: el sistema operativo usa ese Python para sus propias herramientas y lo protege para que no lo rompas (la norma se llama PEP 668). La solución es la que acabas de aprender: crea un entorno virtual y activa. Verás en internet la opción <code>--break-system-packages</code>; su nombre avisa de lo que hace («romper los paquetes del sistema»), así que no la uses.</p></div></aside>
+  <p>Hay dos archivos que tampoco deben subirse a Git. Uno es la carpeta <code>.venv</code>. El otro es <code>__pycache__</code>, que Python crea junto a tus módulos al importarlos para guardar su <strong>bytecode</strong> ya traducido (el paso intermedio que viste en la <a href="22-ejecucion.html#del-texto">Estación 22</a>) y arrancar más rápido la próxima vez. Desde Python 3.13, <code>venv</code> mete dentro de <code>.venv</code> un pequeño <code>.gitignore</code> que la oculta a Git, pero la costumbre es escribir las dos carpetas en el <code>.gitignore</code> del proyecto, como hiciste con <code>node_modules</code> en la <a href="24-git.html">Estación 24</a>. Practícalo:</p>
+  <div class="terminal-sim" data-titulo="Misión: un proyecto de Python limpio en Git" data-inicio="/home/tu">
+    <div class="terminal-instrucciones">
+      <ol>
+        <li>Entra en el proyecto con <code>cd clima</code>. Compara <code>ls</code> con <code>ls -a</code>: la carpeta <code>.venv</code> está oculta. Mira también qué hay en <code>__pycache__</code>.</li>
+        <li>Crea el <code>.gitignore</code> con dos líneas: <code>echo ".venv/" &gt; .gitignore</code> y <code>echo "__pycache__/" &gt;&gt; .gitignore</code>. Compruébalo con <code>cat .gitignore</code>.</li>
+        <li>Crea el repositorio con <code>git init</code>, prepara todo con <code>git add .</code> y revisa con <code>git status</code> que no aparecen ni <code>.venv</code> ni <code>__pycache__</code>.</li>
+        <li>Guarda la primera versión: <code>git commit -m "feat: primera versión del clima"</code>.</li>
+      </ol>
+    </div>
+    <script type="application/json" class="terminal-sistema">{"clima": {"main.py": "import requests\nfrom utilidades import formatear\n\nprint(formatear(21.5))\n", "utilidades.py": "def formatear(grados):\n    return f\"{grados:.1f} °C\"\n", "requirements.txt": "certifi==2026.7.22\ncharset-normalizer==3.5.2\nidna==3.20\nrequests==2.34.2\nurllib3==2.8.0\n", ".venv": {"pyvenv.cfg": "home = /usr/bin\nversion = 3.14.7\n", "bin": {"python": "(programa)", "pip": "(programa)"}, "lib": {"site-packages": {"requests": {"__init__.py": "# código de la librería requests\n"}}}}, "__pycache__": {"utilidades.cpython-314.pyc": "(bytecode)"}}}</script>
+    <script type="text/plain" class="terminal-mision">
+var gi = sistema.clima && sistema.clima[".gitignore"];
+if (!gi) return "Paso 2: entra en clima y crea el archivo .gitignore con echo \".venv/\" > .gitignore";
+if (gi.indexOf(".venv") === -1) return "Tu .gitignore debe contener la línea .venv/";
+if (gi.indexOf("__pycache__") === -1) return "Añade también __pycache__/ al .gitignore con echo \"__pycache__/\" >> .gitignore (dos signos >> para no borrar lo anterior).";
+if (!git) return "Paso 3: crea el repositorio dentro de clima con git init.";
+if (git.raiz !== "/home/tu/clima") return "El repositorio debía estar en /home/tu/clima. Pulsa «Reiniciar» y haz cd clima antes de git init.";
+if (!git.commits.length) return "Paso 4: prepara con git add . y guarda con git commit -m \"feat: primera versión del clima\".";
+var sucio = git.commits.some(function (c) { return Object.keys(c.arbol).some(function (k) { return k.indexOf(".venv/") === 0 || k.indexOf("__pycache__") !== -1; }); });
+if (sucio) return "Un commit incluye archivos de .venv o de __pycache__. Pulsa «Reiniciar» y crea el .gitignore ANTES de git add.";
+var bueno = git.commits.some(function (c) { return "main.py" in c.arbol && "utilidades.py" in c.arbol && "requirements.txt" in c.arbol && ".gitignore" in c.arbol; });
+if (!bueno) return "El commit debe incluir main.py, utilidades.py, requirements.txt y .gitignore. Usa git add . antes de git commit.";
+return true;
+    </script>
+  </div>
+
+  <h3>uv: todo en una herramienta</h3>
+  <p><strong>uv</strong> es un gestor de proyectos y paquetes de Python que se ha vuelto muy popular desde 2024. Hace en un solo programa lo que antes hacían varios: instala versiones de Python, crea el entorno virtual, instala paquetes (su documentación habla de 10 a 100 veces más rápido que pip) y guarda las versiones exactas. Si vienes de npm, su forma de trabajar te resultará conocida. Se instala con una línea (los comandos exactos para tu sistema están en docs.astral.sh/uv) y se usa así:</p>
+  <pre class="consola"><code><span class="prompt">$</span> uv init --no-package juego
+<span class="salida">Initialized project `juego` at `/home/tu/juego`</span>
+<span class="prompt">$</span> cd juego
+<span class="prompt">$</span> uv run main.py
+<span class="salida">Using CPython 3.14.7
+Creating virtual environment at: .venv
+Hello from juego!</span>
+<span class="prompt">$</span> uv add requests
+<span class="salida">Resolved 6 packages in 220ms
+...
+ + requests==2.34.2</span></code></pre>
+  <p><code>uv init</code> crea el proyecto (con un <code>main.py</code> de ejemplo, un <code>.gitignore</code> y un repositorio de Git); <code>uv run</code> crea el entorno la primera vez y ejecuta el programa dentro de él, sin que tengas que activar nada; <code>uv add</code> instala un paquete y lo apunta. La opción <code>--no-package</code> pide el proyecto más sencillo, un programa y no una librería para publicar; sin ella, las versiones recientes crean una estructura con una carpeta <code>src</code>. uv cambia rápido: comprueba tu versión con <code>uv --version</code> y las opciones con <code>uv init --help</code>. Cada pieza tiene su pareja en el mundo de Node:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Node.js y npm</th><th scope="col">Python con uv</th><th scope="col">Python con pip</th></tr></thead>
+      <tbody>
+        <tr><td><code>package.json</code></td><td><code>pyproject.toml</code> (la ficha del proyecto y sus dependencias)</td><td><code>requirements.txt</code> (solo la lista)</td></tr>
+        <tr><td><code>package-lock.json</code></td><td><code>uv.lock</code> (versiones exactas; se sube a Git)</td><td><code>requirements.txt</code> con <code>==</code></td></tr>
+        <tr><td><code>node_modules/</code></td><td><code>.venv/</code></td><td><code>.venv/</code></td></tr>
+        <tr><td><code>npm install express</code></td><td><code>uv add flask</code></td><td><code>python -m pip install flask</code></td></tr>
+        <tr><td><code>npm install</code> (en un proyecto descargado)</td><td><code>uv sync</code></td><td><code>python -m pip install -r requirements.txt</code></td></tr>
+        <tr><td><code>node index.js</code>, <code>npm run</code></td><td><code>uv run main.py</code></td><td><code>python main.py</code> con el entorno activado</td></tr>
+        <tr><td><code>.nvmrc</code> (versión de Node)</td><td><code>.python-version</code></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">¿pip o uv?</p><p>pip viene con Python y lo mantiene la comunidad oficial de empaquetado de Python: siempre estará ahí, en cualquier computadora y servidor, y todo tutorial lo usa. uv es software libre, pero lo desarrolla una empresa, Astral, que OpenAI anunció en marzo de 2026 que iba a comprar. Aprende los dos: pip porque es la base y lo encontrarás en todas partes; uv porque cada vez más equipos lo usan y es mucho más cómodo. Si tu equipo ya eligió uno, usa ese.</p></div></aside>
+
+  <h3>Las librerías más famosas</h3>
+  <p>No hace falta que las aprendas ahora; sí que sepas qué existe, para qué sirve cada una y cómo se ve su código. Todas se instalan con <code>python -m pip install nombre</code> o <code>uv add nombre</code> (no funcionan en los talleres de esta página, que solo tienen la biblioteca estándar).</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Librería</th><th scope="col">Para qué sirve</th><th scope="col">Se parece a…</th></tr></thead>
+      <tbody>
+        <tr><td><strong>requests</strong></td><td>Hacer peticiones HTTP a APIs y páginas web</td><td><code>fetch</code> (<a href="16-asincronia.html#fetch">Estación 16</a>)</td></tr>
+        <tr><td><strong>NumPy</strong></td><td>Arrays numéricos rápidos y cálculo con vectores y matrices; la base de casi todo el cálculo científico y la IA en Python</td><td>Los vectores de la <a href="18-matematicas.html#vectores">Estación 18</a>, a gran escala</td></tr>
+        <tr><td><strong>pandas</strong></td><td>Tablas de datos: leer CSV y Excel, filtrar, agrupar, resumir</td><td>Una hoja de cálculo programable; <code>GROUP BY</code> de la <a href="30-bases-datos.html">Estación 30</a></td></tr>
+        <tr><td><strong>Matplotlib</strong></td><td>Gráficos de líneas, barras, dispersión…</td><td>Una librería de gráficos para la web</td></tr>
+        <tr><td><strong>Flask</strong></td><td>Servidores web y APIs pequeñas y medianas</td><td>Express (<a href="29-backend.html#express">Estación 29</a>)</td></tr>
+        <tr><td><strong>FastAPI</strong></td><td>APIs modernas que validan los datos con las anotaciones de tipo y generan documentación sola</td><td>Express con validación y documentación incluidas</td></tr>
+        <tr><td><strong>Django</strong></td><td>Aplicaciones web completas: usuarios, administración, base de datos</td><td>Un framework «con todo incluido»</td></tr>
+        <tr><td><strong>pygame-ce</strong></td><td>Juegos 2D: ventana, dibujo, teclado, sonido</td><td>El canvas y el bucle de juego de la <a href="34-videojuegos.html">Estación 34</a></td></tr>
+        <tr><td><strong>pytest</strong></td><td>Pruebas automáticas con <code>assert</code></td><td>Vitest (<a href="26-testing.html#herramientas">Estación 26</a>)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Así se ven. Son fragmentos para tu computadora, con la librería instalada en un entorno virtual:</p>
+  <pre><code class="language-python"># requests: pedir datos a una API
+import requests
+
+respuesta = requests.get("https://api.github.com/repos/python/cpython", timeout=10)
+respuesta.raise_for_status()          # error si la respuesta no fue 2xx
+datos = respuesta.json()              # como await respuesta.json() en JavaScript
+print(datos["stargazers_count"])</code></pre>
+  <pre><code class="language-python"># NumPy: operar con miles de números a la vez, sin bucles
+import numpy as np
+
+precios = np.array([15.5, 9.99, 7.25])
+print(precios * 1.16)          # multiplica TODOS los elementos de una vez
+print(precios.mean())          # promedio</code></pre>
+  <pre><code class="language-python"># pandas + Matplotlib: de un CSV a un gráfico en seis líneas
+import pandas as pd
+import matplotlib.pyplot as plt
+
+partidas = pd.read_csv("partidas.csv")
+puntos = partidas.groupby("jugador")["puntos"].sum().sort_values(ascending=False)
+print(puntos)
+puntos.plot(kind="bar", title="Puntos por jugador")
+plt.savefig("puntos.png")</code></pre>
+  <pre><code class="language-python"># Flask: una API mínima (se arranca con: flask --app main run)
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.get("/api/saludo")
+def saludo():
+    return {"mensaje": "Hola desde Flask"}   # un diccionario se envía como JSON</code></pre>
+  <pre><code class="language-python"># FastAPI: la anotación nombre: str valida el dato
+# (se instala con: python -m pip install "fastapi[standard]"; se arranca con: fastapi dev main.py)
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/api/saludo/{nombre}")
+def saludo(nombre: str):
+    return {"mensaje": f"Hola, {nombre}"}</code></pre>
+  <pre><code class="language-python"># pygame-ce: un círculo que cruza la ventana a 60 fotogramas por segundo
+import pygame
+
+pygame.init()
+pantalla = pygame.display.set_mode((640, 360))
+reloj = pygame.time.Clock()
+x = 0
+jugando = True
+while jugando:                                  # el bucle de juego
+    for evento in pygame.event.get():
+        if evento.type == pygame.QUIT:          # cerrar la ventana
+            jugando = False
+    x = (x + 4) % 640
+    pantalla.fill("black")
+    pygame.draw.circle(pantalla, "gold", (x, 180), 20)
+    pygame.display.flip()
+    reloj.tick(60)
+pygame.quit()</code></pre>
+  <p>Las líneas que empiezan con <code>@</code> en Flask y FastAPI son decoradores, como el <code>@dataclass</code> de la sección anterior: registran la función de debajo como la respuesta a esa ruta, igual que <code>app.get("/ruta", funcion)</code> en Express.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">pygame o pygame-ce</p><p>Hay dos paquetes: <code>pygame</code>, el original, y <code>pygame-ce</code> (<em>Community Edition</em>), una continuación mantenida por antiguos desarrolladores del original. A finales de septiembre de 2026, la última versión de <code>pygame</code> es de 2024 y no publica paquetes preparados para Python 3.14, así que <code>pip install pygame</code> suele fallar con un Python reciente. <code>pygame-ce</code> sí los tiene y se importa igual, con <code>import pygame</code>. Por eso mismo, no instales los dos en el mismo entorno.</p></div></aside>
+
+  <h3>Python e inteligencia artificial: lo que viene</h3>
+  <p>Esta estación abre la línea de Python e inteligencia artificial, y el motivo es práctico: casi todas las herramientas de IA hablan Python. Sobre NumPy se construye el resto: <strong>pandas</strong> prepara los datos; <strong>scikit-learn</strong> trae los algoritmos clásicos de aprendizaje automático (clasificar, predecir, agrupar) con una forma de uso común a todos; <strong>PyTorch</strong> entrena redes neuronales; y <strong>Jupyter</strong> es un cuaderno donde mezclas código, resultados y gráficos en celdas, muy usado para experimentar con datos. Así sigue la línea:</p>
+  <ul>
+    <li><a href="37-ia-personajes.html">Estación 37: IA para personajes y mundos</a>. Comportamientos para los personajes y mundos de tus juegos.</li>
+    <li><a href="38-ia-busqueda.html">Estación 38: Buscar y decidir</a>. Algoritmos para encontrar caminos y elegir la mejor jugada.</li>
+    <li><a href="39-aprendizaje-automatico.html">Estación 39: Aprendizaje automático</a>. Modelos que aprenden de datos, con Python en tu computadora: NumPy, pandas y scikit-learn.</li>
+    <li><a href="40-redes-neuronales.html">Estación 40: Redes neuronales y aprendizaje por refuerzo</a>. Redes neuronales con PyTorch y agentes que aprenden jugando.</li>
+    <li><a href="41-modelos-lenguaje.html">Estación 41: Modelos de lenguaje en tus apps y juegos</a>. Conectar modelos de lenguaje a lo que construyes.</li>
+  </ul>
+  <p>Para las Estaciones 39 y 40 necesitarás lo que acabas de aprender: Python instalado, un entorno virtual por proyecto y soltura para instalar paquetes con pip o uv.</p>
+
+  <h3>La chuleta: JavaScript ↔ Python</h3>
+  <p>Todo lo de esta estación en una tabla. Vuelve a ella cuando escribas tus primeros programas y cuando leas código de Python ajeno:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Concepto</th><th scope="col">JavaScript</th><th scope="col">Python</th></tr></thead>
+      <tbody>
+        <tr><td>Imprimir</td><td><code>console.log(a, b)</code></td><td><code>print(a, b)</code></td></tr>
+        <tr><td>Comentario</td><td><code>// nota</code></td><td><code># nota</code></td></tr>
+        <tr><td>Variable</td><td><code>let vidas = 3;</code></td><td><code>vidas = 3</code></td></tr>
+        <tr><td>Constante</td><td><code>const MAX = 10;</code></td><td><code>MAX = 10</code> (solo convención)</td></tr>
+        <tr><td>Nombres</td><td><code>precioTotal</code></td><td><code>precio_total</code></td></tr>
+        <tr><td>Texto con valores</td><td><code>`Hola, ${nombre}`</code></td><td><code>f"Hola, {nombre}"</code></td></tr>
+        <tr><td>Booleanos y vacío</td><td><code>true</code>, <code>false</code>, <code>null</code>, <code>undefined</code></td><td><code>True</code>, <code>False</code>, <code>None</code></td></tr>
+        <tr><td>Lógica</td><td><code>&amp;&amp;</code>, <code>||</code>, <code>!</code></td><td><code>and</code>, <code>or</code>, <code>not</code></td></tr>
+        <tr><td>Igualdad</td><td><code>===</code>, <code>!==</code></td><td><code>==</code>, <code>!=</code> (y <code>is None</code>)</td></tr>
+        <tr><td>División entera</td><td><code>Math.floor(a / b)</code></td><td><code>a // b</code></td></tr>
+        <tr><td>Convertir</td><td><code>Number(t)</code>, <code>String(n)</code></td><td><code>int(t)</code>, <code>float(t)</code>, <code>str(n)</code></td></tr>
+        <tr><td>Tipo</td><td><code>typeof x</code></td><td><code>type(x)</code></td></tr>
+        <tr><td>Decisión</td><td><code>if (a) {…} else if (b) {…} else {…}</code></td><td><code>if a:</code> / <code>elif b:</code> / <code>else:</code></td></tr>
+        <tr><td>Ternario</td><td><code>c ? a : b</code></td><td><code>a if c else b</code></td></tr>
+        <tr><td>Recorrer</td><td><code>for (const x of lista)</code></td><td><code>for x in lista:</code></td></tr>
+        <tr><td>Contar</td><td><code>for (let i = 0; i &lt; n; i++)</code></td><td><code>for i in range(n):</code></td></tr>
+        <tr><td>Índice y valor</td><td><code>lista.forEach((x, i) =&gt; …)</code></td><td><code>for i, x in enumerate(lista):</code></td></tr>
+        <tr><td>Función</td><td><code>function f(a, b = 1) { return a + b; }</code></td><td><code>def f(a, b=1):</code> / <code>return a + b</code></td></tr>
+        <tr><td>Función corta</td><td><code>x =&gt; x * 2</code></td><td><code>lambda x: x * 2</code></td></tr>
+        <tr><td>Lista</td><td><code>[1, 2]</code>, <code>push</code>, <code>pop</code>, <code>.length</code></td><td><code>[1, 2]</code>, <code>append</code>, <code>pop</code>, <code>len()</code></td></tr>
+        <tr><td>Objeto o mapa</td><td><code>{ nombre: "Ana" }</code>, <code>o.nombre</code></td><td><code>{"nombre": "Ana"}</code>, <code>d["nombre"]</code>, <code>d.get("nombre")</code></td></tr>
+        <tr><td>Conjunto</td><td><code>new Set([1, 2])</code></td><td><code>{1, 2}</code>, <code>set()</code></td></tr>
+        <tr><td>Transformar y filtrar</td><td><code>l.filter(x =&gt; x &gt; 0).map(x =&gt; x * 2)</code></td><td><code>[x * 2 for x in l if x &gt; 0]</code></td></tr>
+        <tr><td>Ordenar</td><td><code>l.sort((a, b) =&gt; a.p - b.p)</code></td><td><code>sorted(l, key=lambda x: x["p"])</code></td></tr>
+        <tr><td>Clase</td><td><code>class A { constructor(n) { this.n = n; } }</code></td><td><code>class A:</code> / <code>def __init__(self, n): self.n = n</code></td></tr>
+        <tr><td>Crear objeto</td><td><code>new A(1)</code></td><td><code>A(1)</code></td></tr>
+        <tr><td>Errores</td><td><code>try {…} catch (e) {…}</code>, <code>throw new Error("…")</code></td><td><code>try:</code> / <code>except ValueError as e:</code>, <code>raise ValueError("…")</code></td></tr>
+        <tr><td>Importar</td><td><code>import { f } from "./util.js";</code></td><td><code>from util import f</code></td></tr>
+        <tr><td>Paquetes</td><td><code>npm install x</code></td><td><code>python -m pip install x</code>, <code>uv add x</code></td></tr>
+        <tr><td>Ejecutar</td><td><code>node app.js</code></td><td><code>python app.py</code>, <code>uv run app.py</code></td></tr>
+        <tr><td>Pruebas</td><td>Vitest, <code>node:test</code></td><td>pytest, <code>unittest</code></td></tr>
+        <tr><td>Estilo y formato</td><td>ESLint, Prettier</td><td>PEP 8; Ruff, Black</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Para aprender un lenguaje nuevo, compáralo con uno que ya dominas: los conceptos se transfieren, la sintaxis se aprende en horas y el ecosistema (herramientas, librerías, costumbres) es lo que más práctica pide. Cuidado con los falsos amigos.</li>
+    <li>Python se instala (el install manager en Windows, python.org o Homebrew en macOS, el de tu distribución en Linux, o uv). Comprueba la versión con <code>python --version</code>; a finales de septiembre de 2026, la serie estable es la 3.14.</li>
+    <li>En Python la sangría es la sintaxis: los bloques empiezan con <code>:</code> y se marcan con 4 espacios. No hay llaves, ni punto y coma, ni <code>let</code>; los nombres van en snake_case.</li>
+    <li>Tipos: <code>int</code>, <code>float</code>, <code>str</code>, <code>bool</code> (<code>True</code>, <code>False</code>) y <code>None</code>. Python no mezcla tipos por su cuenta: convierte con <code>int()</code>, <code>float()</code> y <code>str()</code>. <code>/</code> siempre da decimal y <code>//</code> es la división entera.</li>
+    <li>Las f-strings (<code>f"Hola, {nombre}"</code>, <code>f"{precio:.2f}"</code>) sustituyen a las plantillas literales y además dan formato.</li>
+    <li><code>elif</code>, <code>and</code>, <code>or</code>, <code>not</code>; las colecciones vacías son falsas. <code>for</code> recorre elementos; para contar, <code>range(inicio, fin)</code> sin incluir el final; para índice y valor, <code>enumerate</code>.</li>
+    <li>Colecciones: lista <code>[]</code>, tupla <code>()</code> inmutable, diccionario <code>{"clave": valor}</code> con corchetes y <code>.get()</code>, conjunto <code>set()</code>. Las comprensiones (<code>[x * 2 for x in l if x &gt; 0]</code>) sustituyen a <code>map</code> y <code>filter</code>.</li>
+    <li>Funciones con <code>def</code>, parámetros por defecto y argumentos con nombre; nunca uses una lista como valor por defecto. Cada archivo <code>.py</code> es un módulo que se importa con <code>import</code>, y la biblioteca estándar trae casi de todo.</li>
+    <li>Las trazas se leen desde abajo. Se captura por tipo con <code>try</code> / <code>except ValueError</code>, se lanza con <code>raise</code>, y los archivos se abren con <code>with open(..., encoding="utf-8")</code>. Clases con <code>__init__</code> y <code>self</code> explícito; <code>@dataclass</code> para registros de datos.</li>
+    <li>Un entorno virtual por proyecto (<code>python -m venv .venv</code>), paquetes con <code>python -m pip install</code> o <code>uv add</code>, y <code>.venv</code> fuera de Git. Las librerías clave: requests, NumPy, pandas, Matplotlib, Flask, FastAPI, pygame-ce y pytest.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Estos ejercicios ejecutan Python de verdad y comprueban tu solución. Van de guiados a retos. En cada uno, intenta primero sin pistas: el objetivo no es solo que funcione, sino que se vea como Python y no como JavaScript traducido. Ten la chuleta de la sección anterior a mano.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-traduce"><header class="ejercicio-cabeza"><h3>Traduce de JavaScript</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>Traduce este programa a Python. Debe imprimir exactamente <code>Auriculares x2: $99.80</code> y, en la línea siguiente, <code>Envío gratis</code>.</p>
+    <pre><code class="language-js">const producto = "Auriculares";
+const precio = 49.9;
+const cantidad = 2;
+const total = precio * cantidad;
+console.log(`${producto} x${cantidad}: $${total.toFixed(2)}`);
+if (total &gt; 50) {
+  console.log("Envío gratis");
+} else {
+  console.log("Envío: $5");
+}</code></pre>
+    <div class="taller" data-modo="python" id="taller-ej-traduce" data-titulo="Ejercicio 1">
+      <textarea class="taller-codigo"># Traduce aquí el programa de JavaScript.
+# 1. Crea producto, precio y cantidad.
+# 2. Calcula total.
+# 3. Imprime la primera línea con una f-string y dos decimales.
+# 4. Decide el envío con if / else.
+</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (/console\.log|\bconst\s|\blet\s|toFixed/.test(codigo)) return "Todavía quedan palabras de JavaScript (console.log, const, let o toFixed). Tradúcelas todas.";
+if (!/\bf["']/.test(codigo)) return "Arma la primera línea con una f-string: f\"...{producto}...\".";
+if (salida[0] !== "Auriculares x2: $99.80") return "La primera línea debería ser «Auriculares x2: $99.80» y es «" + (salida[0] || "(nada)") + "».";
+if (salida[1] !== "Envío gratis") return "La segunda línea debería ser «Envío gratis» y es «" + (salida[1] || "(nada)") + "».";
+if (salida.length !== 2) return "Deberían salir exactamente dos líneas.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Quita <code>const</code> y los punto y coma. <code>console.log</code> pasa a ser <code>print</code>, y el <code>if</code> lleva dos puntos y sangría en lugar de paréntesis y llaves.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>total.toFixed(2)</code> dentro de la plantilla se escribe <code>{total:.2f}</code> dentro de la f-string. El signo <code>$</code> que va delante es un carácter normal: en Python no tiene nada de especial.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-python">producto = "Auriculares"
+precio = 49.9
+cantidad = 2
+total = precio * cantidad
+print(f"{producto} x{cantidad}: ${total:.2f}")
+if total &gt; 50:
+    print("Envío gratis")
+else:
+    print("Envío: $5")</code></pre>
+      <p>En JavaScript el <code>$</code> de <code>$${total...}</code> hacía doble función; en Python solo las llaves son especiales, así que <code>${total:.2f}</code> se lee como «un signo de dólar y después el total con dos decimales».</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-habitos"><header class="ejercicio-cabeza"><h3>Arregla los hábitos de JavaScript</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>Alguien acostumbrado a JavaScript escribió este programa y Python no lo acepta. Ejecútalo, lee cada error y corrige hasta que imprima estas cuatro líneas:</p>
+    <pre class="consola"><code>Kai juega sin escudo
+Vida 1
+Vida 2
+Vida 3</code></pre>
+    <div class="taller" data-modo="python" id="taller-ej-habitos" data-titulo="Ejercicio 2: arregla el programa">
+      <textarea class="taller-codigo">nombre = "Kai"
+vidas = 3
+escudo = null
+
+if vidas > 0 && escudo == null {
+    console.log(f"{nombre} juega sin escudo")
+}
+
+for i in range(vidas)
+    print("Vida", i + 1)</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (/\bnull\b/.test(codigo)) return "En Python no existe null: el valor vacío se llama None.";
+if (/&&/.test(codigo)) return "El «y» lógico de Python es la palabra and.";
+if (/console/.test(codigo)) return "console.log no existe en Python: usa print.";
+var esp = ["Kai juega sin escudo", "Vida 1", "Vida 2", "Vida 3"];
+for (var i = 0; i < esp.length; i++) if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+if (salida.length !== 4) return "Deberían salir exactamente cuatro líneas.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Hay cinco hábitos de JavaScript: <code>null</code> (dos veces), <code>&amp;&amp;</code>, las llaves del <code>if</code>, <code>console.log</code> y los dos puntos que faltan al final de la línea del <code>for</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para comparar con <code>None</code>, lo pythónico es <code>escudo is None</code>. La línea del <code>if</code> termina en <code>:</code> y la llave de cierre sobra.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-python">nombre = "Kai"
+vidas = 3
+escudo = None
+
+if vidas &gt; 0 and escudo is None:
+    print(f"{nombre} juega sin escudo")
+
+for i in range(vidas):
+    print("Vida", i + 1)</code></pre>
+      <p>Fíjate en que Python se detiene en el primer error de sintaxis que encuentra, así que los arreglas de uno en uno. Con la práctica, estos reflejos desaparecen en pocos días.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-palabras"><header class="ejercicio-cabeza"><h3>Las palabras más repetidas</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Cuenta cuántas veces aparece cada palabra del texto, sin distinguir mayúsculas y sin comas ni puntos, e imprime las tres más repetidas con el formato <code>palabra: veces</code>, de más a menos. Debe salir <code>hoy: 3</code>, <code>juego: 3</code> y <code>mañana: 2</code> (las dos primeras pueden ir en cualquier orden).</p>
+    <div class="taller" data-modo="python" id="taller-ej-palabras" data-titulo="Ejercicio 3">
+      <textarea class="taller-codigo">texto = "Hoy juego, mañana juego y pasado juego otra vez. Hoy gano, mañana pierdo, hoy aprendo."
+
+# 1. Pasa el texto a minúsculas y quita las comas y los puntos.
+# 2. Separa las palabras con split().
+# 3. Cuenta cada palabra en un diccionario.
+# 4. Ordena de más a menos repetida e imprime las 3 primeras: «palabra: veces».
+</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (/print\(\s*f?["'](hoy|juego|mañana)/.test(codigo)) return "No escribas el resultado a mano: cuéntalo con código.";
+if (salida.length < 3) return "Deberían salir tres líneas y salieron " + salida.length + ".";
+var dos = [salida[0], salida[1]].sort().join(" y ");
+if (dos !== "hoy: 3 y juego: 3") return "Las dos primeras líneas deberían ser «hoy: 3» y «juego: 3». ¿Pasaste todo a minúsculas y quitaste comas y puntos?";
+if (salida[2] !== "mañana: 2") return "La tercera línea debería ser «mañana: 2» y es «" + salida[2] + "».";
+if (salida.length !== 3) return "Imprime solo las tres más repetidas.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>texto.lower().replace(",", "").replace(".", "")</code> deja el texto limpio, y <code>.split()</code> lo convierte en una lista de palabras. Para contar, usa el patrón de la traza de los votos: <code>conteo[p] = conteo.get(p, 0) + 1</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>sorted(conteo.items(), key=lambda par: par[1], reverse=True)</code> ordena las parejas (palabra, veces) por las veces. Después toma las tres primeras con <code>[:3]</code> y desempaquétalas en el <code>for</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-python">texto = "Hoy juego, mañana juego y pasado juego otra vez. Hoy gano, mañana pierdo, hoy aprendo."
+
+limpio = texto.lower().replace(",", "").replace(".", "")
+conteo = {}
+for palabra in limpio.split():
+    conteo[palabra] = conteo.get(palabra, 0) + 1
+
+ranking = sorted(conteo.items(), key=lambda par: par[1], reverse=True)
+for palabra, veces in ranking[:3]:
+    print(f"{palabra}: {veces}")</code></pre>
+      <p>Con la biblioteca estándar es aún más corto: <code>from collections import Counter</code> y luego <code>for palabra, veces in Counter(limpio.split()).most_common(3):</code>. Conocer la biblioteca estándar es parte de aprender un lenguaje.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-ofertas"><header class="ejercicio-cabeza"><h3>Ofertas con comprensiones</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Sin bucles <code>for</code> normales: crea <code>baratos</code> con una <strong>comprensión de lista</strong> (los nombres de los productos de menos de 20) y <code>con_descuento</code> con una <strong>comprensión de diccionario</strong> (cada nombre con su precio rebajado un 10 %, redondeado a dos decimales). Debe imprimir:</p>
+    <pre class="consola"><code>['Taza', 'Gorra']
+{'Taza': 6.75, 'Libro': 21.6, 'Gorra': 10.8, 'Mochila': 40.5}</code></pre>
+    <div class="taller" data-modo="python" id="taller-ej-ofertas" data-titulo="Ejercicio 4">
+      <textarea class="taller-codigo">productos = [
+    {"nombre": "Taza", "precio": 7.5},
+    {"nombre": "Libro", "precio": 24.0},
+    {"nombre": "Gorra", "precio": 12.0},
+    {"nombre": "Mochila", "precio": 45.0},
+]
+
+# 1. baratos: los NOMBRES de los productos de menos de 20
+baratos = []
+
+# 2. con_descuento: nombre -> precio con un 10 % menos, redondeado a 2 decimales
+con_descuento = {}
+
+print(baratos)
+print(con_descuento)</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/\[[^\n]*\bfor\b[^\n]*\bin\b[^\n]*\]/.test(codigo)) return "Crea baratos con una comprensión de lista: [algo for p in productos if condición].";
+if (!/\{[^\n]*:[^\n]*\bfor\b[^\n]*\bin\b[^\n]*\}/.test(codigo)) return "Crea con_descuento con una comprensión de diccionario: {clave: valor for p in productos}.";
+if (salida[0] !== "['Taza', 'Gorra']") return "La primera línea debería ser «['Taza', 'Gorra']» y es «" + (salida[0] || "(nada)") + "».";
+if (salida[1] !== "{'Taza': 6.75, 'Libro': 21.6, 'Gorra': 10.8, 'Mochila': 40.5}") return "La segunda línea no coincide: «" + (salida[1] || "(nada)") + "». ¿Redondeaste con round(..., 2)?";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La forma es <code>[expresión for p in productos if condición]</code>. Aquí la expresión es <code>p["nombre"]</code> y la condición, <code>p["precio"] &lt; 20</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La de diccionario lleva llaves y dos puntos: <code>{clave: valor for p in productos}</code>. El valor es <code>round(p["precio"] * 0.9, 2)</code>; sin <code>round</code> verías cosas como <code>10.799999999999999</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-python">productos = [
+    {"nombre": "Taza", "precio": 7.5},
+    {"nombre": "Libro", "precio": 24.0},
+    {"nombre": "Gorra", "precio": 12.0},
+    {"nombre": "Mochila", "precio": 45.0},
+]
+
+baratos = [p["nombre"] for p in productos if p["precio"] &lt; 20]
+con_descuento = {p["nombre"]: round(p["precio"] * 0.9, 2) for p in productos}
+
+print(baratos)
+print(con_descuento)</code></pre>
+      <p>En JavaScript habrías escrito <code>productos.filter(p =&gt; p.precio &lt; 20).map(p =&gt; p.nombre)</code>. La comprensión hace las dos cosas en una sola expresión.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-convertir"><header class="ejercicio-cabeza"><h3>Convierte sin romperte</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Los datos llegan como texto y algunos no son números. Completa <code>a_entero</code> para que devuelva el entero o <code>None</code> si no se puede convertir (usa <code>try</code> y <code>except ValueError</code>), y después separa los válidos de los inválidos. Debe imprimir <code>Válidos: [25, 40, 18]</code> y <code>Inválidos: 2</code>.</p>
+    <div class="taller" data-modo="python" id="taller-ej-convertir" data-titulo="Ejercicio 5">
+      <textarea class="taller-codigo">def a_entero(texto):
+    # Devuelve int(texto), o None si no se puede convertir.
+    return int(texto)
+
+datos = ["25", "treinta", " 40 ", "", "18"]
+validos = []
+invalidos = 0
+# Recorre datos: guarda los números en validos y cuenta los que dan None.
+
+print("Válidos:", validos)
+print("Inválidos:", invalidos)</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/\btry\s*:/.test(codigo) || !/except\s+ValueError/.test(codigo)) return "Usa try: y except ValueError: dentro de a_entero.";
+if (salida[0] !== "Válidos: [25, 40, 18]") return "La primera línea debería ser «Válidos: [25, 40, 18]» y es «" + (salida[0] || "(nada)") + "».";
+if (salida[1] !== "Inválidos: 2") return "La segunda línea debería ser «Inválidos: 2» y es «" + (salida[1] || "(nada)") + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Dentro de la función: <code>try:</code>, en la línea siguiente (con sangría) <code>return int(texto)</code>, y después <code>except ValueError:</code> con <code>return None</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En el bucle, guarda el resultado en una variable y pregunta <code>if numero is None:</code>. No uses <code>if numero:</code>: un 0 válido contaría como falso.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-python">def a_entero(texto):
+    try:
+        return int(texto)
+    except ValueError:
+        return None
+
+datos = ["25", "treinta", " 40 ", "", "18"]
+validos = []
+invalidos = 0
+for dato in datos:
+    numero = a_entero(dato)
+    if numero is None:
+        invalidos += 1
+    else:
+        validos.append(numero)
+
+print("Válidos:", validos)
+print("Inválidos:", invalidos)</code></pre>
+      <p><code>int(" 40 ")</code> funciona porque <code>int</code> ignora los espacios de los extremos; <code>int("")</code> y <code>int("treinta")</code> lanzan <code>ValueError</code>. Por eso importa <code>is None</code>: si llegara un <code>"0"</code>, <code>if numero:</code> lo tomaría por inválido.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-inventario"><header class="ejercicio-cabeza"><h3>La clase Inventario</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>Completa la clase para que el código de abajo (que no debes cambiar) imprima exactamente:</p>
+    <pre class="consola"><code>espada x1, poción x2
+Total: 3
+Error: No tienes escudo</code></pre>
+    <p><code>quitar</code> debe lanzar <code>ValueError</code> con el mensaje <code>No tienes ...</code> si no hay suficientes, y borrar el objeto cuando su cantidad llegue a 0. <code>__str__</code> muestra los objetos en orden alfabético.</p>
+    <div class="taller" data-modo="python" id="taller-ej-inventario" data-titulo="Ejercicio 6">
+      <textarea class="taller-codigo">class Inventario:
+    def __init__(self):
+        self.objetos = {}   # nombre -> cantidad
+
+    def agregar(self, nombre, cantidad=1):
+        pass   # suma cantidad a ese objeto
+
+    def quitar(self, nombre, cantidad=1):
+        pass   # resta; si no hay suficientes, lanza ValueError
+
+    def total(self):
+        return 0   # cantidad total de objetos
+
+    def __str__(self):
+        return ""   # "espada x1, poción x2"
+
+
+# No cambies nada de aquí para abajo
+mochila = Inventario()
+mochila.agregar("poción", 3)
+mochila.agregar("espada")
+mochila.quitar("poción")
+print(mochila)
+print("Total:", mochila.total())
+try:
+    mochila.quitar("escudo")
+except ValueError as error:
+    print("Error:", error)</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/\braise\s+ValueError/.test(codigo)) return "quitar debe lanzar el error con raise ValueError(...).";
+var esp = ["espada x1, poción x2", "Total: 3", "Error: No tienes escudo"];
+for (var i = 0; i < esp.length; i++) if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>agregar</code> es el patrón de contar: <code>self.objetos[nombre] = self.objetos.get(nombre, 0) + cantidad</code>. <code>total</code> suma los valores: <code>sum(self.objetos.values())</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>quitar</code>, comprueba primero <code>if self.objetos.get(nombre, 0) &lt; cantidad:</code> y lanza <code>raise ValueError(f"No tienes {nombre}")</code>. Para <code>__str__</code>, recorre <code>sorted(self.objetos.items())</code> y únelo con <code>", ".join(...)</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-python">class Inventario:
+    def __init__(self):
+        self.objetos = {}   # nombre -&gt; cantidad
+
+    def agregar(self, nombre, cantidad=1):
+        self.objetos[nombre] = self.objetos.get(nombre, 0) + cantidad
+
+    def quitar(self, nombre, cantidad=1):
+        if self.objetos.get(nombre, 0) &lt; cantidad:
+            raise ValueError(f"No tienes {nombre}")
+        self.objetos[nombre] -= cantidad
+        if self.objetos[nombre] == 0:
+            del self.objetos[nombre]
+
+    def total(self):
+        return sum(self.objetos.values())
+
+    def __str__(self):
+        return ", ".join(f"{nombre} x{cantidad}" for nombre, cantidad in sorted(self.objetos.items()))
+
+
+mochila = Inventario()
+mochila.agregar("poción", 3)
+mochila.agregar("espada")
+mochila.quitar("poción")
+print(mochila)
+print("Total:", mochila.total())
+try:
+    mochila.quitar("escudo")
+except ValueError as error:
+    print("Error:", error)</code></pre>
+      <p><code>sorted</code> sobre las parejas (nombre, cantidad) las ordena por el primer elemento, el nombre. Dentro de <code>join</code> hay una expresión generadora, una comprensión sin corchetes.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-cesar"><header class="ejercicio-cabeza"><h3>Mensajes secretos: el cifrado César</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>El cifrado César desplaza cada letra un número fijo de posiciones en el alfabeto: con desplazamiento 3, la «a» pasa a «d» y la «z» da la vuelta hasta la «c». Completa <code>cifrar</code> para las letras minúsculas de la «a» a la «z» (sin la «ñ»); el resto de caracteres queda igual. Con un desplazamiento negativo, descifra. Debe imprimir <code>dwdtxh do dpdqhfhu</code>, <code>ataque al amanecer</code> y <code>apssp yza</code>.</p>
+    <div class="taller" data-modo="python" id="taller-ej-cesar" data-titulo="Ejercicio 7">
+      <textarea class="taller-codigo">def cifrar(texto, desplazamiento):
+    resultado = ""
+    # Recorre cada carácter del texto y construye el resultado
+    return resultado
+
+secreto = cifrar("ataque al amanecer", 3)
+print(secreto)
+print(cifrar(secreto, -3))
+print(cifrar("zorro xyz", 1))</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (codigo.indexOf("%") === -1) return "Usa el resto (%) para que la z dé la vuelta hasta la a.";
+var esp = ["dwdtxh do dpdqhfhu", "ataque al amanecer", "apssp yza"];
+for (var i = 0; i < esp.length; i++) if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>ord("a")</code> da 97, el código de la letra, y <code>chr(98)</code> da <code>"b"</code>. La posición de una letra en el alfabeto es <code>ord(letra) - ord("a")</code>, de 0 a 25.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La nueva posición es <code>(posicion + desplazamiento) % 26</code>. En Python, <code>(0 - 3) % 26</code> da 23, la «x»: el resto de Python ya da la vuelta bien con negativos. En JavaScript daría -3 y tendrías que sumar 26.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-python">def cifrar(texto, desplazamiento):
+    resultado = ""
+    for letra in texto:
+        if "a" &lt;= letra &lt;= "z":
+            posicion = ord(letra) - ord("a")
+            nueva = (posicion + desplazamiento) % 26
+            resultado += chr(ord("a") + nueva)
+        else:
+            resultado += letra
+    return resultado
+
+secreto = cifrar("ataque al amanecer", 3)
+print(secreto)
+print(cifrar(secreto, -3))
+print(cifrar("zorro xyz", 1))</code></pre>
+      <p><code>"a" &lt;= letra &lt;= "z"</code> es una comparación encadenada con textos: compara por orden alfabético (por código). Otra forma: <code>alfabeto = "abcdefghijklmnopqrstuvwxyz"</code> y <code>alfabeto.index(letra)</code>. Y otra más pythónica: construir una lista de letras y unirlas al final con <code>"".join(...)</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-liga"><header class="ejercicio-cabeza"><h3>La tabla de la liga</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>Con los resultados de los partidos, calcula los puntos de cada equipo (victoria 3, empate 1 a cada uno, derrota 0) e imprime la tabla de mayor a menor. Si dos equipos empatan a puntos, van en orden alfabético. Debe salir:</p>
+    <pre class="consola"><code>1. Pumas 4
+2. Tigres 4
+3. Leones 3</code></pre>
+    <div class="taller" data-modo="python" id="taller-ej-liga" data-titulo="Ejercicio 8">
+      <textarea class="taller-codigo">partidos = [
+    ("Tigres", 2, "Leones", 1),
+    ("Pumas", 0, "Tigres", 0),
+    ("Leones", 3, "Pumas", 1),
+    ("Tigres", 1, "Pumas", 2),
+]
+# Cada tupla es (local, goles_local, visitante, goles_visitante).
+# 1. Suma los puntos de cada equipo en un diccionario.
+# 2. Ordena: primero más puntos; si empatan, por nombre.
+# 3. Imprime «posición. equipo puntos».
+</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (/print\(\s*f?["']\s*1\.\s*Pumas/.test(codigo)) return "No escribas la tabla a mano: calcúlala.";
+var esp = ["1. Pumas 4", "2. Tigres 4", "3. Leones 3"];
+for (var i = 0; i < esp.length; i++) if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+if (salida.length !== 3) return "Deberían salir exactamente tres líneas.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Desempaqueta cada tupla en el propio <code>for</code>: <code>for local, gl, visitante, gv in partidos:</code>. Antes de sumar, asegúrate de que los dos equipos existen en el diccionario, por ejemplo con <code>tabla.setdefault(local, 0)</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para ordenar por dos criterios, la función <code>key</code> puede devolver una tupla: <code>key=lambda par: (-par[1], par[0])</code>. El signo menos ordena los puntos de mayor a menor, y el nombre desempata en orden alfabético. Las tuplas se comparan elemento a elemento.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-python">partidos = [
+    ("Tigres", 2, "Leones", 1),
+    ("Pumas", 0, "Tigres", 0),
+    ("Leones", 3, "Pumas", 1),
+    ("Tigres", 1, "Pumas", 2),
+]
+
+tabla = {}
+for local, goles_local, visitante, goles_visitante in partidos:
+    tabla.setdefault(local, 0)
+    tabla.setdefault(visitante, 0)
+    if goles_local &gt; goles_visitante:
+        tabla[local] += 3
+    elif goles_local &lt; goles_visitante:
+        tabla[visitante] += 3
+    else:
+        tabla[local] += 1
+        tabla[visitante] += 1
+
+ordenada = sorted(tabla.items(), key=lambda par: (-par[1], par[0]))
+for posicion, (equipo, puntos) in enumerate(ordenada, start=1):
+    print(f"{posicion}. {equipo} {puntos}")</code></pre>
+      <p><code>enumerate</code> entrega parejas (posición, (equipo, puntos)); los paréntesis en el <code>for</code> desempaquetan también la pareja interior. Ordenar con una clave en forma de tupla es la forma pythónica de ordenar por varios criterios.</p>
+    </details>
+  </article>
 </section>
   </main>
 </div>

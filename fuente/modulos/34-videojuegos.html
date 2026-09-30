@@ -3224,3 +3224,629 @@ requestAnimationFrame(bucle);</code></pre>
     </details>
   </article>
 </section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: Saltarín completo</h2>
+  <p>Vas a terminar el juego de la game jam: un perro que tiene que recoger todos los huesos del nivel antes de que se ponga el sol. El punto de partida ya tiene lo que construiste en las secciones: el mapa de casillas, la física con tiempo de coyote, las colisiones, la cámara con paralaje, el sprite animado y los huesos. Le falta todo lo que lo convierte en un juego. En el código, unos comentarios <code>// Paso N</code> marcan dónde va cada pieza.</p>
+  <ol class="pasos">
+    <li><div><p>Ejecuta el taller, haz clic en el lienzo y juega un poco. Después lee el código entero, sin prisa, y localiza cada comentario <code>Paso</code>. Todo lo que vas a añadir ya lo viste funcionando en algún taller de la estación.</p></div></li>
+    <li><div><p><strong>Paso 1, estados.</strong> Crea <code>let estado = "menu";</code>. En <code>actualizar</code>, haz un bloque por estado: en el menú, Enter o Espacio llaman a <code>nuevaPartida()</code> y pasan a <code>"jugando"</code>; jugando, Escape pausa y, si no, se llama a <code>jugar(dt)</code>; en la pausa, Escape vuelve a jugar; en el fin, Enter vuelve al menú. La cámara no se mueve durante la pausa. En <code>dibujar</code>, pinta encima un cartel semitransparente con un título y una ayuda para el menú, la pausa y el fin.</p></div></li>
+    <li><div><p><strong>Paso 2, tiempo y atardecer.</strong> Crea la variable <code>tiempo</code> y ponla a <code>DURACION</code> en <code>nuevaPartida</code>. En <code>jugar</code>, réstale <code>dt</code>; caer por un agujero resta 5 segundos. Muestra el tiempo en el marcador. Para el cielo, calcula <code>tarde = 1 - tiempo / DURACION</code> (de 0 a 1) y úsalo para mezclar el azul del día con el naranja del atardecer (un <code>lerp</code> por cada componente del color) y para bajar el sol.</p></div></li>
+    <li><div><p><strong>Paso 3, ganar y perder.</strong> Escribe <code>terminar(mensaje)</code>, que pasa al estado <code>"fin"</code>. Si no quedan huesos, termina con «¡Todos los huesos!» y suma 10 puntos por cada segundo de sol que sobra; si el tiempo llega a 0, termina con «Se puso el sol».</p></div></li>
+    <li><div><p><strong>Paso 4, récord.</strong> Carga el récord con <code>Number(localStorage.getItem("saltarin-record")) || 0</code>, guárdalo en <code>terminar</code> solo si se bate y muéstralo en el marcador.</p></div></li>
+    <li><div><p><strong>Paso 5, sonido.</strong> Añade <code>desbloquearAudio()</code> y <code>sonar()</code> de la sección de sonido. Llama a <code>desbloquearAudio</code> desde <code>keydown</code> y <code>pointerdown</code>. Pon un sonido al saltar, otro al recoger un hueso y otro al caer por un agujero.</p></div></li>
+    <li><div><p><strong>Paso 6, jugo.</strong> Crea un array <code>particulas</code> (vacío en cada partida nueva): una explosión de partículas al recoger un hueso, una sacudida de pantalla al caer por un agujero y otra pequeña al aterrizar fuerte, y un aplastamiento del sprite al aterrizar.</p></div></li>
+    <li><div><p><strong>Paso 7, prueba y ajusta.</strong> Dale el juego a otra persona sin explicarle nada y observa, como en la sección de diseño. Ajusta <code>DURACION</code>, la altura del salto y el <code>MAPA</code> según lo que veas. Diseña tu propio tramo con una curva de dificultad: presenta, practica, complica.</p></div></li>
+    <li><div><p><strong>Paso 8, publica.</strong> Copia las tres pestañas del taller en <code>index.html</code>, <code>estilos.css</code> y <code>juego.js</code> (enlázalos desde el HTML), pruébalo con un servidor local y súbelo a itch.io siguiendo los pasos de la sección de motores. Comparte el enlace.</p></div></li>
+  </ol>
+  <p>Al pulsar «Ejecutar», la comprobación simula pulsaciones para recorrer los estados (menú, partida, pausa y fin por tiempo) y revisa que haya récord, sonido y partículas. Lo que no puede comprobar (que sea divertido) depende del paso 7.</p>
+  <div class="taller" data-modo="web" id="taller-proyecto" data-titulo="Proyecto: Saltarín" data-alto="23rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas id="juego" width="480" height="270" tabindex="0"&gt;&lt;/canvas&gt;
+&lt;div class="controles"&gt;
+  &lt;button type="button" data-tecla="ArrowLeft"&gt;Izquierda&lt;/button&gt;
+  &lt;button type="button" data-tecla="Space"&gt;Saltar&lt;/button&gt;
+  &lt;button type="button" data-tecla="ArrowRight"&gt;Derecha&lt;/button&gt;
+&lt;/div&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; }
+canvas { display: block; width: 100%; max-width: 480px; border-radius: 8px; image-rendering: pixelated; touch-action: none; }
+.controles { display: flex; gap: 6px; max-width: 480px; margin-top: 6px; }
+.controles button { flex: 1; padding: 10px; font: inherit; touch-action: none; user-select: none; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// ===== Saltarín: el punto de partida del proyecto =====
+const lienzo = document.querySelector("#juego");
+const ctx = lienzo.getContext("2d");
+const ANCHO = lienzo.width, ALTO = lienzo.height;
+const TILE = 30;
+
+// Ajustes de la física (píxeles y segundos)
+const GRAVEDAD = 1500;
+const VEL_MAX = 190;
+const ACELERACION = 1400;
+const FRICCION = 1600;
+const CAIDA_MAX = 700;
+const VEL_SALTO = -Math.sqrt(2 * GRAVEDAD * 100);   // salto de 100 px de alto
+const COYOTE = 0.1;           // segundos para saltar después de dejar el suelo
+const DURACION = 60;          // Paso 2: segundos hasta que se pone el sol
+
+// # suelo · h hueso · s salida del perro · . aire
+const MAPA = [
+  "................................................................",
+  "................................................................",
+  "........................h...................h...................",
+  "..........h............###...........h....#####.........h.......",
+  ".........###.....h..........###.....###.............h..###......",
+  "...............#####...h..............................###.......",
+  ".s....h..............#####.....h...........h..............h.....",
+  "#########..######.............######..##########..##############",
+  "#########..######..##########.######..##########..##############",
+];
+const MUNDO_ANCHO = MAPA[0].length * TILE;
+const MUNDO_ALTO = MAPA.length * TILE;
+
+// ===== Sprites dibujados con código (una hoja de 4 fotogramas) =====
+const PALETA = { M: "#9c6644", O: "#2b2d42", C: "#ede0d4", N: "#7f5539" };
+const CUERPO = ["........N.N.", "........MMMM", "N.......MOMMO", ".N......MMMM", ".MMMMMMMMMM.", ".MMMMMMMMM..", ".MCCCCCCMM.."];
+const PATAS = [
+  [".M.M....M.M.", ".M.M....M.M.", ".O.O....O.O."],
+  ["..M.M..M.M..", ".M...MM...M.", "O....OO....O"],
+  [".M.M....M.M.", "..MM.....MM.", "..OO.....OO."],
+  ["M..M...M..M.", "M...M.M...M.", "O....O.....O"],
+];
+const FOTO_ANCHO = 13, FOTO_ALTO = 10, ESCALA = 3;
+const hoja = document.createElement("canvas");
+hoja.width = FOTO_ANCHO * PATAS.length;
+hoja.height = FOTO_ALTO;
+const pincel = hoja.getContext("2d");
+PATAS.forEach((patas, i) =&gt; {
+  [...CUERPO, ...patas].forEach((fila, y) =&gt; {
+    [...fila].forEach((c, x) =&gt; {
+      if (PALETA[c]) { pincel.fillStyle = PALETA[c]; pincel.fillRect(i * FOTO_ANCHO + x, y, 1, 1); }
+    });
+  });
+});
+
+// ===== Estado del juego =====
+// ===== Estado de la partida =====
+// Paso 1: aquí irá la variable estado ("menu", "jugando", "pausa", "fin").
+let perro, huesos, puntos, recogidos, totalHuesos;
+const camara = { x: 0 };
+let salida = { x: 0, y: 0 };
+
+function nuevaPartida() {
+  huesos = [];
+  MAPA.forEach((fila, f) =&gt; [...fila].forEach((c, col) =&gt; {
+    if (c === "h") huesos.push({ x: col * TILE + 15, y: f * TILE + 18, r: 9, fase: col });
+    if (c === "s") salida = { x: col * TILE, y: f * TILE };
+  }));
+  perro = { x: salida.x, y: salida.y, ancho: 30, alto: 24, vx: 0, vy: 0, enSuelo: false, coyote: 0, mira: 1, t: 0 };
+  totalHuesos = huesos.length;
+  recogidos = 0;
+  puntos = 0;
+  camara.x = 0;
+}
+nuevaPartida();
+
+// ===== Entrada =====
+const teclas = new Set();
+const recienPulsadas = new Set();
+const CONTROLES = ["ArrowLeft", "ArrowRight", "ArrowUp", "Space", "KeyA", "KeyD", "KeyW", "Enter", "Escape", "KeyP"];
+addEventListener("keydown", (e) =&gt; {
+  if (CONTROLES.includes(e.code)) e.preventDefault();
+  if (!e.repeat) recienPulsadas.add(e.code);
+  teclas.add(e.code);
+});
+addEventListener("keyup", (e) =&gt; teclas.delete(e.code));
+addEventListener("blur", () =&gt; teclas.clear());
+lienzo.addEventListener("pointerdown", () =&gt; { lienzo.focus(); recienPulsadas.add("Enter"); });
+document.querySelectorAll("[data-tecla]").forEach((boton) =&gt; {
+  const codigo = boton.dataset.tecla;
+  boton.addEventListener("pointerdown", (e) =&gt; { e.preventDefault(); teclas.add(codigo); recienPulsadas.add(codigo); });
+  for (const tipo of ["pointerup", "pointerleave", "pointercancel"]) boton.addEventListener(tipo, () =&gt; teclas.delete(codigo));
+});
+const pulsa = (...codigos) =&gt; codigos.some((c) =&gt; teclas.has(c));
+const acabaDePulsar = (...codigos) =&gt; codigos.some((c) =&gt; recienPulsadas.has(c));
+
+// ===== Colisiones con el mapa =====
+function solidaEn(col, fila) {
+  if (col &lt; 0 || col &gt;= MAPA[0].length) return true;   // paredes invisibles a los lados
+  if (fila &lt; 0 || fila &gt;= MAPA.length) return false;
+  return MAPA[fila][col] === "#";
+}
+function moverYChocar(e, dt) {
+  e.x += e.vx * dt;                       // 1. mover en x y resolver en x
+  let arriba = Math.floor(e.y / TILE), abajo = Math.floor((e.y + e.alto - 1) / TILE);
+  for (let f = arriba; f &lt;= abajo; f++) {
+    if (e.vx &gt; 0 &amp;&amp; solidaEn(Math.floor((e.x + e.ancho - 1) / TILE), f)) { e.x = Math.floor((e.x + e.ancho - 1) / TILE) * TILE - e.ancho; e.vx = 0; }
+    if (e.vx &lt; 0 &amp;&amp; solidaEn(Math.floor(e.x / TILE), f)) { e.x = (Math.floor(e.x / TILE) + 1) * TILE; e.vx = 0; }
+  }
+  e.y += e.vy * dt;                       // 2. mover en y y resolver en y
+  e.enSuelo = false;
+  const izq = Math.floor(e.x / TILE), der = Math.floor((e.x + e.ancho - 1) / TILE);
+  for (let c = izq; c &lt;= der; c++) {
+    if (e.vy &gt; 0 &amp;&amp; solidaEn(c, Math.floor((e.y + e.alto - 1) / TILE))) {
+      e.y = Math.floor((e.y + e.alto - 1) / TILE) * TILE - e.alto;
+      // Paso 6: si aterriza muy rápido (e.vy &gt; 500), sacudida y sonido
+      e.vy = 0; e.enSuelo = true;
+    }
+    if (e.vy &lt; 0 &amp;&amp; solidaEn(c, Math.floor(e.y / TILE))) { e.y = (Math.floor(e.y / TILE) + 1) * TILE; e.vy = 0; }
+  }
+}
+
+// ===== Actualizar =====
+function actualizarPerro(dt) {
+  const direccion = (pulsa("ArrowRight", "KeyD") ? 1 : 0) - (pulsa("ArrowLeft", "KeyA") ? 1 : 0);
+  if (direccion !== 0) {
+    perro.vx += direccion * ACELERACION * dt;
+    perro.mira = direccion;
+  } else {
+    const frenado = Math.min(Math.abs(perro.vx), FRICCION * dt);
+    perro.vx -= Math.sign(perro.vx) * frenado;
+  }
+  perro.vx = Math.max(-VEL_MAX, Math.min(VEL_MAX, perro.vx));
+
+  perro.coyote = perro.enSuelo ? COYOTE : perro.coyote - dt;
+  if (acabaDePulsar("Space", "ArrowUp", "KeyW") &amp;&amp; perro.coyote &gt; 0) {
+    perro.vy = VEL_SALTO;
+    perro.coyote = 0;
+    // Paso 5: sonido de salto
+  }
+  if (!pulsa("Space", "ArrowUp", "KeyW") &amp;&amp; perro.vy &lt; VEL_SALTO / 3) perro.vy = VEL_SALTO / 3;  // salto corto al soltar
+  perro.vy = Math.min(perro.vy + GRAVEDAD * dt, CAIDA_MAX);
+
+  moverYChocar(perro, dt);
+  perro.t += dt;
+
+  if (perro.y &gt; MUNDO_ALTO + 60) {        // se cayó por un agujero
+    perro.x = salida.x; perro.y = salida.y; perro.vx = 0; perro.vy = 0;
+    // Paso 2: restar 5 segundos de sol. Paso 6: sacudida y sonido.
+  }
+}
+
+function recoger(hueso) {
+  huesos.splice(huesos.indexOf(hueso), 1);
+  puntos += 100;
+  recogidos++;
+  // Paso 5: sonido. Paso 6: partículas.
+}
+
+function jugar(dt) {
+  actualizarPerro(dt);
+  for (const hueso of [...huesos]) {
+    const cx = Math.max(perro.x, Math.min(hueso.x, perro.x + perro.ancho));
+    const cy = Math.max(perro.y, Math.min(hueso.y, perro.y + perro.alto));
+    if (Math.hypot(hueso.x - cx, hueso.y - cy) &lt; hueso.r) recoger(hueso);
+  }
+  // Paso 2: descontar el tiempo. Paso 3: terminar al recoger todos los huesos o al ponerse el sol.
+}
+
+function actualizar(dt) {
+  // Paso 1: según el estado, hacer una cosa u otra. Ahora siempre se juega.
+  jugar(dt);
+  const objetivo = Math.max(0, Math.min(perro.x + perro.ancho / 2 - ANCHO / 2, MUNDO_ANCHO - ANCHO));
+  camara.x += (objetivo - camara.x) * Math.min(1, 8 * dt);
+  recienPulsadas.clear();
+}
+
+// ===== Dibujar =====
+function dibujarCielo() {
+  ctx.fillStyle = "#8ecae6";               // Paso 2: que se vaya poniendo el sol
+  ctx.fillRect(0, 0, ANCHO, ALTO);
+  ctx.fillStyle = "#ffd166";
+  ctx.beginPath();
+  ctx.arc(380, 40, 26, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255, 255, 255, 0.5)";               // colinas lejanas: paralaje
+  for (let i = -1; i &lt; 4; i++) {
+    const x = i * 200 - (camara.x * 0.3) % 200;
+    ctx.beginPath(); ctx.arc(x + 100, ALTO - 40, 90, Math.PI, 0); ctx.fill();
+  }
+}
+function dibujarMundo() {
+  const primera = Math.floor(camara.x / TILE), ultima = Math.ceil((camara.x + ANCHO) / TILE);
+  for (let f = 0; f &lt; MAPA.length; f++) {
+    for (let c = primera; c &lt;= ultima; c++) {
+      if (MAPA[f][c] !== "#") continue;
+      const encima = f &gt; 0 &amp;&amp; MAPA[f - 1][c] === "#";
+      ctx.fillStyle = encima ? "#7f5539" : "#6a994e";
+      ctx.fillRect(c * TILE, f * TILE, TILE, TILE);
+      if (!encima) { ctx.fillStyle = "#7f5539"; ctx.fillRect(c * TILE, f * TILE + 10, TILE, TILE - 10); }
+    }
+  }
+  for (const h of huesos) {
+    const y = h.y + Math.sin(perro.t * 4 + h.fase) * 3;
+    ctx.fillStyle = "#fffdf7";
+    ctx.fillRect(h.x - 8, y - 2, 16, 4);
+    for (const [dx, dy] of [[-8, -3], [-8, 3], [8, -3], [8, 3]]) { ctx.beginPath(); ctx.arc(h.x + dx, y + dy, 3, 0, Math.PI * 2); ctx.fill(); }
+  }
+  const quieto = Math.abs(perro.vx) &lt; 10;
+  const foto = !perro.enSuelo ? 3 : quieto ? 0 : Math.floor(perro.t * 12) % 3;
+  ctx.save();
+  ctx.translate(Math.round(perro.x + perro.ancho / 2), Math.round(perro.y + perro.alto));
+  ctx.scale(perro.mira, 1);                // Paso 6: aplastar al aterrizar
+  ctx.drawImage(hoja, foto * FOTO_ANCHO, 0, FOTO_ANCHO, FOTO_ALTO, -FOTO_ANCHO * ESCALA / 2, -FOTO_ALTO * ESCALA + 6, FOTO_ANCHO * ESCALA, FOTO_ALTO * ESCALA);
+  ctx.restore();
+  // Paso 6: dibujar las partículas
+}
+function texto(t, x, y, tam = 16, alinear = "left") {
+  ctx.font = `bold ${tam}px system-ui, sans-serif`;
+  ctx.textAlign = alinear;
+  ctx.textBaseline = "top";
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
+  ctx.strokeText(t, x, y);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(t, x, y);
+}
+function dibujar() {
+  ctx.imageSmoothingEnabled = false;
+  dibujarCielo();
+  ctx.save();
+  ctx.translate(-Math.round(camara.x), 0);       // Paso 6: sumar aquí la sacudida
+  dibujarMundo();
+  ctx.restore();
+  texto(`Huesos: ${recogidos}/${totalHuesos}`, 10, 8);
+  // Paso 2: el tiempo que queda. Paso 4: el récord. Paso 1: carteles de menú, pausa y fin.
+}
+
+// ===== Bucle de juego =====
+let anterior = null;
+function bucle(ahora) {
+  if (anterior === null) anterior = ahora;
+  const dt = Math.min((ahora - anterior) / 1000, 1 / 30);
+  anterior = ahora;
+  actualizar(dt);
+  dibujar();
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);
+</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (typeof estado === "undefined") return "Paso 1: crea la variable estado; al cargar debe valer \"menu\".";
+if (estado !== "menu") return "Al cargar la página, el juego debería estar en el menú (estado = \"menu\").";
+recienPulsadas.add("Enter"); actualizar(0.016);
+if (estado !== "jugando") return "Paso 1: en el menú, Enter debería empezar la partida (estado = \"jugando\").";
+recienPulsadas.add("Escape"); actualizar(0.016);
+if (estado !== "pausa") return "Paso 1: durante la partida, Escape debería pausar (estado = \"pausa\").";
+recienPulsadas.add("Escape"); actualizar(0.016);
+if (estado !== "jugando") return "Paso 1: en la pausa, Escape debería volver a la partida.";
+if (typeof tiempo !== "number") return "Paso 2: crea la variable tiempo con los segundos de sol que quedan.";
+tiempo = 0.01; actualizar(0.05);
+if (estado !== "fin") return "Paso 2: cuando tiempo llega a 0, la partida debería terminar (estado = \"fin\").";
+if (!/localStorage\.getItem/.test(codigo.js) || !/localStorage\.setItem/.test(codigo.js)) return "Paso 4: carga el récord con localStorage.getItem y guárdalo con localStorage.setItem.";
+if (!/AudioContext/.test(codigo.js)) return "Paso 5: añade sonidos con Web Audio (new AudioContext()).";
+if (typeof particulas === "undefined" || !Array.isArray(particulas)) return "Paso 6: guarda las partículas en un array llamado particulas.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <p>El HTML y el CSS no cambian. Este es el JavaScript completo:</p>
+    <pre><code class="language-js">// ===== Saltarín: juego completo (una solución de referencia) =====
+const lienzo = document.querySelector("#juego");
+const ctx = lienzo.getContext("2d");
+const ANCHO = lienzo.width, ALTO = lienzo.height;
+const TILE = 30;
+
+// Ajustes de la física (píxeles y segundos)
+const GRAVEDAD = 1500;
+const VEL_MAX = 190;
+const ACELERACION = 1400;
+const FRICCION = 1600;
+const CAIDA_MAX = 700;
+const VEL_SALTO = -Math.sqrt(2 * GRAVEDAD * 100);   // salto de 100 px de alto
+const COYOTE = 0.1;           // segundos para saltar después de dejar el suelo
+const DURACION = 60;          // segundos hasta que se pone el sol
+
+// # suelo · h hueso · s salida del perro · . aire
+const MAPA = [
+  "................................................................",
+  "................................................................",
+  "........................h...................h...................",
+  "..........h............###...........h....#####.........h.......",
+  ".........###.....h..........###.....###.............h..###......",
+  "...............#####...h..............................###.......",
+  ".s....h..............#####.....h...........h..............h.....",
+  "#########..######.............######..##########..##############",
+  "#########..######..##########.######..##########..##############",
+];
+const MUNDO_ANCHO = MAPA[0].length * TILE;
+const MUNDO_ALTO = MAPA.length * TILE;
+
+// ===== Sprites dibujados con código (una hoja de 4 fotogramas) =====
+const PALETA = { M: "#9c6644", O: "#2b2d42", C: "#ede0d4", N: "#7f5539" };
+const CUERPO = ["........N.N.", "........MMMM", "N.......MOMMO", ".N......MMMM", ".MMMMMMMMMM.", ".MMMMMMMMM..", ".MCCCCCCMM.."];
+const PATAS = [
+  [".M.M....M.M.", ".M.M....M.M.", ".O.O....O.O."],
+  ["..M.M..M.M..", ".M...MM...M.", "O....OO....O"],
+  [".M.M....M.M.", "..MM.....MM.", "..OO.....OO."],
+  ["M..M...M..M.", "M...M.M...M.", "O....O.....O"],
+];
+const FOTO_ANCHO = 13, FOTO_ALTO = 10, ESCALA = 3;
+const hoja = document.createElement("canvas");
+hoja.width = FOTO_ANCHO * PATAS.length;
+hoja.height = FOTO_ALTO;
+const pincel = hoja.getContext("2d");
+PATAS.forEach((patas, i) =&gt; {
+  [...CUERPO, ...patas].forEach((fila, y) =&gt; {
+    [...fila].forEach((c, x) =&gt; {
+      if (PALETA[c]) { pincel.fillStyle = PALETA[c]; pincel.fillRect(i * FOTO_ANCHO + x, y, 1, 1); }
+    });
+  });
+});
+
+// ===== Estado del juego =====
+let estado = "menu";            // menu | jugando | pausa | fin
+let perro, huesos, particulas, puntos, recogidos, totalHuesos, tiempo, sacudida, mensajeFinal;
+let record = Number(localStorage.getItem("saltarin-record")) || 0;
+const camara = { x: 0, y: 0 };
+let salida = { x: 0, y: 0 };
+
+function nuevaPartida() {
+  huesos = [];
+  MAPA.forEach((fila, f) =&gt; [...fila].forEach((c, col) =&gt; {
+    if (c === "h") huesos.push({ x: col * TILE + 15, y: f * TILE + 18, r: 9, fase: col });
+    if (c === "s") salida = { x: col * TILE, y: f * TILE };
+  }));
+  perro = { x: salida.x, y: salida.y, ancho: 30, alto: 24, vx: 0, vy: 0, enSuelo: false, coyote: 0, mira: 1, t: 0, aplastado: 0 };
+  totalHuesos = huesos.length;
+  recogidos = 0;
+  particulas = [];
+  puntos = 0;
+  tiempo = DURACION;
+  sacudida = 0;
+  camara.x = 0;
+}
+nuevaPartida();
+
+// ===== Entrada =====
+const teclas = new Set();
+const recienPulsadas = new Set();
+const CONTROLES = ["ArrowLeft", "ArrowRight", "ArrowUp", "Space", "KeyA", "KeyD", "KeyW", "Enter", "Escape", "KeyP"];
+addEventListener("keydown", (e) =&gt; {
+  if (CONTROLES.includes(e.code)) e.preventDefault();
+  if (!e.repeat) recienPulsadas.add(e.code);
+  teclas.add(e.code);
+  desbloquearAudio();
+});
+addEventListener("keyup", (e) =&gt; teclas.delete(e.code));
+addEventListener("blur", () =&gt; teclas.clear());
+document.addEventListener("visibilitychange", () =&gt; {
+  if (document.hidden &amp;&amp; estado === "jugando") estado = "pausa";
+});
+lienzo.addEventListener("pointerdown", () =&gt; { lienzo.focus(); desbloquearAudio(); recienPulsadas.add("Enter"); });
+document.querySelectorAll("[data-tecla]").forEach((boton) =&gt; {
+  const codigo = boton.dataset.tecla;
+  boton.addEventListener("pointerdown", (e) =&gt; { e.preventDefault(); teclas.add(codigo); recienPulsadas.add(codigo); desbloquearAudio(); });
+  for (const tipo of ["pointerup", "pointerleave", "pointercancel"]) boton.addEventListener(tipo, () =&gt; teclas.delete(codigo));
+});
+const pulsa = (...codigos) =&gt; codigos.some((c) =&gt; teclas.has(c));
+const acabaDePulsar = (...codigos) =&gt; codigos.some((c) =&gt; recienPulsadas.has(c));
+
+// ===== Sonido (Web Audio) =====
+let audio = null;
+function desbloquearAudio() {
+  if (!audio) audio = new AudioContext();
+  if (audio.state === "suspended") audio.resume();
+}
+function sonar(frecuencia, duracion, tipo = "square", volumen = 0.12, frecuenciaFinal = frecuencia) {
+  if (!audio || audio.state !== "running") return;
+  const t = audio.currentTime;
+  const osc = audio.createOscillator();
+  const vol = audio.createGain();
+  osc.type = tipo;
+  osc.frequency.setValueAtTime(frecuencia, t);
+  osc.frequency.exponentialRampToValueAtTime(frecuenciaFinal, t + duracion);
+  vol.gain.setValueAtTime(volumen, t);
+  vol.gain.exponentialRampToValueAtTime(0.001, t + duracion);
+  osc.connect(vol).connect(audio.destination);
+  osc.start(t);
+  osc.stop(t + duracion);
+}
+
+// ===== Colisiones con el mapa =====
+function solidaEn(col, fila) {
+  if (col &lt; 0 || col &gt;= MAPA[0].length) return true;   // paredes invisibles a los lados
+  if (fila &lt; 0 || fila &gt;= MAPA.length) return false;
+  return MAPA[fila][col] === "#";
+}
+function moverYChocar(e, dt) {
+  e.x += e.vx * dt;                       // 1. mover en x y resolver en x
+  let arriba = Math.floor(e.y / TILE), abajo = Math.floor((e.y + e.alto - 1) / TILE);
+  for (let f = arriba; f &lt;= abajo; f++) {
+    if (e.vx &gt; 0 &amp;&amp; solidaEn(Math.floor((e.x + e.ancho - 1) / TILE), f)) { e.x = Math.floor((e.x + e.ancho - 1) / TILE) * TILE - e.ancho; e.vx = 0; }
+    if (e.vx &lt; 0 &amp;&amp; solidaEn(Math.floor(e.x / TILE), f)) { e.x = (Math.floor(e.x / TILE) + 1) * TILE; e.vx = 0; }
+  }
+  e.y += e.vy * dt;                       // 2. mover en y y resolver en y
+  const antesEnSuelo = e.enSuelo;
+  e.enSuelo = false;
+  const izq = Math.floor(e.x / TILE), der = Math.floor((e.x + e.ancho - 1) / TILE);
+  for (let c = izq; c &lt;= der; c++) {
+    if (e.vy &gt; 0 &amp;&amp; solidaEn(c, Math.floor((e.y + e.alto - 1) / TILE))) {
+      e.y = Math.floor((e.y + e.alto - 1) / TILE) * TILE - e.alto;
+      if (!antesEnSuelo &amp;&amp; e.vy &gt; 500) { e.aplastado = 0.15; sacudida = Math.min(1, sacudida + 0.3); sonar(110, 0.12, "triangle", 0.2, 60); }
+      e.vy = 0; e.enSuelo = true;
+    }
+    if (e.vy &lt; 0 &amp;&amp; solidaEn(c, Math.floor(e.y / TILE))) { e.y = (Math.floor(e.y / TILE) + 1) * TILE; e.vy = 0; }
+  }
+}
+
+// ===== Actualizar =====
+function actualizarPerro(dt) {
+  const direccion = (pulsa("ArrowRight", "KeyD") ? 1 : 0) - (pulsa("ArrowLeft", "KeyA") ? 1 : 0);
+  if (direccion !== 0) {
+    perro.vx += direccion * ACELERACION * dt;
+    perro.mira = direccion;
+  } else {
+    const frenado = Math.min(Math.abs(perro.vx), FRICCION * dt);
+    perro.vx -= Math.sign(perro.vx) * frenado;
+  }
+  perro.vx = Math.max(-VEL_MAX, Math.min(VEL_MAX, perro.vx));
+
+  perro.coyote = perro.enSuelo ? COYOTE : perro.coyote - dt;
+  if (acabaDePulsar("Space", "ArrowUp", "KeyW") &amp;&amp; perro.coyote &gt; 0) {
+    perro.vy = VEL_SALTO;
+    perro.coyote = 0;
+    sonar(300, 0.15, "square", 0.1, 600);
+  }
+  if (!pulsa("Space", "ArrowUp", "KeyW") &amp;&amp; perro.vy &lt; VEL_SALTO / 3) perro.vy = VEL_SALTO / 3;  // salto corto al soltar
+  perro.vy = Math.min(perro.vy + GRAVEDAD * dt, CAIDA_MAX);
+
+  moverYChocar(perro, dt);
+  perro.t += dt;
+  perro.aplastado = Math.max(0, perro.aplastado - dt);
+
+  if (perro.y &gt; MUNDO_ALTO + 60) {        // se cayó por un agujero
+    perro.x = salida.x; perro.y = salida.y; perro.vx = 0; perro.vy = 0;
+    tiempo = Math.max(0, tiempo - 5);
+    sacudida = 1;
+    sonar(220, 0.4, "sawtooth", 0.12, 55);
+  }
+}
+
+function recoger(hueso) {
+  huesos.splice(huesos.indexOf(hueso), 1);
+  puntos += 100;
+  recogidos++;
+  sonar(660, 0.08, "square", 0.1, 990);
+  for (let i = 0; i &lt; 12; i++) {
+    const angulo = Math.random() * Math.PI * 2, rapidez = 60 + Math.random() * 120;
+    particulas.push({ x: hueso.x, y: hueso.y, vx: Math.cos(angulo) * rapidez, vy: Math.sin(angulo) * rapidez - 80, vida: 0.6 });
+  }
+}
+
+function terminar(texto) {
+  estado = "fin";
+  mensajeFinal = texto;
+  if (puntos &gt; record) {
+    record = puntos;
+    localStorage.setItem("saltarin-record", String(record));
+  }
+}
+
+function jugar(dt) {
+  tiempo -= dt;
+  actualizarPerro(dt);
+  for (const hueso of [...huesos]) {
+    const cx = Math.max(perro.x, Math.min(hueso.x, perro.x + perro.ancho));
+    const cy = Math.max(perro.y, Math.min(hueso.y, perro.y + perro.alto));
+    if (Math.hypot(hueso.x - cx, hueso.y - cy) &lt; hueso.r) recoger(hueso);
+  }
+  if (huesos.length === 0) { puntos += Math.ceil(tiempo) * 10; terminar("¡Todos los huesos!"); }
+  else if (tiempo &lt;= 0) { tiempo = 0; terminar("Se puso el sol"); }
+}
+
+function actualizar(dt) {
+  if (estado === "menu") {
+    if (acabaDePulsar("Enter", "Space")) { nuevaPartida(); estado = "jugando"; }
+  } else if (estado === "jugando") {
+    if (acabaDePulsar("Escape", "KeyP")) estado = "pausa";
+    else jugar(dt);
+  } else if (estado === "pausa") {
+    if (acabaDePulsar("Escape", "KeyP", "Enter")) estado = "jugando";
+  } else if (estado === "fin") {
+    if (acabaDePulsar("Enter")) estado = "menu";
+  }
+  // Partículas y cámara siguen vivas en todos los estados menos la pausa
+  if (estado !== "pausa") {
+    for (const p of particulas) { p.vy += 400 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vida -= dt; }
+    particulas = particulas.filter((p) =&gt; p.vida &gt; 0);
+    const objetivo = Math.max(0, Math.min(perro.x + perro.ancho / 2 - ANCHO / 2, MUNDO_ANCHO - ANCHO));
+    camara.x += (objetivo - camara.x) * Math.min(1, 8 * dt);
+    sacudida = Math.max(0, sacudida - 1.5 * dt);
+  }
+  recienPulsadas.clear();
+}
+
+// ===== Dibujar =====
+const mezclar = (a, b, t) =&gt; a.map((v, i) =&gt; Math.round(v + (b[i] - v) * t));
+const rgb = (c) =&gt; `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+function dibujarCielo() {
+  const tarde = 1 - tiempo / DURACION;                      // 0 al empezar, 1 al ponerse el sol
+  const cielo = tarde &lt; 0.7 ? mezclar([142, 202, 230], [255, 183, 3], tarde / 0.7) : mezclar([255, 183, 3], [61, 64, 91], (tarde - 0.7) / 0.3);
+  ctx.fillStyle = rgb(cielo);
+  ctx.fillRect(0, 0, ANCHO, ALTO);
+  ctx.fillStyle = "#ffd166";
+  ctx.beginPath();
+  ctx.arc(380, 40 + tarde * 240, 26, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255, 255, 255, 0.5)";               // colinas lejanas: paralaje
+  for (let i = -1; i &lt; 4; i++) {
+    const x = i * 200 - (camara.x * 0.3) % 200;
+    ctx.beginPath(); ctx.arc(x + 100, ALTO - 40, 90, Math.PI, 0); ctx.fill();
+  }
+}
+function dibujarMundo() {
+  const primera = Math.floor(camara.x / TILE), ultima = Math.ceil((camara.x + ANCHO) / TILE);
+  for (let f = 0; f &lt; MAPA.length; f++) {
+    for (let c = primera; c &lt;= ultima; c++) {
+      if (MAPA[f][c] !== "#") continue;
+      const encima = f &gt; 0 &amp;&amp; MAPA[f - 1][c] === "#";
+      ctx.fillStyle = encima ? "#7f5539" : "#6a994e";
+      ctx.fillRect(c * TILE, f * TILE, TILE, TILE);
+      if (!encima) { ctx.fillStyle = "#7f5539"; ctx.fillRect(c * TILE, f * TILE + 10, TILE, TILE - 10); }
+    }
+  }
+  for (const h of huesos) {
+    const y = h.y + Math.sin(perro.t * 4 + h.fase) * 3;
+    ctx.fillStyle = "#fffdf7";
+    ctx.fillRect(h.x - 8, y - 2, 16, 4);
+    for (const [dx, dy] of [[-8, -3], [-8, 3], [8, -3], [8, 3]]) { ctx.beginPath(); ctx.arc(h.x + dx, y + dy, 3, 0, Math.PI * 2); ctx.fill(); }
+  }
+  const quieto = Math.abs(perro.vx) &lt; 10;
+  const foto = !perro.enSuelo ? 3 : quieto ? 0 : Math.floor(perro.t * 12) % 3;
+  const estirar = perro.aplastado &gt; 0 ? 1.25 : 1, encoger = perro.aplastado &gt; 0 ? 0.8 : 1;
+  ctx.save();
+  ctx.translate(Math.round(perro.x + perro.ancho / 2), Math.round(perro.y + perro.alto));
+  ctx.scale(perro.mira * estirar, encoger);
+  ctx.drawImage(hoja, foto * FOTO_ANCHO, 0, FOTO_ANCHO, FOTO_ALTO, -FOTO_ANCHO * ESCALA / 2, -FOTO_ALTO * ESCALA + 6, FOTO_ANCHO * ESCALA, FOTO_ALTO * ESCALA);
+  ctx.restore();
+  for (const p of particulas) {
+    ctx.fillStyle = `rgba(255, 253, 247, ${p.vida / 0.6})`;
+    ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+  }
+}
+function texto(t, x, y, tam = 16, alinear = "left") {
+  ctx.font = `bold ${tam}px system-ui, sans-serif`;
+  ctx.textAlign = alinear;
+  ctx.textBaseline = "top";
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
+  ctx.strokeText(t, x, y);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(t, x, y);
+}
+function dibujar() {
+  ctx.imageSmoothingEnabled = false;
+  dibujarCielo();
+  ctx.save();
+  const temblor = sacudida * sacudida * 8;               // la sacudida crece con el cuadrado
+  ctx.translate(-Math.round(camara.x + (Math.random() * 2 - 1) * temblor), Math.round((Math.random() * 2 - 1) * temblor));
+  dibujarMundo();
+  ctx.restore();
+  // HUD: fuera de la cámara, siempre en el mismo sitio de la pantalla
+  texto(`Huesos: ${recogidos}/${totalHuesos}`, 10, 8);
+  texto(`Sol: ${Math.ceil(tiempo)} s`, ANCHO / 2, 8, 16, "center");
+  texto(`Récord: ${record}`, ANCHO - 10, 8, 16, "right");
+  if (estado !== "jugando") {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+    ctx.fillRect(0, 0, ANCHO, ALTO);
+    const titulos = { menu: "SALTARÍN", pausa: "Pausa", fin: mensajeFinal };
+    const ayudas = { menu: "Enter o toca para jugar", pausa: "Escape para seguir", fin: `Puntos: ${puntos} · Enter para volver al menú` };
+    texto(titulos[estado], ANCHO / 2, ALTO / 2 - 34, 30, "center");
+    texto(ayudas[estado], ANCHO / 2, ALTO / 2 + 10, 16, "center");
+  }
+}
+
+// ===== Bucle de juego =====
+let anterior = null;
+function bucle(ahora) {
+  if (anterior === null) anterior = ahora;
+  const dt = Math.min((ahora - anterior) / 1000, 1 / 30);
+  anterior = ahora;
+  actualizar(dt);
+  dibujar();
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);</code></pre>
+    <p>Fíjate en cómo encaja cada idea de la estación: <code>bucle</code> limita <code>dt</code>; <code>actualizar</code> es la máquina de estados y solo llama a <code>jugar</code> en el estado <code>"jugando"</code>; <code>moverYChocar</code> resuelve un eje cada vez contra el mapa; la cámara se mueve con <code>lerp</code> y límites; el HUD se dibuja después de <code>restore</code>; y la sacudida usa el cuadrado de un «trauma» que se calma solo.</p>
+  </details>
+  <p><strong>Para ir más allá:</strong> añade el gato que patrulla de la sección del mundo y haz que te devuelva a la salida; crea varios niveles (un array de mapas) y pasa al siguiente al recoger todos los huesos; añade música con un botón de silencio y una opción para desactivar la sacudida; guarda también el mejor tiempo de cada nivel; o rehaz el juego en Phaser o en Godot y compara cuánto código te ahorras. Si quieres enemigos que vigilen, persigan y encuentren caminos, sigue en la <a href="37-ia-personajes.html">Estación 37</a>.</p>
+</section>

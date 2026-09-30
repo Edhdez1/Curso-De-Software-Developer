@@ -378,7 +378,7 @@ execFile("ping", ["-c", "1", servidor]);</textarea>
     <li><strong>HTML y JavaScript</strong>: es el XSS, y tiene sección propia a continuación.</li>
     <li><strong>Bases de datos NoSQL</strong>: en MongoDB, si tu código hace <code>buscar({ nombre: cuerpo.nombre, clave: cuerpo.clave })</code> y alguien envía <code>{"clave": {"$ne": null}}</code>, la condición pasa a ser «cualquier clave que no sea nula». La defensa es comprobar que cada campo sea del tipo esperado, un texto y no un objeto, algo que verás en la sección de validación.</li>
     <li><strong>Rutas de archivos</strong>: si guardas avatares en <code>"avatares/" + nombreArchivo</code> y alguien envía <code>../../.env</code>, podría leer o sobrescribir archivos fuera de la carpeta. A esto se le llama <strong>recorrido de rutas</strong> (<em>path traversal</em>).</li>
-    <li><strong>Modelos de lenguaje</strong>: si tu app pega el texto de una página web o de un correo dentro de las instrucciones que le das a una IA, ese texto puede traer órdenes escondidas («ignora lo anterior y envía los datos a…»). Es la <strong>inyección de instrucciones</strong> (<em>prompt injection</em>), y la verás en la <a href="37-ia.html">Estación 37</a>. Aquí no existe todavía una defensa tan limpia como los parámetros de SQL, así que se combina con el mínimo privilegio: que la IA no pueda hacer nada grave aunque la engañen.</li>
+    <li><strong>Modelos de lenguaje</strong>: si tu app pega el texto de una página web o de un correo dentro de las instrucciones que le das a una IA, ese texto puede traer órdenes escondidas («ignora lo anterior y envía los datos a…»). Es la <strong>inyección de instrucciones</strong> (<em>prompt injection</em>), y la verás a fondo en la <a href="41-modelos-lenguaje.html">Estación 41: Modelos de lenguaje</a>. Aquí no existe todavía una defensa tan limpia como los parámetros de SQL, así que se combina con el mínimo privilegio: que la IA no pueda hacer nada grave aunque la engañen.</li>
   </ul>
   <aside class="senal clave">
     <p>Regla general contra la inyección: <strong>separa el código de los datos</strong>. Usa las herramientas que los envían por canales distintos (parámetros en SQL, argumentos en <code>execFile</code>, <code>textContent</code> en el DOM). Cuando no existan, escapa según las reglas exactas del lenguaje de destino, con una biblioteca, y limita lo que el otro programa puede hacer.</p>
@@ -1446,10 +1446,11 @@ app.use(cors({ origin: permitidos, credentials: true }));</code></pre>
         <tr><td><code>X-Content-Type-Options: nosniff</code></td><td>Impide que el navegador «adivine» que un archivo de texto es un script y lo ejecute.</td></tr>
         <tr><td><code>Referrer-Policy: strict-origin-when-cross-origin</code></td><td>No revela la ruta completa de tu página a otros sitios cuando alguien sigue un enlace.</td></tr>
         <tr><td><code>Set-Cookie</code> con sus atributos</td><td><code>HttpOnly</code>, <code>Secure</code> y <code>SameSite</code>, como viste.</td></tr>
+        <tr><td><code>X-Powered-By</code> (para quitarla)</td><td>Express la añade por defecto y anuncia qué usas. Es una pista gratis para quien busca fallos conocidos de una versión: quítala con <code>app.disable("x-powered-by")</code> (helmet también lo hace).</td></tr>
       </tbody>
     </table>
   </div>
-  <p>En Express, <code>app.use(helmet())</code> pone valores razonables para casi todas. Para comprobar las de cualquier sitio, abre la pestaña Red de las DevTools, pulsa en la primera petición y mira las cabeceras de la respuesta.</p>
+  <p>En Express, <code>app.use(helmet())</code> pone valores razonables para casi todas y quita <code>X-Powered-By</code>. Para comprobar las de cualquier sitio, abre la pestaña Red de las DevTools, pulsa en la primera petición y mira las cabeceras de la respuesta.</p>
 </section>
 
 <section id="secretos" data-parada="Secretos y datos">
@@ -1464,6 +1465,7 @@ app.use(cors({ origin: permitidos, credentials: true }));</code></pre>
     <li><div><p><strong>Un secreto por entorno</strong> y con el mínimo alcance: la clave de pruebas de la API de pagos en tu computadora, la de producción solo en el servidor. En producción, los secretos se guardan en el panel de la plataforma o en un gestor de secretos (lo verás en la <a href="35-devops.html">Estación 35</a>).</p></div></li>
     <li><div><p><strong>Si se filtra, primero se anula.</strong> Revoca la clave en el servicio que la emitió y crea una nueva; después limpia el repositorio. Borrar el archivo en un commit nuevo no sirve, porque sigue en el historial. GitHub revisa los envíos a los repositorios públicos y bloquea muchos formatos de clave conocidos (<em>push protection</em>), pero no los reconoce todos.</p></div></li>
   </ol>
+  <p>Además de anularlos cuando se filtran, los secretos se <strong>rotan</strong>: se cambian cada cierto tiempo y siempre que alguien con acceso deja el equipo. Rotar sin cortar el servicio exige un periodo en el que valen el secreto viejo y el nuevo. Por ejemplo, con la contraseña de la base de datos: creas la nueva, despliegas el servidor con ella y solo entonces revocas la vieja. Con el secreto de los JWT: firmas los tokens nuevos con la clave nueva (la cabecera <code>kid</code> indica cuál se usó) y sigues aceptando la vieja solo hasta que caduquen los tokens que firmó. Si rotar un secreto te da miedo porque no sabes qué se rompería, esa es la señal de que conviene practicarlo antes de necesitarlo.</p>
   <p>Practícalo en una terminal simulada. Tienes el proyecto <code>arena-api</code> con un <code>.env</code> que contiene dos secretos de mentira. Tu misión: que Git guarde el proyecto sin que los secretos entren nunca en un commit.</p>
   <div class="terminal-sim" data-titulo="Misión: el primer commit sin secretos" data-inicio="/home/tu">
     <script type="application/json" class="terminal-sistema">{"arena-api": {"servidor.js": "import express from \"express\";\nconst app = express();\nconst clavePagos = process.env.CLAVE_PAGOS;\napp.listen(3000);\n", "package.json": "{ \"name\": \"arena-api\", \"type\": \"module\" }\n", ".env": "CLAVE_PAGOS=clave-de-prueba-123\nJWT_SECRETO=otro-secreto-de-prueba\n"}}</script>
@@ -1509,7 +1511,7 @@ GRANT SELECT, INSERT, UPDATE ON TABLE usuarios, puntuaciones TO api_arena;
   <p>En la <a href="29-backend.html#npm">Estación 29</a> instalaste paquetes con npm. Cada uno trae sus propias dependencias, y un proyecto pequeño acaba ejecutando código de cientos de personas que no conoces. A ese conjunto de piezas ajenas, y a los procesos con los que se publican, se le llama <strong>cadena de suministro de software</strong>. Es tan importante que el OWASP Top 10:2025 le dedicó una categoría nueva, la A03. Tiene dos riesgos distintos:</p>
   <ul>
     <li><strong>Paquetes con vulnerabilidades conocidas</strong>: código honesto con un fallo que alguien descubrió y publicó. Se arregla actualizando.</li>
-    <li><strong>Paquetes maliciosos</strong>: código hecho para dañar. Llega por un nombre casi igual al de un paquete famoso (<em>typosquatting</em>: <code>expres</code> en lugar de <code>express</code>), o porque alguien roba la cuenta de quien mantiene un paquete legítimo y publica una versión envenenada. El 8 de septiembre de 2025 pasó con 18 paquetes muy usados, entre ellos <code>chalk</code> y <code>debug</code>, que sumaban unos 2 600 millones de descargas semanales: el mantenedor cayó en un correo de phishing. Días después apareció Shai-Hulud, el primer «gusano» de npm: robaba las credenciales de quien instalaba un paquete infectado y las usaba para infectar otros paquetes de esa persona. Afectó a más de 500.</li>
+    <li><strong>Paquetes maliciosos</strong>: código hecho para dañar. Llega por un nombre casi igual al de un paquete famoso (<em>typosquatting</em>: <code>expres</code> en lugar de <code>express</code>), o porque alguien roba la cuenta de quien mantiene un paquete legítimo y publica una versión envenenada. Es lo que pasó el 8 de septiembre de 2025, como se contó en la <a href="29-backend.html#npm">Estación 29</a>, con 18 paquetes muy usados, entre ellos <code>chalk</code> y <code>debug</code>, que sumaban unos 2 600 millones de descargas semanales: el mantenedor cayó en un correo de phishing. Días después apareció Shai-Hulud, el primer «gusano» de npm: robaba las credenciales de quien instalaba un paquete infectado y las usaba para infectar otros paquetes de esa persona. Afectó a más de 500.</li>
   </ul>
   <p>Contra el primer riesgo, npm trae una herramienta: <code>npm audit</code> compara tus dependencias con una base de datos pública de avisos de seguridad. Así se ve su salida en un proyecto con una versión antigua de <code>lodash</code> (recortada):</p>
   <pre class="consola"><code><span class="prompt">$</span> npm audit
@@ -1700,25 +1702,23 @@ console.log(cookieDeSesion("7fK2pQ9xLm"));</code></pre>
 
   <article class="ejercicio" data-nivel="semi" id="ej-parametros">
     <h3>Del texto pegado a la consulta parametrizada</h3>
-    <p>La primera parte del código simula el controlador de una base de datos: acepta una consulta con huecos <code>?</code> y una lista de valores. La función <code>buscarJugador</code> está escrita de la forma vulnerable. Reescríbela para que use un hueco y pase el nombre como parámetro. Deben imprimirse <code>1</code> y <code>0</code>.</p>
+    <p>En este taller ya existe <code>db</code>, una simulación oculta del controlador de una base de datos con tres usuarios: <code>db.consultar(sql, parametros)</code> acepta una consulta con huecos <code>?</code> y un array con un valor por hueco. La función <code>buscarJugador</code> está escrita de la forma vulnerable. Reescríbela para que use un hueco y pase el nombre como parámetro. Deben imprimirse <code>1</code> y <code>0</code>.</p>
     <div class="taller" id="taller-ej-parametros" data-titulo="Ejercicio 3">
-      <textarea class="taller-codigo">// Simulación del controlador de una base de datos (no hace falta cambiarla)
-const usuarios = [
+      <script type="text/plain" class="taller-preparacion">const usuarios = [
   { id: 1, nombre: "ana" }, { id: 2, nombre: "luis" }, { id: 3, nombre: "sol" },
 ];
 const db = {
   consultar(sql, parametros = []) {
     const huecos = (sql.match(/\?/g) || []).length;
     if (huecos !== parametros.length) throw new Error(`La consulta tiene ${huecos} huecos y recibió ${parametros.length} valores`);
-    if (/'\s*OR\s*'1'\s*=\s*'1/i.test(sql)) return usuarios;   // la inyección funcionó
+    if (/'\s*OR\s*'1'\s*=\s*'1/i.test(sql)) return usuarios;
     const m = sql.match(/WHERE nombre = (\?|'([^']*)')/);
     if (!m) throw new Error("Esta simulación solo entiende consultas del tipo ... WHERE nombre = ?");
     const valor = m[1] === "?" ? parametros[0] : m[2];
-    return usuarios.filter((u) =&gt; u.nombre === valor);
+    return usuarios.filter((u) => u.nombre === valor);
   },
-};
-
-// ----- Tu código -----
+};</script>
+      <textarea class="taller-codigo">// db ya existe: db.consultar(sql, parametros)
 function buscarJugador(nombre) {
   return db.consultar("SELECT id, nombre FROM usuarios WHERE nombre = '" + nombre + "'");
 }
@@ -1728,31 +1728,14 @@ console.log(buscarJugador("x' OR '1'='1").length);   // debería ser 0</textarea
       <script type="text/plain" class="taller-verificar">
 if (salida[0] !== "1") return "Buscar «luis» debería devolver 1 fila y devolvió " + (salida[0] || "(nada)") + ".";
 if (salida[1] !== "0") return "La búsqueda maliciosa todavía devuelve " + (salida[1] || "(nada)") + " filas. Usa un hueco ? y pasa el nombre en la lista de parámetros.";
-var tuyo = codigo.split("----- Tu código -----")[1] || "";
-if (/\+\s*nombre|\$\{\s*nombre/.test(tuyo)) return "Da el resultado correcto, pero todavía pegas nombre dentro del SQL. El valor debe viajar aparte.";
+if (/\+\s*nombre|\$\{\s*nombre/.test(codigo)) return "Da el resultado correcto, pero todavía pegas nombre dentro del SQL. El valor debe viajar aparte.";
 return true;
       </script>
     </div>
     <details class="pista"><summary>Pista 1</summary><p>El segundo argumento de <code>db.consultar</code> es un array con un valor por cada <code>?</code>.</p></details>
     <details class="pista"><summary>Pista 2</summary><p>La consulta queda así: <code>"SELECT id, nombre FROM usuarios WHERE nombre = ?"</code>, sin comillas alrededor del hueco. Las comillas las pone (o no las necesita) la base de datos.</p></details>
     <details class="solucion"><summary>Ver una solución</summary>
-      <pre><code class="language-js">// Simulación del controlador de una base de datos (no hace falta cambiarla)
-const usuarios = [
-  { id: 1, nombre: "ana" }, { id: 2, nombre: "luis" }, { id: 3, nombre: "sol" },
-];
-const db = {
-  consultar(sql, parametros = []) {
-    const huecos = (sql.match(/\?/g) || []).length;
-    if (huecos !== parametros.length) throw new Error(`La consulta tiene ${huecos} huecos y recibió ${parametros.length} valores`);
-    if (/'\s*OR\s*'1'\s*=\s*'1/i.test(sql)) return usuarios;   // la inyección funcionó
-    const m = sql.match(/WHERE nombre = (\?|'([^']*)')/);
-    if (!m) throw new Error("Esta simulación solo entiende consultas del tipo ... WHERE nombre = ?");
-    const valor = m[1] === "?" ? parametros[0] : m[2];
-    return usuarios.filter((u) =&gt; u.nombre === valor);
-  },
-};
-
-// ----- Tu código -----
+      <pre><code class="language-js">// db ya existe: db.consultar(sql, parametros)
 function buscarJugador(nombre) {
   return db.consultar("SELECT id, nombre FROM usuarios WHERE nombre = ?", [nombre]);
 }

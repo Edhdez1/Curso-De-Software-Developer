@@ -186,7 +186,7 @@ h1 { margin: 0 0 .5rem; }</textarea>
   <aside class="senal ojo" data-titulo="El aviso amarillo de Babel">
     <p>En la consola del taller verás un aviso en inglés: <em>You are using the in-browser Babel transformer. Be sure to precompile your scripts for production</em>. Dice «estás traduciendo el código en el navegador; en producción, tradúcelo antes». Tiene razón: traducir en el navegador de cada visitante es lento. Para aprender es perfecto; para una app de verdad usarás Vite, que traduce una sola vez en tu computadora. Lo verás en la próxima sección.</p>
   </aside>
-  <p><strong>Modifica:</strong> cambia el nivel a 9 y añade un tercer elemento, <code>&lt;p&gt;Oro: {nivel * 150} monedas&lt;/p&gt;</code>, dentro del <code>&lt;div&gt;</code>. Después prueba a borrar la etiqueta de cierre <code>&lt;/div&gt;</code> y ejecuta: la consola mostrará un error de Babel con un recorte del código y una flecha <code>&gt;</code> que señala dónde se dio cuenta del problema. Los números de línea de esos errores cuentan desde la etiqueta <code>&lt;script type="text/babel"&gt;</code>, no desde el principio de la pestaña.</p>
+  <p><strong>Modifica:</strong> cambia el nivel a 9 y añade un tercer elemento, <code>&lt;p&gt;Oro: {nivel * 150} monedas&lt;/p&gt;</code>, dentro del <code>&lt;div&gt;</code>. Después prueba a borrar la etiqueta de cierre <code>&lt;/div&gt;</code> y ejecuta: la consola mostrará un error de Babel con un recorte del código y una flecha <code>&gt;</code> que señala dónde se dio cuenta del problema. Los números de línea de esos errores cuentan desde la etiqueta <code>&lt;script type="text/babel"&gt;</code>, no desde el principio de la pestaña. Y si un error de ejecución muestra un número enorme, como «línea 15473», ese número es del código de React, no del tuyo: guíate por el mensaje.</p>
 </section>
 
 <section id="vite" data-parada="Crear un proyecto">
@@ -362,7 +362,7 @@ export default App</code></pre>
 dist/assets/index-DykytF2W.css    4.10 kB │ gzip:  1.47 kB
 dist/assets/index-CyBHeG3D.js   222.52 kB │ gzip: 69.26 kB
 built in 718ms</span></code></pre>
-  <p>Todo tu código y React caben en un único archivo JavaScript de unos 220 kB, que viaja comprimido (<em>gzip</em>) en unos 70 kB. Las letras raras del nombre, como <code>CyBHeG3D</code>, cambian cada vez que cambia el contenido: así el navegador sabe cuándo debe descargar la versión nueva en vez de usar la que tenía guardada. La carpeta <code>dist</code> es una web estática: la puedes publicar en GitHub Pages (<a href="24-git.html">Estación 24</a>) o en los servicios que verás en la <a href="35-devops.html">Estación 35</a>.</p>
+  <p>Todo tu código y React caben en un único archivo JavaScript de unos 220 kB, que viaja comprimido (<em>gzip</em>) en unos 70 kB. Las letras raras del nombre, como <code>CyBHeG3D</code>, cambian cada vez que cambia el contenido: así el navegador sabe cuándo debe descargar la versión nueva en vez de usar la que tenía guardada. La carpeta <code>dist</code> es una web estática: la puedes publicar en GitHub Pages (<a href="24-git.html">Estación 24</a>) o en los servicios que verás en la <a href="35-devops.html#estatico">Estación 35</a>.</p>
 
   <h3>Practica: explora el proyecto</h3>
   <p>Esta terminal simulada tiene un proyecto recién creado con Vite (no tiene npm; ese lo usarás en tu computadora). Tu misión: mira el contenido de <code>src/main.jsx</code> con <code>cat</code> y después crea la carpeta <code>src/components</code> con dos archivos vacíos, <code>TarjetaProducto.jsx</code> y <code>Carrito.jsx</code>.</p>
@@ -650,7 +650,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
     </ol>
   </div>
   <aside class="senal nota" data-titulo="Impacto">
-    <p>Todo lo que pones entre llaves se muestra como texto, nunca como HTML. Si un comentario de un usuario contiene <code>&lt;img src=x onerror="…"&gt;</code>, React lo muestra como letras y no ejecuta nada. Es la protección contra la inyección de código que viste en el taller de <code>innerHTML</code> de la <a href="15-dom.html#cambiar">Estación 15</a>, activada por defecto. La única forma de saltársela tiene un nombre que avisa: <code>dangerouslySetInnerHTML</code> («asignar innerHTML peligrosamente»). Úsala solo con HTML que hayas limpiado antes; la <a href="31-seguridad.html">Estación 31</a> explica cómo.</p>
+    <p>Todo lo que pones entre llaves se muestra como texto, nunca como HTML. Si un comentario de un usuario contiene <code>&lt;img src=x onerror="…"&gt;</code>, React lo muestra como letras y no ejecuta nada. Es la protección contra la inyección de código que viste en el taller de <code>innerHTML</code> de la <a href="15-dom.html#cambiar">Estación 15</a>, activada por defecto. La única forma de saltársela tiene un nombre que avisa: <code>dangerouslySetInnerHTML</code> («asignar innerHTML peligrosamente»). Úsala solo con HTML que hayas limpiado antes; la <a href="31-seguridad.html#xss">Estación 31</a> explica cómo.</p>
   </aside>
 </section>
 
@@ -1883,7 +1883,7 @@ export default function DetalleProducto() {
     <p>Dos fallos frecuentes. (1) Usar <code>&lt;a href="/carrito"&gt;</code> en vez de <code>&lt;Link to="/carrito"&gt;</code>: el navegador recarga la página entera y se pierde todo el estado (el carrito queda vacío). (2) Copiar de tutoriales anteriores a 2026 <code>import … from "react-router-dom"</code>: en la versión 8 ese paquete desapareció y todo se importa de <code>"react-router"</code>. Las ideas (<code>Routes</code>, <code>Route</code>, <code>Link</code>, <code>useParams</code>) son las mismas desde la versión 6.</p>
   </aside>
   <aside class="senal ojo" data-titulo="Al publicar una SPA">
-    <p>Si publicas la carpeta <code>dist</code> y alguien recarga la página en <code>/carrito</code>, el servidor buscará un archivo <code>carrito</code> que no existe y responderá 404. Hay que configurar el servidor para que devuelva <code>index.html</code> en cualquier ruta; React Router se encarga del resto. Cada servicio de publicación tiene su forma de hacerlo; lo verás en la <a href="35-devops.html">Estación 35</a>.</p>
+    <p>Si publicas la carpeta <code>dist</code> y alguien recarga la página en <code>/carrito</code>, el servidor buscará un archivo <code>carrito</code> que no existe y responderá 404. Hay que configurar el servidor para que devuelva <code>index.html</code> en cualquier ruta; React Router se encarga del resto. Cada servicio de publicación tiene su forma de hacerlo; lo verás en la <a href="35-devops.html#estatico">Estación 35</a>.</p>
   </aside>
   <p>React Router tiene además un «modo framework», heredero de un proyecto llamado Remix, que añade carga de datos antes de mostrar cada página y renderizado en el servidor. Es una de las dos opciones que recomienda la documentación de React para proyectos grandes, junto con Next.js.</p>
 
@@ -2905,4 +2905,445 @@ ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);</cod
       <p><code>{ valor, sumar, restar, reiniciar }</code> es la forma abreviada de <code>{ valor: valor, sumar: sumar, … }</code>. Devolver un objeto permite usar solo lo que necesites; <code>useState</code> devuelve un array porque así puedes elegir los nombres al desestructurar. Las dos opciones son habituales.</p>
     </details>
   </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: tienda con carrito</h2>
+  <p>Vas a construir la tienda de «Café Terminal»: un catálogo con filtro por categoría, un carrito que suma cantidades, un total que se calcula solo, una insignia en la cabecera y un carrito que sobrevive a una recarga. Es el tipo de interfaz que se programa todos los días en la industria, y usa casi todo lo de esta estación. Seguirás el método «Pensar en React»: el taller ya trae la versión estática (componentes y props, sin estado) y tú le das vida.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Lee la versión estática.</strong> Ejecuta el taller. Identifica los cuatro componentes (<code>Cabecera</code>, <code>TarjetaProducto</code>, <code>Carrito</code> y <code>App</code>) y qué props recibe cada uno. Todavía nada responde a los clics.</p></div></li>
+    <li><div><p><strong>Decide el estado mínimo.</strong> Solo hacen falta dos estados, los dos en <code>App</code>: el carrito, un array de líneas con la forma <code>{ ...producto, cantidad }</code>, y la categoría elegida en el filtro. Todo lo demás es derivado: las unidades de la insignia, el total y los productos visibles.</p></div></li>
+    <li><div><p><strong>Añade al carrito.</strong> Crea el estado <code>carrito</code> en <code>App</code> y una función <code>agregar(producto)</code>: si el producto ya está en el carrito, aumenta su cantidad con <code>map</code> y spread; si no, añade una línea nueva con <code>cantidad: 1</code>. Pásala a cada tarjeta como prop <code>onAgregar</code> y úsala en el botón «Añadir al carrito».</p></div></li>
+    <li><div><p><strong>Muestra el carrito.</strong> Pasa el carrito a <code>Carrito</code>. Por cada línea, un <code>&lt;li&gt;</code> con un <code>&lt;span className="nombre"&gt;</code>, un <code>&lt;span className="cantidad"&gt;</code> (solo el número) y tres botones con los textos <code>+</code>, <code>-</code> y <code>Quitar</code>. El párrafo <code>.vacio</code> solo aparece si no hay líneas. El párrafo <code>.total</code> muestra <code>Total: $33.00</code>, calculado con <code>reduce</code>. La insignia de la cabecera muestra la suma de cantidades.</p></div></li>
+    <li><div><p><strong>Cambia cantidades.</strong> Crea <code>cambiarCantidad(id, cambio)</code>, que suma o resta 1 a una línea y elimina las que llegan a 0 (<code>map</code> seguido de <code>filter</code>), y <code>quitar(id)</code>. Pásalas a <code>Carrito</code> como props.</p></div></li>
+    <li><div><p><strong>Filtra por categoría.</strong> Añade encima del catálogo un <code>&lt;select id="categoria"&gt;</code> controlado con las opciones <code>todas</code>, <code>cafe</code> y <code>accesorios</code> (esos son los <code>value</code>). Los productos visibles se calculan al renderizar.</p></div></li>
+    <li><div><p><strong>Recuerda el carrito.</strong> Copia el hook <code>useLocalStorage</code> de la sección <a href="#efectos">Efectos y datos</a> y cambia el <code>useState</code> del carrito por <code>useLocalStorage("carrito", [])</code>. Ejecuta, añade productos y vuelve a ejecutar: el carrito sigue ahí.</p></div></li>
+    <li><div><p><strong>Revisa como en un equipo.</strong> ¿Todas las listas tienen key? ¿Alguna función muta el estado? ¿La insignia tiene un <code>aria-label</code> que explique qué es ese número? ¿Hay algún <code>useEffect</code> que sobre? Pulsa «Ejecutar»: la comprobación prueba la tienda como lo haría un cliente.</p></div></li>
+  </ol>
+  <div class="taller" data-modo="web" id="taller-proyecto" data-titulo="Proyecto: Café Terminal" data-alto="26rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState, useEffect } = React;
+
+const CATALOGO = [
+  { id: 1, nombre: "Café de Colombia", precio: 12.5, categoria: "cafe" },
+  { id: 2, nombre: "Café de Etiopía", precio: 14, categoria: "cafe" },
+  { id: 3, nombre: "Café de Guatemala", precio: 11.75, categoria: "cafe" },
+  { id: 4, nombre: "Taza de cerámica", precio: 8, categoria: "accesorios" },
+  { id: 5, nombre: "Molinillo manual", precio: 34.9, categoria: "accesorios" },
+  { id: 6, nombre: "Filtros de papel", precio: 3.25, categoria: "accesorios" },
+];
+
+function formatear(precio) {
+  return "$" + precio.toFixed(2);
+}
+
+function Cabecera({ unidades }) {
+  return (
+    &lt;header className="cabecera"&gt;
+      &lt;h1&gt;Café Terminal&lt;/h1&gt;
+      &lt;span className="insignia" aria-label="Unidades en el carrito"&gt;{unidades}&lt;/span&gt;
+    &lt;/header&gt;
+  );
+}
+
+function TarjetaProducto({ producto }) {
+  return (
+    &lt;article className="producto"&gt;
+      &lt;h3&gt;{producto.nombre}&lt;/h3&gt;
+      &lt;p&gt;{formatear(producto.precio)}&lt;/p&gt;
+      &lt;button&gt;Añadir al carrito&lt;/button&gt;
+    &lt;/article&gt;
+  );
+}
+
+function Carrito({ lineas }) {
+  return (
+    &lt;aside className="carrito"&gt;
+      &lt;h2&gt;Tu carrito&lt;/h2&gt;
+      &lt;p className="vacio"&gt;Tu carrito está vacío&lt;/p&gt;
+      &lt;p className="total"&gt;Total: {formatear(0)}&lt;/p&gt;
+    &lt;/aside&gt;
+  );
+}
+
+function App() {
+  // Paso 3: el estado del carrito vive aquí
+  return (
+    &lt;&gt;
+      &lt;Cabecera unidades={0} /&gt;
+      &lt;main className="tienda"&gt;
+        &lt;section className="catalogo"&gt;
+          {CATALOGO.map(p =&gt; &lt;TarjetaProducto key={p.id} producto={p} /&gt;)}
+        &lt;/section&gt;
+        &lt;Carrito lineas={[]} /&gt;
+      &lt;/main&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
+&lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 0; background: #faf7f2; color: #2b2118; }
+.cabecera { display: flex; align-items: center; justify-content: space-between; padding: .6rem 1rem; background: #3b2a1e; color: #fff; }
+.cabecera h1 { font-size: 1.3rem; margin: 0; }
+.insignia { background: #ffcf70; color: #3b2a1e; font-weight: bold; border-radius: 99px; min-width: 1.8rem; text-align: center; padding: .15rem .5rem; }
+.tienda { display: grid; grid-template-columns: 1fr 15rem; gap: 1rem; padding: 1rem; }
+.catalogo { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: .7rem; margin-top: .5rem; }
+.producto { background: #fff; border: 1px solid #e0d6c8; border-radius: 10px; padding: .6rem .8rem; }
+.producto h3 { font-size: 1rem; margin: 0 0 .3rem; }
+.producto p { margin: 0 0 .5rem; }
+.carrito { background: #fff; border: 1px solid #e0d6c8; border-radius: 10px; padding: .6rem .9rem; align-self: start; }
+.carrito h2 { font-size: 1.1rem; margin: 0 0 .5rem; }
+.carrito ul { list-style: none; padding: 0; margin: 0; }
+.carrito li { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; padding: .3rem 0; border-bottom: 1px solid #eee; }
+.carrito li .botones { margin-left: auto; }
+.total { font-weight: bold; margin: .6rem 0 0; }
+.vacio { color: #7a6a5a; font-style: italic; }
+button { cursor: pointer; }
+@media (max-width: 36rem) { .tienda { grid-template-columns: 1fr; } }</textarea>
+    <script type="text/plain" class="taller-verificar">
+function clic(el) { ReactDOM.flushSync(function () { el.click(); }); }
+function elegir(sel, valor) { var s = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set; ReactDOM.flushSync(function () { s.call(sel, valor); sel.dispatchEvent(new Event("change", { bubbles: true })); }); }
+function t(el) { return el ? el.textContent.replace(/\s+/g, " ").trim() : ""; }
+function boton(raiz, texto) { return raiz ? [].filter.call(raiz.querySelectorAll("button"), function (b) { return t(b) === texto; })[0] : null; }
+function linea(nombre) { return [].filter.call(document.querySelectorAll(".carrito li"), function (li) { return t(li.querySelector(".nombre")) === nombre; })[0]; }
+function producto(nombre) { return [].filter.call(document.querySelectorAll(".producto"), function (a) { return t(a.querySelector("h3")) === nombre; })[0]; }
+function total() { return t(document.querySelector(".carrito .total")); }
+function insignia() { return t(document.querySelector(".insignia")); }
+for (var g = 0; g < 20 && document.querySelector(".carrito li"); g++) { var q = boton(document.querySelector(".carrito li"), "Quitar"); if (!q) break; clic(q); }
+if (document.querySelectorAll(".producto").length !== 6) return "Deberían verse los 6 productos del catálogo (artículos con la clase producto).";
+if (!document.querySelector(".carrito .vacio")) return "Con el carrito vacío debería verse el párrafo .vacio.";
+var cafe = producto("Café de Colombia"), taza = producto("Taza de cerámica");
+var bc = boton(cafe, "Añadir al carrito"), bt = boton(taza, "Añadir al carrito");
+if (!bc || !bt) return "Cada producto debería tener un botón con el texto «Añadir al carrito».";
+clic(bc); clic(bc); clic(bt);
+var lc = linea("Café de Colombia"), lt = linea("Taza de cerámica");
+if (!lc || !lt) return "Después de añadir el café dos veces y una taza, el carrito debería tener una línea (li) para cada uno, con el nombre en un span.nombre.";
+if (document.querySelectorAll(".carrito li").length !== 2) return "Añadir el mismo producto dos veces no debe crear dos líneas: aumenta su cantidad.";
+if (t(lc.querySelector(".cantidad")) !== "2") return "La línea del café debería tener cantidad 2, en un span.cantidad (solo el número).";
+if (document.querySelector(".carrito .vacio")) return "Con productos en el carrito, el párrafo .vacio no debería verse.";
+if (insignia() !== "3") return "La insignia de la cabecera debería mostrar 3 unidades y muestra «" + insignia() + "».";
+if (total() !== "Total: $33.00") return "El total debería ser «Total: $33.00» (12.50 × 2 + 8) y es «" + total() + "».";
+var guardado = null; try { guardado = JSON.parse(localStorage.getItem("carrito")); } catch (e) {}
+if (!Array.isArray(guardado) || guardado.length !== 2) return "El carrito debería guardarse en localStorage con la clave «carrito»: usa useLocalStorage(\"carrito\", []).";
+var mas = boton(linea("Taza de cerámica"), "+");
+if (!mas) return "Cada línea del carrito debería tener un botón «+».";
+clic(mas);
+if (total() !== "Total: $41.00") return "Tras pulsar + en la taza, el total debería ser «Total: $41.00» y es «" + total() + "».";
+var menos = boton(linea("Café de Colombia"), "-");
+if (!menos) return "Cada línea del carrito debería tener un botón «-».";
+clic(menos);
+if (total() !== "Total: $28.50") return "Tras pulsar - en el café, el total debería ser «Total: $28.50» y es «" + total() + "».";
+clic(boton(linea("Café de Colombia"), "-"));
+if (linea("Café de Colombia")) return "Al bajar la cantidad a 0, la línea debería desaparecer del carrito.";
+if (total() !== "Total: $16.00") return "Sin café y con dos tazas, el total debería ser «Total: $16.00» y es «" + total() + "».";
+var quitar = boton(linea("Taza de cerámica"), "Quitar");
+if (!quitar) return "Cada línea del carrito debería tener un botón «Quitar».";
+clic(quitar);
+if (document.querySelectorAll(".carrito li").length !== 0 || !document.querySelector(".carrito .vacio")) return "«Quitar» debería eliminar la línea y dejar el carrito vacío, con el párrafo .vacio.";
+var sel = document.querySelector("#categoria");
+if (!sel) return "Falta el filtro: un select con id categoria.";
+elegir(sel, "accesorios");
+if (document.querySelectorAll(".producto").length !== 3) return "Con la categoría «accesorios» deberían verse 3 productos y se ven " + document.querySelectorAll(".producto").length + ".";
+elegir(sel, "todas");
+if (document.querySelectorAll(".producto").length !== 6) return "Con «todas» deberían volver a verse los 6 productos.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <pre><code class="language-jsx">const { useState, useEffect } = React;
+
+const CATALOGO = [
+  { id: 1, nombre: "Café de Colombia", precio: 12.5, categoria: "cafe" },
+  { id: 2, nombre: "Café de Etiopía", precio: 14, categoria: "cafe" },
+  { id: 3, nombre: "Café de Guatemala", precio: 11.75, categoria: "cafe" },
+  { id: 4, nombre: "Taza de cerámica", precio: 8, categoria: "accesorios" },
+  { id: 5, nombre: "Molinillo manual", precio: 34.9, categoria: "accesorios" },
+  { id: 6, nombre: "Filtros de papel", precio: 3.25, categoria: "accesorios" },
+];
+
+function formatear(precio) {
+  return "$" + precio.toFixed(2);
+}
+
+function useLocalStorage(clave, valorInicial) {
+  const [valor, setValor] = useState(() =&gt; {
+    const guardado = localStorage.getItem(clave);
+    return guardado !== null ? JSON.parse(guardado) : valorInicial;
+  });
+  useEffect(() =&gt; {
+    localStorage.setItem(clave, JSON.stringify(valor));
+  }, [clave, valor]);
+  return [valor, setValor];
+}
+
+function Cabecera({ unidades }) {
+  return (
+    &lt;header className="cabecera"&gt;
+      &lt;h1&gt;Café Terminal&lt;/h1&gt;
+      &lt;span className="insignia" aria-label="Unidades en el carrito"&gt;{unidades}&lt;/span&gt;
+    &lt;/header&gt;
+  );
+}
+
+function TarjetaProducto({ producto, onAgregar }) {
+  return (
+    &lt;article className="producto"&gt;
+      &lt;h3&gt;{producto.nombre}&lt;/h3&gt;
+      &lt;p&gt;{formatear(producto.precio)}&lt;/p&gt;
+      &lt;button onClick={() =&gt; onAgregar(producto)}&gt;Añadir al carrito&lt;/button&gt;
+    &lt;/article&gt;
+  );
+}
+
+function Carrito({ lineas, onCambiar, onQuitar }) {
+  const total = lineas.reduce((suma, l) =&gt; suma + l.precio * l.cantidad, 0);
+  return (
+    &lt;aside className="carrito"&gt;
+      &lt;h2&gt;Tu carrito&lt;/h2&gt;
+      {lineas.length === 0 ? (
+        &lt;p className="vacio"&gt;Tu carrito está vacío&lt;/p&gt;
+      ) : (
+        &lt;ul&gt;
+          {lineas.map(l =&gt; (
+            &lt;li key={l.id}&gt;
+              &lt;span className="nombre"&gt;{l.nombre}&lt;/span&gt; × &lt;span className="cantidad"&gt;{l.cantidad}&lt;/span&gt;
+              &lt;span className="botones"&gt;
+                &lt;button onClick={() =&gt; onCambiar(l.id, 1)} aria-label={"Uno más de " + l.nombre}&gt;+&lt;/button&gt;{" "}
+                &lt;button onClick={() =&gt; onCambiar(l.id, -1)} aria-label={"Uno menos de " + l.nombre}&gt;-&lt;/button&gt;{" "}
+                &lt;button onClick={() =&gt; onQuitar(l.id)}&gt;Quitar&lt;/button&gt;
+              &lt;/span&gt;
+            &lt;/li&gt;
+          ))}
+        &lt;/ul&gt;
+      )}
+      &lt;p className="total"&gt;Total: {formatear(total)}&lt;/p&gt;
+    &lt;/aside&gt;
+  );
+}
+
+function App() {
+  const [carrito, setCarrito] = useLocalStorage("carrito", []);
+  const [categoria, setCategoria] = useState("todas");
+
+  const visibles = categoria === "todas" ? CATALOGO : CATALOGO.filter(p =&gt; p.categoria === categoria);
+  const unidades = carrito.reduce((suma, l) =&gt; suma + l.cantidad, 0);
+
+  function agregar(producto) {
+    setCarrito(c =&gt;
+      c.some(l =&gt; l.id === producto.id)
+        ? c.map(l =&gt; (l.id === producto.id ? { ...l, cantidad: l.cantidad + 1 } : l))
+        : [...c, { ...producto, cantidad: 1 }]
+    );
+  }
+
+  function cambiarCantidad(id, cambio) {
+    setCarrito(c =&gt;
+      c.map(l =&gt; (l.id === id ? { ...l, cantidad: l.cantidad + cambio } : l))
+       .filter(l =&gt; l.cantidad &gt; 0)
+    );
+  }
+
+  function quitar(id) {
+    setCarrito(c =&gt; c.filter(l =&gt; l.id !== id));
+  }
+
+  return (
+    &lt;&gt;
+      &lt;Cabecera unidades={unidades} /&gt;
+      &lt;main className="tienda"&gt;
+        &lt;section&gt;
+          &lt;label htmlFor="categoria"&gt;Categoría &lt;/label&gt;
+          &lt;select id="categoria" value={categoria} onChange={e =&gt; setCategoria(e.target.value)}&gt;
+            &lt;option value="todas"&gt;Todas&lt;/option&gt;
+            &lt;option value="cafe"&gt;Café&lt;/option&gt;
+            &lt;option value="accesorios"&gt;Accesorios&lt;/option&gt;
+          &lt;/select&gt;
+          &lt;div className="catalogo"&gt;
+            {visibles.map(p =&gt; &lt;TarjetaProducto key={p.id} producto={p} onAgregar={agregar} /&gt;)}
+          &lt;/div&gt;
+        &lt;/section&gt;
+        &lt;Carrito lineas={carrito} onCambiar={cambiarCantidad} onQuitar={quitar} /&gt;
+      &lt;/main&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);</code></pre>
+    <p>Las tres funciones que cambian el carrito usan la forma con función (<code>setCarrito(c =&gt; …)</code>), así son correctas aunque se llamen varias veces seguidas. Los botones «+» y «-» llevan un <code>aria-label</code> porque, leídos en voz alta, un signo solo no dice de qué producto son. Y fíjate en qué <em>no</em> es estado: <code>visibles</code>, <code>unidades</code> y <code>total</code>.</p>
+  </details>
+  <p><strong>Para ir más allá:</strong> lleva la tienda a un proyecto de Vite, con un archivo por componente en <code>src/components</code>; añade React Router con las páginas <code>/</code>, <code>/producto/:id</code> y <code>/carrito</code>; dale estilo con CSS Modules o con Tailwind; carga el catálogo desde un archivo <code>productos.json</code> con <code>fetch</code> y los estados de carga y error; añade un formulario de pago con validación; y publícala (<a href="35-devops.html#estatico">Estación 35</a>). Si prefieres los juegos, el mismo esqueleto sirve para la tienda de mejoras de un videojuego: monedas en vez de dólares y armas en vez de café.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Si fallas alguna, lee la explicación de cada opción: equivocarse aquí es la forma más barata de aprender.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Qué significa «la interfaz es una función del estado»?</p>
+      <ol class="opciones">
+        <li>Que cada componente debe tener una función llamada <code>estado</code>.<p class="explica">No. Es una forma de pensar, no un nombre obligatorio.</p></li>
+        <li>Que para cambiar la pantalla escribes una función que modifica el DOM.<p class="explica">Eso es el enfoque imperativo. En React no tocas el DOM: cambias el estado.</p></li>
+        <li>Que para un mismo estado se ve siempre la misma interfaz, y para cambiar lo que se ve cambias el estado.<p class="explica">Correcto. React vuelve a calcular la interfaz a partir del estado y actualiza el DOM por ti.</p></li>
+        <li>Que React guarda el estado dentro de los elementos del DOM.<p class="explica">Al revés: el estado vive en JavaScript y el DOM es la consecuencia.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Un componente tiene <code>let cuenta = 0;</code> y un botón con <code>onClick={() =&gt; cuenta++}</code>. ¿Por qué la pantalla sigue mostrando 0?</p>
+      <ol class="opciones">
+        <li>Porque cambiar una variable normal no avisa a React, y además la variable vuelve a 0 en cada render.<p class="explica">Correcto. Por eso existe <code>useState</code>: guarda el valor entre renders y, al cambiarlo, provoca un render.</p></li>
+        <li>Porque habría que usar <code>var</code> en lugar de <code>let</code>.<p class="explica"><code>var</code> tiene los mismos dos problemas. No es cuestión de cómo se declara.</p></li>
+        <li>Porque falta un <code>console.log</code> después de sumar.<p class="explica"><code>console.log</code> solo escribe en la consola; no cambia la pantalla.</p></li>
+        <li>Porque los eventos de React no pueden cambiar variables.<p class="explica">Sí pueden; la variable cambia (compruébalo en la consola). Lo que no ocurre es un nuevo render.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado"><code>cuenta</code> vale 0. Un clic ejecuta tres veces seguidas <code>setCuenta(cuenta + 1)</code>. ¿Qué muestra la pantalla después?</p>
+      <ol class="opciones">
+        <li><code>3</code><p class="explica">Es lo que parece, pero las tres llamadas usan la misma foto del estado: 0 + 1 las tres veces.</p></li>
+        <li><code>1</code><p class="explica">Correcto. Dentro de un render el estado no cambia. Con <code>setCuenta(c =&gt; c + 1)</code> sí llegaría a 3.</p></li>
+        <li><code>0</code><p class="explica"><code>setCuenta</code> sí cambia el estado, pero para el siguiente render.</p></li>
+        <li>Un error por llamar tres veces a <code>setCuenta</code>.<p class="explica">Se puede llamar las veces que quieras; React agrupa las actualizaciones.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Cuál de estos trozos de JSX es correcto?</p>
+      <ol class="opciones">
+        <li><code>&lt;label for="n" class="x"&gt;Nombre&lt;/label&gt;</code><p class="explica">En JSX se escribe <code>htmlFor</code> y <code>className</code>.</p></li>
+        <li><code>return &lt;h1&gt;Hola&lt;/h1&gt;&lt;p&gt;Adiós&lt;/p&gt;;</code><p class="explica">Dos elementos hermanos sin envolver: hace falta un elemento raíz o un fragmento.</p></li>
+        <li><code>&lt;img src={foto}&gt;</code><p class="explica">En JSX todas las etiquetas se cierran: <code>&lt;img src={foto} /&gt;</code>. Y le falta <code>alt</code>.</p></li>
+        <li><code>&lt;&gt;&lt;h1 className="t"&gt;Hola&lt;/h1&gt;&lt;img src={foto} alt="" /&gt;&lt;/&gt;</code><p class="explica">Correcto: fragmento como raíz, <code>className</code> y la imagen cerrada.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Este código no actualiza la pantalla: <code>carrito.push(producto); setCarrito(carrito);</code>. ¿Por qué?</p>
+      <ol class="opciones">
+        <li>Porque <code>push</code> no funciona dentro de un componente.<p class="explica"><code>push</code> funciona: el array sí tiene un elemento más. El problema es otro.</p></li>
+        <li>Porque falta un <code>useEffect</code> que avise del cambio.<p class="explica">Un efecto no arregla esto. Basta con pasar un array nuevo.</p></li>
+        <li>Porque es el mismo array: React compara la referencia, ve que no cambió y no vuelve a renderizar.<p class="explica">Correcto. Usa <code>setCarrito([...carrito, producto])</code>, que crea un array nuevo.</p></li>
+        <li>Porque <code>setCarrito</code> solo acepta números y textos.<p class="explica">El estado puede ser cualquier valor, incluidos arrays y objetos.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Una lista de tareas se puede reordenar y se pueden borrar tareas. ¿Qué key debe llevar cada <code>&lt;li&gt;</code>?</p>
+      <ol class="opciones">
+        <li><code>key={indice}</code><p class="explica">Al reordenar o borrar, las posiciones cambian de dueño y React mezcla los elementos (lo viste con las notas del taller).</p></li>
+        <li><code>key={tarea.id}</code><p class="explica">Correcto: un identificador único y estable que viaja con cada dato.</p></li>
+        <li><code>key={Math.random()}</code><p class="explica">Cambia en cada render: React destruye y crea todos los elementos cada vez, y se pierde lo que tenían dentro.</p></li>
+        <li>Ninguna: React la deduce solo.<p class="explica">Sin key, React empareja por posición (como con el índice) y muestra un aviso en la consola.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Con cero mensajes, ¿qué muestra <code>{mensajes.length &amp;&amp; &lt;p&gt;Tienes mensajes&lt;/p&gt;}</code>?</p>
+      <ol class="opciones">
+        <li>Un <code>0</code> en la pantalla.<p class="explica">Correcto. <code>0 &amp;&amp; …</code> vale 0, y React sí dibuja los números. Escribe <code>mensajes.length &gt; 0 &amp;&amp; …</code>.</p></li>
+        <li>Nada.<p class="explica">Sería así con <code>false</code>, <code>null</code> o <code>undefined</code>, pero no con el número 0.</p></li>
+        <li>La palabra <code>false</code>.<p class="explica">La expresión no vale <code>false</code>, vale 0. Y aunque valiera <code>false</code>, React no lo dibujaría.</p></li>
+        <li>Un error.<p class="explica">Es código válido; el fallo es que se ve un 0 inesperado.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Dos componentes hermanos necesitan el mismo dato, y uno de ellos lo cambia. ¿Qué haces?</p>
+      <ol class="opciones">
+        <li>Creas el estado en los dos y los mantienes iguales con un <code>useEffect</code>.<p class="explica">Dos copias del mismo dato acaban desincronizándose. Es justo lo que hay que evitar.</p></li>
+        <li>Lo guardas en una variable global fuera de los componentes.<p class="explica">Cambiar una variable global no provoca renders: la pantalla no se enteraría.</p></li>
+        <li>El que lo necesita lee el DOM del otro con <code>querySelector</code>.<p class="explica">En React no se lee la pantalla para obtener datos: se leen el estado y las props.</p></li>
+        <li>Levantas el estado al ancestro común y lo pasas por props, junto con una función para cambiarlo.<p class="explica">Correcto. Los datos bajan por props y los cambios suben llamando a la función.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿En cuál de estos casos sí hace falta <code>useEffect</code>?</p>
+      <ol class="opciones">
+        <li>Calcular el total del carrito.<p class="explica">Es un valor derivado: se calcula al renderizar, sin efecto.</p></li>
+        <li>Enviar el pedido cuando se pulsa «Pagar».<p class="explica">Es la respuesta a un evento: va en el manejador del clic.</p></li>
+        <li>Iniciar un <code>setInterval</code> cuando aparece un cronómetro y pararlo cuando desaparece.<p class="explica">Correcto: es sincronizar con algo externo a React (un temporizador), con su limpieza.</p></li>
+        <li>Filtrar una lista según lo que se escribe en un buscador.<p class="explica">También es un valor derivado. Hacerlo con un efecto duplica el estado y renderiza dos veces.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Cuándo se ejecuta <code>useEffect(cargar, [categoria])</code>?</p>
+      <ol class="opciones">
+        <li>Solo una vez, cuando el componente aparece.<p class="explica">Eso sería con el array vacío, <code>[]</code>.</p></li>
+        <li>Cuando el componente aparece y cada vez que <code>categoria</code> cambia.<p class="explica">Correcto. Antes de repetirlo, React ejecuta la limpieza del efecto anterior, si la hay.</p></li>
+        <li>Después de cada render, cambie lo que cambie.<p class="explica">Eso ocurre si no pasas array de dependencias.</p></li>
+        <li>Antes de pintar el componente por primera vez.<p class="explica">Los efectos se ejecutan después de que React actualiza la pantalla.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">En un efecto que pide datos, ¿qué evita la limpieza <code>return () =&gt; { ignorar = true; }</code>?</p>
+      <ol class="opciones">
+        <li>Que la respuesta de una petición vieja pise a la de la más reciente.<p class="explica">Correcto. Es una condición de carrera: sin la limpieza, gana la respuesta que llega la última, no la última que pediste.</p></li>
+        <li>Que la petición se haga dos veces.<p class="explica">La petición se hace igual; lo que se descarta es su resultado. Para cancelarla de verdad existe <code>AbortController</code>.</p></li>
+        <li>Que el servidor responda con un error.<p class="explica">La limpieza no influye en el servidor. Los errores se manejan con <code>try</code>/<code>catch</code>.</p></li>
+        <li>Que aparezca el mensaje «Cargando…».<p class="explica">El estado de carga depende de <code>cargando</code>, no de la limpieza.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Quieres empezar hoy un proyecto nuevo de React en tu computadora. ¿Qué haces?</p>
+      <ol class="opciones">
+        <li><code>npx create-react-app mi-app</code><p class="explica">Está obsoleto desde febrero de 2025 y ya no se mantiene.</p></li>
+        <li>Descargar el archivo <code>react.js</code> y cargarlo con <code>&lt;script&gt;</code>.<p class="explica">React 19 ya no publica esos archivos UMD, y además tendrías que traducir el JSX en el navegador.</p></li>
+        <li><code>npm install react</code> en una carpeta vacía y abrir un <code>index.html</code>.<p class="explica">Faltaría quien traduzca el JSX y resuelva los <code>import</code>: eso lo hace una herramienta como Vite.</p></li>
+        <li><code>npm create vite@latest mi-app</code> y elegir React (o un framework como Next.js si necesitas servidor).<p class="explica">Correcto. Es lo que recomienda hoy la documentación para empezar sin framework.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>React</dt><dd>Biblioteca de JavaScript para construir interfaces de usuario con componentes, de forma declarativa.</dd>
+    <dt>Declarativo</dt><dd>Estilo de programación en el que describes el resultado que quieres (qué debe verse) en lugar de cada paso para conseguirlo.</dd>
+    <dt>Componente</dt><dd>Pieza de interfaz con nombre propio. En React es una función, con nombre en mayúscula, que devuelve JSX.</dd>
+    <dt>JSX</dt><dd>Extensión de la sintaxis de JavaScript que permite escribir etiquetas parecidas a HTML. Se traduce a llamadas que crean objetos con la descripción de la interfaz.</dd>
+    <dt>Fragmento</dt><dd>Envoltorio <code>&lt;&gt;…&lt;/&gt;</code> que agrupa varios elementos sin añadir nada al DOM.</dd>
+    <dt>Props</dt><dd>Datos que un componente recibe de su padre, escritos como atributos. Son de solo lectura.</dd>
+    <dt>children</dt><dd>Prop especial que contiene lo que se escribe entre la etiqueta de apertura y la de cierre de un componente.</dd>
+    <dt>Estado</dt><dd>Datos que un componente recuerda entre renders y que, al cambiar, hacen que React vuelva a renderizarlo.</dd>
+    <dt>Hook</dt><dd>Función especial de React cuyo nombre empieza por <code>use</code> (<code>useState</code>, <code>useEffect</code>…). Solo se llama en el nivel superior de un componente o de otro hook.</dd>
+    <dt>Renderizar</dt><dd>Llamar a un componente para calcular qué debe verse. Después, React aplica al DOM solo las diferencias.</dd>
+    <dt>Reconciliación</dt><dd>Proceso con el que React compara la descripción nueva de la interfaz con la anterior para decidir qué cambiar en el DOM.</dd>
+    <dt>Función de actualización</dt><dd>Función que se pasa a un <code>set</code> del estado (<code>setCuenta(c =&gt; c + 1)</code>) y que recibe el valor pendiente para calcular el siguiente.</dd>
+    <dt>Inmutabilidad</dt><dd>No modificar un valor existente, sino crear uno nuevo con los cambios. En React, obligatoria para arrays y objetos del estado.</dd>
+    <dt>Key</dt><dd>Prop especial, única y estable, que identifica cada elemento de una lista para que React sepa cuál es cuál entre renders.</dd>
+    <dt>Campo controlado</dt><dd>Campo de formulario cuyo valor sale del estado (<code>value</code>) y se actualiza con <code>onChange</code>.</dd>
+    <dt>Levantar el estado</dt><dd>Mover un estado al ancestro común de los componentes que lo necesitan, y pasarlo hacia abajo por props.</dd>
+    <dt>Valor derivado</dt><dd>Dato que se calcula al renderizar a partir de props o estado (un total, una lista filtrada), en lugar de guardarse como estado.</dd>
+    <dt>Contexto</dt><dd>Mecanismo para que un componente ofrezca un valor que cualquier componente de debajo puede leer con <code>useContext</code>, sin pasarlo por props.</dd>
+    <dt>Efecto</dt><dd>Código que React ejecuta después de actualizar la pantalla para sincronizar un componente con un sistema externo. Se declara con <code>useEffect</code>.</dd>
+    <dt>Dependencias</dt><dd>Array de valores que usa un efecto; React lo repite solo si alguno cambió.</dd>
+    <dt>Limpieza</dt><dd>Función que devuelve un efecto para deshacer lo que hizo (parar un intervalo, cerrar una conexión). Se ejecuta antes de repetir el efecto y al desmontar.</dd>
+    <dt>StrictMode</dt><dd>Envoltorio que, solo en desarrollo, hace comprobaciones extra, como ejecutar los efectos dos veces al montar para detectar limpiezas que faltan.</dd>
+    <dt>Hook personalizado</dt><dd>Función propia, con nombre que empieza por <code>use</code>, que reúne estado y efectos para reutilizar esa lógica en varios componentes.</dd>
+    <dt>SPA</dt><dd>Aplicación de una sola página (<em>Single Page Application</em>): carga un único HTML y cambia el contenido con JavaScript al navegar.</dd>
+    <dt>Vite</dt><dd>Herramienta de construcción que crea proyectos, sirve la app en desarrollo con recarga instantánea y genera la versión optimizada para publicar.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación, no antes: te servirán para repasar y para ver a otra persona construir con React en tiempo real. Algunos tienen un par de años; si ves <code>create-react-app</code> o avisos de versiones viejas, recuerda lo que aprendiste aquí.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=pFyAu4R684s" data-canal="MoureDev by Brais Moure" data-idioma="es" data-nivel="intro" data-duracion="10 min" data-por-que="Un primer vistazo corto: qué es React, componentes y estado en diez minutos.">REACT: Crea tu primera web DESDE CERO [para principiantes]</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=7iobxzd_2wY" data-canal="midulive" data-idioma="es" data-nivel="curso" data-duracion="2 h 24 min" data-por-que="Clase completa: por qué React, JSX desde cero, componentes, props y estilos, con un proyecto de Vite.">CURSO REACT.JS - Aprende desde cero</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=qkzcjwnueLA" data-canal="midulive" data-idioma="es" data-nivel="curso" data-duracion="2 h 6 min" data-por-que="Construye el tres en raya paso a paso para practicar useState, useEffect y localStorage con un juego.">Curso de React desde cero: Crea un videojuego y una aplicación para aprender useState y useEffect</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=TBxpAhpQqYk" data-canal="midulive" data-idioma="es" data-nivel="profundo" data-duracion="11 min" data-por-que="Cómo y cuándo se ejecuta useEffect, sus dependencias y su limpieza.">¿Qué es y cómo funciona useEffect? Hooks de React</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://es.react.dev/learn">Inicio rápido (documentación oficial de React)</a><p>La documentación oficial, en español, con ejemplos que puedes editar. Cubre el 80 % de lo que usarás cada día.</p></li>
+    <li><a href="https://es.react.dev/learn/tutorial-tic-tac-toe">Tutorial: Tres en línea (documentación oficial de React)</a><p>Construye un juego completo paso a paso, con historial para volver atrás. Ideal después de esta estación.</p></li>
+    <li><a href="https://es.react.dev/learn/thinking-in-react">Pensar en React (documentación oficial de React)</a><p>El método de cinco pasos para pasar de un boceto a componentes, estado y props.</p></li>
+    <li><a href="https://es.react.dev/learn/you-might-not-need-an-effect">Quizás no necesites un Efecto (documentación oficial de React)</a><p>Todos los casos en los que un <code>useEffect</code> sobra, con la alternativa correcta para cada uno.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Core/Frameworks_libraries/React_getting_started">Primeros pasos en React (MDN)</a><p>La guía de Mozilla: crea una lista de tareas con Vite, desde el primer comando.</p></li>
+    <li><a href="https://vite.dev/guide/">Getting Started (documentación de Vite, en inglés)</a><p>Requisitos, plantillas disponibles y cómo funciona el servidor de desarrollo.</p></li>
+  </ul>
 </section>

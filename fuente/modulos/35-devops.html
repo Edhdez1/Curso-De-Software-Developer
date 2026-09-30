@@ -445,7 +445,8 @@ Address: 185.199.110.153</span></code></pre>
   <ol class="pasos">
     <li><div><p><strong>Escucha en el puerto que te dan.</strong> La plataforma elige el puerto y te lo pasa en la variable de entorno <code>PORT</code> (en Render, por defecto, 10000). Tu código ya lo lee con <code>Number(process.env.PORT) || 3000</code>.</p></div></li>
     <li><div><p><strong>Escucha en todas las interfaces de red.</strong> Dentro de la plataforma, las peticiones llegan desde fuera de la máquina. Si escribes <code>app.listen(puerto, "localhost")</code>, tu servidor solo acepta conexiones de la propia máquina y la plataforma no puede hablar con él. Sin segundo argumento, Express escucha en todas las interfaces, que es lo que quieres (a veces verás esa dirección escrita como <code>0.0.0.0</code>).</p></div></li>
-    <li><div><p><strong>Tiene un comando de construcción y uno de arranque.</strong> El de construcción instala las dependencias exactas: <code>npm ci</code>. El de arranque es tu script <code>start</code>: <code>npm start</code>.</p></div></li>
+    <li><div><p><strong>Tiene un comando de construcción y uno de arranque.</strong> El de construcción instala las dependencias con <code>npm ci</code>, que viste en la <a href="29-backend.html#npm">Estación 29</a>: borra <code>node_modules</code> e instala exactamente las versiones de <code>package-lock.json</code>, y si no coinciden con <code>package.json</code>, falla en lugar de adivinar. Por eso es el comando de los servidores y de la integración continua: el mismo resultado en cada máquina, siempre. El de arranque es tu script <code>start</code>: <code>npm start</code>.</p></div></li>
+    <li><div><p><strong>Sabe que está en producción.</strong> Por convención, la variable de entorno <code>NODE_ENV</code> vale <code>production</code> en el servidor publicado, y muchas librerías cambian su comportamiento con ella. Express, por ejemplo, deja de enviar la traza completa de los errores en su manejador de serie, que en producción revelaría detalles internos a cualquiera. Render la pone a <code>production</code> automáticamente en los servicios de Node; en otras plataformas, añádela tú. En tu computadora déjala en <code>development</code>.</p></div></li>
     <li><div><p><strong>Fija la versión de Node.</strong> Añade <code>"engines": { "node": "24.x" }</code> a tu <code>package.json</code>. Sin eso, la plataforma elige por ti y un día puede elegir otra.</p></div></li>
     <li><div><p><strong>Tiene una ruta de salud.</strong> Una ruta muy simple, como <code>/salud</code>, que responde 200 si el servidor está bien. La usan la plataforma, para saber si una versión nueva arrancó, y los monitores que verás en <a href="#vigilar">Vigilar</a>.</p></div></li>
     <li><div><p><strong>Escribe sus registros en la consola.</strong> Nada de archivos de registro: la plataforma recoge todo lo que imprimes con <code>console.log</code> y <code>console.error</code>.</p></div></li>
@@ -1229,7 +1230,7 @@ Qué mejorar: prueba para puntuaciones sin nombre (Ana, hoy) · revertir automá
     </table>
   </div>
   <p>Para aprender, los tres regalan crédito a las cuentas nuevas, con condiciones que cambian cada pocos años. En septiembre de 2026: AWS da 100 dólares de crédito (ampliables a 200 completando actividades) en un plan gratuito de seis meses; Google Cloud da 300 dólares para gastar en 90 días, además de servicios con uso gratuito permanente como los 2 millones de peticiones al mes de Cloud Run; Azure da 200 dólares para los primeros 30 días y algunos servicios gratis durante 12 meses. Todos piden una tarjeta para verificar tu identidad.</p>
-  <p>¿Cuándo pasar de una plataforma como Render a uno de los grandes? Cuando necesites algo que la plataforma no ofrece, cuando el precio a gran escala lo justifique, o cuando tu empresa ya trabaje allí. Para tus primeros proyectos, la plataforma te ahorra semanas de configuración. Aprender uno de los grandes es muy valioso para tu carrera (<a href="39-carrera.html">Estación 39</a>), y sus certificaciones son de las más pedidas; pero hazlo con un presupuesto y alertas configurados desde el primer día.</p>
+  <p>¿Cuándo pasar de una plataforma como Render a uno de los grandes? Cuando necesites algo que la plataforma no ofrece, cuando el precio a gran escala lo justifique, o cuando tu empresa ya trabaje allí. Para tus primeros proyectos, la plataforma te ahorra semanas de configuración. Aprender uno de los grandes es muy valioso para tu carrera (<a href="44-carrera.html">Estación 44</a>), y sus certificaciones son de las más pedidas; pero hazlo con un presupuesto y alertas configurados desde el primer día.</p>
 
   <h3>Cuánto cuesta y cómo no llevarte sorpresas</h3>
   <p>La nube cobra de tres maneras, y conviene tenerlas claras antes de encender nada:</p>
@@ -2172,4 +2173,426 @@ for (const mes of meses) {
       <p>Mira de dónde sale cada sorpresa. En el mes viral, la transferencia (72 dólares) cuesta más del triple que los servidores (21): lo que se dispara con el éxito no es la CPU, sino los datos que salen. Y el servidor olvidado sube la factura un 40 % sin que nadie lo use. Recuerda también que en la nube real esta alerta llegaría con horas de retraso, y que no detiene el gasto.</p>
     </details>
   </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: publica tu proyecto y vigílalo</h2>
+  <p>Vas a publicar de verdad las dos piezas que llevas construyendo: una web (tu portafolio, o un juego para el navegador) y la API de puntuaciones de la <a href="29-backend.html">Estación 29</a>. Al terminar tendrás dos direcciones públicas con HTTPS, una tubería que prueba cada cambio y solo publica lo que pasa, y un monitor que te escribe si la API se cae. Todo con planes gratuitos.</p>
+  <p>El repositorio tendrá esta forma: una carpeta <code>web</code> con los archivos estáticos (con su <code>index.html</code>) y una carpeta <code>api</code> con el proyecto de Node, sus pruebas y su <code>package-lock.json</code>.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Prepara el repositorio.</strong> Crea las carpetas <code>web</code> y <code>api</code>. En <code>api</code>, comprueba lo que practicaste en la terminal de la sección <a href="#backend">Desplegar un backend</a>: <code>.env</code> en <code>.gitignore</code>, un <code>.env.example</code>, <code>"engines": { "node": "24.x" }</code>, la ruta <code>/salud</code> y la comprobación de la configuración al arrancar. Ejecuta <code>npm test</code> en <code>api</code>: si no tienes pruebas, escribe al menos dos con lo que aprendiste en la <a href="26-testing.html">Estación 26</a>.</p></div></li>
+    <li><div><p><strong>Publica la API en Render.</strong> Sigue el paso a paso de la sección <a href="#backend">Desplegar un backend</a>, con <em>Root Directory</em> <code>api</code>, <em>Health Check Path</em> <code>/salud</code> y las variables de producción. En los ajustes del servicio, pon el despliegue automático en <em>After CI Checks Pass</em>. Abre <code>https://…onrender.com/salud</code> y comprueba que responde.</p></div></li>
+    <li><div><p><strong>Prepara GitHub Pages.</strong> En el repositorio, en <em>Settings → Pages</em>, elige <em>GitHub Actions</em> como fuente (<em>Source</em>).</p></div></li>
+    <li><div><p><strong>Escribe el workflow.</strong> Completa en el taller de abajo el archivo <code>.github/workflows/publicar.yml</code>: el trabajo de pruebas de la API ya está; añade el que publica la carpeta <code>web</code>. Cuando el revisor lo dé por bueno, cópialo a tu repositorio (sin la parte de JavaScript), haz commit y push, y mira la ejecución en la pestaña <em>Actions</em>.</p></div></li>
+    <li><div><p><strong>Conecta la web con la API.</strong> Haz que el JavaScript de tu web pida datos a la dirección pública de la API, con <code>fetch</code> (<a href="16-asincronia.html#fetch">Estación 16</a>). Muestra un mensaje de carga que avise de que el servidor puede tardar un minuto en despertar. Si tu API limita los orígenes permitidos con CORS, añade la dirección de GitHub Pages.</p></div></li>
+    <li><div><p><strong>Protege la rama principal.</strong> Crea un <em>ruleset</em> para <code>main</code> que exija que el trabajo <code>pruebas-api</code> pase antes de fusionar.</p></div></li>
+    <li><div><p><strong>Vigila.</strong> Crea un monitor gratuito (por ejemplo, en UptimeRobot) que compruebe <code>/salud</code> cada 5 minutos y te avise por correo. Opcional: crea un proyecto en Sentry, guarda su DSN como variable <code>SENTRY_DSN</code> en Render y carga <code>instrument.mjs</code> como en la sección <a href="#vigilar">Vigilar</a>.</p></div></li>
+    <li><div><p><strong>Pon a prueba la tubería.</strong> En una rama nueva, rompe a propósito una prueba y abre un pull request: debe salir en rojo y GitHub no debe dejarte fusionar. Arréglala, fusiona y observa cómo se publican la web y la API. Después practica una reversión en el panel de Render y vuelve a activar el despliegue automático.</p></div></li>
+    <li><div><p><strong>Opcional: tu dominio.</strong> Si tienes uno, apunta la raíz y <code>www</code> a GitHub Pages y un subdominio <code>api</code> a Render, espera a los certificados y activa <em>Enforce HTTPS</em>.</p></div></li>
+  </ol>
+  <div class="taller" id="taller-proyecto" data-titulo="Proyecto: publicar.yml">
+    <textarea class="taller-codigo">const workflow = `
+name: Publicar
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  pruebas-api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api        # los comandos run se ejecutan dentro de api
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm test
+  # Añade aquí el trabajo publicar-web
+`;
+console.log("Revisando " + workflow.trim().split("\n").length + " líneas de YAML…");</textarea>
+    <script type="text/plain" class="taller-verificar">
+// Mini lector de YAML (subconjunto) para las verificaciones de la estación 35.
+// Devuelve { ok: valor } o { error: "mensaje" }. Números de línea = líneas del editor.
+function leerYaml(codigo) {
+  var a = codigo.indexOf("`"), b = codigo.lastIndexOf("`");
+  if (a === -1 || b <= a) return { error: "No encuentro el texto entre comillas invertidas (`). No las borres: el archivo va entre ellas." };
+  var base = codigo.slice(0, a + 1).split("\n").length;
+  var crudas = codigo.slice(a + 1, b).replace(/\\\$\{/g, "${").split("\n");
+  var L = [];
+  for (var k = 0; k < crudas.length; k++) {
+    var raw = crudas[k], n = base + k;
+    if (/^ *\t/.test(raw)) return { error: "Línea " + n + ": hay un tabulador en la sangría. YAML solo admite espacios." };
+    var t = "", q = null;
+    for (var c = 0; c < raw.length; c++) {
+      var ch = raw.charAt(c);
+      if (q) { if (ch === q) q = null; }
+      else if (ch === "\"" || ch === "'") q = ch;
+      else if (ch === "#" && (c === 0 || /\s/.test(raw.charAt(c - 1)))) break;
+      t += ch;
+    }
+    t = t.replace(/\s+$/, "");
+    if (!t.trim()) continue;
+    L.push({ n: n, ind: t.length - t.replace(/^ +/, "").length, txt: t.trim() });
+  }
+  if (!L.length) return { error: "El archivo está vacío." };
+  function fallo(m) { throw new Error(m); }
+  function esItem(l) { return l.txt === "-" || l.txt.indexOf("- ") === 0; }
+  function dosPuntos(s) {
+    if (/^[\[{"']/.test(s)) return -1;
+    for (var i = 0; i < s.length; i++) if (s.charAt(i) === ":" && (i === s.length - 1 || s.charAt(i + 1) === " ")) return i;
+    return -1;
+  }
+  function escalar(s) {
+    s = s.trim();
+    var m = s.match(/^\[(.*)\]$/);
+    if (m) return m[1].trim() ? m[1].split(",").map(escalar) : [];
+    if (/^\{\s*\}$/.test(s)) return {};
+    if (/^".*"$/.test(s) || /^'.*'$/.test(s)) return s.slice(1, -1);
+    if (/^(true|false)$/.test(s)) return s === "true";
+    if (/^-?\d+(\.\d+)?$/.test(s)) return Number(s);
+    if (s === "null" || s === "~") return null;
+    return s;
+  }
+  var i = 0;
+  function bloque(ind) { return esItem(L[i]) ? lista(ind) : mapa(ind); }
+  function hijo(padre) {
+    if (i < L.length && L[i].ind > padre) return bloque(L[i].ind);
+    return null;
+  }
+  function mapa(ind) {
+    var o = {};
+    while (i < L.length && L[i].ind >= ind) {
+      var l = L[i];
+      if (l.ind > ind) fallo("Línea " + l.n + ": la sangría no encaja. Tiene " + l.ind + " espacios, pero las claves de este nivel tienen " + ind + " y la línea de arriba no termina en «:».");
+      if (esItem(l)) fallo("Línea " + l.n + ": aquí no se espera un elemento de lista («- »). ¿Falta la clave con «:» en la línea de arriba, o la sangría?");
+      var p = dosPuntos(l.txt);
+      if (p === -1) fallo("Línea " + l.n + ": falta «clave: valor». Recuerda el espacio después de los dos puntos.");
+      var clave = l.txt.slice(0, p).trim().replace(/^["']|["']$/g, ""), resto = l.txt.slice(p + 1).trim();
+      if (Object.prototype.hasOwnProperty.call(o, clave)) fallo("Línea " + l.n + ": la clave «" + clave + "» está repetida en el mismo nivel.");
+      i++;
+      if (resto === "") {
+        if (i < L.length && L[i].ind === ind && esItem(L[i])) o[clave] = lista(ind, true);
+        else o[clave] = hijo(ind);
+      } else if (/^[|>][-+]?$/.test(resto)) {
+        var partes = [];
+        while (i < L.length && L[i].ind > ind) { partes.push(L[i].txt); i++; }
+        o[clave] = partes.join("\n");
+      } else o[clave] = escalar(resto);
+    }
+    return o;
+  }
+  function lista(ind, pegada) {
+    var arr = [];
+    while (i < L.length && L[i].ind === ind && esItem(L[i])) {
+      var l = L[i], cont = l.txt.slice(1).trim();
+      if (cont === "") { i++; arr.push(hijo(ind)); continue; }
+      if (dosPuntos(cont) !== -1) {
+        var col = ind + l.txt.length - cont.length;
+        L[i] = { n: l.n, ind: col, txt: cont };
+        arr.push(mapa(col));
+      } else { i++; arr.push(escalar(cont)); }
+    }
+    if (i < L.length && L[i].ind > ind) fallo("Línea " + L[i].n + ": sobra sangría. Esta línea no pertenece a nada de lo que hay encima.");
+    if (!pegada && i < L.length && L[i].ind === ind) fallo("Línea " + L[i].n + ": está a la altura de los guiones de la lista, pero no empieza por «- ». Si pertenece al elemento de arriba, dale más sangría.");
+    return arr;
+  }
+  try {
+    if (L[0].ind !== 0) fallo("Línea " + L[0].n + ": la primera línea del archivo no debe llevar sangría.");
+    var v = bloque(0);
+    if (i < L.length) fallo("Línea " + L[i].n + ": no encaja con la estructura de arriba. Revisa la sangría.");
+    return { ok: v };
+  } catch (e) { return { error: e.message }; }
+}
+function revisarCI(w, nombreJob, versionLibre) {
+  if (!w || typeof w !== "object" || Array.isArray(w)) return "El archivo debería estar formado por claves como name, on y jobs.";
+  var on = w.on;
+  var eventos = Array.isArray(on) ? on : (on && typeof on === "object" ? Object.keys(on) : (typeof on === "string" ? [on] : []));
+  if (eventos.indexOf("push") === -1) return "El workflow debe ponerse en marcha con cada push: revisa la clave on.";
+  if (eventos.indexOf("pull_request") === -1) return "Añade también el evento pull_request a on, para probar cada pull request.";
+  if (!w.jobs || typeof w.jobs !== "object") return "Falta la clave jobs, con el trabajo dentro.";
+  var job = w.jobs[nombreJob];
+  if (!job || typeof job !== "object") return "Falta el trabajo " + nombreJob + " dentro de jobs (con dos espacios de sangría).";
+  if (job["runs-on"] !== "ubuntu-latest") return "El trabajo " + nombreJob + " necesita runs-on: ubuntu-latest.";
+  var s = job.steps;
+  if (!Array.isArray(s) || !s.length) return "El trabajo " + nombreJob + " necesita una lista de pasos en steps.";
+  for (var k = 0; k < s.length; k++) {
+    if (!s[k] || typeof s[k] !== "object" || Array.isArray(s[k])) return "El paso " + (k + 1) + " de steps no tiene la forma «clave: valor». ¿Falta «:» después de run o de uses?";
+    if (!s[k].uses && !s[k].run) return "El paso " + (k + 1) + " no tiene uses ni run: cada paso necesita uno de los dos.";
+  }
+  function buscar(f) { for (var k = 0; k < s.length; k++) if (f(s[k])) return k; return -1; }
+  var iCheckout = buscar(function (p) { return /^actions\/checkout@v\d+/.test(String(p.uses || "")); });
+  var iNode = buscar(function (p) { return /^actions\/setup-node@v\d+/.test(String(p.uses || "")); });
+  var iCi = buscar(function (p) { return /^npm ci\b/.test(String(p.run || "").trim()); });
+  var iTest = buscar(function (p) { return /^npm (run )?test\b/.test(String(p.run || "").trim()); });
+  if (iCheckout === -1) return "Falta el paso que descarga el código: - uses: actions/checkout@v7";
+  if (iNode === -1) return "Falta el paso que instala Node.js: - uses: actions/setup-node@v7";
+  var datos = s[iNode]["with"];
+  if (!datos || typeof datos !== "object") return "El paso de setup-node necesita with: y, dentro (con más sangría), node-version.";
+  if (!versionLibre && String(datos["node-version"]).indexOf("24") !== 0) return "Dentro del with de setup-node, pon node-version: 24.";
+  if (iCi === -1) {
+    if (buscar(function (p) { return /^npm i(nstall)?\b/.test(String(p.run || "").trim()); }) !== -1) return "Usa npm ci en lugar de npm install: instala exactamente las versiones de package-lock.json y falla si no coinciden.";
+    return "Falta el paso que instala las dependencias exactas: - run: npm ci";
+  }
+  if (iTest === -1) return "Falta el paso que ejecuta las pruebas: - run: npm test";
+  if (!(iCheckout < iNode && iNode < iCi && iCi < iTest)) return "Los pasos están desordenados: primero checkout, después setup-node, después npm ci y al final npm test.";
+  return true;
+}
+var r = leerYaml(codigo);
+if (r.error) return r.error;
+var base = revisarCI(r.ok, "pruebas-api", false);
+if (base !== true) return base;
+var jobs = r.ok.jobs;
+var pa = jobs["pruebas-api"];
+var wd = pa.defaults && pa.defaults.run && pa.defaults.run["working-directory"];
+if (String(wd).replace(/^\.\//, "").replace(/\/$/, "") !== "api") return "No borres defaults.run.working-directory: api del trabajo pruebas-api: sin eso, npm buscaría package.json fuera de la carpeta api.";
+var pw = jobs["publicar-web"];
+if (!pw || typeof pw !== "object") return "Falta el trabajo publicar-web dentro de jobs, al mismo nivel que pruebas-api (dos espacios de sangría).";
+var needs = Array.isArray(pw.needs) ? pw.needs : [pw.needs];
+if (needs.indexOf("pruebas-api") === -1) return "publicar-web debe esperar a que pasen las pruebas: needs: pruebas-api";
+var cond = String(pw["if"] || "");
+if (!/github\.ref\s*==\s*'refs\/heads\/main'/.test(cond) && !/github\.event_name\s*==\s*'push'/.test(cond)) return "Sin condición, publicarías también en cada pull request. Añade: if: github.ref == 'refs/heads/main'";
+if (pw["runs-on"] !== "ubuntu-latest") return "publicar-web necesita runs-on: ubuntu-latest.";
+var perm = pw.permissions || {};
+if (perm.pages !== "write" || perm["id-token"] !== "write") return "publicar-web necesita permiso para publicar: permissions: con pages: write e id-token: write dentro.";
+var ent = pw.environment;
+if ((ent && typeof ent === "object" ? ent.name : ent) !== "github-pages") return "Asocia el trabajo al entorno de Pages: environment: y, dentro, name: github-pages";
+var s = pw.steps;
+if (!Array.isArray(s) || !s.length) return "publicar-web necesita su lista de steps.";
+for (var k = 0; k < s.length; k++) if (!s[k] || typeof s[k] !== "object" || Array.isArray(s[k]) || (!s[k].uses && !s[k].run)) return "El paso " + (k + 1) + " de publicar-web no tiene la forma - uses: … o - run: …";
+function idx(re) { for (var k = 0; k < s.length; k++) if (re.test(String(s[k].uses || ""))) return k; return -1; }
+var iCo = idx(/^actions\/checkout@v\d+/), iUp = idx(/^actions\/upload-pages-artifact@v\d+/), iDe = idx(/^actions\/deploy-pages@v\d+/);
+if (iCo === -1) return "publicar-web se ejecuta en otra máquina, vacía: su primer paso también tiene que descargar el código (actions/checkout@v7).";
+if (iUp === -1) return "Falta empaquetar la web: - uses: actions/upload-pages-artifact@v5, con with: y path: web";
+var ruta = String((s[iUp]["with"] || {}).path || "").replace(/^\.\//, "").replace(/\/$/, "");
+if (ruta !== "web") return "upload-pages-artifact debe publicar la carpeta web: dentro de with, path: web";
+if (iDe === -1) return "Falta el paso que publica: - uses: actions/deploy-pages@v5";
+if (!(iCo < iUp && iUp < iDe)) return "El orden de los pasos de publicar-web es: checkout, upload-pages-artifact y deploy-pages.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <pre><code class="language-js">const workflow = `
+name: Publicar
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  pruebas-api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api        # los comandos run se ejecutan dentro de api
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm test
+  publicar-web:
+    needs: pruebas-api
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: web
+      - uses: actions/deploy-pages@v5
+`;
+console.log("Revisando " + workflow.trim().split("\n").length + " líneas de YAML…");</code></pre>
+    <p>Fíjate en que <code>publicar-web</code> repite el <code>checkout</code>: cada trabajo corre en su propia máquina vacía. La API no aparece en el workflow porque Render, con <em>After CI Checks Pass</em>, espera a que <code>pruebas-api</code> termine en verde y entonces despliega solo. Si tu web necesitara construirse (con <code>npm run build</code>), añadirías antes del <code>upload</code> los pasos de Node y la construcción, y publicarías la carpeta <code>dist</code>.</p>
+  </details>
+  <p>Antes de dar el proyecto por terminado, repasa esta lista con tu despliegue real:</p>
+  <ul>
+    <li>La web y la API responden con <code>https://</code>, y <code>http://</code> redirige a HTTPS.</li>
+    <li>En el historial del repositorio no hay ningún <code>.env</code> ni ninguna clave (búscalo en GitHub).</li>
+    <li>Un pull request con una prueba rota sale en rojo y no se puede fusionar.</li>
+    <li>Un push a <code>main</code> publica la web y la API sin que toques nada más.</li>
+    <li><code>/salud</code> responde, y el monitor te avisó al menos una vez (puedes provocarlo pausando el servicio unos minutos).</li>
+    <li>El <code>README.md</code> tiene las dos direcciones, cómo arrancar el proyecto en local y qué variables de entorno necesita.</li>
+  </ul>
+  <p><strong>Para ir más allá:</strong> añade al workflow la matriz de Node 24 y 26 del ejercicio 6; escribe un <code>Dockerfile</code> para la API y despliégala en Render desde la imagen; añade un entorno de <em>staging</em> con su propia base de datos; o describe el servicio en un <code>render.yaml</code>. En el <a href="43-proyecto-final.html">proyecto final</a> publicarás así tu aplicación completa.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Si fallas alguna, lee la explicación: equivocarse aquí es la forma más barata de aprender.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Qué describe mejor DevOps?</p>
+      <ol class="opciones">
+        <li>Un programa que despliega aplicaciones automáticamente.<p class="explica">Las herramientas ayudan, pero DevOps no es una herramienta: puedes usarlas todas y seguir trabajando a la antigua.</p></li>
+        <li>El puesto de la persona que administra los servidores.<p class="explica">Ese era el papel de operaciones. DevOps nació precisamente para romper la separación entre quien desarrolla y quien opera.</p></li>
+        <li>Una forma de trabajar en la que quien construye el software se responsabiliza de operarlo, con cambios pequeños, automatización y medición.<p class="explica">Correcto. Cultura y prácticas: «tú lo construyes, tú lo operas».</p></li>
+        <li>Desplegar pocas veces al año para reducir el riesgo.<p class="explica">Es lo contrario: los cambios pequeños y frecuentes son más fáciles de probar y de revertir.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Tu aplicación de React funciona mientras navegas, pero al recargar la página <code>/perfil/ana</code> el hosting responde 404. ¿Por qué?</p>
+      <ol class="opciones">
+        <li>React Router tiene un error.<p class="explica">React Router funciona: el problema ocurre antes de que se cargue, en el hosting.</p></li>
+        <li>El hosting busca un archivo <code>perfil/ana</code> que no existe; hay que configurarlo para que entregue <code>index.html</code> en las rutas desconocidas.<p class="explica">Correcto. Es la trampa de las SPA: esa ruta solo existe dentro del JavaScript de la aplicación.</p></li>
+        <li>Falta activar HTTPS.<p class="explica">HTTPS no cambia qué archivo se entrega. Sin HTTPS verías un aviso, no un 404.</p></li>
+        <li>El DNS todavía no se ha propagado.<p class="explica">Si el DNS fallara, no cargaría ninguna página, tampoco la de inicio.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Quieres que el dominio raíz <code>juegosdeana.com</code> apunte a GitHub Pages. ¿Qué registros creas?</p>
+      <ol class="opciones">
+        <li>Un <code>CNAME</code> de la raíz a <code>ana-perez.github.io</code>.<p class="explica">La raíz no admite <code>CNAME</code>, porque siempre tiene otros registros. El <code>CNAME</code> es para <code>www</code>.</p></li>
+        <li>Un registro <code>MX</code>.<p class="explica"><code>MX</code> indica el servidor de correo, no el de la web.</p></li>
+        <li>Un registro <code>TXT</code> con la dirección IP.<p class="explica"><code>TXT</code> guarda texto, por ejemplo un código de verificación. Los navegadores no lo usan para conectarse.</p></li>
+        <li>Registros <code>A</code> (y <code>AAAA</code>) con las direcciones IP de GitHub Pages.<p class="explica">Correcto. Cuatro de cada tipo, copiadas de la documentación de GitHub.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Añadiste tu dominio en el hosting y el certificado lleva horas «pendiente». ¿Qué es lo más probable?</p>
+      <ol class="opciones">
+        <li>El DNS no apunta (todavía, o por un error) al hosting, así que no puede superar el reto de ACME.<p class="explica">Correcto. Let's Encrypt descarga el token visitando tu dominio: si el dominio lleva a otro sitio, no lo encuentra.</p></li>
+        <li>Tienes que comprar el certificado aparte.<p class="explica">Los hostings modernos lo consiguen gratis con Let's Encrypt, de forma automática.</p></li>
+        <li>HTTPS solo funciona con dominios <code>.com</code>.<p class="explica">Funciona con cualquier terminación. Algunas, como <code>.dev</code>, incluso lo exigen.</p></li>
+        <li>Los navegadores no aceptan certificados de Let's Encrypt.<p class="explica">Todos los navegadores importantes confían en Let's Encrypt; es la autoridad más usada del mundo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Dónde debe estar la contraseña de la base de datos de producción?</p>
+      <ol class="opciones">
+        <li>En el archivo <code>.env</code>, subido a un repositorio privado.<p class="explica">Privado no es secreto: lo ve todo el que tenga acceso, y queda en la historia para siempre si un día se hace público.</p></li>
+        <li>En una constante en el código.<p class="explica">Es el peor sitio: acaba en Git y en cada copia del proyecto.</p></li>
+        <li>En las variables de entorno del panel de la plataforma (y en los secretos de GitHub, si un workflow la necesita).<p class="explica">Correcto. Se guardan cifradas y tu programa las lee con <code>process.env</code>.</p></li>
+        <li>En el <code>Dockerfile</code>, con <code>ENV</code>.<p class="explica">Cualquiera que tenga la imagen puede leer sus capas, incluidas las variables.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">En un workflow, ¿qué hace <code>needs: pruebas</code> en el trabajo <code>publicar</code>?</p>
+      <ol class="opciones">
+        <li>Instala las dependencias de las pruebas.<p class="explica">De eso se encarga un paso con <code>npm ci</code>.</p></li>
+        <li>Hace que <code>publicar</code> solo empiece cuando <code>pruebas</code> ha terminado bien.<p class="explica">Correcto. Es la línea que impide publicar código que no pasa las pruebas.</p></li>
+        <li>Vuelve a ejecutar las pruebas dentro de <code>publicar</code>.<p class="explica">No repite nada: solo establece el orden y la condición.</p></li>
+        <li>Nada: los trabajos siempre se ejecutan en orden.<p class="explica">Por defecto se ejecutan en paralelo, cada uno en su máquina.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">GitHub rechaza un workflow por la línea <code>runs-on:ubuntu-latest</code>. ¿Cuál es el problema?</p>
+      <ol class="opciones">
+        <li><code>ubuntu-latest</code> no existe.<p class="explica">Existe: es la versión más reciente de Ubuntu que ofrece GitHub.</p></li>
+        <li>La clave se escribe con mayúsculas.<p class="explica">Las claves de GitHub Actions van en minúsculas: <code>runs-on</code> está bien escrita.</p></li>
+        <li>Falta el paso de <code>checkout</code>.<p class="explica">Sin <code>checkout</code> los pasos no tendrían el código, pero el archivo sería válido.</p></li>
+        <li>Falta el espacio después de los dos puntos, así que YAML no lo lee como clave y valor.<p class="explica">Correcto. <code>runs-on: ubuntu-latest</code>, con espacio.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">En un <code>Dockerfile</code>, ¿por qué se copian <code>package.json</code> y <code>package-lock.json</code> y se ejecuta <code>npm ci</code> antes de <code>COPY . .</code>?</p>
+      <ol class="opciones">
+        <li>Para que, si solo cambia tu código, la capa con las dependencias salga de la caché y la construcción sea rápida.<p class="explica">Correcto. Cuando una capa cambia, todas las de encima se reconstruyen: lo que cambia a menudo, cuanto más arriba, mejor.</p></li>
+        <li>Porque Docker no permite otro orden.<p class="explica">Lo permite y funciona, pero cada cambio de código reinstalaría todas las dependencias.</p></li>
+        <li>Para que el <code>node_modules</code> de tu computadora entre en la imagen.<p class="explica">Al revés: <code>node_modules</code> se excluye con <code>.dockerignore</code> y se instala dentro de la imagen.</p></li>
+        <li>Para que la imagen ocupe menos.<p class="explica">El tamaño final es el mismo en los dos órdenes; lo que cambia es el tiempo de construcción.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Tu contenedor imprime «API lista en el puerto 3000», pero el navegador no conecta con <code>http://localhost:3000</code>. ¿Causa más probable?</p>
+      <ol class="opciones">
+        <li>La imagen está dañada.<p class="explica">Si la imagen estuviera dañada, el programa no llegaría a arrancar.</p></li>
+        <li>Falta <code>EXPOSE 3000</code> en el <code>Dockerfile</code>.<p class="explica"><code>EXPOSE</code> solo documenta el puerto; no abre nada.</p></li>
+        <li>Olvidaste <code>-p 3000:3000</code> en <code>docker run</code>, o el servidor escucha solo en <code>localhost</code> dentro del contenedor.<p class="explica">Correcto. Son las dos causas de casi todos los «arranca pero no conecta».</p></li>
+        <li>Docker no es compatible con Express.<p class="explica">Express funciona perfectamente en contenedores.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Tu API tiene una latencia media de 250 ms, un p50 de 44 ms y un p95 de 1800 ms. ¿Qué significa?</p>
+      <ol class="opciones">
+        <li>Casi todas las peticiones tardan unos 250 ms.<p class="explica">La media engaña: la mitad tarda 44 ms o menos. Ninguna tardó 250.</p></li>
+        <li>La petición típica es rápida, pero una de cada veinte tarda casi dos segundos o más.<p class="explica">Correcto. Los percentiles muestran lo que la media esconde.</p></li>
+        <li>El 95 % de las peticiones tarda 1800 ms.<p class="explica">Es al revés: el 95 % tarda 1800 ms <em>o menos</em>.</p></li>
+        <li>El p95 es un error de medición y se puede ignorar.<p class="explica">Ese 5 % son personas reales esperando: a menudo, las que más usan la aplicación.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Justo después de un despliegue, la API da errores a muchos usuarios. ¿Qué haces primero?</p>
+      <ol class="opciones">
+        <li>Buscar la causa en el código antes de tocar nada.<p class="explica">Mientras investigas, los usuarios siguen sufriendo. Eso va después.</p></li>
+        <li>Escribir el informe del incidente.<p class="explica">El informe se escribe cuando el problema ya está resuelto.</p></li>
+        <li>Añadir más servidores.<p class="explica">Más copias de una versión rota solo dan más errores (y más factura).</p></li>
+        <li>Volver a la última versión que funcionaba y, después, investigar.<p class="explica">Correcto. Primero recupera el servicio, después busca la causa.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">En tu cuenta de la nube creaste un presupuesto de 20 USD con alertas. Una máquina olvidada genera 60 USD en un mes. ¿Qué pasa?</p>
+      <ol class="opciones">
+        <li>La nube apaga la máquina al llegar a 20 USD.<p class="explica">Un presupuesto de alertas no apaga nada por sí solo.</p></li>
+        <li>No te cobran lo que pase de 20 USD.<p class="explica">Te cobran todo lo consumido: el presupuesto no es un límite de gasto.</p></li>
+        <li>Recibes avisos, con cierto retraso, pero el gasto sigue: pagas los 60 USD.<p class="explica">Correcto. Por eso conviene leer las alertas, borrar lo que no usas y, mientras aprendes, preferir límites que pausan.</p></li>
+        <li>La cuenta se cierra automáticamente.<p class="explica">Las cuentas de pago no se cierran por superar un presupuesto.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>DevOps</dt><dd>Forma de trabajar en la que quien construye el software se ocupa también de operarlo en producción, con cambios pequeños y frecuentes, automatización y medición.</dd>
+    <dt>Desplegar (despliegue)</dt><dd>Poner una versión de un programa a funcionar en los servidores donde otras personas pueden usarla. En inglés, <em>deploy</em>.</dd>
+    <dt>Producción</dt><dd>El entorno de verdad, el que usan los usuarios con sus datos reales.</dd>
+    <dt>Entorno de despliegue</dt><dd>Lugar donde se ejecuta una aplicación con su propia configuración y datos: desarrollo, pruebas (<em>staging</em>) o producción.</dd>
+    <dt>Tubería de despliegue (pipeline)</dt><dd>Secuencia automática de etapas (pruebas, construcción, despliegue) que recorre cada cambio hasta producción.</dd>
+    <dt>Entrega continua y despliegue continuo (CD)</dt><dd>Prácticas en las que cada cambio que pasa las pruebas queda listo para desplegar con un botón (entrega) o se despliega solo (despliegue).</dd>
+    <dt>Artefacto</dt><dd>El paquete exacto que se despliega, como una carpeta construida o una imagen de Docker, identificado con la versión de la que sale.</dd>
+    <dt>Aplicación de una sola página (SPA)</dt><dd>Web que carga un único <code>index.html</code> y cambia de pantalla con JavaScript sin recargar. Necesita que el hosting entregue <code>index.html</code> en cualquier ruta.</dd>
+    <dt>Registro DNS</dt><dd>Cada dato de la zona de un dominio: <code>A</code> e <code>AAAA</code> guardan direcciones IP; <code>CNAME</code>, un alias hacia otro nombre; <code>TXT</code>, texto; <code>MX</code>, el servidor de correo.</dd>
+    <dt>TTL</dt><dd>Segundos que un resolvedor puede guardar en caché un registro DNS. Explica por qué los cambios tardan en verse en todas partes.</dd>
+    <dt>ACME</dt><dd>Protocolo con el que un servidor pide, demuestra que controla un dominio y renueva certificados HTTPS de forma automática, por ejemplo con Let's Encrypt.</dd>
+    <dt>Plataforma como servicio (PaaS)</dt><dd>Servicio que recibe tu código y se encarga de instalarlo, arrancarlo, reiniciarlo y darle HTTPS, como Render o Railway.</dd>
+    <dt>Arranque en frío</dt><dd>Espera extra de la primera petición cuando un servicio estaba dormido o apagado y tiene que volver a arrancar.</dd>
+    <dt>Secreto</dt><dd>Dato de configuración que da acceso a algo, como una contraseña o una clave de API. Nunca va en el código ni en el repositorio.</dd>
+    <dt>YAML</dt><dd>Formato de texto para escribir datos, basado en <code>clave: valor</code>, listas con guion y sangría con espacios. Lo usan GitHub Actions, Docker Compose y muchas plataformas.</dd>
+    <dt>Workflow</dt><dd>Archivo YAML en <code>.github/workflows</code> que describe qué debe hacer GitHub Actions (trabajos y pasos) y con qué eventos.</dd>
+    <dt>Contenedor</dt><dd>Programa que se ejecuta aislado, con su propio sistema de archivos, red y procesos, compartiendo el núcleo del sistema operativo de la máquina.</dd>
+    <dt>Imagen de contenedor</dt><dd>Paquete de solo lectura, formado por capas, con todo lo que un programa necesita para ejecutarse. De una imagen se arrancan contenedores.</dd>
+    <dt>Dockerfile</dt><dd>Archivo con las instrucciones (<code>FROM</code>, <code>COPY</code>, <code>RUN</code>, <code>CMD</code>…) para construir una imagen de Docker.</dd>
+    <dt>Observabilidad</dt><dd>Capacidad de entender qué ocurre dentro de un sistema a partir de lo que emite: registros, métricas y trazas distribuidas.</dd>
+    <dt>Percentil</dt><dd>Valor por debajo del cual queda un porcentaje de las medidas. El p95 de la latencia es el tiempo que no supera el 95 % de las peticiones.</dd>
+    <dt>SLO</dt><dd>Objetivo de nivel de servicio: la fiabilidad que un equipo se compromete a mantener, como el 99,9 % de peticiones correctas al mes. Lo que falta hasta el 100 % es el presupuesto de errores.</dd>
+    <dt>Despliegue canario</dt><dd>Estrategia que envía primero una pequeña parte del tráfico a la versión nueva y la amplía solo si sus métricas son buenas.</dd>
+    <dt>Revertir (rollback)</dt><dd>Volver a la última versión que funcionaba cuando un despliegue sale mal.</dd>
+    <dt>Infraestructura como código</dt><dd>Describir servidores, bases de datos y configuración en archivos del repositorio, que una herramienta aplica, en lugar de configurarlos a mano en un panel.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación, no antes: te servirán para repasar y ver las mismas ideas explicadas por otra persona. Algunos tienen unos años: si una versión o un botón no coincide, manda lo que has visto aquí y la documentación oficial.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=MtDFK-evWw4" data-canal="EDteam" data-idioma="es" data-nivel="intro" data-duracion="17 min" data-por-que="Qué es DevOps como cultura, qué no es y de dónde viene, contado sin tecnicismos.">¿Qué es y qué no es DevOps?</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=9eTVZwMZJsA" data-canal="Ringa Tech" data-idioma="es" data-nivel="intro" data-duracion="19 min" data-por-que="Imágenes, contenedores y el problema que resuelven, con animaciones muy claras.">Docker - La explicación que querías</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=pNtcTmCiXzw" data-canal="MoureDev by Brais Moure" data-idioma="es" data-nivel="profundo" data-duracion="52 min" data-por-que="GitHub Actions desde cero: eventos, trabajos, pasos y ejemplos reales de automatización.">GITHUB ACTIONS: AUTOMATIZA tu CÓDIGO y ahorra tiempo</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=wZnddhLrmiM" data-canal="midudev" data-idioma="es" data-nivel="curso" data-duracion="1 h 51 min" data-por-que="Curso completo y reciente: de tu primer Dockerfile a Docker Compose y el despliegue en producción.">Curso de Docker desde cero hasta despliegue a producción</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://docs.github.com/es/actions/get-started/quickstart">Inicio rápido para Acciones de GitHub (GitHub Docs)</a><p>En español: tu primer workflow y, desde ahí, toda la documentación de GitHub Actions, con la sintaxis completa y la guía de uso seguro.</p></li>
+    <li><a href="https://docs.github.com/es/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site">Administración de un dominio personalizado para GitHub Pages (GitHub Docs)</a><p>Los registros DNS exactos y actualizados, la verificación del dominio y cómo activar HTTPS.</p></li>
+    <li><a href="https://letsencrypt.org/es/how-it-works/">Cómo funciona Let's Encrypt (letsencrypt.org)</a><p>En español: el protocolo ACME y los retos para demostrar que controlas un dominio.</p></li>
+    <li><a href="https://docs.docker.com/get-started/">Get started (Docker Docs, en inglés)</a><p>La guía oficial: imágenes, contenedores, capas, Compose y buenas prácticas para escribir un Dockerfile.</p></li>
+    <li><a href="https://12factor.net/es/">The Twelve-Factor App (12factor.net)</a><p>En español: los doce principios para construir aplicaciones que se despliegan bien, entre ellos la configuración en el entorno y los registros como flujo de eventos.</p></li>
+    <li><a href="https://sre.google/sre-book/monitoring-distributed-systems/">Monitoring Distributed Systems (libro Site Reliability Engineering de Google, en inglés)</a><p>El capítulo de las cuatro señales de oro y de cómo diseñar alertas que no agoten al equipo.</p></li>
+  </ul>
 </section>

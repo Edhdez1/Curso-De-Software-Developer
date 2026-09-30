@@ -282,3 +282,381 @@ console.log("Resultado:", resultado);</textarea>
   <h3>El contexto se llena</h3>
   <p>Cada archivo que Claude lee y cada salida de comando ocupa espacio en su ventana de contexto. Los modelos actuales admiten ventanas muy grandes, pero la guía oficial insiste en que el rendimiento baja a medida que se llenan: el modelo empieza a «olvidar» instrucciones del principio y comete más errores. Tres hábitos lo evitan: <code>/clear</code> al terminar una tarea y empezar otra que no tiene que ver; <code>/compact</code> cuando una tarea larga todavía no ha terminado; y <code>/context</code> para ver qué está ocupando el espacio.</p>
 </section>
+
+<section id="configurar" data-parada="CLAUDE.md y permisos">
+  <h2>CLAUDE.md y settings.json: el proyecto se presenta solo</h2>
+  <p>Cada sesión de Claude Code empieza con la ventana de contexto vacía. Si tu juego se prueba con <code>npm test</code>, si los niveles viven en <code>niveles/</code> o si nunca se tocan los archivos de <code>assets/</code>, tendrías que repetirlo en cada conversación. Y cada permiso que apruebas a mano te lo volvería a preguntar mañana. Dos archivos resuelven eso: <code>CLAUDE.md</code> para lo que Claude debe <em>saber</em>, y <code>settings.json</code> para lo que Claude Code debe <em>permitir o impedir</em>.</p>
+
+  <h3>CLAUDE.md: las instrucciones del proyecto</h3>
+  <p><strong>CLAUDE.md</strong> es un archivo de texto en Markdown (el formato de los README que viste en la <a href="24-git.html#colaborar">Estación 24</a>) que Claude Code carga al principio de cada sesión. Es lo primero que lee: la presentación de tu proyecto. Según dónde lo guardes, afecta a más o menos cosas:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Dónde</th><th scope="col">Para qué</th><th scope="col">Quién lo recibe</th></tr></thead>
+      <tbody>
+        <tr><td><code>~/.claude/CLAUDE.md</code></td><td>Tus preferencias en todos tus proyectos («explícame los cambios en español»).</td><td>Solo tú.</td></tr>
+        <tr><td><code>CLAUDE.md</code> o <code>.claude/CLAUDE.md</code> en la raíz del proyecto</td><td>Comandos, convenciones y arquitectura del proyecto.</td><td>Todo el equipo: se sube a Git.</td></tr>
+        <tr><td><code>CLAUDE.local.md</code> en la raíz del proyecto</td><td>Notas tuyas para este proyecto (tus datos de prueba, tu URL local).</td><td>Solo tú: añádelo a <code>.gitignore</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>No tienes que empezar de cero: el comando <code>/init</code> analiza el proyecto y escribe un primer <code>CLAUDE.md</code> con los comandos y convenciones que descubre. A partir de ahí lo mejoras tú. La guía oficial propone una prueba para cada línea: <em>¿si la quito, Claude cometería errores?</em> Si la respuesta es no, sobra.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Sí va en CLAUDE.md</th><th scope="col">No va en CLAUDE.md</th></tr></thead>
+      <tbody>
+        <tr><td>Comandos que Claude no puede adivinar: cómo arrancar, probar y compilar.</td><td>Lo que Claude descubre leyendo el código.</td></tr>
+        <tr><td>Reglas de estilo que no son las habituales del lenguaje.</td><td>Convenciones estándar que el modelo ya conoce.</td></tr>
+        <tr><td>Cómo se prueba y con qué herramienta.</td><td>Documentación larga de una API (enlázala).</td></tr>
+        <tr><td>Normas del repositorio: nombres de ramas, formato de commits.</td><td>Información que cambia cada semana.</td></tr>
+        <tr><td>Decisiones de arquitectura propias del proyecto.</td><td>Descripciones archivo por archivo.</td></tr>
+        <tr><td>Trampas conocidas: «el servidor necesita la variable PUERTO».</td><td>Obviedades como «escribe código limpio».</td></tr>
+        <tr><td></td><td>Secretos. Nunca: el archivo se sube a Git.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Las instrucciones funcionan mejor cuanto más concretas y comprobables son:</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Vago: no se puede comprobar</p>
+      <pre><code class="language-text">- Escribe buen código.
+- Sigue las buenas prácticas.
+- Ten cuidado con los archivos importantes.</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Concreto: se puede comprobar</p>
+      <pre><code class="language-text">- Ejecuta `npm test` antes de dar una tarea por terminada.
+- Usa 2 espacios de sangría y comillas dobles.
+- No edites nada dentro de `assets/`: son archivos del equipo de arte.</code></pre>
+    </div>
+  </div>
+  <p>Así puede quedar el <code>CLAUDE.md</code> de un juego web pequeño. Fíjate en que cabe en una pantalla:</p>
+  <pre><code class="language-text"># Rompebloques
+
+Juego de navegador con Phaser 3 y Vite. Código en `src/`, niveles en `niveles/*.json`.
+
+## Comandos
+- `npm run dev`: servidor de desarrollo en http://localhost:5173
+- `npm test`: pruebas con Vitest (deben pasar antes de terminar una tarea)
+- `npm run lint`: revisa el estilo
+
+## Convenciones
+- JavaScript con módulos ES (`import`/`export`), nunca `require`.
+- Nombres de variables y funciones en español y en camelCase.
+- La física va en `src/fisica.js`; las escenas no calculan colisiones.
+
+## Reglas
+- No edites `assets/`: son archivos del equipo de arte.
+- Cualquier dependencia nueva, pregúntamela antes de instalarla.
+- Soy principiante: cuando cambies algo, explícame en dos frases el porqué.</code></pre>
+  <aside class="senal ojo" data-titulo="Contexto, no obligación">
+    <p>Claude trata <code>CLAUDE.md</code> como información, no como una ley: casi siempre lo sigue, pero no hay garantía. Si un archivo es largo o tiene reglas contradictorias, las instrucciones se diluyen. La documentación recomienda menos de 200 líneas por archivo y reservar «IMPORTANTE» para una sola regla, como mucho. Para lo que tiene que pasar <em>siempre</em> (formatear, bloquear un archivo) existen los hooks, que verás en otra sección.</p>
+  </aside>
+  <p>Algunos detalles útiles: puedes importar otros archivos escribiendo <code>@ruta/al/archivo.md</code> dentro de <code>CLAUDE.md</code>; si tu proyecto ya tiene un <code>AGENTS.md</code> (el archivo equivalente que usan otras herramientas), Claude Code también puede leerlo; y el comando <code>/context</code> te dice qué archivos de instrucciones se cargaron. Además, Claude Code tiene una <strong>memoria automática</strong>: cuando lo corriges, puede guardar una nota por su cuenta («Saved 1 memory») en una carpeta de tu usuario, para recordarla en la siguiente sesión. Con <code>/memory</code> ves y editas esas notas, abres tus <code>CLAUDE.md</code> y activas o desactivas la memoria automática.</p>
+  <p>Ahora practica con un revisor de <code>CLAUDE.md</code>. Es una función preparada en esta página que aplica las recomendaciones de la guía oficial: detecta secretos, instrucciones vagas, falta de comandos y exceso de longitud. Ejecuta el código tal como está, lee el informe y <strong>modifica</strong> las líneas hasta que no quede ningún error ni aviso.</p>
+  <div class="taller" id="taller-claudemd" data-titulo="Modifica: un CLAUDE.md que sirva">
+    <script type="text/plain" class="taller-preparacion">// ─── Revisor de CLAUDE.md: aplica las recomendaciones de la documentación. No hace falta que lo leas. ───
+var __revisionClaudeMd = null;
+function revisarClaudeMd(texto) {
+  if (typeof texto !== "string") { console.log("Error: revisarClaudeMd necesita un texto."); __revisionClaudeMd = { errores: 1, avisos: 0 }; return; }
+  var lineas = texto.split("\n");
+  var errores = [], avisos = [], bien = [];
+  var secreto = texto.match(/sk-ant-[\w-]+|sk-[A-Za-z0-9]{16,}|\b(password|contraseña|clave|api_?key|token|secret)\b\s*[:=]\s*\S{4,}/i);
+  if (secreto) errores.push("parece un secreto («" + secreto[0].slice(0, 18) + "…»). CLAUDE.md se sube a Git: las claves van en .env.");
+  if (lineas.length > 200) avisos.push("tiene " + lineas.length + " líneas; la guía recomienda menos de 200.");
+  if (!lineas.some(function (l) { return /^#{1,3} \S/.test(l); })) avisos.push("no tiene títulos (# y ##): agrupa las instrucciones por temas.");
+  else bien.push("está organizado con títulos");
+  var enCodigo = texto.match(/`[^`\n]+`/g) || [];
+  var comandos = enCodigo.filter(function (c) { return /(npm|npx|pnpm|yarn|node|bun|python|pytest|make|cargo|go |git )/.test(c); });
+  if (!comandos.length) avisos.push("no dice qué comandos usar: escribe al menos cómo se arranca y cómo se prueba, entre comillas invertidas (`npm test`).");
+  else bien.push("incluye comandos: " + comandos.slice(0, 3).join(", "));
+  if (comandos.length && !comandos.some(function (c) { return /test|vitest|jest|pytest/.test(c); })) avisos.push("no dice cómo se ejecutan las pruebas.");
+  var vagas = ["buen código", "código limpio", "buenas prácticas", "ten cuidado", "sé cuidadoso", "hazlo bien", "código de calidad", "eres un experto", "programador experto", "como un experto"];
+  vagas.forEach(function (v) { if (texto.toLowerCase().indexOf(v) !== -1) avisos.push("instrucción vaga: «" + v + "». ¿Cómo comprobarías que se cumple? Escribe una regla concreta."); });
+  var imp = (texto.match(/IMPORTANTE/g) || []).length;
+  if (imp > 1) avisos.push("usa «IMPORTANTE» " + imp + " veces: si todo es importante, nada lo es.");
+  bien.forEach(function (b) { console.log("Bien: " + b); });
+  avisos.forEach(function (a) { console.log("Aviso: " + a); });
+  errores.forEach(function (e) { console.log("Error: " + e); });
+  console.log("Resultado: " + errores.length + " errores, " + avisos.length + " avisos, " + lineas.length + " líneas");
+  __revisionClaudeMd = { errores: errores.length, avisos: avisos.length };
+}
+</script>
+    <textarea class="taller-codigo">const claudeMd = [
+  "# Rompebloques",
+  "Eres un programador experto. Escribe siempre buen código",
+  "y sigue las buenas prácticas.",
+  "La clave de la API de puntuaciones es sk-ant-EJEMPLO-123.",
+  "Ten cuidado con los archivos importantes."
+].join("\n");
+
+revisarClaudeMd(claudeMd);</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (!__revisionClaudeMd) return "Deja la última línea: revisarClaudeMd(claudeMd); es la que hace la revisión.";
+if (__revisionClaudeMd.errores > 0) return "Todavía hay un error grave: quita la clave. En CLAUDE.md nunca van secretos.";
+if (__revisionClaudeMd.avisos > 0) return "Vas bien. Quedan " + __revisionClaudeMd.avisos + " avisos: léelos en la salida y corrige esas líneas.";
+return true;
+    </script>
+  </div>
+  <p>Si te atascas, fíjate en el ejemplo de <em>Rompebloques</em> de arriba: una sección <code>## Comandos</code> con <code>npm test</code> y reglas que se pueden comprobar. Lo que acabas de hacer con este revisor es lo mismo que hace el comando <code>/doctor prompt-audit</code> de Claude Code con tus archivos de instrucciones de verdad: busca reglas contradictorias, anticuadas o que apuntan a archivos que ya no existen.</p>
+
+  <h3>settings.json: qué se permite y qué no</h3>
+  <p>El comportamiento de Claude Code se configura en archivos <code>settings.json</code>, en formato JSON (lo conoces de la <a href="16-asincronia.html">Estación 16</a>). Igual que <code>CLAUDE.md</code>, existen en varios niveles:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Diagrama de tres cajas. A la izquierda, la carpeta personal ~/.claude con CLAUDE.md, settings.json, skills y agents, que se aplica solo a ti en todos tus proyectos. En el centro, la carpeta del proyecto con CLAUDE.md, .mcp.json y la carpeta .claude con settings.json, skills, agents y hooks, que se sube a Git para todo el equipo. A la derecha, CLAUDE.local.md y .claude/settings.local.json, que se quedan fuera de Git y solo te afectan a ti en ese proyecto.">
+      <rect class="d-caja" x="12" y="14" width="200" height="226" rx="10"/>
+      <text class="d-rotulo" x="28" y="42">Personal</text>
+      <text class="d-mono d-peq d-tenue" x="28" y="64">~/.claude/</text>
+      <g class="d-mono d-peq">
+        <text x="40" y="96">CLAUDE.md</text>
+        <text x="40" y="120">settings.json</text>
+        <text x="40" y="144">skills/</text>
+        <text x="40" y="168">agents/</text>
+      </g>
+      <text class="d-peq" x="28" y="210">Tú, en todos</text>
+      <text class="d-peq" x="28" y="228">tus proyectos</text>
+      <rect class="d-caja" x="224" y="14" width="236" height="226" rx="10" data-clases=""/>
+      <rect class="d-acento" x="224" y="14" width="236" height="8" rx="4"/>
+      <text class="d-rotulo" x="240" y="42">Proyecto compartido</text>
+      <text class="d-mono d-peq d-tenue" x="240" y="64">mi-juego/</text>
+      <g class="d-mono d-peq">
+        <text x="252" y="92">CLAUDE.md</text>
+        <text x="252" y="112">.mcp.json</text>
+        <text x="252" y="132">.claude/settings.json</text>
+        <text x="252" y="152">.claude/skills/</text>
+        <text x="252" y="172">.claude/agents/</text>
+        <text x="252" y="192">.claude/hooks/</text>
+      </g>
+      <text class="d-peq" x="240" y="228">Todo el equipo: va en Git</text>
+      <rect class="d-caja" x="472" y="14" width="236" height="226" rx="10"/>
+      <text class="d-rotulo" x="488" y="42">Local</text>
+      <text class="d-mono d-peq d-tenue" x="488" y="64">mi-juego/</text>
+      <g class="d-mono d-peq">
+        <text x="500" y="96">CLAUDE.local.md</text>
+        <text x="500" y="120">.claude/</text>
+        <text x="516" y="140">settings.local.json</text>
+      </g>
+      <text class="d-peq" x="488" y="210">Solo tú, en este proyecto:</text>
+      <text class="d-peq" x="488" y="228">fuera de Git</text>
+      <path class="d-flecha" d="M20 272 H700"/>
+      <path class="d-tinta" d="M708 272 l-12 -6 v12 z"/>
+      <text class="d-peq d-tenue" x="20" y="294">menos prioridad</text>
+      <text class="d-peq d-tenue" x="700" y="294" text-anchor="end">más prioridad (si una opción se repite)</text>
+    </svg>
+    <figcaption>Dónde vive cada archivo de configuración. Si la misma opción aparece en varios niveles, gana el más específico (local sobre proyecto, proyecto sobre personal); por encima de todos está la configuración que imponga una organización. Las listas de permisos no se pisan: se suman.</figcaption>
+  </figure>
+  <p>La parte que más usarás es <code>permissions</code>: listas de <strong>reglas de permisos</strong> que dicen qué herramientas se permiten sin preguntar (<code>allow</code>), cuáles preguntan siempre (<code>ask</code>) y cuáles se bloquean (<code>deny</code>). Cada regla nombra una herramienta y, entre paréntesis, a qué se aplica. El asterisco <code>*</code> significa «cualquier texto».</p>
+  <pre><code class="language-json">{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": ["Bash(npm test)", "Bash(npm run lint)", "Bash(npm run test *)"],
+    "ask": ["Bash(git push *)"],
+    "deny": ["Read(./.env)", "Read(./.env.*)", "Bash(curl *)"]
+  }
+}</code></pre>
+  <p>La línea <code>$schema</code> no cambia nada: le dice a tu editor qué opciones existen, para que te las sugiera y te marque los errores. Las reglas se evalúan siempre en el mismo orden: primero <code>deny</code>, después <code>ask</code> y al final <code>allow</code>. La primera que coincide decide. Por eso una regla <code>deny</code> bloquea en todos los modos, incluso en el automático. Algunas cosas más que conviene saber:</p>
+  <ul>
+    <li><code>Bash(npm test)</code> coincide solo con ese comando exacto; <code>Bash(npm run test *)</code> coincide con <code>npm run test</code> y con cualquier cosa detrás.</li>
+    <li>Un comando compuesto como <code>npm test &amp;&amp; git push</code> se divide en partes: para ejecutarse sin preguntar, cada parte necesita su permiso, y basta que una esté denegada para bloquearlo entero.</li>
+    <li>Algunos comandos de solo lectura (<code>ls</code>, <code>cat</code>, <code>pwd</code>, <code>git status</code>, <code>git diff</code>…) nunca piden permiso.</li>
+    <li>Una regla <code>deny</code> de tipo <code>Read</code> bloquea la herramienta de lectura de Claude y también comandos como <code>cat .env</code>. No bloquea un programa que abra el archivo por su cuenta (un script de Node, por ejemplo). Para un bloqueo total existe el <strong>sandbox</strong> (<code>/sandbox</code>), que aísla los comandos a nivel del sistema operativo.</li>
+  </ul>
+  <p>Comprueba si lo has entendido. El simulador de abajo aplica esas reglas en modo Manual. <strong>Predice</strong> el resultado de cada acción antes de ejecutar; después añade <code>"Bash(npm run *)"</code> a <code>allow</code> y mueve <code>git push</code> a <code>deny</code>, y mira qué cambia.</p>
+  <div class="taller" id="taller-permisos" data-titulo="Predice: ¿pregunta, permite o bloquea?">
+    <script type="text/plain" class="taller-preparacion">// ─── Simulador simplificado de las reglas de permisos de Claude Code (modo Manual). No hace falta que lo leas. ───
+function __patron(p) {
+  var fin = / \*$/.test(p);
+  var cuerpo = fin ? p.slice(0, -2) : p;
+  var re = cuerpo.split("*").map(function (t) { return t.replace(/[.+?^${}()|[\]\\]/g, "\\$&"); }).join(".*");
+  return new RegExp("^" + re + (fin ? "( .*)?" : "") + "$");
+}
+function __ruta(r) { return String(r).trim().replace(/^\.\//, ""); }
+function __patronRuta(p) {
+  var re = __ruta(p).split("**").map(function (t) { return t.split("*").map(function (u) { return u.replace(/[.+?^${}()|[\]\\]/g, "\\$&"); }).join("[^/]*"); }).join(".*");
+  return new RegExp("^" + re + "$");
+}
+function __partes(accion) {
+  var m = /^(\w+)\((.*)\)$/.exec(String(accion).trim());
+  return m ? { herramienta: m[1], argumento: m[2] } : { herramienta: "Bash", argumento: String(accion).trim() };
+}
+function __coincide(regla, herramienta, argumento) {
+  var r = __partes(regla);
+  if (r.herramienta !== herramienta) return false;
+  if (herramienta === "Bash") return __patron(r.argumento).test(argumento);
+  return __patronRuta(r.argumento).test(__ruta(argumento));
+}
+var __soloLectura = /^(ls|cat|pwd|echo|head|tail|grep|wc|find|diff|git status|git diff|git log)( |$)/;
+function __unaAccion(reglas, herramienta, argumento) {
+  var lista = function (n) { return (reglas && reglas[n]) || []; };
+  var hay = function (n) { return lista(n).some(function (r) { return __coincide(r, herramienta, argumento); }); };
+  if (herramienta === "Bash") {
+    var lee = /^(cat|head|tail) +(\S+)$/.exec(argumento);
+    if (lee && lista("deny").some(function (r) { return __coincide(r, "Read", lee[2]); })) return "denegado";
+  }
+  if (hay("deny")) return "denegado";
+  if (hay("ask")) return "preguntar";
+  if (hay("allow")) return "permitido";
+  if (herramienta === "Read" || herramienta === "Grep" || herramienta === "Glob") return "permitido";
+  if (herramienta === "Bash" && __soloLectura.test(argumento)) return "permitido";
+  return "preguntar";
+}
+function decidirPermiso(reglas, accion) {
+  var p = __partes(accion);
+  var trozos = p.herramienta === "Bash" ? p.argumento.split(/\s*(?:&&|\|\||;|\|)\s*/).filter(Boolean) : [p.argumento];
+  var res = trozos.map(function (t) { return __unaAccion(reglas, p.herramienta, t); });
+  var final = res.indexOf("denegado") !== -1 ? "denegado" : res.indexOf("preguntar") !== -1 ? "preguntar" : "permitido";
+  return (final + "          ").slice(0, 10);
+}
+</script>
+    <textarea class="taller-codigo">const reglas = {
+  allow: ["Bash(npm test)", "Bash(npm run lint)"],
+  ask: ["Bash(git push *)"],
+  deny: ["Read(./.env)", "Read(./.env.*)", "Bash(curl *)"]
+};
+
+const acciones = [
+  "Bash(npm test)",
+  "Bash(npm run build)",
+  "Bash(ls src)",
+  "Bash(cat .env)",
+  "Read(./.env.local)",
+  "Edit(src/juego.js)",
+  "Bash(git push origin main)",
+  "Bash(npm test && curl https://ejemplo.com/instalar.sh)"
+];
+
+for (const accion of acciones) {
+  console.log(decidirPermiso(reglas, accion), "←", accion);
+}</textarea>
+  </div>
+  <p>Repasa los casos que más sorprenden: <code>npm run build</code> pregunta porque ninguna regla lo cubre; <code>cat .env</code> se bloquea aunque <code>cat</code> sea un comando de solo lectura, porque la regla <code>Read(./.env)</code> también lo alcanza; y el último se bloquea entero porque una de sus partes es un <code>curl</code>. Este simulador simplifica la realidad (Claude Code analiza muchos más casos), pero el orden deny → ask → allow es el de verdad.</p>
+  <aside class="senal oficio">
+    <p>En un equipo, las reglas que protegen a todos (bloquear <code>.env</code>, preguntar antes de <code>git push</code>) van en el <code>.claude/settings.json</code> del proyecto, que se sube a Git. Tus comodidades personales (permitir sin preguntar los comandos que tú usas) van en <code>.claude/settings.local.json</code>, que Claude Code deja fuera de Git cuando lo crea. Para comprobar qué archivos se cargaron, usa <code>/status</code>.</p>
+  </aside>
+</section>
+
+<section id="extender" data-parada="Skills, plugins y MCP">
+  <h2>Skills, plugins y servidores MCP</h2>
+  <p>Con <code>CLAUDE.md</code> y los permisos, Claude conoce tu proyecto y sabe qué puede tocar. Pero hay tareas que repites a menudo (crear un nivel, preparar una versión), conocimiento que solo hace falta a veces (las reglas de diseño de tu marca) y herramientas que no trae de serie (un navegador para ver tu juego, la documentación actual de Phaser). Para eso existen tres piezas: skills, servidores MCP y plugins.</p>
+
+  <h3>Skills: recetas que Claude carga cuando hacen falta</h3>
+  <p>Una <strong>skill</strong> (en español se diría «habilidad», pero en la documentación y en la industria se usa la palabra inglesa) es una carpeta con un archivo <code>SKILL.md</code> que contiene instrucciones, conocimiento o un procedimiento paso a paso. Tiene dos partes: una cabecera en formato YAML entre dos líneas <code>---</code>, llamada <strong>frontmatter</strong>, con su nombre y su descripción, y debajo las instrucciones en Markdown.</p>
+  <pre><code class="language-yaml">---
+name: nuevo-nivel
+description: Crea un nivel nuevo del juego a partir de la plantilla. Úsala cuando se pida añadir o diseñar un nivel.
+disable-model-invocation: true
+---
+
+Crea el nivel llamado $ARGUMENTS:
+
+1. Copia `niveles/plantilla.json` a `niveles/$ARGUMENTS.json`.
+2. Pregúntame cuántos bloques y qué dificultad quiero antes de rellenarlo.
+3. Añade el nivel a la lista de `src/niveles.js`, al final.
+4. Ejecuta `npm test` y corrige lo que falle.
+5. No cambies ningún nivel existente.</code></pre>
+  <p>Guardada en <code>.claude/skills/nuevo-nivel/SKILL.md</code>, esta skill crea el comando <code>/nuevo-nivel</code>. Si escribes <code>/nuevo-nivel bosque</code>, la palabra <code>bosque</code> sustituye a <code>$ARGUMENTS</code>. Los campos más importantes del frontmatter:</p>
+  <ul>
+    <li><code>name</code>: el nombre del comando. Por convención, minúsculas, números y guiones.</li>
+    <li><code>description</code>: qué hace y cuándo usarla. Es lo único que Claude ve al empezar la sesión; con eso decide si la carga. Una buena descripción dice cuándo, no solo qué.</li>
+    <li><code>disable-model-invocation: true</code>: solo tú puedes lanzarla con su comando; Claude no la usará por iniciativa propia. Úsalo en todo lo que tenga efectos: crear archivos, publicar, hacer commits.</li>
+    <li><code>user-invocable: false</code>: lo contrario. Solo Claude la usa, como conocimiento de fondo (por ejemplo, las reglas de un sistema antiguo), y no aparece en el menú <code>/</code>.</li>
+  </ul>
+  <p>La gran ventaja frente a <code>CLAUDE.md</code> es que una skill no ocupa contexto hasta que se usa: al principio solo se carga su descripción. Por eso la guía oficial recomienda mover a skills los procedimientos largos que hoy tienes en <code>CLAUDE.md</code>. Las skills personales van en <code>~/.claude/skills/</code>; las del proyecto, en <code>.claude/skills/</code>. Siguen un estándar abierto, <em>Agent Skills</em>, que también entienden otras herramientas de IA.</p>
+  <aside class="senal nota" data-titulo="Comandos personalizados y skills incluidas">
+    <p>Antes, los comandos propios se escribían como archivos en <code>.claude/commands/</code>. Siguen funcionando, pero ahora son lo mismo que una skill y se recomienda usar skills. Claude Code también trae skills incluidas: <code>/code-review</code> revisa tus cambios en busca de errores, <code>/simplify</code> propone limpiezas, <code>/doctor</code> revisa tu instalación y <code>/verify</code> arranca tu aplicación para comprobar que un cambio funciona de verdad. Escribe <code>/</code> para ver las que tienes.</p>
+  </aside>
+
+  <h3>MCP: herramientas nuevas para el agente</h3>
+  <p>El <strong>MCP</strong> (<em>Model Context Protocol</em>, protocolo de contexto para modelos) es un estándar abierto, creado por Anthropic en 2024 y adoptado por muchas herramientas, para conectar agentes de IA con servicios externos. Un <strong>servidor MCP</strong> es un programa que ofrece herramientas nuevas al agente: controlar un navegador, consultar la documentación actual de una biblioteca, leer tus issues de GitHub, consultar tu base de datos. Puede ejecutarse en tu computadora o ser un servicio en internet.</p>
+  <aside class="senal analogia">
+    <p>MCP es como el puerto USB-C: cualquier aparato que lo cumpla se conecta a cualquier computadora que lo tenga, sin adaptadores a medida. Un servidor MCP escrito una vez sirve en Claude Code y en otras herramientas compatibles. La analogía falla en algo importante: un cable USB-C no decide nada, mientras que un servidor MCP es un programa que se ejecuta con tus permisos y cuyas respuestas lee el modelo. Por eso solo se instalan servidores de fuentes en las que confías.</p>
+  </aside>
+  <p>Los servidores se añaden desde la terminal, fuera de una sesión, con <code>claude mcp add</code>. Hay dos formas según dónde vive el servidor:</p>
+  <pre class="consola"><code><span class="prompt">$</span> claude mcp add --transport http context7 https://mcp.context7.com/mcp
+<span class="salida">Added HTTP MCP server context7 with URL: https://mcp.context7.com/mcp to local config</span>
+<span class="prompt">$</span> claude mcp add playwright -- npx -y @playwright/mcp@latest
+<span class="salida">Added stdio MCP server playwright with command: npx -y @playwright/mcp@latest to local config</span>
+<span class="prompt">$</span> claude mcp list</code></pre>
+  <p>El primero es un servidor en internet (<code>--transport http</code> y su URL). El segundo es un programa local: todo lo que va detrás de <code>--</code> es el comando que Claude Code ejecuta para arrancarlo, en este caso con <code>npx</code>, que descarga y ejecuta un paquete de npm. <code>claude mcp list</code> muestra si cada servidor está conectado. Si un servicio necesita iniciar sesión, abre <code>/mcp</code> dentro de Claude Code y elige «Authenticate». Para quitar uno: <code>claude mcp remove nombre</code>.</p>
+  <p>Por defecto, un servidor se registra solo para ti y solo en ese proyecto (alcance <code>local</code>). Con <code>--scope user</code> lo tienes en todos tus proyectos, y con <code>--scope project</code> se guarda en un archivo <code>.mcp.json</code> en la raíz del proyecto, que se sube a Git para que todo el equipo tenga los mismos servidores:</p>
+  <pre><code class="language-json">{
+  "mcpServers": {
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": { "Authorization": "Bearer ${CONTEXT7_API_KEY:-}" }
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    }
+  }
+}</code></pre>
+  <p>Fíjate en <code>${CONTEXT7_API_KEY:-}</code>: Claude Code sustituye ese texto por el valor de la variable de entorno, o por nada si no existe. Así la clave nunca se escribe en un archivo que va a Git. La primera vez que alguien abre el proyecto, Claude Code le pregunta si aprueba los servidores de <code>.mcp.json</code>: un repositorio que clonas no puede lanzar programas en tu computadora sin tu permiso.</p>
+  <aside class="senal ojo" data-titulo="Cada servidor cuesta contexto">
+    <p>Los nombres y descripciones de las herramientas de cada servidor conectado se cargan en todas las sesiones, aunque no los uses. Diez servidores «por si acaso» son contexto perdido y más opciones entre las que el modelo puede equivocarse. Conecta lo que usas y quita lo que no.</p>
+  </aside>
+
+  <h3>Plugins y marketplaces: paquetes listos para instalar</h3>
+  <p>Un <strong>plugin</strong> es un paquete que instala de una vez varias piezas: skills, subagentes, hooks y servidores MCP. Un <strong>marketplace</strong> es un catálogo de plugins, normalmente un repositorio de GitHub con un archivo <code>.claude-plugin/marketplace.json</code>. Claude Code añade solo el marketplace oficial de Anthropic, <code>claude-plugins-official</code>, la primera vez que lo abres. Contiene plugins de Anthropic y de otras empresas (por ejemplo, GitHub, Playwright, Supabase, Unity o Epic Games para Unreal).</p>
+  <p>Dentro de una sesión, <code>/plugin</code> abre un panel con pestañas: <em>Discover</em> para buscar, <em>Installed</em> para ver lo instalado, <em>Marketplaces</em> para gestionar catálogos. También puedes ir directo:</p>
+  <pre><code class="language-text">/plugin install commit-commands@claude-plugins-official</code></pre>
+  <p>La parte tras la <code>@</code> es el nombre del marketplace. El panel te enseña qué va a instalar (comandos, agentes, hooks, servidores) y cuánto contexto ocupa, y te pide un alcance: para ti en todos tus proyectos, para todo el equipo en este repositorio, o solo para ti en este repositorio. Las skills de un plugin aparecen con su nombre delante, como <code>/commit-commands:commit</code>. Si el resumen final dice <code>Run /reload-plugins to activate</code>, Claude Code recarga los plugins por ti.</p>
+  <p>Para usar un marketplace de otra persona o empresa, primero se añade con <code>/plugin marketplace add dueño/repositorio</code> y después se instala con <code>/plugin install nombre@nombre-del-marketplace</code>. Desde la terminal existen los equivalentes <code>claude plugin install</code>, <code>claude plugin list</code> y <code>claude plugin marketplace add</code>.</p>
+  <aside class="senal ojo" data-titulo="Un plugin es código que ejecutas">
+    <p>Un plugin puede traer hooks y servidores MCP, es decir, programas que se ejecutan en tu computadora con tus permisos. El propio catálogo oficial avisa de que Anthropic no controla el contenido de los plugins de terceros. Antes de instalar uno, lee qué incluye en el panel de detalles, mira quién lo publica y cuánta gente lo usa, y prefiere los de empresas y proyectos conocidos.</p>
+  </aside>
+
+  <h3>Qué pieza usar en cada caso</h3>
+  <p>El mapa completo de piezas alrededor del bucle del agente:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 330" role="img" aria-label="Diagrama: en el centro, el bucle del agente con reunir contexto, actuar y verificar. Alrededor, cinco piezas conectadas: CLAUDE.md, que está siempre en el contexto; skills, que se cargan cuando hacen falta; hooks, scripts que se ejecutan siempre en ciertos momentos; servidores MCP, que añaden herramientas externas; y subagentes, que trabajan en otro bucle con su propio contexto. Un marco discontinuo alrededor indica que un plugin empaqueta varias de estas piezas.">
+      <rect class="d-punteada" x="6" y="6" width="708" height="318" rx="14"/>
+      <rect class="d-acento" x="250" y="118" width="220" height="84" rx="14"/>
+      <text class="d-sobre-acento d-rotulo" x="360" y="150" text-anchor="middle">Bucle del agente</text>
+      <text class="d-sobre-acento d-peq" x="360" y="176" text-anchor="middle">reunir · actuar · verificar</text>
+      <rect class="d-caja" x="24" y="22" width="196" height="76" rx="10"/>
+      <text class="d-rotulo" x="40" y="50">CLAUDE.md</text>
+      <text class="d-peq" x="40" y="72">Siempre en contexto:</text>
+      <text class="d-peq" x="40" y="89">lo que Claude debe saber</text>
+      <rect class="d-caja" x="500" y="22" width="196" height="76" rx="10"/>
+      <text class="d-rotulo" x="516" y="50">Skills</text>
+      <text class="d-peq" x="516" y="72">Se cargan si hacen falta:</text>
+      <text class="d-peq" x="516" y="89">recetas y conocimiento</text>
+      <rect class="d-caja" x="24" y="222" width="196" height="76" rx="10"/>
+      <text class="d-rotulo" x="40" y="250">Hooks</text>
+      <text class="d-peq" x="40" y="272">Scripts que se ejecutan</text>
+      <text class="d-peq" x="40" y="289">siempre, en ciertos eventos</text>
+      <rect class="d-caja" x="500" y="222" width="196" height="76" rx="10"/>
+      <text class="d-rotulo" x="516" y="250">Servidores MCP</text>
+      <text class="d-peq" x="516" y="272">Herramientas externas:</text>
+      <text class="d-peq" x="516" y="289">navegador, docs, GitHub</text>
+      <rect class="d-caja" x="262" y="236" width="196" height="62" rx="10"/>
+      <text class="d-rotulo" x="278" y="262">Subagentes</text>
+      <text class="d-peq" x="278" y="284">Otro bucle, otro contexto</text>
+      <path class="d-linea" d="M220 78 L262 118"/>
+      <path class="d-linea" d="M500 78 L458 118"/>
+      <path class="d-linea" d="M220 242 L262 202"/>
+      <path class="d-linea" d="M500 242 L458 202"/>
+      <path class="d-linea" d="M360 202 V236"/>
+      <text class="d-peq d-tenue" x="360" y="60" text-anchor="middle">Plugin: un paquete</text>
+      <text class="d-peq d-tenue" x="360" y="78" text-anchor="middle">que instala varias piezas</text>
+    </svg>
+    <figcaption>Cada pieza se engancha en un punto distinto del bucle. El marco discontinuo representa un plugin: la forma de empaquetar y compartir varias piezas a la vez.</figcaption>
+  </figure>
+  <p>No hace falta montarlo todo el primer día. La documentación oficial propone ir añadiendo piezas cuando aparece un síntoma concreto:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Cuando pasa esto…</th><th scope="col">…añade</th></tr></thead>
+      <tbody>
+        <tr><td>Claude se equivoca dos veces con el mismo comando o convención.</td><td>Una línea en <code>CLAUDE.md</code>.</td></tr>
+        <tr><td>Escribes una y otra vez la misma petición para empezar una tarea.</td><td>Una skill que invocas tú.</td></tr>
+        <tr><td>Pegas por tercera vez el mismo procedimiento largo.</td><td>Una skill.</td></tr>
+        <tr><td>Copias datos de una página o servicio que Claude no puede ver.</td><td>Un servidor MCP.</td></tr>
+        <tr><td>Una tarea secundaria llena la conversación de resultados que no volverás a mirar.</td><td>Un subagente.</td></tr>
+        <tr><td>Quieres que algo pase siempre, sin tener que pedirlo.</td><td>Un hook.</td></tr>
+        <tr><td>Otro proyecto necesita la misma configuración.</td><td>Un plugin.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
