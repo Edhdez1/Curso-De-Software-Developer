@@ -296,3 +296,2184 @@ Frame size 0
     <p>«Si el error de sintaxis está en la línea 50, se ejecutan las 49 anteriores». No: el análisis léxico y el sintáctico recorren el archivo completo antes de ejecutar nada. Un detalle para curiosos: V8 no construye el árbol completo de cada función hasta que la llama por primera vez (hace una lectura rápida previa), pero esa lectura rápida también detecta los errores de sintaxis.</p>
   </aside>
 </section>
+
+<section id="motores" data-parada="Motores y entornos">
+  <h2>Motores y entornos de ejecución</h2>
+  <p>Tu JavaScript funciona en Chrome, en Firefox, en la terminal con Node.js y en los talleres de este curso. <code>console.log</code> existe en todos esos sitios, pero <code>document</code> solo existe en una página web, y la lectura de archivos, solo en Node.js. ¿Por qué el mismo lenguaje tiene poderes distintos según dónde se ejecute? Porque «ejecutar JavaScript» es trabajo de dos piezas distintas.</p>
+
+  <h3>El motor: el lenguaje y nada más</h3>
+  <p>Un <strong>motor de JavaScript</strong> es el programa que analiza y ejecuta el código, siguiendo el estándar del lenguaje, llamado ECMAScript (<a href="06-primeros-pasos.html">Estación 6</a>). Hace todo lo de la sección anterior: tokens, árbol, bytecode y JIT. También gestiona la pila de llamadas, la memoria de los objetos y el recolector de basura, que verás a continuación. Hay tres motores principales:</p>
+  <ul>
+    <li><strong>V8</strong>, de Google: el de Chrome, Edge, Opera, Node.js, Deno y las apps de escritorio hechas con Electron.</li>
+    <li><strong>SpiderMonkey</strong>, de Mozilla: el de Firefox. Fue el primer motor de JavaScript de la historia.</li>
+    <li><strong>JavaScriptCore</strong>, de Apple: el de Safari y todos los navegadores de iPhone y iPad. También lo usa Bun.</li>
+  </ul>
+  <p>Lo sorprendente es lo que un motor <em>no</em> sabe hacer. No sabe dibujar en la pantalla, ni leer archivos, ni conectarse a internet, ni siquiera esperar un segundo: <code>setTimeout</code> y <code>console</code> no forman parte del lenguaje ECMAScript. Esas capacidades las pone quien «aloja» al motor.</p>
+
+  <h3>El entorno: el motor más sus herramientas</h3>
+  <p>Un <strong>entorno de ejecución</strong> (en inglés, <em>runtime</em>) es un programa que incluye un motor y le añade dos cosas: <strong>APIs</strong> (funciones para hablar con el mundo exterior: la pantalla, la red, los archivos, los temporizadores) y un <strong>bucle de eventos</strong> que decide cuándo se ejecuta cada trozo de código. El navegador es un entorno; Node.js es otro.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 355" role="img" aria-label="Anatomía de un entorno de ejecución. Arriba, tu código JavaScript. Debajo, a la izquierda, el motor, con el análisis y el bytecode, el intérprete y el JIT, la pila de llamadas, y el montículo con el recolector. A la derecha, las APIs del entorno: en el navegador, DOM y eventos, fetch, setTimeout, localStorage y Web Workers; en Node.js, archivos, red, procesos, setTimeout y módulos. Debajo de todo, el bucle de eventos con sus colas y, al fondo, el sistema operativo y el hardware">
+      <rect class="d-codigo" x="200" y="10" width="320" height="44" rx="8"/>
+      <text class="d-codigo-texto" x="360" y="38" text-anchor="middle" style="font-size:16px">Tu código JavaScript</text>
+      <path class="d-linea" d="M270 54V72M450 54V72"/>
+      <path class="d-tinta" d="M264 70l6 10 6-10zM444 70l6 10 6-10z"/>
+      <rect class="d-caja" x="10" y="82" width="340" height="180" rx="8"/>
+      <text class="d-rotulo" x="180" y="106" text-anchor="middle">Motor</text>
+      <text class="d-peq d-tenue" x="180" y="125" text-anchor="middle">V8, SpiderMonkey o JavaScriptCore</text>
+      <rect class="d-caja-suave" x="25" y="138" width="150" height="54" rx="6"/>
+      <text x="100" y="161" text-anchor="middle" style="font-size:14px">Análisis y</text>
+      <text x="100" y="180" text-anchor="middle" style="font-size:14px">bytecode</text>
+      <rect class="d-caja-suave" x="185" y="138" width="150" height="54" rx="6"/>
+      <text x="260" y="161" text-anchor="middle" style="font-size:14px">Intérprete</text>
+      <text x="260" y="180" text-anchor="middle" style="font-size:14px">y JIT</text>
+      <rect class="d-caja-suave" x="25" y="200" width="150" height="54" rx="6"/>
+      <text x="100" y="223" text-anchor="middle" style="font-size:14px">Pila de</text>
+      <text x="100" y="242" text-anchor="middle" style="font-size:14px">llamadas</text>
+      <rect class="d-caja-suave" x="185" y="200" width="150" height="54" rx="6"/>
+      <text x="260" y="223" text-anchor="middle" style="font-size:14px">Montículo y</text>
+      <text x="260" y="242" text-anchor="middle" style="font-size:14px">recolector</text>
+      <rect class="d-caja" x="370" y="82" width="340" height="180" rx="8"/>
+      <text class="d-rotulo" x="540" y="106" text-anchor="middle">APIs del entorno</text>
+      <text class="d-peq d-tenue" x="540" y="125" text-anchor="middle">lo que el lenguaje no trae</text>
+      <rect class="d-caja-suave" x="385" y="138" width="150" height="116" rx="6"/>
+      <text class="d-rotulo" x="460" y="158" text-anchor="middle" style="font-size:14px">Navegador</text>
+      <g class="d-peq">
+        <text x="460" y="178" text-anchor="middle">DOM y eventos</text>
+        <text x="460" y="196" text-anchor="middle">fetch</text>
+        <text x="460" y="214" text-anchor="middle">setTimeout</text>
+        <text x="460" y="232" text-anchor="middle">localStorage</text>
+        <text x="460" y="250" text-anchor="middle">Web Workers</text>
+      </g>
+      <rect class="d-caja-suave" x="545" y="138" width="150" height="116" rx="6"/>
+      <text class="d-rotulo" x="620" y="158" text-anchor="middle" style="font-size:14px">Node.js</text>
+      <g class="d-peq">
+        <text x="620" y="178" text-anchor="middle">archivos (fs)</text>
+        <text x="620" y="196" text-anchor="middle">red (http)</text>
+        <text x="620" y="214" text-anchor="middle">procesos</text>
+        <text x="620" y="232" text-anchor="middle">setTimeout</text>
+        <text x="620" y="250" text-anchor="middle">módulos</text>
+      </g>
+      <rect class="d-acento" x="10" y="274" width="700" height="32" rx="8"/>
+      <text class="d-sobre-acento d-rotulo" x="360" y="295" text-anchor="middle">Bucle de eventos y colas de tareas</text>
+      <rect class="d-caja" x="10" y="314" width="700" height="32" rx="8"/>
+      <text class="d-rotulo" x="360" y="335" text-anchor="middle">Sistema operativo y hardware</text>
+    </svg>
+    <figcaption>Un entorno de ejecución es un motor, más APIs, más un bucle de eventos. Chrome y Node.js usan el mismo motor, V8; lo que cambia son las APIs que rodean al motor.</figcaption>
+  </figure>
+  <p>Estos son los entornos más importantes en 2026:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Entorno</th><th scope="col">Motor</th><th scope="col">Qué aporta</th><th scope="col">Para qué se usa</th></tr></thead>
+      <tbody>
+        <tr><td>Navegadores</td><td>V8 (Chrome, Edge), SpiderMonkey (Firefox), JavaScriptCore (Safari)</td><td>El DOM, eventos, <code>fetch</code>, almacenamiento, gráficos, audio, Web Workers</td><td>Páginas y aplicaciones web, juegos web</td></tr>
+        <tr><td>Node.js</td><td>V8</td><td>Archivos, red, procesos, y la biblioteca libuv, que gestiona la entrada y salida asíncrona. Trae npm, el gestor de paquetes</td><td>Servidores y APIs (<a href="29-backend.html">Estación 29</a>), herramientas de la terminal, scripts</td></tr>
+        <tr><td>Deno</td><td>V8</td><td>Escrito en Rust. Ejecuta TypeScript directamente, pide permiso explícito para leer archivos o usar la red, y usa las mismas APIs que el navegador cuando puede</td><td>Lo mismo que Node.js, con más seguridad por defecto</td></tr>
+        <tr><td>Bun</td><td>JavaScriptCore</td><td>Escrito en Zig. Reúne en un solo programa el entorno, un gestor de paquetes, un empaquetador y un ejecutor de pruebas, y es compatible con casi todo Node.js</td><td>Lo mismo que Node.js, buscando arrancar y ejecutar más rápido</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>A finales de septiembre de 2026, Node.js 24 es la versión LTS activa (la 24.21.0) y Node.js 26 pasa a LTS el 28 de octubre de 2026; Deno va por la serie 2 y Bun por la serie 1. Las versiones cambian cada pocas semanas, así que no te fíes de un número escrito en un curso: compruébalo en tu terminal.</p>
+  <pre class="consola"><code><span class="prompt">$</span> node --version
+<span class="salida">v24.21.0</span>
+<span class="prompt">$</span> node -p "process.versions.v8"
+<span class="salida">13.6.233.17-node.…</span></code></pre>
+  <p>La segunda orden le pide a Node.js que imprima la versión del motor V8 que lleva dentro. Si tienes Deno o Bun instalados, <code>deno --version</code> y <code>bun --version</code> hacen lo mismo. Para empezar, Node.js es la opción más documentada y la que usa este curso; Deno y Bun son alternativas serias que conviene conocer de nombre.</p>
+
+  <h3>¿Dónde se ejecuta este código?</h3>
+  <p>Una forma de descubrir en qué entorno estás es preguntar qué existe. <code>typeof</code> (lo conociste en la <a href="07-variables.html#tipos">Estación 7</a>) devuelve <code>"undefined"</code> si un nombre no existe, sin lanzar un error. Predice qué imprimirá cada línea en este taller:</p>
+  <div class="taller" id="taller-entorno" data-titulo="Predice: ¿qué existe aquí?">
+    <textarea class="taller-codigo">console.log("Math:", typeof Math);             // parte del lenguaje
+console.log("Promise:", typeof Promise);       // parte del lenguaje
+console.log("console:", typeof console);       // la pone el entorno
+console.log("setTimeout:", typeof setTimeout); // la pone el entorno
+console.log("document:", typeof document);     // solo en una página
+console.log("process:", typeof process);       // solo en Node.js
+console.log("globalThis:", typeof globalThis); // el objeto global, en todas partes</textarea>
+  </div>
+  <p>Aquí <code>document</code> no existe, aunque estás en un navegador. Es una pista de algo que verás más adelante: los talleres de este curso se ejecutan en un <a href="#workers">Web Worker</a>, un entorno sin página. Copia las mismas líneas en la consola de tu navegador (<kbd>F12</kbd>) y, si puedes, en un archivo que ejecutes con Node.js, y compara:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Nombre</th><th scope="col">Consola del navegador</th><th scope="col">Node.js</th><th scope="col">Talleres del curso</th></tr></thead>
+      <tbody>
+        <tr><td><code>Math</code>, <code>Promise</code></td><td>Sí</td><td>Sí</td><td>Sí</td></tr>
+        <tr><td><code>console</code>, <code>setTimeout</code></td><td>Sí</td><td>Sí</td><td>Sí</td></tr>
+        <tr><td><code>document</code>, <code>window</code></td><td>Sí</td><td>No</td><td>No</td></tr>
+        <tr><td><code>process</code></td><td>No</td><td>Sí</td><td>No</td></tr>
+        <tr><td><code>globalThis</code></td><td>Sí</td><td>Sí</td><td>Sí</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><code>globalThis</code> es el nombre estándar del objeto global en cualquier entorno. Antes cada uno lo llamaba a su manera (<code>window</code> en las páginas, <code>global</code> en Node.js, <code>self</code> en los workers), y escribir código que funcionara en todos era un fastidio.</p>
+
+  <h3>Los niveles de V8: el JIT en acción</h3>
+  <p>V8 no tiene un solo compilador JIT, sino una escalera de cuatro niveles. Cada nivel tarda más en compilar pero genera código más rápido, y el motor solo sube de nivel las funciones que lo merecen:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Ignition</strong> (intérprete): todo el código empieza aquí, como bytecode. Arranca enseguida.</p></div></li>
+    <li><div><p><strong>Sparkplug</strong> (desde 2021): traduce el bytecode a código máquina casi al instante, sin optimizar. Ahorra el trabajo de interpretar.</p></div></li>
+    <li><div><p><strong>Maglev</strong> (desde Chrome 117, en 2023): un compilador optimizador rápido. Según el equipo de V8, compila unas diez veces más despacio que Sparkplug y unas diez veces más deprisa que TurboFan.</p></div></li>
+    <li><div><p><strong>TurboFan</strong>: el optimizador más potente. Tarda más en compilar y genera el código más rápido, para las funciones muy calientes.</p></div></li>
+  </ol>
+  <p>Los niveles optimizadores <strong>especulan</strong>: usan las notas que tomó el intérprete («aquí siempre llegan enteros») para generar código que solo funciona si la suposición se cumple, con una comprobación a la entrada. Puedes ver a V8 tomar esas decisiones. Con este archivo, <code>calientes.js</code>:</p>
+  <pre><code class="language-js">function calcularTotal(precio, cantidad) {
+  return precio * cantidad + 5;
+}
+let suma = 0;
+for (let i = 0; i &lt; 1000000; i++) {
+  suma += calcularTotal(i % 100, 3);   // siempre enteros: la función se calienta
+}
+console.log(calcularTotal("20", 3));   // un texto: la apuesta falla</code></pre>
+  <p>Y estas opciones de Node.js, que avisan cuando el motor optimiza (<code>--trace-opt</code>) y cuando desoptimiza (<code>--trace-deopt</code>), verás algo así (resumido; las direcciones cambian en cada ejecución):</p>
+  <pre class="consola"><code><span class="prompt">$</span> node --trace-opt --trace-deopt calientes.js
+<span class="salida">[marking … &lt;JSFunction calcularTotal …&gt; for optimization to TURBOFAN, ConcurrencyMode::kConcurrent, reason: hot and stable]
+[completed optimizing … &lt;JSFunction calcularTotal …&gt; (target TURBOFAN)]
+[bailout (kind: deopt-eager, reason: not a Smi): begin. deoptimizing … &lt;JSFunction calcularTotal …&gt; …]
+65</span></code></pre>
+  <p>Se lee así. Primera línea: V8 marca <code>calcularTotal</code> para optimizarla porque está «caliente y estable» (<em>hot and stable</em>): se llama mucho y siempre con los mismos tipos. <code>kConcurrent</code> significa que la compilación ocurre en otro hilo, en paralelo, para no frenar tu programa (los hilos llegan en unas secciones). Tercera línea: al llegar <code>"20"</code>, la comprobación falla con el motivo <em>not a Smi</em>. Un Smi (<em>small integer</em>) es la forma en que V8 guarda los enteros pequeños; un texto no lo es. El motor desoptimiza, vuelve al bytecode y el programa imprime el resultado correcto, 65. Según tu versión de Node.js, puede que antes de TurboFan aparezca MAGLEV.</p>
+  <aside class="senal oficio">
+    <p>Una consecuencia práctica: las funciones que reciben siempre el mismo tipo de datos, y objetos con las mismas propiedades en el mismo orden, son más fáciles de optimizar. Pero no escribas código raro «para ayudar al JIT»: los motores cambian cada pocas semanas y lo que hoy es un truco mañana no sirve. Escribe código claro, elige buenos algoritmos (<a href="20-algoritmos.html">Estación 20</a>) y, si algo va lento, <em>mide</em> con el panel Rendimiento (<em>Performance</em>) de las DevTools antes de tocar nada.</p>
+  </aside>
+  <aside class="senal error">
+    <p>«Node.js es un lenguaje» o «Node.js es un framework de JavaScript». Node.js es un entorno de ejecución: el lenguaje es el mismo JavaScript que en el navegador, y el motor, el mismo V8 que en Chrome. Lo que cambia son las APIs: en Node.js no hay <code>document</code> porque no hay página, y en el navegador no puedes leer cualquier archivo del disco porque sería un peligro para tu seguridad.</p>
+  </aside>
+</section>
+
+<section id="memoria" data-parada="Pila y montículo">
+  <h2>La memoria de tu programa: pila y montículo</h2>
+  <p>Cada valor que usa tu programa ocupa sitio en la RAM (<a href="02-computadora.html#dentro">Estación 2</a>). Pero no todos los valores viven lo mismo. Las variables locales de una función solo sirven mientras la función se ejecuta. El inventario de tu personaje, en cambio, tiene que durar toda la partida, aunque lo haya creado una función que terminó hace rato. El motor organiza la memoria de tu programa en dos zonas pensadas para esas dos formas de vivir.</p>
+
+  <h3>La pila: memoria para cada llamada</h3>
+  <p>La pila de llamadas de la <a href="10-funciones.html#pila">Estación 10</a> no es solo una idea para entender el orden de las funciones: ocupa una zona real de memoria que también se llama <strong>pila</strong> (en inglés, <em>stack</em>). Cada vez que llamas a una función, el motor reserva en la cima de la pila un bloque llamado <strong>marco de pila</strong> (en inglés, <em>stack frame</em>). El marco guarda los parámetros de esa llamada, sus variables locales y el punto del programa al que hay que volver cuando termine.</p>
+  <p>Reservar y liberar memoria en la pila es rapidísimo: basta con mover un indicador que marca dónde está la cima. Sube al llamar a una función y baja cuando la función termina. Por eso las variables locales «desaparecen» al acabar: su marco queda libre y lo ocupará la siguiente llamada. La pila tiene un inconveniente: es pequeña y su tamaño está fijado de antemano. En V8 ronda el megabyte.</p>
+
+  <h3>El montículo: memoria para lo que dura</h3>
+  <p>Los objetos, los arrays y las funciones se crean en otra zona, el <strong>montículo</strong> (en inglés, <em>heap</em>). Es mucho más grande (puede ocupar cientos de megabytes o varios gigabytes) y en él los datos se crean y se liberan en cualquier orden, no solo por la cima. Un objeto del montículo no pertenece a ninguna llamada: vive mientras alguien pueda llegar a él. Quién decide cuándo ya nadie puede llegar lo verás en la próxima sección.</p>
+  <aside class="senal ojo" data-titulo="Mismo nombre, otra cosa">
+    <p>En la <a href="19-estructuras-datos.html">Estación 19</a> conociste otro montículo: una estructura de datos con forma de árbol que sirve para las colas de prioridad. El montículo de memoria no tiene nada que ver con él. Comparten nombre por casualidad histórica. Cuando leas <em>heap</em>, el contexto te dirá de cuál se habla.</p>
+  </aside>
+  <p>¿Y qué hay en el marco de una función cuando una de sus variables es un objeto? No el objeto entero, sino una <strong>referencia</strong>: la dirección del objeto en el montículo. Con un número pequeño, en cambio, el marco guarda el propio valor. Esta es la explicación, a nivel de memoria, de lo que viste en la <a href="11-colecciones.html#referencias">Estación 11</a>: cuando haces <code>const b = a</code> con un objeto, o pasas un objeto a una función, se copia el contenido del marco, es decir, la referencia. Hay dos variables, pero un solo objeto en el montículo.</p>
+  <p>Mira qué pasa en la memoria cuando una función crea un objeto y lo devuelve:</p>
+  <figure class="capsula" data-titulo="Pila y montículo">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 330" role="img" aria-label="Animación: al llamar a crearJugador se apila un marco con nombre y vidas; el objeto jugador se crea en el montículo y el marco guarda una referencia a él. Al hacer return, el marco se desapila y la variable global heroe recibe la referencia, así que el objeto sobrevive. Al asignar null a heroe, ya nadie apunta al objeto y se convierte en basura">
+        <rect class="d-codigo" x="10" y="10" width="320" height="180" rx="8"/>
+        <text class="d-codigo-tenue" x="24" y="30" style="font-size:13px">Código</text>
+        <rect class="d-resalte" x="16" y="39" width="308" height="20" rx="4" data-mover="1:translate(0px,100px); 2:translate(0px,0px); 3:translate(0px,20px); 4:translate(0px,40px); 5:translate(0px,60px); 6:translate(0px,120px)"/>
+        <g style="font-size:13px">
+          <text class="d-codigo-texto" x="24" y="54">function crearJugador(nombre) {</text>
+          <text class="d-codigo-texto" x="24" y="74">  const vidas = 3;</text>
+          <text class="d-codigo-texto" x="24" y="94">  const jugador = { nombre, vidas };</text>
+          <text class="d-codigo-texto" x="24" y="114">  return jugador;</text>
+          <text class="d-codigo-texto" x="24" y="134">}</text>
+          <text class="d-codigo-texto" x="24" y="154">let heroe = crearJugador("Ana");</text>
+          <text class="d-codigo-texto" x="24" y="174">heroe = null;</text>
+        </g>
+        <text class="d-rotulo" x="435" y="30" text-anchor="middle">Pila</text>
+        <path class="d-linea" d="M350 320H520"/>
+        <rect class="d-caja" x="350" y="252" width="170" height="64" rx="6"/>
+        <text class="d-peq d-tenue" x="362" y="272">marco global</text>
+        <text class="d-mono" x="362" y="300" style="font-size:14px">heroe</text>
+        <text class="d-mono" x="508" y="300" text-anchor="end" style="font-size:14px" data-texto="1:…; 5:; 6:null">…</text>
+        <circle class="d-tinta" cx="500" cy="295" r="5" data-pasos="5"/>
+        <g data-pasos="2-4">
+          <rect class="d-caja" x="350" y="128" width="170" height="112" rx="6" data-clases="2:d-acento-trazo"/>
+          <text class="d-peq d-tenue" x="362" y="148">marco de crearJugador</text>
+          <text class="d-mono" x="362" y="176" style="font-size:14px">nombre</text>
+          <text class="d-mono" x="508" y="176" text-anchor="end" style="font-size:14px">"Ana"</text>
+          <g data-pasos="3-4">
+            <text class="d-mono" x="362" y="202" style="font-size:14px">vidas</text>
+            <text class="d-mono" x="508" y="202" text-anchor="end" style="font-size:14px">3</text>
+          </g>
+          <g data-pasos="4">
+            <text class="d-mono" x="362" y="228" style="font-size:14px">jugador</text>
+            <circle class="d-tinta" cx="500" cy="223" r="5"/>
+            <path class="d-linea" d="M505 223C530 223 530 190 545 190"/>
+            <path class="d-tinta" d="M545 184l10 6-10 6z"/>
+          </g>
+        </g>
+        <g data-pasos="5">
+          <path class="d-linea" d="M505 295C540 295 530 206 545 206"/>
+          <path class="d-tinta" d="M545 200l10 6-10 6z"/>
+        </g>
+        <text class="d-rotulo" x="632" y="30" text-anchor="middle">Montículo</text>
+        <g data-pasos="4-">
+          <rect class="d-caja" x="557" y="160" width="150" height="62" rx="6" data-clases="6:d-caja-suave"/>
+          <text class="d-mono" x="568" y="185" style="font-size:13px" data-clases="6:d-tenue">{ nombre: "Ana",</text>
+          <text class="d-mono" x="568" y="208" style="font-size:13px" data-clases="6:d-tenue">  vidas: 3 }</text>
+        </g>
+        <g data-pasos="6">
+          <text class="d-peq" x="632" y="246" text-anchor="middle">nadie apunta aquí:</text>
+          <text class="d-peq" x="632" y="264" text-anchor="middle">es basura</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li data-duracion="6">El programa llega a la línea 6. En la pila solo está el marco global, con la variable <code>heroe</code>, que todavía no tiene valor. El montículo está vacío. Antes de guardar nada en <code>heroe</code>, hay que ejecutar <code>crearJugador("Ana")</code>.</li>
+        <li data-duracion="6">Llamada a <code>crearJugador</code>: se apila un marco nuevo encima del global, con el parámetro <code>nombre</code>. El texto <code>"Ana"</code> se muestra dentro del marco para simplificar.</li>
+        <li>Línea 2: la variable local <code>vidas</code> ocupa su hueco en el marco. Un número pequeño se guarda directamente ahí.</li>
+        <li data-duracion="7">Línea 3: el objeto se crea en el montículo, fuera de la pila. En el marco, <code>jugador</code> guarda solo una referencia: la dirección donde vive el objeto.</li>
+        <li data-duracion="8">Línea 4: <code>return jugador</code> entrega la referencia y el marco de <code>crearJugador</code> se retira de la pila. Sus variables locales desaparecen, pero el objeto no: <code>heroe</code> recibe una copia de la referencia y apunta al mismo objeto.</li>
+        <li data-duracion="7">Línea 7: <code>heroe = null</code> borra la única referencia. El objeto sigue en el montículo, pero ya ninguna variable puede llegar a él. Es basura, y el recolector la liberará cuando le toque.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <aside class="senal nota" data-titulo="Un modelo, no una ley">
+    <p>La especificación de JavaScript no menciona la pila ni el montículo: dice qué debe <em>hacer</em> el programa, no dónde guardar cada dato. Pila y montículo son el modelo que siguen los motores, y cada uno lo aplica con sus matices. V8, por ejemplo, guarda los enteros pequeños directamente, pero los textos viven en el montículo; como un texto no se puede modificar, se comporta como si se copiara. Y las variables que recuerda un closure (<a href="10-funciones.html#closures">Estación 10</a>) no pueden vivir en el marco, porque sobreviven a la función: el motor las guarda en el montículo. Quédate con la idea general: marcos de corta vida en la pila, objetos de vida larga en el montículo.</p>
+  </aside>
+
+  <h3>Cuando la pila se llena</h3>
+  <p>Como la pila tiene un tamaño fijo, una cadena de llamadas demasiado larga la llena. Es el desbordamiento de pila (<em>stack overflow</em>) que viste con la recursión sin caso base. ¿Cuántas llamadas caben? Depende del entorno y del tamaño de cada marco. Predice un número aproximado y compruébalo:</p>
+  <div class="taller" id="taller-profundidad" data-titulo="Mide tu pila">
+    <textarea class="taller-codigo">let profundidad = 0;
+
+function bajar() {
+  profundidad++;
+  bajar();          // sin caso base: se llama para siempre
+}
+
+try {
+  bajar();
+} catch (error) {
+  console.log(error.name + ": " + error.message);
+  console.log("La pila aguantó unas " + profundidad + " llamadas");
+}</textarea>
+  </div>
+  <p>En Chrome y en Node.js salen unos pocos miles o decenas de miles de llamadas; en Firefox y Safari, otras cifras. <strong>Modifica</strong> <code>bajar</code> para que cada marco sea más grande: dale cinco parámetros y crea diez variables locales que se calculen a partir de ellos. Verás que caben bastantes menos llamadas, porque cada marco ocupa más. El <code>try</code>/<code>catch</code> que atrapa el <code>RangeError</code> lo aprendiste en la <a href="12-depuracion.html#excepciones">Estación 12</a>.</p>
+  <aside class="senal error">
+    <p>«Las variables de una función se borran al terminar, así que los objetos que creé dentro también». Se borra el <em>marco</em>, con las referencias que contenía. Los objetos del montículo siguen vivos mientras alguien pueda llegar a ellos: la función pudo devolverlos, guardarlos en un array global o dejarlos dentro de un closure. Por eso <code>crearJugador</code> funciona.</p>
+  </aside>
+</section>
+
+<section id="basura" data-parada="Recolector de basura">
+  <h2>El recolector de basura y las fugas de memoria</h2>
+  <p>Cada objeto que creas ocupa sitio en el montículo. Un juego que crea proyectiles, partículas y mensajes sesenta veces por segundo llenaría la RAM en minutos si nadie liberara nada. ¿Quién decide qué se puede borrar?</p>
+  <p>En lenguajes como C, lo decides tú: pides memoria y la devuelves a mano cuando ya no la necesitas. Es muy eficiente, pero olvidar devolverla, devolverla dos veces o seguir usándola después de devolverla son errores clásicos, y muchos agujeros de seguridad vienen de ahí. Rust evita esos errores con reglas que el compilador comprueba. JavaScript, Python, Java, C# y Go usan otra solución: un <strong>recolector de basura</strong> (en inglés, <em>garbage collector</em>, GC), una parte del entorno que busca los objetos que ya no se pueden usar y libera su memoria sin que tú hagas nada.</p>
+
+  <h3>Alcanzable o basura</h3>
+  <p>El recolector no puede leer tu mente para saber qué objetos «ya no necesitas». Usa una regla más simple y segura: un objeto es <strong>alcanzable</strong> si se puede llegar a él siguiendo referencias desde alguna <strong>raíz</strong>. Las raíces son los puntos de partida que el motor sabe que están en uso: las variables globales y las variables de los marcos que hay ahora mismo en la pila. Todo lo alcanzable se conserva. Todo lo demás es basura, porque ningún código puede volver a tocarlo.</p>
+  <p>Todos los motores modernos de JavaScript usan un algoritmo llamado <strong>marcar y barrer</strong> (en inglés, <em>mark-and-sweep</em>). Tiene dos fases:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Marcar</strong>: parte de las raíces y recorre todas las referencias, objeto a objeto, marcando cada objeto que visita. Es un recorrido de grafo como los de la <a href="19-estructuras-datos.html">Estación 19</a>.</p></div></li>
+    <li><div><p><strong>Barrer</strong>: recorre el montículo y libera todo objeto que haya quedado sin marcar.</p></div></li>
+  </ol>
+  <figure class="capsula" data-titulo="Marcar y barrer">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 310" role="img" aria-label="Animación: dos raíces, las variables jugador y nivel, apuntan a objetos del montículo. El recolector marca el personaje y el nivel, después el inventario y la espada. Quedan sin marcar un mensaje viejo y dos objetos, enemigo y arma, que se apuntan entre sí pero a los que no llega ninguna raíz. Esos tres se barren y su memoria queda libre">
+        <rect class="d-caja-suave" x="10" y="36" width="130" height="264" rx="8"/>
+        <text class="d-rotulo" x="75" y="60" text-anchor="middle">Raíces</text>
+        <text class="d-peq d-tenue" x="75" y="78" text-anchor="middle">globales y pila</text>
+        <rect class="d-caja" x="25" y="95" width="100" height="36" rx="6" data-clases="2:d-acento-trazo; 3:"/>
+        <text class="d-mono" x="75" y="118" text-anchor="middle" style="font-size:14px">jugador</text>
+        <rect class="d-caja" x="25" y="195" width="100" height="36" rx="6" data-clases="2:d-acento-trazo; 3:"/>
+        <text class="d-mono" x="75" y="218" text-anchor="middle" style="font-size:14px">nivel</text>
+        <text class="d-rotulo" x="432" y="26" text-anchor="middle">Montículo</text>
+        <rect class="d-punteada" x="155" y="36" width="555" height="264" rx="8"/>
+        <path class="d-linea" d="M125 113H165M295 113H345M475 113H525M125 213H165"/>
+        <path class="d-tinta" d="M165 107l10 6-10 6zM345 107l10 6-10 6zM525 107l10 6-10 6zM165 207l10 6-10 6z"/>
+        <rect class="d-caja" x="175" y="95" width="120" height="36" rx="6" data-clases="2:d-acento; 6:"/>
+        <text class="d-mono" x="235" y="118" text-anchor="middle" style="font-size:14px" data-clases="2:d-sobre-acento; 6:">personaje</text>
+        <rect class="d-caja" x="355" y="95" width="120" height="36" rx="6" data-clases="3:d-acento; 6:"/>
+        <text class="d-mono" x="415" y="118" text-anchor="middle" style="font-size:14px" data-clases="3:d-sobre-acento; 6:">inventario</text>
+        <rect class="d-caja" x="535" y="95" width="120" height="36" rx="6" data-clases="3:d-acento; 6:"/>
+        <text class="d-mono" x="595" y="118" text-anchor="middle" style="font-size:14px" data-clases="3:d-sobre-acento; 6:">espada</text>
+        <rect class="d-caja" x="175" y="195" width="120" height="36" rx="6" data-clases="2:d-acento; 6:"/>
+        <text class="d-mono" x="235" y="218" text-anchor="middle" style="font-size:14px" data-clases="2:d-sobre-acento; 6:">nivel 3</text>
+        <g data-pasos="1-4">
+          <rect class="d-caja" x="535" y="195" width="120" height="36" rx="6" data-clases="4:d-mal-trazo"/>
+          <text class="d-mono" x="595" y="218" text-anchor="middle" style="font-size:14px">mensaje</text>
+          <rect class="d-caja" x="355" y="252" width="120" height="36" rx="6" data-clases="4:d-mal-trazo"/>
+          <text class="d-mono" x="415" y="275" text-anchor="middle" style="font-size:14px">enemigo</text>
+          <rect class="d-caja" x="535" y="252" width="120" height="36" rx="6" data-clases="4:d-mal-trazo"/>
+          <text class="d-mono" x="595" y="275" text-anchor="middle" style="font-size:14px">arma</text>
+          <path class="d-linea" d="M475 263H525M535 279H485"/>
+          <path class="d-tinta" d="M525 257l10 6-10 6zM485 273l-10 6 10 6z"/>
+        </g>
+        <g data-pasos="5-" class="d-peq d-tenue">
+          <rect class="d-punteada" x="535" y="195" width="120" height="36" rx="6"/>
+          <text x="595" y="218" text-anchor="middle">libre</text>
+          <rect class="d-punteada" x="355" y="252" width="120" height="36" rx="6"/>
+          <text x="415" y="275" text-anchor="middle">libre</text>
+          <rect class="d-punteada" x="535" y="252" width="120" height="36" rx="6"/>
+          <text x="595" y="275" text-anchor="middle">libre</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li data-duracion="7">Un momento de la partida. Hay dos raíces, las variables <code>jugador</code> y <code>nivel</code>, y siete objetos en el montículo. Las flechas son referencias. Hay un par curioso: <code>enemigo</code> y <code>arma</code> se apuntan el uno al otro. ¿Cuáles se pueden borrar?</li>
+        <li>Empieza la fase de marcar. El recolector parte de las raíces y marca los objetos a los que apuntan directamente: el personaje y el nivel.</li>
+        <li>Sigue las referencias de los objetos marcados: del personaje llega al inventario, y del inventario a la espada. Ya no quedan flechas nuevas que seguir.</li>
+        <li data-duracion="7">Quedan tres objetos sin marcar: el mensaje, que nadie referencia, y el par <code>enemigo</code> y <code>arma</code>. Que se apunten entre sí no los salva: ninguna raíz llega hasta ellos, así que ningún código puede volver a usarlos.</li>
+        <li>Fase de barrer: los objetos sin marcar se liberan y su espacio queda disponible para objetos nuevos.</li>
+        <li data-duracion="6">Las marcas se borran y el programa sigue. La próxima recolección empezará otra vez desde las raíces. Tú no escribiste nada de esto: el recolector trabaja solo, cuando el motor lo decide.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Los ciclos, como el de <code>enemigo</code> y <code>arma</code>, son la razón por la que se abandonó una técnica más antigua, el <strong>conteo de referencias</strong>: llevar la cuenta de cuántas flechas llegan a cada objeto y borrarlo cuando la cuenta llega a cero. En un ciclo, la cuenta nunca llega a cero, y los objetos quedan atrapados para siempre. Según MDN, ningún motor moderno de JavaScript usa ya conteo de referencias para su recolector (Python sí lo usa, combinado con un detector de ciclos). Lo comprobarás tú en un ejercicio de la práctica.</p>
+  <p>Este taller simula el algoritmo con un «montículo» de mentira: cada objeto tiene la lista de los objetos a los que apunta. <strong>Predice</strong> qué se barrerá antes de ejecutar:</p>
+  <div class="taller" id="taller-marcar" data-titulo="Predice y modifica: marcar y barrer en miniatura">
+    <textarea class="taller-codigo">// Cada objeto del montículo y los objetos a los que apunta
+const monticulo = {
+  personaje: ["inventario"],
+  inventario: ["espada"],
+  espada: [],
+  nivel: [],
+  enemigo: ["arma"],
+  arma: ["enemigo"],          // enemigo y arma se apuntan entre sí: un ciclo
+  mensaje: [],
+};
+const raices = ["personaje", "nivel"];
+
+// Fase 1: marcar todo lo alcanzable desde las raíces
+const marcados = new Set();
+const pendientes = [...raices];
+while (pendientes.length > 0) {
+  const actual = pendientes.pop();
+  if (marcados.has(actual)) continue;     // ya visitado: evita dar vueltas en los ciclos
+  marcados.add(actual);
+  for (const destino of monticulo[actual]) pendientes.push(destino);
+}
+
+// Fase 2: barrer lo que no se marcó
+const barridos = Object.keys(monticulo).filter((nombre) => !marcados.has(nombre));
+console.log("Se conservan:", [...marcados].join(", "));
+console.log("Se barren:", barridos.join(", "));</textarea>
+  </div>
+  <p>Ahora <strong>modifica</strong> y predice cada vez antes de ejecutar: quita <code>"nivel"</code> de las raíces (como si esa variable dejara de existir); haz que <code>nivel</code> apunte a <code>"enemigo"</code> (el ciclo se salva entero); vacía la lista de <code>personaje</code> (el inventario y la espada caen con él). La línea con <code>continue</code> es importante: sin ella, el ciclo entre <code>enemigo</code> y <code>arma</code> haría que el bucle diera vueltas para siempre si alguno de los dos fuera alcanzable.</p>
+
+  <h3>Cómo lo hace V8 sin parar tu juego</h3>
+  <p>Recorrer un montículo de cientos de megabytes lleva tiempo, y mientras el recolector trabaja en el hilo principal tu código espera. Esas esperas se llaman <strong>pausas</strong> del recolector. Para acortarlas, V8 aplica varias ideas:</p>
+  <ul>
+    <li><strong>Generaciones</strong>. La experiencia dice que la mayoría de los objetos mueren jóvenes: se crean y dejan de usarse casi enseguida, como el objeto temporal de un cálculo. V8 divide el montículo en una generación joven, pequeña, que revisa muy a menudo y muy rápido, y una generación vieja, donde van los objetos que sobreviven a dos recolecciones, que revisa con menos frecuencia.</li>
+    <li><strong>Trabajo en paralelo y en segundo plano</strong>. Parte del marcado lo hacen hilos auxiliares mientras tu código sigue corriendo, y parte se reparte en trocitos entre fotograma y fotograma.</li>
+    <li><strong>Compactar</strong>. De vez en cuando junta los objetos vivos para que la memoria libre quede en bloques grandes y no en huecos sueltos.</li>
+  </ul>
+  <aside class="senal oficio">
+    <p>En los videojuegos, las pausas del recolector se notan como tirones: la animación se congela una fracción de segundo. Por eso en el bucle de un juego se evita crear objetos nuevos en cada fotograma. Una técnica muy usada es el <strong>grupo de objetos</strong> (en inglés, <em>object pool</em>): se crean, por ejemplo, 200 proyectiles al empezar y se reutilizan una y otra vez, en lugar de crear uno nuevo con cada disparo. Lo pondrás en práctica en la <a href="34-videojuegos.html">Estación 34</a>.</p>
+  </aside>
+
+  <h3>Fugas de memoria</h3>
+  <p>El recolector solo libera lo inalcanzable. Si tu programa conserva por descuido una referencia a algo que ya no necesita, ese algo nunca se libera. Eso es una <strong>fuga de memoria</strong> (en inglés, <em>memory leak</em>): memoria que tu programa ya no usa pero que sigue ocupada. Una fuga pequeña no se nota; una que crece un poco cada segundo termina haciendo que la pestaña vaya lenta o que el sistema la cierre. Estas son las causas más comunes:</p>
+  <ol>
+    <li><strong>Colecciones que solo crecen</strong>: un array de historial, un <code>Map</code> que hace de caché o una lista de mensajes a la que se añade y nunca se quita nada.</li>
+    <li><strong>Temporizadores olvidados</strong>: un <code>setInterval</code> que nadie detiene sigue vivo, y con él todo lo que usa su función.</li>
+    <li><strong>Escuchadores de eventos que no se quitan</strong>: si un panel añade un escuchador a <code>window</code> cada vez que se abre y nunca lo quita, cada apertura deja uno más, con sus datos.</li>
+    <li><strong>Elementos del DOM desconectados</strong>: quitaste un elemento de la página, pero una variable tuya todavía lo guarda, y con él todo su contenido.</li>
+    <li><strong>Closures que recuerdan de más</strong>: una función pequeña que sigue viva (por ejemplo, un escuchador) puede mantener vivas variables enormes del lugar donde nació.</li>
+  </ol>
+  <p>El caso del temporizador es el más traicionero, porque el código parece inocente:</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Cada apertura deja un temporizador vivo</p>
+      <pre><code class="language-js">function abrirPanel() {
+  const datos = cargarEstadisticas(); // muchos datos
+  setInterval(() =&gt; {
+    dibujarPanel(datos);
+  }, 1000);
+}
+// Se abre y se cierra el panel 20 veces:
+// quedan 20 intervalos, y 20 copias de los datos</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Guardar el id y detenerlo al cerrar</p>
+      <pre><code class="language-js">let intervalo = null;
+function abrirPanel() {
+  const datos = cargarEstadisticas();
+  intervalo = setInterval(() =&gt; {
+    dibujarPanel(datos);
+  }, 1000);
+}
+function cerrarPanel() {
+  clearInterval(intervalo); // el closure y los datos
+  intervalo = null;         // ya se pueden liberar
+}</code></pre>
+    </div>
+  </div>
+  <p>Con los escuchadores, la solución es la misma idea: <code>removeEventListener</code> al cerrar, o pasar una señal de un <code>AbortController</code> (lo conociste en la <a href="16-asincronia.html">Estación 16</a>) con <code>addEventListener("resize", ajustar, { signal })</code> y llamar a <code>abort()</code> para quitar de golpe todos los escuchadores asociados a esa señal.</p>
+  <aside class="senal nota" data-titulo="Referencias débiles">
+    <p>A veces quieres asociar datos a un objeto sin impedir que se libere. Para eso existe <code>WeakMap</code>: un <code>Map</code> cuyas claves son objetos que el recolector <em>no</em> cuenta como referencias. Si el objeto clave deja de ser alcanzable por otro camino, su entrada desaparece del <code>WeakMap</code> sola. Sirve, por ejemplo, para guardar información extra de cada elemento del DOM o de cada entidad de un juego sin tener que acordarte de borrarla.</p>
+  </aside>
+  <p>Para cazar una fuga, las DevTools de Chrome tienen el panel <strong>Memoria</strong> (<em>Memory</em>). Su herramienta principal es la <strong>instantánea del montículo</strong> (<em>heap snapshot</em>): una foto de todos los objetos vivos en un momento, con cuánto ocupan y quién los retiene. El método habitual: haz una instantánea, usa la función sospechosa varias veces (abre y cierra el panel diez veces), haz otra y compáralas. Lo que crece sin parar es tu sospechoso. Para una vista rápida, el Administrador de tareas de Chrome (<kbd>Shift</kbd> + <kbd>Esc</kbd> en Windows y Linux, o en el menú: Más herramientas, Administrador de tareas) muestra cuánta memoria gasta cada pestaña. En Node.js, <code>process.memoryUsage()</code> devuelve cuánta memoria ocupa el montículo.</p>
+  <aside class="senal error">
+    <p>«Como hay recolector de basura, en JavaScript no puede haber fugas de memoria». El recolector libera lo inalcanzable, no lo innecesario. Si tu código mantiene una referencia a algo, para el recolector ese algo está en uso, aunque tú nunca más lo vayas a leer. Las fugas en JavaScript son siempre referencias olvidadas.</p>
+  </aside>
+</section>
+
+<section id="procesos" data-parada="Procesos e hilos">
+  <h2>Procesos, hilos, concurrencia y paralelismo</h2>
+  <p>Mientras juegas, la música suena, el juego carga el siguiente nivel desde el disco y la pantalla se redibuja sesenta veces por segundo. En la <a href="02-computadora.html#sistema-operativo">Estación 2</a> viste que el sistema operativo reparte turnos de CPU entre los procesos. Ahora vas a ver qué pasa <em>dentro</em> de un proceso, y dos palabras que se confunden todo el tiempo: concurrencia y paralelismo.</p>
+
+  <h3>Proceso e hilo</h3>
+  <p>Recuerda: un <strong>proceso</strong> es un programa en ejecución. Cada proceso tiene su propio espacio de memoria (su código, su montículo, sus pilas) y el sistema operativo impide que un proceso lea la memoria de otro. Por eso, si una app se cuelga, las demás siguen funcionando.</p>
+  <p>Dentro de un proceso puede haber uno o varios <strong>hilos</strong> (en inglés, <em>threads</em>). Un hilo es una línea de ejecución: una secuencia de instrucciones que avanza por su cuenta. Todos los hilos de un proceso <em>comparten</em> la misma memoria (el código y el montículo), pero cada uno tiene su propia pila y sus propios registros de la CPU, porque cada uno va por un punto distinto del programa. El hilo que arranca con el programa se llama <strong>hilo principal</strong>.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 262" role="img" aria-label="Diagrama. A la izquierda, el proceso de un juego con una zona compartida por todos sus hilos (código, montículo y archivos abiertos) y tres hilos: el principal, el de audio y el de carga, cada uno con su propia pila y sus propios registros. A la derecha, separado por un muro, otro proceso, el navegador, con su propia memoria que el juego no puede ver y su propio hilo">
+      <rect class="d-caja" x="10" y="10" width="450" height="242" rx="8"/>
+      <text class="d-rotulo" x="235" y="34" text-anchor="middle">Proceso: tu juego</text>
+      <rect class="d-caja-suave" x="25" y="46" width="420" height="58" rx="6"/>
+      <text class="d-rotulo" x="235" y="70" text-anchor="middle" style="font-size:15px">Compartido por todos sus hilos</text>
+      <text class="d-peq" x="235" y="92" text-anchor="middle">código, montículo, archivos abiertos</text>
+      <g style="font-size:14px">
+        <rect class="d-caja" x="25" y="116" width="130" height="124" rx="6"/>
+        <text class="d-rotulo" x="90" y="138" text-anchor="middle">Hilo principal</text>
+        <rect class="d-caja" x="170" y="116" width="130" height="124" rx="6"/>
+        <text class="d-rotulo" x="235" y="138" text-anchor="middle">Hilo de audio</text>
+        <rect class="d-caja" x="315" y="116" width="130" height="124" rx="6"/>
+        <text class="d-rotulo" x="380" y="138" text-anchor="middle">Hilo de carga</text>
+      </g>
+      <g class="d-peq">
+        <rect class="d-caja-suave" x="37" y="150" width="106" height="36" rx="4"/>
+        <text x="90" y="173" text-anchor="middle">su pila</text>
+        <rect class="d-caja-suave" x="37" y="194" width="106" height="36" rx="4"/>
+        <text x="90" y="217" text-anchor="middle">sus registros</text>
+        <rect class="d-caja-suave" x="182" y="150" width="106" height="36" rx="4"/>
+        <text x="235" y="173" text-anchor="middle">su pila</text>
+        <rect class="d-caja-suave" x="182" y="194" width="106" height="36" rx="4"/>
+        <text x="235" y="217" text-anchor="middle">sus registros</text>
+        <rect class="d-caja-suave" x="327" y="150" width="106" height="36" rx="4"/>
+        <text x="380" y="173" text-anchor="middle">su pila</text>
+        <rect class="d-caja-suave" x="327" y="194" width="106" height="36" rx="4"/>
+        <text x="380" y="217" text-anchor="middle">sus registros</text>
+      </g>
+      <path class="d-solido-trazo" d="M470 10V252" style="stroke-width:6"/>
+      <rect class="d-caja" x="480" y="10" width="230" height="242" rx="8"/>
+      <text class="d-rotulo" x="595" y="34" text-anchor="middle">Otro proceso</text>
+      <text class="d-peq d-tenue" x="595" y="52" text-anchor="middle">por ejemplo, el navegador</text>
+      <rect class="d-caja-suave" x="495" y="64" width="200" height="50" rx="6"/>
+      <text class="d-peq" x="595" y="85" text-anchor="middle">Su propia memoria,</text>
+      <text class="d-peq" x="595" y="103" text-anchor="middle">que tu juego no puede ver</text>
+      <rect class="d-caja" x="530" y="126" width="130" height="114" rx="6"/>
+      <text class="d-rotulo" x="595" y="148" text-anchor="middle" style="font-size:14px">Su hilo</text>
+      <g class="d-peq">
+        <rect class="d-caja-suave" x="542" y="158" width="106" height="34" rx="4"/>
+        <text x="595" y="180" text-anchor="middle">su pila</text>
+        <rect class="d-caja-suave" x="542" y="198" width="106" height="34" rx="4"/>
+        <text x="595" y="220" text-anchor="middle">sus registros</text>
+      </g>
+    </svg>
+    <figcaption>Los hilos de un mismo proceso comparten memoria; los procesos están aislados entre sí por el sistema operativo (el muro del medio).</figcaption>
+  </figure>
+  <p>Crear un hilo es más barato que crear un proceso, y los hilos se comunican con facilidad porque ven la misma memoria. Esa misma facilidad es su mayor peligro, como verás enseguida. Algunos ejemplos reales:</p>
+  <ul>
+    <li><strong>Chrome</strong> usa muchos procesos: uno principal para el navegador, uno para la GPU, uno para la red y, en general, uno distinto para cada sitio web que abres. Si una pestaña se cuelga, no arrastra a las demás, y una página maliciosa lo tiene mucho más difícil para leer la memoria de otra. Puedes verlos en el Administrador de tareas de Chrome.</li>
+    <li><strong>Los motores de videojuegos</strong>, como Unity o Godot, reparten el trabajo en hilos: el principal ejecuta la lógica del juego, y otros se encargan del audio, de cargar recursos del disco o de parte de la física y el dibujado.</li>
+    <li><strong>Node.js</strong> ejecuta tu JavaScript en un solo hilo, pero la biblioteca libuv mantiene por detrás un pequeño grupo de hilos (cuatro, por defecto) para tareas que el sistema operativo no sabe hacer de forma asíncrona, como leer archivos o comprimir datos.</li>
+  </ul>
+
+  <h3>Concurrencia no es paralelismo</h3>
+  <p>Son dos ideas distintas que se mezclan mucho:</p>
+  <ul>
+    <li><strong>Concurrencia</strong>: manejar varias tareas cuyos tiempos de vida se solapan, avanzando un poco en cada una. No hace falta hacerlas en el mismo instante: basta con ir alternando. Es una forma de <em>organizar</em> el trabajo.</li>
+    <li><strong>Paralelismo</strong>: ejecutar varias cosas literalmente en el mismo instante, en núcleos distintos de la CPU. Es una forma de <em>hacer</em> el trabajo, y necesita hardware con varios núcleos.</li>
+  </ul>
+  <p>Rob Pike, uno de los creadores del lenguaje Go, lo resumió en una charla de 2012: la concurrencia trata de <em>lidiar</em> con muchas cosas a la vez; el paralelismo, de <em>hacer</em> muchas cosas a la vez.</p>
+  <aside class="senal analogia">
+    <p>Una sola cocinera que prepara tres platos a la vez trabaja de forma concurrente: pone el agua a hervir, mientras tanto corta verduras, remueve la salsa, vuelve a la pasta. Nunca hace dos cosas en el mismo segundo, pero los tres platos avanzan. Tres cocineros, cada uno con su plato, trabajan en paralelo. El límite de la analogía: los cocineros de verdad se ven y se avisan; los hilos que comparten memoria no saben lo que está haciendo el otro a menos que se programe con cuidado.</p>
+  </aside>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 250" role="img" aria-label="Línea de tiempo. Arriba, concurrencia con un solo núcleo: las tareas A, B y C se turnan en bloques cortos y las tres terminan al final. Abajo, paralelismo con tres núcleos: A, B y C avanzan a la vez, cada una en su núcleo, y terminan mucho antes">
+      <text class="d-rotulo" x="20" y="60">Concurrencia</text>
+      <text class="d-peq d-tenue" x="20" y="80">un núcleo, se turnan</text>
+      <g class="d-rotulo" text-anchor="middle">
+        <rect class="d-l1" x="200" y="44" width="48" height="40" rx="4"/><text x="224" y="70">A</text>
+        <rect class="d-l3" x="250" y="44" width="48" height="40" rx="4"/><text x="274" y="70">B</text>
+        <rect class="d-l5" x="300" y="44" width="48" height="40" rx="4"/><text x="324" y="70">C</text>
+        <rect class="d-l1" x="350" y="44" width="48" height="40" rx="4"/><text x="374" y="70">A</text>
+        <rect class="d-l3" x="400" y="44" width="48" height="40" rx="4"/><text x="424" y="70">B</text>
+        <rect class="d-l5" x="450" y="44" width="48" height="40" rx="4"/><text x="474" y="70">C</text>
+        <rect class="d-l1" x="500" y="44" width="48" height="40" rx="4"/><text x="524" y="70">A</text>
+        <rect class="d-l3" x="550" y="44" width="48" height="40" rx="4"/><text x="574" y="70">B</text>
+        <rect class="d-l5" x="600" y="44" width="48" height="40" rx="4"/><text x="624" y="70">C</text>
+      </g>
+      <text class="d-rotulo" x="20" y="150">Paralelismo</text>
+      <text class="d-peq d-tenue" x="20" y="170">tres núcleos,</text>
+      <text class="d-peq d-tenue" x="20" y="188">a la vez</text>
+      <g class="d-peq d-tenue" text-anchor="end">
+        <text x="192" y="134">núcleo 1</text>
+        <text x="192" y="172">núcleo 2</text>
+        <text x="192" y="210">núcleo 3</text>
+      </g>
+      <g class="d-rotulo" text-anchor="middle">
+        <rect class="d-l1" x="200" y="116" width="148" height="28" rx="4"/><text x="274" y="136">A</text>
+        <rect class="d-l3" x="200" y="154" width="148" height="28" rx="4"/><text x="274" y="174">B</text>
+        <rect class="d-l5" x="200" y="192" width="148" height="28" rx="4"/><text x="274" y="212">C</text>
+      </g>
+      <path class="d-punteada" d="M349 108V226M649 36V92"/>
+      <text class="d-peq" x="356" y="136">las tres terminaron</text>
+      <text class="d-peq" x="656" y="26" text-anchor="end">aquí terminan las tres</text>
+      <path class="d-linea" d="M200 238H690"/>
+      <path class="d-tinta" d="M688 232l12 6-12 6z"/>
+      <text class="d-peq d-tenue" x="600" y="232" text-anchor="end">tiempo</text>
+    </svg>
+    <figcaption>El mismo trabajo, repartido de dos formas. Con un núcleo, las tareas se turnan (concurrencia). Con tres núcleos, avanzan a la vez (paralelismo) y terminan antes.</figcaption>
+  </figure>
+  <p>El bucle de eventos de JavaScript, que verás en la próxima sección, es concurrencia sin paralelismo: un solo hilo que alterna entre muchas tareas (esperar la red, responder a un clic, animar). Los Web Workers, que verás después, añaden paralelismo de verdad. Puedes saber cuántos hilos puede ejecutar a la vez tu equipo con <code>navigator.hardwareConcurrency</code> en la consola del navegador: es el número de núcleos lógicos.</p>
+
+  <h3>Condiciones de carrera</h3>
+  <p>Cuando dos hilos comparten memoria, pueden pisarse. Imagina dos hilos que suman 1 a un contador que vale 5. Cada uno lee 5, calcula 6 y escribe 6. Resultado: 6, en vez de 7. Una suma se perdió. Eso es una <strong>condición de carrera</strong> (en inglés, <em>race condition</em>): el resultado depende de quién llega antes, y cambia de una ejecución a otra. Son de los errores más difíciles de encontrar, porque pueden aparecer una vez de cada mil. Los lenguajes con hilos compartidos ofrecen herramientas como los cerrojos (<em>locks</em>) para que solo un hilo toque un dato a la vez.</p>
+  <p>JavaScript evita el problema de raíz: un solo hilo ejecuta tu código y nadie lo interrumpe a mitad de una función. Pero cuidado, porque la concurrencia del bucle de eventos también tiene su versión del problema. Cada <code>await</code> es un punto donde tu función se pausa y otras pueden avanzar. Predice qué imprime este programa, que simula dos retiradas de dinero a la vez de una cuenta con 100:</p>
+  <div class="taller" id="taller-carrera" data-titulo="Predice y arregla: una carrera sin hilos">
+    <textarea class="taller-codigo">let saldo = 100;
+const esperar = (ms) => new Promise((resolver) => setTimeout(resolver, ms));
+
+async function retirar(nombre, cantidad) {
+  const leido = saldo;          // 1. lee el saldo
+  await esperar(10);            // 2. espera (como si consultara un servidor)
+  if (leido >= cantidad) {
+    saldo = leido - cantidad;   // 3. escribe el saldo nuevo
+    console.log(`${nombre} retira ${cantidad}. Saldo: ${saldo}`);
+  } else {
+    console.log(`${nombre}: saldo insuficiente`);
+  }
+}
+
+await Promise.all([retirar("Ana", 80), retirar("Leo", 80)]);
+console.log("Saldo final:", saldo);</textarea>
+  </div>
+  <p>Se retiran 160 de una cuenta que tenía 100, y el saldo final es 20. Las dos funciones leyeron <code>saldo</code> cuando todavía valía 100, las dos se pausaron en el <code>await</code>, y las dos escribieron después usando un dato viejo. <code>Promise.all</code>, que viste en la <a href="16-asincronia.html#varias">Estación 16</a>, lanza las dos a la vez. <strong>Arréglalo</strong>: haz que la función lea el saldo y lo actualice <em>después</em> del <code>await</code>, sin ninguna pausa entre la lectura y la escritura. Como nadie interrumpe un trozo de código síncrono, esa parte queda a salvo. La segunda retirada debería decir «saldo insuficiente».</p>
+  <aside class="senal clave">
+    <p>Entre dos <code>await</code>, tu código se ejecuta sin interrupciones. En cada <code>await</code>, el mundo puede cambiar. Si lees un dato compartido, esperas y luego lo escribes, pregúntate: ¿y si otra función lo cambió mientras yo esperaba?</p>
+  </aside>
+</section>
+
+<section id="bucle" data-parada="Bucle de eventos">
+  <h2>El bucle de eventos, a fondo</h2>
+  <p>En la <a href="16-asincronia.html#esperar">Estación 16</a> viste la versión sencilla: JavaScript hace una cosa a la vez, el entorno se encarga de las esperas y lo que ya está listo espera su turno en una cola. Allí quedó una promesa pendiente: la cola especial de las promesas. Con ella podrás predecir el orden exacto de cualquier programa, que es justo lo que te preguntarán en muchas entrevistas técnicas y lo que necesitas para entender los errores más raros de la asincronía.</p>
+
+  <h3>Las piezas</h3>
+  <ul>
+    <li><strong>La pila de llamadas</strong>: donde el motor ejecuta el código. Mientras tenga algo, nada más puede ejecutarse.</li>
+    <li><strong>Las APIs del entorno</strong>: el navegador o Node.js, que hacen las esperas (temporizadores, red, disco) fuera de tu hilo.</li>
+    <li><strong>La cola de tareas</strong> (también llamada de <em>macrotareas</em>): los callbacks de <code>setTimeout</code> y <code>setInterval</code>, los eventos como un clic o una tecla, los mensajes de un worker. Cada uno es una <strong>tarea</strong>.</li>
+    <li><strong>La cola de microtareas</strong>: los callbacks de <code>then</code>, <code>catch</code> y <code>finally</code>, el código que sigue a un <code>await</code>, y las funciones que pasas a <code>queueMicrotask</code>. Cada uno es una <strong>microtarea</strong>.</li>
+  </ul>
+
+  <h3>Las reglas</h3>
+  <ol class="pasos">
+    <li><div><p><strong>Cada tarea se ejecuta hasta el final.</strong> Nada la interrumpe a la mitad: ni un temporizador que vence, ni un clic. En inglés se llama <em>run-to-completion</em>. Tu programa principal es la primera tarea.</p></div></li>
+    <li><div><p><strong>Cuando la pila se vacía, se vacía entera la cola de microtareas.</strong> Se ejecutan una detrás de otra, incluidas las microtareas nuevas que se añadan mientras tanto.</p></div></li>
+    <li><div><p><strong>Después, el navegador puede redibujar la pantalla</strong>, si toca (lo habitual es unas 60 veces por segundo).</p></div></li>
+    <li><div><p><strong>Se toma una sola tarea de la cola</strong>, la más antigua de las que están listas, y se vuelve a la regla 1.</p></div></li>
+  </ol>
+  <p>La consecuencia práctica: <strong>las microtareas siempre van antes que la siguiente tarea</strong>. Una promesa ya cumplida se atiende antes que un <code>setTimeout</code> de 0 milisegundos, aunque el <code>setTimeout</code> se haya escrito antes. Míralo en acción:</p>
+  <figure class="capsula" data-titulo="Tareas y microtareas">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 340" role="img" aria-label="Animación: un programa de cuatro líneas imprime 1. Inicio; setTimeout deja su callback en las APIs del navegador y, al vencer los 0 milisegundos, en la cola de tareas; el callback de then entra en la cola de microtareas; se imprime 2. Fin y la pila queda vacía; el bucle de eventos ejecuta primero la microtarea, que imprime 3. Promesa, y después la tarea, que imprime 4. Tiempo">
+        <rect class="d-codigo" x="10" y="10" width="462" height="136" rx="8"/>
+        <text class="d-codigo-tenue" x="24" y="30" style="font-size:13px">Código</text>
+        <rect class="d-resalte" x="16" y="39" width="450" height="21" rx="4" data-pasos="2-5" data-mover="3:translate(0px,24px); 4:translate(0px,48px); 5:translate(0px,72px)"/>
+        <g style="font-size:13px">
+          <text class="d-codigo-texto" x="24" y="54">console.log("1. Inicio");</text>
+          <text class="d-codigo-texto" x="24" y="78">setTimeout(() =&gt; console.log("4. Tiempo"), 0);</text>
+          <text class="d-codigo-texto" x="24" y="102">Promise.resolve().then(() =&gt; console.log("3. Promesa"));</text>
+          <text class="d-codigo-texto" x="24" y="126">console.log("2. Fin");</text>
+        </g>
+        <rect class="d-codigo" x="486" y="10" width="224" height="136" rx="8"/>
+        <text class="d-codigo-tenue" x="500" y="30" style="font-size:13px">Consola</text>
+        <g style="font-size:14px">
+          <text class="d-codigo-texto" x="500" y="54" data-pasos="2-">1. Inicio</text>
+          <text class="d-codigo-texto" x="500" y="78" data-pasos="5-">2. Fin</text>
+          <text class="d-codigo-texto" x="500" y="102" data-pasos="6-">3. Promesa</text>
+          <text class="d-codigo-texto" x="500" y="126" data-pasos="7-">4. Tiempo</text>
+        </g>
+        <rect class="d-caja" x="10" y="160" width="220" height="140" rx="8"/>
+        <text class="d-rotulo" x="120" y="184" text-anchor="middle">Pila de llamadas</text>
+        <rect class="d-caja" x="245" y="160" width="210" height="140" rx="8"/>
+        <text class="d-rotulo" x="350" y="184" text-anchor="middle">APIs del navegador</text>
+        <text class="d-peq d-tenue" x="350" y="202" text-anchor="middle">temporizadores, red</text>
+        <rect class="d-caja" x="470" y="160" width="240" height="66" rx="8"/>
+        <text class="d-rotulo" x="590" y="180" text-anchor="middle" style="font-size:14px">Cola de microtareas</text>
+        <rect class="d-caja" x="470" y="234" width="240" height="66" rx="8"/>
+        <text class="d-rotulo" x="590" y="254" text-anchor="middle" style="font-size:14px">Cola de tareas</text>
+        <g data-pasos="1-4">
+          <rect class="d-acento" x="30" y="226" width="180" height="30" rx="15"/>
+          <text class="d-sobre-acento d-mono" x="120" y="246" text-anchor="middle" style="font-size:13px">programa principal</text>
+        </g>
+        <text class="d-tenue" x="120" y="246" text-anchor="middle" data-pasos="5">(programa terminado)</text>
+        <g data-pasos="3-7" data-mover="4:translate(245px,38px); 7:translate(-230px,0px)">
+          <rect class="d-caja" x="260" y="226" width="180" height="30" rx="15" data-clases="7:d-acento"/>
+          <text class="d-mono" x="350" y="246" text-anchor="middle" style="font-size:13px" data-clases="7:d-sobre-acento">callback «4. Tiempo»</text>
+        </g>
+        <text class="d-peq d-tenue" x="350" y="282" text-anchor="middle" data-pasos="3">espera 0 ms</text>
+        <g data-pasos="4-6" data-mover="6:translate(-465px,34px)">
+          <rect class="d-caja" x="490" y="192" width="200" height="30" rx="15" data-clases="6:d-acento"/>
+          <text class="d-mono" x="590" y="212" text-anchor="middle" style="font-size:13px" data-clases="6:d-sobre-acento">callback «3. Promesa»</text>
+        </g>
+        <path class="d-flecha" d="M590 302C590 330 120 330 120 302" data-clases="6:d-acento-trazo; 7:d-acento-trazo"/>
+        <path class="d-tinta" d="M113 312l7-12 7 12z"/>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li data-duracion="7">Tu programa principal es la primera tarea y ocupa la pila de llamadas. A la derecha, las dos colas: la de microtareas (promesas) y la de tareas (temporizadores, eventos). La flecha de abajo es el bucle de eventos, que lleva trabajo de las colas a la pila cuando la pila queda libre.</li>
+        <li>Línea 1: se imprime «1. Inicio».</li>
+        <li data-duracion="6">Línea 2: <code>setTimeout</code> entrega su callback al navegador con una espera de 0 milisegundos. JavaScript no espera: pasa a la línea siguiente.</li>
+        <li data-duracion="8">Línea 3: el temporizador de 0 ms ya venció, así que el navegador dejó su callback en la cola de tareas. <code>Promise.resolve()</code> crea una promesa ya cumplida, y por eso el callback de <code>then</code> va directo a la cola de microtareas. Ninguno de los dos se ejecuta todavía: la pila está ocupada con el programa.</li>
+        <li>Línea 4: se imprime «2. Fin». El programa principal termina y la pila queda vacía.</li>
+        <li data-duracion="7">Con la pila vacía, el bucle de eventos vacía primero la cola de microtareas completa. El callback de <code>then</code> pasa a la pila y se imprime «3. Promesa».</li>
+        <li data-duracion="8">Solo cuando no queda ninguna microtarea, el bucle toma una tarea: el callback del temporizador. Se imprime «4. Tiempo». Si esa tarea creara microtareas, se vaciarían antes de la siguiente tarea.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Ahora te toca a ti. <strong>Predice</strong> el orden de las letras antes de ejecutar. <code>queueMicrotask(funcion)</code> pone una función directamente en la cola de microtareas.</p>
+  <div class="taller" id="taller-orden-letras" data-titulo="Predice el orden: tareas y microtareas">
+    <textarea class="taller-codigo">console.log("A");
+setTimeout(() => console.log("B"), 0);
+Promise.resolve().then(() => console.log("C"));
+queueMicrotask(() => console.log("D"));
+console.log("E");</textarea>
+  </div>
+  <p>El orden es A, E, C, D, B. Primero todo el código síncrono (A y E). Después las microtareas, en el orden en que entraron en su cola (C y D). Al final, la tarea del temporizador (B).</p>
+
+  <h3>Paso a paso: tareas que crean microtareas</h3>
+  <p>Las colas se llenan también <em>durante</em> la ejecución de callbacks. Sigue este programa con la traza: la memoria muestra qué hay en la pila y en cada cola después de cada paso.</p>
+  <div class="traza" data-titulo="Tareas y microtareas que se encadenan" data-rotulo-memoria="Pila y colas">
+    <pre><code class="language-js">console.log("A");
+setTimeout(() =&gt; {
+  console.log("B");
+  queueMicrotask(() =&gt; console.log("C"));
+}, 0);
+Promise.resolve().then(() =&gt; {
+  console.log("D");
+  setTimeout(() =&gt; console.log("E"), 0);
+});
+console.log("F");</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"Pila": "programa principal", "Microtareas": "(vacía)", "Tareas": "(vacía)"}, "salida": "A", "nota": "El programa principal es la primera tarea. Se imprime A."},
+      {"linea": 2, "vars": {"Pila": "programa principal", "Microtareas": "(vacía)", "Tareas": "callback de B"}, "nota": "setTimeout entrega su callback al entorno. Como la espera es de 0 ms, vence enseguida y el callback queda en la cola de tareas."},
+      {"linea": 6, "vars": {"Pila": "programa principal", "Microtareas": "callback de D", "Tareas": "callback de B"}, "nota": "La promesa ya está cumplida: el callback de then va a la cola de microtareas. Nada se ejecuta todavía."},
+      {"linea": 10, "vars": {"Pila": "programa principal", "Microtareas": "callback de D", "Tareas": "callback de B"}, "salida": "F", "nota": "Se imprime F. El programa principal termina y la pila queda vacía."},
+      {"linea": 7, "vars": {"Pila": "callback de D (microtarea)", "Microtareas": "(vacía)", "Tareas": "callback de B"}, "salida": "D", "nota": "Pila vacía: primero, todas las microtareas. Se ejecuta el callback de then e imprime D, aunque el setTimeout se escribió antes."},
+      {"linea": 8, "vars": {"Pila": "callback de D (microtarea)", "Microtareas": "(vacía)", "Tareas": "callback de B, callback de E"}, "nota": "Dentro de la microtarea se programa otro temporizador. Su callback se pone en la cola de tareas, detrás del de B."},
+      {"linea": 3, "vars": {"Pila": "callback de B (tarea)", "Microtareas": "(vacía)", "Tareas": "callback de E"}, "salida": "B", "nota": "No quedan microtareas. El bucle de eventos toma UNA tarea, la más antigua: el callback de B."},
+      {"linea": 4, "vars": {"Pila": "callback de B (tarea)", "Microtareas": "callback de C", "Tareas": "callback de E"}, "nota": "Esta tarea crea una microtarea (C) con queueMicrotask. Irá antes que la siguiente tarea (E), porque las microtareas se vacían al terminar cada tarea."},
+      {"linea": 4, "vars": {"Pila": "callback de C (microtarea)", "Microtareas": "(vacía)", "Tareas": "callback de E"}, "salida": "C", "nota": "Terminó la tarea de B: se vacían las microtareas. Se imprime C."},
+      {"linea": 8, "vars": {"Pila": "callback de E (tarea)", "Microtareas": "(vacía)", "Tareas": "(vacía)"}, "salida": "E", "nota": "Por último, la tarea que quedaba. Orden final: A, F, D, B, C, E. Las dos colas están vacías y el programa terminó."}
+    ]</script>
+  </div>
+
+  <h3>Y con await</h3>
+  <p>Una función <code>async</code> se ejecuta de forma síncrona hasta su primer <code>await</code>. Ahí se pausa, y el resto de la función se programa como una microtarea para cuando la promesa esperada se cumpla. Con eso ya puedes predecir este programa. Escribe tu predicción antes de ejecutar:</p>
+  <div class="taller" id="taller-orden-await" data-titulo="Predice el orden: async y await">
+    <textarea class="taller-codigo">async function cargar() {
+  console.log("cargar: empieza");
+  await null;
+  console.log("cargar: sigue después del await");
+}
+
+console.log("programa: inicio");
+setTimeout(() => console.log("temporizador"), 0);
+cargar();
+Promise.resolve().then(() => console.log("then"));
+console.log("programa: fin");</textarea>
+  </div>
+  <p>El orden es: «programa: inicio», «cargar: empieza», «programa: fin», «cargar: sigue después del await», «then» y «temporizador». La llamada a <code>cargar()</code> imprime su primera línea en el acto, porque hasta el <code>await</code> es código normal. El resto de <code>cargar</code> entra en la cola de microtareas antes que el <code>then</code>, porque el <code>await</code> se ejecutó antes. <strong>Modifica</strong>: cambia <code>await null</code> por <code>await new Promise((r) =&gt; setTimeout(r, 0))</code>. Ahora la continuación depende de un temporizador, que es una tarea, y «cargar: sigue…» pasa al final, detrás de «temporizador».</p>
+  <aside class="senal ojo" data-titulo="Las microtareas también pueden congelar">
+    <p>Como la cola de microtareas se vacía entera antes de seguir, una microtarea que programa otra microtarea, que programa otra… nunca deja pasar a las tareas ni al dibujado de la pantalla. La página se congela igual que con un <code>while (true)</code>. Un bucle infinito de promesas es tan grave como uno normal.</p>
+  </aside>
+
+  <h3>Por qué se congela la página</h3>
+  <p>Ahora puedes responder a la pregunta que quedó abierta en la <a href="09-bucles.html">Estación 9</a>. El navegador intenta dibujar la pantalla unas 60 veces por segundo (más en pantallas de 120 Hz): cada fotograma dispone de unos 16 milisegundos. Pero solo puede dibujar <em>entre</em> tareas, y solo puede atender un clic cuando la tarea en curso termina. Un bucle que tarda dos segundos es una tarea de dos segundos: dos segundos sin dibujar y sin responder. Las herramientas de rendimiento llaman <strong>tarea larga</strong> (<em>long task</em>) a cualquier tarea de 50 milisegundos o más, porque a partir de ahí la persona ya nota que la interfaz no responde (lo viste con la métrica INP en la <a href="17-diseno-ux.html">Estación 17</a>).</p>
+  <p>Hay tres salidas, de mejor a peor:</p>
+  <ol>
+    <li><strong>Hacer menos trabajo</strong>: un algoritmo mejor (<a href="20-algoritmos.html">Estación 20</a>) convierte a veces dos segundos en dos milisegundos.</li>
+    <li><strong>Moverlo a otro hilo</strong> con un Web Worker, que verás en la próxima sección.</li>
+    <li><strong>Trocearlo</strong>: hacer el trabajo en partes y ceder el turno entre parte y parte, para que el navegador pueda dibujar y atender eventos. La forma que funciona en todas partes es esperar a un <code>setTimeout</code> de 0 ms, que te pone al final de la cola de tareas:</li>
+  </ol>
+  <pre><code class="language-js">const cederTurno = () =&gt; new Promise((resolver) =&gt; setTimeout(resolver, 0));
+
+async function procesarTodo(elementos) {
+  for (let i = 0; i &lt; elementos.length; i++) {
+    procesar(elementos[i]);
+    if (i % 1000 === 999) await cederTurno();   // cada 1000 elementos, deja pasar a los demás
+  }
+}</code></pre>
+  <p>Algunos navegadores ofrecen además <code>scheduler.yield()</code>, pensado justo para esto, pero en 2026 todavía no funciona en todos, así que comprueba su compatibilidad en MDN antes de usarlo. Lo practicarás en un ejercicio.</p>
+  <aside class="senal nota" data-titulo="Temporizadores que no son puntuales">
+    <p>El número que le pasas a <code>setTimeout</code> es una espera <em>mínima</em>. El callback espera además a que termine la tarea en curso y las que tenga delante en la cola. Los navegadores añaden sus propias reglas: si encadenas muchos temporizadores anidados, a partir del quinto nivel la espera mínima sube a 4 ms, y en las pestañas en segundo plano los temporizadores se retrasan hasta una vez por segundo o menos, para ahorrar batería. Para animaciones y juegos se usa <code>requestAnimationFrame</code>, que ejecuta tu función justo antes del próximo dibujado (<a href="15-dom.html#estado">Estación 15</a> y <a href="34-videojuegos.html">Estación 34</a>).</p>
+  </aside>
+  <aside class="senal nota" data-titulo="El bucle de eventos de Node.js">
+    <p>Node.js sigue las mismas ideas con algunas piezas más. Su bucle de eventos, que implementa libuv, recorre varias fases (temporizadores, entrada y salida, <code>setImmediate</code>, cierres) y vacía las microtareas entre callback y callback. Tiene además <code>process.nextTick</code>, una cola que en la mayoría de los casos se atiende incluso antes que las promesas. La regla que te importa sigue valiendo: el código síncrono termina, luego van las microtareas, luego la siguiente tarea. Lo usarás en la <a href="29-backend.html">Estación 29</a>.</p>
+  </aside>
+  <aside class="senal oficio">
+    <p>Para ver el bucle de eventos funcionando con tu propio código, prueba <a href="https://www.jsv9000.app/">JS Visualizer 9000</a>: pegas un programa y lo ejecuta paso a paso, mostrando la pila, la cola de tareas y la de microtareas. Y cuando depures en las DevTools, el panel Rendimiento marca las tareas largas con una esquina roja: son las primeras sospechosas cuando una página va a tirones.</p>
+  </aside>
+</section>
+
+<section id="workers" data-parada="Web Workers">
+  <h2>Web Workers: un segundo hilo para el trabajo pesado</h2>
+  <p>Tu juego tiene que generar un mapa procedural de 500 × 500 casillas, o tu app de fotos tiene que aplicar un filtro a una imagen enorme. Son dos segundos de cálculo puro. Trocear ayuda, pero complica el código y el cálculo sigue robándole tiempo a la animación. Lo que de verdad quieres es que ese trabajo lo haga <em>otro</em> hilo, en otro núcleo, mientras el hilo principal sigue dibujando y respondiendo. Para eso existen los <strong>Web Workers</strong>.</p>
+  <p>Un worker es un hilo aparte, creado desde tu página, con su propio motor en marcha: su propia pila, su propio montículo y su propio bucle de eventos. Tiene una limitación importante: <strong>no puede tocar el DOM</strong>. No existe <code>document</code> dentro de un worker; el único que manipula la página es el hilo principal. Sí tiene <code>fetch</code>, temporizadores y muchas otras APIs.</p>
+
+  <h3>Hablar con mensajes</h3>
+  <p>El hilo principal y el worker no comparten variables. Se comunican enviándose mensajes con <code>postMessage</code> y escuchándolos con el evento <code>message</code>. En un proyecto real, el worker vive en su propio archivo:</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo">main.js (hilo principal)</p>
+      <pre><code class="language-js">const worker = new Worker("primos.js");
+
+worker.addEventListener("message", (evento) =&gt; {
+  resultado.textContent = evento.data;
+});
+
+boton.addEventListener("click", () =&gt; {
+  worker.postMessage(5000000);   // pide el trabajo
+});</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo">primos.js (el worker)</p>
+      <pre><code class="language-js">self.addEventListener("message", (evento) =&gt; {
+  const limite = evento.data;
+  const cantidad = contarPrimos(limite);
+  self.postMessage(cantidad);    // devuelve el resultado
+});
+
+function contarPrimos(limite) { /* … */ }</code></pre>
+    </div>
+  </div>
+  <p>Dentro del worker, <code>self</code> es el objeto global (el <code>globalThis</code> del worker). Los mensajes se <strong>copian</strong>, no se comparten: el navegador hace una copia profunda del dato con el mismo algoritmo que usa <code>structuredClone</code> (<a href="11-colecciones.html#referencias">Estación 11</a>). Así ninguno de los dos hilos puede pisar los datos del otro, y desaparecen las condiciones de carrera de la sección anterior. Por eso tampoco se pueden enviar funciones ni elementos del DOM.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 262" role="img" aria-label="Línea de tiempo con dos carriles. En el hilo principal, postMessage envía el trabajo; mientras tanto, el hilo principal sigue dibujando y respondiendo en bloques cortos. En el carril del worker, sin DOM, se cuentan los primos en un bloque largo y al terminar se envía el resultado con postMessage. El hilo principal lo recibe en onmessage. Las flechas indican que los datos y el resultado se copian">
+      <text class="d-rotulo" x="20" y="66">Hilo principal</text>
+      <text class="d-peq d-tenue" x="20" y="86">página, DOM, eventos</text>
+      <rect class="d-caja-suave" x="150" y="40" width="560" height="60" rx="6"/>
+      <text class="d-peq d-tenue" x="425" y="30" text-anchor="middle">sigue dibujando y respondiendo a clics</text>
+      <rect class="d-acento" x="160" y="48" width="110" height="44" rx="6"/>
+      <text class="d-sobre-acento d-mono" x="215" y="75" text-anchor="middle" style="font-size:13px">postMessage</text>
+      <rect class="d-caja" x="282" y="48" width="48" height="44" rx="6"/>
+      <rect class="d-caja" x="340" y="48" width="48" height="44" rx="6"/>
+      <rect class="d-caja" x="398" y="48" width="48" height="44" rx="6"/>
+      <rect class="d-caja" x="456" y="48" width="48" height="44" rx="6"/>
+      <rect class="d-caja" x="514" y="48" width="48" height="44" rx="6"/>
+      <rect class="d-acento" x="600" y="48" width="100" height="44" rx="6"/>
+      <text class="d-sobre-acento d-mono" x="650" y="75" text-anchor="middle" style="font-size:13px">onmessage</text>
+      <text class="d-rotulo" x="20" y="186">Worker</text>
+      <text class="d-peq d-tenue" x="20" y="206">otro hilo, sin DOM</text>
+      <rect class="d-caja-suave" x="150" y="160" width="560" height="60" rx="6"/>
+      <rect class="d-caja" x="280" y="168" width="232" height="44" rx="6"/>
+      <text class="d-mono" x="396" y="195" text-anchor="middle" style="font-size:13px">contarPrimos(5000000)</text>
+      <rect class="d-acento" x="518" y="168" width="100" height="44" rx="6"/>
+      <text class="d-sobre-acento d-mono" x="568" y="195" text-anchor="middle" style="font-size:13px">postMessage</text>
+      <path class="d-linea" d="M215 94L278 158"/>
+      <path class="d-tinta" d="M270 156l12 6-4-13z"/>
+      <path class="d-linea" d="M592 166L635 102"/>
+      <path class="d-tinta" d="M628 104l11-8-1 14z"/>
+      <text class="d-peq" x="252" y="124">se copian los datos</text>
+      <text class="d-peq" x="596" y="140" text-anchor="end">se copia el resultado</text>
+      <path class="d-linea" d="M150 244H690"/>
+      <path class="d-tinta" d="M688 238l12 6-12 6z"/>
+      <text class="d-peq d-tenue" x="660" y="238" text-anchor="end">tiempo</text>
+    </svg>
+    <figcaption>Mientras el worker calcula, el hilo principal queda libre. Los dos hilos solo se comunican con mensajes, que viajan como copias.</figcaption>
+  </figure>
+  <p>Compruébalo. Este taller tiene un contador que avanza mientras el hilo principal está libre y dos botones que cuentan los números primos menores que cinco millones: uno en el hilo principal y otro en un worker. Pulsa cada uno y observa el contador.</p>
+  <div class="taller" data-modo="web" id="taller-worker" data-titulo="El mismo cálculo, en dos hilos" data-alto="15rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;p&gt;Contador: &lt;strong id="contador"&gt;0&lt;/strong&gt; (solo avanza si el hilo principal está libre)&lt;/p&gt;
+&lt;p&gt;
+  &lt;button id="principal"&gt;Calcular en el hilo principal&lt;/button&gt;
+  &lt;button id="trabajador"&gt;Calcular en un worker&lt;/button&gt;
+&lt;/p&gt;
+&lt;p id="resultado"&gt;Pulsa un botón.&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">#contador { font-size: 1.5rem; }
+button { font: inherit; padding: 0.4rem 0.6rem; margin: 0.2rem 0; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const LIMITE = 5000000;
+
+function contarPrimos(limite) {
+  let cantidad = 0;
+  for (let n = 2; n < limite; n++) {
+    let esPrimo = true;
+    for (let d = 2; d * d <= n; d++) {
+      if (n % d === 0) { esPrimo = false; break; }
+    }
+    if (esPrimo) cantidad++;
+  }
+  return cantidad;
+}
+
+const contador = document.querySelector("#contador");
+const resultado = document.querySelector("#resultado");
+let vueltas = 0;
+setInterval(() => {
+  vueltas++;
+  contador.textContent = vueltas;
+}, 50);
+
+// 1. En el hilo principal: todo se congela mientras calcula
+document.querySelector("#principal").addEventListener("click", () => {
+  resultado.textContent = "Calculando en el hilo principal…";
+  setTimeout(() => {              // deja que se vea el mensaje antes de bloquear
+    const inicio = performance.now();
+    const cantidad = contarPrimos(LIMITE);
+    const ms = Math.round(performance.now() - inicio);
+    resultado.textContent = `Hilo principal: ${cantidad} primos en ${ms} ms`;
+  }, 50);
+});
+
+// 2. En un worker. En un proyecto real, su código iría en un archivo aparte.
+// Como el taller no tiene archivos, lo creamos a partir de un texto (un Blob).
+const codigoWorker = `
+  ${contarPrimos.toString()}
+  self.addEventListener("message", (evento) => {
+    const inicio = performance.now();
+    const cantidad = contarPrimos(evento.data);
+    self.postMessage({ cantidad, ms: Math.round(performance.now() - inicio) });
+  });
+`;
+document.querySelector("#trabajador").addEventListener("click", () => {
+  resultado.textContent = "Calculando en un worker…";
+  let worker;
+  try {
+    const url = URL.createObjectURL(new Blob([codigoWorker], { type: "text/javascript" }));
+    worker = new Worker(url);
+  } catch (error) {
+    resultado.textContent = "Este navegador no permitió crear el worker aquí: " + error.message;
+    return;
+  }
+  worker.addEventListener("message", (evento) => {
+    const { cantidad, ms } = evento.data;
+    resultado.textContent = `Worker: ${cantidad} primos en ${ms} ms`;
+    worker.terminate();           // ya no lo necesitamos: libera el hilo
+  });
+  worker.addEventListener("error", (evento) => {
+    resultado.textContent = "El worker falló: " + evento.message;
+  });
+  worker.postMessage(LIMITE);
+});</textarea>
+  </div>
+  <p>Con el primer botón, el contador se detiene uno o dos segundos (y puede que toda la página del curso se quede quieta: es lo esperado). Con el segundo, el contador sigue corriendo mientras el worker trabaja, y el cálculo tarda más o menos lo mismo. El worker no hace el cálculo más rápido: lo hace en otro sitio. <code>performance.now()</code> devuelve los milisegundos transcurridos con mucha precisión, y <code>worker.terminate()</code> detiene el worker cuando ya no hace falta. Las líneas del <code>Blob</code> solo existen porque el taller no tiene archivos: con un archivo <code>primos.js</code> bastaría con <code>new Worker("primos.js")</code>.</p>
+  <aside class="senal nota" data-titulo="Ya los estabas usando">
+    <p>Los talleres de JavaScript de este curso se ejecutan en un Web Worker. Por eso no existe <code>document</code> en ellos, como viste en la sección de entornos. Y por eso un bucle infinito en un taller no congela la página: el curso espera unos segundos y, si el programa no termina, llama a <code>terminate()</code>.</p>
+  </aside>
+  <p>Algunos detalles que te encontrarás:</p>
+  <ul>
+    <li><strong>Módulos en workers</strong>: <code>new Worker("primos.js", { type: "module" })</code> permite usar <code>import</code> dentro del worker. Funciona en todos los navegadores modernos.</li>
+    <li><strong>Transferir en vez de copiar</strong>: copiar una imagen de 50 MB cuesta tiempo. Algunos datos binarios, como un <code>ArrayBuffer</code>, se pueden <em>transferir</em>: pasan al otro hilo sin copiarse, y el que los envía deja de poder usarlos.</li>
+    <li><strong>Memoria compartida</strong>: existe <code>SharedArrayBuffer</code>, que sí comparte memoria entre hilos, con <code>Atomics</code> para evitar carreras. Por seguridad, el navegador solo lo permite si el servidor envía unas cabeceras especiales de aislamiento. Es una herramienta avanzada: casi nunca la necesitarás.</li>
+    <li><strong>Otros workers</strong>: los <em>Service Workers</em> se colocan entre tu página y la red para que funcione sin conexión (los verás con las apps instalables en la <a href="33-moviles-escritorio.html">Estación 33</a>), y los <em>Shared Workers</em> se comparten entre varias pestañas.</li>
+    <li><strong>En Node.js</strong>, el módulo <code>node:worker_threads</code> ofrece hilos con la misma idea de mensajes. Deno y Bun entienden la API <code>Worker</code> del navegador.</li>
+  </ul>
+  <aside class="senal oficio">
+    <p>Un worker tiene un coste: tarda en arrancar y cada mensaje se copia. Vale la pena para trabajos de decenas de milisegundos o más, repetidos o largos: generar mundos, calcular rutas para muchos enemigos (<a href="20-algoritmos.html#caminos">Estación 20</a>), procesar imágenes, audio o archivos grandes, o comprimir datos. Para sumar diez números, no: el mensaje tardaría más que el cálculo.</p>
+  </aside>
+</section>
+
+<section id="modulos" data-parada="Módulos">
+  <h2>Módulos: dividir el código en archivos</h2>
+  <p>Tu juego empezó en un archivo de 100 líneas. Ahora tiene 3000: el jugador, los enemigos, el mapa, el sonido, la interfaz. Encontrar algo es una pesadilla, y si dos partes usan una variable llamada <code>velocidad</code>, se pisan. La salida clásica era repartir el código en varios archivos y cargarlos con varias etiquetas <code>&lt;script&gt;</code>, pero todos esos scripts comparten el mismo ámbito global: los nombres siguen chocando, y el orden de las etiquetas importa, porque si un script usa algo de otro que se carga después, falla.</p>
+  <p>Un <strong>módulo</strong> es un archivo de JavaScript con su propio ámbito. Nada de lo que declara es visible desde fuera, salvo lo que decide <strong>exportar</strong>. Y para usar algo de otro módulo, lo <strong>importa</strong> de forma explícita. Cada archivo dice qué ofrece y qué necesita, como una pieza de un mecano con sus conectores a la vista.</p>
+
+  <h3>Módulos de ECMAScript: import y export</h3>
+  <p>Desde 2015, JavaScript tiene un sistema de módulos estándar, los <strong>módulos de ECMAScript</strong> (en inglés, <em>ES modules</em>, abreviado ESM). Funciona en los navegadores, en Node.js, en Deno y en Bun. Así se exporta:</p>
+  <pre><code class="language-js">// puntuacion.js
+export const PUNTOS_POR_MONEDA = 10;
+
+export function sumarPuntos(total, monedas) {
+  return total + monedas * PUNTOS_POR_MONEDA;
+}
+
+function redondear(n) {          // sin export: es privada de este módulo
+  return Math.round(n);
+}
+
+export default function formatear(puntos) {
+  return `${redondear(puntos)} pts`;
+}</code></pre>
+  <p>Y así se importa desde otro archivo:</p>
+  <pre><code class="language-js">// main.js
+import formatear, { sumarPuntos, PUNTOS_POR_MONEDA } from "./puntuacion.js";
+import { sumarPuntos as sumar } from "./puntuacion.js";   // con otro nombre
+import * as puntuacion from "./puntuacion.js";             // todo, en un objeto
+
+console.log(formatear(sumarPuntos(0, 3)));   // "30 pts"
+console.log(puntuacion.PUNTOS_POR_MONEDA);   // 10</code></pre>
+  <ul>
+    <li>Las <strong>exportaciones con nombre</strong> (<code>export const</code>, <code>export function</code>) se importan entre llaves, con su nombre exacto. Puede haber muchas por módulo.</li>
+    <li>La <strong>exportación por defecto</strong> (<code>export default</code>) es una sola por módulo y se importa sin llaves, con el nombre que quieras.</li>
+    <li><code>as</code> cambia el nombre al importar, útil si dos módulos exportan cosas que se llaman igual.</li>
+    <li>La ruta empieza por <code>./</code> o <code>../</code> y lleva la extensión <code>.js</code>. En el navegador y en los módulos de Node.js la extensión es obligatoria.</li>
+    <li>Lo importado es de solo lectura: <code>PUNTOS_POR_MONEDA = 20</code> en <code>main.js</code> da <code>TypeError: Assignment to constant variable.</code> Si quieres cambiar algo de otro módulo, ese módulo debe exportar una función que lo cambie.</li>
+  </ul>
+  <aside class="senal oficio">
+    <p>Muchos equipos prefieren las exportaciones con nombre incluso cuando un módulo exporta una sola cosa: el nombre es el mismo en todos los archivos que la usan, así que buscarlo y renombrarlo es más fácil, y el editor puede autocompletar los imports. Sea cual sea la costumbre de tu equipo, síguela en todo el proyecto.</p>
+  </aside>
+
+  <h3>Cómo carga los módulos el navegador</h3>
+  <p>En una página, un módulo se carga con <code>type="module"</code>:</p>
+  <pre><code class="language-html">&lt;script type="module" src="main.js"&gt;&lt;/script&gt;</code></pre>
+  <p>Las líneas <code>import</code> no se ejecutan una a una como el resto del código. Antes de ejecutar nada, el navegador descubre y descarga todo el grafo de módulos. Imagina este proyecto: <code>main.js</code> importa <code>juego.js</code> y <code>pantalla.js</code>, y los dos importan <code>config.js</code>. Cada archivo imprime un mensaje al evaluarse, y <code>main.js</code> lo hace en su primera línea, <em>antes</em> de sus imports:</p>
+  <pre><code class="language-js">// main.js
+console.log("Evaluando main.js");
+import { empezar } from "./juego.js";
+import { dibujarVidas } from "./pantalla.js";</code></pre>
+  <figure class="capsula" data-titulo="Cómo se carga un grafo de módulos">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 305" role="img" aria-label="Animación: el navegador descarga main.js y descubre que importa juego.js y pantalla.js, que descarga a la vez; los dos importan config.js, que se descarga una sola vez. Después enlaza todos los imports con sus exports. Por último evalúa los módulos empezando por las dependencias: primero config.js, luego juego.js, luego pantalla.js y al final main.js, cada uno una sola vez">
+        <g data-pasos="2-">
+          <path class="d-linea" d="M360 66V98M170 98H550M170 98V120M550 98V120"/>
+          <path class="d-tinta" d="M164 118l6 10 6-10zM544 118l6 10 6-10z"/>
+        </g>
+        <g data-pasos="3-">
+          <path class="d-linea" d="M170 176V208M550 176V208M170 208H550M360 208V230"/>
+          <path class="d-tinta" d="M354 228l6 10 6-10z"/>
+        </g>
+        <rect class="d-caja" x="285" y="20" width="150" height="46" rx="6" data-clases="1:d-acento-trazo; 2:"/>
+        <text class="d-mono" x="360" y="41" text-anchor="middle" style="font-size:15px">main.js</text>
+        <text class="d-peq d-tenue" x="360" y="59" text-anchor="middle" data-texto="1:descargado; 4:enlazado; 5:evaluado">descargado</text>
+        <g data-pasos="2-">
+          <rect class="d-caja" x="95" y="130" width="150" height="46" rx="6" data-clases="2:d-acento-trazo; 3:"/>
+          <text class="d-mono" x="170" y="151" text-anchor="middle" style="font-size:15px">juego.js</text>
+          <text class="d-peq d-tenue" x="170" y="169" text-anchor="middle" data-texto="2:descargado; 4:enlazado; 5:evaluado">descargado</text>
+          <rect class="d-caja" x="475" y="130" width="150" height="46" rx="6" data-clases="2:d-acento-trazo; 3:"/>
+          <text class="d-mono" x="550" y="151" text-anchor="middle" style="font-size:15px">pantalla.js</text>
+          <text class="d-peq d-tenue" x="550" y="169" text-anchor="middle" data-texto="2:descargado; 4:enlazado; 5:evaluado">descargado</text>
+        </g>
+        <g data-pasos="3-">
+          <rect class="d-caja" x="285" y="240" width="150" height="46" rx="6" data-clases="3:d-acento-trazo; 4:"/>
+          <text class="d-mono" x="360" y="261" text-anchor="middle" style="font-size:15px">config.js</text>
+          <text class="d-peq d-tenue" x="360" y="279" text-anchor="middle" data-texto="3:descargado una vez; 4:enlazado; 5:evaluado una vez">descargado una vez</text>
+        </g>
+        <g data-pasos="5-" class="d-rotulo" text-anchor="middle">
+          <circle class="d-acento" cx="285" cy="240" r="14"/><text class="d-sobre-acento" x="285" y="246">1</text>
+          <circle class="d-acento" cx="95" cy="130" r="14"/><text class="d-sobre-acento" x="95" y="136">2</text>
+          <circle class="d-acento" cx="475" cy="130" r="14"/><text class="d-sobre-acento" x="475" y="136">3</text>
+          <circle class="d-acento" cx="285" cy="20" r="14"/><text class="d-sobre-acento" x="285" y="26">4</text>
+        </g>
+        <g data-pasos="6">
+          <path class="d-punteada" d="M622 263H448"/>
+          <path class="d-tinta" d="M448 257l-10 6 10 6z"/>
+        </g>
+        <g data-pasos="6" class="d-peq">
+          <text x="630" y="250">Otro import de</text>
+          <text x="630" y="268">config.js recibe</text>
+          <text x="630" y="286">el mismo módulo</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li data-duracion="6">El HTML pide <code>main.js</code> como módulo. El navegador lo descarga y lo analiza, pero todavía no ejecuta ni una línea: primero busca sus <code>import</code>.</li>
+        <li data-duracion="6"><code>main.js</code> importa <code>juego.js</code> y <code>pantalla.js</code>. El navegador descarga los dos a la vez y los analiza en busca de más imports.</li>
+        <li data-duracion="6">Los dos importan <code>config.js</code>. Se descarga una sola vez, aunque dos módulos lo pidan. Ya no hay más imports: el grafo está completo.</li>
+        <li data-duracion="8">Fase de enlace: cada nombre importado se conecta con el nombre exportado correspondiente. Si importas algo que no existe, por ejemplo <code>{ VIDA }</code> cuando se exporta <code>VIDAS</code>, el error salta aquí, antes de ejecutar nada: <code>SyntaxError: The requested module './config.js' does not provide an export named 'VIDA'</code>.</li>
+        <li data-duracion="8">Fase de evaluación: primero las dependencias y después quien las usa. <code>config.js</code> se evalúa en primer lugar, luego <code>juego.js</code>, luego <code>pantalla.js</code> y, al final, <code>main.js</code>. Por eso «Evaluando main.js» sale el último, aunque esté en su primera línea: los imports se resuelven antes que cualquier otra línea del módulo.</li>
+        <li data-duracion="7">Cada módulo se evalúa una sola vez. Si más adelante otro archivo importa <code>config.js</code>, recibe el mismo módulo, con los mismos valores, sin volver a ejecutarlo. Un módulo funciona como un objeto único compartido por toda la aplicación.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Además, un script de tipo módulo se comporta distinto de un script clásico en varios detalles que sorprenden:</p>
+  <ul>
+    <li>Se <strong>aplaza</strong> solo, como si tuviera <code>defer</code> (<a href="15-dom.html#script">Estación 15</a>): se ejecuta cuando el HTML ya está completo, aunque la etiqueta esté en el <code>&lt;head&gt;</code>.</li>
+    <li>Tiene su <strong>propio ámbito</strong>: sus variables de nivel superior no son globales, y <code>this</code> vale <code>undefined</code> en el nivel superior.</li>
+    <li>Siempre funciona en <strong>modo estricto</strong>: por ejemplo, asignar a una variable que nunca declaraste lanza un <code>ReferenceError</code> en vez de crear una variable global en silencio.</li>
+    <li>Admite <strong><code>await</code> en el nivel superior</strong>, fuera de funciones, como anunciaba la <a href="16-asincronia.html#async-await">Estación 16</a>.</li>
+  </ul>
+  <p>Este taller tiene tres scripts en su HTML: uno clásico, uno de tipo módulo y otro clásico. Están numerados por su posición en el documento. <strong>Predice</strong> en qué orden aparecerán sus mensajes y qué dirá cada uno:</p>
+  <div class="taller" data-modo="web" id="taller-modulo-web" data-titulo="Predice: script clásico o módulo" data-alto="6rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;p&gt;Mira los mensajes en la consola de la página.&lt;/p&gt;
+&lt;script&gt;
+  var saludo = "hola";
+  console.log("1. Clásico: ¿this es window?", this === window);
+&lt;/script&gt;
+&lt;script type="module"&gt;
+  var secreto = "solo del módulo";
+  console.log("2. Módulo: this vale", String(this));
+  console.log("3. Módulo: ¿existe saludo?", typeof saludo);
+&lt;/script&gt;
+&lt;script&gt;
+  console.log("4. Clásico: ¿existe secreto?", typeof secreto);
+&lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">p { font-family: sans-serif; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// Esta vez todo el código está en la pestaña HTML.</textarea>
+  </div>
+  <p>El orden es 1, 4, 2, 3. El módulo se aplazó hasta que el HTML terminó de leerse, así que el segundo script clásico se le adelantó. En el módulo, <code>this</code> es <code>undefined</code>, y aun así ve <code>saludo</code>, porque una variable global de un script clásico es visible para todos. Al revés no funciona: <code>secreto</code> es del módulo y nadie más la ve. <strong>Modifica</strong>: dentro del módulo, añade la línea <code>puntos = 10;</code> sin <code>let</code> ni <code>const</code>. Salta un <code>ReferenceError</code>, por el modo estricto. En el script clásico, esa misma línea crearía una variable global sin avisar.</p>
+  <aside class="senal error">
+    <p>Tres errores que casi todo el mundo se encuentra la primera vez:</p>
+    <ul>
+      <li><code>Uncaught SyntaxError: Cannot use import statement outside a module</code>. Usaste <code>import</code> en un script sin <code>type="module"</code>. Añádelo a la etiqueta.</li>
+      <li><code>Access to script at 'file:///…/main.js' from origin 'null' has been blocked by CORS policy</code>. Abriste el <code>index.html</code> con doble clic. Por seguridad, los navegadores no cargan módulos desde direcciones <code>file://</code>: necesitas un servidor local. La extensión Live Server de VS Code, la orden <code>npx serve</code> o <code>python3 -m http.server</code> te lo dan en un segundo (en esas dos últimas, abre después la dirección <code>http://localhost:…</code> que muestran).</li>
+      <li><code>Failed to resolve module specifier "confetti". Relative references must start with either "/", "./", or "../".</code> Escribiste <code>from "confetti"</code> en lugar de una ruta. Esos nombres sueltos son paquetes de npm: Node.js sabe buscarlos en la carpeta <code>node_modules</code>, pero el navegador no.</li>
+    </ul>
+  </aside>
+  <p>Para los nombres sueltos en el navegador existen los <strong>mapas de importación</strong> (<em>import maps</em>), una etiqueta <code>&lt;script type="importmap"&gt;</code> que le dice al navegador a qué archivo corresponde cada nombre. En la práctica, en los proyectos grandes se usa una herramienta como Vite (la usarás con React en la <a href="32-react.html">Estación 32</a>), que sirve los módulos mientras desarrollas y, al publicar, los empaqueta en pocos archivos optimizados. A ese trabajo se le llama <strong>empaquetar</strong> (en inglés, <em>bundling</em>).</p>
+  <p>Dos formas más de importar:</p>
+  <pre><code class="language-js">// Importación dinámica: carga el módulo solo cuando hace falta y devuelve una promesa
+boton.addEventListener("click", async () =&gt; {
+  const { abrirEditor } = await import("./editor-de-niveles.js");
+  abrirEditor();
+});
+
+// Datos JSON como módulo (funciona en todos los navegadores modernos desde 2025, y en Node.js)
+import niveles from "./niveles.json" with { type: "json" };</code></pre>
+  <p>La importación dinámica, <code>import()</code>, se usa para no descargar al principio partes grandes que quizá nunca se usen, como el editor de niveles de un juego. La segunda forma lleva un <strong>atributo de importación</strong> (<code>with { type: "json" }</code>) que avisa de que el archivo es JSON y no código.</p>
+
+  <h3>CommonJS: los módulos de Node.js de siempre</h3>
+  <p>Node.js nació en 2009, seis años antes de que existieran los módulos de ECMAScript, y tuvo que inventar su propio sistema: <strong>CommonJS</strong>. Lo verás en muchísimo código, tutoriales y paquetes de npm:</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo">CommonJS</p>
+      <pre><code class="language-js">// puntuacion.js
+function sumarPuntos(total, monedas) {
+  return total + monedas * 10;
+}
+module.exports = { sumarPuntos };
+
+// main.js
+const { sumarPuntos } = require("./puntuacion");</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo">ES modules</p>
+      <pre><code class="language-js">// puntuacion.js
+export function sumarPuntos(total, monedas) {
+  return total + monedas * 10;
+}
+
+
+// main.js
+import { sumarPuntos } from "./puntuacion.js";</code></pre>
+    </div>
+  </div>
+  <p>La diferencia no es solo de palabras. <code>require</code> es una función normal que se ejecuta cuando llega su línea: lee el archivo del disco, lo ejecuta en ese momento, de forma síncrona, y devuelve lo que ese archivo puso en <code>module.exports</code>. Por dentro, Node.js envuelve cada archivo CommonJS en una función así:</p>
+  <pre><code class="language-js">(function (exports, require, module, __filename, __dirname) {
+  // aquí dentro va el código de tu archivo
+});</code></pre>
+  <p>Ese envoltorio lo explica todo. Las variables de un archivo son privadas porque son variables locales de esa función. <code>require</code>, <code>module</code> y <code>__dirname</code> (la carpeta del archivo) no son mágicos: son parámetros. Y como Node.js guarda en una caché cada módulo ya cargado, un segundo <code>require</code> del mismo archivo devuelve el mismo objeto sin volver a ejecutarlo. Este taller construye un <code>require</code> en miniatura con esa misma idea. Predice cuántas veces aparece «Evaluando config.js»:</p>
+  <div class="taller" id="taller-requerir" data-titulo="Predice y modifica: tu propio require">
+    <textarea class="taller-codigo">// Cada "archivo" es una función, como el envoltorio de Node.js
+const archivos = {
+  "config.js": function (module, exports, requerir) {
+    console.log("Evaluando config.js");
+    module.exports = { vidasIniciales: 3 };
+  },
+  "juego.js": function (module, exports, requerir) {
+    const config = requerir("config.js");
+    console.log("Evaluando juego.js");
+    module.exports = {
+      empezar: () => "Partida con " + config.vidasIniciales + " vidas",
+    };
+  },
+  "pantalla.js": function (module, exports, requerir) {
+    const config = requerir("config.js");
+    console.log("Evaluando pantalla.js");
+    module.exports = { dibujar: () => "Vidas: " + config.vidasIniciales };
+  },
+};
+
+const cache = {};
+function requerir(nombre) {
+  if (cache[nombre]) return cache[nombre].exports;   // ya se evaluó: se reutiliza
+  const module = { exports: {} };
+  cache[nombre] = module;
+  archivos[nombre](module, module.exports, requerir); // ejecuta el "archivo"
+  return module.exports;
+}
+
+const juego = requerir("juego.js");
+const pantalla = requerir("pantalla.js");
+console.log(juego.empezar());
+console.log(pantalla.dibujar());</textarea>
+  </div>
+  <p>«Evaluando config.js» sale una sola vez, aunque dos módulos lo pidan: la segunda vez, <code>requerir</code> lo encuentra en la caché. <strong>Modifica</strong>: pon <code>//</code> delante de la línea del <code>if</code> para desactivar la caché. Ahora <code>config.js</code> se evalúa dos veces, y cada módulo recibe un objeto distinto. Con un módulo que guardara el estado de la partida, eso sería un error grave: dos partidas distintas creyendo ser la misma.</p>
+
+  <h3>Cómo decide Node.js qué sistema usar</h3>
+  <p>Node.js entiende los dos sistemas. Para saber cómo tratar cada archivo, mira su extensión y el archivo <code>package.json</code> más cercano (el archivo que describe un proyecto de Node.js; lo conocerás a fondo en la <a href="29-backend.html">Estación 29</a>):</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Archivo</th><th scope="col">Cómo lo trata Node.js</th></tr></thead>
+      <tbody>
+        <tr><td><code>.mjs</code></td><td>Siempre como módulo de ECMAScript</td></tr>
+        <tr><td><code>.cjs</code></td><td>Siempre como CommonJS</td></tr>
+        <tr><td><code>.js</code> con <code>"type": "module"</code> en <code>package.json</code></td><td>Como módulo de ECMAScript</td></tr>
+        <tr><td><code>.js</code> con <code>"type": "commonjs"</code></td><td>Como CommonJS</td></tr>
+        <tr><td><code>.js</code> sin <code>"type"</code></td><td>Como CommonJS, salvo que el archivo use <code>import</code> o <code>export</code>: entonces Node.js (desde la versión 22.7) lo detecta y lo vuelve a leer como módulo, con un aviso si hay un <code>package.json</code> sin <code>"type"</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Ese aviso tiene este aspecto, y te dice exactamente cómo quitarlo:</p>
+  <pre class="consola"><code><span class="prompt">$</span> node main.js
+<span class="salida">(node:19919) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/tu/juego/main.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/tu/juego/package.json.</span></code></pre>
+  <p>Los dos sistemas se pueden mezclar, con algunas reglas. Desde un módulo de ECMAScript puedes importar paquetes CommonJS. Al revés, <code>require()</code> de un módulo de ECMAScript funciona sin configuración desde Node.js 20.19 y 22.12 (en Node.js 24, por tanto, también), siempre que ese módulo no use <code>await</code> en el nivel superior; si lo usa, Node.js lanza el error <code>ERR_REQUIRE_ASYNC_MODULE</code> y hay que cargarlo con <code>import()</code>. Si mezclas por error, verás estos mensajes:</p>
+  <pre class="consola"><code><span class="prompt">$</span> node main.js
+<span class="salida">ReferenceError: require is not defined in ES module scope, you can use import instead</span>
+<span class="prompt">$</span> node otro.js
+<span class="salida">SyntaxError: Cannot use import statement outside a module</span></code></pre>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">ES modules</th><th scope="col">CommonJS</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Sintaxis</th><td><code>import</code> y <code>export</code></td><td><code>require()</code> y <code>module.exports</code></td></tr>
+        <tr><th scope="row">Es estándar de JavaScript</th><td>Sí, desde 2015</td><td>No, es una convención de Node.js</td></tr>
+        <tr><th scope="row">Dónde funciona</th><td>Navegadores, Node.js, Deno, Bun</td><td>Node.js y Bun (Deno, a través de su compatibilidad con npm)</td></tr>
+        <tr><th scope="row">Cuándo se resuelven las dependencias</th><td>Antes de ejecutar: se analiza todo el grafo primero</td><td>Al llegar a cada <code>require</code>, de forma síncrona</td></tr>
+        <tr><th scope="row">Extensión en las rutas</th><td>Obligatoria</td><td>Opcional</td></tr>
+        <tr><th scope="row"><code>await</code> en el nivel superior</th><td>Sí</td><td>No</td></tr>
+        <tr><th scope="row">Carpeta del archivo actual</th><td><code>import.meta.dirname</code> (Node.js 20.11 o posterior)</td><td><code>__dirname</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal clave">
+    <p>Para un proyecto nuevo en 2026, usa módulos de ECMAScript y pon <code>"type": "module"</code> en tu <code>package.json</code>. Es el estándar del lenguaje, el mismo código sirve en el navegador y en el servidor, y es lo que usan las herramientas modernas. Aprende a leer CommonJS, porque te lo encontrarás en código existente, pero no lo necesitas para empezar.</p>
+  </aside>
+  <p>Practica la configuración en esta terminal. Dentro de <code>juego</code> hay un proyecto con módulos, pero le falta el <code>package.json</code> que avisa a Node.js del tipo de módulos que usa:</p>
+  <div class="terminal-sim" data-titulo="Prepara un proyecto con módulos" data-inicio="/home/tu">
+    <script type="application/json" class="terminal-sistema">{"juego": {"main.js": "import { empezar } from \"./juego.js\";\nimport { dibujarVidas } from \"./pantalla.js\";\n\nconsole.log(empezar());\nconsole.log(dibujarVidas());\n", "juego.js": "import { VIDAS } from \"./config.js\";\n\nexport function empezar() {\n  return `Partida con ${VIDAS} vidas`;\n}\n", "pantalla.js": "import { VIDAS } from \"./config.js\";\n\nexport function dibujarVidas() {\n  return \"Vidas: \" + VIDAS;\n}\n", "config.js": "export const VIDAS = 3;\n"}}</script>
+    <div class="terminal-instrucciones">
+      <p>1. Entra en la carpeta <code>juego</code> y mira sus archivos con <code>ls</code>. Lee <code>main.js</code> y <code>config.js</code> con <code>cat</code>.</p>
+      <p>2. Crea el <code>package.json</code> con una sola orden: <code>echo '{"type": "module"}' &gt; package.json</code> (las comillas simples de fuera protegen las dobles de dentro).</p>
+      <p>3. Comprueba el resultado con <code>cat package.json</code> y la versión de Node.js con <code>node -v</code>.</p>
+    </div>
+    <script type="text/plain" class="terminal-mision">
+var h = historial.map(function (c) { return c.replace(/\s+/g, " ").trim(); });
+var j = sistema.juego;
+if (!j || typeof j !== "object") return "La carpeta juego ha desaparecido. Pulsa «Reiniciar» para empezar de nuevo.";
+if (!h.some(function (c) { return /^cat (\.\/)?(juego\/)?main\.js$/.test(c); })) return "Paso 1: entra con cd juego y lee main.js con cat main.js. Fíjate en sus import.";
+if (!h.some(function (c) { return /^cat (\.\/)?(juego\/)?config\.js$/.test(c); })) return "Paso 1: lee también config.js con cat config.js. ¿Qué exporta?";
+var p = j["package.json"];
+if (typeof p !== "string") return "Paso 2: crea package.json dentro de juego con echo '{\"type\": \"module\"}' > package.json";
+if (!/"type"\s*:\s*"module"/.test(p)) return "El package.json contiene «" + p.trim() + "». Debe ser exactamente {\"type\": \"module\"}. Vuelve a crearlo con echo y comillas simples por fuera.";
+if (!h.some(function (c) { return c === "node -v" || c === "node --version"; })) return "Paso 3: comprueba tu versión de Node.js con node -v.";
+return true;
+    </script>
+  </div>
+  <p>En tu computadora, con ese <code>package.json</code>, <code>node main.js</code> imprimiría «Partida con 3 vidas» y «Vidas: 3», sin avisos. (La terminal del curso no puede ejecutar módulos que importan otros archivos, así que no lo intentes aquí.)</p>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>La CPU solo ejecuta código máquina. Un compilador anticipado traduce todo antes; un intérprete traduce a bytecode y lo ejecuta con una máquina virtual; un JIT empieza interpretando y compila a código máquina las partes calientes mientras el programa corre. JavaScript usa las tres ideas.</li>
+    <li>El camino del código: texto, tokens (análisis léxico), árbol de sintaxis abstracta (análisis sintáctico), bytecode y, si la función se calienta, código máquina. Los errores de sintaxis se detectan antes de ejecutar nada.</li>
+    <li>El JIT especula con los tipos que ha visto; si llega un tipo inesperado, desoptimiza y vuelve al bytecode. V8 sube por cuatro niveles: Ignition, Sparkplug, Maglev y TurboFan.</li>
+    <li>Un motor (V8, SpiderMonkey, JavaScriptCore) ejecuta el lenguaje; un entorno (navegador, Node.js, Deno, Bun) le añade APIs y un bucle de eventos. <code>setTimeout</code>, <code>console</code> y <code>document</code> son del entorno, no del lenguaje.</li>
+    <li>La pila guarda un marco por cada llamada, con sus variables locales, y es pequeña y rapidísima. El montículo guarda objetos, arrays y funciones, que viven mientras alguien pueda llegar a ellos. Las variables guardan valores pequeños o referencias al montículo.</li>
+    <li>El recolector de basura libera lo inalcanzable desde las raíces con el algoritmo de marcar y barrer, que resuelve los ciclos. Una fuga de memoria es una referencia olvidada: colecciones que solo crecen, temporizadores y escuchadores que nadie quita.</li>
+    <li>Un proceso tiene su propia memoria; sus hilos la comparten, cada uno con su pila. Concurrencia es alternar entre tareas; paralelismo, ejecutarlas a la vez en varios núcleos. Compartir memoria trae condiciones de carrera, y en JavaScript también aparecen entre dos <code>await</code>.</li>
+    <li>El bucle de eventos ejecuta cada tarea hasta el final, después vacía toda la cola de microtareas (promesas, <code>await</code>, <code>queueMicrotask</code>), luego puede dibujar y después toma una sola tarea (temporizadores, eventos). Las tareas largas congelan la página.</li>
+    <li>Un Web Worker es otro hilo, sin DOM, que se comunica con mensajes que se copian. Sirve para cálculos pesados sin congelar la interfaz.</li>
+    <li>Los módulos de ECMAScript (<code>import</code> y <code>export</code>) son el estándar: cada archivo tiene su ámbito, el grafo se resuelve antes de ejecutar y cada módulo se evalúa una vez. CommonJS (<code>require</code> y <code>module.exports</code>) es el sistema histórico de Node.js. Para proyectos nuevos, <code>"type": "module"</code>.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Los dos primeros ejercicios están casi resueltos; los últimos te piden construir piezas de un motor por tu cuenta. En los de «predice», escribe tu predicción <em>antes</em> de ejecutar: acertar a la primera no importa, lo que enseña es contrastar lo que pensabas con lo que pasó. Usa las pistas después de intentarlo un rato.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-predice-orden">
+    <h3>Predice el orden</h3>
+    <p>El programa anota letras en un array en distintos momentos: <code>S1</code> y <code>S2</code> desde el código síncrono, <code>M</code> desde una microtarea y <code>T</code> desde una tarea. Escribe en <code>prediccion</code> el orden en que crees que quedarán anotadas y ejecuta. El ejercicio se da por bueno cuando tu predicción coincide con la línea «Real».</p>
+    <div class="taller" id="taller-ej1" data-titulo="Ejercicio 1">
+      <textarea class="taller-codigo">// 1. ANTES de ejecutar, escribe en este array el orden en que
+//    crees que se anotarán las letras (cambia cada "?").
+const prediccion = ["?", "?", "?", "?"];
+
+// 2. No cambies nada de aquí para abajo.
+const real = [];
+const anotar = (letra) => real.push(letra);
+
+setTimeout(() => anotar("T"), 0);
+anotar("S1");
+Promise.resolve().then(() => anotar("M"));
+anotar("S2");
+
+setTimeout(() => {
+  console.log("Real:       " + real.join(" "));
+  console.log("Predicción: " + prediccion.join(" "));
+}, 20);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var intacto = ["setTimeout(() => anotar(\"T\"), 0);", "anotar(\"S1\");", "Promise.resolve().then(() => anotar(\"M\"));", "anotar(\"S2\");"];
+for (var k = 0; k < intacto.length; k++) if (codigo.indexOf(intacto[k]) === -1) return "Cambiaste el programa de abajo. Pulsa «Reiniciar» y modifica solo el array prediccion.";
+var real = (salida[0] || "").replace("Real:", "").trim();
+var pred = (salida[1] || "").replace("Predicción:", "").trim();
+if (pred.indexOf("?") !== -1) return "Primero escribe tu predicción: cambia cada \"?\" por una letra (o letra y número) entre comillas.";
+if (pred !== real) return "Tu predicción no coincide con lo que pasó. Compara las dos líneas de la consola y repasa las reglas: ¿qué va antes, una microtarea o una tarea?";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Primero se ejecuta todo el código síncrono, de arriba abajo. ¿Qué líneas anotan algo en el acto?</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Cuando el código síncrono termina, se vacían las microtareas y solo después se toma la siguiente tarea. El callback de <code>then</code> es una microtarea; el de <code>setTimeout</code>, una tarea.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// 1. ANTES de ejecutar, escribe en este array el orden en que
+//    crees que se anotarán las letras (cambia cada "?").
+const prediccion = ["S1", "S2", "M", "T"];
+
+// 2. No cambies nada de aquí para abajo.
+const real = [];
+const anotar = (letra) =&gt; real.push(letra);
+
+setTimeout(() =&gt; anotar("T"), 0);
+anotar("S1");
+Promise.resolve().then(() =&gt; anotar("M"));
+anotar("S2");
+
+setTimeout(() =&gt; {
+  console.log("Real:       " + real.join(" "));
+  console.log("Predicción: " + prediccion.join(" "));
+}, 20);</code></pre>
+      <p>Salen S1 y S2 (síncronos), después M (microtarea) y al final T (tarea), aunque el <code>setTimeout</code> esté escrito el primero. El segundo <code>setTimeout</code>, el que imprime, espera 20 ms para que todo lo demás haya terminado.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-textos">
+    <h3>Enseña al analizador a leer textos</h3>
+    <p>El analizador léxico de la estación no entiende las comillas: con <code>const saludo = "hola mundo" + nombre;</code> se detiene con un error. Añade una rama que reconozca un texto entre comillas dobles y lo guarde como un solo token <code>TEXTO</code>, con sus comillas y con los espacios de dentro. La salida debe ser:</p>
+    <pre class="consola"><code>CLAVE const
+NOMBRE saludo
+SIGNO =
+TEXTO "hola mundo"
+SIGNO +
+NOMBRE nombre
+SIGNO ;</code></pre>
+    <div class="taller" id="taller-ej2" data-titulo="Ejercicio 2">
+      <textarea class="taller-codigo">function esDigito(c) {
+  return c >= "0" && c <= "9";
+}
+function esLetra(c) {
+  return (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c === "_";
+}
+const CLAVES = ["let", "const", "return", "if", "function"];
+
+function tokenizar(texto) {
+  const tokens = [];
+  let i = 0;
+  while (i < texto.length) {
+    const c = texto[i];
+    if (c === " ") {
+      i++;
+    } else if (esDigito(c)) {
+      let numero = "";
+      while (i < texto.length && esDigito(texto[i])) {
+        numero += texto[i];
+        i++;
+      }
+      tokens.push("NUMERO " + numero);
+    } else if (esLetra(c)) {
+      let palabra = "";
+      while (i < texto.length && (esLetra(texto[i]) || esDigito(texto[i]))) {
+        palabra += texto[i];
+        i++;
+      }
+      tokens.push((CLAVES.includes(palabra) ? "CLAVE " : "NOMBRE ") + palabra);
+    } else if ("=+-*/();".includes(c)) {
+      tokens.push("SIGNO " + c);
+      i++;
+    // AÑADE AQUÍ una rama para los textos entre comillas dobles
+    } else {
+      throw new SyntaxError(`Carácter inesperado «${c}» en la posición ${i}`);
+    }
+  }
+  return tokens;
+}
+
+for (const token of tokenizar('const saludo = "hola mundo" + nombre;')) {
+  console.log(token);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = ["CLAVE const", "NOMBRE saludo", "SIGNO =", "TEXTO \"hola mundo\"", "SIGNO +", "NOMBRE nombre", "SIGNO ;"];
+if (salida.length === 0) return "No se imprimió ningún token. ¿El analizador lanzó un error? Lee el mensaje de la consola.";
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "El token " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+if (salida.length > esperado.length) return "Sobran tokens: «" + salida[esperado.length] + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La nueva rama empieza así: <code>} else if (c === '"') {</code>. Fíjate en la rama de los números: guarda los caracteres en una variable mientras se cumpla una condición.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Salta la comilla de apertura con <code>i++</code>, acumula caracteres mientras <code>texto[i] !== '"'</code>, salta también la de cierre y guarda <code>"TEXTO " + '"' + lo leído + '"'</code>. El espacio de dentro del texto no se descarta, porque el bucle interior no mira si es un espacio.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function esDigito(c) {
+  return c &gt;= "0" &amp;&amp; c &lt;= "9";
+}
+function esLetra(c) {
+  return (c &gt;= "a" &amp;&amp; c &lt;= "z") || (c &gt;= "A" &amp;&amp; c &lt;= "Z") || c === "_";
+}
+const CLAVES = ["let", "const", "return", "if", "function"];
+
+function tokenizar(texto) {
+  const tokens = [];
+  let i = 0;
+  while (i &lt; texto.length) {
+    const c = texto[i];
+    if (c === " ") {
+      i++;
+    } else if (esDigito(c)) {
+      let numero = "";
+      while (i &lt; texto.length &amp;&amp; esDigito(texto[i])) {
+        numero += texto[i];
+        i++;
+      }
+      tokens.push("NUMERO " + numero);
+    } else if (esLetra(c)) {
+      let palabra = "";
+      while (i &lt; texto.length &amp;&amp; (esLetra(texto[i]) || esDigito(texto[i]))) {
+        palabra += texto[i];
+        i++;
+      }
+      tokens.push((CLAVES.includes(palabra) ? "CLAVE " : "NOMBRE ") + palabra);
+    } else if ("=+-*/();".includes(c)) {
+      tokens.push("SIGNO " + c);
+      i++;
+    } else if (c === '"') {
+      let textoLeido = '"';
+      i++;                                   // salta la comilla de apertura
+      while (i &lt; texto.length &amp;&amp; texto[i] !== '"') {
+        textoLeido += texto[i];
+        i++;
+      }
+      if (i &gt;= texto.length) throw new SyntaxError("Falta cerrar las comillas");
+      i++;                                   // salta la comilla de cierre
+      tokens.push("TEXTO " + textoLeido + '"');
+    } else {
+      throw new SyntaxError(`Carácter inesperado «${c}» en la posición ${i}`);
+    }
+  }
+  return tokens;
+}
+
+for (const token of tokenizar('const saludo = "hola mundo" + nombre;')) {
+  console.log(token);
+}</code></pre>
+      <p>El bucle interior avanza hasta la comilla de cierre, sin importar qué haya en medio, y por eso el espacio de <code>hola mundo</code> se conserva. La comprobación <code>if (i &gt;= texto.length)</code> detecta un texto sin cerrar, como <code>"hola</code>: es el mismo error que te daría el motor real (<code>Invalid or unexpected token</code>).</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-predice-await">
+    <h3>Predice el orden con await</h3>
+    <p>Ahora hay una función <code>async</code> en juego. Escribe tu predicción de las seis anotaciones y ejecuta. Como antes, el ejercicio se da por bueno cuando tu predicción coincide con la línea «Real».</p>
+    <div class="taller" id="taller-ej3" data-titulo="Ejercicio 3">
+      <textarea class="taller-codigo">// 1. Escribe tu predicción ANTES de ejecutar (cambia cada "?").
+const prediccion = ["?", "?", "?", "?", "?", "?"];
+
+// 2. No cambies nada de aquí para abajo.
+const real = [];
+const anotar = (x) => real.push(x);
+
+async function tarea() {
+  anotar("A1");
+  await null;
+  anotar("A2");
+}
+
+anotar("S1");
+setTimeout(() => anotar("T"), 0);
+tarea();
+Promise.resolve().then(() => anotar("M"));
+anotar("S2");
+
+setTimeout(() => {
+  console.log("Real:       " + real.join(" "));
+  console.log("Predicción: " + prediccion.join(" "));
+}, 20);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var intacto = ["anotar(\"A1\");", "await null;", "anotar(\"A2\");", "setTimeout(() => anotar(\"T\"), 0);", "tarea();", "Promise.resolve().then(() => anotar(\"M\"));"];
+for (var k = 0; k < intacto.length; k++) if (codigo.indexOf(intacto[k]) === -1) return "Cambiaste el programa de abajo. Pulsa «Reiniciar» y modifica solo el array prediccion.";
+var real = (salida[0] || "").replace("Real:", "").trim();
+var pred = (salida[1] || "").replace("Predicción:", "").trim();
+if (pred.indexOf("?") !== -1) return "Primero escribe tu predicción: cambia cada \"?\" por una letra (o letra y número) entre comillas.";
+if (pred !== real) return "Tu predicción no coincide con lo que pasó. Compara las dos líneas de la consola y repasa las reglas: ¿qué va antes, una microtarea o una tarea?";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Una función <code>async</code> se ejecuta en el acto hasta su primer <code>await</code>. ¿Qué anota <code>tarea()</code> antes de pausarse?</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Lo que sigue al <code>await</code> es una microtarea, y entra en la cola antes que el callback del <code>then</code>, porque el <code>await</code> se ejecutó antes.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// 1. Escribe tu predicción ANTES de ejecutar (cambia cada "?").
+const prediccion = ["S1", "A1", "S2", "A2", "M", "T"];
+
+// 2. No cambies nada de aquí para abajo.
+const real = [];
+const anotar = (x) =&gt; real.push(x);
+
+async function tarea() {
+  anotar("A1");
+  await null;
+  anotar("A2");
+}
+
+anotar("S1");
+setTimeout(() =&gt; anotar("T"), 0);
+tarea();
+Promise.resolve().then(() =&gt; anotar("M"));
+anotar("S2");
+
+setTimeout(() =&gt; {
+  console.log("Real:       " + real.join(" "));
+  console.log("Predicción: " + prediccion.join(" "));
+}, 20);</code></pre>
+      <p>S1; después <code>tarea()</code> anota A1 y se pausa en el <code>await</code>, dejando su continuación en la cola de microtareas; el <code>then</code> añade M detrás; se anota S2. Terminado el código síncrono, las microtareas en orden: A2 y M. Por último, la tarea: T.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-trocear">
+    <h3>Trocea una tarea larga</h3>
+    <p>Este programa suma tres millones de números en una sola tarea. El temporizador «tic», que quiere ejecutarse cuanto antes, tiene que esperar a que termine todo, así que sale después del total. Reparte el cálculo en tres bloques de un millón de números y cede el turno entre bloque y bloque con <code>await esperarTurno()</code>. Así «tic» saldrá <em>antes</em> del total, y el total seguirá siendo <code>8999997</code>.</p>
+    <div class="taller" id="taller-ej4" data-titulo="Ejercicio 4">
+      <textarea class="taller-codigo">const esperarTurno = () => new Promise((resolver) => setTimeout(resolver, 0));
+
+setTimeout(() => console.log("tic"), 0);   // quiere ejecutarse cuanto antes
+
+let total = 0;
+for (let i = 1; i <= 3000000; i++) {
+  total += i % 7;
+}
+console.log("Total: " + total);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var iTotal = salida.indexOf("Total: 8999997");
+if (iTotal === -1) return "El total debería seguir siendo 8999997. Revisa que tus bloques recorran todos los números del 1 al 3000000, sin saltarse ni repetir ninguno.";
+if (!/await\s+esperarTurno\(\)/.test(codigo)) return "Usa await esperarTurno() entre un bloque y el siguiente para ceder el turno.";
+var iTic = salida.indexOf("tic");
+if (iTic === -1 || iTic > iTotal) return "«tic» todavía sale después del total: el cálculo sigue siendo una sola tarea larga. Divide el bucle en bloques y cede el turno entre ellos.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Hay dos formas. Una: un bucle exterior de tres vueltas (<code>bloque</code> de 0 a 2) y dentro el bucle de los números de ese bloque. Otra: dentro del bucle original, <code>if (i % 1000000 === 0) await esperarTurno();</code></p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En los talleres puedes usar <code>await</code> fuera de funciones. <code>esperarTurno()</code> programa un temporizador de 0 ms; como el de «tic» se programó antes, está delante en la cola de tareas y se ejecuta primero.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const esperarTurno = () =&gt; new Promise((resolver) =&gt; setTimeout(resolver, 0));
+
+setTimeout(() =&gt; console.log("tic"), 0);
+
+let total = 0;
+for (let bloque = 0; bloque &lt; 3; bloque++) {
+  const desde = bloque * 1000000 + 1;
+  const hasta = desde + 999999;
+  for (let i = desde; i &lt;= hasta; i++) {
+    total += i % 7;
+  }
+  await esperarTurno();   // cede el turno entre un bloque y el siguiente
+}
+console.log("Total: " + total);</code></pre>
+      <p>Cada <code>await esperarTurno()</code> termina la tarea actual y deja la continuación del cálculo al final de la cola de tareas. «tic» estaba delante, así que se ejecuta en el primer hueco. En una página, esos huecos son los que aprovecha el navegador para dibujar y responder a clics.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-conteo">
+    <h3>Por qué el conteo de referencias falla</h3>
+    <p>Usa el mismo montículo de la sección del recolector. Simula el conteo de referencias: calcula cuántas referencias llegan a cada objeto (cada raíz cuenta como una) y libera los que tengan 0. Debes obtener exactamente:</p>
+    <pre class="consola"><code>Conteo de referencias libera: mensaje
+Cuentas: {"personaje":1,"inventario":1,"espada":1,"nivel":1,"enemigo":1,"arma":1,"mensaje":0}</code></pre>
+    <p>Compara con marcar y barrer, que liberaba el mensaje, el enemigo y el arma. ¿Qué objetos se le escapan al conteo de referencias, y por qué?</p>
+    <div class="taller" id="taller-ej5" data-titulo="Ejercicio 5">
+      <textarea class="taller-codigo">const monticulo = {
+  personaje: ["inventario"],
+  inventario: ["espada"],
+  espada: [],
+  nivel: [],
+  enemigo: ["arma"],
+  arma: ["enemigo"],
+  mensaje: [],
+};
+const raices = ["personaje", "nivel"];
+
+// Empieza con todas las cuentas a 0
+const cuentas = {};
+for (const nombre of Object.keys(monticulo)) cuentas[nombre] = 0;
+
+// 1. Suma 1 a la cuenta de cada objeto al que apunta una raíz
+
+// 2. Suma 1 a la cuenta de cada objeto por cada flecha que llega desde otro objeto
+
+// El conteo de referencias libera los objetos cuya cuenta es 0
+const liberados = Object.keys(cuentas).filter((nombre) => cuentas[nombre] === 0);
+console.log("Conteo de referencias libera: " + liberados.join(", "));
+console.log("Cuentas: " + JSON.stringify(cuentas));</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (salida[1] !== 'Cuentas: {"personaje":1,"inventario":1,"espada":1,"nivel":1,"enemigo":1,"arma":1,"mensaje":0}') return "Las cuentas no son correctas todavía. Cada objeto debería tener tantas referencias como flechas (o raíces) le llegan. Imprimiste: «" + (salida[1] || "(nada)") + "».";
+if (salida[0] !== "Conteo de referencias libera: mensaje") return "La primera línea debería ser «Conteo de referencias libera: mensaje».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Para las raíces basta un <code>for...of</code> sobre <code>raices</code> con <code>cuentas[raiz]++</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para las flechas, recorre las listas de destinos de todos los objetos (<code>Object.values(monticulo)</code> te da un array de listas) y suma 1 a la cuenta de cada destino.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const monticulo = {
+  personaje: ["inventario"],
+  inventario: ["espada"],
+  espada: [],
+  nivel: [],
+  enemigo: ["arma"],
+  arma: ["enemigo"],
+  mensaje: [],
+};
+const raices = ["personaje", "nivel"];
+
+// Empieza con todas las cuentas a 0
+const cuentas = {};
+for (const nombre of Object.keys(monticulo)) cuentas[nombre] = 0;
+
+// 1. Suma 1 a la cuenta de cada objeto al que apunta una raíz
+for (const raiz of raices) cuentas[raiz]++;
+
+// 2. Suma 1 a la cuenta de cada objeto por cada flecha que llega desde otro objeto
+for (const destinos of Object.values(monticulo)) {
+  for (const destino of destinos) cuentas[destino]++;
+}
+
+// El conteo de referencias libera los objetos cuya cuenta es 0
+const liberados = Object.keys(cuentas).filter((nombre) =&gt; cuentas[nombre] === 0);
+console.log("Conteo de referencias libera: " + liberados.join(", "));
+console.log("Cuentas: " + JSON.stringify(cuentas));</code></pre>
+      <p>El enemigo y el arma tienen cuenta 1 cada uno: se apuntan entre sí. El conteo de referencias nunca los libera, aunque ninguna raíz llegue a ellos. Es la fuga que evita marcar y barrer, y la razón por la que los motores de JavaScript dejaron de usar esta técnica.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-cache">
+    <h3>Tapa la fuga de la caché</h3>
+    <p>La caché de rutas de este juego no tiene límite: cada destino nuevo se queda en memoria para siempre. Haz que nunca guarde más de <code>LIMITE</code> entradas: cuando se pase, borra la entrada más antigua, es decir, la primera que se añadió. Un <code>Map</code> recuerda el orden en que se añadieron sus claves. La salida debe ser:</p>
+    <pre class="consola"><code>ruta a bosque | tamaño: 1
+ruta a cueva | tamaño: 2
+ruta a castillo | tamaño: 3
+ruta a bosque (de la caché) | tamaño: 3
+ruta a puerto | tamaño: 3
+ruta a cueva (de la caché) | tamaño: 3</code></pre>
+    <div class="taller" id="taller-ej6" data-titulo="Ejercicio 6">
+      <textarea class="taller-codigo">// Una caché guarda resultados para no recalcularlos.
+// Sin límite, crece durante toda la partida: una fuga de memoria.
+const LIMITE = 3;
+const cache = new Map();
+
+function calcularRuta(destino) {
+  if (cache.has(destino)) return cache.get(destino) + " (de la caché)";
+  const ruta = "ruta a " + destino;    // imagina un cálculo muy caro
+  cache.set(destino, ruta);
+  // Si la caché tiene más de LIMITE entradas, borra la más antigua
+  return ruta;
+}
+
+for (const destino of ["bosque", "cueva", "castillo", "bosque", "puerto", "cueva"]) {
+  console.log(calcularRuta(destino), "| tamaño:", cache.size);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["ruta a bosque | tamaño: 1", "ruta a cueva | tamaño: 2", "ruta a castillo | tamaño: 3", "ruta a bosque (de la caché) | tamaño: 3", "ruta a puerto | tamaño: 3", "ruta a cueva (de la caché) | tamaño: 3"];
+if (codigo.indexOf(".delete(") === -1) return "Usa cache.delete(clave) para quitar la entrada más antigua.";
+for (var i = 0; i < esp.length; i++) if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] || "(nada)") + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>cache.keys()</code> devuelve las claves en el orden en que se añadieron. <code>cache.keys().next().value</code> es la primera, la más antigua.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Comprueba el tamaño justo después del <code>cache.set</code>: <code>if (cache.size &gt; LIMITE)</code>, y borra con <code>cache.delete(clave)</code>. En la quinta vuelta se añade «puerto» y debe salir «bosque», que fue el primero en entrar.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// Una caché guarda resultados para no recalcularlos.
+// Sin límite, crece durante toda la partida: una fuga de memoria.
+const LIMITE = 3;
+const cache = new Map();
+
+function calcularRuta(destino) {
+  if (cache.has(destino)) return cache.get(destino) + " (de la caché)";
+  const ruta = "ruta a " + destino;    // imagina un cálculo muy caro
+  cache.set(destino, ruta);
+  // Si la caché tiene más de LIMITE entradas, borra la más antigua
+  if (cache.size &gt; LIMITE) {
+    const masAntigua = cache.keys().next().value;
+    cache.delete(masAntigua);
+  }
+  return ruta;
+}
+
+for (const destino of ["bosque", "cueva", "castillo", "bosque", "puerto", "cueva"]) {
+  console.log(calcularRuta(destino), "| tamaño:", cache.size);
+}</code></pre>
+      <p>Esta política se llama FIFO (el primero en entrar es el primero en salir, como la cola de la <a href="19-estructuras-datos.html#pilas-colas">Estación 19</a>). Una mejora habitual es LRU, «el menos usado recientemente»: al acertar en la caché, se borra la clave y se vuelve a añadir para moverla al final. Con cualquiera de las dos, la memoria queda acotada: nunca más de tres rutas.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-orden-modulos">
+    <h3>¿En qué orden se evalúan los módulos?</h3>
+    <p>Escribe la función que usa el navegador, a grandes rasgos, para decidir el orden de evaluación de un grafo de módulos: cada módulo se evalúa después de todos los que importa, en el orden de sus <code>import</code>, y una sola vez. Para este proyecto debe imprimir:</p>
+    <pre class="consola"><code>config.js → juego.js → dibujo.js → pantalla.js → main.js</code></pre>
+    <div class="taller" id="taller-ej7" data-titulo="Ejercicio 7">
+      <textarea class="taller-codigo">// Qué importa cada módulo, en el orden de sus líneas import
+const imports = {
+  "main.js": ["juego.js", "pantalla.js"],
+  "juego.js": ["config.js"],
+  "pantalla.js": ["config.js", "dibujo.js"],
+  "dibujo.js": ["config.js"],
+  "config.js": [],
+};
+
+function ordenDeEvaluacion(inicio) {
+  const orden = [];
+  const visitados = new Set();
+  // Escribe aquí una función recursiva visitar(modulo) que:
+  //  1. no haga nada si el módulo ya se visitó;
+  //  2. lo marque como visitado;
+  //  3. visite antes cada uno de sus imports, en orden;
+  //  4. al final, añada el módulo a orden.
+  // Y llámala con el módulo de inicio.
+  return orden;
+}
+
+console.log(ordenDeEvaluacion("main.js").join(" → "));</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (salida[0] === "") return "La lista está vacía: todavía no añades nada a orden.";
+if (salida[0] !== "config.js → juego.js → dibujo.js → pantalla.js → main.js") return "El orden debería ser «config.js → juego.js → dibujo.js → pantalla.js → main.js» y es «" + (salida[0] || "(nada)") + "». Recuerda: primero las dependencias, en el orden de sus import, y cada módulo una sola vez.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Es un recorrido en profundidad como los de la <a href="19-estructuras-datos.html">Estación 19</a>, con una diferencia: el módulo se añade a la lista <em>después</em> de visitar sus dependencias, no antes.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Define <code>function visitar(modulo) { … }</code> dentro de <code>ordenDeEvaluacion</code>, para que vea <code>orden</code> y <code>visitados</code>. Dentro, un <code>for...of</code> sobre <code>imports[modulo]</code> que llama a <code>visitar</code> con cada dependencia. No olvides llamar a <code>visitar(inicio)</code> antes del <code>return</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// Qué importa cada módulo, en el orden de sus líneas import
+const imports = {
+  "main.js": ["juego.js", "pantalla.js"],
+  "juego.js": ["config.js"],
+  "pantalla.js": ["config.js", "dibujo.js"],
+  "dibujo.js": ["config.js"],
+  "config.js": [],
+};
+
+function ordenDeEvaluacion(inicio) {
+  const orden = [];
+  const visitados = new Set();
+  function visitar(modulo) {
+    if (visitados.has(modulo)) return;       // ya visitado: se evalúa una sola vez
+    visitados.add(modulo);
+    for (const dependencia of imports[modulo]) {
+      visitar(dependencia);                  // primero, lo que este módulo necesita
+    }
+    orden.push(modulo);                      // después, el propio módulo
+  }
+  visitar(inicio);
+  return orden;
+}
+
+console.log(ordenDeEvaluacion("main.js").join(" → "));</code></pre>
+      <p>Este orden se llama postorden: cada nodo se anota después de sus hijos. <code>config.js</code> aparece una sola vez aunque lo importen tres módulos, gracias a <code>visitados</code>. Ese mismo conjunto evita un bucle infinito si dos módulos se importan entre sí, algo que JavaScript permite.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-simulador">
+    <h3>Construye un bucle de eventos</h3>
+    <p>Escribe un simulador del bucle de eventos con dos arrays como colas. Las funciones del programa no usan <code>setTimeout</code> ni promesas de verdad: usan <code>api.tarea(fn)</code> y <code>api.microtarea(fn)</code>, que solo añaden la función a su cola. Tu <code>ejecutarBucle</code> debe aplicar las reglas de la estación. El primer programa es el de la traza, así que debe imprimir A, F, D, B, C, E; el segundo, S, M1, M2, T1. Cada letra, en su propia línea.</p>
+    <div class="taller" id="taller-ej8" data-titulo="Ejercicio 8">
+      <textarea class="taller-codigo">const colaTareas = [];
+const colaMicrotareas = [];
+const api = {
+  log: (texto) => console.log(texto),
+  tarea: (fn) => colaTareas.push(fn),           // como setTimeout(fn, 0)
+  microtarea: (fn) => colaMicrotareas.push(fn), // como queueMicrotask(fn)
+};
+
+function ejecutarBucle(programaPrincipal) {
+  // 1. El programa principal es la primera tarea: ponlo en colaTareas.
+  // 2. Mientras queden tareas, saca la primera (shift) y ejecútala pasándole api.
+  // 3. Después de CADA tarea, vacía por completo la cola de microtareas.
+  //    Cuidado: una microtarea puede añadir otras mientras la vacías.
+}
+
+// El programa de la traza, escrito con la api del simulador
+ejecutarBucle((api) => {
+  api.log("A");
+  api.tarea((api) => {
+    api.log("B");
+    api.microtarea(() => api.log("C"));
+  });
+  api.microtarea((api) => {
+    api.log("D");
+    api.tarea(() => api.log("E"));
+  });
+  api.log("F");
+});
+
+console.log("---");
+
+// Microtareas que crean microtareas
+ejecutarBucle((api) => {
+  api.microtarea((api) => {
+    api.log("M1");
+    api.microtarea(() => api.log("M2"));
+  });
+  api.tarea(() => api.log("T1"));
+  api.log("S");
+});</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["A", "F", "D", "B", "C", "E", "---", "S", "M1", "M2", "T1"];
+if (salida.join(" ") === "---") return "El simulador no ejecuta nada todavía. Empieza por poner el programa principal en colaTareas y sacarlo con un bucle while.";
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La salida debería ser «" + esp.join(" ") + "» y es «" + salida.join(" ") + "». Revisa en qué momento vacías las microtareas: después de cada tarea, y hasta que no quede ninguna.";
+}
+if (salida.length > esp.length) return "Sobran líneas: «" + salida.slice(esp.length).join(" ") + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La estructura es un <code>while</code> que se repite mientras <code>colaTareas.length &gt; 0</code>. En cada vuelta: <code>const tarea = colaTareas.shift(); tarea(api);</code></p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Justo después de ejecutar cada tarea, otro <code>while</code> que se repite mientras <code>colaMicrotareas.length &gt; 0</code>. Como la condición se comprueba en cada vuelta, las microtareas que se añadan mientras tanto también se ejecutan.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const colaTareas = [];
+const colaMicrotareas = [];
+const api = {
+  log: (texto) =&gt; console.log(texto),
+  tarea: (fn) =&gt; colaTareas.push(fn),           // como setTimeout(fn, 0)
+  microtarea: (fn) =&gt; colaMicrotareas.push(fn), // como queueMicrotask(fn)
+};
+
+function ejecutarBucle(programaPrincipal) {
+  colaTareas.push(programaPrincipal);
+  while (colaTareas.length &gt; 0) {
+    const tarea = colaTareas.shift();
+    tarea(api);
+    while (colaMicrotareas.length &gt; 0) {   // se vacía entera, incluidas las nuevas
+      const microtarea = colaMicrotareas.shift();
+      microtarea(api);
+    }
+  }
+}
+
+// El programa de la traza, escrito con la api del simulador
+ejecutarBucle((api) =&gt; {
+  api.log("A");
+  api.tarea((api) =&gt; {
+    api.log("B");
+    api.microtarea(() =&gt; api.log("C"));
+  });
+  api.microtarea((api) =&gt; {
+    api.log("D");
+    api.tarea(() =&gt; api.log("E"));
+  });
+  api.log("F");
+});
+
+console.log("---");
+
+// Microtareas que crean microtareas
+ejecutarBucle((api) =&gt; {
+  api.microtarea((api) =&gt; {
+    api.log("M1");
+    api.microtarea(() =&gt; api.log("M2"));
+  });
+  api.tarea(() =&gt; api.log("T1"));
+  api.log("S");
+});</code></pre>
+      <p>Son doce líneas, y es el corazón de verdad del bucle de eventos: los navegadores y Node.js añaden detalles (varias colas de tareas con prioridades, el dibujado de la pantalla entre tareas, las fases de libuv), pero la regla central es esta. Si cambias el segundo <code>while</code> por un <code>if</code>, M2 saldría después de T1: esa es la diferencia entre «vaciar la cola» y «ejecutar una microtarea».</p>
+    </details>
+  </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: tu propio mini lenguaje</h2>
+  <p>Vas a construir las piezas de un motor para un lenguaje diminuto: el de las expresiones aritméticas, como <code>(2 + 3) * 4</code>. El analizador léxico y el sintáctico ya están hechos; tú escribirás las dos formas de ejecutar el árbol que has visto en esta estación. Primero, un <strong>intérprete</strong> que recorre el árbol y calcula. Después, un <strong>compilador</strong> que traduce el árbol a bytecode y una <strong>máquina virtual de pila</strong> que ejecuta ese bytecode, como Ignition. Si las dos formas dan el mismo resultado, tu motor funciona.</p>
+  <p>El bytecode de tu máquina tiene cinco instrucciones. <code>EMPUJAR n</code> mete el número <code>n</code> en una pila (la estructura de la <a href="19-estructuras-datos.html#pilas-colas">Estación 19</a>). <code>SUMAR</code>, <code>RESTAR</code>, <code>MULTIPLICAR</code> y <code>DIVIDIR</code> sacan los dos números de arriba, operan y meten el resultado. Por ejemplo, <code>2 + 3 * 4</code> se compila así: <code>EMPUJAR 2</code>, <code>EMPUJAR 3</code>, <code>EMPUJAR 4</code>, <code>MULTIPLICAR</code> (la pila queda 2, 12), <code>SUMAR</code> (queda 14).</p>
+  <ol class="pasos">
+    <li><div><p>Lee por encima <code>tokenizar</code> y <code>parsear</code>. No hace falta entender cada línea de <code>parsear</code>: fíjate en que devuelve nodos de dos tipos, <code>{ tipo: "numero", valor }</code> y <code>{ tipo: "operacion", op, izq, der }</code>. Añade temporalmente <code>console.log(JSON.stringify(parsear(tokenizar("2 + 3 * 4"))))</code> para ver un árbol de verdad.</p></div></li>
+    <li><div><p>Escribe <code>evaluar(nodo)</code>. Es recursiva (<a href="20-algoritmos.html#recursion">Estación 20</a>): un número es el caso base; para una operación, evalúa sus dos hijos y combínalos con su operador.</p></div></li>
+    <li><div><p>Escribe <code>compilar(nodo, codigo)</code>. También es recursiva, y el orden importa: primero el lado izquierdo, después el derecho y al final la instrucción del operador. Es un recorrido en postorden, como el del ejercicio de los módulos.</p></div></li>
+    <li><div><p>Escribe <code>ejecutarBytecode(codigo)</code> con una pila. Cuidado con la resta y la división: el número de arriba de la pila es el lado <em>derecho</em>. Si los sacas al revés, <code>10 - 4 - 3</code> no dará 3.</p></div></li>
+    <li><div><p>Ejecuta las pruebas. Cada expresión debe dar el mismo resultado con el árbol y con la máquina, y la última línea debe mostrar el bytecode de <code>2 + 3 * 4</code>. La salida esperada es:</p>
+      <pre class="consola"><code>2 + 3 * 4 = 14 (árbol) = 14 (máquina)
+(2 + 3) * 4 = 20 (árbol) = 20 (máquina)
+10 - 4 - 3 = 3 (árbol) = 3 (máquina)
+8 / (3 - 1) = 4 (árbol) = 4 (máquina)
+Bytecode de 2 + 3 * 4: EMPUJAR 2, EMPUJAR 3, EMPUJAR 4, MULTIPLICAR, SUMAR</code></pre></div></li>
+    <li><div><p>Prueba expresiones con errores, como <code>2 + * 3</code> o <code>(1 + 2</code>, añadiéndolas a la lista. El analizador sintáctico lanza un <code>SyntaxError</code> antes de que tu intérprete o tu máquina ejecuten nada: igual que el motor de JavaScript.</p></div></li>
+  </ol>
+    <div class="taller" id="taller-proyecto" data-titulo="Proyecto: la calculadora que compila">
+      <textarea class="taller-codigo">// ===== 1. Analizador léxico (ya hecho) =====
+function tokenizar(texto) {
+  const tokens = [];
+  let i = 0;
+  while (i < texto.length) {
+    const c = texto[i];
+    if (c === " ") {
+      i++;
+    } else if (c >= "0" && c <= "9") {
+      let numero = "";
+      while (i < texto.length && texto[i] >= "0" && texto[i] <= "9") {
+        numero += texto[i];
+        i++;
+      }
+      tokens.push({ tipo: "numero", valor: Number(numero) });
+    } else if ("+-*/()".includes(c)) {
+      tokens.push({ tipo: "signo", valor: c });
+      i++;
+    } else {
+      throw new SyntaxError(`Carácter inesperado «${c}»`);
+    }
+  }
+  return tokens;
+}
+
+// ===== 2. Analizador sintáctico (ya hecho) =====
+// suma     → producto, y después (+ o -) producto, las veces que haga falta
+// producto → factor, y después (* o /) factor, las veces que haga falta
+// factor   → un número, o una suma entre paréntesis
+function parsear(tokens) {
+  let pos = 0;
+  const actual = () => tokens[pos];
+  function factor() {
+    const t = actual();
+    if (!t) throw new SyntaxError("La expresión termina antes de tiempo");
+    if (t.tipo === "numero") {
+      pos++;
+      return { tipo: "numero", valor: t.valor };
+    }
+    if (t.valor === "(") {
+      pos++;
+      const dentro = suma();
+      if (!actual() || actual().valor !== ")") throw new SyntaxError("Falta cerrar un paréntesis");
+      pos++;
+      return dentro;
+    }
+    throw new SyntaxError(`No esperaba «${t.valor}»`);
+  }
+  function producto() {
+    let izq = factor();
+    while (actual() && (actual().valor === "*" || actual().valor === "/")) {
+      const op = actual().valor;
+      pos++;
+      izq = { tipo: "operacion", op, izq, der: factor() };
+    }
+    return izq;
+  }
+  function suma() {
+    let izq = producto();
+    while (actual() && (actual().valor === "+" || actual().valor === "-")) {
+      const op = actual().valor;
+      pos++;
+      izq = { tipo: "operacion", op, izq, der: producto() };
+    }
+    return izq;
+  }
+  const arbol = suma();
+  if (pos < tokens.length) throw new SyntaxError(`Sobra «${actual().valor}»`);
+  return arbol;
+}
+
+// ===== 3. Intérprete que recorre el árbol (TU CÓDIGO) =====
+function evaluar(nodo) {
+  // Si el nodo es un número, devuelve su valor.
+  // Si es una operación, evalúa sus dos lados y aplica nodo.op.
+  return null;
+}
+
+// ===== 4. Compilador a bytecode (TU CÓDIGO) =====
+const NOMBRES = { "+": "SUMAR", "-": "RESTAR", "*": "MULTIPLICAR", "/": "DIVIDIR" };
+function compilar(nodo, codigo = []) {
+  // Número: añade ["EMPUJAR", valor] a codigo.
+  // Operación: compila el lado izquierdo, después el derecho,
+  // y al final añade [NOMBRES[nodo.op]].
+  return codigo;
+}
+
+// ===== 5. Máquina virtual de pila (TU CÓDIGO) =====
+function ejecutarBytecode(codigo) {
+  const pila = [];
+  for (const [instruccion, valor] of codigo) {
+    // EMPUJAR: mete valor en la pila.
+    // Las demás: saca dos valores (¡el de arriba es el lado derecho!),
+    // opera con ellos y mete el resultado.
+  }
+  return pila.pop();
+}
+
+// ===== Pruebas =====
+for (const expresion of ["2 + 3 * 4", "(2 + 3) * 4", "10 - 4 - 3", "8 / (3 - 1)"]) {
+  const arbol = parsear(tokenizar(expresion));
+  const bytecode = compilar(arbol);
+  console.log(`${expresion} = ${evaluar(arbol)} (árbol) = ${ejecutarBytecode(bytecode)} (máquina)`);
+}
+const ejemplo = compilar(parsear(tokenizar("2 + 3 * 4")));
+console.log("Bytecode de 2 + 3 * 4: " + ejemplo.map((instruccion) => instruccion.join(" ")).join(", "));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["2 + 3 * 4 = 14 (árbol) = 14 (máquina)", "(2 + 3) * 4 = 20 (árbol) = 20 (máquina)", "10 - 4 - 3 = 3 (árbol) = 3 (máquina)", "8 / (3 - 1) = 4 (árbol) = 4 (máquina)", "Bytecode de 2 + 3 * 4: EMPUJAR 2, EMPUJAR 3, EMPUJAR 4, MULTIPLICAR, SUMAR"];
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] || "(nada)") + "».";
+}
+return true;
+      </script>
+    </div>
+    <details class="solucion"><summary>Ver una solución de referencia</summary>
+      <pre><code class="language-js">// ===== 1. Analizador léxico (ya hecho) =====
+function tokenizar(texto) {
+  const tokens = [];
+  let i = 0;
+  while (i &lt; texto.length) {
+    const c = texto[i];
+    if (c === " ") {
+      i++;
+    } else if (c &gt;= "0" &amp;&amp; c &lt;= "9") {
+      let numero = "";
+      while (i &lt; texto.length &amp;&amp; texto[i] &gt;= "0" &amp;&amp; texto[i] &lt;= "9") {
+        numero += texto[i];
+        i++;
+      }
+      tokens.push({ tipo: "numero", valor: Number(numero) });
+    } else if ("+-*/()".includes(c)) {
+      tokens.push({ tipo: "signo", valor: c });
+      i++;
+    } else {
+      throw new SyntaxError(`Carácter inesperado «${c}»`);
+    }
+  }
+  return tokens;
+}
+
+// ===== 2. Analizador sintáctico (ya hecho) =====
+// suma     → producto, y después (+ o -) producto, las veces que haga falta
+// producto → factor, y después (* o /) factor, las veces que haga falta
+// factor   → un número, o una suma entre paréntesis
+function parsear(tokens) {
+  let pos = 0;
+  const actual = () =&gt; tokens[pos];
+  function factor() {
+    const t = actual();
+    if (!t) throw new SyntaxError("La expresión termina antes de tiempo");
+    if (t.tipo === "numero") {
+      pos++;
+      return { tipo: "numero", valor: t.valor };
+    }
+    if (t.valor === "(") {
+      pos++;
+      const dentro = suma();
+      if (!actual() || actual().valor !== ")") throw new SyntaxError("Falta cerrar un paréntesis");
+      pos++;
+      return dentro;
+    }
+    throw new SyntaxError(`No esperaba «${t.valor}»`);
+  }
+  function producto() {
+    let izq = factor();
+    while (actual() &amp;&amp; (actual().valor === "*" || actual().valor === "/")) {
+      const op = actual().valor;
+      pos++;
+      izq = { tipo: "operacion", op, izq, der: factor() };
+    }
+    return izq;
+  }
+  function suma() {
+    let izq = producto();
+    while (actual() &amp;&amp; (actual().valor === "+" || actual().valor === "-")) {
+      const op = actual().valor;
+      pos++;
+      izq = { tipo: "operacion", op, izq, der: producto() };
+    }
+    return izq;
+  }
+  const arbol = suma();
+  if (pos &lt; tokens.length) throw new SyntaxError(`Sobra «${actual().valor}»`);
+  return arbol;
+}
+
+// ===== 3. Intérprete que recorre el árbol =====
+function evaluar(nodo) {
+  if (nodo.tipo === "numero") return nodo.valor;
+  const a = evaluar(nodo.izq);
+  const b = evaluar(nodo.der);
+  if (nodo.op === "+") return a + b;
+  if (nodo.op === "-") return a - b;
+  if (nodo.op === "*") return a * b;
+  return a / b;
+}
+
+// ===== 4. Compilador a bytecode =====
+const NOMBRES = { "+": "SUMAR", "-": "RESTAR", "*": "MULTIPLICAR", "/": "DIVIDIR" };
+function compilar(nodo, codigo = []) {
+  if (nodo.tipo === "numero") {
+    codigo.push(["EMPUJAR", nodo.valor]);
+  } else {
+    compilar(nodo.izq, codigo);
+    compilar(nodo.der, codigo);
+    codigo.push([NOMBRES[nodo.op]]);
+  }
+  return codigo;
+}
+
+// ===== 5. Máquina virtual de pila =====
+function ejecutarBytecode(codigo) {
+  const pila = [];
+  for (const [instruccion, valor] of codigo) {
+    if (instruccion === "EMPUJAR") {
+      pila.push(valor);
+      continue;
+    }
+    const b = pila.pop();   // el de arriba es el lado derecho
+    const a = pila.pop();
+    if (instruccion === "SUMAR") pila.push(a + b);
+    else if (instruccion === "RESTAR") pila.push(a - b);
+    else if (instruccion === "MULTIPLICAR") pila.push(a * b);
+    else if (instruccion === "DIVIDIR") pila.push(a / b);
+  }
+  return pila.pop();
+}
+
+// ===== Pruebas =====
+for (const expresion of ["2 + 3 * 4", "(2 + 3) * 4", "10 - 4 - 3", "8 / (3 - 1)"]) {
+  const arbol = parsear(tokenizar(expresion));
+  const bytecode = compilar(arbol);
+  console.log(`${expresion} = ${evaluar(arbol)} (árbol) = ${ejecutarBytecode(bytecode)} (máquina)`);
+}
+const ejemplo = compilar(parsear(tokenizar("2 + 3 * 4")));
+console.log("Bytecode de 2 + 3 * 4: " + ejemplo.map((instruccion) =&gt; instruccion.join(" ")).join(", "));</code></pre>
+      <p>Fíjate en que <code>evaluar</code> y <code>compilar</code> recorren el árbol igual; la diferencia es que una calcula en el acto y la otra escribe instrucciones para después. El bytecode se puede guardar y ejecutar muchas veces sin volver a analizar el texto: esa es la ventaja de compilar. Y la máquina de pila no sabe nada de paréntesis ni de precedencias: todo eso ya lo resolvió el árbol.</p>
+    </details>
+  <p><strong>Para ir más allá:</strong> añade el operador <code>%</code> en las tres piezas (léxico, sintáctico y las dos formas de ejecutar); añade números negativos como <code>-5</code>; haz que <code>ejecutarBytecode</code> imprima el estado de la pila después de cada instrucción, como una traza; o añade variables con una instrucción <code>CARGAR nombre</code> que lea de un objeto de memoria. Con eso tendrías el esqueleto de un intérprete de verdad. Si te apasiona, el libro gratuito <a href="https://craftinginterpreters.com/">Crafting Interpreters</a>, en inglés, construye dos intérpretes completos paso a paso.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Cada opción tiene su explicación: léelas también cuando aciertes, porque los errores de las demás son los que la gente comete de verdad.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Qué hace un compilador JIT, como los de los motores de JavaScript?</p>
+      <ol class="opciones">
+        <li>Traduce todo el programa a código máquina antes de ejecutarlo, una sola vez.<p class="explica">Eso es la compilación anticipada (AOT), la de C o Rust.</p></li>
+        <li>Lee el texto del programa línea a línea y ejecuta cada línea sin traducir nada.<p class="explica">Ni siquiera los intérpretes modernos trabajan así: casi todos generan bytecode primero.</p></li>
+        <li>Mientras el programa corre, compila a código máquina las partes que se ejecutan mucho.<p class="explica">Correcto. Empieza interpretando para arrancar rápido y optimiza lo que está caliente.</p></li>
+        <li>Convierte JavaScript en otro lenguaje de alto nivel, como TypeScript.<p class="explica">Traducir entre lenguajes de alto nivel se llama transpilar, y el camino habitual es el inverso: de TypeScript a JavaScript.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Un archivo de JavaScript tiene 40 líneas y un paréntesis sin cerrar en la línea 30. ¿Qué pasa al ejecutarlo?</p>
+      <ol class="opciones">
+        <li>Se ejecutan las líneas 1 a 29 y el programa falla en la 30.<p class="explica">Eso pasa con los errores de ejecución, como llamar a una función que no existe. Un error de sintaxis se detecta antes.</p></li>
+        <li>No se ejecuta ninguna línea: sale un SyntaxError al analizar el archivo.<p class="explica">Correcto. El análisis léxico y el sintáctico recorren el archivo entero antes de ejecutar nada.</p></li>
+        <li>El motor ignora la línea 30 y ejecuta todas las demás.<p class="explica">El motor no adivina ni se salta líneas: si el texto no es JavaScript válido, no lo ejecuta.</p></li>
+        <li>El JIT corrige el paréntesis automáticamente.<p class="explica">El JIT optimiza código que ya es válido; nunca corrige errores.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Qué produce el análisis sintáctico?</p>
+      <ol class="opciones">
+        <li>Una lista de tokens.<p class="explica">Los tokens los produce la etapa anterior, el análisis léxico.</p></li>
+        <li>Código máquina para el procesador.<p class="explica">El código máquina llega al final del camino, y solo para las funciones calientes.</p></li>
+        <li>Bytecode.<p class="explica">El bytecode se genera a partir del resultado del análisis sintáctico, no es su resultado.</p></li>
+        <li>Un árbol de sintaxis abstracta (AST) que refleja la estructura del código.<p class="explica">Correcto. El árbol guarda, por ejemplo, qué operación va primero según la precedencia.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Qué relación hay entre Node.js y V8?</p>
+      <ol class="opciones">
+        <li>Node.js es un entorno de ejecución que usa el motor V8 y le añade APIs como archivos y red.<p class="explica">Correcto. Es el mismo motor que Chrome, rodeado de otras APIs.</p></li>
+        <li>Son dos nombres del mismo programa.<p class="explica">V8 también está dentro de Chrome, Edge y Deno. Node.js es solo uno de los programas que lo usan.</p></li>
+        <li>V8 es un lenguaje y Node.js su compilador.<p class="explica">El lenguaje es JavaScript. V8 es un motor, y Node.js, un entorno.</p></li>
+        <li>Node.js es el motor y V8 es su gestor de paquetes.<p class="explica">Al revés, y el gestor de paquetes de Node.js es npm.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Una función crea un objeto con <code>const jugador = { vidas: 3 }</code> y lo devuelve. ¿Qué pasa con el objeto cuando la función termina?</p>
+      <ol class="opciones">
+        <li>Se borra, porque las variables locales desaparecen al terminar la función.<p class="explica">Desaparece el marco con la referencia <code>jugador</code>, pero el objeto vive en el montículo.</p></li>
+        <li>Se copia entero a la pila de quien llamó a la función.<p class="explica">Los objetos no viven en la pila. Lo que se copia es la referencia.</p></li>
+        <li>Sigue en el montículo, y quien recibe el valor devuelto guarda una referencia a él.<p class="explica">Correcto. Vivirá mientras alguna variable o estructura pueda llegar a él.</p></li>
+        <li>Queda congelado y ya no se puede modificar, porque se creó con <code>const</code>.<p class="explica"><code>const</code> impide reasignar la variable, no modificar el objeto (<a href="11-colecciones.html#referencias">Estación 11</a>).</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Cuándo puede liberar el recolector de basura un objeto?</p>
+      <ol class="opciones">
+        <li>Cuando pasa cierto tiempo sin que el programa lo use.<p class="explica">El recolector no mira cuánto hace que se usó algo, sino si se puede llegar a él.</p></li>
+        <li>Cuando ya no es alcanzable siguiendo referencias desde las raíces.<p class="explica">Correcto. Esa es la regla de marcar y barrer.</p></li>
+        <li>Cuando ningún otro objeto lo apunta, aunque forme parte de un ciclo.<p class="explica">Esa es la idea del conteo de referencias, que falla precisamente con los ciclos.</p></li>
+        <li>Solo cuando el programador lo borra con <code>delete</code>.<p class="explica"><code>delete</code> quita una propiedad de un objeto. La memoria la libera el recolector, sin que tú lo pidas.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Qué imprime este programa, en orden? <code>console.log(1); setTimeout(() =&gt; console.log(2), 0); Promise.resolve().then(() =&gt; console.log(3)); console.log(4);</code></p>
+      <ol class="opciones">
+        <li>1, 2, 3, 4<p class="explica">Ese sería el orden si todo fuera síncrono. <code>setTimeout</code> y <code>then</code> dejan sus funciones para después.</p></li>
+        <li>1, 4, 2, 3<p class="explica">El temporizador es una tarea; la promesa, una microtarea. Las microtareas van antes.</p></li>
+        <li>1, 2, 4, 3<p class="explica">Con 0 ms, el temporizador tampoco se ejecuta en el acto: espera a que se vacíe la pila y las microtareas.</p></li>
+        <li>1, 4, 3, 2<p class="explica">Correcto. Primero lo síncrono (1 y 4), después las microtareas (3) y al final la tarea (2).</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Cuál de estas frases describe bien la diferencia entre concurrencia y paralelismo?</p>
+      <ol class="opciones">
+        <li>La concurrencia alterna entre varias tareas; el paralelismo las ejecuta en el mismo instante en varios núcleos.<p class="explica">Correcto. Puede haber concurrencia con un solo núcleo; el paralelismo necesita varios.</p></li>
+        <li>Son sinónimos.<p class="explica">Se confunden a menudo, pero son ideas distintas: organizar el trabajo frente a hacerlo a la vez.</p></li>
+        <li>El bucle de eventos de JavaScript ejecuta tu código en paralelo.<p class="explica">El bucle de eventos da concurrencia con un solo hilo. Para paralelismo necesitas Web Workers.</p></li>
+        <li>El paralelismo solo existe en los servidores, y la concurrencia en los navegadores.<p class="explica">Los dos existen en todas partes: tu teléfono tiene varios núcleos.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Qué <strong>no</strong> puede hacer un Web Worker?</p>
+      <ol class="opciones">
+        <li>Usar <code>setTimeout</code>.<p class="explica">Sí puede: tiene su propio bucle de eventos.</p></li>
+        <li>Hacer cálculos largos sin congelar la página.<p class="explica">Para eso existen, precisamente.</p></li>
+        <li>Modificar directamente el DOM de la página.<p class="explica">Correcto. Dentro de un worker no existe <code>document</code>: debe enviar un mensaje al hilo principal para que él cambie la página.</p></li>
+        <li>Enviar mensajes al hilo principal.<p class="explica">Sí puede, con <code>postMessage</code>. Es su forma de comunicarse.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">En el navegador aparece <code>SyntaxError: Cannot use import statement outside a module</code>. ¿Qué lo arregla?</p>
+      <ol class="opciones">
+        <li>Cambiar <code>import</code> por <code>require</code>.<p class="explica">Los navegadores no tienen <code>require</code>: es de Node.js.</p></li>
+        <li>Añadir <code>type="module"</code> a la etiqueta <code>&lt;script&gt;</code>.<p class="explica">Correcto. Sin ese atributo, el navegador trata el archivo como un script clásico, que no admite <code>import</code>.</p></li>
+        <li>Quitar la extensión <code>.js</code> de la ruta del import.<p class="explica">Al contrario: en el navegador la extensión es obligatoria.</p></li>
+        <li>Añadir <code>defer</code> al script.<p class="explica"><code>defer</code> cambia cuándo se ejecuta el script, pero no lo convierte en módulo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Tres módulos distintos importan <code>config.js</code>. ¿Cuántas veces se ejecuta el código de <code>config.js</code>?</p>
+      <ol class="opciones">
+        <li>Tres, una por cada import.<p class="explica">Así sería si cada import creara una copia, pero los módulos se evalúan una sola vez y se comparten.</p></li>
+        <li>Ninguna: los módulos solo exportan, no ejecutan código.<p class="explica">Un módulo es código normal: sus líneas se ejecutan al evaluarlo.</p></li>
+        <li>Depende del orden de las etiquetas <code>&lt;script&gt;</code>.<p class="explica">Con módulos, el orden lo decide el grafo de imports, no las etiquetas.</p></li>
+        <li>Una sola vez; todos reciben el mismo módulo.<p class="explica">Correcto. Por eso un módulo sirve para guardar un estado compartido por toda la aplicación.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">La memoria de una página crece cada vez que abres y cierras un panel. ¿Cuál es el sospechoso más probable?</p>
+      <ol class="opciones">
+        <li>Un <code>setInterval</code> que se crea al abrir el panel y nunca se detiene.<p class="explica">Correcto. Cada apertura deja un temporizador vivo que retiene, con su closure, los datos del panel.</p></li>
+        <li>Usar <code>const</code> en lugar de <code>let</code>.<p class="explica">La forma de declarar una variable no provoca fugas.</p></li>
+        <li>Que el recolector de basura esté desactivado.<p class="explica">No se puede desactivar, y funciona bien: libera todo lo inalcanzable.</p></li>
+        <li>Usar funciones flecha.<p class="explica">Las funciones flecha no retienen más memoria que las demás.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Compilación anticipada (AOT)</dt><dd>Traducir un programa entero a código máquina antes de ejecutarlo, como hacen C, C++, Rust o Go. En inglés, <em>ahead of time</em>.</dd>
+    <dt>Intérprete</dt><dd>Programa que ejecuta código fuente sin convertirlo antes en un ejecutable. Los modernos suelen traducirlo primero a bytecode.</dd>
+    <dt>Bytecode</dt><dd>Código intermedio, compacto y sencillo, que ejecuta una máquina virtual. Ninguna CPU lo entiende directamente.</dd>
+    <dt>Máquina virtual</dt><dd>Programa que ejecuta bytecode instrucción a instrucción, como si fuera un procesador hecho de software.</dd>
+    <dt>Compilación JIT</dt><dd>Compilar a código máquina, mientras el programa corre, las partes que se ejecutan mucho. Del inglés <em>just in time</em>, «justo a tiempo».</dd>
+    <dt>Desoptimización</dt><dd>Descartar el código máquina que generó el JIT y volver al bytecode, porque falló una suposición sobre los datos, como recibir un texto donde siempre había un número.</dd>
+    <dt>Análisis léxico</dt><dd>Primera etapa de la traducción: agrupar los caracteres del código en tokens y descartar espacios y comentarios.</dd>
+    <dt>Token</dt><dd>Cada «palabra» del código fuente: una palabra clave, un nombre, un número, un operador o un signo.</dd>
+    <dt>Análisis sintáctico</dt><dd>Etapa que comprueba que los tokens siguen la gramática del lenguaje y construye el árbol de sintaxis abstracta. En inglés, <em>parsing</em>.</dd>
+    <dt>Árbol de sintaxis abstracta (AST)</dt><dd>Árbol que representa la estructura de un programa: cada nodo es una construcción del lenguaje y sus hijos son sus partes.</dd>
+    <dt>V8</dt><dd>Motor de JavaScript de Google, usado en Chrome, Edge, Node.js y Deno.</dd>
+    <dt>Pila (memoria)</dt><dd>Zona de memoria donde se guarda un marco por cada llamada a función en curso. Es pequeña, de tamaño fijo y muy rápida. En inglés, <em>stack</em>.</dd>
+    <dt>Marco de pila</dt><dd>Bloque de la pila que ocupa una llamada: sus parámetros, sus variables locales y el punto al que debe volver. En inglés, <em>stack frame</em>.</dd>
+    <dt>Montículo (memoria)</dt><dd>Zona de memoria grande donde viven los objetos, arrays y funciones mientras se pueda llegar a ellos. En inglés, <em>heap</em>. No es el montículo estructura de datos.</dd>
+    <dt>Recolector de basura</dt><dd>Parte del entorno que libera automáticamente la memoria de los objetos a los que ya no se puede llegar. En inglés, <em>garbage collector</em>.</dd>
+    <dt>Marcar y barrer</dt><dd>Algoritmo de recolección de basura: marca todo lo alcanzable desde las raíces y libera lo que queda sin marcar.</dd>
+    <dt>Fuga de memoria</dt><dd>Memoria que un programa ya no necesita pero que no se libera porque sigue habiendo una referencia a ella.</dd>
+    <dt>Concurrencia</dt><dd>Manejar varias tareas que se solapan en el tiempo, alternando entre ellas, aunque no se ejecuten en el mismo instante.</dd>
+    <dt>Paralelismo</dt><dd>Ejecutar varias tareas en el mismo instante, en núcleos distintos del procesador.</dd>
+    <dt>Tarea (macrotarea)</dt><dd>Trabajo que el bucle de eventos toma de la cola de tareas: el programa principal, un callback de <code>setTimeout</code>, un evento o un mensaje.</dd>
+    <dt>Microtarea</dt><dd>Trabajo de la cola prioritaria: callbacks de <code>then</code>, <code>catch</code> y <code>finally</code>, la continuación tras un <code>await</code> o <code>queueMicrotask</code>. Se vacía entera antes de la siguiente tarea.</dd>
+    <dt>Web Worker</dt><dd>Hilo aparte, creado desde una página, que ejecuta JavaScript sin acceso al DOM y se comunica con mensajes.</dd>
+    <dt>Módulo</dt><dd>Archivo de código con su propio ámbito, que exporta lo que quiere compartir e importa lo que necesita.</dd>
+    <dt>ES modules (ESM)</dt><dd>Sistema de módulos estándar de JavaScript, con <code>import</code> y <code>export</code>. Funciona en navegadores, Node.js, Deno y Bun.</dd>
+    <dt>CommonJS</dt><dd>Sistema de módulos histórico de Node.js, con <code>require()</code> y <code>module.exports</code>.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación. El bucle de eventos, sobre todo, se entiende mucho mejor cuando lo ves explicado de varias formas.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=s1PmAdnVMEQ" data-canal="Eduardo Fierro" data-idioma="es" data-nivel="profundo" data-por-que="Sigue el bucle de eventos con el depurador de Chrome, tarea a tarea y microtarea a microtarea.">OBSERVA cómo FUNCIONA el EVENT LOOP en JAVASCRIPT</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=eiC58R16hb8" data-canal="Lydia Hallie" data-idioma="en" data-nivel="intro" data-por-que="Animaciones muy claras de la pila, las APIs del navegador y las dos colas; muy visual aunque no entiendas todo el inglés.">JavaScript Visualized - Event Loop, Web APIs, (Micro)task Queue</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=ygA5U7Wgsg8" data-canal="La Cocina del Código" data-idioma="es" data-nivel="intro" data-por-que="La pila de ejecución de JavaScript con dibujos, para repasar la base de todo lo demás.">1. La PILA DE EJECUCIÓN (Call Stack) de JAVASCRIPT | JS en ESPAÑOL</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=29iYdru2KUg" data-canal="Desarrollo Útil" data-idioma="es" data-nivel="intro" data-por-que="Las diferencias entre require e import en Node.js, con ejemplos en el editor.">REQUIRE vs IMPORT COMMON JS vs ES MODULES CJS vs ESM Curso de Node.JS desde cero #3</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Execution_model">Modelo de concurrencia y loop de eventos (MDN)</a><p>La pila, el montículo, la cola y la regla de ejecutar hasta el final, en la referencia de Mozilla.</p></li>
+    <li><a href="https://es.javascript.info/event-loop">Loop de eventos: microtareas y macrotareas (javascript.info)</a><p>El bucle de eventos con muchos ejemplos de orden, en español y con tareas al final.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/JavaScript/Guide/Memory_management">Gestión de memoria (MDN)</a><p>El ciclo de vida de la memoria, el conteo de referencias y marcar y barrer.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/API/Web_Workers_API/Using_web_workers">Usando Web Workers (MDN)</a><p>Guía completa de los workers: mensajes, errores, módulos y tipos de workers.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/JavaScript/Guide/Modules">Módulos JavaScript (MDN)</a><p>Todo sobre <code>import</code>, <code>export</code>, la importación dinámica y cómo se cargan en el navegador.</p></li>
+    <li><a href="https://v8.dev/blog/maglev">Maglev, el JIT optimizador más rápido de V8 (blog de V8, en inglés)</a><p>El equipo de V8 explica sus niveles de compilación. Para cuando quieras mirar dentro del motor.</p></li>
+  </ul>
+</section>

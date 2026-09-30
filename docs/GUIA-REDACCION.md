@@ -144,6 +144,8 @@ Geometría precisa, nada de dibujos «a mano alzada» ni figuras humanas.
 
 Reglas: 3–8 pasos. Si un elemento rotado (`transform="rotate(…)"`) también se anima o cambia de texto, envuélvelo en un `<g>` y pon las marcas en el `<g>`. No pongas `opacity` en el atributo `style` de un elemento animado: usa `fill-opacity` o `stroke-opacity`. Cada `li` explica lo que cambia en ese paso. El paso 1 debe entenderse solo (es lo que se ve
 en reposo). `data-mover`, `data-clases` y `data-texto` aplican el último valor cuyo número de paso sea ≤ al actual.
+En los pasos anteriores a la primera entrada de `data-clases`, esas clases se quitan del elemento aunque estén en su
+atributo `class`: si una clase debe verse desde el principio, añade también la entrada `1:clase`.
 Usa `px` en `translate`. Para contenido HTML (no SVG) la escena puede tener `div`s con las mismas marcas.
 
 ### Traza (máquina paso a paso)
