@@ -202,6 +202,10 @@ function paginaModulo(m, i) {
     avisos.push(`Falta el contenido de ${ruta}`);
     cuerpo = `<section id="ruta" data-parada="En construcción"><h2>Estación en construcción</h2><p class="entradilla">Este módulo todavía se está escribiendo.</p></section>`;
   }
+  // El JSON de una terminal simulada se corta sin avisar si contiene «</script>»: se comprueba aquí.
+  for (const [, json] of cuerpo.matchAll(/<script type="application\/json" class="terminal-sistema">([\s\S]*?)<\/script>/g)) {
+    try { JSON.parse(json); } catch (e) { avisos.push(`${m.slug}: el JSON de una terminal simulada no es válido (${e.message}). Si contiene «</script>», escríbelo «<\\/script>».`); }
+  }
   cuerpo = enlacesAlDia(nivelEjercicios(expandirVideos(expandirSenales(cuerpo))));
   // Chrome no aplica white-space:pre al texto SVG: el código dentro de diagramas conserva su sangría con xml:space.
   cuerpo = cuerpo.replace(/<text(?![^>]*xml:space)([^>]*class="[^"]*\b(?:d-mono|d-codigo-texto|d-codigo-tenue)\b[^"]*"[^>]*)>/g, '<text xml:space="preserve"$1>');

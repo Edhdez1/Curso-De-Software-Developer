@@ -216,7 +216,8 @@ Página web (HTML/CSS/JS con vista previa):
 escrito que compila Babel) solo aparece como «Script error.». Verificar talleres de React: React actualiza el DOM de
 forma asíncrona, así que en la verificación envuelve los clics simulados en `ReactDOM.flushSync(() => boton.click())`
 y, para escribir en un campo controlado, usa el setter nativo de `value` y dispara un evento `input` con `bubbles: true`.
-`console.log` entiende las sustituciones `%s`, `%d`, `%i`, `%f`, `%o` y `%c` como Node y los navegadores.
+`console.log` entiende las sustituciones `%s`, `%d`, `%i`, `%f`, `%o` y `%c` como Node y los navegadores. Con Phaser, pon `banner: false` en la
+configuración del juego para que no llene la consola del taller con su anuncio.
 
 Python (se ejecuta con Brython en el navegador; se verifica con Python real en las pruebas):
 
@@ -295,6 +296,9 @@ Opcional: `data-exito="mensaje"` cambia el mensaje de acierto. Escribe las líne
   </script>
 </div>
 ```
+
+Dentro del JSON de `terminal-sistema`, un `</script>` literal corta el bloque: escríbelo `<\/script>` (es JSON válido y
+significa lo mismo). `construir.mjs` avisa si el JSON no es válido.
 
 Instrucciones visibles dentro de la terminal (opcional): `<div class="terminal-instrucciones"><p>…</p></div>` dentro del
 `div.terminal-sim`. La misión recibe también `salida` (líneas que imprimieron los comandos y `node`).
