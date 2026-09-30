@@ -1891,3 +1891,542 @@ console.log(aBase62(62 ** 7 - 1));</textarea>
     </ol>
   </div>
 </section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>La arquitectura es la estructura de alto nivel de un sistema (piezas, responsabilidades, comunicación y reglas) y las razones detrás. Sus decisiones son las más caras de cambiar.</li>
+    <li>La arquitectura la deciden sobre todo los atributos de calidad: rendimiento, escalabilidad, disponibilidad, seguridad, mantenibilidad y costo. Escríbelos con números (p95, nueves) y acepta que mejorar uno suele empeorar otro.</li>
+    <li>Las piezas en cadena restan disponibilidad; las copias en paralelo la suman. Busca los puntos únicos de fallo.</li>
+    <li>Las capas (presentación, negocio, datos) y MVC separan responsabilidades dentro de un programa: cada parte tiene un solo motivo para cambiar.</li>
+    <li>Empieza casi siempre con un monolito, mejor si es modular. Los microservicios compensan con varios equipos, necesidades de escala muy distintas y experiencia en sistemas distribuidos.</li>
+    <li>REST para APIs generales, GraphQL para pantallas con necesidades de datos variadas, WebSockets para tiempo real y gRPC entre servicios internos. Con eventos y colas, quien publica no conoce a quien escucha; los consumidores deben ser idempotentes.</li>
+    <li>La caché acelera a cambio de datos que pueden estar viejos. Caché a un lado: lee de la caché y, si falla, de la fuente; al escribir, actualiza la fuente y borra la copia.</li>
+    <li>Para escalar horizontalmente, los servidores deben ser sin estado y estar detrás de un balanceador con comprobaciones de salud. En la base de datos: índices, caché, réplicas y, solo al final, particiones.</li>
+    <li>Documenta con C4 (contexto, contenedores, componentes, código), con UML de clases y de secuencia cuando ayuden, y guarda los porqués en ADR dentro del repositorio.</li>
+    <li>Un juego se organiza con un bucle de juego (entrada, actualizar con paso fijo, dibujar), escenas y, cuando hay muchas entidades, un ECS que separa datos (componentes) de lógica (sistemas).</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Los ejercicios van de lo guiado a los retos. Todos se ejecutan y se comprueban aquí mismo. Intenta cada uno unos minutos antes de abrir las pistas: pelearte con el problema es lo que hace que lo recuerdes.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-cadena">
+    <h3>Disponibilidad en cadena</h3>
+    <p>Completa <code>disponibilidadEnCadena</code> para que devuelva la disponibilidad de varias piezas que se necesitan todas a la vez: el producto de todas ellas. El programa debe imprimir exactamente <code>99.30 %</code> y <code>98.01 %</code>.</p>
+    <div class="taller" id="taller-ej-cadena" data-titulo="Ejercicio 1">
+      <textarea class="taller-codigo">// Devuelve la disponibilidad de varias piezas en cadena (todas necesarias).
+function disponibilidadEnCadena(piezas) {
+  let total = 1;
+  // Recorre piezas y multiplica total por cada una
+  return total;
+}
+
+function comoPorcentaje(d) {
+  return (d * 100).toFixed(2) + " %";
+}
+
+console.log(comoPorcentaje(disponibilidadEnCadena([0.999, 0.999, 0.995])));
+console.log(comoPorcentaje(disponibilidadEnCadena([0.99, 0.99])));</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (/99\.30|98\.01/.test(codigo)) return "No escribas los resultados a mano: calcúlalos multiplicando las disponibilidades.";
+if (salida[0] !== "99.30 %") return "La primera línea debería ser «99.30 %» y es «" + (salida[0] || "(nada)") + "». ¿Multiplicas total por cada pieza dentro del bucle?";
+if (salida[1] !== "98.01 %") return "La segunda línea debería ser «98.01 %» y es «" + (salida[1] || "(nada)") + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Usa un bucle <code>for (const p of piezas)</code> y, dentro, <code>total = total * p;</code> (o <code>total *= p;</code>).</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Si prefieres, <code>reduce</code> de la <a href="11-colecciones.html#transformar">Estación 11</a> lo hace en una línea: <code>piezas.reduce((acum, p) =&gt; acum * p, 1)</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// Devuelve la disponibilidad de varias piezas en cadena (todas necesarias).
+function disponibilidadEnCadena(piezas) {
+  let total = 1;
+  for (const p of piezas) {
+    total = total * p;
+  }
+  return total;
+}
+
+function comoPorcentaje(d) {
+  return (d * 100).toFixed(2) + " %";
+}
+
+console.log(comoPorcentaje(disponibilidadEnCadena([0.999, 0.999, 0.995])));
+console.log(comoPorcentaje(disponibilidadEnCadena([0.99, 0.99])));</code></pre>
+      <p>Tres piezas bastante fiables dan un sistema menos fiable que cualquiera de ellas. Por eso cada pieza que añades «por si acaso» tiene un costo en disponibilidad, no solo en dinero.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-capas">
+    <h3>Arregla las capas</h3>
+    <p>La función de presentación <code>mostrarPerfil</code> se salta las capas: lee directamente de <code>baseDeDatos</code> y calcula el nivel ella misma. Completa <code>servicioJugadores</code> con dos métodos, <code>nivelDe(xp)</code> (cada 1000 puntos de experiencia es un nivel, empezando en 1) y <code>obtenerPerfil(id)</code> (usa el repositorio y devuelve <code>{ nombre, nivel }</code>), y cambia <code>mostrarPerfil</code> para que solo llame a <code>servicioJugadores.obtenerPerfil(id)</code> y muestre el resultado. La salida no debe cambiar: <code>Lyra · nivel 3</code> y <code>Tom · nivel 1</code>.</p>
+    <div class="taller" id="taller-ej-capas" data-titulo="Ejercicio 2: arregla las capas">
+      <textarea class="taller-codigo">// DATOS
+const baseDeDatos = {
+  7: { nombre: "Lyra", xp: 2350 },
+  9: { nombre: "Tom", xp: 480 },
+};
+const repositorioJugadores = {
+  buscar(id) { return baseDeDatos[id]; },
+};
+
+// NEGOCIO (complétalo)
+const servicioJugadores = {
+  // nivelDe(xp): cada 1000 de experiencia es un nivel, empezando en 1
+  // obtenerPerfil(id): devuelve { nombre, nivel } usando el repositorio y nivelDe
+};
+
+// PRESENTACIÓN: esta función se salta las capas. Arréglala.
+function mostrarPerfil(id) {
+  const jugador = baseDeDatos[id];
+  const nivel = Math.floor(jugador.xp / 1000) + 1;
+  console.log(`${jugador.nombre} · nivel ${nivel}`);
+}
+
+mostrarPerfil(7);
+mostrarPerfil(9);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var cuerpo = (codigo.match(/function mostrarPerfil\s*\([^)]*\)\s*\{[\s\S]*?\n\}/) || [""])[0];
+if (!cuerpo) return "No encuentro la función mostrarPerfil. No le cambies el nombre.";
+if (/baseDeDatos/.test(cuerpo)) return "mostrarPerfil todavía lee baseDeDatos directamente. Pide los datos a servicioJugadores.";
+if (/Math\.floor|1000/.test(cuerpo)) return "La regla del nivel (dividir entre 1000) sigue en la presentación. Muévela a servicioJugadores.nivelDe.";
+if (!/servicioJugadores\.obtenerPerfil\s*\(/.test(cuerpo)) return "mostrarPerfil debería llamar a servicioJugadores.obtenerPerfil(id).";
+if (!/nivelDe\s*\(/.test(codigo)) return "Falta el método nivelDe(xp) en servicioJugadores.";
+if (!/repositorioJugadores\.buscar\s*\(/.test(codigo.replace(cuerpo, ""))) return "El servicio debería leer los datos con repositorioJugadores.buscar(id).";
+if (salida[0] !== "Lyra · nivel 3") return "La primera línea debería ser «Lyra · nivel 3» y es «" + (salida[0] || "(nada)") + "».";
+if (salida[1] !== "Tom · nivel 1") return "La segunda línea debería ser «Tom · nivel 1» y es «" + (salida[1] || "(nada)") + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Dentro de un objeto, un método se escribe como <code>nivelDe(xp) { return …; },</code>. Mueve ahí la línea con <code>Math.floor</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>obtenerPerfil(id)</code>: primero <code>const jugador = repositorioJugadores.buscar(id);</code> y después devuelve <code>{ nombre: jugador.nombre, nivel: this.nivelDe(jugador.xp) }</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// DATOS
+const baseDeDatos = {
+  7: { nombre: "Lyra", xp: 2350 },
+  9: { nombre: "Tom", xp: 480 },
+};
+const repositorioJugadores = {
+  buscar(id) { return baseDeDatos[id]; },
+};
+
+// NEGOCIO
+const servicioJugadores = {
+  nivelDe(xp) {
+    return Math.floor(xp / 1000) + 1;
+  },
+  obtenerPerfil(id) {
+    const jugador = repositorioJugadores.buscar(id);
+    return { nombre: jugador.nombre, nivel: this.nivelDe(jugador.xp) };
+  },
+};
+
+// PRESENTACIÓN
+function mostrarPerfil(id) {
+  const perfil = servicioJugadores.obtenerPerfil(id);
+  console.log(`${perfil.nombre} · nivel ${perfil.nivel}`);
+}
+
+mostrarPerfil(7);
+mostrarPerfil(9);</code></pre>
+      <p>La salida es la misma, pero ahora la regla del nivel vive en un solo sitio. Si mañana los niveles se calculan con una tabla, o los datos vienen de un servidor, <code>mostrarPerfil</code> no se entera. Cambiar la estructura sin cambiar el comportamiento es una <strong>refactorización</strong>, que verás a fondo en la <a href="25-codigo-limpio.html">Estación 25</a>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-idempotente">
+    <h3>Un consumidor que no cobra dos veces</h3>
+    <p>La cola entregó dos mensajes repetidos. Cambia <code>procesar</code> para que sea <strong>idempotente</strong>: debe recordar los <code>id</code> ya procesados y, si recibe uno repetido, imprimir <code>Duplicado m1 ignorado</code> (con su id) sin cobrar. La salida completa debe ser:</p>
+    <pre class="consola"><code>Cobro de 30 a Ana
+Cobro de 12 a Leo
+Duplicado m1 ignorado
+Cobro de 5 a Ana
+Duplicado m2 ignorado
+Total Ana: 35
+Total Leo: 12</code></pre>
+    <div class="taller" id="taller-ej-idempotente" data-titulo="Ejercicio 3" data-esperado="Cobro de 30 a Ana
+Cobro de 12 a Leo
+Duplicado m1 ignorado
+Cobro de 5 a Ana
+Duplicado m2 ignorado
+Total Ana: 35
+Total Leo: 12">
+      <textarea class="taller-codigo">const mensajes = [
+  { id: "m1", cliente: "Ana", importe: 30 },
+  { id: "m2", cliente: "Leo", importe: 12 },
+  { id: "m1", cliente: "Ana", importe: 30 },   // la cola lo entregó otra vez
+  { id: "m3", cliente: "Ana", importe: 5 },
+  { id: "m2", cliente: "Leo", importe: 12 },   // y este también
+];
+
+const totales = { Ana: 0, Leo: 0 };
+
+function procesar(mensaje) {
+  totales[mensaje.cliente] += mensaje.importe;
+  console.log(`Cobro de ${mensaje.importe} a ${mensaje.cliente}`);
+}
+
+for (const m of mensajes) procesar(m);
+console.log(`Total Ana: ${totales.Ana}`);
+console.log(`Total Leo: ${totales.Leo}`);</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Necesitas una memoria de ids procesados que viva fuera de la función. Un <code>Set</code> (<a href="19-estructuras-datos.html#conjuntos">Estación 19</a>) es perfecto: <code>const procesados = new Set();</code></p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Al principio de <code>procesar</code>: si <code>procesados.has(mensaje.id)</code>, imprime el aviso y sal con <code>return</code>. Si no, cobra y después <code>procesados.add(mensaje.id)</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const mensajes = [
+  { id: "m1", cliente: "Ana", importe: 30 },
+  { id: "m2", cliente: "Leo", importe: 12 },
+  { id: "m1", cliente: "Ana", importe: 30 },
+  { id: "m3", cliente: "Ana", importe: 5 },
+  { id: "m2", cliente: "Leo", importe: 12 },
+];
+
+const totales = { Ana: 0, Leo: 0 };
+const procesados = new Set();
+
+function procesar(mensaje) {
+  if (procesados.has(mensaje.id)) {
+    console.log(`Duplicado ${mensaje.id} ignorado`);
+    return;
+  }
+  totales[mensaje.cliente] += mensaje.importe;
+  procesados.add(mensaje.id);
+  console.log(`Cobro de ${mensaje.importe} a ${mensaje.cliente}`);
+}
+
+for (const m of mensajes) procesar(m);
+console.log(`Total Ana: ${totales.Ana}`);
+console.log(`Total Leo: ${totales.Leo}`);</code></pre>
+      <p>En un sistema real, el conjunto de ids procesados se guarda en la base de datos, en la misma operación que el cobro, para que sobreviva a un reinicio. Si se guardara solo en memoria, un reinicio del consumidor volvería a abrir la puerta a los duplicados.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-menos-conexiones">
+    <h3>Balanceador por menos conexiones</h3>
+    <p>Escribe <code>elegir(servidores)</code>: debe devolver el servidor <em>sano</em> con menos conexiones <code>activas</code>. Si hay empate, el primero de la lista. Si no hay ninguno sano, <code>null</code>. El programa debe imprimir <code>S2</code>, <code>S4</code> y <code>ninguno</code>, en ese orden.</p>
+    <div class="taller" id="taller-ej-conexiones" data-titulo="Ejercicio 4" data-esperado="S2
+S4
+ninguno">
+      <textarea class="taller-codigo">function elegir(servidores) {
+  // Devuelve el servidor sano con menos conexiones activas, o null
+  return servidores[0];
+}
+
+function nombreDe(servidor) {
+  return servidor === null ? "ninguno" : servidor.nombre;
+}
+
+const servidores = [
+  { nombre: "S1", sano: true, activas: 12 },
+  { nombre: "S2", sano: true, activas: 3 },
+  { nombre: "S3", sano: false, activas: 0 },
+  { nombre: "S4", sano: true, activas: 3 },
+];
+
+console.log(nombreDe(elegir(servidores)));   // S2 (S3 tiene 0, pero no está sano)
+servidores[1].sano = false;
+console.log(nombreDe(elegir(servidores)));   // S4
+servidores[0].sano = false;
+servidores[3].sano = false;
+console.log(nombreDe(elegir(servidores)));   // ninguno</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Empieza con <code>let mejor = null;</code> y recorre la lista. Salta los que no están sanos con <code>continue</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Un servidor sano reemplaza a <code>mejor</code> si <code>mejor === null</code> o si tiene <em>estrictamente</em> menos activas (<code>&lt;</code>, no <code>&lt;=</code>: así, en un empate, se queda el primero).</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function elegir(servidores) {
+  let mejor = null;
+  for (const s of servidores) {
+    if (!s.sano) continue;
+    if (mejor === null || s.activas &lt; mejor.activas) {
+      mejor = s;
+    }
+  }
+  return mejor;
+}
+
+function nombreDe(servidor) {
+  return servidor === null ? "ninguno" : servidor.nombre;
+}
+
+const servidores = [
+  { nombre: "S1", sano: true, activas: 12 },
+  { nombre: "S2", sano: true, activas: 3 },
+  { nombre: "S3", sano: false, activas: 0 },
+  { nombre: "S4", sano: true, activas: 3 },
+];
+
+console.log(nombreDe(elegir(servidores)));
+servidores[1].sano = false;
+console.log(nombreDe(elegir(servidores)));
+servidores[0].sano = false;
+servidores[3].sano = false;
+console.log(nombreDe(elegir(servidores)));</code></pre>
+      <p>Es un recorrido que busca el mínimo, como los de la <a href="09-bucles.html">Estación 9</a>, con una condición extra. Los balanceadores reales llevan la cuenta de <code>activas</code> sumando 1 al abrir una conexión y restando 1 al cerrarla.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-particiones">
+    <h3>Particiones por hash</h3>
+    <p>Completa <code>particionDe(clave, n)</code>: suma los códigos de todas las letras de la clave (<code>clave.charCodeAt(i)</code> da el código de la letra en la posición <code>i</code>) y devuelve el resto de dividir esa suma entre <code>n</code>. Después completa el bucle que cuenta cuántos usuarios cambiarían de partición si pasaras de 3 a 4 particiones. La salida debe ser:</p>
+    <pre class="consola"><code>ana → 1
+leo → 2
+sol → 1
+Partición 0: 1
+Partición 1: 5
+Partición 2: 4
+Cambian al pasar a 4 particiones: 9 de 10</code></pre>
+    <div class="taller" id="taller-ej-particiones" data-titulo="Ejercicio 5">
+      <textarea class="taller-codigo">// Devuelve un número de partición de 0 a n-1 para una clave de texto
+function particionDe(clave, n) {
+  return 0;   // cámbialo
+}
+
+console.log(`ana → ${particionDe("ana", 3)}`);
+console.log(`leo → ${particionDe("leo", 3)}`);
+console.log(`sol → ${particionDe("sol", 3)}`);
+
+const usuarios = ["ana", "leo", "sol", "mia", "teo", "ivan", "luz", "noa", "eva", "max"];
+const conteo = [0, 0, 0];
+for (const u of usuarios) conteo[particionDe(u, 3)]++;
+conteo.forEach((c, i) => console.log(`Partición ${i}: ${c}`));
+
+// Cuenta cuántos usuarios cambiarían de partición al pasar de 3 a 4
+let cambian = 0;
+// tu bucle aquí
+console.log(`Cambian al pasar a 4 particiones: ${cambian} de ${usuarios.length}`);</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (codigo.indexOf("charCodeAt") === -1) return "Usa clave.charCodeAt(i) para obtener el código de cada letra.";
+if (codigo.indexOf("%") === -1) return "El número de partición es el resto de dividir la suma entre n: usa el operador %.";
+var esperado = ["ana → 1", "leo → 2", "sol → 1", "Partición 0: 1", "Partición 1: 5", "Partición 2: 4", "Cambian al pasar a 4 particiones: 9 de 10"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] || "(nada)") + "».";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Dentro de <code>particionDe</code>: <code>let suma = 0;</code>, un bucle <code>for</code> con índice que haga <code>suma += clave.charCodeAt(i);</code> y al final <code>return suma % n;</code></p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para contar los cambios: recorre <code>usuarios</code> y suma 1 a <code>cambian</code> cuando <code>particionDe(u, 3) !== particionDe(u, 4)</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// Devuelve un número de partición de 0 a n-1 para una clave de texto
+function particionDe(clave, n) {
+  let suma = 0;
+  for (let i = 0; i &lt; clave.length; i++) {
+    suma += clave.charCodeAt(i);
+  }
+  return suma % n;
+}
+
+console.log(`ana → ${particionDe("ana", 3)}`);
+console.log(`leo → ${particionDe("leo", 3)}`);
+console.log(`sol → ${particionDe("sol", 3)}`);
+
+const usuarios = ["ana", "leo", "sol", "mia", "teo", "ivan", "luz", "noa", "eva", "max"];
+const conteo = [0, 0, 0];
+for (const u of usuarios) conteo[particionDe(u, 3)]++;
+conteo.forEach((c, i) =&gt; console.log(`Partición ${i}: ${c}`));
+
+let cambian = 0;
+for (const u of usuarios) {
+  if (particionDe(u, 3) !== particionDe(u, 4)) cambian++;
+}
+console.log(`Cambian al pasar a 4 particiones: ${cambian} de ${usuarios.length}`);</code></pre>
+      <p>Dos lecciones. Un hash tan simple reparte mal (1, 5 y 4 usuarios): los sistemas reales usan funciones hash mejores. Y al pasar de 3 a 4 particiones, <em>9 de cada 10</em> datos tendrían que mudarse de máquina. Para evitarlo existe el <strong>hash consistente</strong>, una técnica que, al añadir una partición, solo mueve una pequeña parte de los datos.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-decodificar">
+    <h3>Del código corto al número</h3>
+    <p>El acortador necesita la operación contraria a <code>aBase62</code>: dado un código, obtener el número. Escribe <code>deBase62(codigo)</code>. Debe imprimir <code>61</code>, <code>62</code>, <code>125</code>, <code>1000000</code> y <code>3521614606207</code>, uno por línea.</p>
+    <div class="taller" id="taller-ej-decodificar" data-titulo="Ejercicio 6">
+      <textarea class="taller-codigo">const ALFABETO = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+// De código a número: la operación contraria de aBase62
+function deBase62(codigo) {
+  let numero = 0;
+  // Recorre el código de izquierda a derecha...
+  return numero;
+}
+
+for (const c of ["Z", "10", "21", "4c92", "ZZZZZZZ"]) {
+  console.log(deBase62(c));
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (/1000000|3521614606207/.test(codigo)) return "No escribas los resultados a mano: calcúlalos a partir del código.";
+if (codigo.indexOf("indexOf") === -1 && codigo.indexOf("findIndex") === -1) return "Necesitas saber qué valor tiene cada carácter: ALFABETO.indexOf(caracter) te lo da.";
+var esperado = ["61", "62", "125", "1000000", "3521614606207"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "Para «" + ["Z", "10", "21", "4c92", "ZZZZZZZ"][i] + "» debería salir " + esperado[i] + " y sale «" + (salida[i] || "(nada)") + "».";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Piensa en cómo lees «372» en decimal: empiezas en 0; por cada cifra, multiplicas lo que llevas por 10 y sumas la cifra: 0 → 3 → 37 → 372. En base 62 es igual, multiplicando por 62.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>for (const caracter of codigo) { numero = numero * 62 + ALFABETO.indexOf(caracter); }</code></p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const ALFABETO = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+// De código a número: la operación contraria de aBase62
+function deBase62(codigo) {
+  let numero = 0;
+  for (const caracter of codigo) {
+    const valor = ALFABETO.indexOf(caracter);
+    if (valor === -1) return NaN;   // carácter que no está en el alfabeto
+    numero = numero * 62 + valor;
+  }
+  return numero;
+}
+
+for (const c of ["Z", "10", "21", "4c92", "ZZZZZZZ"]) {
+  console.log(deBase62(c));
+}</code></pre>
+      <p>Este método de «multiplicar y sumar» se llama esquema de Horner y sirve para cualquier base. Devolver <code>NaN</code> ante un carácter extraño es una forma simple de validar la entrada: en un servidor, ese caso respondería 404 sin llegar a consultar la base de datos.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-lru">
+    <h3>Una caché que olvida lo menos usado</h3>
+    <p>Una caché tiene memoria limitada. Completa <code>crearCacheLRU(capacidad)</code> para que, cuando se llene, descarte la entrada <strong>usada hace más tiempo</strong> (LRU). Leer una clave con <code>obtener</code> o actualizarla con <code>guardar</code> cuenta como uso. La salida debe ser <code>a,b,c</code>, <code>c,a,d</code>, <code>undefined</code> y <code>a,d,c</code>.</p>
+    <div class="taller" id="taller-ej-lru" data-titulo="Ejercicio 7" data-esperado="a,b,c
+c,a,d
+undefined
+a,d,c">
+      <textarea class="taller-codigo">function crearCacheLRU(capacidad) {
+  const datos = new Map();   // un Map recuerda el orden en que entraron las claves
+  return {
+    obtener(clave) {
+      return datos.get(clave);
+    },
+    guardar(clave, valor) {
+      datos.set(clave, valor);
+    },
+    claves() {
+      return [...datos.keys()].join(",");
+    },
+  };
+}
+
+const cache = crearCacheLRU(3);
+cache.guardar("a", 1);
+cache.guardar("b", 2);
+cache.guardar("c", 3);
+console.log(cache.claves());      // a,b,c
+cache.obtener("a");               // "a" pasa a ser la usada más recientemente
+cache.guardar("d", 4);            // no cabe: sale la usada hace más tiempo ("b")
+console.log(cache.claves());      // c,a,d
+console.log(cache.obtener("b"));  // undefined
+cache.guardar("c", 30);           // actualizar también cuenta como uso
+console.log(cache.claves());      // a,d,c</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Un <code>Map</code> guarda las claves en orden de inserción, y volver a hacer <code>set</code> de una clave que ya existe <em>no</em> la mueve al final. El truco para marcarla como recién usada: <code>delete</code> y después <code>set</code>. Así, la primera clave del Map siempre es la usada hace más tiempo.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>guardar</code>, después de insertar, si <code>datos.size &gt; capacidad</code>, borra la primera clave: <code>datos.delete([...datos.keys()][0]);</code>. En <code>obtener</code>, si la clave existe, sácala y vuelve a meterla antes de devolver su valor.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function crearCacheLRU(capacidad) {
+  const datos = new Map();
+  return {
+    obtener(clave) {
+      if (!datos.has(clave)) return undefined;
+      const valor = datos.get(clave);
+      datos.delete(clave);        // la saco…
+      datos.set(clave, valor);    // …y la vuelvo a meter al final: recién usada
+      return valor;
+    },
+    guardar(clave, valor) {
+      if (datos.has(clave)) datos.delete(clave);
+      datos.set(clave, valor);
+      if (datos.size &gt; capacidad) {
+        const masAntigua = [...datos.keys()][0];
+        datos.delete(masAntigua);
+      }
+    },
+    claves() {
+      return [...datos.keys()].join(",");
+    },
+  };
+}
+
+const cache = crearCacheLRU(3);
+cache.guardar("a", 1);
+cache.guardar("b", 2);
+cache.guardar("c", 3);
+console.log(cache.claves());
+cache.obtener("a");
+cache.guardar("d", 4);
+console.log(cache.claves());
+console.log(cache.obtener("b"));
+cache.guardar("c", 30);
+console.log(cache.claves());</code></pre>
+      <p>Crear un array con <code>[...datos.keys()]</code> recorre todas las claves; para una caché grande sería más eficiente <code>datos.keys().next().value</code>, que solo mira la primera. Redis y Valkey ofrecen políticas de descarte parecidas (aproximaciones de LRU), que se eligen en su configuración.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-adr">
+    <h3>Escribe un ADR</h3>
+    <p>Tu juego de preguntas en vivo tiene un problema. Para saber si empezó una pregunta nueva, cada teléfono le pregunta al servidor cada 2 segundos (a esto se le llama <strong>sondeo</strong>, en inglés <em>polling</em>). Con 3 000 personas jugando son 1 500 peticiones por segundo, casi todas con la respuesta «nada nuevo», y una pregunta puede tardar hasta 2 segundos en aparecer en algunos teléfonos, lo que es injusto en un juego de rapidez. Decide qué hacer y escribe el ADR en la plantilla. La comprobación revisa que tenga título numerado, estado, un contexto de al menos 120 caracteres con algún número, una decisión en voz activa («Usaremos…») y consecuencias con al menos un «A favor» y un «En contra».</p>
+    <div class="taller" id="taller-ej-adr" data-titulo="Ejercicio 8">
+      <textarea class="taller-codigo">const adr = `# ADR 0004: (escribe aquí la decisión en pocas palabras)
+Estado: Propuesta
+
+## Contexto
+
+
+## Decisión
+
+
+## Consecuencias
+
+`;
+
+console.log(adr);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var t = salida.join("\n");
+if (!/^# ADR \d+: \S/m.test(t)) return "La primera línea debe ser el título numerado: «# ADR 0004: Usar…».";
+if (/\(escribe aquí/.test(t)) return "Cambia el texto «(escribe aquí…)» del título por tu decisión.";
+if (!/^Estado: (Propuesta|Aceptada)/m.test(t)) return "Deja una línea «Estado: Propuesta» o «Estado: Aceptada».";
+function seccion(nombre) {
+  var m = t.match(new RegExp("## " + nombre + "\\n([\\s\\S]*?)(\\n## |$)"));
+  return m ? m[1].trim() : null;
+}
+var ctx = seccion("Contexto"), dec = seccion("Decisión"), con = seccion("Consecuencias");
+if (ctx === null || dec === null || con === null) return "No borres los encabezados ## Contexto, ## Decisión y ## Consecuencias.";
+if (ctx.length < 120) return "El contexto es muy corto (" + ctx.length + " caracteres). Explica la situación: cuántas personas, cuántas peticiones, qué problema hay.";
+if (!/\d/.test(ctx)) return "Incluye al menos un número en el contexto: los números hacen que la decisión se pueda revisar después.";
+if (!/usaremos|vamos a|adoptaremos/i.test(dec)) return "Escribe la decisión en voz activa: «Usaremos…».";
+if (!/a favor/i.test(con) || !/en contra/i.test(con)) return "En las consecuencias incluye al menos un «A favor» y un «En contra». Toda decisión tiene costos.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Repasa la sección de APIs: ¿qué tecnología permite que el <em>servidor</em> avise a los teléfonos sin que ellos pregunten? Hay dos candidatas; una de ellas solo envía del servidor al cliente, y para este juego podría bastar.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Usa los números del enunciado en el contexto (3 000 personas, cada 2 segundos, 1 500 peticiones por segundo). En contra, piensa en qué cuesta mantener miles de conexiones abiertas y qué pasa al tener varios servidores.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const adr = `# ADR 0004: Avisar de las preguntas nuevas con WebSockets
+Estado: Aceptada
+
+## Contexto
+Cada teléfono pregunta al servidor cada 2 segundos si empezó una pregunta
+nueva. Con 3 000 jugadores son 1 500 peticiones por segundo, y casi todas
+responden «nada nuevo». Además, una pregunta puede tardar hasta 2 segundos
+en aparecer, y en un juego de rapidez eso es injusto.
+
+## Decisión
+Usaremos WebSockets: cada teléfono abre una conexión al entrar en la
+partida y el servidor envía la pregunta a todos en el mismo instante.
+
+## Consecuencias
+- A favor: desaparecen las 1 500 peticiones por segundo inútiles.
+- A favor: todas las personas ven la pregunta casi a la vez.
+- En contra: el servidor mantiene 3 000 conexiones abiertas y la app
+  debe reconectarse sola si se corta la red.
+- En contra: con varios servidores necesitaremos publicar-suscribir
+  entre ellos para que todos reenvíen cada pregunta.
+
+## Alternativas consideradas
+- Server-Sent Events: más simple y serviría para enviar preguntas, pero
+  las respuestas irían por otro canal. Lo revisaremos si WebSockets da
+  problemas.
+`;
+
+console.log(adr);</code></pre>
+      <p>Elegir Server-Sent Events también sería defendible: lo importante es que el ADR explique por qué, con números, y que diga honestamente lo que se pierde.</p>
+    </details>
+  </article>
+</section>

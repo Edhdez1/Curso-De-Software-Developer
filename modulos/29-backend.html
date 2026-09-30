@@ -53,6 +53,8 @@
       <li><a href="#express">Express</a></li>
       <li><a href="#rest">Diseñar una API REST</a></li>
       <li><a href="#middleware">Middleware y errores</a></li>
+      <li><a href="#validar">Validar datos</a></li>
+      <li><a href="#config">Configuración y carpetas</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -1512,13 +1514,16 @@ export function rutaNoEncontrada(req, res) {
 }
 
 export function manejarErrores(err, req, res, next) {
+  if (err.type === "entity.parse.failed") {       // el JSON que envió el cliente está roto
+    return res.status(400).json({ error: "El cuerpo no es JSON válido" });
+  }
   const estado = err.status ?? 500;
   if (estado &gt;= 500) console.error(err);        // el detalle completo, solo en tu terminal
   res.status(estado).json({
     error: estado &gt;= 500 ? "Error interno del servidor" : err.message,
   });
 }</code></pre>
-  <p>Con esto, tus rutas pueden lanzar errores sin preocuparse de cómo se responden. En Express 5 funciona también dentro de funciones <code>async</code>, que es lo que usarás cuando tus datos vivan en una base de datos (<a href="30-bases-datos.html">Estación 30</a>). Crear un error con un código de estado es añadirle una propiedad:</p>
+  <p>Los errores que produce <code>express.json()</code> traen dos propiedades útiles: <code>status</code> (400) y <code>type</code>, que vale <code>"entity.parse.failed"</code> cuando el JSON no se puede leer. Los demás errores usan su <code>status</code> si lo tienen, y 500 si no. Con esto, tus rutas pueden lanzar errores sin preocuparse de cómo se responden. En Express 5 funciona también dentro de funciones <code>async</code>, que es lo que usarás cuando tus datos vivan en una base de datos (<a href="30-bases-datos.html">Estación 30</a>). Crear un error con un código de estado es añadirle una propiedad:</p>
   <pre><code class="language-js">app.get("/api/tareas/:id", async (req, res) =&gt; {
   const tarea = await buscarTarea(Number(req.params.id)); // imagina que consulta una base de datos
   if (!tarea) {
@@ -1547,6 +1552,273 @@ export function manejarErrores(err, req, res, next) {
 app.use(cors({ origin: "http://localhost:5173" })); // solo tu frontend, no cualquiera</code></pre>
   <p>Dos cosas que ahorran horas de confusión: CORS lo aplica el navegador, así que curl, Bruno y otros servidores no lo sufren (por eso con curl todo funciona y desde tu página no). Y abrir la API a todos los orígenes sin pensar tiene consecuencias de seguridad. Por qué existe CORS y cómo configurarlo bien está en la <a href="31-seguridad.html">Estación 31</a>.</p>
   <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Otros middleware que verás a menudo</p><p><code>express.static("public")</code> sirve los archivos de una carpeta (el HTML, el CSS, el JavaScript y las imágenes de tu juego) desde el mismo servidor que la API. Como todo sale del mismo origen, no hay problema de CORS. <code>express.urlencoded()</code> lee los formularios HTML clásicos. <code>helmet</code> añade cabeceras de seguridad y <code>express-rate-limit</code> limita cuántas peticiones puede hacer cada cliente; los dos aparecen en la Estación 31.</p></div></aside>
+</section>
+
+<section id="validar" data-parada="Validar datos">
+  <h2>Validar los datos que llegan</h2>
+  <p>Tu ruta <code>POST /api/puntuaciones</code> espera algo como <code>{"jugador": "Ana", "juego": "snake", "puntos": 420}</code>. Pero por la red puede llegar cualquier cosa: <code>{"puntos": "mil"}</code>, <code>{"puntos": -50}</code>, <code>{"jugador": ""}</code>, un nombre de cinco millones de letras o <code>{"puntos": 420, "esAdmin": true}</code>. Si lo guardas sin mirar, el ranking se rompe en el mejor de los casos. <strong>Validar</strong> es comprobar que los datos tienen la forma y los valores que esperas <em>antes</em> de usarlos, y si no, responder 400 explicando qué está mal.</p>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Validar en el frontend no basta</p><p>Las validaciones de un formulario HTML (<code>required</code>, <code>pattern</code>, que viste en la <a href="13-html.html">Estación 13</a>) son para la comodidad de la persona: le avisan al momento. Las del servidor son para la seguridad: cualquiera puede saltarse tu formulario enviando la petición con curl. Necesitas las dos, y la del servidor es obligatoria.</p></div></aside>
+
+  <h3>Validar a mano</h3>
+  <p>Una validación es una función que recibe los datos y devuelve la lista de problemas. Si la lista está vacía, los datos sirven. <code>Number.isInteger(valor)</code> responde si un valor es un número entero; para un texto como <code>"mil"</code> o un decimal como <code>12.5</code> responde <code>false</code>. Sigue la función con datos malos:</p>
+  <div class="traza" data-titulo="Una validación paso a paso">
+    <pre><code class="language-js">function validarPuntuacion(datos) {
+  const errores = [];
+  if (typeof datos.jugador !== "string" || datos.jugador.trim() === "") {
+    errores.push("jugador: escribe un nombre");
+  }
+  if (!Number.isInteger(datos.puntos) || datos.puntos &lt; 0) {
+    errores.push("puntos: debe ser un entero de 0 o más");
+  }
+  return errores;
+}
+
+const problemas = validarPuntuacion({ jugador: "  ", puntos: "mil" });
+console.log(problemas.length, problemas[0]);</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"validarPuntuacion": "función"}, "nota": "Se guarda la función. Todavía no se ejecuta."},
+      {"linea": 12, "vars": {"validarPuntuacion": "función", "datos": "{ jugador: \"  \", puntos: \"mil\" }"}, "nota": "Se llama con datos malos: un nombre hecho solo de espacios y unos puntos que son texto. Así podrían llegar en req.body."},
+      {"linea": 2, "vars": {"validarPuntuacion": "función", "datos": "{ jugador: \"  \", puntos: \"mil\" }", "errores": "[]"}, "nota": "Empieza con la lista de problemas vacía."},
+      {"linea": 3, "vars": {"validarPuntuacion": "función", "datos": "{ jugador: \"  \", puntos: \"mil\" }", "errores": "[]"}, "nota": "jugador sí es un texto, así que la primera parte es falsa. Pero \"  \".trim() quita los espacios y queda \"\": la segunda parte es verdadera. Con || basta una."},
+      {"linea": 4, "vars": {"validarPuntuacion": "función", "datos": "{ jugador: \"  \", puntos: \"mil\" }", "errores": "[\"jugador: escribe un nombre\"]"}, "nota": "Se anota el primer problema."},
+      {"linea": 6, "vars": {"validarPuntuacion": "función", "datos": "{ jugador: \"  \", puntos: \"mil\" }", "errores": "[\"jugador: escribe un nombre\"]"}, "nota": "Number.isInteger(\"mil\") es false, y con ! se vuelve true. La condición ya es verdadera: JavaScript ni siquiera evalúa datos.puntos < 0."},
+      {"linea": 7, "vars": {"validarPuntuacion": "función", "datos": "{ jugador: \"  \", puntos: \"mil\" }", "errores": "[\"jugador: escribe un nombre\", \"puntos: debe ser un entero de 0 o más\"]"}, "nota": "Segundo problema anotado. Fíjate en que la función no se detiene en el primero: así el cliente puede corregir todo de una vez."},
+      {"linea": 9, "vars": {"validarPuntuacion": "función", "datos": "{ jugador: \"  \", puntos: \"mil\" }", "errores": "[\"jugador: escribe un nombre\", \"puntos: debe ser un entero de 0 o más\"]"}, "nota": "Devuelve la lista completa."},
+      {"linea": 12, "vars": {"validarPuntuacion": "función", "problemas": "[\"jugador: escribe un nombre\", \"puntos: debe ser un entero de 0 o más\"]"}, "nota": "La lista se guarda en problemas. En una ruta, si no está vacía, responderías 400 con ella."},
+      {"linea": 13, "vars": {"validarPuntuacion": "función", "problemas": "[\"jugador: escribe un nombre\", \"puntos: debe ser un entero de 0 o más\"]"}, "salida": "2 jugador: escribe un nombre", "nota": "Dos problemas; se imprime el primero."}
+    ]</script>
+  </div>
+  <p>Ahora una versión con una regla más (el nombre no puede pasar de 20 caracteres). <strong>Predice</strong> qué lista imprime cada línea. Presta atención a la tercera, la cuarta y la última.</p>
+  <div class="taller" id="taller-validar" data-titulo="Predice: ¿qué datos pasan?">
+    <textarea class="taller-codigo">function validarPuntuacion(datos) {
+  const errores = [];
+  if (typeof datos.jugador !== "string" || datos.jugador.trim() === "") {
+    errores.push("jugador: escribe un nombre");
+  } else if (datos.jugador.trim().length > 20) {
+    errores.push("jugador: máximo 20 caracteres");
+  }
+  if (!Number.isInteger(datos.puntos) || datos.puntos < 0) {
+    errores.push("puntos: debe ser un entero de 0 o más");
+  }
+  return errores;
+}
+
+console.log(validarPuntuacion({ jugador: "Ana", puntos: 420 }));
+console.log(validarPuntuacion({ jugador: "  ", puntos: 420 }));
+console.log(validarPuntuacion({ jugador: "Leo", puntos: "510" }));
+console.log(validarPuntuacion({ jugador: "Leo", puntos: 12.5 }));
+console.log(validarPuntuacion({ puntos: -3 }));
+console.log(validarPuntuacion({ jugador: "Sofía", puntos: 777, esAdmin: true }));</textarea>
+  </div>
+  <p><code>"510"</code> falla porque es texto, aunque parezca un número: en JSON, <code>"puntos": "510"</code> y <code>"puntos": 510</code> son cosas distintas. <code>12.5</code> falla porque no es entero. Y la última pasa... con un campo de regalo, <code>esAdmin</code>. Si después guardaras <code>{ ...req.body }</code>, ese campo acabaría en tu base de datos. A ese ataque se le llama <strong>asignación masiva</strong> (<em>mass assignment</em>): colar campos que el servidor no esperaba. La defensa es construir el objeto a guardar solo con los campos que validaste.</p>
+  <p>Validar a mano funciona, pero crece rápido: cada campo, cada tipo, longitudes, valores por defecto, quitar espacios, mensajes claros, campos que sobran. Por eso se usan librerías.</p>
+
+  <h3>Zod: describe la forma y deja que compruebe</h3>
+  <p><strong>Zod</strong> es una librería de validación muy usada en JavaScript y TypeScript. En vez de escribir <code>if</code> tras <code>if</code>, describes la forma que deben tener los datos, un <strong>esquema</strong>, y Zod comprueba cualquier valor contra él. La versión actual es la 4. Se instala como cualquier paquete:</p>
+  <pre class="consola"><code><span class="prompt">$</span> npm install zod
+<span class="salida">added 1 package, and audited 70 packages in 2s</span></code></pre>
+  <pre><code class="language-js">import * as z from "zod";
+
+z.config(z.locales.es()); // mensajes de error en español
+
+const EsquemaPuntuacion = z.object({
+  jugador: z.string().trim().min(1, "Escribe un nombre").max(20, "Máximo 20 caracteres"),
+  juego: z.string().trim().min(1, "Indica el juego"),
+  puntos: z.number({ error: "Los puntos deben ser un número" })
+    .int("Los puntos deben ser un número entero")
+    .nonnegative("Los puntos no pueden ser negativos"),
+});</code></pre>
+  <p>Se lee casi como una frase: un objeto con un <code>jugador</code> que es un texto, sin espacios en los extremos, de 1 a 20 caracteres; un <code>juego</code> que es un texto no vacío; y unos <code>puntos</code> que son un número entero no negativo. El segundo argumento de cada regla es el mensaje de error; si no lo pones, Zod usa uno genérico, que <code>z.config(z.locales.es())</code> traduce al español.</p>
+  <p>Para comprobar datos se usa <code>safeParse</code>, que nunca lanza errores: devuelve un objeto con <code>success</code> y, según el caso, <code>data</code> (los datos ya limpios) o <code>error</code> (los problemas). Así se ve con datos buenos:</p>
+  <pre><code class="language-js">const bien = EsquemaPuntuacion.safeParse({ jugador: "  Sofía ", juego: "snake", puntos: 777, esAdmin: true });
+console.log(bien);
+// { success: true, data: { jugador: 'Sofía', juego: 'snake', puntos: 777 } }</code></pre>
+  <p>Mira dos regalos: <code>trim()</code> quitó los espacios de <code>"  Sofía "</code>, y <code>esAdmin</code> desapareció. <code>z.object</code> descarta los campos que no están en el esquema, así que la asignación masiva queda bloqueada. (Si prefieres rechazar la petición cuando sobran campos, usa <code>z.strictObject</code>.) Y con datos malos:</p>
+  <pre><code class="language-js">const mal = EsquemaPuntuacion.safeParse({ jugador: "", puntos: 12.5 });
+console.log(mal.success);                // false
+console.log(z.flattenError(mal.error));
+// {
+//   formErrors: [],
+//   fieldErrors: {
+//     jugador: [ 'Escribe un nombre' ],
+//     juego: [ 'Entrada inválida: se esperaba texto, recibido indefinido' ],
+//     puntos: [ 'Los puntos deben ser un número entero' ]
+//   }
+// }</code></pre>
+  <p><code>z.flattenError</code> ordena los problemas por campo en <code>fieldErrors</code>, justo lo que necesita un frontend para pintar cada mensaje junto a su casilla. En <code>formErrors</code> van los problemas del conjunto: por ejemplo, si no llegó ningún cuerpo, aparece <code>'Entrada inválida: se esperaba objeto, recibido indefinido'</code>. En una ruta queda así:</p>
+  <pre><code class="language-js">app.post("/api/puntuaciones", (req, res) =&gt; {
+  const resultado = EsquemaPuntuacion.safeParse(req.body);
+  if (!resultado.success) {
+    return res.status(400).json({ error: "Datos no válidos", detalles: z.flattenError(resultado.error) });
+  }
+  const nueva = { id: siguienteId++, ...resultado.data };   // resultado.data, no req.body
+  puntuaciones.push(nueva);
+  res.status(201).location(`/api/puntuaciones/${nueva.id}`).json(nueva);
+});</code></pre>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Después de validar, usa los datos validados</p><p>Una vez que Zod aprobó los datos, trabaja con <code>resultado.data</code> y olvídate de <code>req.body</code>. <code>resultado.data</code> tiene los textos recortados, los valores por defecto aplicados y solo los campos permitidos. Si vuelves a usar <code>req.body</code>, pierdes todo eso.</p></div></aside>
+
+  <h3>Validar también la consulta</h3>
+  <p>Los parámetros de consulta llegan como texto, así que <code>z.number()</code> rechazaría <code>"5"</code>. Para ellos existe <code>z.coerce.number()</code>, que primero convierte con <code>Number()</code> y después valida. Con <code>.default()</code> das un valor cuando el parámetro no viene, y con <code>.optional()</code> permites que falte:</p>
+  <pre><code class="language-js">const EsquemaConsulta = z.object({
+  juego: z.string().optional(),
+  limite: z.coerce.number().int().min(1).max(100).default(10),
+});
+
+EsquemaConsulta.safeParse({ limite: "5" });     // { success: true, data: { limite: 5 } }
+EsquemaConsulta.safeParse({});                  // { success: true, data: { limite: 10 } }
+EsquemaConsulta.safeParse({ limite: "mucho" }); // success: false → "se esperaba número, recibido NaN"
+EsquemaConsulta.safeParse({ limite: "500" });   // success: false → "se esperaba que número fuera &lt;=100"</code></pre>
+  <p>Limitar <code>limite</code> no es un capricho: sin un máximo, alguien podría pedir un millón de puntuaciones en una sola petición y dejar tu servidor ocupado.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Zod y TypeScript</p><p>Si escribes tu API en TypeScript (<a href="23-typescript.html">Estación 23</a>), Zod te da además el tipo a partir del esquema: <code>type Puntuacion = z.infer&lt;typeof EsquemaPuntuacion&gt;</code>. Así el esquema es la única fuente de verdad, para la comprobación mientras el programa corre y para los tipos mientras programas. Hay alternativas con la misma idea, como Valibot, Joi o express-validator.</p></div></aside>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Validar no es toda la seguridad</p><p>Validar la forma de los datos es la primera defensa, pero no la única. Un texto válido todavía puede ser un ataque si lo metes en una consulta SQL sin cuidado (<a href="30-bases-datos.html">Estación 30</a>) o en una página con <code>innerHTML</code> (<a href="15-dom.html">Estación 15</a>), y validar no dice si esa persona tiene permiso para hacer lo que pide (<a href="31-seguridad.html">Estación 31</a>). Un detalle útil: <code>express.json()</code> rechaza por defecto cuerpos de más de 100 KB, así que nadie puede colarte un JSON gigante.</p></div></aside>
+</section>
+
+<section id="config" data-parada="Configuración y carpetas">
+  <h2>Configuración y estructura del proyecto</h2>
+  <p>Hasta ahora el puerto 3000 estaba escrito en el código. Funciona en tu computadora, pero la plataforma donde publiques la API te dirá qué puerto usar, y no siempre será el 3000. Peor aún: pronto tendrás secretos, como la contraseña de la base de datos o la clave de un servicio de correo. Si los escribes en el código, acaban en Git, y lo que entra en el historial de Git se queda ahí para siempre (<a href="24-git.html">Estación 24</a>). La configuración tiene que vivir fuera del código.</p>
+
+  <h3>Variables de entorno</h3>
+  <p>Una <strong>variable de entorno</strong> es un valor con nombre que el sistema operativo le entrega a un programa al arrancarlo. Cada programa recibe las suyas, y en Node están en el objeto <code>process.env</code>:</p>
+  <pre><code class="language-js">const puerto = Number(process.env.PORT) || 3000;
+
+app.listen(puerto, (error) =&gt; {
+  if (error) throw error;
+  console.log(`API lista en http://localhost:${puerto}`);
+});</code></pre>
+  <p>Los valores de <code>process.env</code> son siempre texto, o <code>undefined</code> si la variable no existe. Por eso se convierte con <code>Number()</code> y se da un valor por defecto con <code>||</code>. Para darle un valor al arrancar, en la terminal:</p>
+  <pre class="consola"><code><span class="prompt">$</span> PORT=4000 node src/servidor.js
+<span class="salida">API lista en http://localhost:4000</span></code></pre>
+  <p>Así se hace en macOS, Linux y Git Bash. En PowerShell es <code>$env:PORT=4000; node src/servidor.js</code>, y la variable queda puesta hasta que cierres esa terminal.</p>
+
+  <h3>El archivo .env y --env-file</h3>
+  <p>Escribir todas las variables en cada arranque es incómodo. La costumbre es guardarlas en un archivo llamado <code>.env</code> en la raíz del proyecto, una por línea, con la forma <code>NOMBRE=valor</code>:</p>
+  <pre><code class="language-text"># Configuración de MI computadora. Este archivo NO se sube a Git.
+PORT=3000
+NODE_ENV=development
+CLAVE_API_CORREO=pon-aqui-tu-clave</code></pre>
+  <p>Node lo lee con la opción <code>--env-file</code>: todas esas variables aparecen en <code>process.env</code> antes de que empiece tu código. Existe desde Node 20.6 y es estable desde Node 24.10:</p>
+  <pre class="consola"><code><span class="prompt">$</span> node --env-file=.env src/servidor.js
+<span class="salida">API lista en http://localhost:3000</span></code></pre>
+  <p>Si el archivo no existe, Node se niega a arrancar con <code>node: .env: not found</code>. Cuando el archivo es opcional, usa <code>--env-file-if-exists=.env</code>. Y si una variable está a la vez en el entorno real y en el archivo, gana la del entorno. En tutoriales anteriores verás el paquete <code>dotenv</code> (<code>import "dotenv/config"</code>), que hacía lo mismo cuando Node todavía no sabía hacerlo; hoy no lo necesitas. Con esto, los scripts de <code>package.json</code> quedan así:</p>
+  <pre><code class="language-json">"scripts": {
+  "dev": "node --watch --env-file=.env src/servidor.js",
+  "start": "node src/servidor.js"
+}</code></pre>
+  <p>¿Por qué <code>start</code> no lee <code>.env</code>? Porque <code>start</code> es lo que ejecuta la plataforma de publicación, y allí no hay archivo <code>.env</code>: las variables se escriben en el panel de la plataforma, que se las entrega a tu programa como variables de entorno reales (<a href="35-devops.html">Estación 35</a>).</p>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">.env nunca va a Git</p><p>Añade <code>.env</code> a <code>.gitignore</code> antes del primer commit. Para que tu equipo sepa qué variables hacen falta, sube en su lugar un <code>.env.example</code> con los mismos nombres y valores de mentira: <code>CLAVE_API_CORREO=cambia-esto</code>. Si alguna vez subes un secreto por error, dalo por robado: hay programas que recorren GitHub buscando claves. Borrarlo del historial no basta; hay que cambiar la clave en el servicio (en inglés, <em>rotarla</em>). La <a href="31-seguridad.html">Estación 31</a> trata la gestión de secretos a fondo.</p></div></aside>
+  <p>Dos costumbres más. La primera: <strong>comprueba la configuración al arrancar</strong>. Si falta algo imprescindible, es mejor que el servidor se niegue a encender con un mensaje claro que descubrirlo a medianoche cuando falle el primer correo:</p>
+  <pre><code class="language-js">const claveCorreo = process.env.CLAVE_API_CORREO;
+if (!claveCorreo) {
+  throw new Error("Falta la variable de entorno CLAVE_API_CORREO. Revisa tu archivo .env");
+}</code></pre>
+  <p>La segunda: la variable <code>NODE_ENV</code>. Por convención vale <code>"production"</code> en el servidor publicado, y muchas librerías cambian su comportamiento con ella. Express, por ejemplo, deja de mostrar la traza de los errores en su manejador de serie. La pondrás en la plataforma de publicación, no en tu computadora.</p>
+
+  <h3>Estructura de carpetas</h3>
+  <p>Un solo archivo sirve para aprender, pero con diez rutas se vuelve un laberinto. No hay una estructura obligatoria en Express; esta es una forma sencilla y muy común, la que usarás en el proyecto:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 356" role="img" aria-label="Árbol de carpetas del proyecto api-puntuaciones: en la raíz, package.json, package-lock.json, .env, .env.example, .gitignore, la carpeta node_modules y la carpeta src; dentro de src, servidor.js, app.js, la carpeta rutas con puntuaciones.js y la carpeta middleware con registro.js y errores.js; a la derecha, qué contiene cada archivo y si se sube a Git">
+      <path class="d-linea" style="stroke-width:1.5" d="M28 38 V179 M28 47 H40 M28 69 H40 M28 91 H40 M28 113 H40 M28 135 H40 M28 157 H40 M28 179 H40"/>
+      <path class="d-linea" style="stroke-width:1.5" d="M52 190 V289 M52 201 H64 M52 223 H64 M52 245 H64 M52 289 H64"/>
+      <path class="d-linea" style="stroke-width:1.5" d="M76 256 V267 M76 267 H88"/>
+      <path class="d-linea" style="stroke-width:1.5" d="M76 300 V333 M76 311 H88 M76 333 H88"/>
+      <text xml:space="preserve" class="d-mono" x="16" y="30" style="font-size:15px;font-weight:700">api-puntuaciones/</text>
+      <text xml:space="preserve" class="d-mono" x="44" y="52" style="font-size:15px">package.json</text>
+      <text xml:space="preserve" class="d-mono" x="44" y="74" style="font-size:15px">package-lock.json</text>
+      <text xml:space="preserve" class="d-mono" x="44" y="96" style="font-size:15px">.env</text>
+      <text xml:space="preserve" class="d-mono" x="44" y="118" style="font-size:15px">.env.example</text>
+      <text xml:space="preserve" class="d-mono" x="44" y="140" style="font-size:15px">.gitignore</text>
+      <text xml:space="preserve" class="d-mono d-tenue" x="44" y="162" style="font-size:15px">node_modules/</text>
+      <text xml:space="preserve" class="d-mono" x="44" y="184" style="font-size:15px;font-weight:700">src/</text>
+      <text xml:space="preserve" class="d-mono" x="68" y="206" style="font-size:15px">servidor.js</text>
+      <text xml:space="preserve" class="d-mono" x="68" y="228" style="font-size:15px">app.js</text>
+      <text xml:space="preserve" class="d-mono" x="68" y="250" style="font-size:15px;font-weight:700">rutas/</text>
+      <text xml:space="preserve" class="d-mono" x="92" y="272" style="font-size:15px">puntuaciones.js</text>
+      <text xml:space="preserve" class="d-mono" x="68" y="294" style="font-size:15px;font-weight:700">middleware/</text>
+      <text xml:space="preserve" class="d-mono" x="92" y="316" style="font-size:15px">registro.js</text>
+      <text xml:space="preserve" class="d-mono" x="92" y="338" style="font-size:15px">errores.js</text>
+      <g class="d-peq">
+        <text class="d-tenue" x="270" y="52">ficha del proyecto · se sube a Git</text>
+        <text class="d-tenue" x="270" y="74">versiones exactas · se sube a Git</text>
+        <text x="270" y="96">tu configuración y tus secretos · NO se sube</text>
+        <text class="d-tenue" x="270" y="118">los nombres de las variables, sin secretos · se sube</text>
+        <text class="d-tenue" x="270" y="140">lo que Git debe ignorar: node_modules/ y .env</text>
+        <text x="270" y="162">los paquetes descargados · NO se sube</text>
+        <text class="d-tenue" x="270" y="206">arranca: lee PORT y llama a app.listen</text>
+        <text class="d-tenue" x="270" y="228">crea la app: middleware y rutas, en orden</text>
+        <text class="d-tenue" x="270" y="272">las rutas de /api/puntuaciones (un Router)</text>
+        <text class="d-tenue" x="270" y="316">anota cada petición</text>
+        <text class="d-tenue" x="270" y="338">404 a medida y manejador de errores</text>
+      </g>
+    </svg>
+    <figcaption>Una estructura sencilla para una API con Express. Cada archivo tiene un solo trabajo, y los dos que no se suben a Git están marcados.</figcaption>
+  </figure>
+  <p>Dos decisiones de esta estructura merecen explicación:</p>
+  <ul>
+    <li><strong><code>app.js</code> y <code>servidor.js</code> están separados.</strong> <code>app.js</code> crea y configura la aplicación y la exporta; <code>servidor.js</code> la importa y abre el puerto. Parece un archivo de más, pero permite que las pruebas automáticas importen <code>app</code> y le envíen peticiones sin encender un servidor de verdad (<a href="26-testing.html">Estación 26</a>).</li>
+    <li><strong>Las rutas de cada recurso van en su propio archivo</strong>, agrupadas con un <code>Router</code>: una mini aplicación de Express que solo tiene rutas. Se «monta» en una ruta base, y dentro de él las rutas se escriben sin esa base.</li>
+  </ul>
+  <pre><code class="language-js">// src/rutas/puntuaciones.js
+import { Router } from "express";
+
+export const rutasPuntuaciones = Router();
+
+rutasPuntuaciones.get("/", (req, res) =&gt; { /* … */ });     // GET  /api/puntuaciones
+rutasPuntuaciones.get("/:id", (req, res) =&gt; { /* … */ });  // GET  /api/puntuaciones/7
+rutasPuntuaciones.post("/", (req, res) =&gt; { /* … */ });    // POST /api/puntuaciones
+
+// src/app.js
+app.use("/api/puntuaciones", rutasPuntuaciones);           // monta el Router en su ruta base</code></pre>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuando el proyecto crece</p><p>En proyectos grandes se separa además la lógica en capas: las <strong>rutas</strong> solo hablan HTTP (leen <code>req</code>, responden con <code>res</code>), los <strong>servicios</strong> aplican las reglas del negocio y los <strong>repositorios</strong> hablan con la base de datos. Es la arquitectura en capas de la <a href="28-arquitectura.html">Estación 28</a>. Otra opción popular es agrupar por funcionalidad (<code>src/puntuaciones/rutas.js</code>, <code>src/puntuaciones/esquemas.js</code>…). Empieza simple y divide un archivo cuando cueste encontrar cosas en él.</p></div></aside>
+  <p>Practica la estructura en esta terminal. La carpeta <code>api-puntuaciones</code> ya tiene su <code>package.json</code> y sus dependencias instaladas; te falta el resto. Recuerda: los archivos que empiezan por punto no aparecen con <code>ls</code>; para verlos, <code>ls -a</code>.</p>
+  <div class="terminal-sim" data-titulo="Misión: prepara la estructura de la API" data-inicio="/home/tu">
+    <div class="terminal-instrucciones">
+      <ol>
+        <li>Entra en el proyecto: <code>cd api-puntuaciones</code>.</li>
+        <li>Crea las carpetas de una vez: <code>mkdir -p src/rutas src/middleware</code>.</li>
+        <li>Crea los archivos vacíos: <code>touch src/servidor.js src/app.js src/rutas/puntuaciones.js src/middleware/registro.js src/middleware/errores.js</code>.</li>
+        <li>Crea la configuración: <code>echo "PORT=3000" &gt; .env</code> y lo mismo para <code>.env.example</code>.</li>
+        <li>Crea <code>.gitignore</code> con dos líneas: <code>echo "node_modules/" &gt; .gitignore</code> y <code>echo ".env" &gt;&gt; .gitignore</code> (dos signos: añadir sin borrar).</li>
+        <li>Comprueba con <code>ls -a</code> y <code>cat .gitignore</code>.</li>
+      </ol>
+    </div>
+    <script type="application/json" class="terminal-sistema">{"api-puntuaciones": {"package.json": "{\n  \"name\": \"api-puntuaciones\",\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"dev\": \"node --watch --env-file=.env src/servidor.js\",\n    \"start\": \"node src/servidor.js\"\n  },\n  \"dependencies\": {\n    \"express\": \"^5.2.1\",\n    \"zod\": \"^4.6.5\"\n  }\n}\n", "package-lock.json": "{\n  \"name\": \"api-puntuaciones\",\n  \"lockfileVersion\": 3\n}\n", "node_modules": {"express": {}, "zod": {}}}}</script>
+    <script type="text/plain" class="terminal-mision">
+var p = sistema["api-puntuaciones"];
+if (!p) return "No encuentro la carpeta api-puntuaciones. Pulsa «Reiniciar» para recuperarla.";
+var src = p.src;
+if (!src || typeof src !== "object" || !src.rutas || !src.middleware) return "Paso 2: dentro de api-puntuaciones, crea src/rutas y src/middleware (mkdir -p crea también src).";
+var faltan = [];
+if (src["servidor.js"] === undefined) faltan.push("src/servidor.js");
+if (src["app.js"] === undefined) faltan.push("src/app.js");
+if (src.rutas["puntuaciones.js"] === undefined) faltan.push("src/rutas/puntuaciones.js");
+if (src.middleware["registro.js"] === undefined) faltan.push("src/middleware/registro.js");
+if (src.middleware["errores.js"] === undefined) faltan.push("src/middleware/errores.js");
+if (faltan.length) return "Paso 3: faltan estos archivos: " + faltan.join(", ") + ".";
+if (typeof p[".env"] !== "string" || p[".env"].indexOf("PORT=3000") === -1) return "Paso 4: crea .env con la línea PORT=3000 (echo \"PORT=3000\" > .env).";
+if (typeof p[".env.example"] !== "string" || p[".env.example"].indexOf("PORT") === -1) return "Paso 4: crea también .env.example con PORT=3000.";
+var gi = typeof p[".gitignore"] === "string" ? p[".gitignore"] : "";
+if (!/(^|\n)node_modules\/?\s*(\n|$)/.test(gi)) return "Paso 5: .gitignore debe tener una línea node_modules/.";
+if (!/(^|\n)\.env\s*(\n|$)/.test(gi)) return "Paso 5: .gitignore debe tener también una línea .env. Añádela con >> para no borrar la anterior.";
+if (!historial.some(function (c) { return /^cat\s+\.gitignore/.test(c); })) return "Paso 6: comprueba el resultado con ls -a y cat .gitignore.";
+return true;
+    </script>
+  </div>
+  <p>Y ahora el orden dentro de <code>app.js</code>, que es donde más se nota que el orden importa. Las importaciones pueden ir en cualquier orden entre sí; el resto, no. El registro va primero para que anote incluso las peticiones que fallen al leer el cuerpo.</p>
+  <div class="parsons" data-titulo="Ordena src/app.js" data-lenguaje="js" data-exito="Correcto: importaciones, app, middleware generales, rutas, 404 y, al final de todo, el manejador de errores.">
+    <ol>
+      <li data-grupo="a">import express from "express";</li>
+      <li data-grupo="a">import { registro } from "./middleware/registro.js";</li>
+      <li data-grupo="a">import { rutaNoEncontrada, manejarErrores } from "./middleware/errores.js";</li>
+      <li data-grupo="a">import { rutasPuntuaciones } from "./rutas/puntuaciones.js";</li>
+      <li>export const app = express();</li>
+      <li>app.use(registro);</li>
+      <li>app.use(express.json());</li>
+      <li>app.use("/api/puntuaciones", rutasPuntuaciones);</li>
+      <li>app.use(rutaNoEncontrada);</li>
+      <li>app.use(manejarErrores);</li>
+    </ol>
+  </div>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">¿Y si quiero escribirla en TypeScript?</p><p>Todo lo de esta estación funciona igual en TypeScript. Parte del proyecto y del <code>tsconfig.json</code> de la <a href="23-typescript.html#instalar">Estación 23</a> y haz cuatro cambios. Instala los tipos de Node y de Express como dependencias de desarrollo: <code>npm install -D typescript @types/node @types/express</code> (Zod ya trae los suyos). En <code>tsconfig.json</code>, cambia <code>"types": []</code> por <code>"types": ["node"]</code>, para que TypeScript conozca <code>process</code> y los módulos de Node, y añade <code>"rewriteRelativeImportExtensions": true</code>. Nombra tus archivos <code>.ts</code> e impórtalos con su extensión real: <code>import { app } from "./app.ts"</code>. Para desarrollar, <code>node --watch --env-file=.env src/servidor.ts</code> ejecuta el código directamente gracias al borrado de tipos de Node 24, y en otra terminal <code>npx tsc --noEmit --watch</code> revisa los tipos. Para publicar, <code>npx tsc</code> escribe la versión JavaScript en <code>dist/</code> (cambiando esas extensiones a <code>.js</code>) y el script <code>start</code> pasa a ser <code>node dist/servidor.js</code>.</p></div></aside>
 </section>
   </main>
 </div>

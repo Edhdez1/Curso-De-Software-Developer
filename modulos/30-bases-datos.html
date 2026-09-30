@@ -47,6 +47,8 @@
     <ol>
       <li><a href="#ruta">Lo que vas a lograr</a></li>
       <li><a href="#por-que">Por qué una base de datos</a></li>
+      <li><a href="#tablas">Tablas y claves</a></li>
+      <li><a href="#consultar">Consultar</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -85,11 +87,13 @@
   <figure class="capsula" data-titulo="Dos peticiones, un archivo">
     <div class="capsula-escena">
       <svg viewBox="0 0 720 290" role="img" aria-label="Animación: el archivo visitas.json guarda 10 visitas. La petición A lee 10, la petición B también lee 10, A escribe 11 y B escribe 11 encima: se pierde una visita. Con una base de datos, cada suma se hace de una vez y B espera su turno, así que el resultado es 12.">
-        <rect class="d-caja" x="20" y="30" width="230" height="84" rx="8" data-clases="2:d-acento-trazo; 3:d-caja; 4:d-acento-trazo; 5:d-caja"/>
+        <rect class="d-caja" x="20" y="30" width="230" height="84" rx="8"/>
+        <rect class="d-acento-trazo" x="20" y="30" width="230" height="84" rx="8" data-pasos="2,4"/>
         <text class="d-rotulo" x="36" y="58">Petición A</text>
         <text class="d-peq d-tenue" x="36" y="80">quiere sumar una visita</text>
         <text xml:space="preserve" class="d-mono d-peq" x="36" y="102" data-texto="2:leyó 10; 4:escribió 10 + 1 = 11; 6:suma dentro de la base">esperando…</text>
-        <rect class="d-caja" x="20" y="176" width="230" height="84" rx="8" data-clases="3:d-acento-trazo; 4:d-caja; 5:d-acento-trazo; 6:d-caja"/>
+        <rect class="d-caja" x="20" y="176" width="230" height="84" rx="8"/>
+        <rect class="d-acento-trazo" x="20" y="176" width="230" height="84" rx="8" data-pasos="3,5"/>
         <text class="d-rotulo" x="36" y="204">Petición B</text>
         <text class="d-peq d-tenue" x="36" y="226">quiere sumar una visita</text>
         <text xml:space="preserve" class="d-mono d-peq" x="36" y="248" data-texto="3:leyó 10; 5:escribió 10 + 1 = 11; 6:esperó su turno">esperando…</text>
@@ -105,10 +109,11 @@
         <text class="d-peq" x="360" y="112" data-pasos="4">escribe</text>
         <text class="d-peq" x="360" y="190" data-pasos="3">lee</text>
         <text class="d-peq" x="360" y="190" data-pasos="5">escribe</text>
-        <rect class="d-caja" x="470" y="96" width="230" height="100" rx="8" data-clases="6:d-ok-trazo"/>
+        <rect class="d-caja" x="470" y="96" width="230" height="100" rx="8"/>
+        <rect class="d-ok-trazo" x="470" y="96" width="230" height="100" rx="8" data-pasos="6"/>
         <text class="d-rotulo" x="486" y="124" data-texto="6:Base de datos">visitas.json</text>
         <text xml:space="preserve" class="d-mono" x="486" y="166" style="font-size:18px" data-texto="4:{ &quot;visitas&quot;: 11 }; 6:visitas = 12" data-clases="5:d-mal; 6:d-ok">{ "visitas": 10 }</text>
-        <text class="d-peq" x="470" y="240" data-pasos="5-" data-texto="5:Debía quedar 12. Se perdió una visita.; 6:Leer, sumar y escribir en un solo paso." data-clases="5:d-mal; 6:d-ok">Debía quedar 12. Se perdió una visita.</text>
+        <text class="d-peq" x="585" y="228" text-anchor="middle" data-pasos="5-" data-texto="5:Debía quedar 12: se perdió una visita.; 6:Leer, sumar y escribir en un solo paso" data-clases="5:d-mal; 6:d-ok">Debía quedar 12: se perdió una visita.</text>
       </svg>
     </div>
     <figcaption>
@@ -167,6 +172,305 @@ SELECT visitas FROM contador;</textarea>
     <li>Los comentarios empiezan con dos guiones: <code>-- esto no se ejecuta</code>.</li>
   </ul>
 </section>
+
+<section id="tablas" data-parada="Tablas y claves">
+  <h2>Tablas, tipos y claves</h2>
+  <p>En 1970, Edgar F. Codd, un matemático que trabajaba en IBM, publicó un artículo que cambió la informática: proponía organizar los datos en <strong>tablas</strong> y consultarlos con operaciones matemáticas bien definidas, sin que el programa tuviera que saber cómo estaban guardados en el disco. Es el <strong>modelo relacional</strong>, y más de cincuenta años después sigue siendo la forma más común de guardar datos. Cada tabla guarda un tipo de cosa: una tabla de juegos, otra de clientes, otra de compras.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 290" role="img" aria-label="Anatomía de la tabla juegos. Tiene cinco columnas: id de tipo INTEGER, titulo de tipo TEXT, genero de tipo TEXT, precio de tipo REAL y anio de tipo INTEGER. Tiene cuatro filas, una por juego. La segunda fila está resaltada con el rótulo fila. La columna genero está recuadrada con el rótulo columna. La columna id está marcada como clave primaria. En la última fila, la celda de anio contiene NULL, que significa que falta el dato.">
+      <text class="d-rotulo" x="80" y="32">Tabla juegos</text>
+      <rect class="d-caja" x="80" y="44" width="560" height="180" rx="6"/>
+      <rect class="d-caja-suave" x="82" y="46" width="556" height="41"/>
+      <rect class="d-resalte" x="81" y="123" width="558" height="33"/>
+      <path class="d-linea" d="M80 88H640M80 122H640M80 156H640M80 190H640" stroke-opacity="0.35"/>
+      <path class="d-linea" d="M140 44V224M340 44V224M470 44V224M560 44V224" stroke-opacity="0.35"/>
+      <g class="d-rotulo" style="font-size:15px">
+        <text x="110" y="64" text-anchor="middle">id</text>
+        <text x="150" y="64">titulo</text>
+        <text x="350" y="64">genero</text>
+        <text x="480" y="64">precio</text>
+        <text x="570" y="64">anio</text>
+      </g>
+      <g class="d-mono d-tenue" style="font-size:12px">
+        <text x="110" y="81" text-anchor="middle">INTEGER</text>
+        <text x="150" y="81">TEXT NOT NULL</text>
+        <text x="350" y="81">TEXT</text>
+        <text x="480" y="81">REAL</text>
+        <text x="570" y="81">INTEGER</text>
+      </g>
+      <g class="d-mono" style="font-size:14px">
+        <text x="110" y="110" text-anchor="middle">1</text>
+        <text x="150" y="110">Bosque Eterno</text>
+        <text x="350" y="110">aventura</text>
+        <text x="480" y="110">20.0</text>
+        <text x="570" y="110">2021</text>
+        <text x="110" y="144" text-anchor="middle">2</text>
+        <text x="150" y="144">Cohete Loco</text>
+        <text x="350" y="144">carreras</text>
+        <text x="480" y="144">10.0</text>
+        <text x="570" y="144">2019</text>
+        <text x="110" y="178" text-anchor="middle">3</text>
+        <text x="150" y="178">Mazmorra 64</text>
+        <text x="350" y="178">rpg</text>
+        <text x="480" y="178">25.0</text>
+        <text x="570" y="178">2023</text>
+        <text x="110" y="212" text-anchor="middle">4</text>
+        <text x="150" y="212">Isla Perdida</text>
+        <text x="350" y="212">aventura</text>
+        <text x="480" y="212">18.0</text>
+        <text class="d-tenue" x="570" y="212">NULL</text>
+      </g>
+      <rect class="d-acento-trazo" x="340" y="44" width="130" height="180"/>
+      <rect class="d-acento-trazo" x="80" y="44" width="60" height="180" rx="6"/>
+      <text class="d-rotulo d-peq" x="16" y="144">fila</text>
+      <path class="d-linea" d="M46 139H72"/>
+      <path class="d-tinta" d="M68 133l10 6-10 6z"/>
+      <path class="d-linea" d="M110 226V240M405 226V240M600 226V240"/>
+      <g class="d-peq">
+        <text class="d-rotulo" x="110" y="256" text-anchor="middle">clave primaria</text>
+        <text class="d-tenue" x="110" y="274" text-anchor="middle">identifica cada fila</text>
+        <text class="d-rotulo" x="405" y="256" text-anchor="middle">columna</text>
+        <text class="d-tenue" x="405" y="274" text-anchor="middle">un dato con nombre y tipo</text>
+        <text class="d-rotulo" x="600" y="256" text-anchor="middle">NULL</text>
+        <text class="d-tenue" x="600" y="274" text-anchor="middle">falta el dato</text>
+      </g>
+    </svg>
+    <figcaption>Una tabla por dentro. Cada columna tiene un nombre y un tipo; cada fila es un juego; la clave primaria <code>id</code> distingue una fila de las demás; <code>NULL</code> marca un dato que no se conoce.</figcaption>
+  </figure>
+  <p>Estas son las piezas, con los nombres que vas a leer en todas partes:</p>
+  <ul>
+    <li>Una <strong>fila</strong> (en inglés, <em>row</em>; también se dice <strong>registro</strong>) es una cosa concreta: un juego, un cliente, una compra.</li>
+    <li>Una <strong>columna</strong> (en inglés, <em>column</em>; también se dice <strong>campo</strong>) es una propiedad que tienen todas las filas: el título, el precio. Tiene un nombre y un tipo.</li>
+    <li>El <strong>esquema</strong> (en inglés, <em>schema</em>) es la descripción de las tablas: qué columnas tienen, de qué tipo y con qué reglas. Es el plano de tu base de datos.</li>
+  </ul>
+  <p>Si vienes de la Estación 11, cada fila es como un objeto <code>{ id: 1, titulo: "Bosque Eterno", … }</code> y la tabla es como un array de esos objetos, con una diferencia importante: en una tabla todas las filas tienen exactamente las mismas columnas.</p>
+  <aside class="senal analogia"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Para entenderlo</p><p>Una tabla se parece a una hoja de cálculo, y la comparación sirve para empezar. Pero falla en dos puntos. En una hoja de cálculo puedes escribir cualquier cosa en cualquier celda; en una tabla, cada columna tiene un tipo y unas reglas que la base de datos hace cumplir. Y las filas de una tabla no tienen un orden fijo: si quieres verlas ordenadas, lo pides en cada consulta.</p></div></aside>
+
+  <h3>Crear una tabla</h3>
+  <p>La instrucción <code>CREATE TABLE</code> define una tabla nueva: su nombre, sus columnas y las reglas de cada una.</p>
+  <pre><code class="language-sql">CREATE TABLE juegos (
+  id     INTEGER PRIMARY KEY,               -- número que identifica cada juego
+  titulo TEXT NOT NULL,                     -- texto obligatorio
+  genero TEXT,                              -- texto opcional
+  precio REAL NOT NULL CHECK (precio &gt;= 0), -- decimal, obligatorio, nunca negativo
+  anio   INTEGER                            -- año de salida, opcional
+);</code></pre>
+  <p>Cada línea dentro de los paréntesis es una columna: primero el nombre, después el tipo y, al final, las restricciones. Los nombres suelen escribirse en minúsculas, sin tildes ni espacios, con guion bajo para separar palabras (<code>precio_pagado</code>). Esa forma se llama <em>snake_case</em>. La columna se llama <code>anio</code> y no <code>año</code> porque la ñ y las tildes funcionan en muchos motores, pero dan problemas en algunas herramientas; es más seguro evitarlas en los nombres, aunque sí puedes usarlas dentro de los datos.</p>
+
+  <h3>Tipos de datos</h3>
+  <p>Cada motor tiene su lista de tipos. SQLite tiene muy pocos; PostgreSQL, muchos. Esta tabla muestra los más comunes:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Qué guardas</th><th scope="col">SQLite</th><th scope="col">PostgreSQL</th></tr></thead>
+      <tbody>
+        <tr><td>Números enteros</td><td><code>INTEGER</code></td><td><code>integer</code>, <code>bigint</code></td></tr>
+        <tr><td>Números con decimales</td><td><code>REAL</code></td><td><code>double precision</code>; <code>numeric(10,2)</code> para dinero</td></tr>
+        <tr><td>Texto</td><td><code>TEXT</code></td><td><code>text</code>, <code>varchar(n)</code></td></tr>
+        <tr><td>Verdadero o falso</td><td><code>INTEGER</code> con 0 y 1</td><td><code>boolean</code></td></tr>
+        <tr><td>Fechas y horas</td><td><code>TEXT</code> en formato <code>'2026-09-30'</code></td><td><code>date</code>, <code>timestamptz</code></td></tr>
+        <tr><td>Datos binarios (una imagen)</td><td><code>BLOB</code></td><td><code>bytea</code></td></tr>
+        <tr><td>Documentos JSON</td><td><code>TEXT</code> y funciones JSON</td><td><code>jsonb</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>SQLite no tiene tipo de fecha: guarda las fechas como texto con el formato internacional <strong>ISO 8601</strong>, año-mes-día (<code>'2026-09-30'</code>). Ese orden tiene una ventaja: al ordenar los textos alfabéticamente, quedan ordenados por fecha.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">El dinero no va en REAL</p><p>En la <a href="07-variables.html#numeros">Estación 7</a> viste que <code>0.1 + 0.2</code> no da exactamente <code>0.3</code>. <code>REAL</code> tiene el mismo problema. Para dinero de verdad, guarda los céntimos como enteros (<code>1999</code> para 19,99) o usa <code>numeric</code> en PostgreSQL, que guarda decimales exactos. En esta estación los precios son redondos para que los ejemplos se lean fácil.</p></div></aside>
+
+  <h3>La clave primaria</h3>
+  <p>La <strong>clave primaria</strong> (en inglés, <em>primary key</em>) es la columna cuyo valor identifica cada fila: no puede repetirse y no puede faltar. ¿Por qué no usar el nombre? Porque dos clientas pueden llamarse Ana. ¿Y el correo? Porque la gente cambia de correo, y entonces habría que cambiarlo en todas partes. Lo habitual es añadir una columna <code>id</code> con un número que no significa nada más: una <strong>clave sustituta</strong> (en inglés, <em>surrogate key</em>). Una clave que sí tiene significado, como un DNI, se llama <strong>clave natural</strong>.</p>
+  <p>En SQLite, una columna <code>INTEGER PRIMARY KEY</code> se numera sola: si insertas una fila sin <code>id</code>, recibe el siguiente número libre. Cada motor lo escribe a su manera:</p>
+  <pre><code class="language-sql">-- SQLite
+id INTEGER PRIMARY KEY
+-- PostgreSQL (forma moderna; en tutoriales antiguos verás SERIAL)
+id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+-- MySQL
+id INT AUTO_INCREMENT PRIMARY KEY</code></pre>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">¿Y AUTOINCREMENT?</p><p>En tutoriales de SQLite verás <code>INTEGER PRIMARY KEY AUTOINCREMENT</code>. No hace falta para que el número se ponga solo: solo impide reutilizar los números de filas borradas. La documentación de SQLite recomienda no usarlo si no lo necesitas, porque gasta más recursos.</p></div></aside>
+
+  <h3>Restricciones: las reglas de la tabla</h3>
+  <p>Una <strong>restricción</strong> (en inglés, <em>constraint</em>) es una regla que la base de datos comprueba en cada inserción y en cada cambio. Si una fila la rompe, la operación entera se rechaza con un error.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Restricción</th><th scope="col">Qué exige</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td><code>PRIMARY KEY</code></td><td>Valor único que identifica la fila</td><td><code>id INTEGER PRIMARY KEY</code></td></tr>
+        <tr><td><code>NOT NULL</code></td><td>El dato es obligatorio</td><td><code>titulo TEXT NOT NULL</code></td></tr>
+        <tr><td><code>UNIQUE</code></td><td>No puede repetirse en dos filas</td><td><code>email TEXT UNIQUE</code></td></tr>
+        <tr><td><code>CHECK (…)</code></td><td>Una condición que siempre debe cumplirse</td><td><code>CHECK (precio &gt;= 0)</code></td></tr>
+        <tr><td><code>DEFAULT …</code></td><td>Valor que se usa si no das uno</td><td><code>puntos INTEGER DEFAULT 0</code></td></tr>
+        <tr><td><code>REFERENCES …</code></td><td>El valor debe existir en otra tabla</td><td>La verás en <a href="#relaciones">Relaciones y JOIN</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>La base de datos es la última línea de defensa. Tu API debería validar los datos antes de guardarlos (lo viste en la Estación 29), pero el código tiene errores y a veces hay varios programas escribiendo en la misma base. Las restricciones se cumplen siempre, venga el dato de donde venga.</p></div></aside>
+
+  <h3>Insertar filas</h3>
+  <p>Con <code>INSERT INTO</code> añades filas. Primero nombras las columnas que vas a rellenar y después, en <code>VALUES</code>, los valores en el mismo orden. Puedes insertar varias filas en una sola instrucción separándolas con comas:</p>
+  <pre><code class="language-sql">INSERT INTO juegos (titulo, genero, precio, anio)
+VALUES ('Bosque Eterno', 'aventura', 20, 2021),
+       ('Cohete Loco', 'carreras', 10, 2019);</code></pre>
+  <p>Los textos van entre comillas <strong>simples</strong>. Si el texto contiene un apóstrofo, se escribe doble: <code>'Bernardo O''Higgins'</code>. Los números van sin comillas. No hace falta dar el <code>id</code>: la base de datos lo asigna.</p>
+  <p>Para ver lo que hay en una tabla se usa <code>SELECT * FROM juegos;</code>. El asterisco significa «todas las columnas». En la próxima sección lo verás a fondo.</p>
+  <p>Lee este programa completo y <strong>predice</strong> qué número de <code>id</code> recibirá cada juego. Después ejecútalo.</p>
+  <div class="taller" data-modo="sql" id="taller-primera-tabla" data-titulo="Tu primera tabla">
+    <textarea class="taller-codigo">CREATE TABLE juegos (
+  id     INTEGER PRIMARY KEY,
+  titulo TEXT NOT NULL,
+  genero TEXT,
+  precio REAL NOT NULL CHECK (precio >= 0),
+  anio   INTEGER
+);
+
+INSERT INTO juegos (titulo, genero, precio, anio)
+VALUES ('Bosque Eterno', 'aventura', 20, 2021),
+       ('Cohete Loco', 'carreras', 10, 2019),
+       ('Mazmorra 64', 'rpg', 25, 2023);
+
+-- Quita los dos guiones de UNA de estas líneas y vuelve a ejecutar:
+-- INSERT INTO juegos (titulo, precio) VALUES ('Gratis Total', -5);
+-- INSERT INTO juegos (genero, precio) VALUES ('puzle', 5);
+
+SELECT * FROM juegos;</textarea>
+  </div>
+  <p>Los tres juegos recibieron los números 1, 2 y 3 sin que los escribieras. Ahora <strong>modifica</strong>: quita los guiones de la primera línea comentada. La base de datos responde <code>CHECK constraint failed</code>: el precio negativo rompe la regla. Vuelve a comentarla y prueba la segunda: <code>NOT NULL constraint failed: juegos.titulo</code>. Fíjate en que el error dice exactamente qué regla y qué columna. Por último, añade un cuarto juego tuyo al <code>INSERT</code>.</p>
+
+  <h3>La rareza de SQLite: tipos flexibles</h3>
+  <p>SQLite tiene una particularidad que sorprende a casi todo el mundo. <strong>Predice</strong> qué guardará en cada fila:</p>
+  <div class="taller" data-modo="sql" id="taller-tipos-flexibles" data-titulo="Predice: ¿qué tipo queda guardado?">
+    <textarea class="taller-codigo">CREATE TABLE prueba (edad INTEGER);
+INSERT INTO prueba VALUES (30), ('31'), ('treinta');
+SELECT edad, typeof(edad) AS tipo FROM prueba;</textarea>
+  </div>
+  <p>La función <code>typeof</code> dice el tipo real de cada valor. El texto <code>'31'</code> se convirtió en el número 31, porque parecía un número. Pero <code>'treinta'</code> se guardó como texto en una columna de enteros, sin ningún error. SQLite trata el tipo de la columna como una preferencia, no como una obligación; la documentación lo llama <em>afinidad de tipo</em>. Lo hace para ser compatible con programas antiguos.</p>
+  <p>Desde la versión 3.37 (2021) existe la opción <code>STRICT</code>, que hace que SQLite se comporte como los demás motores. Cambia la primera línea del taller por <code>CREATE TABLE prueba (edad INTEGER) STRICT;</code> y ejecuta: ahora el texto <code>'treinta'</code> se rechaza con un error. <code>'31'</code>, en cambio, se sigue aceptando convertido en número, porque la conversión no pierde nada.</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p>Confiar en que SQLite comprueba los tipos. Sin <code>STRICT</code>, una columna <code>INTEGER</code> acepta <code>'treinta'</code> y el error aparece mucho después, cuando una suma da un resultado raro. En proyectos nuevos con SQLite, usa tablas <code>STRICT</code> o valida los datos antes de guardarlos. PostgreSQL y MySQL, en su configuración habitual, rechazan el valor desde el principio.</p></div></aside>
+</section>
+
+<section id="consultar" data-parada="Consultar">
+  <h2>Consultar con SELECT</h2>
+  <p>En casi todas las apps se lee mucho más de lo que se escribe: una tienda muestra su catálogo miles de veces por cada juego nuevo que añade. Por eso la instrucción que más vas a escribir es <code>SELECT</code> («seleccionar»). Su forma general, con las partes opcionales entre corchetes, es:</p>
+  <pre><code class="language-sql">SELECT columnas
+FROM tabla
+[WHERE condición]
+[ORDER BY columna]
+[LIMIT cantidad];</code></pre>
+  <p>Cada parte recibe el nombre de su palabra clave: la <strong>cláusula</strong> <code>WHERE</code>, la cláusula <code>ORDER BY</code>… Una consulta que lee datos se llama, en general, una <strong>consulta</strong> (en inglés, <em>query</em>). Los talleres de esta sección usan esta tabla <code>juegos</code> de una tienda en línea. Tenla a la vista para predecir los resultados:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">id</th><th scope="col">titulo</th><th scope="col">genero</th><th scope="col">precio</th><th scope="col">anio</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Bosque Eterno</td><td>aventura</td><td>20</td><td>2021</td></tr>
+        <tr><td>2</td><td>Cohete Loco</td><td>carreras</td><td>10</td><td>2019</td></tr>
+        <tr><td>3</td><td>Mazmorra 64</td><td>rpg</td><td>25</td><td>2023</td></tr>
+        <tr><td>4</td><td>Granja Pixel</td><td>simulación</td><td>15</td><td>2016</td></tr>
+        <tr><td>5</td><td>Neón Runner</td><td>plataformas</td><td>12.5</td><td>2022</td></tr>
+        <tr><td>6</td><td>Reino de Hielo</td><td>rpg</td><td>30</td><td>2024</td></tr>
+        <tr><td>7</td><td>Puzle Cuántico</td><td>puzle</td><td>5</td><td>2020</td></tr>
+        <tr><td>8</td><td>Tanques de Papel</td><td>estrategia</td><td>8</td><td>2018</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Elegir columnas</h3>
+  <p>Después de <code>SELECT</code> escribes las columnas que quieres, separadas por comas. También puedes calcular columnas nuevas y ponerles un nombre con <code>AS</code>, que se llama <strong>alias</strong>:</p>
+  <pre><code class="language-sql">SELECT titulo, precio FROM juegos;                      -- solo dos columnas
+SELECT titulo, precio * 0.8 AS rebajado FROM juegos;    -- columna calculada: 20 % menos
+SELECT titulo || ' (' || anio || ')' AS ficha FROM juegos; -- une textos: Bosque Eterno (2021)
+SELECT DISTINCT genero FROM juegos;                     -- cada género una sola vez</code></pre>
+  <p>En SQL los textos se unen con <code>||</code>, no con <code>+</code>. Y <code>DISTINCT</code> quita las filas repetidas del resultado: «rpg» aparece dos veces en la tabla, pero una sola en la respuesta. Las columnas calculadas no cambian nada en la tabla: solo existen en la respuesta.</p>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p><code>SELECT *</code> es cómodo para explorar, pero en el código de una app escribe las columnas que necesitas. Traes menos datos por la red, y si mañana alguien añade a la tabla una columna enorme (una imagen, un texto largo) o una columna privada, tu programa no la recibirá sin querer.</p></div></aside>
+
+  <h3>Filtrar filas con WHERE</h3>
+  <p><code>WHERE</code> se queda solo con las filas que cumplen una condición. Es como el <code>filter</code> de la <a href="11-colecciones.html#transformar">Estación 11</a>, pero lo ejecuta la base de datos. Estos son los operadores que usarás:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Operador</th><th scope="col">Significa</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td><code>=</code></td><td>Igual (un solo signo, no <code>===</code> como en JavaScript)</td><td><code>genero = 'rpg'</code></td></tr>
+        <tr><td><code>&lt;&gt;</code> o <code>!=</code></td><td>Distinto</td><td><code>genero &lt;&gt; 'rpg'</code></td></tr>
+        <tr><td><code>&lt; &gt; &lt;= &gt;=</code></td><td>Menor, mayor, menor o igual, mayor o igual</td><td><code>precio &lt;= 10</code></td></tr>
+        <tr><td><code>BETWEEN a AND b</code></td><td>Entre a y b, ambos incluidos</td><td><code>anio BETWEEN 2020 AND 2022</code></td></tr>
+        <tr><td><code>IN (…)</code></td><td>Igual a alguno de la lista</td><td><code>genero IN ('rpg', 'puzle')</code></td></tr>
+        <tr><td><code>LIKE</code></td><td>Parecido a un patrón: <code>%</code> es «cualquier cantidad de caracteres» y <code>_</code>, «exactamente uno»</td><td><code>titulo LIKE 'M%'</code></td></tr>
+        <tr><td><code>IS NULL</code></td><td>No tiene valor (lo verás enseguida)</td><td><code>email IS NULL</code></td></tr>
+        <tr><td><code>AND</code>, <code>OR</code>, <code>NOT</code></td><td>Combinar condiciones, como <code>&amp;&amp;</code>, <code>||</code> y <code>!</code> en JavaScript</td><td><code>precio &lt; 20 AND anio &gt; 2020</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Antes de ejecutar, mira la tabla de datos y <strong>predice</strong> qué filas devolverá cada una de estas tres consultas:</p>
+  <div class="taller" data-modo="sql" id="taller-filtros" data-titulo="Predice: tres filtros">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE juegos (id INTEGER PRIMARY KEY, titulo TEXT NOT NULL, genero TEXT, precio REAL NOT NULL, anio INTEGER);
+INSERT INTO juegos VALUES (1, 'Bosque Eterno', 'aventura', 20, 2021), (2, 'Cohete Loco', 'carreras', 10, 2019), (3, 'Mazmorra 64', 'rpg', 25, 2023), (4, 'Granja Pixel', 'simulación', 15, 2016), (5, 'Neón Runner', 'plataformas', 12.5, 2022), (6, 'Reino de Hielo', 'rpg', 30, 2024), (7, 'Puzle Cuántico', 'puzle', 5, 2020), (8, 'Tanques de Papel', 'estrategia', 8, 2018);</script>
+    <textarea class="taller-codigo">-- 1. ¿Qué juegos cuestan 10 o menos?
+SELECT titulo, precio FROM juegos WHERE precio <= 10;
+
+-- 2. ¿Cuáles salieron entre 2020 y 2022?
+SELECT titulo, anio FROM juegos WHERE anio BETWEEN 2020 AND 2022;
+
+-- 3. ¿Cuáles empiezan por «M» o son de rol?
+SELECT titulo, genero FROM juegos WHERE titulo LIKE 'M%' OR genero = 'rpg';</textarea>
+  </div>
+  <p>En la tercera, «Mazmorra 64» cumple las dos condiciones, pero aparece una sola vez: <code>WHERE</code> decide fila por fila si entra o no. <strong>Modifica</strong> la consulta 1 para que muestre los juegos de más de 20, y la 3 para que busque títulos que <em>contengan</em> la palabra «de» en cualquier posición (pista: <code>'%de%'</code>).</p>
+  <p>Cuando mezclas <code>AND</code> y <code>OR</code>, ocurre lo mismo que en la <a href="08-decisiones.html#logica">Estación 8</a>: <code>AND</code> se evalúa antes que <code>OR</code>. Si quieres otro orden, usa paréntesis.</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Sin paréntesis: se cuela Reino de Hielo</p>
+      <pre><code class="language-sql">-- Se lee: rpg O (puzle Y barato)
+SELECT titulo, precio FROM juegos
+WHERE genero = 'rpg' OR genero = 'puzle'
+  AND precio &lt; 28;
+-- Mazmorra 64, Reino de Hielo (30), Puzle Cuántico</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Con paréntesis: lo que querías</p>
+      <pre><code class="language-sql">-- (rpg O puzle) Y barato
+SELECT titulo, precio FROM juegos
+WHERE (genero = 'rpg' OR genero = 'puzle')
+  AND precio &lt; 28;
+-- Mazmorra 64, Puzle Cuántico</code></pre>
+    </div>
+  </div>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Mayúsculas y tildes en los textos</p><p>En SQLite, <code>=</code> distingue mayúsculas: <code>'rpg'</code> no es igual a <code>'RPG'</code>. <code>LIKE</code> no las distingue, pero solo para las letras sin tilde del alfabeto inglés: <code>'Ábaco' LIKE 'á%'</code> es falso. En PostgreSQL, <code>LIKE</code> sí distingue mayúsculas y existe <code>ILIKE</code> para ignorarlas. Cuando busques nombres escritos por personas, guarda o compara todo en minúsculas, y comprueba cómo trata tu motor las tildes.</p></div></aside>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p>Usar comillas dobles para los textos. En SQL, las comillas simples son para textos (<code>'rpg'</code>) y las dobles, para nombres de columnas o tablas (<code>"genero"</code>). SQLite, por compatibilidad, acepta <code>"rpg"</code> como texto si no hay una columna con ese nombre, así que parece funcionar. Pero <code>WHERE genero = "genero"</code> compara la columna consigo misma y devuelve todas las filas, sin error. PostgreSQL rechaza <code>"rpg"</code> diciendo que esa columna no existe. Acostúmbrate a las simples.</p></div></aside>
+
+  <h3>Ordenar y limitar</h3>
+  <p><code>ORDER BY</code> ordena el resultado por una o varias columnas: de menor a mayor por defecto (<code>ASC</code>, ascendente) o de mayor a menor con <code>DESC</code> (descendente). <code>LIMIT</code> se queda con las primeras filas y <code>OFFSET</code> se salta unas cuantas antes de empezar. Con los dos juntos se hace la <strong>paginación</strong>: mostrar los resultados de 10 en 10, como las páginas de una tienda.</p>
+  <pre><code class="language-sql">SELECT titulo, precio FROM juegos ORDER BY precio DESC;          -- del más caro al más barato
+SELECT titulo, genero, precio FROM juegos ORDER BY genero, precio; -- por género y, dentro de cada género, por precio
+SELECT titulo FROM juegos ORDER BY titulo LIMIT 3;                -- los 3 primeros por orden alfabético
+SELECT titulo FROM juegos ORDER BY titulo LIMIT 3 OFFSET 3;       -- la «página 2»: del 4.º al 6.º</code></pre>
+  <div class="taller" data-modo="sql" id="taller-ordenar" data-titulo="Modifica: el ranking de la tienda">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE juegos (id INTEGER PRIMARY KEY, titulo TEXT NOT NULL, genero TEXT, precio REAL NOT NULL, anio INTEGER);
+INSERT INTO juegos VALUES (1, 'Bosque Eterno', 'aventura', 20, 2021), (2, 'Cohete Loco', 'carreras', 10, 2019), (3, 'Mazmorra 64', 'rpg', 25, 2023), (4, 'Granja Pixel', 'simulación', 15, 2016), (5, 'Neón Runner', 'plataformas', 12.5, 2022), (6, 'Reino de Hielo', 'rpg', 30, 2024), (7, 'Puzle Cuántico', 'puzle', 5, 2020), (8, 'Tanques de Papel', 'estrategia', 8, 2018);</script>
+    <textarea class="taller-codigo">-- Los 3 juegos más caros
+SELECT titulo, precio
+FROM juegos
+ORDER BY precio DESC
+LIMIT 3;</textarea>
+  </div>
+  <p>Haz tres cambios, ejecutando después de cada uno: muestra los 3 más <em>baratos</em>; después la segunda página de 3 (añade <code>OFFSET 3</code>); por último, los 4 juegos más recientes, usando la columna <code>anio</code>.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Sin ORDER BY no hay orden</p><p>Si no escribes <code>ORDER BY</code>, la base de datos devuelve las filas en el orden que le resulte más cómodo. Hoy puede coincidir con el orden en que las insertaste y mañana, tras un cambio interno, no. Un <code>LIMIT</code> sin <code>ORDER BY</code> te da «unas filas cualesquiera». Si el orden importa, pídelo siempre.</p></div></aside>
+
+  <h3>NULL: el valor que no es un valor</h3>
+  <p><code>NULL</code> significa «no se sabe» o «no hay dato». No es cero ni un texto vacío: un cliente con el correo vacío (<code>''</code>) te dio un correo en blanco; un cliente con el correo <code>NULL</code> no te lo dio. Y aquí viene la trampa: cualquier comparación con algo desconocido da como resultado «desconocido». ¿Es un correo desconocido igual a otro correo desconocido? No se sabe. Por eso <code>email = NULL</code> nunca es verdadero, ni siquiera cuando el correo es <code>NULL</code>, y <code>WHERE</code> solo deja pasar las filas cuya condición es verdadera.</p>
+  <p>Estos datos son de los clientes de la tienda. Dos no dieron su correo. <strong>Predice</strong> cuántas filas devolverá cada consulta:</p>
+  <div class="taller" data-modo="sql" id="taller-null" data-titulo="Predice: buscar lo que falta">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, ciudad TEXT, email TEXT UNIQUE);
+INSERT INTO clientes VALUES (1, 'Ana', 'Bogotá', 'ana@correo.com'), (2, 'Luis', 'Lima', 'luis@correo.com'), (3, 'Sofía', 'Ciudad de México', NULL), (4, 'Marta', 'Bogotá', 'marta@correo.com'), (5, 'Iván', 'Santiago', NULL);</script>
+    <textarea class="taller-codigo">-- 1. La trampa
+SELECT nombre, email FROM clientes WHERE email = NULL;
+
+-- 2. La forma correcta
+SELECT nombre, email FROM clientes WHERE email IS NULL;
+
+-- 3. Sustituir los que faltan por un texto
+SELECT nombre, COALESCE(email, 'sin correo') AS contacto FROM clientes;</textarea>
+  </div>
+  <p>Solo aparecen dos resultados: la primera consulta no devolvió ninguna fila, así que no hay nada que mostrar. La segunda usa <code>IS NULL</code>, el operador correcto (su contrario es <code>IS NOT NULL</code>). La tercera usa <code>COALESCE</code>, una función que devuelve el primero de sus argumentos que no sea <code>NULL</code>: es la forma de mostrar «sin correo» en vez de un hueco.</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p>Escribir <code>= NULL</code> o <code>&lt;&gt; NULL</code>. No dan error: simplemente no devuelven nada, y crees que no hay datos. Para preguntar por la falta de valor usa siempre <code>IS NULL</code> o <code>IS NOT NULL</code>.</p></div></aside>
+  <p><code>NULL</code> también se contagia en los cálculos: <code>5 + NULL</code> es <code>NULL</code>, y <code>'Hola ' || NULL</code> también. Tiene sentido: si no sabes cuánto vale algo, tampoco sabes cuánto vale ese algo más 5. Al ordenar, SQLite y MySQL ponen los <code>NULL</code> al principio en orden ascendente y PostgreSQL, al final. Si te importa, dilo tú: <code>ORDER BY email NULLS LAST</code> funciona en SQLite y en PostgreSQL.</p>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>Decide columna por columna si un dato puede faltar. Si no puede, márcala <code>NOT NULL</code> desde el principio: cada columna que admite <code>NULL</code> es una pregunta más que tendrás que responder en cada consulta y en cada línea de código que lea ese dato.</p></div></aside>
+</section>
   </main>
 </div>
 
@@ -185,6 +489,7 @@ SELECT visitas FROM contador;</textarea>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 <script src="../assets/js/motor.js"></script>
 <script src="../assets/js/terminal.js"></script>

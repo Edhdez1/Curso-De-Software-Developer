@@ -732,6 +732,7 @@
     function ejecutarNode(arg) {
       if (!arg) { imprimir("Welcome to Node.js " + VERSION_NODE + "."); imprimir("Pista: esta terminal de práctica no tiene el modo interactivo de Node. Escribe «node archivo.js» para ejecutar un archivo.", "aviso"); return terminarComando(); }
       if (arg === "-v" || arg === "--version") { imprimir(VERSION_NODE); return terminarComando(); }
+      if (/^-/.test(arg)) { imprimir("La opción «" + arg + "» de node no está en esta terminal de práctica.", "error"); imprimir("Pista: aquí solo se puede ejecutar un archivo con «node archivo.js» (y ver la versión con «node -v»). Pruébalo en la terminal de tu computadora.", "aviso"); return terminarComando(); }
       var abs = normalizar(arg), n = obtener(abs);
       if (!n) { imprimir("Error: Cannot find module '" + abs + "'", "error"); imprimir("Pista: no existe ese archivo aquí. Revisa el nombre con «ls» y que estés en la carpeta correcta.", "aviso"); return terminarComando(); }
       if (n.tipo === "dir") { imprimir("Error: EISDIR: illegal operation on a directory", "error"); imprimir("Pista: «" + arg + "» es una carpeta; node necesita un archivo .js.", "aviso"); return terminarComando(); }
