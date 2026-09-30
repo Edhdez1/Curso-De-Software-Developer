@@ -177,3 +177,1087 @@
   </ul>
   <p>Si un día encuentras un fallo por casualidad en un sitio real, lo ético es no aprovecharlo, no acceder a más datos de los que ya viste y avisar a quien lo administra. Muchos sitios publican cómo contactar a su equipo de seguridad en un archivo <code>/.well-known/security.txt</code> (un estándar, el RFC 9116). A esto se le llama <strong>divulgación responsable</strong>.</p>
 </section>
+
+<section id="inyeccion" data-parada="Inyección">
+  <h2>Inyección: cuando los datos se vuelven código</h2>
+  <p>Tu programa habla con otros programas en sus propios lenguajes: le habla en SQL a la base de datos, en comandos a la terminal del sistema y en HTML al navegador. Muchas veces arma esas frases pegando trozos de texto, y algunos trozos vienen de la persona que usa la app. Si esa persona escribe algo que el otro programa entiende como una instrucción, acaba de dar órdenes dentro de tu sistema. Eso es una <strong>inyección</strong>: un dato que termina interpretado como código.</p>
+  <p>Es una de las familias de ataques más antiguas y todavía está en el puesto A05 del OWASP Top 10. La buena noticia es que su defensa principal es muy concreta y la puedes aplicar desde hoy.</p>
+
+  <h3>Inyección SQL paso a paso</h3>
+  <p>En la <a href="30-bases-datos.html">Estación 30</a> escribiste consultas SQL. Ahora imagina un buscador de jugadores en la API de «Arena». Un programa escrito con prisa arma la consulta así:</p>
+  <pre><code class="language-js">// MAL: el texto de la persona se pega dentro de la consulta
+const consulta = "SELECT * FROM usuarios WHERE nombre = '" + nombre + "'";</code></pre>
+  <p>Con <code>nombre = "ana"</code> sale una consulta perfecta. Sigue qué pasa cuando alguien escribe otra cosa en el buscador:</p>
+  <div class="traza" data-titulo="Armar una consulta pegando textos">
+    <pre><code class="language-js">const entrada = "x' OR '1'='1";
+const inicio = "SELECT * FROM usuarios WHERE nombre = '";
+const consulta = inicio + entrada + "'";
+console.log(consulta);</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"entrada": "\"x' OR '1'='1\""}, "nota": "Llega lo que alguien escribió en el buscador. Para JavaScript es un texto como cualquier otro: las comillas simples son caracteres normales, sin ningún significado especial."},
+      {"linea": 2, "vars": {"entrada": "\"x' OR '1'='1\"", "inicio": "\"SELECT * FROM usuarios WHERE nombre = '\""}, "nota": "El principio de la consulta, escrito por ti. Termina en una comilla simple que abre el texto que se va a buscar."},
+      {"linea": 3, "vars": {"entrada": "\"x' OR '1'='1\"", "inicio": "\"SELECT * FROM usuarios WHERE nombre = '\"", "consulta": "\"SELECT * FROM usuarios WHERE nombre = 'x' OR '1'='1'\""}, "nota": "Se pegan las tres piezas. La comilla que venía dentro de la entrada cierra el texto antes de tiempo, y la comilla final que añade tu programa cierra la última '1. El resultado tiene la forma exacta de un SQL válido."},
+      {"linea": 4, "vars": {"entrada": "\"x' OR '1'='1\"", "inicio": "\"SELECT * FROM usuarios WHERE nombre = '\"", "consulta": "\"SELECT * FROM usuarios WHERE nombre = 'x' OR '1'='1'\""}, "salida": "SELECT * FROM usuarios WHERE nombre = 'x' OR '1'='1'", "nota": "Esto es lo que recibe la base de datos. Ya no pregunta «¿quién se llama x' OR '1'='1?». Pregunta «¿quién se llama x, o cumple que 1 es igual a 1?». Y 1 siempre es igual a 1."}
+    ]</script>
+  </div>
+  <p>JavaScript no hizo nada raro: pegó textos, como le pediste. El problema aparece después, cuando la base de datos lee ese texto como SQL. Compruébalo con una base de datos real. Este taller ejecuta las consultas que ese programa enviaría en tres casos. Antes de ejecutar, <strong>predice</strong> cuántas filas devuelve cada una:</p>
+  <div class="taller" data-modo="sql" id="taller-sql-inyeccion" data-titulo="Tres búsquedas, un mismo programa">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE usuarios (id INTEGER PRIMARY KEY, nombre TEXT, email TEXT, hash_clave TEXT, es_admin INTEGER);
+INSERT INTO usuarios VALUES
+(1, 'ana', 'ana@correo.example', '$argon2id$v=19$m=19456,t=2,p=1$1f2e...', 0),
+(2, 'luis', 'luis@correo.example', '$argon2id$v=19$m=19456,t=2,p=1$9a0c...', 0),
+(3, 'sol', 'sol@correo.example', '$argon2id$v=19$m=19456,t=2,p=1$77b1...', 1),
+(4, 'ivan', 'ivan@correo.example', '$argon2id$v=19$m=19456,t=2,p=1$c4d8...', 0);</script>
+    <textarea class="taller-codigo">-- 1. Alguien busca: ana
+SELECT id, nombre, email FROM usuarios WHERE nombre = 'ana';
+
+-- 2. Alguien escribe: x' OR '1'='1
+SELECT id, nombre, email FROM usuarios WHERE nombre = 'x' OR '1'='1';
+
+-- 3. Alguien escribe: x' UNION SELECT id, nombre, hash_clave FROM usuarios --
+SELECT id, nombre, email FROM usuarios WHERE nombre = 'x' UNION SELECT id, nombre, hash_clave FROM usuarios --';</textarea>
+  </div>
+  <p>La primera devuelve una fila. La segunda, la tabla entera: si esa consulta fuera la del inicio de sesión, la atacante entraría sin contraseña. La tercera es peor. <code>UNION</code> pega a los resultados los de una segunda consulta que escribió la atacante, y los dos guiones <code>--</code> convierten en comentario la comilla final que añadía tu programa. En la columna del correo aparecen ahora los hashes de las contraseñas. Con variantes de esta técnica se puede leer cualquier tabla y, según los permisos del usuario de la base de datos, modificar o borrar datos.</p>
+  <aside class="senal nota" data-titulo="El pequeño Bobby Tables">
+    <p>Hay una tira cómica muy famosa entre programadores, <em>Exploits of a Mom</em> (xkcd 327), en la que una madre llama a su hijo <code>Robert'); DROP TABLE Students;--</code> y la escuela pierde su base de datos. Si alguna vez oyes hablar de «Bobby Tables», ya sabes de qué va la broma.</p>
+  </aside>
+
+  <h3>La defensa: consultas parametrizadas</h3>
+  <p>La solución no es «revisar que no haya comillas». Es no mezclar nunca el código y los datos. En una <strong>consulta parametrizada</strong> (también llamada <em>prepared statement</em>, «consulta preparada») escribes la consulta con huecos, normalmente <code>?</code> o <code>$1</code>, y envías los valores por separado. La base de datos primero analiza la consulta con sus huecos y fija su estructura; después coloca cada valor en su hueco, siempre como dato. Aunque el valor tenga comillas, <code>OR</code> o guiones, ya no puede cambiar la forma de la consulta.</p>
+  <figure class="capsula" data-titulo="La consulta que cambia de forma">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: un programa arma una consulta SQL pegando lo que escribe una persona. Con el texto ana, la base de datos ve código más un dato y devuelve una fila. Con el texto x comilla OR comilla 1 comilla igual comilla 1, la comilla cierra el dato antes de tiempo y OR 1 igual 1 se convierte en código nuevo: devuelve toda la tabla. Con una consulta parametrizada, el valor viaja aparte, siempre es un dato, y no devuelve ninguna fila.">
+        <rect class="d-codigo" x="10" y="10" width="700" height="44" rx="8"/>
+        <text class="d-codigo-texto" x="24" y="38" style="font-size:14px" data-pasos="1-4">consulta = "SELECT * FROM usuarios WHERE nombre = '" + entrada + "'";</text>
+        <text class="d-codigo-texto" x="24" y="38" style="font-size:14px" data-pasos="5">db.consultar("SELECT * FROM usuarios WHERE nombre = ?", [entrada]);</text>
+        <text class="d-rotulo" x="24" y="95" style="font-size:15px">entrada:</text>
+        <rect class="d-caja" x="104" y="72" width="200" height="36" rx="6" data-clases="3:d-acento-trazo; 4:"/>
+        <text class="d-mono" x="118" y="96" style="font-size:15px" data-pasos="1-2">ana</text>
+        <text class="d-mono" x="118" y="96" style="font-size:15px" data-pasos="3-">x' OR '1'='1</text>
+        <text class="d-peq d-tenue" x="322" y="95" data-texto="3:lo que escribe una atacante">lo que escribe una persona cualquiera</text>
+        <text class="d-rotulo" x="24" y="140" style="font-size:15px" data-pasos="2-" data-texto="2:Lo que entiende la base de datos:; 3:El texto que arma tu programa (para JavaScript, solo texto):; 4:Lo que entiende la base de datos:; 5:La consulta y el dato viajan por separado:">Lo que entiende la base de datos:</text>
+        <g data-pasos="2">
+          <rect class="d-caja-suave" x="24" y="154" width="350" height="40" rx="6"/>
+          <text class="d-mono" x="199" y="179" text-anchor="middle" style="font-size:14px">SELECT * FROM usuarios WHERE nombre =</text>
+          <rect class="d-ok-trazo" x="384" y="154" width="80" height="40" rx="6"/>
+          <text class="d-mono" x="424" y="179" text-anchor="middle" style="font-size:14px">'ana'</text>
+          <text class="d-peq d-tenue" x="199" y="214" text-anchor="middle">código: lo escribiste tú</text>
+          <text class="d-peq d-tenue" x="424" y="214" text-anchor="middle">dato</text>
+        </g>
+        <g data-pasos="3">
+          <rect class="d-caja" x="24" y="154" width="672" height="40" rx="6"/>
+          <text class="d-mono" x="38" y="179" style="font-size:14px">SELECT * FROM usuarios WHERE nombre = 'x' OR '1'='1'</text>
+        </g>
+        <g data-pasos="4">
+          <rect class="d-caja-suave" x="24" y="154" width="350" height="40" rx="6"/>
+          <text class="d-mono" x="199" y="179" text-anchor="middle" style="font-size:14px">SELECT * FROM usuarios WHERE nombre =</text>
+          <rect class="d-ok-trazo" x="384" y="154" width="56" height="40" rx="6"/>
+          <text class="d-mono" x="412" y="179" text-anchor="middle" style="font-size:14px">'x'</text>
+          <rect class="d-mal-trazo" x="450" y="154" width="130" height="40" rx="6"/>
+          <text class="d-mono" x="515" y="179" text-anchor="middle" style="font-size:14px">OR '1'='1'</text>
+          <text class="d-peq d-tenue" x="199" y="214" text-anchor="middle">código: lo escribiste tú</text>
+          <text class="d-peq d-tenue" x="412" y="214" text-anchor="middle">dato</text>
+          <text class="d-peq d-mal d-rotulo" x="515" y="214" text-anchor="middle">¡código nuevo!</text>
+        </g>
+        <g data-pasos="5">
+          <rect class="d-caja-suave" x="24" y="154" width="370" height="40" rx="6"/>
+          <text class="d-mono" x="209" y="179" text-anchor="middle" style="font-size:14px">SELECT * FROM usuarios WHERE nombre = ?</text>
+          <rect class="d-ok-trazo" x="414" y="154" width="140" height="40" rx="6"/>
+          <text class="d-mono" x="484" y="179" text-anchor="middle" style="font-size:14px">x' OR '1'='1</text>
+          <text class="d-peq d-tenue" x="209" y="214" text-anchor="middle">estructura fija, con un hueco</text>
+          <text class="d-peq d-tenue" x="484" y="214" text-anchor="middle">valor del hueco: siempre dato</text>
+        </g>
+        <g data-pasos="2">
+          <rect class="d-caja" x="24" y="236" width="672" height="44" rx="8"/>
+          <text x="40" y="264" style="font-size:15px">Resultado: 1 fila, la de ana.</text>
+        </g>
+        <g data-pasos="4">
+          <rect class="d-mal-trazo" x="24" y="236" width="672" height="44" rx="8"/>
+          <text class="d-rotulo" x="40" y="264" style="font-size:15px">Resultado: 4 filas. Toda la tabla, porque 1 = 1 es verdad en cada fila.</text>
+        </g>
+        <g data-pasos="5">
+          <rect class="d-ok-trazo" x="24" y="236" width="672" height="44" rx="8"/>
+          <text x="40" y="264" style="font-size:15px">Resultado: 0 filas. Nadie se llama, literalmente, x' OR '1'='1.</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Tu programa arma la consulta pegando, entre dos comillas simples, lo que la persona escribió en el buscador. Alguien busca <code>ana</code>.</li>
+        <li>La base de datos analiza el texto: reconoce tu código y, entre las comillas, un dato. Devuelve la fila de Ana. Todo en orden.</li>
+        <li data-duracion="6">Ahora una atacante escribe <code>x' OR '1'='1</code>. Tu programa pega los textos como siempre. Para JavaScript el resultado es solo un texto más; nadie ha ejecutado nada todavía.</li>
+        <li data-duracion="7">La base de datos lo analiza. La comilla de la atacante cerró el dato antes de tiempo, y <code>OR '1'='1'</code> quedó fuera de las comillas, como código. La atacante acaba de escribir parte de tu consulta, y la condición se cumple en todas las filas.</li>
+        <li data-duracion="7">Con una consulta parametrizada, la base de datos recibe primero la consulta con un hueco (<code>?</code>) y fija su estructura. El valor llega aparte y va al hueco como dato, pase lo que pase dentro de él. No hay forma de que se convierta en código.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Así se escribe en Node.js con las bibliotecas más habituales. Fíjate en que en ninguna aparece un <code>+</code> ni un <code>${}</code> dentro del SQL:</p>
+  <pre><code class="language-js">// SQLite con el módulo incluido en Node (node:sqlite)
+import { DatabaseSync } from "node:sqlite";
+const db = new DatabaseSync("arena.db");
+const buscar = db.prepare("SELECT id, nombre FROM usuarios WHERE nombre = ?");
+const fila = buscar.get(nombre);          // el valor viaja aparte
+
+// PostgreSQL con el paquete pg: los huecos se numeran $1, $2…
+const resultado = await pool.query(
+  "SELECT id, nombre FROM usuarios WHERE nombre = $1 AND activo = $2",
+  [nombre, true]
+);</code></pre>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Pegar el dato dentro del SQL</p>
+      <pre><code class="language-js">db.prepare(
+  `SELECT * FROM puntuaciones WHERE juego = '${juego}'`
+).all();</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Hueco en el SQL, dato aparte</p>
+      <pre><code class="language-js">db.prepare(
+  "SELECT * FROM puntuaciones WHERE juego = ?"
+).all(juego);</code></pre>
+    </div>
+  </div>
+  <aside class="senal error">
+    <p>Usar <code>prepare</code> no te protege por sí solo. En el ejemplo de la izquierda también hay un <code>prepare</code>, pero el dato ya venía pegado dentro del texto con una plantilla literal: la consulta preparada ya incluye la inyección. Lo que protege es que el valor llegue por separado, como argumento.</p>
+  </aside>
+  <p>Los <strong>ORM</strong> y constructores de consultas que viste en la Estación 30 (Prisma, Drizzle) parametrizan por ti cuando usas sus funciones normales. El peligro vuelve cuando escribes SQL a mano con ellos. En Prisma, por ejemplo, <code>$queryRaw</code> con una plantilla etiquetada convierte cada <code>${valor}</code> en un parámetro, mientras que <code>$queryRawUnsafe</code> recibe un texto ya armado, y su propio nombre te avisa.</p>
+  <h3>Lo que no se puede parametrizar</h3>
+  <p>Los huecos sirven para <em>valores</em>, no para nombres de tablas o columnas ni para palabras de SQL como <code>ASC</code> o <code>DESC</code>. Si quieres que la persona elija cómo ordenar la tabla de récords, no pegues su texto: tradúcelo con una lista de opciones permitidas.</p>
+  <pre><code class="language-js">// La URL trae ?orden=puntos o ?orden=fecha
+const columnas = { puntos: "puntos", fecha: "creado_en" };
+const columna = columnas[req.query.orden] ?? "puntos";   // lo que no está en la lista, no entra
+const filas = db.prepare(`SELECT jugador, puntos FROM puntuaciones ORDER BY ${columna} DESC LIMIT ?`).all(10);</code></pre>
+  <p>Aquí sí aparece un <code>${}</code> dentro del SQL, pero lo que se pega es siempre uno de tus dos textos, nunca el de la persona.</p>
+  <aside class="senal ojo" data-titulo="No escapes a mano">
+    <p>Una idea tentadora es «duplico las comillas y listo». Los sistemas de bases de datos tienen reglas de escape distintas, codificaciones de caracteres con trampas y casos que no se te van a ocurrir. Escapar SQL a mano es la forma más común de creer que estás protegido sin estarlo. Usa parámetros.</p>
+  </aside>
+
+  <h3>Inyección de comandos</h3>
+  <p>El mismo error aparece cuando tu programa ejecuta comandos del sistema. Imagina una herramienta interna de «Arena» que comprueba si un servidor de partidas responde, usando el comando <code>ping</code>. Node permite ejecutar comandos con el módulo <code>node:child_process</code>, y hay dos formas muy distintas de hacerlo:</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">exec: un texto que interpreta una shell</p>
+      <pre><code class="language-js">import { exec } from "node:child_process";
+exec("ping -c 1 " + servidor, (error, salida) =&gt; {
+  console.log(salida);
+});</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">execFile: programa y argumentos aparte</p>
+      <pre><code class="language-js">import { execFile } from "node:child_process";
+execFile("ping", ["-c", "1", servidor], (error, salida) =&gt; {
+  console.log(salida);
+});</code></pre>
+    </div>
+  </div>
+  <p><code>exec</code> le entrega el texto completo a una <strong>shell</strong>, el programa que interpreta lo que escribes en la terminal (la conociste en la <a href="05-herramientas.html#terminal">Estación 5</a>). En una shell, caracteres como <code>;</code>, <code>&amp;&amp;</code> o <code>|</code> separan un comando de otro. La documentación oficial de Node lo advierte sin rodeos: nunca pases a <code>exec</code> datos que vengan de una persona sin sanear. <code>execFile</code>, en cambio, no usa una shell: ejecuta un programa concreto y le pasa cada argumento tal cual. Este taller simula, de forma muy simplificada, la diferencia. Predice cuántos programas se ejecutan en cada caso:</p>
+  <div class="taller" id="taller-comandos" data-titulo="Predice: ¿cuántos programas se ejecutan?">
+    <textarea class="taller-codigo">// Simulación MUY simplificada de cómo una shell trocea una línea.
+// Nada de esto se ejecuta de verdad: solo se imprime.
+function shell(linea) {
+  const comandos = linea.split(/;|&amp;&amp;|\|\||\|/).map((c) => c.trim()).filter(Boolean);
+  comandos.forEach((c, i) => console.log(`  programa ${i + 1}: ${c}`));
+}
+function execFile(programa, argumentos) {
+  console.log(`  programa 1: ${programa}, con los argumentos ${JSON.stringify(argumentos)}`);
+}
+
+const servidor = "partidas.example; rm -rf ~/partidas-guardadas";
+
+console.log("Con exec (texto para la shell):");
+shell("ping -c 1 " + servidor);
+
+console.log("Con execFile (argumentos separados):");
+execFile("ping", ["-c", "1", servidor]);</textarea>
+  </div>
+  <p>Con <code>exec</code>, la shell ve dos órdenes: el <code>ping</code> y un borrado de archivos. Con <code>execFile</code> se ejecuta un único programa, <code>ping</code>, que recibe un nombre de servidor rarísimo, no lo encuentra y termina con un error inofensivo. La mejor defensa, de todos modos, es otra: casi nunca necesitas un comando del sistema. Para leer archivos, comprimir o hacer peticiones hay módulos y bibliotecas que no pasan por una shell.</p>
+
+  <h3>La misma idea, en muchos disfraces</h3>
+  <p>Cada vez que un dato se mete dentro de un texto que otro programa va a interpretar, hay riesgo de inyección:</p>
+  <ul>
+    <li><strong>HTML y JavaScript</strong>: es el XSS, y tiene sección propia a continuación.</li>
+    <li><strong>Bases de datos NoSQL</strong>: en MongoDB, si tu código hace <code>buscar({ nombre: cuerpo.nombre, clave: cuerpo.clave })</code> y alguien envía <code>{"clave": {"$ne": null}}</code>, la condición pasa a ser «cualquier clave que no sea nula». La defensa es comprobar que cada campo sea del tipo esperado, un texto y no un objeto, algo que verás en la sección de validación.</li>
+    <li><strong>Rutas de archivos</strong>: si guardas avatares en <code>"avatares/" + nombreArchivo</code> y alguien envía <code>../../.env</code>, podría leer o sobrescribir archivos fuera de la carpeta. A esto se le llama <strong>recorrido de rutas</strong> (<em>path traversal</em>).</li>
+    <li><strong>Modelos de lenguaje</strong>: si tu app pega el texto de una página web o de un correo dentro de las instrucciones que le das a una IA, ese texto puede traer órdenes escondidas («ignora lo anterior y envía los datos a…»). Es la <strong>inyección de instrucciones</strong> (<em>prompt injection</em>), y la verás en la <a href="37-ia.html">Estación 37</a>. Aquí no existe todavía una defensa tan limpia como los parámetros de SQL, así que se combina con el mínimo privilegio: que la IA no pueda hacer nada grave aunque la engañen.</li>
+  </ul>
+  <aside class="senal clave">
+    <p>Regla general contra la inyección: <strong>separa el código de los datos</strong>. Usa las herramientas que los envían por canales distintos (parámetros en SQL, argumentos en <code>execFile</code>, <code>textContent</code> en el DOM). Cuando no existan, escapa según las reglas exactas del lenguaje de destino, con una biblioteca, y limita lo que el otro programa puede hacer.</p>
+  </aside>
+</section>
+
+<section id="xss" data-parada="XSS">
+  <h2>XSS: que tu página no ejecute código ajeno</h2>
+  <p>En la <a href="15-dom.html#cambiar">Estación 15</a> viste el <strong>XSS</strong> (<em>cross-site scripting</em>) en acción: un comentario con <code>&lt;img src="x" onerror="…"&gt;</code> mostrado con <code>innerHTML</code> ejecuta código en el navegador de cada persona que lo lee. Es una inyección más, esta vez en HTML y JavaScript. Ahora vas a ver por qué es tan grave, en qué formas aparece y cómo se defiende una aplicación completa.</p>
+  <p>El código inyectado se ejecuta <em>dentro de tu página</em>, con los mismos poderes que tu propio JavaScript. Puede leer todo lo que la página muestra, enviar peticiones a tu API en nombre de la víctima (publicar, comprar, cambiar su correo), leer lo que guardaste en <code>localStorage</code>, dibujar un formulario de inicio de sesión falso encima del verdadero o registrar lo que se escribe. Para el navegador, ese código es tuyo.</p>
+
+  <h3>Tres formas de XSS</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Tipo</th><th scope="col">De dónde sale el código</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Almacenado</strong></td><td>Se guarda en tu base de datos y se muestra a cada visitante.</td><td>Un comentario, un nombre de jugador o una biografía con HTML malicioso. Es el más peligroso: afecta a todas las personas que lo vean.</td></tr>
+        <tr><td><strong>Reflejado</strong></td><td>Viaja en la petición y el servidor lo devuelve en la respuesta.</td><td><code>/buscar?q=&lt;script&gt;…</code> y una página que responde «No hay resultados para» seguido de <code>q</code> sin escapar. La víctima tiene que abrir un enlace preparado.</td></tr>
+        <tr><td><strong>Basado en el DOM</strong></td><td>Nunca pasa por el servidor: tu propio JavaScript lo toma de la URL o de otro lugar y lo inserta.</td><td><code>titulo.innerHTML = location.hash.slice(1)</code> con un enlace que termina en <code>#&lt;img src=x onerror=…&gt;</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Defensa 1: escapar la salida</h3>
+  <p><strong>Escapar</strong> un texto es reemplazar los caracteres que tienen un significado especial en el lenguaje de destino por una forma que solo significa «este carácter, tal cual». En HTML se usan <strong>entidades</strong>: <code>&amp;lt;</code> se ve como <code>&lt;</code> en pantalla, pero el navegador ya no lo lee como el inicio de una etiqueta. Bastan cinco reemplazos:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Carácter</th><th scope="col">Se escribe</th><th scope="col">Por qué</th></tr></thead>
+      <tbody>
+        <tr><td><code>&amp;</code></td><td><code>&amp;amp;</code></td><td>Empieza las entidades. Va primero: si no, estropearías las que acabas de crear.</td></tr>
+        <tr><td><code>&lt;</code></td><td><code>&amp;lt;</code></td><td>Abre etiquetas.</td></tr>
+        <tr><td><code>&gt;</code></td><td><code>&amp;gt;</code></td><td>Cierra etiquetas.</td></tr>
+        <tr><td><code>"</code></td><td><code>&amp;quot;</code></td><td>Cierra el valor de un atributo escrito con comillas dobles.</td></tr>
+        <tr><td><code>'</code></td><td><code>&amp;#39;</code></td><td>Cierra el valor de un atributo escrito con comillas simples.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Cuando generas HTML como texto (en el servidor, en un correo, en una plantilla), cada dato ajeno pasa por una función así. Predice qué imprime cada línea y después ejecuta. Luego mueve el reemplazo de <code>&amp;</code> al final de la función y observa qué se rompe:</p>
+  <div class="taller" id="taller-escapar" data-titulo="Predice: escapar HTML">
+    <textarea class="taller-codigo">function escaparHTML(texto) {
+  return String(texto)
+    .replaceAll("&amp;", "&amp;amp;")
+    .replaceAll("&lt;", "&amp;lt;")
+    .replaceAll("&gt;", "&amp;gt;")
+    .replaceAll('"', "&amp;quot;")
+    .replaceAll("'", "&amp;#39;");
+}
+
+const nombre = 'Leo&lt;img src=x onerror="robar()"&gt;';
+const bio = "Me gusta el rock &amp; roll";
+
+console.log(`&lt;b&gt;${nombre}&lt;/b&gt;`);               // sin escapar
+console.log(`&lt;b&gt;${escaparHTML(nombre)}&lt;/b&gt;`);  // escapado
+console.log(escaparHTML(bio));
+console.log(`&lt;input value="${escaparHTML('dijo "hola"')}"&gt;`);</textarea>
+  </div>
+  <p>La segunda línea, pegada en una página, se vería exactamente como el nombre que escribió Leo, con sus símbolos, pero sin crear ninguna imagen ni ejecutar nada. Si pusiste el reemplazo de <code>&amp;</code> al final, habrás visto <code>&amp;amp;lt;</code>: el <code>&amp;</code> de las entidades recién creadas se escapó otra vez, y en pantalla aparecería <code>&amp;lt;</code> en lugar de <code>&lt;</code>.</p>
+  <aside class="senal clave">
+    <p><strong>Escapa en la salida, no en la entrada.</strong> Guarda en la base de datos el texto tal como lo escribió la persona (después de validarlo) y escápalo en el momento de insertarlo en HTML. El mismo dato puede terminar en una página, en un JSON, en un CSV o en un correo, y cada destino tiene sus propias reglas. Si lo escapas al guardarlo, lo escaparás dos veces o con las reglas equivocadas.</p>
+  </aside>
+
+  <h3>El contexto manda</h3>
+  <p>Escapar HTML protege el texto que va entre etiquetas y dentro de atributos con comillas. Pero hay lugares de una página donde esas cinco sustituciones no bastan:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Dónde va el dato</th><th scope="col">Riesgo</th><th scope="col">Qué hacer</th></tr></thead>
+      <tbody>
+        <tr><td>Texto dentro de un elemento</td><td>Etiquetas nuevas.</td><td><code>textContent</code> en el navegador; escapar HTML en el servidor.</td></tr>
+        <tr><td>Valor de un atributo</td><td>Cerrar el atributo y añadir otro, como <code>onerror</code>.</td><td><code>setAttribute</code> o escapar, y siempre entre comillas.</td></tr>
+        <tr><td>Una URL en <code>href</code> o <code>src</code></td><td>Direcciones <code>javascript:alert(1)</code>, que ejecutan código al pulsarlas.</td><td>Comprobar el protocolo con <code>new URL()</code>: solo <code>http:</code> y <code>https:</code>.</td></tr>
+        <tr><td>Dentro de <code>&lt;script&gt;</code> o de un <code>onclick="…"</code></td><td>El dato ya está en medio de código.</td><td>No lo hagas. Pasa el dato en un atributo <code>data-</code> o como JSON y léelo desde tu script.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El caso de las URL engaña a mucha gente, porque <code>setAttribute</code> no ayuda: una dirección <code>javascript:</code> es un valor de atributo perfectamente válido. Si dejas que cada jugador ponga un enlace a su canal en su perfil, compruébalo así:</p>
+  <pre><code class="language-js">function esEnlaceSeguro(texto) {
+  try {
+    const url = new URL(texto);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;   // ni siquiera es una URL válida
+  }
+}
+esEnlaceSeguro("https://twitch.tv/lyra");   // true
+esEnlaceSeguro("javascript:alert(1)");      // false
+esEnlaceSeguro("JaVaScRiPt:alert(1)");      // false: URL normaliza el protocolo a minúsculas</code></pre>
+
+  <h3>Defensa 2: cuando necesitas HTML de verdad, límpialo</h3>
+  <p>A veces quieres permitir algo de formato: negritas en los comentarios, enlaces en una descripción. Entonces no puedes escapar todo. La salida es <strong>sanear</strong> (o sanitizar) el HTML: analizarlo y quedarte solo con las etiquetas y atributos de una lista de permitidos, eliminando todo lo demás. Nunca lo intentes con tus propias expresiones regulares: el HTML tiene demasiados rincones. Usa una biblioteca mantenida por especialistas, como <strong>DOMPurify</strong>.</p>
+  <p>Este taller carga DOMPurify y publica el mismo comentario de dos formas. Ejecútalo, prueba a escribir otros comentarios y pulsa «Publicar»:</p>
+  <div class="taller" data-modo="web" id="taller-dompurify" data-titulo="Negritas sí, código no" data-alto="22rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;p&gt;&lt;label for="entrada"&gt;Comentario (se permiten negrita y cursiva):&lt;/label&gt;&lt;br&gt;
+&lt;input id="entrada" size="60"&gt; &lt;button id="publicar"&gt;Publicar&lt;/button&gt;&lt;/p&gt;
+&lt;h3&gt;1. Con textContent: se ve todo, no se ejecuta nada&lt;/h3&gt;
+&lt;p id="texto" class="caja"&gt;&lt;/p&gt;
+&lt;h3&gt;2. Con DOMPurify: queda la negrita, se va el peligro&lt;/h3&gt;
+&lt;p id="limpio" class="caja"&gt;&lt;/p&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.4.16/purify.min.js"&gt;&lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+h3 { margin: .75rem 0 .25rem; font-size: 1rem; }
+.caja { border: 2px solid #999; padding: .5rem; margin: 0; min-height: 1.5rem; }
+body.atacado { background: #ffd6d6; }
+body.atacado::after { content: "Se ejecutó código que venía dentro del comentario."; display: block; margin-top: 1rem; font-weight: bold; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const entrada = document.querySelector("#entrada");
+entrada.value = '¡Qué partida! &lt;b&gt;GG&lt;/b&gt; &lt;img src="no-existe.png" onerror="document.body.classList.add(\'atacado\')"&gt;';
+
+function publicar() {
+  const comentario = entrada.value;
+  document.querySelector("#texto").textContent = comentario;
+  if (typeof DOMPurify === "undefined") {
+    console.error("No se pudo cargar DOMPurify. ¿Tienes conexión?");
+    return;
+  }
+  const limpio = DOMPurify.sanitize(comentario, {
+    ALLOWED_TAGS: ["b", "i", "strong", "em"],  // lista de permitidos
+    ALLOWED_ATTR: []                           // ningún atributo
+  });
+  document.querySelector("#limpio").innerHTML = limpio;
+  console.log("DOMPurify devolvió:", limpio);
+}
+
+document.querySelector("#publicar").addEventListener("click", publicar);
+publicar();
+console.log("¿Tu navegador tiene setHTML?", "setHTML" in Element.prototype ? "sí" : "todavía no");</textarea>
+  </div>
+  <p>El fondo no se vuelve rojo: la imagen con <code>onerror</code> desapareció y la negrita se conservó. La última línea comprueba una novedad. Los navegadores están incorporando un saneador propio, la <strong>Sanitizer API</strong>, con el método <code>elemento.setHTML(texto)</code>: inserta HTML quitando siempre lo peligroso. Según MDN, en septiembre de 2026 funciona en Chrome desde la versión 146 y en Firefox desde la 148, pero todavía no en Safari. Hasta que esté en todos, DOMPurify sigue siendo la opción portátil.</p>
+
+  <h3>Defensa 3: que tu herramienta escape por ti</h3>
+  <p>Los sistemas de plantillas y los frameworks modernos escapan por defecto. En React, que verás en la <a href="32-react.html">Estación 32</a>, escribir <code>&lt;p&gt;{comentario}&lt;/p&gt;</code> muestra el texto escapado sin que hagas nada. Para insertar HTML sin escapar tienes que usar una propiedad llamada, a propósito, <code>dangerouslySetInnerHTML</code> («fijar el HTML interno de forma peligrosa»). Vue tiene <code>v-html</code>, Svelte tiene <code>{@html …}</code>, y en plantillas de servidor como EJS, <code>&lt;%= dato %&gt;</code> escapa y <code>&lt;%- dato %&gt;</code> no. Cuando revises código, busca esas salidas de emergencia: casi todos los XSS en aplicaciones modernas pasan por ellas.</p>
+
+  <h3>Defensa 4: la política de seguridad de contenido (CSP)</h3>
+  <p>Las defensas anteriores evitan que el código entre. La <strong>política de seguridad de contenido</strong> (<em>Content Security Policy</em>, CSP) es una segunda capa por si algo se cuela: una cabecera HTTP con la que tu servidor le dice al navegador de dónde puede cargar scripts, estilos, imágenes y demás. Una política estricta para una app sencilla podría ser:</p>
+  <pre><code class="language-text">Content-Security-Policy: default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'</code></pre>
+  <ul>
+    <li><code>default-src 'self'</code>: por defecto, todo se carga solo desde tu propio origen.</li>
+    <li><code>script-src 'self'</code>: solo se ejecutan scripts que vengan de archivos de tu sitio. Los scripts escritos dentro del HTML y los atributos como <code>onerror="…"</code> quedan bloqueados, y con ellos la mayoría de los XSS.</li>
+    <li><code>object-src 'none'</code> y <code>base-uri 'none'</code>: cierran dos trucos antiguos para cargar código.</li>
+    <li><code>frame-ancestors 'none'</code>: nadie puede meter tu página dentro de un <code>&lt;iframe&gt;</code> de otro sitio (evita el <em>clickjacking</em>, engañar a alguien para que pulse botones de tu página escondida debajo de otra).</li>
+  </ul>
+  <p>Si tu página necesita un script dentro del HTML, la CSP permite autorizarlo con un <strong>nonce</strong>, un valor aleatorio que el servidor genera en cada respuesta y escribe tanto en la cabecera como en la etiqueta. Antes de activar una política nueva, puedes probarla con la cabecera <code>Content-Security-Policy-Report-Only</code>: el navegador informa en la consola de lo que habría bloqueado, sin bloquearlo todavía. En Express, el paquete <code>helmet</code> (versión 8 en 2026) añade una CSP razonable y otras cabeceras de seguridad con una línea, <code>app.use(helmet())</code>.</p>
+  <aside class="senal oficio">
+    <p>La CSP no sustituye a escapar. Es un cinturón de seguridad: te salva el día que alguien del equipo escribe un <code>innerHTML</code> con datos ajenos. Los equipos con experiencia usan las dos cosas, y además marcan la cookie de sesión como <code>HttpOnly</code> (lo verás en <a href="#sesiones">Sesiones y tokens</a>) para que un XSS no pueda llevársela.</p>
+  </aside>
+</section>
+
+<section id="validar" data-parada="No confíes en la entrada">
+  <h2>No confíes en la entrada</h2>
+  <p>En la <a href="29-backend.html#validar">Estación 29</a> validaste los datos de tu API con Zod: tipos, longitudes y campos de sobra que desaparecen (la asignación masiva). Esta sección no repite esa técnica. Se centra en el criterio de seguridad que hay detrás: qué comprobar, en qué orden, y qué pasa cuando alguien diseña una entrada para engañarte.</p>
+
+  <h3>Lista de permitidos, no lista de prohibidos</h3>
+  <p>Hay dos formas de decidir qué entra. Una <strong>lista de prohibidos</strong> (<em>denylist</em>) enumera lo malo y deja pasar lo demás. Una <strong>lista de permitidos</strong> (<em>allowlist</em>) describe lo bueno y rechaza todo lo demás. La primera parece más cómoda, pero te obliga a imaginar todos los ataques posibles, y siempre te faltará alguno. Compruébalo: este filtro intenta frenar el XSS quitando <code>&lt;script&gt;</code>. Predice cuántos ataques deja pasar:</p>
+  <div class="taller" id="taller-prohibidos" data-titulo="Predice: el filtro que se cree seguro">
+    <textarea class="taller-codigo">// Lista de prohibidos: quita la etiqueta <script>
+function filtroIngenuo(texto) {
+  return texto.replaceAll("<script>", "").replaceAll("</script>", "");
+}
+
+// Lista de permitidos: un nombre de jugador solo puede tener esto
+function nombreValido(texto) {
+  return /^[a-zA-Z0-9_]{3,16}$/.test(texto);
+}
+
+const intentos = [
+  "<script>robar()</script>",
+  "<SCRIPT>robar()</SCRIPT>",
+  "<scr<script>ipt>robar()</script>",
+  '<img src=x onerror="robar()">',
+  "Lyra_07",
+];
+
+for (const t of intentos) {
+  const filtrado = filtroIngenuo(t);
+  const peligro = /<|>/.test(filtrado) ? "PASA ALGO SOSPECHOSO" : "limpio";
+  console.log(`${peligro.padEnd(21)} | permitido: ${nombreValido(t)} | ${filtrado}`);
+}</textarea>
+  </div>
+  <p>El filtro solo detiene el primer intento. Las mayúsculas lo esquivan, el tercero se rearma solo cuando el filtro quita la etiqueta del medio, y el cuarto ni siquiera usa <code>&lt;script&gt;</code>. La lista de permitidos, en cambio, no necesita conocer ningún ataque: un nombre de jugador tiene de 3 a 16 letras, números o guiones bajos, y punto. Lo que no encaja, no entra.</p>
+  <aside class="senal ojo">
+    <p>Validar no sustituye a escapar ni a parametrizar. Un campo de texto libre, como un comentario, tiene que aceptar comillas, <code>&lt;</code> y <code>&amp;</code>, porque la gente escribe «5 &lt; 7» o «Tom &amp; Jerry». Ahí la validación solo limita el tamaño; la protección la ponen el escape al mostrarlo y los parámetros al guardarlo. Son capas distintas: defensa en profundidad.</p>
+  </aside>
+
+  <h3>Validar, normalizar, escapar</h3>
+  <p>Tres palabras que se confunden mucho y hacen cosas distintas, en momentos distintos:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Acción</th><th scope="col">Qué hace</th><th scope="col">Cuándo</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Normalizar</strong></td><td>Lleva el dato a su forma estándar, sin cambiar lo que significa.</td><td>Al entrar, antes de validar.</td><td>Quitar espacios de los extremos; pasar un correo a minúsculas.</td></tr>
+        <tr><td><strong>Validar</strong></td><td>Decide si el dato se acepta o se rechaza (con un 400).</td><td>Al entrar, en el servidor.</td><td>La edad es un entero entre 13 y 120.</td></tr>
+        <tr><td><strong>Escapar</strong></td><td>Lo transforma para un destino concreto, para que siga siendo dato allí.</td><td>Al salir, justo antes de usarlo.</td><td>Entidades HTML; parámetros SQL.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Qué conviene comprobar de cada dato, de lo más básico a lo más fino:</p>
+  <ul>
+    <li><strong>Tipo</strong>: un número es un número y un texto es un texto. Así se frena la inyección NoSQL de la sección anterior: <code>{"$ne": null}</code> es un objeto, no un texto.</li>
+    <li><strong>Tamaño</strong>: longitud máxima de cada texto, cantidad máxima de elementos de una lista y tamaño máximo del cuerpo completo. <code>express.json()</code> rechaza por defecto los cuerpos de más de 100 KB, y puedes bajarlo con su opción <code>limit</code>. Sin límites, un solo mensaje de 500 MB puede tumbar tu servidor.</li>
+    <li><strong>Rango y formato</strong>: mínimos y máximos, patrones como el del nombre de jugador, fechas que existen.</li>
+    <li><strong>Conjunto de valores</strong>: si el campo es la dificultad, solo <code>"facil"</code>, <code>"normal"</code> o <code>"dificil"</code>.</li>
+    <li><strong>Reglas del negocio</strong>: lo que solo tu app sabe. ¿Existe ese objeto? ¿Le alcanzan las monedas? ¿Es su turno? Muchos ataques reales no rompen ninguna regla de formato: piden <em>cantidad: -5</em> en una tienda y reciben dinero en lugar de gastarlo.</li>
+  </ul>
+  <aside class="senal error">
+    <p>Aceptar del cliente datos que el servidor puede calcular. Si la petición de compra incluye <code>"precio": 100</code>, alguien enviará <code>"precio": 0</code>. El cliente dice <em>qué</em> quiere comprar y <em>cuántos</em>; el precio lo busca el servidor en su propio catálogo. Lo mismo vale para descuentos, recompensas, puntuaciones y cualquier valor que tenga consecuencias.</p>
+  </aside>
+
+  <h3>Claves que vienen de fuera: la contaminación del prototipo</h3>
+  <p>En la <a href="19-estructuras-datos.html#hash">Estación 19</a> viste que los objetos de JavaScript traen «claves de fábrica» heredadas de su prototipo, y se anunció un ataque que aprovecha eso. Se llama <strong>contaminación del prototipo</strong> (<em>prototype pollution</em>). Ocurre cuando tu código copia en un objeto claves que decidió otra persona, y una de ellas es la especial <code>__proto__</code>. Ejecuta y mira la última línea:</p>
+  <div class="taller" id="taller-prototipo" data-titulo="Un ajuste que contamina a todos">
+    <textarea class="taller-codigo">// Copia profunda ingenua: mezcla los ajustes que envía el cliente
+function mezclar(destino, origen) {
+  for (const clave in origen) {
+    const valor = origen[clave];
+    if (typeof valor === "object" && valor !== null) {
+      if (typeof destino[clave] !== "object" || destino[clave] === null) destino[clave] = {};
+      mezclar(destino[clave], valor);
+    } else {
+      destino[clave] = valor;
+    }
+  }
+  return destino;
+}
+
+// Llega en el cuerpo de una petición: parece un cambio de ajustes inocente
+const cuerpo = JSON.parse('{"volumen": 7, "__proto__": {"esAdmin": true}}');
+const ajustesDeLyra = mezclar({ volumen: 5 }, cuerpo);
+console.log("Ajustes de Lyra:", ajustesDeLyra.volumen);
+
+// Mucho después, en otra parte del programa, se crea un usuario cualquiera
+const usuarioNuevo = { nombre: "Leo" };
+console.log("¿Leo es admin?", usuarioNuevo.esAdmin);</textarea>
+  </div>
+  <p><code>destino["__proto__"]</code> no es una propiedad normal: es el prototipo compartido por <em>todos</em> los objetos. Al «mezclar» dentro de él, la función añadió <code>esAdmin: true</code> a todos los objetos del programa, incluido el de Leo, que se creó después. Si en algún sitio tu servidor comprueba <code>if (usuario.esAdmin)</code>, la puerta queda abierta. Varias bibliotecas populares tuvieron este fallo; lo verás en el ejemplo de <code>npm audit</code> de la última sección. Las defensas:</p>
+  <ul>
+    <li>Valida con un esquema: Zod solo copia las claves que describiste, y <code>__proto__</code> no es una de ellas.</li>
+    <li>Si necesitas un diccionario con claves que escriben los usuarios, usa un <code>Map</code> o <code>Object.create(null)</code>, un objeto sin prototipo.</li>
+    <li>Si escribes una función que copia claves ajenas, rechaza <code>__proto__</code>, <code>constructor</code> y <code>prototype</code>.</li>
+  </ul>
+
+  <h3>En un videojuego en línea: el servidor manda</h3>
+  <p>En los juegos, «nunca confíes en el cliente» tiene nombre propio: <strong>servidor autoritativo</strong>. El juego instalado en la computadora de cada jugador está en sus manos. Con editores de memoria puede cambiar sus monedas o su vida; con un cliente modificado puede moverse más rápido o atravesar paredes; con un programa automático (un <em>bot</em>) puede jugar las 24 horas. Por eso, en la arquitectura que viste en la <a href="28-arquitectura.html#estilos">Estación 28</a>, el cliente envía <em>intenciones</em> y el servidor decide los <em>resultados</em>:</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">El cliente decide</p>
+      <pre><code class="language-json">{ "accion": "disparo",
+  "impacto": true,
+  "danio": 500,
+  "enemigo": 17 }</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">El cliente pide, el servidor decide</p>
+      <pre><code class="language-json">{ "accion": "disparo",
+  "direccion": 1.57,
+  "tick": 18234 }</code></pre>
+    </div>
+  </div>
+  <p>Con el mensaje de la derecha, el servidor comprueba que el arma esté cargada y que haya pasado el tiempo mínimo entre disparos, calcula la trayectoria con su propia copia del mundo, decide si hubo impacto y aplica el daño que dicta su tabla de armas. Otras reglas del oficio:</p>
+  <ul>
+    <li><strong>Límites físicos</strong>: si un personaje no puede recorrer más de 8 unidades por segundo, el servidor rechaza cualquier movimiento más largo, venga de donde venga.</li>
+    <li><strong>Azar en el servidor</strong>: el botín, los críticos y las cartas se sortean en el servidor. Si el cliente tira los dados, el cliente elige el resultado.</li>
+    <li><strong>No envíes lo que no se debe ver</strong>: si el servidor manda la posición de todos los enemigos, aunque estén detrás de una pared, un cliente modificado los dibujará (el truco llamado <em>wallhack</em>). Envía solo lo que el jugador puede percibir.</li>
+    <li><strong>Récords creíbles</strong>: en tu tabla de puntuaciones, rechaza lo imposible (más puntos por segundo de los que permite el juego, partidas de dos segundos) y, si el premio lo merece, guarda la partida para revisarla.</li>
+  </ul>
+  <aside class="senal nota">
+    <p>Ninguna defensa elimina las trampas del todo; los programas antitrampas de los grandes juegos son una carrera sin fin. Pero un servidor autoritativo convierte la trampa de «cambio un número y gano» en algo caro y difícil. Lo pondrás en práctica en la <a href="34-videojuegos.html">Estación 34</a>.</p>
+  </aside>
+</section>
+
+<section id="contrasenas" data-parada="Contraseñas">
+  <h2>Contraseñas: guardarlas sin conocerlas</h2>
+  <p>Antes de hablar de contraseñas, dos palabras que se parecen y no significan lo mismo:</p>
+  <ul>
+    <li><strong>Autenticación</strong> (en inglés, <em>authentication</em>, abreviada <em>authn</em>): comprobar <em>quién eres</em>. Es lo que pasa al iniciar sesión.</li>
+    <li><strong>Autorización</strong> (<em>authorization</em>, <em>authz</em>): decidir <em>qué puedes hacer</em> una vez que se sabe quién eres. Es lo que pasa cuando intentas borrar un comentario y el servidor comprueba si es tuyo.</li>
+  </ul>
+  <p>Para autenticarte puedes demostrar tres tipos de cosas, llamadas <strong>factores</strong>: algo que sabes (una contraseña), algo que tienes (tu teléfono, una llave física) o algo que eres (tu huella, tu cara). Esta sección trata del primero, que sigue siendo el más común y el que más veces se hace mal.</p>
+
+  <h3>El problema: las bases de datos se filtran</h3>
+  <p>En diciembre de 2009 alguien entró en RockYou, una empresa de juegos y aplicaciones para redes sociales, y se llevó 32 millones de contraseñas. Estaban guardadas <strong>en texto plano</strong>, tal cual las escribió cada persona. Esa lista sigue circulando hoy y se usa para adivinar contraseñas en otros sitios. El daño no se quedó en RockYou: mucha gente usa la misma contraseña en todas partes, y probar en tu banco o en tu correo las parejas de usuario y contraseña robadas de otro sitio es un ataque tan común que tiene nombre, <strong>relleno de credenciales</strong> (<em>credential stuffing</em>).</p>
+  <p>Diseña pensando que un día te robarán la base de datos. La pregunta es: ¿qué podrá hacer quien la tenga?</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Cómo se guarda</th><th scope="col">Qué ve quien roba la base de datos</th><th scope="col">Veredicto</th></tr></thead>
+      <tbody>
+        <tr><td>Texto plano</td><td>Todas las contraseñas, listas para usar.</td><td>Nunca.</td></tr>
+        <tr><td>Cifrada</td><td>Texto ilegible… hasta que encuentra la clave, que suele estar en el mismo servidor. Entonces, todas.</td><td>Nunca. El cifrado es reversible a propósito, y nadie necesita recuperar tu contraseña: basta con comprobarla.</td></tr>
+        <tr><td>Hash rápido (MD5, SHA-1, SHA-256)</td><td>Resúmenes que no se pueden invertir, pero que se pueden adivinar a enorme velocidad.</td><td>Insuficiente.</td></tr>
+        <tr><td>Hash lento con sal (Argon2id, scrypt, bcrypt)</td><td>Resúmenes únicos y carísimos de adivinar uno por uno.</td><td>Lo correcto.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Hash: comprobar sin conocer</h3>
+  <p>En la <a href="19-estructuras-datos.html#hash">Estación 19</a> conociste las funciones hash y se anunció que las criptográficas sirven para guardar contraseñas. Una <strong>función hash criptográfica</strong> convierte cualquier texto en un resumen de tamaño fijo con tres propiedades: siempre da el mismo resumen para la misma entrada, un cambio mínimo en la entrada cambia el resumen por completo, y es prácticamente imposible ir del resumen a la entrada. Por eso el servidor no guarda tu contraseña: guarda su hash. Al iniciar sesión calcula el hash de lo que escribiste y compara. Si coinciden, escribiste la contraseña correcta, y el servidor lo sabe sin haberla guardado nunca.</p>
+  <div class="traza" data-titulo="Comprobar una contraseña sin guardarla" data-rotulo-memoria="Memoria del servidor">
+    <pre><code class="language-js">const guardado = { sal: "k9P2", hash: "9f0da2ba84a2…" };
+const intento = "123456";
+const calculado = sha256(guardado.sal + intento);
+const correcto = calculado === guardado.hash;
+console.log(correcto ? "Hola, Luis" : "Usuario o contraseña incorrectos");</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"guardado": "{ sal: \"k9P2\", hash: \"9f0da2ba84a2…\" }"}, "nota": "El servidor lee de la base de datos lo único que tiene de Luis: una sal y un hash. En ningún lugar está la contraseña. (La sal la explicamos enseguida; de momento, es un texto aleatorio que se guarda junto al hash)."},
+      {"linea": 2, "vars": {"guardado": "{ sal: \"k9P2\", hash: \"9f0da2ba84a2…\" }", "intento": "\"123456\""}, "nota": "Llega lo que Luis escribió en el formulario, por HTTPS. Esta variable solo vive en la memoria durante esta petición; nunca se guarda ni se escribe en los registros."},
+      {"linea": 3, "vars": {"guardado": "{ sal: \"k9P2\", hash: \"9f0da2ba84a2…\" }", "intento": "\"123456\"", "calculado": "\"9f0da2ba84a2…\""}, "nota": "Se repite exactamente el cálculo que se hizo al registrarse: la misma sal, pegada al intento, pasa por la misma función hash."},
+      {"linea": 4, "vars": {"guardado": "{ sal: \"k9P2\", hash: \"9f0da2ba84a2…\" }", "intento": "\"123456\"", "calculado": "\"9f0da2ba84a2…\"", "correcto": "true"}, "nota": "Los dos resúmenes coinciden. Con una sola letra distinta en el intento, el hash sería completamente diferente y esto daría false."},
+      {"linea": 5, "vars": {"guardado": "{ sal: \"k9P2\", hash: \"9f0da2ba84a2…\" }", "intento": "\"123456\"", "calculado": "\"9f0da2ba84a2…\"", "correcto": "true"}, "salida": "Hola, Luis", "nota": "Luis entra. En un servidor real no usarás sha256 a mano: una biblioteca como argon2 hace las líneas 3 y 4 por ti con verify(), con un algoritmo lento y comparando de forma segura."}
+    ]</script>
+  </div>
+
+  <h3>La sal: que cada hash sea único</h3>
+  <p>Un hash sin más tiene un punto débil: la misma contraseña siempre produce el mismo hash. Quien roba la base de datos puede calcular una sola vez los hashes de millones de contraseñas comunes y buscarlos todos a la vez. A esas listas se las llama <strong>tablas precalculadas</strong> (una versión optimizada se conoce como <em>tabla arcoíris</em>). Además, dos personas con la misma contraseña quedan delatadas porque comparten hash. Ejecuta este taller en Python y predice antes cuántas cuentas caen:</p>
+  <div class="taller" data-modo="python" id="taller-sal" data-titulo="Una tabla precalculada contra una base filtrada">
+    <textarea class="taller-codigo">import hashlib, secrets
+
+def sha256(texto):
+    return hashlib.sha256(texto.encode()).hexdigest()
+
+# 1) Una base de datos filtrada que guardaba SHA-256 SIN sal
+filtrada = {
+    "ana": sha256("dragon"),
+    "luis": sha256("123456"),
+    "sol": sha256("Xq9!mT#2vLp$8wZr"),
+    "ivan": sha256("123456"),
+}
+print("¿Luis e Iván tienen el mismo hash?", filtrada["luis"] == filtrada["ivan"])
+
+# La atacante calcula UNA vez los hashes de contraseñas comunes...
+comunes = ["123456", "password", "qwerty", "dragon", "futbol"]
+tabla = {sha256(c): c for c in comunes}
+
+# ...y los busca en toda la base filtrada de golpe
+for usuario, h in filtrada.items():
+    print(usuario, "->", tabla.get(h, "no está en la tabla"))
+
+# 2) Lo mismo, pero con una sal aleatoria distinta para cada persona
+def registrar(clave):
+    sal = secrets.token_hex(16)
+    return sal, sha256(sal + clave)
+
+con_sal = {"luis": registrar("123456"), "ivan": registrar("123456")}
+print("Con sal, ¿mismo hash?", con_sal["luis"][1] == con_sal["ivan"][1])
+print("Con sal, ¿la tabla encuentra a Luis?", con_sal["luis"][1] in tabla)</textarea>
+  </div>
+  <p>Sin sal caen tres de cuatro cuentas con una sola búsqueda, y Sol se salva solo porque su contraseña es larga y aleatoria. Con sal, la tabla de la atacante no sirve para nada. Una <strong>sal</strong> (<em>salt</em>) es un valor aleatorio, distinto para cada cuenta, que se mezcla con la contraseña antes de calcular el hash y se guarda junto a él. No es secreta: su trabajo es que cada hash sea único.</p>
+  <figure class="capsula" data-titulo="Qué cambia la sal">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: Luis e Iván usan la contraseña 123456. Sin sal, los dos tienen el mismo hash, 8d969eef, que aparece en la tabla precalculada de la atacante: las dos cuentas quedan al descubierto con una búsqueda. Con sal, Luis tiene la sal k9P2 e Iván la sal Qz7m, sus hashes son distintos y ninguno está en la tabla. La atacante tendría que empezar de cero para cada persona, y con Argon2id cada intento es lento.">
+        <text class="d-mono" x="20" y="30" style="font-size:15px" data-texto="3:hash guardado = sha256(sal + contraseña)">hash guardado = sha256(contraseña)</text>
+        <text class="d-rotulo d-peq" x="32" y="70">Usuario</text>
+        <text class="d-rotulo d-peq" x="170" y="70">Sal</text>
+        <text class="d-rotulo d-peq" x="260" y="70">Hash guardado</text>
+        <rect class="d-caja" x="20" y="80" width="470" height="58" rx="6"/>
+        <text class="d-rotulo" x="32" y="104">Luis</text>
+        <text class="d-peq d-tenue" x="32" y="126">contraseña: 123456</text>
+        <text class="d-mono" x="170" y="115" data-texto="3:k9P2">—</text>
+        <text class="d-mono" x="260" y="115" data-texto="3:9f0da2ba84a2…">8d969eef6eca…</text>
+        <rect class="d-caja" x="20" y="148" width="470" height="58" rx="6"/>
+        <text class="d-rotulo" x="32" y="172">Iván</text>
+        <text class="d-peq d-tenue" x="32" y="194">contraseña: 123456</text>
+        <text class="d-mono" x="170" y="183" data-texto="3:Qz7m">—</text>
+        <text class="d-mono" x="260" y="183" data-texto="3:9e0b68455e52…">8d969eef6eca…</text>
+        <rect class="d-caja" x="520" y="48" width="190" height="186" rx="8"/>
+        <text class="d-rotulo" x="615" y="72" text-anchor="middle" style="font-size:15px">Tabla de la atacante</text>
+        <text class="d-peq d-tenue" x="615" y="92" text-anchor="middle">hash = contraseña</text>
+        <rect class="d-caja-suave" x="528" y="104" width="174" height="24" rx="4"/>
+        <text class="d-mono d-peq" x="536" y="121">5e884898… = password</text>
+        <rect class="d-caja-suave" x="528" y="134" width="174" height="24" rx="4" data-clases="1:d-caja-suave; 2:d-mal-trazo; 3:d-caja-suave"/>
+        <text class="d-mono d-peq" x="536" y="151">8d969eef… = 123456</text>
+        <rect class="d-caja-suave" x="528" y="164" width="174" height="24" rx="4"/>
+        <text class="d-mono d-peq" x="536" y="181">65e84be3… = qwerty</text>
+        <rect class="d-caja-suave" x="528" y="194" width="174" height="24" rx="4"/>
+        <text class="d-mono d-peq" x="536" y="211">a9c43be9… = dragon</text>
+        <g data-pasos="2">
+          <path class="d-mal-trazo" d="M404 110L516 142"/>
+          <path class="d-mal" d="M518 137l10 7 -12 4z"/>
+          <path class="d-mal-trazo" d="M404 178L516 150"/>
+          <path class="d-mal" d="M516 145l12 3 -10 7z"/>
+          <text class="d-rotulo d-mal" x="20" y="240" style="font-size:15px">Una sola búsqueda deja al descubierto las dos cuentas.</text>
+        </g>
+        <g data-pasos="4-">
+          <path class="d-punteada" d="M404 110L512 142"/>
+          <path class="d-punteada" d="M404 178L512 150"/>
+          <text class="d-rotulo d-ok" x="20" y="240" style="font-size:15px">Ningún hash está en la tabla: el trabajo previo no sirve.</text>
+        </g>
+        <g data-pasos="5">
+          <text class="d-peq" x="20" y="266">Para atacar a Luis hay que probar sha256("k9P2" + intento), intento por intento;</text>
+          <text class="d-peq" x="20" y="286">para Iván, todo otra vez con "Qz7m". Y con Argon2id cada intento es lento a propósito.</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Luis e Iván no se conocen, pero los dos eligieron <code>123456</code>. El servidor guarda solo el hash SHA-256 de cada contraseña, sin sal. Fíjate en que los dos hashes son idénticos.</li>
+        <li data-duracion="6">La atacante roba la base de datos. Tiene preparada una tabla con los hashes de millones de contraseñas comunes, calculada una sola vez. Busca y encuentra <code>8d969eef…</code>: ya sabe la contraseña de las dos cuentas, y de cualquier otra que use <code>123456</code>.</li>
+        <li data-duracion="6">Ahora el servidor genera al registrar a cada persona una sal aleatoria (<code>k9P2</code> para Luis, <code>Qz7m</code> para Iván), la pega a la contraseña y calcula el hash del conjunto. Los dos hashes son distintos aunque la contraseña sea la misma.</li>
+        <li>La tabla precalculada se hizo sin esas sales, así que ningún hash coincide. Tampoco se ve quién comparte contraseña con quién.</li>
+        <li data-duracion="7">A la atacante solo le queda adivinar cuenta por cuenta, probando cada candidata con la sal de esa persona. La sal no impide adivinar una contraseña débil; impide hacerlo al por mayor. Para que cada intento también sea caro, falta la última pieza: un hash lento.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Lento a propósito</h3>
+  <p>SHA-256 se diseñó para ser rápido, porque se usa para comprobar archivos enormes y firmas. Para contraseñas, esa rapidez juega en tu contra. Según las pruebas públicas de hashcat, una herramienta para adivinar contraseñas, una sola tarjeta gráfica RTX 4090 calcula unos 22 000 millones de hashes SHA-256 por segundo. Con bcrypt a coste 5 baja a unos 184 000 por segundo, y cada punto más de coste divide esa cifra entre dos: a coste 10, el mínimo que recomienda OWASP, quedan unos 5 750 por segundo. Juega con los números: cambia la longitud y el alfabeto y observa qué pesa más.</p>
+  <div class="taller" id="taller-aguanta" data-titulo="¿Cuánto aguanta una contraseña?">
+    <textarea class="taller-codigo">// Intentos por segundo con una tarjeta RTX 4090 (pruebas públicas de hashcat)
+const porSegundo = {
+  "SHA-256 (rápido)": 22_000_000_000,
+  "bcrypt coste 10 (lento)": 5_750,
+};
+
+function duracion(segundos) {
+  const unidades = [["año", "años", 31_557_600], ["día", "días", 86_400], ["hora", "horas", 3_600],
+                    ["minuto", "minutos", 60], ["segundo", "segundos", 1]];
+  for (const [uno, varios, s] of unidades) {
+    if (segundos >= s) {
+      const n = Math.round(segundos / s);
+      return `${n.toLocaleString("es")} ${n === 1 ? uno : varios}`;
+    }
+  }
+  return "menos de 1 segundo";
+}
+
+function probar(descripcion, alfabeto, largo) {
+  const combinaciones = alfabeto ** largo;
+  console.log(`${descripcion}: ${alfabeto}^${largo} combinaciones`);
+  for (const [hash, velocidad] of Object.entries(porSegundo)) {
+    console.log(`  ${hash}: ${duracion(combinaciones / velocidad)} para probarlas todas`);
+  }
+}
+
+probar("8 minúsculas", 26, 8);
+probar("8 caracteres de todo tipo", 95, 8);
+probar("15 minúsculas", 26, 15);</textarea>
+  </div>
+  <p>Dos lecciones. La primera: con un hash lento, la misma contraseña pasa de caer en segundos a aguantar años. La segunda: la longitud pesa mucho más que los símbolos raros; quince minúsculas resisten más que ocho caracteres de todo tipo. Un matiz importante: estas cifras suponen que la atacante prueba todas las combinaciones. En la realidad empieza por diccionarios de contraseñas filtradas, y ahí <code>gato123</code> cae en el primer segundo, con cualquier algoritmo. Por eso, además del hash lento, hay que rechazar las contraseñas conocidas, como verás en las reglas de más abajo.</p>
+  <p>Los algoritmos pensados para contraseñas son lentos a propósito y <strong>adaptativos</strong>: tienen un parámetro de coste que se sube con los años, a medida que las computadoras se vuelven más rápidas. Algunos, además, exigen mucha memoria, lo que encarece los ataques con tarjetas gráficas. Estos son los que recomienda la hoja de referencia de OWASP sobre almacenamiento de contraseñas, en orden de preferencia:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Algoritmo</th><th scope="col">Configuración mínima recomendada</th><th scope="col">Notas</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Argon2id</strong></td><td>19 MiB de memoria, 2 pasadas, paralelismo 1</td><td>Ganó la Password Hashing Competition en 2015. Primera opción.</td></tr>
+        <tr><td><strong>scrypt</strong></td><td>N = 2<sup>17</sup> (128 MiB), r = 8, p = 1</td><td>Si no tienes Argon2id. Viene incluido en Node (<code>crypto.scrypt</code>).</td></tr>
+        <tr><td><strong>bcrypt</strong></td><td>Coste 10 o más</td><td>Para sistemas antiguos. Solo usa los primeros 72 bytes de la contraseña.</td></tr>
+        <tr><td><strong>PBKDF2</strong></td><td>600 000 iteraciones con HMAC-SHA-256</td><td>Cuando una norma exige algoritmos certificados (FIPS-140).</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>En Node, lo más cómodo es el paquete <code>argon2</code>. Genera la sal, elige parámetros seguros y lo guarda todo en un solo texto:</p>
+  <pre><code class="language-js">import * as argon2 from "argon2";   // npm install argon2
+
+// Al registrarse: guarda el hash, nunca la contraseña
+const hash = await argon2.hash(clave);
+db.prepare("INSERT INTO usuarios (nombre, hash_clave) VALUES (?, ?)").run(nombre, hash);
+
+// Al iniciar sesión: verify recalcula con la sal y los parámetros guardados
+const usuario = db.prepare("SELECT id, hash_clave FROM usuarios WHERE nombre = ?").get(nombre);
+const correcta = usuario ? await argon2.verify(usuario.hash_clave, intento) : false;</code></pre>
+  <p>El texto que devuelve <code>argon2.hash</code> sigue el formato PHC y se ve más o menos así (los números dependen de la versión del paquete):</p>
+  <pre><code class="language-text">$argon2id$v=19$m=65536,t=3,p=4$Qm9nb3NhbHRhbGVhdG9yaWE$w2mZ…(hash en base64)</code></pre>
+  <p>Se lee por partes separadas por <code>$</code>: el algoritmo, la versión, los parámetros (memoria en KiB, pasadas y paralelismo), la sal y el hash. Como todo viaja junto, podrás subir el coste en el futuro: las contraseñas viejas se siguen verificando con sus parámetros, y cuando cada persona inicie sesión puedes recalcular su hash con los nuevos. Desde la versión 24.7, Node también trae <code>crypto.argon2()</code> incluido, pero es de más bajo nivel: tienes que generar la sal y guardar tú los parámetros.</p>
+  <aside class="senal nota" data-titulo="¿Y la pimienta?">
+    <p>Algunos sistemas añaden una <strong>pimienta</strong> (<em>pepper</em>): un secreto común a todas las contraseñas que se mezcla también en el hash, pero que se guarda <em>fuera</em> de la base de datos, por ejemplo en una variable de entorno o en un módulo de hardware especial. Si solo roban la base de datos, sin la pimienta no pueden ni empezar a adivinar. Es una capa extra, no un sustituto de la sal ni del hash lento.</p>
+  </aside>
+
+  <h3>Reglas actuales para las contraseñas</h3>
+  <p>El NIST, el instituto de normas de Estados Unidos, publica unas guías de identidad digital que se usan como referencia en todo el mundo. Su revisión 4, publicada en 2025 (SP 800-63B-4), rompe con varias costumbres que quizá sufriste como usuaria o usuario:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Regla</th><th scope="col">Qué dice la guía</th></tr></thead>
+      <tbody>
+        <tr><td>Longitud mínima</td><td>15 caracteres si la contraseña es el único factor; 8 si se usa junto con otro factor (2FA).</td></tr>
+        <tr><td>Longitud máxima</td><td>Permitir al menos 64 caracteres. Y verificar la contraseña entera, sin recortarla.</td></tr>
+        <tr><td>Reglas de composición</td><td>No exigir mezclas del tipo «una mayúscula, un número y un símbolo». La gente responde de forma predecible (<code>Gato123!</code>) y no gana seguridad.</td></tr>
+        <tr><td>Lista de bloqueo</td><td>Comparar con una lista de contraseñas comunes, esperables o filtradas, y rechazarlas.</td></tr>
+        <tr><td>Cambios periódicos</td><td>No obligar a cambiarla cada cierto tiempo. Sí obligar si hay indicios de que se filtró.</td></tr>
+        <tr><td>Gestores de contraseñas</td><td>Permitir el autocompletado y pegar la contraseña.</td></tr>
+        <tr><td>Pistas y preguntas de seguridad</td><td>Prohibidas. «¿Cómo se llamaba tu primera mascota?» se averigua en redes sociales.</td></tr>
+        <tr><td>Caracteres</td><td>Aceptar Unicode: espacios, acentos, eñes y emojis.</td></tr>
+        <tr><td>Intentos fallidos</td><td>Limitarlos de forma efectiva.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>No le des pistas a quien ataca</h3>
+  <p>En la <a href="08-decisiones.html">Estación 8</a> se adelantó una costumbre: muchos sitios responden «usuario o contraseña incorrectos» sin decir cuál de las dos cosas falló. El motivo es la <strong>enumeración de cuentas</strong>: si tu formulario dice «ese usuario no existe», cualquiera puede averiguar qué correos tienen cuenta en tu juego y centrar ahí sus ataques. La misma idea vale para el registro y para recuperar la contraseña:</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Da pistas</p>
+      <pre><code class="language-text">No existe ninguna cuenta con ana@correo.example.
+La contraseña de ana es incorrecta.</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">No da pistas</p>
+      <pre><code class="language-text">Usuario o contraseña incorrectos.
+Si existe una cuenta con ese correo, te enviamos un enlace.</code></pre>
+    </div>
+  </div>
+  <p>Hay una pista más sutil: el tiempo. Si cuando el usuario no existe respondes al instante y cuando existe tardas 50 milisegundos en verificar el hash, la diferencia se puede medir. Por eso muchos sistemas calculan igualmente un hash de relleno cuando el usuario no existe.</p>
+
+  <h3>Limitar los intentos</h3>
+  <p>En la <a href="09-bucles.html">Estación 9</a> viste que muchos servicios limitan cuántas peticiones aceptan por minuto. Aquí está el porqué: sin límite, un programa puede probar miles de contraseñas por minuto contra una cuenta. Un <strong>limitador de peticiones</strong> (<em>rate limiter</em>) cuenta los intentos por dirección IP, por cuenta o por ambas, y responde <code>429 Too Many Requests</code> al pasarse. En Express se usa mucho el paquete <code>express-rate-limit</code>:</p>
+  <pre><code class="language-js">import { rateLimit } from "express-rate-limit";
+
+const limiteLogin = rateLimit({
+  windowMs: 15 * 60 * 1000,        // ventana de 15 minutos
+  limit: 5,                        // 5 intentos por IP en cada ventana
+  skipSuccessfulRequests: true,    // solo cuentan los intentos fallidos
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+});
+
+app.post("/api/login", limiteLogin, iniciarSesion);</code></pre>
+  <aside class="senal ojo">
+    <p>Bloquear una cuenta por completo tras cinco fallos parece seguro, pero regala un ataque nuevo: cualquiera puede dejar sin acceso a otra persona fallando a propósito con su nombre. Es mejor aumentar la espera de forma progresiva (unos segundos, luego minutos), pedir un CAPTCHA o avisar por correo, y combinar el límite por cuenta con el límite por IP.</p>
+  </aside>
+
+  <h3>Recuperar la cuenta sin abrir una puerta trasera</h3>
+  <p>El enlace de «olvidé mi contraseña» es una forma alternativa de entrar a la cuenta, así que necesita la misma seriedad que el inicio de sesión. Un enlace de recuperación lleva un <strong>token</strong>, un código de un solo uso, que debe ser:</p>
+  <ul>
+    <li><strong>Impredecible</strong>: generado con un generador criptográfico, nunca con <code>Math.random()</code>. Es lo que se anunció en las estaciones <a href="08-decisiones.html">8</a> y <a href="18-matematicas.html#azar">18</a>. En el navegador y en Node existe <code>crypto.getRandomValues()</code>, y también <code>crypto.randomUUID()</code> (este último, en el navegador, solo en páginas servidas por HTTPS). En Node es habitual <code>crypto.randomBytes(32).toString("hex")</code>.</li>
+    <li><strong>De un solo uso y con caducidad corta</strong>: por ejemplo, 30 minutos.</li>
+    <li><strong>Guardado como hash</strong>: si roban la base de datos, que no puedan usar los tokens pendientes.</li>
+  </ul>
+  <pre><code class="language-js">// En el navegador o en Node: 32 bytes aleatorios de calidad criptográfica, en hexadecimal
+const bytes = crypto.getRandomValues(new Uint8Array(32));
+const token = Array.from(bytes, (b) =&gt; b.toString(16).padStart(2, "0")).join("");</code></pre>
+  <aside class="senal error">
+    <p>Escribir contraseñas en los registros. Un <code>console.log(req.body)</code> olvidado en la ruta de inicio de sesión deja todas las contraseñas en texto plano en los archivos de registro, que suelen tener muchas menos protecciones que la base de datos. Registra el intento («login fallido para ana desde tal IP»), nunca su contenido.</p>
+  </aside>
+  <p>Para cerrar, ordena los pasos que sigue un servidor bien diseñado al recibir un intento de inicio de sesión. Dos de ellos pueden ir en cualquier orden entre sí:</p>
+  <div class="parsons" data-titulo="Ordena el inicio de sesión seguro" data-lenguaje="text" data-exito="Así lo hace un servidor bien diseñado: primero se frena a los robots, después se verifica y solo al final se crea la sesión.">
+    <ol>
+      <li>Recibir el nombre y la contraseña por HTTPS</li>
+      <li data-grupo="a">Comprobar que esa IP no superó el límite de intentos</li>
+      <li data-grupo="a">Buscar al usuario en la base de datos con una consulta parametrizada</li>
+      <li>Verificar la contraseña con argon2.verify(hashGuardado, intento)</li>
+      <li>Si falla: contar el intento y responder «usuario o contraseña incorrectos»</li>
+      <li>Si acierta: crear una sesión nueva con un identificador aleatorio</li>
+      <li>Enviar la cookie de sesión con HttpOnly, Secure y SameSite</li>
+    </ol>
+  </div>
+</section>
+
+<section id="sesiones" data-parada="Sesiones y tokens">
+  <h2>Sesiones, cookies y tokens</h2>
+  <p>En la <a href="03-internet.html#http">Estación 3</a> viste que HTTP es un protocolo sin estado: cada petición llega sola y el servidor, por sí mismo, no recuerda las anteriores. Entonces, después de que Luis inicia sesión, ¿cómo sabe el servidor que la siguiente petición también es de Luis? No puede pedirle la contraseña en cada clic. Hay dos grandes soluciones: las <strong>sesiones</strong> guardadas en el servidor y los <strong>tokens</strong> autocontenidos, como los JWT.</p>
+
+  <h3>Sesión en el servidor y cookie en el navegador</h3>
+  <p>Una <strong>sesión</strong> es un registro que el servidor guarda (en memoria, en la base de datos o en un almacén rápido como Redis) con el formato «este identificador pertenece a este usuario y caduca a tal hora». El identificador es un número aleatorio enorme, sin ningún significado. El servidor se lo entrega al navegador en una <strong>cookie</strong>: un pequeño dato con nombre que el navegador guarda y adjunta de forma automática en cada petición a ese mismo sitio.</p>
+  <figure class="capsula" data-titulo="Iniciar sesión con una cookie">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: el navegador envía usuario y contraseña al servidor por HTTPS. El servidor verifica la contraseña, crea una sesión con un identificador aleatorio y lo devuelve en una cabecera Set-Cookie con HttpOnly, Secure y SameSite. El navegador guarda la cookie y la adjunta sola en la siguiente petición; el servidor busca el identificador en sus sesiones y sabe que es Luis. El JavaScript de la página no puede leer la cookie. Al cerrar sesión, el servidor borra la sesión y la cookie.">
+        <rect class="d-caja" x="10" y="16" width="200" height="268" rx="10"/>
+        <text class="d-rotulo" x="110" y="42" text-anchor="middle">Navegador</text>
+        <rect class="d-caja-suave" x="24" y="58" width="172" height="84" rx="6" data-clases="1:d-caja-suave; 5:d-acento-trazo; 6:d-caja-suave"/>
+        <text class="d-peq d-rotulo" x="110" y="80" text-anchor="middle">JavaScript de la página</text>
+        <text class="d-mono d-peq" x="110" y="104" text-anchor="middle" data-pasos="5">document.cookie</text>
+        <text class="d-peq d-ok d-rotulo" x="110" y="126" text-anchor="middle" data-pasos="5">no la ve: HttpOnly</text>
+        <rect class="d-caja-suave" x="24" y="158" width="172" height="112" rx="6" data-clases="1:d-caja-suave; 3:d-acento-trazo; 5:d-caja-suave"/>
+        <text class="d-peq d-rotulo" x="110" y="182" text-anchor="middle">Cookies guardadas</text>
+        <text class="d-mono d-peq" x="110" y="218" text-anchor="middle" data-texto="3:sesion=7fK2…; 6:(ninguna)">(ninguna)</text>
+        <rect class="d-caja" x="510" y="16" width="200" height="130" rx="10"/>
+        <text class="d-rotulo" x="610" y="42" text-anchor="middle">Servidor</text>
+        <text class="d-peq" x="610" y="78" text-anchor="middle" data-texto="2:Contraseña correcta.; 3:Envía el identificador; 4:Busca 7fK2… en sus; 5:Esto no pasa por él:; 6:Borra la sesión">Recibe la contraseña</text>
+        <text class="d-peq" x="610" y="98" text-anchor="middle" data-texto="2:Crea un id aleatorio.; 3:dentro de una cookie.; 4:sesiones: es Luis.; 5:ocurre en el navegador.; 6:7fK2… para siempre.">cifrada por HTTPS.</text>
+        <rect class="d-caja" x="510" y="164" width="200" height="120" rx="10"/>
+        <text class="d-rotulo" x="610" y="190" text-anchor="middle" style="font-size:15px">Sesiones</text>
+        <g data-pasos="2-5">
+          <rect class="d-caja-suave" x="524" y="202" width="172" height="58" rx="6" data-clases="2:d-acento-trazo; 3:d-caja-suave; 4:d-acento-trazo; 5:d-caja-suave"/>
+          <text class="d-mono d-peq" x="610" y="226" text-anchor="middle">7fK2… = usuario 42</text>
+          <text class="d-peq d-tenue" x="610" y="248" text-anchor="middle">caduca en 30 minutos</text>
+        </g>
+        <text class="d-peq d-tenue" x="610" y="236" text-anchor="middle" data-pasos="1,6">(ninguna)</text>
+        <g data-pasos="1">
+          <text class="d-mono d-peq" x="360" y="62" text-anchor="middle">POST /api/login</text>
+          <text class="d-mono d-peq" x="360" y="80" text-anchor="middle">usuario=luis&amp;clave=123456</text>
+          <path class="d-linea" d="M212 94H496"/>
+          <path class="d-tinta" d="M496 88l12 6 -12 6z"/>
+          <text class="d-peq d-tenue" x="360" y="116" text-anchor="middle">viaja cifrado por HTTPS</text>
+        </g>
+        <g data-pasos="3">
+          <text class="d-mono d-peq" x="360" y="62" text-anchor="middle">200 OK</text>
+          <text class="d-mono d-peq" x="360" y="80" text-anchor="middle">Set-Cookie: sesion=7fK2…;</text>
+          <text class="d-mono d-peq" x="360" y="98" text-anchor="middle">HttpOnly; Secure; SameSite=Lax</text>
+          <path class="d-linea" d="M508 112H224"/>
+          <path class="d-tinta" d="M224 106l-12 6 12 6z"/>
+        </g>
+        <g data-pasos="4,6">
+          <text class="d-mono d-peq" x="360" y="62" text-anchor="middle" data-texto="6:POST /api/logout">GET /api/perfil</text>
+          <text class="d-mono d-peq" x="360" y="80" text-anchor="middle">Cookie: sesion=7fK2…</text>
+          <path class="d-linea" d="M212 94H496"/>
+          <path class="d-tinta" d="M496 88l12 6 -12 6z"/>
+          <path class="d-linea" d="M508 150H224"/>
+          <path class="d-tinta" d="M224 144l-12 6 12 6z"/>
+          <text class="d-mono d-peq" x="360" y="172" text-anchor="middle" data-texto="6:Set-Cookie: sesion=; Max-Age=0">200 OK: el perfil de Luis</text>
+        </g>
+        <g data-pasos="5">
+          <text class="d-peq" x="360" y="200" text-anchor="middle">Un script inyectado con XSS</text>
+          <text class="d-peq" x="360" y="220" text-anchor="middle">tampoco puede leerla ni</text>
+          <text class="d-peq" x="360" y="240" text-anchor="middle">enviarla a otro sitio.</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Luis escribe su nombre y su contraseña. El navegador los envía en una petición <code>POST</code>, cifrada por HTTPS. Todavía no hay ninguna cookie ni ninguna sesión.</li>
+        <li>El servidor verifica la contraseña contra el hash guardado. Es correcta, así que crea una sesión: un identificador aleatorio (aquí abreviado, <code>7fK2…</code>) asociado al usuario 42, con fecha de caducidad.</li>
+        <li data-duracion="6">La respuesta lleva la cabecera <code>Set-Cookie</code>. El navegador guarda la cookie con el identificador y sus atributos de seguridad, que verás enseguida.</li>
+        <li data-duracion="6">En la siguiente petición, el navegador adjunta la cookie por su cuenta, sin que tu código haga nada. El servidor busca <code>7fK2…</code> en sus sesiones, encuentra al usuario 42 y responde con su perfil.</li>
+        <li>Como la cookie se marcó <code>HttpOnly</code>, el JavaScript de la página no la ve: <code>document.cookie</code> no la incluye. Si alguien consigue colar un script, no podrá llevarse el identificador.</li>
+        <li data-duracion="6">Al cerrar sesión, el servidor borra la sesión de su almacén y le pide al navegador que borre la cookie. Aunque alguien hubiera copiado el identificador, ya no sirve: el servidor no lo reconoce.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Los atributos de una cookie segura</h3>
+  <p>Así se ve la cabecera con la que el servidor crea una cookie de sesión bien configurada:</p>
+  <pre><code class="language-text">Set-Cookie: __Host-sesion=7fK2pQ9xLm…; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=1800</code></pre>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Atributo</th><th scope="col">Qué hace</th><th scope="col">Qué evita</th></tr></thead>
+      <tbody>
+        <tr><td><code>HttpOnly</code></td><td>El JavaScript de la página no puede leer la cookie.</td><td>Que un XSS robe la sesión.</td></tr>
+        <tr><td><code>Secure</code></td><td>El navegador solo la envía por HTTPS (salvo en <code>localhost</code>, para que puedas desarrollar).</td><td>Que viaje sin cifrar por una red Wi-Fi pública.</td></tr>
+        <tr><td><code>SameSite=Lax</code></td><td>No se envía en peticiones que otro sitio provoca en segundo plano, como formularios <code>POST</code> automáticos. Sí se envía al llegar a tu sitio desde un enlace.</td><td>La mayoría de los ataques CSRF (los verás en <a href="#navegador">HTTPS, CORS y CSRF</a>).</td></tr>
+        <tr><td><code>SameSite=Strict</code></td><td>Nunca se envía si la petición la origina otro sitio, ni siquiera al seguir un enlace.</td><td>Más protección, pero si llegas desde un enlace externo aparecerás sin sesión.</td></tr>
+        <tr><td><code>SameSite=None</code></td><td>Se envía siempre. Exige también <code>Secure</code>.</td><td>Nada: úsala solo si de verdad necesitas la cookie desde otros sitios.</td></tr>
+        <tr><td><code>Max-Age</code> o <code>Expires</code></td><td>Cuándo caduca, en segundos o como fecha. Si están las dos, gana <code>Max-Age</code>. Sin ninguna, se borra al cerrar el navegador.</td><td>Sesiones eternas.</td></tr>
+        <tr><td>Prefijo <code>__Host-</code></td><td>El navegador solo acepta la cookie si tiene <code>Secure</code>, <code>Path=/</code> y ningún <code>Domain</code>.</td><td>Que un subdominio ajeno la sobrescriba.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal ojo">
+    <p>Si no escribes <code>SameSite</code>, cada navegador decide. Chrome y los navegadores basados en él la tratan como <code>Lax</code>; otros no. No dependas del valor por defecto: escríbela siempre.</p>
+  </aside>
+  <p>Algunas costumbres más de una buena gestión de sesiones:</p>
+  <ul>
+    <li><strong>Un identificador nuevo al iniciar sesión.</strong> Si reutilizas el que el navegador ya traía, alguien que te lo hubiera colocado antes quedaría dentro contigo. Este ataque se llama <em>fijación de sesión</em>.</li>
+    <li><strong>Dos caducidades</strong>: por inactividad (por ejemplo, 30 minutos sin peticiones) y absoluta (por ejemplo, 12 horas pase lo que pase). Para acciones delicadas, como cambiar el correo, pide la contraseña otra vez.</li>
+    <li><strong>Cerrar sesión de verdad</strong>: borrar la sesión en el servidor, no solo la cookie en el navegador.</li>
+    <li><strong>Nunca en la URL</strong>: un identificador en <code>/perfil?sesion=7fK2…</code> acaba en el historial, en los registros del servidor y en capturas de pantalla.</li>
+  </ul>
+  <p>En Express, el paquete <code>express-session</code> se encarga de casi todo esto; por ejemplo, <code>req.session.regenerate()</code> crea un identificador nuevo justo después de verificar la contraseña.</p>
+  <aside class="senal error">
+    <p>Guardar el token de sesión en <code>localStorage</code> porque «es más cómodo». En la <a href="15-dom.html#guardar">Estación 15</a> viste que cualquier script de la página puede leer <code>localStorage</code>, incluido uno inyectado con XSS. Una cookie <code>HttpOnly</code> no se puede leer desde JavaScript. Para una aplicación web normal, la cookie es la opción más segura.</p>
+  </aside>
+
+  <h3>JWT: un token que se explica solo</h3>
+  <p>La otra familia de soluciones no guarda nada en el servidor. Al iniciar sesión, el servidor entrega un <strong>token</strong> que contiene los datos importantes (quién eres, qué rol tienes, cuándo caduca) y una <strong>firma</strong> que demuestra que lo fabricó él. El formato más usado es el <strong>JWT</strong> (<em>JSON Web Token</em>, se pronuncia «yot» en inglés), definido en el estándar RFC 7519. Un JWT son tres textos codificados, separados por puntos:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Diagrama de un JWT: tres partes separadas por puntos. La cabecera, en base64url, se decodifica como un JSON con alg HS256 y typ JWT. El contenido se decodifica como un JSON con sub 42, nombre Ana, rol jugadora, iat y exp. La firma es un HMAC-SHA256 de la cabecera y el contenido calculado con un secreto que solo conoce el servidor. Las dos primeras partes las puede leer cualquiera; la firma solo la puede fabricar quien tiene el secreto.">
+      <rect class="d-caja" x="10" y="20" width="200" height="40" rx="6"/>
+      <rect class="d-l1" x="10" y="20" width="200" height="6" rx="3"/>
+      <text class="d-mono d-peq" x="110" y="48" text-anchor="middle">eyJhbGciOiJIUzI1…</text>
+      <text class="d-mono" x="217" y="48" text-anchor="middle" style="font-size:20px">.</text>
+      <rect class="d-caja" x="224" y="20" width="272" height="40" rx="6"/>
+      <rect class="d-l3" x="224" y="20" width="272" height="6" rx="3"/>
+      <text class="d-mono d-peq" x="360" y="48" text-anchor="middle">eyJzdWIiOiI0MiIsIm5vbWJyZSI6…</text>
+      <text class="d-mono" x="503" y="48" text-anchor="middle" style="font-size:20px">.</text>
+      <rect class="d-caja" x="510" y="20" width="200" height="40" rx="6"/>
+      <rect class="d-l6" x="510" y="20" width="200" height="6" rx="3"/>
+      <text class="d-mono d-peq" x="610" y="48" text-anchor="middle">GV_wEwctaPushchIH…</text>
+      <text class="d-rotulo" x="110" y="90" text-anchor="middle" style="font-size:15px">Cabecera</text>
+      <text class="d-rotulo" x="360" y="90" text-anchor="middle" style="font-size:15px">Contenido (payload)</text>
+      <text class="d-rotulo" x="610" y="90" text-anchor="middle" style="font-size:15px">Firma</text>
+      <path class="d-punteada" d="M110 98V112"/>
+      <path class="d-punteada" d="M360 98V112"/>
+      <path class="d-punteada" d="M610 98V112"/>
+      <rect class="d-caja-suave" x="10" y="116" width="200" height="130" rx="6"/>
+      <text class="d-mono d-peq" x="22" y="142">{</text>
+      <text class="d-mono d-peq" x="22" y="162">  "alg": "HS256",</text>
+      <text class="d-mono d-peq" x="22" y="182">  "typ": "JWT"</text>
+      <text class="d-mono d-peq" x="22" y="202">}</text>
+      <rect class="d-caja-suave" x="224" y="116" width="272" height="130" rx="6"/>
+      <text class="d-mono d-peq" x="236" y="140">{ "sub": "42",</text>
+      <text class="d-mono d-peq" x="236" y="160">  "nombre": "Ana",</text>
+      <text class="d-mono d-peq" x="236" y="180">  "rol": "jugadora",</text>
+      <text class="d-mono d-peq" x="236" y="200">  "iat": 1790000000,</text>
+      <text class="d-mono d-peq" x="236" y="220">  "exp": 1790000900 }</text>
+      <rect class="d-caja-suave" x="510" y="116" width="200" height="130" rx="6"/>
+      <text class="d-mono d-peq" x="522" y="142">HMAC-SHA256(</text>
+      <text class="d-mono d-peq" x="522" y="162">  cabecera + "." +</text>
+      <text class="d-mono d-peq" x="522" y="182">  contenido,</text>
+      <text class="d-mono d-peq" x="522" y="202">  secreto</text>
+      <text class="d-mono d-peq" x="522" y="222">)</text>
+      <text class="d-peq d-tenue" x="236" y="274" text-anchor="middle">Base64url: cualquiera puede leerlas</text>
+      <path class="d-linea" d="M20 260H452"/>
+      <text class="d-peq d-tenue" x="610" y="274" text-anchor="middle">Solo la fabrica quien tiene el secreto</text>
+      <path class="d-linea" d="M520 260H700"/>
+    </svg>
+    <figcaption>Las dos primeras partes solo están <em>codificadas</em> en base64url, una forma de escribir bytes con letras, números, <code>-</code> y <code>_</code>. No están cifradas. La firma se calcula sobre ellas con un secreto del servidor: si alguien cambia una sola letra del contenido, la firma deja de coincidir.</figcaption>
+  </figure>
+  <p>Compruébalo tú: este taller decodifica un JWT real sin conocer su secreto. Predice qué verás en el contenido antes de ejecutar:</p>
+  <div class="taller" id="taller-jwt" data-titulo="Leer un JWT sin la clave">
+    <textarea class="taller-codigo">const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0MiIsIm5vbWJyZSI6IkFuYSIsInJvbCI6Imp1Z2Fkb3JhIiwiaWF0IjoxNzkwMDAwMDAwLCJleHAiOjE3OTAwMDA5MDB9.GV_wEwctaPushchIHQ2otCr1BBGVwOfnB7jLZDN1Cqs";
+
+// Base64url: cada carácter guarda 6 bits; se juntan de 8 en 8 para formar bytes
+function base64UrlATexto(parte) {
+  const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  let bits = "";
+  for (const c of parte) bits += abc.indexOf(c).toString(2).padStart(6, "0");
+  const bytes = [];
+  for (let i = 0; i + 8 &lt;= bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
+  return new TextDecoder().decode(new Uint8Array(bytes));
+}
+
+const [cabecera, contenido, firma] = token.split(".");
+console.log("Cabecera: ", base64UrlATexto(cabecera));
+console.log("Contenido:", base64UrlATexto(contenido));
+
+const datos = JSON.parse(base64UrlATexto(contenido));
+console.log("Emitido:  ", new Date(datos.iat * 1000).toISOString());
+console.log("Caduca:   ", new Date(datos.exp * 1000).toISOString());
+console.log("Minutos de vida:", (datos.exp - datos.iat) / 60);
+console.log("Firma (no se puede leer, solo verificar):", firma);</textarea>
+  </div>
+  <p>Todo el contenido se lee sin ninguna clave. Eso tiene dos consecuencias. Primera: nunca metas en un JWT nada que no mostrarías en pantalla (contraseñas, datos personales delicados). Segunda: la seguridad está en la firma. El servidor, antes de creerse el contenido, vuelve a calcular la firma con su secreto y la compara. Si Ana cambia <code>"rol": "jugadora"</code> por <code>"rol": "admin"</code>, la firma ya no coincide y el token se rechaza. Para fabricar una firma válida haría falta el secreto, que nunca sale del servidor.</p>
+  <p>En Node se usa una biblioteca probada, como <code>jose</code> (versión 6 en 2026). Fíjate en que al verificar se indica qué algoritmo se acepta:</p>
+  <pre><code class="language-js">import { SignJWT, jwtVerify } from "jose";   // npm install jose
+
+const secreto = new TextEncoder().encode(process.env.JWT_SECRETO);  // largo y aleatorio
+
+// Emitir: 15 minutos de vida
+const token = await new SignJWT({ rol: "jugadora" })
+  .setProtectedHeader({ alg: "HS256" })
+  .setSubject("42")
+  .setIssuedAt()
+  .setExpirationTime("15m")
+  .sign(secreto);
+
+// Verificar: comprueba la firma y la caducidad; si algo falla, lanza un error
+const { payload } = await jwtVerify(token, secreto, { algorithms: ["HS256"] });
+console.log(payload.sub, payload.rol);</code></pre>
+
+  <h3>¿Sesión o JWT?</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">Sesión con cookie</th><th scope="col">JWT</th></tr></thead>
+      <tbody>
+        <tr><td>Dónde viven los datos</td><td>En el servidor. El navegador solo tiene un identificador sin significado.</td><td>Dentro del token, firmados. El servidor no guarda nada.</td></tr>
+        <tr><td>Cerrar una sesión ya</td><td>Fácil: se borra del almacén.</td><td>Difícil: el token vale hasta que caduca, salvo que mantengas una lista de tokens revocados (y entonces vuelves a guardar estado).</td></tr>
+        <tr><td>Varios servidores</td><td>Necesitan compartir el almacén de sesiones.</td><td>Cualquiera con la clave de verificación lo comprueba.</td></tr>
+        <tr><td>Uso típico</td><td>Aplicaciones web con su propio backend.</td><td>APIs que usan otras aplicaciones o servicios entre sí, apps móviles, y los tokens de OpenID Connect que verás enseguida.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal oficio">
+    <p>Para la web de tu juego, con su propio backend, usa sesiones con cookies: son más sencillas y se revocan al instante. Recurre a JWT cuando de verdad necesites un token que se verifique sin consultar a nadie. En ese caso, dales vida corta (minutos) y usa un segundo token de larga duración, el <em>refresh token</em>, guardado con más cuidado, para pedir tokens nuevos.</p>
+  </aside>
+  <p>Los fallos más comunes con JWT, para que los reconozcas en una revisión de código:</p>
+  <ul>
+    <li><strong>Aceptar el algoritmo que diga el token.</strong> La cabecera la escribe quien envía el token. Hubo bibliotecas que aceptaban <code>"alg": "none"</code>, «sin firma», y daban por bueno cualquier contenido. Fija siempre la lista de algoritmos permitidos al verificar.</li>
+    <li><strong>Secretos débiles.</strong> Con <code>HS256</code>, quien tenga un token puede probar secretos en su propia computadora, sin límite de intentos, hasta dar con el que produce esa firma. <code>"secreto123"</code> cae enseguida. Usa al menos 32 bytes aleatorios, en una variable de entorno.</li>
+    <li><strong>Leer sin verificar.</strong> Decodificar el contenido, como hiciste en el taller, no es verificarlo. Solo confía en lo que devuelve la función de verificación.</li>
+    <li><strong>No comprobar la caducidad, el emisor ni el destinatario</strong> (<code>exp</code>, <code>iss</code>, <code>aud</code>). Las bibliotecas lo hacen si se lo pides.</li>
+  </ul>
+</section>
+
+<section id="identidad" data-parada="Permisos y cuentas">
+  <h2>Permisos, OAuth y passkeys</h2>
+  <p>Saber quién es la persona es solo la mitad del trabajo. La otra mitad, la autorización, es la que más falla en el mundo real: la pérdida de control de acceso encabeza el OWASP Top 10 desde 2021 y sigue en el puesto A01 en 2025.</p>
+
+  <h3>Comprobar permisos en cada petición</h3>
+  <p>El fallo más típico tiene un nombre largo: <strong>referencia directa insegura a objetos</strong> (en inglés <em>Insecure Direct Object Reference</em>, IDOR). La tienda de «Arena» muestra cada pedido en <code>/api/pedidos/1041</code>. Ana ve su pedido, se fija en el número, prueba con <code>1042</code>… y aparece el pedido de Luis, con su dirección. Nadie hackeó nada: el servidor comprobó que Ana había iniciado sesión, pero no que el pedido fuera suyo. Arréglalo tú. El manejador está escrito como una función que recibe la petición, igual que en la <a href="29-backend.html">Estación 29</a>:</p>
+  <div class="taller" id="taller-idor" data-titulo="Arréglalo: cada quien, sus pedidos">
+    <textarea class="taller-codigo">const pedidos = [
+  { id: 1041, dueno: "ana", producto: "Mando inalámbrico", direccion: "Calle Luna 12" },
+  { id: 1042, dueno: "luis", producto: "Juego de estrategia", direccion: "Av. Sol 45" },
+];
+
+// GET /api/pedidos/:id   (peticion.usuario es quien inició sesión, según su cookie)
+function verPedido(peticion) {
+  const pedido = pedidos.find((p) => p.id === Number(peticion.params.id));
+  if (!pedido) return { estado: 404, cuerpo: { error: "No existe" } };
+  // FALTA: comprobar que el pedido es de quien lo pide
+  return { estado: 200, cuerpo: pedido };
+}
+
+function mostrar(r) { console.log(r.estado + " " + JSON.stringify(r.cuerpo)); }
+mostrar(verPedido({ usuario: "ana", params: { id: "1041" } }));   // su pedido
+mostrar(verPedido({ usuario: "ana", params: { id: "1042" } }));   // el de Luis
+mostrar(verPedido({ usuario: "luis", params: { id: "1042" } }));  // Luis, el suyo</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (!/^200 /.test(salida[0] || "")) return "Ana debe poder ver su propio pedido (1041). La primera línea debería empezar por 200.";
+if (/^200 /.test(salida[1] || "")) return "Ana todavía puede ver el pedido de Luis. Antes de devolverlo, comprueba que pedido.dueno sea igual a peticion.usuario.";
+if (!/^40[34] /.test(salida[1] || "")) return "Cuando el pedido no es de quien lo pide, responde 404 (o 403).";
+if (/Av\. Sol/.test(salida[1] || "")) return "La respuesta de error no debe incluir los datos del pedido.";
+if (!/^200 /.test(salida[2] || "")) return "Luis sí debe poder ver su pedido 1042.";
+return true;
+    </script>
+  </div>
+  <p>Una solución es añadir, antes del último <code>return</code>, la línea <code>if (pedido.dueno !== peticion.usuario) return { estado: 404, cuerpo: { error: "No existe" } };</code>. ¿Por qué 404 y no 403 (<em>Forbidden</em>, prohibido)? Los dos son correctos. Con 403 confirmas que el pedido 1042 existe; con 404 no das ni esa pista. Muchas APIs eligen 404 para los recursos de otras personas.</p>
+  <p>Todavía mejor: haz que sea imposible olvidar la comprobación metiéndola en la propia consulta. Así, un pedido ajeno sencillamente no aparece:</p>
+  <pre><code class="language-js">const pedido = db.prepare("SELECT * FROM pedidos WHERE id = ? AND dueno_id = ?")
+  .get(req.params.id, req.usuario.id);
+if (!pedido) return res.status(404).json({ error: "No existe" });</code></pre>
+  <p>Cuando hay tipos de usuario con poderes distintos (jugador, moderadora, administradora) se habla de <strong>control de acceso basado en roles</strong> (RBAC, por sus siglas en inglés). Se implementa bien con un middleware que corta la petición si falta el rol, siguiendo el principio de negar por defecto:</p>
+  <pre><code class="language-js">function exigirRol(...roles) {
+  return (req, res, next) =&gt; {
+    if (!req.usuario) return res.status(401).json({ error: "Inicia sesión" });
+    if (!roles.includes(req.usuario.rol)) return res.status(403).json({ error: "No tienes permiso" });
+    next();
+  };
+}
+
+app.delete("/api/comentarios/:id", exigirRol("moderadora", "admin"), borrarComentario);</code></pre>
+  <aside class="senal error">
+    <p>Esconder el botón no es quitar el permiso. Si la interfaz no muestra «Borrar» a quien no es moderadora pero la ruta <code>DELETE /api/comentarios/:id</code> no comprueba el rol, cualquiera puede enviar esa petición con <code>curl</code>. La interfaz decide qué se <em>muestra</em>; el servidor decide qué se <em>permite</em>. Tampoco protege usar identificadores difíciles de adivinar en lugar de 1041 y 1042: ayudan, pero un enlace compartido o un registro filtrado los revela.</p>
+  </aside>
+  <p>Fíjate en los códigos: <code>401</code> significa «no sé quién eres» (falta autenticación) y <code>403</code>, «sé quién eres y no puedes» (falta autorización). El nombre oficial del 401 es <em>Unauthorized</em>, un error histórico del estándar que confunde a todo el mundo.</p>
+
+  <h3>OAuth 2.0: permisos sin compartir la contraseña</h3>
+  <p>Imagina que «Arena» quiere publicar tus logros en tu canal de Discord, o guardar tus partidas en tu Google Drive. Hace años, las apps pedían directamente tu usuario y tu contraseña del otro servicio: la app podía hacer <em>cualquier cosa</em> con tu cuenta, para siempre, y si la app se filtraba, tu contraseña también. <strong>OAuth 2.0</strong> es el estándar (RFC 6749) que resolvió ese problema. Es un protocolo de <em>autorización delegada</em>: tú autorizas a una app a hacer algo concreto en tu nombre, sin darle tu contraseña.</p>
+  <p>Hay cuatro papeles. Tú eres la <strong>propietaria del recurso</strong>; «Arena» es el <strong>cliente</strong>; el servicio de inicio de sesión de Google es el <strong>servidor de autorización</strong>; y la API de Google Drive es el <strong>servidor de recursos</strong>. El flujo recomendado, llamado <em>código de autorización con PKCE</em>, funciona así:</p>
+  <ol class="pasos">
+    <li><div><p>Pulsas «Guardar en Google Drive» en Arena. Arena te redirige a una página <em>de Google</em> (fíjate en el dominio) con la lista de permisos que pide, los <strong>alcances</strong> (<em>scopes</em>): por ejemplo, «ver y crear archivos creados por esta app», no «todo tu Drive».</p></div></li>
+    <li><div><p>Inicias sesión en Google, si no lo estabas, y aceptas. Arena nunca ve tu contraseña de Google.</p></div></li>
+    <li><div><p>Google te redirige de vuelta a una dirección de Arena registrada de antemano, con un <strong>código de autorización</strong> de un solo uso en la URL.</p></div></li>
+    <li><div><p>El servidor de Arena cambia ese código por un <strong>token de acceso</strong> en una petición directa a Google. PKCE (se pronuncia «pixi») añade un secreto temporal que Arena generó en el primer paso, para que un código interceptado no le sirva a nadie más.</p></div></li>
+    <li><div><p>Arena usa el token de acceso para llamar a la API de Drive, solo con los alcances que aceptaste y solo hasta que caduque. Puedes revocar el permiso cuando quieras desde tu cuenta de Google.</p></div></li>
+  </ol>
+  <p>La guía de buenas prácticas de seguridad de OAuth, el RFC 9700 publicado en enero de 2025, exige PKCE, prohíbe comparar las direcciones de retorno de forma aproximada y desaconseja dos flujos antiguos: el implícito, que devolvía el token en la URL, y el de contraseña, que pedía la contraseña a la app. Una versión 2.1 que integra todas esas lecciones lleva años en preparación y, en septiembre de 2026, sigue siendo un borrador.</p>
+
+  <h3>OpenID Connect: «Iniciar sesión con…»</h3>
+  <p>OAuth sirve para <em>dar permisos</em>, no para <em>saber quién eres</em>: un token de acceso le dice a Drive qué puede hacer Arena, pero no está pensado para que Arena sepa quién eres. Para eso existe <strong>OpenID Connect</strong> (OIDC), una capa sobre OAuth 2.0. Además del token de acceso, el servidor entrega un <strong>ID token</strong>: un JWT firmado por Google que dice quién eres (un identificador estable en <code>sub</code>, y si lo aceptas, tu nombre y tu correo), para qué app se emitió (<code>aud</code>) y quién lo emitió (<code>iss</code>). Los botones «Iniciar sesión con Google», «con Apple» o «con Microsoft» usan OIDC.</p>
+  <aside class="senal oficio">
+    <p>No implementes OAuth ni OIDC a mano. Son protocolos con muchos detalles que, si fallan, abren tu app entera. Usa una biblioteca certificada o un servicio de identidad (por ejemplo Auth.js, Keycloak o las funciones de autenticación de plataformas como Supabase o Firebase) y dedícate a configurarlo bien: direcciones de retorno exactas, alcances mínimos, secretos en variables de entorno.</p>
+  </aside>
+
+  <h3>Verificación en dos pasos</h3>
+  <p>La <strong>autenticación multifactor</strong> (MFA, o 2FA cuando son dos factores) exige, además de la contraseña, algo de otro tipo: normalmente algo que tienes. Así, una contraseña robada no basta. No todos los segundos factores protegen igual:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Segundo factor</th><th scope="col">Cómo funciona</th><th scope="col">Punto débil</th></tr></thead>
+      <tbody>
+        <tr><td>Código por SMS</td><td>Recibes 6 dígitos en un mensaje.</td><td>El robo de tu número (alguien convence a tu operadora de pasarlo a otra tarjeta SIM) y las páginas falsas que te piden el código. El NIST lo considera una opción restringida.</td></tr>
+        <tr><td>App de códigos (TOTP)</td><td>Una app genera un código de 6 dígitos que cambia cada 30 segundos, a partir de un secreto compartido y la hora (estándar RFC 6238).</td><td>Una página falsa puede pedirte el código y usarlo al instante.</td></tr>
+        <tr><td>Notificación en el teléfono</td><td>Aceptas el inicio de sesión en una app.</td><td>La «fatiga»: enviar notificaciones hasta que la víctima acepta por cansancio. Se mitiga pidiendo un número que aparece en pantalla.</td></tr>
+        <tr><td>Llave física o passkey</td><td>Firma criptográfica ligada al dominio.</td><td>Resiste el phishing: la verás a continuación.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Si ofreces 2FA en tu app, entrega también <strong>códigos de recuperación</strong> de un solo uso al activarla, para que perder el teléfono no signifique perder la cuenta. Y trátalos como contraseñas: guárdalos con hash.</p>
+
+  <h3>Passkeys: iniciar sesión sin contraseña</h3>
+  <p>En la <a href="03-internet.html#phishing">Estación 3</a> se anunció que las <strong>passkeys</strong> (en español, «llaves de acceso») no funcionan en un sitio falso. Una passkey es un par de claves criptográficas que tu dispositivo crea para un sitio concreto: una <em>clave privada</em>, que nunca sale de tu dispositivo (o de tu gestor de contraseñas, que la sincroniza cifrada), y una <em>clave pública</em>, que se guarda en el servidor. Lo que se firma con la privada solo se puede verificar con su pública, y de la pública no se puede deducir la privada.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Diagrama de una passkey: a la izquierda, tu dispositivo guarda la clave privada de Luis para arena.example y se desbloquea con huella, cara o PIN. A la derecha, el servidor de arena.example guarda solo la clave pública. El servidor envía un reto aleatorio, el dispositivo lo firma con la clave privada y el servidor verifica la firma con la clave pública. Abajo, un sitio falso llamado arena-login.example: el navegador no ofrece la passkey porque el dominio no coincide.">
+      <rect class="d-caja" x="10" y="20" width="230" height="210" rx="10"/>
+      <text class="d-rotulo" x="125" y="48" text-anchor="middle">Tu dispositivo</text>
+      <rect class="d-acento" x="26" y="64" width="198" height="62" rx="8"/>
+      <text class="d-sobre-acento d-rotulo" x="125" y="90" text-anchor="middle" style="font-size:15px">Clave privada de Luis</text>
+      <text class="d-sobre-acento d-peq" x="125" y="112" text-anchor="middle">solo para arena.example</text>
+      <text class="d-peq d-tenue" x="125" y="156" text-anchor="middle">Nunca sale del dispositivo.</text>
+      <text class="d-peq d-tenue" x="125" y="178" text-anchor="middle">Se desbloquea con tu huella,</text>
+      <text class="d-peq d-tenue" x="125" y="198" text-anchor="middle">tu cara o tu PIN.</text>
+      <rect class="d-caja" x="480" y="20" width="230" height="210" rx="10"/>
+      <text class="d-rotulo" x="595" y="48" text-anchor="middle">Servidor de arena.example</text>
+      <rect class="d-caja-suave" x="496" y="64" width="198" height="62" rx="8"/>
+      <text class="d-rotulo" x="595" y="90" text-anchor="middle" style="font-size:15px">Clave pública de Luis</text>
+      <text class="d-peq d-tenue" x="595" y="112" text-anchor="middle">solo sirve para verificar</text>
+      <text class="d-peq d-tenue" x="595" y="156" text-anchor="middle">Si roban la base de datos,</text>
+      <text class="d-peq d-tenue" x="595" y="178" text-anchor="middle">no hay ningún secreto</text>
+      <text class="d-peq d-tenue" x="595" y="198" text-anchor="middle">que sirva para entrar.</text>
+      <text class="d-peq" x="360" y="70" text-anchor="middle">1. Reto aleatorio: 8f3a…c1</text>
+      <path class="d-linea" d="M478 82H256"/>
+      <path class="d-tinta" d="M256 76l-12 6 12 6z"/>
+      <text class="d-peq" x="360" y="138" text-anchor="middle">2. Reto firmado con la clave privada</text>
+      <path class="d-linea" d="M242 150H464"/>
+      <path class="d-tinta" d="M464 144l12 6 -12 6z"/>
+      <text class="d-peq" x="360" y="188" text-anchor="middle">3. El servidor verifica la firma</text>
+      <text class="d-peq" x="360" y="206" text-anchor="middle">con la clave pública: es Luis.</text>
+      <rect class="d-mal-trazo" x="10" y="248" width="700" height="44" rx="8"/>
+      <text class="d-rotulo" x="26" y="275" style="font-size:15px">Sitio falso arena-login.example:</text>
+      <text x="268" y="275" style="font-size:15px">el navegador no ofrece la passkey. No hay nada que robar.</text>
+    </svg>
+    <figcaption>Iniciar sesión con una passkey es responder a un reto nuevo cada vez, con una firma. El servidor nunca recibe ni guarda nada que permita suplantarte, y el navegador solo usa la passkey en el dominio para el que se creó.</figcaption>
+  </figure>
+  <p>Tres ventajas explican por qué los grandes servicios las están adoptando. No hay contraseña que olvidar, reutilizar o filtrar. Si roban la base de datos del servidor, solo obtienen claves públicas. Y resisten el phishing por diseño: es el navegador, no la persona, quien comprueba el dominio, así que en un sitio falso con otro dominio no aparece la passkey, por muy parecido que sea el sitio. Técnicamente se apoyan en dos estándares, WebAuthn (del W3C, la API del navegador) y CTAP (de la FIDO Alliance, para hablar con llaves físicas y teléfonos); juntos se conocen como FIDO2. En el navegador se usan con <code>navigator.credentials.create()</code> para registrarlas y <code>navigator.credentials.get()</code> para iniciar sesión, casi siempre a través de una biblioteca que gestiona los detalles del servidor.</p>
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>Cada método de acceso deja fuera a alguien. No todo el mundo tiene un teléfono moderno, ni puede usar la huella, ni recibe SMS en su zona. Ofrece más de una opción, explica cada paso en lenguaje claro y cuida la recuperación de la cuenta: para mucha gente, perder el acceso a su cuenta es perder años de progreso, compras o fotos.</p>
+  </aside>
+</section>

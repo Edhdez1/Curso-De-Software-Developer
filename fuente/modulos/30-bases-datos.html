@@ -896,3 +896,927 @@ ORDER BY v.veces DESC, j.titulo;</textarea>
     <p>Usar <code>NOT IN</code> con una subconsulta que puede devolver <code>NULL</code>. Si la lista contiene un solo <code>NULL</code>, <code>x NOT IN (lista)</code> nunca es verdadero, por el mismo motivo que <code>= NULL</code>: «¿es x distinto de un valor desconocido?» no se sabe. La consulta devuelve cero filas sin avisar. Para «los que no tienen…», usa <code>NOT EXISTS</code> o el <code>LEFT JOIN … IS NULL</code>, que no tienen esa trampa.</p>
   </aside>
 </section>
+
+<section id="disenar" data-parada="Diseño e índices">
+  <h2>Diseñar la base de datos</h2>
+  <p>Escribir consultas es la mitad del trabajo. La otra mitad, y la que más cuesta cambiar después, es decidir qué tablas tendrás. Un buen diseño hace que las consultas sean sencillas y que los datos no se contradigan; uno malo te persigue durante años. Por eso los equipos diseñan primero en papel, con un diagrama, y solo después escriben <code>CREATE TABLE</code>.</p>
+
+  <h3>Del problema al diagrama entidad-relación</h3>
+  <p>El método clásico es el <strong>modelo entidad-relación</strong> (ER), que propuso Peter Chen en 1976. Tiene tres piezas:</p>
+  <ul>
+    <li>Las <strong>entidades</strong>: las cosas de las que quieres guardar datos. Suelen ser los sustantivos de la descripción del problema: cliente, juego, compra. Cada entidad será una tabla.</li>
+    <li>Los <strong>atributos</strong>: lo que quieres saber de cada entidad. Serán las columnas.</li>
+    <li>Las <strong>relaciones</strong>: cómo se conectan las entidades y con qué cardinalidad (1:1, 1:N, N:M). Serán claves foráneas y tablas intermedias.</li>
+  </ul>
+  <p>Una forma práctica de empezar es escribir en frases lo que hace la app y subrayar: «Un <u>cliente</u> hace <u>compras</u>. Cada compra es de un <u>juego</u>, en una fecha y por un precio. Un juego puede comprarse muchas veces». El diagrama de la tienda queda así:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Diagrama entidad-relación de la tienda con notación de pata de gallo. Tres entidades: clientes con id como clave primaria, nombre, ciudad y email; compras con id como clave primaria, cliente_id y juego_id como claves foráneas, fecha y precio_pagado; juegos con id como clave primaria, titulo, genero, precio y anio. Una línea une clientes con compras: cada compra es de exactamente un cliente, y un cliente tiene cero o muchas compras. Otra línea une juegos con compras: cada compra es de exactamente un juego, y un juego tiene cero o muchas compras. Abajo, una leyenda explica los símbolos.">
+      <g>
+        <rect class="d-caja" x="20" y="30" width="180" height="150" rx="6"/>
+        <rect class="d-caja-suave" x="22" y="32" width="176" height="30"/>
+        <text class="d-rotulo" x="110" y="53" text-anchor="middle">clientes</text>
+        <g class="d-peq">
+          <text class="d-rotulo" x="32" y="86">PK</text><text class="d-mono" x="64" y="86">id</text>
+          <text class="d-mono" x="64" y="112">nombre</text>
+          <text class="d-mono" x="64" y="138">ciudad</text>
+          <text class="d-mono" x="64" y="164">email</text>
+          <text class="d-tenue" x="190" y="164" text-anchor="end">único</text>
+        </g>
+      </g>
+      <g>
+        <rect class="d-caja" x="270" y="30" width="180" height="176" rx="6"/>
+        <rect class="d-caja-suave" x="272" y="32" width="176" height="30"/>
+        <text class="d-rotulo" x="360" y="53" text-anchor="middle">compras</text>
+        <g class="d-peq">
+          <text class="d-rotulo" x="282" y="86">PK</text><text class="d-mono" x="314" y="86">id</text>
+          <text class="d-rotulo" x="282" y="112">FK</text><text class="d-mono" x="314" y="112">cliente_id</text>
+          <text class="d-rotulo" x="282" y="138">FK</text><text class="d-mono" x="314" y="138">juego_id</text>
+          <text class="d-mono" x="314" y="164">fecha</text>
+          <text class="d-mono" x="314" y="190">precio_pagado</text>
+        </g>
+      </g>
+      <g>
+        <rect class="d-caja" x="520" y="30" width="180" height="176" rx="6"/>
+        <rect class="d-caja-suave" x="522" y="32" width="176" height="30"/>
+        <text class="d-rotulo" x="610" y="53" text-anchor="middle">juegos</text>
+        <g class="d-peq">
+          <text class="d-rotulo" x="532" y="86">PK</text><text class="d-mono" x="564" y="86">id</text>
+          <text class="d-mono" x="564" y="112">titulo</text>
+          <text class="d-mono" x="564" y="138">genero</text>
+          <text class="d-mono" x="564" y="164">precio</text>
+          <text class="d-mono" x="564" y="190">anio</text>
+        </g>
+      </g>
+      <path class="d-linea" d="M200 82H232V108H270"/>
+      <path class="d-linea" d="M206 74V90M213 74V90"/>
+      <path class="d-linea" d="M256 108L270 100M256 108L270 108M256 108L270 116"/>
+      <circle class="d-fondo" cx="247" cy="108" r="5"/>
+      <circle class="d-linea" cx="247" cy="108" r="5"/>
+      <path class="d-linea" d="M520 82H488V134H450"/>
+      <path class="d-linea" d="M514 74V90M507 74V90"/>
+      <path class="d-linea" d="M464 134L450 126M464 134L450 134M464 134L450 142"/>
+      <circle class="d-fondo" cx="473" cy="134" r="5"/>
+      <circle class="d-linea" cx="473" cy="134" r="5"/>
+      <text class="d-peq d-tenue" x="236" y="24" text-anchor="middle">hace</text>
+      <text class="d-peq d-tenue" x="486" y="24" text-anchor="middle">es de</text>
+      <path class="d-punteada" d="M20 234H700" stroke-opacity="0.6"/>
+      <g class="d-peq">
+        <path class="d-linea" d="M30 268H90M76 260V276M83 260V276"/>
+        <text x="100" y="273">exactamente uno</text>
+        <path class="d-linea" d="M260 268H320M306 268L320 260M306 268L320 268M306 268L320 276M298 260V276"/>
+        <text x="330" y="273">uno o muchos</text>
+        <path class="d-linea" d="M480 268H540M526 268L540 260M526 268L540 268M526 268L540 276"/>
+        <circle class="d-fondo" cx="516" cy="268" r="5"/>
+        <circle class="d-linea" cx="516" cy="268" r="5"/>
+        <text x="550" y="273">cero o muchos</text>
+      </g>
+    </svg>
+    <figcaption>Diagrama entidad-relación de la tienda en notación «pata de gallo». Cada caja es una tabla; PK marca la clave primaria y FK, las claves foráneas. Se lee desde cada extremo: un cliente hace cero o muchas compras; cada compra es de exactamente un cliente. Lo mismo entre juegos y compras.</figcaption>
+  </figure>
+  <p>El símbolo del extremo que toca cada tabla dice cuántas filas de <em>esa</em> tabla pueden estar en la relación. La «pata de gallo» (en inglés, <em>crow's foot</em>) significa «muchos», y el círculo, que puede no haber ninguna: Iván no tiene compras y «Granja Pixel» no se ha vendido nunca. Hay otras notaciones, como la original de Chen, con rombos para las relaciones, pero la pata de gallo es la que verás en casi todas las herramientas de diseño.</p>
+  <aside class="senal oficio">
+    <p>Dibuja el diagrama antes de escribir código, aunque sea a mano, y enséñaselo a alguien. Es mucho más barato mover una línea en un papel que migrar una base de datos con millones de filas. Herramientas gratuitas como draw.io o dbdiagram.io sirven para dibujarlos, y algunas, como dbdiagram.io, generan el <code>CREATE TABLE</code> a partir del diagrama.</p>
+  </aside>
+
+  <h3>Normalizar: cada dato en un solo lugar</h3>
+  <p>La <strong>normalización</strong> es un método para repartir los datos en tablas de forma que nada se repita sin necesidad. Se aplica en etapas llamadas <strong>formas normales</strong>. Para entender por qué importa, parte de la planilla que muchas tiendas pequeñas usan al empezar:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">pedido</th><th scope="col">fecha</th><th scope="col">cliente</th><th scope="col">email</th><th scope="col">juegos</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>2026-09-01</td><td>Ana</td><td>ana@correo.com</td><td>Bosque Eterno (20), Mazmorra 64 (25)</td></tr>
+        <tr><td>2</td><td>2026-09-04</td><td>Luis</td><td>luis@correo.com</td><td>Cohete Loco (10)</td></tr>
+        <tr><td>3</td><td>2026-09-15</td><td>Ana</td><td>ana@correo.com</td><td>Puzle Cuántico (5)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Parece práctica, pero tiene tres problemas que se llaman <strong>anomalías</strong>:</p>
+  <ul>
+    <li><strong>De actualización</strong>: si Ana cambia de correo, hay que cambiarlo en todas sus filas. Si se te escapa una, la tabla tiene dos correos para la misma persona y no sabes cuál es el bueno.</li>
+    <li><strong>De inserción</strong>: no puedes añadir un juego nuevo al catálogo hasta que alguien lo compre, porque no hay dónde ponerlo.</li>
+    <li><strong>De borrado</strong>: si borras el pedido 2, también pierdes que Luis existe y que «Cohete Loco» cuesta 10.</li>
+  </ul>
+  <p><strong>Primera forma normal (1FN): un valor por celda.</strong> La columna <code>juegos</code> guarda una lista dentro de una celda, y así no puedes buscar, sumar ni relacionar cada juego. También está prohibido el truco de las columnas <code>juego1</code>, <code>juego2</code>, <code>juego3</code>: ¿qué pasa con el pedido de cuatro juegos? En 1FN, cada juego del pedido va en su propia fila:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">pedido</th><th scope="col">fecha</th><th scope="col">cliente</th><th scope="col">email</th><th scope="col">juego</th><th scope="col">precio</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>2026-09-01</td><td>Ana</td><td>ana@correo.com</td><td>Bosque Eterno</td><td>20</td></tr>
+        <tr><td>1</td><td>2026-09-01</td><td>Ana</td><td>ana@correo.com</td><td>Mazmorra 64</td><td>25</td></tr>
+        <tr><td>2</td><td>2026-09-04</td><td>Luis</td><td>luis@correo.com</td><td>Cohete Loco</td><td>10</td></tr>
+        <tr><td>3</td><td>2026-09-15</td><td>Ana</td><td>ana@correo.com</td><td>Puzle Cuántico</td><td>5</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Ahora cada fila se identifica por la pareja (pedido, juego): es una clave compuesta. Pero hay aún más repetición que antes.</p>
+  <p><strong>Segunda forma normal (2FN): todo depende de la clave entera.</strong> Mira de qué depende cada columna. La fecha, el cliente y el correo dependen solo del <em>pedido</em>, no del juego: por eso se repiten en las dos filas del pedido 1. El precio de catálogo depende solo del <em>juego</em>. En 2FN, lo que depende de una parte de la clave se va a su propia tabla: <code>pedidos (pedido, fecha, cliente, email)</code>, <code>juegos (juego, precio)</code> y <code>lineas_pedido (pedido, juego, precio_pagado)</code>, donde queda lo que depende de las dos cosas a la vez.</p>
+  <p><strong>Tercera forma normal (3FN): nada depende de algo que no sea la clave.</strong> En <code>pedidos</code>, el correo depende del cliente, no del pedido: si Ana hace cien pedidos, su correo sigue repitiéndose cien veces. Esa dependencia indirecta se llama <strong>dependencia transitiva</strong>. En 3FN, los datos del cliente se van a su tabla: <code>clientes (id, nombre, email)</code> y <code>pedidos (id, fecha, cliente_id)</code>.</p>
+  <p>El resultado final son cuatro tablas: <code>clientes</code>, <code>pedidos</code>, <code>juegos</code> y <code>lineas_pedido</code>. Cada dato vive en un solo lugar, y las tres anomalías desaparecen. La tabla <code>compras</code> que usas en esta estación es una versión simplificada en la que cada pedido tiene un solo juego.</p>
+  <aside class="senal clave">
+    <p>Una frase clásica resume las tres formas normales: cada columna debe depender <strong>de la clave, de toda la clave y de nada más que la clave</strong>. «De la clave» es 1FN (una fila identificable con valores simples), «de toda la clave» es 2FN y «nada más que la clave», 3FN. Existen formas normales superiores, pero en la práctica diaria llegar a la tercera es lo habitual.</p>
+  </aside>
+  <p>Para pasar datos de una tabla vieja a las nuevas no hace falta copiarlos a mano: <code>INSERT INTO … SELECT …</code> inserta el resultado de una consulta. Este taller parte de una planilla plana y la reparte en dos tablas:</p>
+  <div class="taller" data-modo="sql" id="taller-normalizar" data-titulo="Normaliza con SQL">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE planilla (fecha TEXT, cliente TEXT, email TEXT, juego TEXT, precio REAL);
+INSERT INTO planilla VALUES ('2026-09-01', 'Ana', 'ana@correo.com', 'Bosque Eterno', 20), ('2026-09-01', 'Ana', 'ana@correo.com', 'Mazmorra 64', 25), ('2026-09-04', 'Luis', 'luis@correo.com', 'Cohete Loco', 10), ('2026-09-15', 'Ana', 'ana@correo.com', 'Puzle Cuántico', 5), ('2026-09-20', 'Luis', 'luis@correo.com', 'Mazmorra 64', 25);</script>
+    <textarea class="taller-codigo">-- 1. Una tabla de clientes, cada uno una sola vez
+CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, email TEXT UNIQUE);
+INSERT INTO clientes (nombre, email)
+SELECT DISTINCT cliente, email FROM planilla;
+
+-- 2. Las compras ya no repiten el cliente: apuntan a su id
+CREATE TABLE compras (
+  id INTEGER PRIMARY KEY,
+  cliente_id INTEGER NOT NULL REFERENCES clientes(id),
+  juego TEXT NOT NULL, fecha TEXT NOT NULL, precio REAL NOT NULL
+);
+INSERT INTO compras (cliente_id, juego, fecha, precio)
+SELECT c.id, p.juego, p.fecha, p.precio
+FROM planilla AS p
+JOIN clientes AS c ON c.email = p.email;
+
+SELECT * FROM clientes;
+SELECT * FROM compras;</textarea>
+  </div>
+  <p>Ana y Luis aparecen una sola vez en <code>clientes</code>, y cada compra guarda su número. Si ahora Ana cambia de correo, basta un <code>UPDATE</code> sobre una fila. El juego sigue siendo texto repetido en <code>compras</code>: sacarlo a su propia tabla es uno de los retos de la práctica.</p>
+  <aside class="senal ojo" data-titulo="Desnormalizar a propósito">
+    <p>A veces se rompe la normalización a sabiendas para leer más rápido: guardar en cada cliente un contador <code>numero_compras</code> ahorra contar sus compras en cada visita a su perfil. Se llama <strong>desnormalizar</strong>, y tiene un precio: ahora hay que mantener el contador al día en cada compra, y si un día no se actualiza, los datos se contradicen. Normaliza primero; desnormaliza solo cuando midas un problema de velocidad real.</p>
+  </aside>
+
+  <h3>Índices: decidir cuáles crear</h3>
+  <p>En las estaciones <a href="19-estructuras-datos.html#arboles">19</a> y <a href="20-algoritmos.html#busqueda">20</a> ejecutaste <code>EXPLAIN QUERY PLAN</code> y viste que un <strong>índice</strong> convierte un <code>SCAN</code> (recorrer toda la tabla, <code>O(n)</code>) en un <code>SEARCH</code> (bajar por un árbol B, <code>O(log n)</code>). Si no lo recuerdas, repasa esos talleres. Aquí toca la parte de diseño: cuáles crear y cuáles no.</p>
+  <pre><code class="language-sql">CREATE INDEX idx_compras_cliente ON compras (cliente_id);
+CREATE UNIQUE INDEX idx_clientes_email ON clientes (email);  -- además impide repetidos
+DROP INDEX idx_compras_cliente;                              -- borrarlo</code></pre>
+  <ul>
+    <li><strong>Ya tienes algunos gratis.</strong> La clave primaria y las columnas <code>UNIQUE</code> llevan un índice automático.</li>
+    <li><strong>Las claves foráneas, no.</strong> SQLite y PostgreSQL no crean un índice para ellas (MySQL sí). Como casi todos los <code>JOIN</code> usan esas columnas, indexarlas suele ser lo primero.</li>
+    <li><strong>Indexa lo que buscas a menudo</strong>: columnas que aparecen en <code>WHERE</code>, <code>JOIN … ON</code> y <code>ORDER BY</code> de las consultas frecuentes.</li>
+    <li><strong>No indexes todo.</strong> Cada índice ocupa espacio y hace más lentas las escrituras, porque cada <code>INSERT</code>, <code>UPDATE</code> o <code>DELETE</code> debe actualizar también todos los índices de la tabla. En tablas pequeñas, un índice no aporta nada.</li>
+  </ul>
+  <p>Un índice puede abarcar varias columnas: es un <strong>índice compuesto</strong>. El orden de las columnas importa.</p>
+  <aside class="senal analogia">
+    <p>Una guía telefónica está ordenada por apellido y, dentro de cada apellido, por nombre. Es un índice compuesto (apellido, nombre). Te sirve para buscar a todos los García, o a Ana García. Pero no te sirve para buscar a todas las personas llamadas Ana: tendrías que leer la guía entera. Un índice compuesto solo ayuda si la búsqueda usa sus columnas empezando por la primera.</p>
+  </aside>
+  <div class="taller" data-modo="sql" id="taller-indice-compuesto" data-titulo="Predice: ¿qué consultas usan el índice?">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE partidas (id INTEGER PRIMARY KEY, jugador TEXT NOT NULL, nivel INTEGER NOT NULL, puntos INTEGER NOT NULL);
+INSERT INTO partidas (jugador, nivel, puntos) VALUES ('Ana', 1, 300), ('Ana', 2, 450), ('Ana', 3, 800), ('Leo', 1, 200), ('Leo', 2, 650), ('Leo', 3, 500), ('Sol', 2, 900), ('Sol', 1, 150), ('Iker', 2, 400), ('Iker', 1, 100);</script>
+    <textarea class="taller-codigo">-- 1. Sin índice: recorre la tabla y además ordena aparte
+EXPLAIN QUERY PLAN
+SELECT jugador, puntos FROM partidas WHERE nivel = 2 ORDER BY puntos DESC;
+
+-- 2. Índice compuesto: por nivel y, dentro de cada nivel, por puntos
+CREATE INDEX idx_nivel_puntos ON partidas (nivel, puntos);
+
+EXPLAIN QUERY PLAN
+SELECT jugador, puntos FROM partidas WHERE nivel = 2 ORDER BY puntos DESC;
+
+-- 3. ¿Y si buscas solo por puntos?
+EXPLAIN QUERY PLAN
+SELECT jugador, nivel FROM partidas WHERE puntos > 500;</textarea>
+  </div>
+  <p>Fíjate en la columna <code>detail</code>. La consulta 1 hace <code>SCAN</code> y además <code>USE TEMP B-TREE FOR ORDER BY</code>: ordena los resultados en una estructura temporal. La 2 hace <code>SEARCH … USING INDEX</code> y la ordenación desaparece, porque el índice ya guarda los puntos ordenados dentro de cada nivel: es el ranking de un nivel, gratis. La 3 vuelve a <code>SCAN</code>: <code>puntos</code> es la segunda columna del índice, como el nombre en la guía telefónica. <strong>Modifica</strong>: crea un segundo índice solo sobre <code>puntos</code> antes de la consulta 3 y observa el cambio.</p>
+  <aside class="senal ojo" data-titulo="Consultas que no pueden usar un índice">
+    <p>Un índice sobre <code>titulo</code> ayuda con <code>titulo = 'Cohete Loco'</code>. Con <code>LIKE</code> es más delicado: un patrón que empieza con texto fijo, como <code>'Co%'</code>, solo aprovecha el índice en ciertas configuraciones de cada motor, y uno como <code>'%Loco'</code> no puede aprovecharlo nunca: si no sabes cómo empieza, no puedes saltar a esa parte del árbol. Lo mismo pasa si aplicas una función a la columna, como <code>lower(titulo) = 'cohete loco'</code>. Cuando una consulta va lenta, <code>EXPLAIN QUERY PLAN</code> (en PostgreSQL, <code>EXPLAIN ANALYZE</code>) es la primera herramienta: te dice qué está haciendo la base de datos en lugar de obligarte a adivinar.</p>
+  </aside>
+</section>
+
+<section id="motores" data-parada="Motores y NoSQL">
+  <h2>SQLite, PostgreSQL, MySQL y NoSQL</h2>
+  <p>Todo lo que has aprendido de SQL sirve en cualquier base de datos relacional. Pero al empezar un proyecto hay que elegir un <strong>motor</strong> concreto (así se suele llamar al sistema gestor), y la primera diferencia entre ellos no es el dialecto: es dónde vive la base de datos.</p>
+
+  <h3>Embebida o cliente-servidor</h3>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 290" role="img" aria-label="Dos arquitecturas. Izquierda, embebida: SQLite es una biblioteca dentro de tu programa y guarda toda la base de datos en un solo archivo, tienda.db. Derecha, cliente-servidor: dos copias de tu API y un panel de administración se conectan por la red a un servidor de base de datos, como PostgreSQL, que gestiona los datos en su disco.">
+      <text class="d-rotulo" x="20" y="28">Embebida: SQLite</text>
+      <rect class="d-caja" x="20" y="44" width="290" height="140" rx="8"/>
+      <text class="d-rotulo" x="36" y="70">Tu programa</text>
+      <text class="d-peq d-tenue" x="36" y="90">Node.js, una app móvil, un juego…</text>
+      <rect class="d-acento" x="40" y="108" width="250" height="56" rx="6"/>
+      <text class="d-sobre-acento d-rotulo" x="165" y="132" text-anchor="middle">SQLite</text>
+      <text class="d-sobre-acento d-peq" x="165" y="152" text-anchor="middle">una biblioteca dentro del programa</text>
+      <path class="d-linea" d="M165 184V208"/>
+      <path class="d-tinta" d="M157 206l8 12 8-12z"/>
+      <rect class="d-caja-suave" x="95" y="220" width="140" height="40" rx="6"/>
+      <text class="d-mono" x="165" y="246" text-anchor="middle">tienda.db</text>
+      <text class="d-peq d-tenue" x="165" y="280" text-anchor="middle">toda la base en un solo archivo</text>
+      <path class="d-punteada" d="M340 20V280"/>
+      <text class="d-rotulo" x="360" y="28">Cliente-servidor: PostgreSQL, MySQL</text>
+      <g>
+        <rect class="d-caja" x="360" y="50" width="150" height="40" rx="6"/>
+        <text class="d-peq" x="435" y="75" text-anchor="middle">API (copia 1)</text>
+        <rect class="d-caja" x="360" y="104" width="150" height="40" rx="6"/>
+        <text class="d-peq" x="435" y="129" text-anchor="middle">API (copia 2)</text>
+        <rect class="d-caja" x="360" y="158" width="150" height="40" rx="6"/>
+        <text class="d-peq" x="435" y="183" text-anchor="middle">Panel de administración</text>
+      </g>
+      <path class="d-linea" d="M510 70H540M510 124H540M510 178H540M540 70V178M540 124H566"/>
+      <path class="d-tinta" d="M562 116l12 8-12 8z"/>
+      <text class="d-peq d-tenue" x="540" y="214" text-anchor="middle">por la red</text>
+      <rect class="d-acento" x="576" y="74" width="130" height="100" rx="8"/>
+      <text class="d-sobre-acento d-rotulo" x="641" y="112" text-anchor="middle">Servidor</text>
+      <text class="d-sobre-acento d-rotulo" x="641" y="132" text-anchor="middle">de base</text>
+      <text class="d-sobre-acento d-rotulo" x="641" y="152" text-anchor="middle">de datos</text>
+      <path class="d-linea" d="M641 174V208"/>
+      <path class="d-tinta" d="M633 206l8 12 8-12z"/>
+      <rect class="d-caja-suave" x="576" y="220" width="130" height="40" rx="6"/>
+      <text class="d-peq" x="641" y="245" text-anchor="middle">datos en su disco</text>
+    </svg>
+    <figcaption>Izquierda: SQLite no es un programa aparte, sino una biblioteca que tu programa lleva dentro; la base de datos es un archivo. Derecha: PostgreSQL y MySQL son servidores a los que se conectan, por la red y con usuario y contraseña, todos los programas que necesitan los datos.</figcaption>
+  </figure>
+  <p>Con SQLite no hay nada que instalar ni configurar: la base de datos es un archivo que puedes copiar, enviar por correo o incluir en tu juego. Con PostgreSQL o MySQL instalas (o contratas) un servidor, y tus programas se conectan a él como un navegador se conecta a una web (<a href="03-internet.html#paquetes">Estación 3</a>). A cambio, muchos programas en muchas máquinas pueden usar la misma base a la vez.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">SQLite</th><th scope="col">PostgreSQL</th><th scope="col">MySQL</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Tipo</th><td>Embebida: una biblioteca y un archivo</td><td>Cliente-servidor</td><td>Cliente-servidor</td></tr>
+        <tr><th scope="row">Escrituras a la vez</th><td>Una en cada momento; en modo WAL, las lecturas no esperan</td><td>Muchas</td><td>Muchas</td></tr>
+        <tr><th scope="row">Puntos fuertes</th><td>Cero configuración; lecturas rapidísimas; ideal para apps móviles y de escritorio, juegos, prototipos y webs pequeñas o medianas</td><td>Muy completa y fiel al estándar; <code>jsonb</code>, búsqueda de texto, extensiones como PostGIS (mapas) o pgvector (búsquedas para IA)</td><td>Muy extendida en alojamientos web y en gestores de contenido como WordPress</td></tr>
+        <tr><th scope="row">Licencia</th><td>Dominio público</td><td>Libre (licencia PostgreSQL)</td><td>Libre (GPL) con ediciones comerciales de Oracle; MariaDB es un derivado comunitario</td></tr>
+        <tr><th scope="row">Versión en septiembre de 2026</th><td>3.53</td><td>18 (la 19, en pruebas beta)</td><td>9.7 LTS y 8.4 LTS</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Las versiones cambian cada pocos meses, así que aprende a preguntarle a la base de datos: <code>SELECT sqlite_version();</code> en SQLite y <code>SELECT version();</code> en PostgreSQL y MySQL. Prueba la primera aquí. Verás la versión que incluye la librería sql.js que usa el curso para ejecutar SQLite en el navegador, que puede ser algo más antigua que la última publicada.</p>
+  <div class="taller" data-modo="sql" id="taller-version" data-titulo="¿Qué versión de SQLite usa este curso?">
+    <textarea class="taller-codigo">SELECT sqlite_version() AS version;</textarea>
+  </div>
+  <aside class="senal clave">
+    <p>¿Cuál elegir? Para aprender, prototipos, apps móviles o de escritorio, juegos y webs con un solo servidor, <strong>SQLite</strong>. Para un backend con muchas personas escribiendo a la vez o varias copias del servidor, <strong>PostgreSQL</strong>: es la opción por defecto de muchos equipos y la que más herramientas y servicios soportan. <strong>MySQL</strong>, cuando el proyecto ya lo usa o tu alojamiento solo ofrece ese. Lo bueno: el SQL que acabas de aprender vale para los tres.</p>
+  </aside>
+  <aside class="senal oficio">
+    <p>En producción casi nadie instala PostgreSQL a mano en un servidor propio. Se contrata un servicio gestionado en la nube que se encarga de las copias de seguridad, las actualizaciones y las réplicas: Supabase y Neon son dos ejemplos populares para PostgreSQL, y los grandes proveedores de nube tienen los suyos. Verás cómo publicar tus proyectos en la <a href="35-devops.html">Estación 35</a>. Y cuando una sola base de datos no dé abasto, las réplicas y las particiones que viste en la <a href="28-arquitectura.html#escalar">Estación 28</a> reparten el trabajo entre varias máquinas.</p>
+  </aside>
+
+  <h3>NoSQL: otras formas de guardar datos</h3>
+  <p><strong>NoSQL</strong> (hoy se interpreta como «no solo SQL», <em>not only SQL</em>) es un nombre paraguas para las bases de datos que no organizan la información en tablas relacionales. No es una tecnología, sino varias familias muy distintas, cada una diseñada para un tipo de problema:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Familia</th><th scope="col">Cómo guarda</th><th scope="col">Buena para</th><th scope="col">Ejemplos</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Documentos</strong></td><td>Documentos parecidos a JSON; cada uno puede tener una forma distinta</td><td>Datos que se leen enteros y cambian de forma: perfiles, catálogos con atributos variados, contenido</td><td>MongoDB, Firestore (Firebase)</td></tr>
+        <tr><td><strong>Clave-valor</strong></td><td>Un diccionario gigante: cada clave apunta a un valor, como un <code>Map</code> (<a href="19-estructuras-datos.html#hash">Estación 19</a>)</td><td>Caché, sesiones, contadores, rankings en tiempo real</td><td>Redis, Valkey, DynamoDB</td></tr>
+        <tr><td><strong>Grafos</strong></td><td>Nodos y conexiones entre ellos (<a href="19-estructuras-datos.html#grafos">Estación 19</a>)</td><td>Redes sociales, recomendaciones, «amigos de tus amigos»</td><td>Neo4j</td></tr>
+        <tr><td><strong>Columnas anchas</strong></td><td>Filas con muchísimas columnas repartidas entre muchas máquinas</td><td>Volúmenes enormes de escrituras: sensores, registros, mensajería</td><td>Apache Cassandra</td></tr>
+        <tr><td><strong>Vectoriales</strong></td><td>Listas de números que representan el significado de un texto o una imagen</td><td>Búsquedas «por parecido» en apps de inteligencia artificial</td><td>pgvector (una extensión de PostgreSQL) y bases dedicadas</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Mira cómo guardaría una compra una base de documentos como MongoDB:</p>
+  <pre><code class="language-json">{
+  "_id": "compra-1",
+  "fecha": "2026-09-01",
+  "cliente": { "nombre": "Ana", "email": "ana@correo.com" },
+  "juegos": [
+    { "titulo": "Bosque Eterno", "precio": 20 },
+    { "titulo": "Mazmorra 64", "precio": 25 }
+  ]
+}</code></pre>
+  <p>¿Te resulta familiar? Es la planilla sin normalizar de la sección de diseño, y en una base de documentos es una decisión deliberada: todo lo que necesitas para mostrar la compra llega en una sola lectura, sin <code>JOIN</code>. El precio es el que ya conoces: si Ana cambia de correo, hay que actualizarlo en cada documento donde aparece. Diseñar en NoSQL consiste en decidir qué se guarda junto según cómo se va a leer.</p>
+  <p>En los videojuegos, la familia clave-valor es muy popular para las tablas de clasificación. Redis tiene una estructura llamada <em>sorted set</em> (conjunto ordenado) que mantiene a cada jugador ordenado por su puntuación en todo momento:</p>
+  <pre><code class="language-text">ZADD ranking 800 "Ana" 650 "Leo" 900 "Sol"
+ZRANGE ranking 0 2 REV WITHSCORES</code></pre>
+  <p>La primera orden guarda tres puntuaciones y la segunda devuelve los tres mejores, de mayor a menor, con sus puntos. Actualizar una puntuación o pedir el top sigue siendo muy rápido con millones de jugadores, porque la estructura se mantiene siempre ordenada, con un costo <code>O(log n)</code> por operación, como los árboles de la Estación 19.</p>
+  <aside class="senal error" data-titulo="Tres mitos sobre NoSQL">
+    <p>«NoSQL es más rápido»: depende de la consulta; para lo que fue diseñada, una base NoSQL vuela, y para lo demás puede ser más lenta. «NoSQL no tiene esquema»: los datos siempre tienen una forma; si la base de datos no la vigila, la tiene que vigilar tu código. «NoSQL no tiene transacciones»: MongoDB, por ejemplo, las admite entre varios documentos desde la versión 4.0 (2018).</p>
+  </aside>
+  <p>La recomendación habitual es empezar con una base relacional y añadir otra solo cuando tengas un problema concreto que ella resuelva mejor. Muchos sistemas combinan varias: PostgreSQL como fuente de verdad y Redis como caché y para los rankings, como viste en la <a href="28-arquitectura.html#cache">Estación 28</a>. Además, PostgreSQL guarda y consulta documentos JSON con su tipo <code>jsonb</code>, así que a menudo puedes tener lo mejor de los dos mundos en una sola base.</p>
+</section>
+
+<section id="codigo" data-parada="Desde tu código">
+  <h2>Usar la base de datos desde tu código</h2>
+  <p>Hasta aquí has escrito SQL a mano. En una app, quien escribe las consultas es tu programa: la API de la Estación 29 recibe una petición, consulta la base de datos y responde con los resultados en JSON. En esta sección conectarás Node.js con SQLite, aprenderás el error de seguridad más famoso de las bases de datos y conocerás las herramientas que usan los equipos para trabajar con ellas.</p>
+
+  <h3>Conectar desde Node.js</h3>
+  <p>Node.js trae su propio módulo para SQLite, <code>node:sqlite</code>: no hay que instalar nada. Apareció en la versión 22.5 como experimental, dejó de necesitar una opción especial en la 22.13 y, desde la 24.15, su documentación lo marca como <em>release candidate</em> (candidato a versión estable). Según tu versión, al usarlo puede aparecer un aviso <code>ExperimentalWarning</code>: el módulo funciona igual. Comprueba tu versión con <code>node --version</code> y el estado del módulo en su página de documentación, que tienes al final de la estación. Otras opciones muy usadas son la librería <code>better-sqlite3</code> para SQLite, <code>pg</code> para PostgreSQL y <code>mysql2</code> para MySQL, que se instalan con npm.</p>
+  <p>Sigue este programa paso a paso. Guarda dos jugadores en un archivo y lee el ranking:</p>
+  <div class="traza" data-titulo="Node.js y SQLite, línea a línea" data-rotulo-memoria="Variables">
+    <pre><code class="language-js">import { DatabaseSync } from "node:sqlite";
+const db = new DatabaseSync("juego.db");
+db.exec(`CREATE TABLE IF NOT EXISTS jugadores (
+  id INTEGER PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  puntos INTEGER NOT NULL)`);
+const insertar = db.prepare(
+  "INSERT INTO jugadores (nombre, puntos) VALUES (?, ?)");
+const info = insertar.run("Ana", 120);
+insertar.run("Leo", 90);
+const ranking = db.prepare(
+  "SELECT nombre, puntos FROM jugadores ORDER BY puntos DESC").all();
+console.log(info.lastInsertRowid, ranking[0].nombre);
+db.close();</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {}, "nota": "Importa DatabaseSync del módulo node:sqlite. El prefijo node: indica que es un módulo que viene con Node; no está en npm."},
+      {"linea": 2, "vars": {"db": "conexión con juego.db"}, "nota": "Abre el archivo juego.db, o lo crea vacío si no existe. Todo lo que hagas con db se guarda en ese archivo. Con \":memory:\" en lugar del nombre, la base viviría solo en memoria."},
+      {"linea": 6, "vars": {"db": "conexión con juego.db"}, "nota": "exec ejecuta SQL que no devuelve filas. IF NOT EXISTS evita un error la segunda vez que arranques el programa, cuando la tabla ya exista."},
+      {"linea": 8, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos"}, "nota": "prepare prepara la consulta una vez y la deja lista para usarla muchas veces. Cada ? es un hueco para un valor que llegará después: un parámetro."},
+      {"linea": 9, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }"}, "nota": "run rellena los huecos con \"Ana\" y 120, en orden, y ejecuta. Devuelve cuántas filas cambiaron y el id que recibió la fila nueva."},
+      {"linea": 10, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }"}, "nota": "La misma consulta preparada se reutiliza con otros valores. Leo recibe el id 2."},
+      {"linea": 12, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }", "ranking": "[ { nombre: 'Ana', puntos: 120 }, { nombre: 'Leo', puntos: 90 } ]"}, "nota": "all devuelve todas las filas como un array de objetos: uno por fila, con las columnas como propiedades. get devolvería solo la primera fila, o undefined si no hay ninguna."},
+      {"linea": 13, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }", "ranking": "[ { nombre: 'Ana', puntos: 120 }, { nombre: 'Leo', puntos: 90 } ]"}, "salida": "1 Ana", "nota": "Desde aquí son datos normales de JavaScript: un número y un array de objetos, como los de la Estación 11."},
+      {"linea": 14, "vars": {"insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }", "ranking": "[ { nombre: 'Ana', puntos: 120 }, { nombre: 'Leo', puntos: 90 } ]"}, "nota": "close cierra la conexión. Los datos ya están en juego.db: si ejecutas el programa otra vez, Ana y Leo seguirán ahí (y se añadirán de nuevo, porque ninguna regla lo impide)."}
+    ]</script>
+  </div>
+  <p>Para probarlo en tu computadora, guarda el código como <code>juego.js</code> dentro de un proyecto cuyo <code>package.json</code> tenga <code>"type": "module"</code> (lo viste en la Estación 29) y ejecútalo:</p>
+  <pre class="consola"><code><span class="prompt">$</span> node --version
+<span class="salida">v24.21.0</span>
+<span class="prompt">$</span> node juego.js
+<span class="salida">1 Ana</span></code></pre>
+  <aside class="senal nota" data-titulo="Síncrono o asíncrono">
+    <p><code>DatabaseSync</code>, como su nombre indica, es <strong>síncrono</strong>: mientras la consulta se ejecuta, tu programa espera y no atiende nada más. Con SQLite suele durar microsegundos, porque el archivo está en la misma máquina, y por eso <code>better-sqlite3</code> también funciona así. Pero una consulta muy pesada bloquearía el bucle de eventos que viste en la <a href="29-backend.html#node">Estación 29</a>. Las librerías de PostgreSQL y MySQL son asíncronas: la base de datos está en otra máquina, así que se usan con <code>await</code>.</p>
+  </aside>
+  <p>Con PostgreSQL, el código se parece mucho. La dirección de la base, con su usuario y contraseña, llega en una variable de entorno para no escribir secretos en el código, y los huecos se escriben <code>$1</code>, <code>$2</code>… en lugar de <code>?</code>:</p>
+  <pre><code class="language-js">import pg from "pg";
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+
+const { rows } = await pool.query(
+  "SELECT nombre, puntos FROM jugadores WHERE puntos &gt; $1 ORDER BY puntos DESC",
+  [100]
+);
+console.log(rows);   // [ { nombre: 'Ana', puntos: 120 } ]</code></pre>
+  <p>Un <strong>pool de conexiones</strong> es un grupo de conexiones abiertas que se reutilizan: abrir una conexión nueva con un servidor por cada petición sería lento, así que el pool presta una libre y la recupera al terminar.</p>
+  <p>Y así se escribe una transacción desde el código, con el <code>try/catch</code> de la <a href="12-depuracion.html#excepciones">Estación 12</a>: si cualquier orden falla, se deshace todo.</p>
+  <pre><code class="language-js">function transferir(de, a, cantidad) {
+  db.exec("BEGIN");
+  try {
+    db.prepare("UPDATE monederos SET monedas = monedas - ? WHERE jugador = ?").run(cantidad, de);
+    db.prepare("UPDATE monederos SET monedas = monedas + ? WHERE jugador = ?").run(cantidad, a);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");   // algo falló: no queda nada a medias
+    throw error;           // y avisamos a quien llamó
+  }
+}</code></pre>
+
+  <h3>Inyección SQL: nunca pegues datos en una consulta</h3>
+  <p>Imagina que tu API busca las compras de un cliente con el nombre que alguien escribe en un formulario. La tentación es construir la consulta pegando textos, con <code>+</code> o con una plantilla literal. Mira lo que puede pasar:</p>
+
+  <figure class="capsula" data-titulo="Pegar texto o pasar parámetros">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: una consulta se arma pegando lo que escribe la persona. Con Ana devuelve sus 3 compras. Con el texto x comilla OR comilla 1 comilla igual comilla 1, la comilla cierra el texto antes de tiempo y el resto se convierte en código: la condición siempre es verdadera y devuelve las compras de todos. Con un parámetro, la consulta lleva un hueco y el valor viaja aparte, así que se compara como texto entero y no devuelve ninguna fila.">
+        <text class="d-rotulo" x="20" y="38">La persona escribe:</text>
+        <rect class="d-caja" x="200" y="14" width="320" height="38" rx="6"/>
+        <text class="d-mono" x="214" y="39" data-texto="2:Ana; 3:x' OR '1'='1" data-clases="1:d-tenue; 2:d-tinta">(nada todavía)</text>
+        <rect class="d-codigo" x="20" y="70" width="680" height="104" rx="8"/>
+        <text class="d-codigo-tenue" x="36" y="96" style="font-size:13px" data-texto="5:Con parámetro: la consulta viaja con un hueco (?)">Tu código pega el texto dentro de la consulta</text>
+        <text class="d-codigo-texto" x="36" y="134" style="font-size:16px" data-pasos="1">SELECT * FROM compras WHERE cliente = '…'</text>
+        <text class="d-codigo-texto" x="36" y="134" style="font-size:16px" data-pasos="2">SELECT * FROM compras WHERE cliente = 'Ana'</text>
+        <text class="d-codigo-texto" x="36" y="134" style="font-size:16px" data-pasos="3-4">SELECT * FROM compras WHERE cliente = 'x'<tspan class="d-aviso"> OR '1'='1'</tspan></text>
+        <text class="d-codigo-texto" x="36" y="134" style="font-size:16px" data-pasos="5-">SELECT * FROM compras WHERE cliente = ?</text>
+        <text class="d-codigo-tenue" x="36" y="160" style="font-size:13px" data-pasos="3-4">La comilla de su texto cerró la tuya: lo demás ya es código SQL</text>
+        <text class="d-rotulo" x="20" y="216">Resultado:</text>
+        <text x="120" y="216" data-texto="2:3 filas, las compras de Ana; 3:(todavía no se ejecuta); 4:8 filas: ¡las compras de todos!; 5:(todavía no se ejecuta); 6:0 filas: nadie se llama así" data-clases="1:d-tenue; 2:d-ok; 3:d-tenue; 4:d-mal; 5:d-tenue; 6:d-ok">(todavía no se ejecuta)</text>
+        <g data-pasos="5-">
+          <path class="d-linea" d="M600 234V186"/>
+          <path class="d-tinta" d="M592 188l8-12 8 12z"/>
+          <text class="d-peq d-tenue" x="590" y="228" text-anchor="end">viaja aparte</text>
+          <rect class="d-caja" x="440" y="236" width="260" height="54" rx="8"/>
+          <text class="d-peq d-tenue" x="454" y="256">parámetro 1 (siempre es un dato)</text>
+          <text class="d-mono" x="454" y="280" data-texto="6:x' OR '1'='1">(esperando el valor)</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Tu API arma la consulta pegando lo que escribe la persona entre dos comillas: <code>"… WHERE cliente = '" + nombre + "'"</code>.</li>
+        <li>Alguien escribe «Ana». La consulta queda bien formada y devuelve las 3 compras de Ana. Todo parece funcionar.</li>
+        <li data-duracion="7">Una atacante escribe <code>x' OR '1'='1</code>. Al pegarlo, su primera comilla cierra la comilla de tu código antes de tiempo, y lo que sigue ya no es un texto: es código SQL que ella eligió.</li>
+        <li data-duracion="6"><code>'1'='1'</code> siempre es verdad, así que la condición se cumple en todas las filas: la consulta devuelve las compras de todos los clientes. Con otras entradas podría leer otras tablas o borrar datos.</li>
+        <li data-duracion="6">La forma correcta: la consulta se envía con un hueco, <code>?</code>. La base de datos la analiza primero, con su estructura ya fija, antes de conocer el valor.</li>
+        <li data-duracion="7">El valor viaja aparte y siempre se trata como un dato, nunca como código. La base de datos busca un cliente llamado literalmente <code>x' OR '1'='1</code>. No existe: 0 filas. Las comillas no pueden escaparse del hueco.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <p>Este ataque se llama <strong>inyección SQL</strong> (en inglés, <em>SQL injection</em>): meter código SQL a través de un dato. Lleva más de veinticinco años en las listas de los fallos de seguridad más graves y sigue apareciendo en aplicaciones reales. Compruébalo sin riesgo. Primero, la función que arma la consulta pegando textos. <strong>Predice</strong> las tres líneas:</p>
+  <div class="taller" id="taller-inyeccion-js" data-titulo="Predice: la consulta que arma tu código">
+    <textarea class="taller-codigo">function consultaPegada(nombre) {
+  return "SELECT fecha, juego FROM compras WHERE cliente = '" + nombre + "'";
+}
+
+console.log(consultaPegada("Ana"));
+console.log(consultaPegada("x' OR '1'='1"));
+console.log(consultaPegada("Bernardo O'Higgins"));</textarea>
+  </div>
+  <p>La segunda línea es la consulta del ataque. La tercera muestra que no hace falta mala intención para romperla: un apellido con apóstrofo deja una comilla sin cerrar y la consulta falla. Ahora ejecuta la consulta del ataque contra una tabla de verdad:</p>
+  <div class="taller" data-modo="sql" id="taller-inyeccion-sql" data-titulo="Ejecuta la consulta inyectada">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE compras (id INTEGER PRIMARY KEY, cliente TEXT NOT NULL, fecha TEXT NOT NULL, juego TEXT NOT NULL);
+INSERT INTO compras (cliente, fecha, juego) VALUES ('Ana', '2026-09-01', 'Bosque Eterno'), ('Ana', '2026-09-03', 'Mazmorra 64'), ('Luis', '2026-09-04', 'Cohete Loco'), ('Sofía', '2026-09-05', 'Bosque Eterno'), ('Ana', '2026-09-15', 'Puzle Cuántico'), ('Luis', '2026-09-20', 'Mazmorra 64');</script>
+    <textarea class="taller-codigo">-- Lo que tu API quería: las compras de una persona
+SELECT fecha, juego FROM compras WHERE cliente = 'Ana';
+
+-- Lo que armó con el texto de la atacante
+SELECT fecha, juego FROM compras WHERE cliente = 'x' OR '1'='1';</textarea>
+  </div>
+  <p>La primera devuelve 3 filas; la segunda, las 6 de la tabla: los datos de todos los clientes. La defensa es la <strong>consulta parametrizada</strong>, la que ya usaste en la traza: escribes la consulta con huecos y pasas los valores por separado. La base de datos nunca los interpreta como código.</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Vulnerable</p>
+      <pre><code class="language-js">const sql = "SELECT fecha, juego FROM compras " +
+  "WHERE cliente = '" + nombre + "'";
+db.prepare(sql).all();
+
+// Igual de vulnerable con plantilla literal:
+db.prepare(`… WHERE cliente = '${nombre}'`).all();</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Parametrizada</p>
+      <pre><code class="language-js">const sql = "SELECT fecha, juego FROM compras " +
+  "WHERE cliente = ?";
+db.prepare(sql).all(nombre);
+
+// En PostgreSQL con pg, los huecos son $1, $2…
+await pool.query("… WHERE cliente = $1", [nombre]);</code></pre>
+    </div>
+  </div>
+  <aside class="senal clave">
+    <p>Todo valor que venga de fuera de tu código (formularios, URLs, cuerpos JSON, cabeceras, archivos subidos) va en un parámetro, nunca pegado en el texto de la consulta. Sin excepciones, aunque «ya lo hayas validado». Escapar las comillas a mano tampoco es una defensa fiable: la guía de OWASP, la organización de referencia en seguridad web, lo desaconseja.</p>
+  </aside>
+  <aside class="senal ojo" data-titulo="Lo que no puede ir en un parámetro">
+    <p>Los parámetros sirven para <em>valores</em>, no para nombres de tablas o columnas ni para palabras como <code>ASC</code> o <code>DESC</code>. Si el usuario elige por qué columna ordenar, compara su elección con una lista cerrada de opciones permitidas: <code>const permitidas = ["precio", "anio"]; if (!permitidas.includes(orden)) orden = "precio";</code>. En la <a href="31-seguridad.html">Estación 31: Seguridad</a> verás este y otros ataques, y cómo defenderte en capas.</p>
+  </aside>
+
+  <h3>ORMs y constructores de consultas</h3>
+  <p>Escribir SQL como texto dentro de JavaScript tiene inconvenientes: el editor no sabe si una columna existe, los resultados no tienen tipos de TypeScript (<a href="23-typescript.html">Estación 23</a>) y convertir filas en objetos se vuelve repetitivo. Por eso existen dos tipos de herramientas:</p>
+  <ul>
+    <li>Un <strong>constructor de consultas</strong> (en inglés, <em>query builder</em>) te deja escribir la consulta con funciones de JavaScript que imitan a SQL. Ejemplos: Kysely y Knex.</li>
+    <li>Un <strong>ORM</strong> (<em>object-relational mapping</em>, «mapeo objeto-relacional») va más allá: describes tus tablas como modelos y trabajas con objetos y métodos; el ORM genera el SQL. Ejemplos: Prisma, Drizzle, TypeORM y Sequelize.</li>
+  </ul>
+  <p>Así se pide «los 3 jugadores con más puntos» con SQL directo, con Drizzle y con Prisma, dos de los más usados con TypeScript. En septiembre de 2026, Prisma va por la versión 7 (con la 8 en fase candidata) y Drizzle por la 0.45, con la 1.0 en fase candidata; comprueba siempre la documentación de la versión que instales, porque la forma de configurarlos cambia entre versiones.</p>
+  <pre><code class="language-js">// SQL directo con node:sqlite
+const top = db.prepare(
+  "SELECT nombre, puntos FROM jugadores ORDER BY puntos DESC LIMIT 3"
+).all();</code></pre>
+  <pre><code class="language-ts">// Drizzle: la tabla se describe en TypeScript…
+import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+export const jugadores = sqliteTable("jugadores", {
+  id: int().primaryKey({ autoIncrement: true }),
+  nombre: text().notNull(),
+  puntos: int().notNull().default(0),
+});
+
+// …y la consulta se parece mucho a SQL
+import { desc } from "drizzle-orm";
+const top = await db.select({ nombre: jugadores.nombre, puntos: jugadores.puntos })
+  .from(jugadores).orderBy(desc(jugadores.puntos)).limit(3);</code></pre>
+  <pre><code class="language-text">// Prisma: el modelo va en un archivo schema.prisma…
+model Jugador {
+  id     Int    @id @default(autoincrement())
+  nombre String
+  puntos Int    @default(0)
+}</code></pre>
+  <pre><code class="language-ts">// …y la consulta usa objetos
+const top = await prisma.jugador.findMany({
+  select: { nombre: true, puntos: true },
+  orderBy: { puntos: "desc" },
+  take: 3,
+});</code></pre>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Enfoque</th><th scope="col">Ventajas</th><th scope="col">Inconvenientes</th></tr></thead>
+      <tbody>
+        <tr><td>SQL directo</td><td>Control total; ves exactamente qué se ejecuta; nada extra que aprender</td><td>Sin tipos automáticos; convertir filas a objetos a mano; si concatenas, riesgo de inyección</td></tr>
+        <tr><td>Constructor de consultas</td><td>Tipos de TypeScript; consultas que se arman por partes; parámetros automáticos</td><td>Otra API que aprender; lo muy complejo a veces se escribe mejor en SQL</td></tr>
+        <tr><td>ORM</td><td>Muy productivo; relaciones fáciles; suele traer migraciones</td><td>Esconde el SQL: cuando algo va lento, cuesta ver por qué</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal ojo" data-titulo="El problema N+1">
+    <p>Con un ORM es fácil escribir sin darte cuenta: «trae los 100 clientes» y, dentro de un bucle, «trae las compras de este cliente». Son 1 + 100 consultas donde bastaba una con <code>JOIN</code>. Se llama <strong>problema N+1</strong> y es la causa más común de apps lentas con ORM. Los ORMs ofrecen formas de cargar las relaciones de una vez (en Prisma, <code>include</code>); para detectarlo, activa el registro de las consultas que genera tu ORM y cuéntalas.</p>
+  </aside>
+  <aside class="senal clave">
+    <p>Aprende SQL antes que cualquier ORM. Un ORM genera SQL, y el día que una consulta vaya lenta o devuelva algo raro, tendrás que leer ese SQL para entender qué pasa. Además, los ORMs cambian cada pocos años; SQL lleva cincuenta.</p>
+  </aside>
+
+  <h3>Migraciones: cambiar el esquema sin perder datos</h3>
+  <p>Tu juego ya tiene usuarios y ahora quieres guardar el país de cada jugador. No puedes borrar la base y crearla de nuevo: perderías todo. Necesitas cambiar el esquema con los datos dentro, y que el cambio se aplique igual en tu computadora, en la de tu equipo y en el servidor. Una <strong>migración</strong> es un archivo con un cambio del esquema, numerado para aplicarse en orden:</p>
+  <pre><code class="language-sql">-- migraciones/002_agregar_pais.sql
+ALTER TABLE jugadores ADD COLUMN pais TEXT;</code></pre>
+  <p><code>ALTER TABLE</code> modifica una tabla existente: añadir columnas, renombrarlas o borrarlas (en SQLite, borrar columnas es posible desde la versión 3.35; otros cambios exigen crear una tabla nueva y copiar los datos). Las reglas del oficio con las migraciones son pocas y estrictas:</p>
+  <ul>
+    <li>Cada cambio es un archivo nuevo, con un número o una fecha que fija el orden.</li>
+    <li>Las migraciones van en Git, junto al código que las necesita (<a href="24-git.html">Estación 24</a>).</li>
+    <li>La herramienta apunta en una tabla especial de la base de datos cuáles ya se aplicaron, y solo ejecuta las nuevas.</li>
+    <li><strong>Nunca edites una migración que ya se aplicó en otro sitio.</strong> Si te equivocaste, escribe otra que lo corrija.</li>
+  </ul>
+  <p>Los ORMs traen su herramienta: con Prisma, <code>npx prisma migrate dev --name agregar_pais</code> compara tu <code>schema.prisma</code> con la base y genera el archivo SQL; con Drizzle, <code>npx drizzle-kit generate</code> genera la migración y <code>npx drizzle-kit migrate</code> la aplica. Sin ORM, basta una carpeta de archivos <code>.sql</code> y un pequeño programa que los ejecute en orden. Practica la organización en esta terminal:</p>
+  <div class="terminal-sim" data-titulo="Misión: dos migraciones nuevas" data-inicio="/home/tu">
+    <div class="terminal-instrucciones">
+      <ol>
+        <li>Entra en la carpeta de migraciones del proyecto: <code>cd juego-api/migraciones</code>. Mira qué hay con <code>ls</code> y lee la primera con <code>cat 001_crear_jugadores.sql</code>.</li>
+        <li>Crea la segunda migración: <code>echo "ALTER TABLE jugadores ADD COLUMN pais TEXT;" &gt; 002_agregar_pais.sql</code></li>
+        <li>Crea la tercera, un índice para el ranking: <code>echo "CREATE INDEX idx_jugadores_puntos ON jugadores (puntos);" &gt; 003_indice_puntos.sql</code></li>
+        <li>Comprueba con <code>ls</code> que las tres quedan en orden. No toques la 001: ya se aplicó en el servidor.</li>
+      </ol>
+    </div>
+    <script type="application/json" class="terminal-sistema">{"juego-api": {"package.json": "{ \"name\": \"juego-api\", \"type\": \"module\" }\n", "servidor.js": "// la API de la Estación 29\n", "migraciones": {"001_crear_jugadores.sql": "CREATE TABLE jugadores (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, puntos INTEGER NOT NULL DEFAULT 0);\n"}}}</script>
+    <script type="text/plain" class="terminal-mision">
+var api = sistema["juego-api"];
+if (!api || !api.migraciones) return "La carpeta juego-api/migraciones ya no existe. Pulsa «Reiniciar» para empezar de nuevo.";
+var m = api.migraciones;
+if (m["001_crear_jugadores.sql"] === undefined || m["001_crear_jugadores.sql"].indexOf("CREATE TABLE jugadores") === -1) return "La migración 001 cambió o desapareció. Una migración ya aplicada no se toca: pulsa «Reiniciar».";
+if (m["002_agregar_pais.sql"] === undefined) return "Paso 2: crea 002_agregar_pais.sql dentro de migraciones con echo y >.";
+if (!/ALTER TABLE\s+jugadores\s+ADD COLUMN\s+pais/i.test(m["002_agregar_pais.sql"])) return "002_agregar_pais.sql debería contener: ALTER TABLE jugadores ADD COLUMN pais TEXT;";
+if (m["003_indice_puntos.sql"] === undefined) return "Paso 3: crea 003_indice_puntos.sql con el CREATE INDEX.";
+if (!/CREATE INDEX/i.test(m["003_indice_puntos.sql"])) return "003_indice_puntos.sql debería contener un CREATE INDEX sobre jugadores (puntos).";
+if (Object.keys(m).length !== 3) return "En migraciones debería haber exactamente tres archivos. Sobra alguno: revisa con ls.";
+return true;
+    </script>
+  </div>
+  <p>En un proyecto real, el siguiente paso sería <code>git add migraciones</code> y un commit con un mensaje como «feat: guarda el país del jugador», para que el resto del equipo y el servidor reciban la misma migración.</p>
+
+  <h3>Copias de seguridad</h3>
+  <p>Los discos se rompen, los servidores se borran por error y alguien, algún día, ejecutará un <code>DELETE</code> sin <code>WHERE</code>. Una <strong>copia de seguridad</strong> (en inglés, <em>backup</em>) es lo único que te salva de todo eso a la vez.</p>
+  <ul>
+    <li><strong>SQLite</strong>: no copies el archivo con el explorador mientras la app escribe, porque puedes copiar un estado a medias (y en modo WAL, los últimos cambios están en un archivo aparte, <code>-wal</code>). Usa una copia consistente: <code>VACUUM INTO 'copia.db';</code> desde SQL (desde la versión 3.27), la orden <code>.backup</code> de la terminal de SQLite o la función <code>backup</code> de <code>node:sqlite</code> en las versiones recientes de Node.</li>
+    <li><strong>PostgreSQL</strong>: <code>pg_dump</code> exporta la base a un archivo y <code>pg_restore</code> (o <code>psql</code>, según el formato) la restaura. Los servicios gestionados hacen copias automáticas y permiten volver a cualquier momento de los últimos días, lo que se llama <strong>recuperación a un punto en el tiempo</strong> (en inglés, <em>point-in-time recovery</em>).</li>
+  </ul>
+  <pre class="consola"><code><span class="prompt">$</span> sqlite3 juego.db "VACUUM INTO 'copias/juego-2026-09-30.db'"
+<span class="prompt">$</span> pg_dump --format=custom --file=tienda-2026-09-30.dump tienda
+<span class="prompt">$</span> pg_restore --dbname=tienda_prueba tienda-2026-09-30.dump</code></pre>
+  <aside class="senal oficio" data-titulo="La regla 3-2-1">
+    <p>Ten al menos <strong>3</strong> copias de los datos, en <strong>2</strong> tipos de soporte distintos, con <strong>1</strong> de ellas fuera del lugar donde está el original (otra ciudad, otro proveedor). Automatiza las copias en lugar de confiar en acordarte (lo verás en la <a href="35-devops.html">Estación 35</a>). Y, sobre todo, <strong>prueba a restaurarlas</strong> de vez en cuando en una base de prueba, como en la última línea de la consola: una copia que nunca has restaurado es solo una esperanza.</p>
+  </aside>
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>Una base de datos con correos, direcciones o compras guarda información sobre personas reales, y las copias también. Guarda solo los datos que de verdad necesitas, protege el acceso a la base y a sus copias, y borra lo que ya no uses. Las leyes de protección de datos, como el Reglamento General de Protección de Datos europeo o las leyes de cada país latinoamericano, obligan a hacerlo. En la <a href="31-seguridad.html">Estación 31</a> verás cómo guardar las contraseñas, que nunca se almacenan tal cual.</p>
+  </aside>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Una base de datos guarda datos de forma permanente y <strong>garantiza</strong> cosas que un archivo no: escrituras simultáneas sin pisarse, nada a medias tras un apagón, búsquedas rápidas y reglas que siempre se cumplen.</li>
+    <li>El modelo relacional guarda cada tipo de cosa en una <strong>tabla</strong>: filas (una cosa cada una) y columnas (con nombre, tipo y restricciones). La <strong>clave primaria</strong> identifica cada fila.</li>
+    <li><code>CREATE TABLE</code> define, <code>INSERT</code> añade, <code>SELECT</code> consulta, <code>UPDATE</code> cambia y <code>DELETE</code> borra. Antes de cambiar o borrar, prueba el mismo <code>WHERE</code> con un <code>SELECT</code>.</li>
+    <li><code>WHERE</code> filtra filas, <code>ORDER BY</code> ordena (sin él no hay orden garantizado) y <code>LIMIT</code>/<code>OFFSET</code> pagina. Textos entre comillas simples.</li>
+    <li><code>NULL</code> es «no se sabe»: nunca es igual a nada. Se pregunta con <code>IS NULL</code> y se sustituye con <code>COALESCE</code>.</li>
+    <li>Las <strong>claves foráneas</strong> conectan tablas y evitan huérfanos (en SQLite, actívalas con <code>PRAGMA foreign_keys = ON</code>). <code>INNER JOIN</code> combina solo lo que tiene pareja; <code>LEFT JOIN</code> conserva todo lo de la izquierda.</li>
+    <li><code>GROUP BY</code> hace un resumen por grupo con <code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code> y <code>MAX</code>; <code>WHERE</code> filtra antes de agrupar y <code>HAVING</code>, después. Una consulta se ejecuta en otro orden del que se escribe: <code>FROM</code>, <code>WHERE</code>, <code>GROUP BY</code>, <code>HAVING</code>, <code>SELECT</code>, <code>ORDER BY</code>, <code>LIMIT</code>.</li>
+    <li>Una <strong>transacción</strong> (<code>BEGIN</code> … <code>COMMIT</code> o <code>ROLLBACK</code>) aplica varios cambios como uno solo. ACID: atomicidad, consistencia, aislamiento y durabilidad.</li>
+    <li>Diseña con un diagrama entidad-relación y normaliza hasta la tercera forma normal: cada dato depende de la clave, de toda la clave y de nada más que la clave. Indexa las columnas que buscas y unes a menudo, empezando por las claves foráneas.</li>
+    <li>SQLite para apps, juegos y proyectos con un solo servidor; PostgreSQL para backends con muchas escrituras simultáneas; NoSQL para problemas concretos. Desde el código, usa siempre <strong>consultas parametrizadas</strong>, cambia el esquema con migraciones y prueba tus copias de seguridad.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Todos los ejercicios ejecutan SQLite de verdad. Cada uno trae sus datos de ejemplo, que se crean de nuevo cada vez que pulsas «Ejecutar». Los tres primeros están casi resueltos, los tres siguientes te piden combinar lo aprendido y los tres últimos son retos. Si un resultado no es el que esperas, no mires la solución enseguida: ejecuta partes de la consulta por separado (primero el <code>FROM</code> y el <code>JOIN</code>, luego añade el <code>WHERE</code>…) hasta encontrar dónde cambia.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-baratos">
+    <h3>Juegos por menos de 15</h3>
+    <p>Muestra el <code>titulo</code> y el <code>precio</code> de los juegos que cuestan <strong>menos de 15</strong>, del más barato al más caro. Deben salir cuatro juegos. La tabla <code>juegos</code> es la de la sección <a href="#consultar">Consultar con SELECT</a>.</p>
+    <div class="taller" data-modo="sql" id="taller-ej-baratos" data-titulo="Ejercicio 1">
+      <script type="text/plain" class="taller-preparacion">CREATE TABLE juegos (id INTEGER PRIMARY KEY, titulo TEXT NOT NULL, genero TEXT, precio REAL NOT NULL, anio INTEGER);
+INSERT INTO juegos VALUES (1, 'Bosque Eterno', 'aventura', 20, 2021), (2, 'Cohete Loco', 'carreras', 10, 2019), (3, 'Mazmorra 64', 'rpg', 25, 2023), (4, 'Granja Pixel', 'simulación', 15, 2016), (5, 'Neón Runner', 'plataformas', 12.5, 2022), (6, 'Reino de Hielo', 'rpg', 30, 2024), (7, 'Puzle Cuántico', 'puzle', 5, 2020), (8, 'Tanques de Papel', 'estrategia', 8, 2018);</script>
+      <textarea class="taller-codigo">-- Cambia el asterisco por las dos columnas,
+-- añade la condición y el orden
+SELECT *
+FROM juegos;</textarea>
+      <script type="text/plain" class="taller-verificar">
+var r = resultados[resultados.length - 1];
+if (!r) return "La consulta no devolvió ninguna fila. Revisa la condición del WHERE.";
+if (r.columns.join(",") !== "titulo,precio") return "Pide solo dos columnas, en este orden: titulo y precio. Ahora pides: " + r.columns.join(", ") + ".";
+var t = r.values.map(function (f) { return f[0]; }).join(", ");
+if (r.values.length === 5) return "Salen 5 juegos: Granja Pixel cuesta exactamente 15, y el enunciado dice «menos de 15».";
+if (t !== "Puzle Cuántico, Tanques de Papel, Cohete Loco, Neón Runner") return "Deberían salir 4 juegos, del más barato al más caro. Salió: " + t + ".";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La condición va en <code>WHERE</code>, entre el <code>FROM</code> y el final: <code>WHERE precio &lt; 15</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>ORDER BY precio</code> ordena de menor a mayor, porque <code>ASC</code> es el orden por defecto. Va después del <code>WHERE</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-sql">SELECT titulo, precio
+FROM juegos
+WHERE precio &lt; 15
+ORDER BY precio;</code></pre>
+      <p>Con <code>&lt;= 15</code> entraría también «Granja Pixel». Fíjate siempre en si el límite está incluido o no: es uno de los errores más frecuentes, en SQL y en cualquier lenguaje.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-tareas">
+    <h3>Tu tabla de tareas</h3>
+    <p>Completa la tabla <code>tareas</code> para una app de pendientes. Además del <code>id</code>, necesita dos columnas: <code>titulo</code>, un texto obligatorio, y <code>hecha</code>, un entero obligatorio que vale <code>0</code> si no se indica (0 es pendiente y 1, hecha). Después inserta tres tareas dando <strong>solo el título</strong>. La consulta final ya está escrita.</p>
+    <div class="taller" data-modo="sql" id="taller-ej-tareas" data-titulo="Ejercicio 2">
+      <textarea class="taller-codigo">CREATE TABLE tareas (
+  id INTEGER PRIMARY KEY
+  -- 1. Añade la columna titulo: texto obligatorio
+  -- 2. Añade la columna hecha: entero obligatorio que vale 0 si no se indica
+);
+
+-- 3. Inserta tres tareas dando solo el título
+
+
+SELECT * FROM tareas;</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/titulo\s+TEXT\s+NOT\s+NULL/i.test(codigo)) return "Declara la columna titulo como TEXT NOT NULL (no olvides la coma después de PRIMARY KEY).";
+if (!/hecha\s+INTEGER\s+(NOT\s+NULL\s+DEFAULT\s+0|DEFAULT\s+0\s+NOT\s+NULL)/i.test(codigo)) return "Declara la columna hecha como INTEGER NOT NULL DEFAULT 0.";
+var r = resultados[resultados.length - 1];
+if (!r) return "La tabla está vacía. Inserta tres tareas con INSERT INTO tareas (titulo) VALUES (…), (…), (…);";
+if (r.columns.join(",") !== "id,titulo,hecha") return "La tabla debería tener las columnas id, titulo y hecha, en ese orden. Tiene: " + r.columns.join(", ") + ".";
+if (r.values.length !== 3) return "Deberían quedar exactamente 3 tareas y hay " + r.values.length + ".";
+if (r.values.some(function (f) { return f[2] !== 0; })) return "Todas las tareas deberían empezar con hecha = 0. Deja que lo ponga el DEFAULT: inserta solo el título.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Las columnas se separan con comas. Después de <code>id INTEGER PRIMARY KEY</code> pon una coma y escribe <code>titulo TEXT NOT NULL,</code> y en la línea siguiente la columna <code>hecha</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para insertar solo el título, nombra solo esa columna: <code>INSERT INTO tareas (titulo) VALUES ('Estudiar SQL'), ('Sacar al perro'), ('Llamar a mamá');</code></p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-sql">CREATE TABLE tareas (
+  id INTEGER PRIMARY KEY,
+  titulo TEXT NOT NULL,
+  hecha INTEGER NOT NULL DEFAULT 0
+);
+
+INSERT INTO tareas (titulo)
+VALUES ('Estudiar SQL'), ('Sacar al perro'), ('Llamar a mamá');
+
+SELECT * FROM tareas;</code></pre>
+      <p>El <code>id</code> y <code>hecha</code> se rellenan solos. Para marcar la segunda como hecha bastaría <code>UPDATE tareas SET hecha = 1 WHERE id = 2;</code>. En PostgreSQL usarías el tipo <code>boolean</code> con <code>DEFAULT false</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-arregla-null">
+    <h3>Arregla la consulta: clientes sin correo</h3>
+    <p>Esta consulta debería mostrar el nombre y la ciudad de los clientes que <strong>no</strong> dieron su correo, por orden alfabético. Tiene dos errores. Ejecútala, observa el resultado y corrígela hasta que muestre a Iván y después a Sofía.</p>
+    <div class="taller" data-modo="sql" id="taller-ej-null" data-titulo="Ejercicio 3">
+      <script type="text/plain" class="taller-preparacion">CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, ciudad TEXT, email TEXT UNIQUE);
+INSERT INTO clientes VALUES (1, 'Ana', 'Bogotá', 'ana@correo.com'), (2, 'Luis', 'Lima', 'luis@correo.com'), (3, 'Sofía', 'Ciudad de México', NULL), (4, 'Marta', 'Bogotá', 'marta@correo.com'), (5, 'Iván', 'Santiago', NULL);</script>
+      <textarea class="taller-codigo">SELECT nombre, ciudad
+FROM clientes
+WHERE email = NULL
+ORDER BY nombre DESC;</textarea>
+      <script type="text/plain" class="taller-verificar">
+var r = resultados[resultados.length - 1];
+if (!r) return "La consulta no devuelve ninguna fila. ¿Cómo se pregunta en SQL si a un valor le falta el dato?";
+var n = r.values.map(function (f) { return f[0]; }).join(", ");
+if (n === "Sofía, Iván") return "Ya salen los dos clientes, pero en orden alfabético inverso. Revisa el ORDER BY.";
+if (n !== "Iván, Sofía") return "Deberían salir Iván y Sofía, en ese orden. Salió: " + n + ".";
+if (!/IS\s+NULL/i.test(codigo)) return "Usa IS NULL para buscar valores que faltan.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Con <code>= NULL</code> la condición nunca es verdadera: por eso no sale nada. Repasa la sección sobre <code>NULL</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>DESC</code> ordena de la Z a la A. Para el orden alfabético normal, quítalo o escribe <code>ASC</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-sql">SELECT nombre, ciudad
+FROM clientes
+WHERE email IS NULL
+ORDER BY nombre;</code></pre>
+      <p>El primer error es silencioso: <code>= NULL</code> no da error, solo deja la respuesta vacía. Por eso es tan peligroso: parece que no hay clientes sin correo.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-rebajas">
+    <h3>Rebajas solo para quien toca</h3>
+    <p>La tienda quiere rebajar un 20 % (multiplicar el precio por <code>0.8</code>) los juegos de rol (<code>'rpg'</code>) que salieron <strong>antes de 2024</strong>. El <code>UPDATE</code> que escribió un compañero rebaja demasiado. Corrígelo. El <code>SELECT</code> final muestra todos los precios para que compruebes que nada más cambió.</p>
+    <div class="taller" data-modo="sql" id="taller-ej-rebajas" data-titulo="Ejercicio 4">
+      <script type="text/plain" class="taller-preparacion">CREATE TABLE juegos (id INTEGER PRIMARY KEY, titulo TEXT NOT NULL, genero TEXT, precio REAL NOT NULL, anio INTEGER);
+INSERT INTO juegos VALUES (1, 'Bosque Eterno', 'aventura', 20, 2021), (2, 'Cohete Loco', 'carreras', 10, 2019), (3, 'Mazmorra 64', 'rpg', 25, 2023), (4, 'Granja Pixel', 'simulación', 15, 2016), (5, 'Neón Runner', 'plataformas', 12.5, 2022), (6, 'Reino de Hielo', 'rpg', 30, 2024), (7, 'Puzle Cuántico', 'puzle', 5, 2020), (8, 'Tanques de Papel', 'estrategia', 8, 2018);</script>
+      <textarea class="taller-codigo">-- Rebaja un 20 % los juegos de rol ('rpg') que salieron antes de 2024
+UPDATE juegos SET precio = precio * 0.8;
+
+SELECT titulo, precio FROM juegos ORDER BY id;</textarea>
+      <script type="text/plain" class="taller-verificar">
+var r = resultados[resultados.length - 1];
+if (!r) return "Falta el SELECT final para comprobar los precios.";
+var esperado = [20, 10, 20, 15, 12.5, 30, 5, 8];
+if (r.values.length !== 8) return "Deberían seguir estando los 8 juegos, y hay " + r.values.length + ".";
+for (var i = 0; i < 8; i++) {
+  var titulo = r.values[i][0], precio = r.values[i][1];
+  if (precio === esperado[i]) continue;
+  if (titulo === "Reino de Hielo") return "«Reino de Hielo» es de rol, pero salió en 2024: no entra en la rebaja. Te falta una condición.";
+  if (titulo === "Mazmorra 64") return "«Mazmorra 64» (rol, 2023) debería costar 20 después de la rebaja y cuesta " + precio + ".";
+  return "«" + titulo + "» no es de rol y su precio cambió a " + precio + ". ¿A qué filas afecta tu UPDATE?";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Un <code>UPDATE</code> sin <code>WHERE</code> cambia todas las filas. Añade un <code>WHERE</code> antes del punto y coma.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Hay dos condiciones que deben cumplirse a la vez: el género y el año. Se unen con <code>AND</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-sql">UPDATE juegos SET precio = precio * 0.8
+WHERE genero = 'rpg' AND anio &lt; 2024;
+
+SELECT titulo, precio FROM juegos ORDER BY id;</code></pre>
+      <p>Solo «Mazmorra 64» cumple las dos condiciones. Antes de ejecutar un cambio así en una base real, habrías lanzado <code>SELECT titulo FROM juegos WHERE genero = 'rpg' AND anio &lt; 2024;</code> para ver qué filas iba a tocar.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-bogota">
+    <h3>Las compras de Bogotá</h3>
+    <p>Muestra el nombre del cliente (<code>nombre</code>), el título del juego (<code>titulo</code>) y la fecha (<code>fecha</code>) de cada compra hecha por clientes de <strong>Bogotá</strong>, de la más antigua a la más reciente. Deben salir cuatro filas. Las tablas son <code>clientes</code>, <code>juegos</code> y <code>compras</code>, las de la sección de relaciones.</p>
+    <div class="taller" data-modo="sql" id="taller-ej-bogota" data-titulo="Ejercicio 5">
+      <script type="text/plain" class="taller-preparacion">CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, ciudad TEXT, email TEXT UNIQUE);
+INSERT INTO clientes VALUES (1, 'Ana', 'Bogotá', 'ana@correo.com'), (2, 'Luis', 'Lima', 'luis@correo.com'), (3, 'Sofía', 'Ciudad de México', NULL), (4, 'Marta', 'Bogotá', 'marta@correo.com'), (5, 'Iván', 'Santiago', NULL);
+CREATE TABLE juegos (id INTEGER PRIMARY KEY, titulo TEXT NOT NULL, genero TEXT, precio REAL NOT NULL, anio INTEGER);
+INSERT INTO juegos VALUES (1, 'Bosque Eterno', 'aventura', 20, 2021), (2, 'Cohete Loco', 'carreras', 10, 2019), (3, 'Mazmorra 64', 'rpg', 25, 2023), (4, 'Granja Pixel', 'simulación', 15, 2016), (5, 'Neón Runner', 'plataformas', 12.5, 2022), (6, 'Reino de Hielo', 'rpg', 30, 2024), (7, 'Puzle Cuántico', 'puzle', 5, 2020), (8, 'Tanques de Papel', 'estrategia', 8, 2018);
+CREATE TABLE compras (id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES clientes(id), juego_id INTEGER NOT NULL REFERENCES juegos(id), fecha TEXT NOT NULL, precio_pagado REAL NOT NULL);
+INSERT INTO compras VALUES (1, 1, 1, '2026-09-01', 20), (2, 1, 3, '2026-09-03', 25), (3, 2, 2, '2026-09-04', 10), (4, 3, 1, '2026-09-05', 20), (5, 3, 5, '2026-09-10', 12.5), (6, 4, 6, '2026-09-12', 30), (7, 1, 7, '2026-09-15', 5), (8, 2, 3, '2026-09-20', 25);</script>
+      <textarea class="taller-codigo">-- Nombre del cliente, título del juego y fecha de cada compra
+-- de clientes de Bogotá, de la más antigua a la más reciente
+SELECT co.fecha
+FROM compras AS co
+ORDER BY co.fecha;</textarea>
+      <script type="text/plain" class="taller-verificar">
+var r = resultados[resultados.length - 1];
+if (!r) return "La consulta no devolvió filas. Revisa las condiciones: ¿la ciudad está bien escrita, con tilde?";
+if (r.columns.join(",") !== "nombre,titulo,fecha") return "Pide tres columnas en este orden: nombre (del cliente), titulo (del juego) y fecha. Ahora pides: " + r.columns.join(", ") + ".";
+var filas = r.values.map(function (f) { return f.join(" | "); });
+var esperado = ["Ana | Bosque Eterno | 2026-09-01", "Ana | Mazmorra 64 | 2026-09-03", "Marta | Reino de Hielo | 2026-09-12", "Ana | Puzle Cuántico | 2026-09-15"];
+if (filas.length !== 4) return "Deberían salir 4 compras (tres de Ana y una de Marta) y salen " + filas.length + ".";
+for (var i = 0; i < 4; i++) if (filas[i] !== esperado[i]) return "La fila " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + filas[i] + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Necesitas dos <code>JOIN</code>: uno con <code>clientes</code> (para el nombre y la ciudad) y otro con <code>juegos</code> (para el título). Cada uno con su <code>ON</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Con alias <code>c</code> y <code>j</code>: <code>JOIN clientes AS c ON c.id = co.cliente_id</code>, <code>JOIN juegos AS j ON j.id = co.juego_id</code> y después <code>WHERE c.ciudad = 'Bogotá'</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-sql">SELECT c.nombre, j.titulo, co.fecha
+FROM compras AS co
+JOIN clientes AS c ON c.id = co.cliente_id
+JOIN juegos   AS j ON j.id = co.juego_id
+WHERE c.ciudad = 'Bogotá'
+ORDER BY co.fecha;</code></pre>
+      <p>El <code>WHERE</code> puede filtrar por columnas de cualquiera de las tablas unidas, porque se ejecuta después de los <code>JOIN</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-transferencia">
+    <h3>Una transferencia segura</h3>
+    <p>Leo le paga 15 monedas a Sol. Las dos órdenes ya están escritas, pero van sueltas: si el servidor fallara entre ellas, las monedas se perderían. Mételas en una transacción que se <strong>confirme</strong>. Al final deben quedar Ana con 100, Leo con 5 y Sol con 65.</p>
+    <div class="taller" data-modo="sql" id="taller-ej-transferencia" data-titulo="Ejercicio 6">
+      <script type="text/plain" class="taller-preparacion">CREATE TABLE monederos (jugador TEXT PRIMARY KEY, monedas INTEGER NOT NULL CHECK (monedas >= 0));
+INSERT INTO monederos VALUES ('Ana', 100), ('Leo', 20), ('Sol', 50);</script>
+      <textarea class="taller-codigo">-- Leo le paga 15 monedas a Sol. Las dos órdenes deben ir juntas.
+UPDATE monederos SET monedas = monedas - 15 WHERE jugador = 'Leo';
+UPDATE monederos SET monedas = monedas + 15 WHERE jugador = 'Sol';
+
+SELECT jugador, monedas FROM monederos ORDER BY jugador;</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/\bBEGIN\b/i.test(codigo)) return "Empieza la transacción con BEGIN antes de los UPDATE.";
+if (!/\bCOMMIT\b/i.test(codigo)) return "Confirma la transacción con COMMIT después de los dos UPDATE.";
+if (/\bROLLBACK\b/i.test(codigo)) return "Con ROLLBACK se descartaría la transferencia. Aquí queremos confirmarla.";
+var iB = codigo.search(/\bBEGIN\b/i), iU = codigo.search(/\bUPDATE\b/i), iC = codigo.search(/\bCOMMIT\b/i);
+var ultimoU = -1, re = /\bUPDATE\b/gi, m;
+while ((m = re.exec(codigo))) ultimoU = m.index;
+if (iB > iU) return "BEGIN tiene que ir antes del primer UPDATE.";
+if (iC < ultimoU) return "COMMIT va después del último UPDATE: confirma cuando los dos cambios estén hechos.";
+var r = resultados[resultados.length - 1];
+if (!r) return "Falta el SELECT final.";
+var t = r.values.map(function (f) { return f[0] + " " + f[1]; }).join(", ");
+if (t !== "Ana 100, Leo 5, Sol 65") return "Al final debería quedar «Ana 100, Leo 5, Sol 65». Queda: «" + t + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Una transacción empieza con <code>BEGIN;</code> y termina con <code>COMMIT;</code> (confirmar) o <code>ROLLBACK;</code> (descartar).</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Pon <code>BEGIN;</code> en una línea antes del primer <code>UPDATE</code> y <code>COMMIT;</code> después del segundo. El <code>SELECT</code> puede ir después del <code>COMMIT</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-sql">BEGIN;
+UPDATE monederos SET monedas = monedas - 15 WHERE jugador = 'Leo';
+UPDATE monederos SET monedas = monedas + 15 WHERE jugador = 'Sol';
+COMMIT;
+
+SELECT jugador, monedas FROM monederos ORDER BY jugador;</code></pre>
+      <p>El resultado es el mismo que sin transacción cuando nada falla; la diferencia está en lo que pasa cuando algo falla. Prueba a cambiar el primer <code>15</code> por <code>30</code>: Leo no tiene tanto y la restricción <code>CHECK</code> detiene la operación.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-generos">
+    <h3>¿Qué géneros venden?</h3>
+    <p>Para cada género con <strong>al menos 2 compras</strong>, muestra el género (<code>genero</code>), cuántas compras tuvo (<code>ventas</code>) y cuánto se recaudó sumando <code>precio_pagado</code> (<code>total</code>), del que más recaudó al que menos. Usa las tablas de la tienda.</p>
+    <div class="taller" data-modo="sql" id="taller-ej-generos" data-titulo="Ejercicio 7">
+      <script type="text/plain" class="taller-preparacion">CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, ciudad TEXT, email TEXT UNIQUE);
+INSERT INTO clientes VALUES (1, 'Ana', 'Bogotá', 'ana@correo.com'), (2, 'Luis', 'Lima', 'luis@correo.com'), (3, 'Sofía', 'Ciudad de México', NULL), (4, 'Marta', 'Bogotá', 'marta@correo.com'), (5, 'Iván', 'Santiago', NULL);
+CREATE TABLE juegos (id INTEGER PRIMARY KEY, titulo TEXT NOT NULL, genero TEXT, precio REAL NOT NULL, anio INTEGER);
+INSERT INTO juegos VALUES (1, 'Bosque Eterno', 'aventura', 20, 2021), (2, 'Cohete Loco', 'carreras', 10, 2019), (3, 'Mazmorra 64', 'rpg', 25, 2023), (4, 'Granja Pixel', 'simulación', 15, 2016), (5, 'Neón Runner', 'plataformas', 12.5, 2022), (6, 'Reino de Hielo', 'rpg', 30, 2024), (7, 'Puzle Cuántico', 'puzle', 5, 2020), (8, 'Tanques de Papel', 'estrategia', 8, 2018);
+CREATE TABLE compras (id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES clientes(id), juego_id INTEGER NOT NULL REFERENCES juegos(id), fecha TEXT NOT NULL, precio_pagado REAL NOT NULL);
+INSERT INTO compras VALUES (1, 1, 1, '2026-09-01', 20), (2, 1, 3, '2026-09-03', 25), (3, 2, 2, '2026-09-04', 10), (4, 3, 1, '2026-09-05', 20), (5, 3, 5, '2026-09-10', 12.5), (6, 4, 6, '2026-09-12', 30), (7, 1, 7, '2026-09-15', 5), (8, 2, 3, '2026-09-20', 25);</script>
+      <textarea class="taller-codigo">-- Para cada género con al menos 2 compras: genero, ventas y total,
+-- del que más recaudó al que menos.
+-- El género está en juegos; las compras, en compras.
+</textarea>
+      <script type="text/plain" class="taller-verificar">
+var r = resultados[resultados.length - 1];
+if (!r) return "La consulta no devolvió filas (o todavía no hay consulta).";
+if (r.columns.join(",") !== "genero,ventas,total") return "Las columnas deberían llamarse genero, ventas y total (usa AS). Ahora son: " + r.columns.join(", ") + ".";
+var t = r.values.map(function (f) { return f.join(" "); }).join(", ");
+if (t === "rpg 3 80, aventura 2 40") return true;
+if (r.values.length > 2) return "Salen " + r.values.length + " géneros. Quédate solo con los que tienen al menos 2 compras: eso se filtra después de agrupar.";
+return "Debería salir «rpg 3 80, aventura 2 40». Salió: «" + t + "».";
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Empieza por el <code>FROM</code>: <code>FROM compras AS co JOIN juegos AS j ON j.id = co.juego_id</code>. Ejecuta con <code>SELECT *</code> para ver qué filas tienes antes de agrupar.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Agrupa con <code>GROUP BY j.genero</code>, calcula <code>COUNT(*) AS ventas</code> y <code>SUM(co.precio_pagado) AS total</code>, y filtra los grupos con <code>HAVING COUNT(*) &gt;= 2</code>. El orden va al final.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-sql">SELECT j.genero AS genero,
+       COUNT(*) AS ventas,
+       SUM(co.precio_pagado) AS total
+FROM compras AS co
+JOIN juegos AS j ON j.id = co.juego_id
+GROUP BY j.genero
+HAVING COUNT(*) &gt;= 2
+ORDER BY total DESC;</code></pre>
+      <p>Los tres rpg vendidos suman 25 + 30 + 25 = 80. Fíjate en que el <code>HAVING</code> no podía ir en el <code>WHERE</code>: cuando se ejecuta el <code>WHERE</code>, todavía no se han contado las ventas de cada género.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-ficha-clientes">
+    <h3>La ficha de cada cliente</h3>
+    <p>Para <strong>todos</strong> los clientes, incluidos los que nunca compraron, muestra <code>nombre</code>, cuántas compras hizo (<code>compras</code>) y cuánto gastó en total (<code>gastado</code>), del que más gastó al que menos. Quien no compró nada debe aparecer con <code>0</code> compras y <code>0</code> gastado, no con <code>NULL</code>. Cuidado: hay una trampa con <code>COUNT</code>.</p>
+    <div class="taller" data-modo="sql" id="taller-ej-ficha" data-titulo="Ejercicio 8">
+      <script type="text/plain" class="taller-preparacion">CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, ciudad TEXT, email TEXT UNIQUE);
+INSERT INTO clientes VALUES (1, 'Ana', 'Bogotá', 'ana@correo.com'), (2, 'Luis', 'Lima', 'luis@correo.com'), (3, 'Sofía', 'Ciudad de México', NULL), (4, 'Marta', 'Bogotá', 'marta@correo.com'), (5, 'Iván', 'Santiago', NULL);
+CREATE TABLE compras (id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES clientes(id), juego_id INTEGER NOT NULL, fecha TEXT NOT NULL, precio_pagado REAL NOT NULL);
+INSERT INTO compras VALUES (1, 1, 1, '2026-09-01', 20), (2, 1, 3, '2026-09-03', 25), (3, 2, 2, '2026-09-04', 10), (4, 3, 1, '2026-09-05', 20), (5, 3, 5, '2026-09-10', 12.5), (6, 4, 6, '2026-09-12', 30), (7, 1, 7, '2026-09-15', 5), (8, 2, 3, '2026-09-20', 25);</script>
+      <textarea class="taller-codigo">-- Esta versión casi funciona. Ejecútala y busca a Iván.
+SELECT c.nombre, COUNT(*) AS compras, SUM(co.precio_pagado) AS gastado
+FROM clientes AS c
+JOIN compras AS co ON co.cliente_id = c.id
+GROUP BY c.id, c.nombre
+ORDER BY gastado DESC;</textarea>
+      <script type="text/plain" class="taller-verificar">
+var r = resultados[resultados.length - 1];
+if (!r) return "La consulta no devolvió filas.";
+if (r.columns.join(",") !== "nombre,compras,gastado") return "Las columnas deberían ser nombre, compras y gastado. Ahora son: " + r.columns.join(", ") + ".";
+var filas = r.values.map(function (f) { return f.join(" "); });
+if (filas.length === 4) return "Falta un cliente: Iván no aparece. ¿Qué tipo de JOIN conserva a los clientes sin compras?";
+var iv = r.values.filter(function (f) { return f[0] === "Iván"; })[0];
+if (iv && iv[1] === 1) return "Iván aparece con 1 compra, pero no tiene ninguna. COUNT(*) cuenta la fila que añade el LEFT JOIN; cuenta una columna de compras, que en su caso es NULL.";
+if (iv && iv[2] === null) return "Iván aparece con gastado NULL. Usa COALESCE para mostrar 0.";
+var esperado = "Ana 3 50, Luis 2 35, Sofía 2 32.5, Marta 1 30, Iván 0 0";
+if (filas.join(", ") !== esperado) return "Debería salir: " + esperado + ". Salió: " + filas.join(", ") + ".";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Para no perder a Iván, cambia <code>JOIN</code> por <code>LEFT JOIN</code>. Ejecuta y mira qué valores recibe.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>COUNT(*)</code> cuenta filas, y el <code>LEFT JOIN</code> le da a Iván una fila con las columnas de compras en <code>NULL</code>. <code>COUNT(co.id)</code> solo cuenta valores que no son <code>NULL</code>. Y <code>COALESCE(SUM(…), 0)</code> convierte el <code>NULL</code> de la suma en 0.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-sql">SELECT c.nombre,
+       COUNT(co.id) AS compras,
+       COALESCE(SUM(co.precio_pagado), 0) AS gastado
+FROM clientes AS c
+LEFT JOIN compras AS co ON co.cliente_id = c.id
+GROUP BY c.id, c.nombre
+ORDER BY gastado DESC;</code></pre>
+      <p>Agrupar por <code>c.id</code> además de por el nombre evita mezclar a dos clientes que se llamen igual. La combinación <code>LEFT JOIN</code> + <code>COUNT(columna)</code> + <code>COALESCE</code> aparece en cualquier informe que deba incluir a quien tiene cero.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-normalizar-juegos">
+    <h3>Termina la normalización</h3>
+    <p>La tabla <code>planilla</code> tiene una fila por compra con el título del juego escrito como texto: <code>fecha</code>, <code>cliente</code>, <code>email</code>, <code>juego</code> y <code>precio_pagado</code>. Sácala a dos tablas: <code>juegos</code> (<code>id</code> y <code>titulo</code>, sin títulos repetidos) y <code>compras</code> (con <code>juego_id</code> apuntando a <code>juegos</code>, además de <code>cliente</code>, <code>fecha</code> y <code>precio_pagado</code>). Rellénalas desde la planilla con <code>INSERT INTO … SELECT</code>. La consulta final, que no debes cambiar, comprueba el resultado. Ojo: «Mazmorra 64» se vendió una vez con descuento.</p>
+    <div class="taller" data-modo="sql" id="taller-ej-normalizar" data-titulo="Ejercicio 9">
+      <script type="text/plain" class="taller-preparacion">CREATE TABLE planilla (fecha TEXT, cliente TEXT, email TEXT, juego TEXT, precio_pagado REAL);
+INSERT INTO planilla VALUES ('2026-09-01', 'Ana', 'ana@correo.com', 'Bosque Eterno', 20), ('2026-09-01', 'Ana', 'ana@correo.com', 'Mazmorra 64', 25), ('2026-09-04', 'Luis', 'luis@correo.com', 'Cohete Loco', 10), ('2026-09-15', 'Ana', 'ana@correo.com', 'Puzle Cuántico', 5), ('2026-09-20', 'Luis', 'luis@correo.com', 'Mazmorra 64', 20), ('2026-09-22', 'Sofía', 'sofia@correo.com', 'Bosque Eterno', 20);</script>
+      <textarea class="taller-codigo">-- 1. Crea la tabla juegos y llénala con los títulos de la planilla, sin repetir
+
+
+-- 2. Crea la tabla compras (con juego_id) y llénala desde la planilla
+
+
+-- 3. Comprobación (no la cambies)
+SELECT j.titulo, COUNT(*) AS ventas, SUM(co.precio_pagado) AS recaudado
+FROM compras AS co
+JOIN juegos AS j ON j.id = co.juego_id
+GROUP BY j.titulo
+ORDER BY ventas DESC, j.titulo;</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/CREATE\s+TABLE\s+juegos/i.test(codigo)) return "Paso 1: crea la tabla juegos.";
+if (!/INSERT\s+INTO\s+juegos[\s\S]*?SELECT\s+DISTINCT/i.test(codigo)) return "Llena juegos con INSERT INTO juegos (titulo) SELECT DISTINCT … FROM planilla.";
+if (!/CREATE\s+TABLE\s+compras[\s\S]*?REFERENCES\s+juegos/i.test(codigo)) return "Paso 2: crea compras con una columna juego_id que haga REFERENCES juegos(id).";
+var r = resultados[resultados.length - 1];
+if (!r) return "La comprobación no devolvió filas. ¿Llenaste compras con INSERT INTO compras (…) SELECT … FROM planilla JOIN juegos …?";
+var t = r.values.map(function (f) { return f.join(" "); }).join(", ");
+var esperado = "Bosque Eterno 2 40, Mazmorra 64 2 45, Cohete Loco 1 10, Puzle Cuántico 1 5";
+if (t !== esperado) return "La comprobación debería dar «" + esperado + "» y da «" + t + "». Si un juego sale con más ventas de la cuenta, puede que tengas títulos repetidos en juegos (¿metiste el precio en el DISTINCT?).";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El precio no va en <code>juegos</code>: «Mazmorra 64» se vendió a 25 y a 20, y un <code>SELECT DISTINCT juego, precio_pagado</code> daría dos filas para el mismo título. El precio pagado es un dato de cada compra. Declara <code>titulo TEXT NOT NULL UNIQUE</code> para que la base de datos impida repetidos.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para llenar <code>compras</code>, une la planilla con la tabla <code>juegos</code> que acabas de crear por el título: <code>FROM planilla AS p JOIN juegos AS j ON j.titulo = p.juego</code>, y selecciona <code>j.id</code> como <code>juego_id</code>. Revisa el taller «Normaliza con SQL».</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-sql">CREATE TABLE juegos (id INTEGER PRIMARY KEY, titulo TEXT NOT NULL UNIQUE);
+INSERT INTO juegos (titulo)
+SELECT DISTINCT juego FROM planilla;
+
+CREATE TABLE compras (
+  id INTEGER PRIMARY KEY,
+  juego_id INTEGER NOT NULL REFERENCES juegos(id),
+  cliente TEXT NOT NULL,
+  fecha TEXT NOT NULL,
+  precio_pagado REAL NOT NULL
+);
+INSERT INTO compras (juego_id, cliente, fecha, precio_pagado)
+SELECT j.id, p.cliente, p.fecha, p.precio_pagado
+FROM planilla AS p
+JOIN juegos AS j ON j.titulo = p.juego;
+
+SELECT j.titulo, COUNT(*) AS ventas, SUM(co.precio_pagado) AS recaudado
+FROM compras AS co
+JOIN juegos AS j ON j.id = co.juego_id
+GROUP BY j.titulo
+ORDER BY ventas DESC, j.titulo;</code></pre>
+      <p>Los clientes siguen como texto en <code>compras</code>. Para llegar a 3FN, haz lo mismo con ellos: una tabla <code>clientes</code> con su correo y una columna <code>cliente_id</code> en <code>compras</code>, exactamente como en el taller de la sección de diseño.</p>
+    </details>
+  </article>
+</section>

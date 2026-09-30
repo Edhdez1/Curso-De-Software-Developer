@@ -113,7 +113,7 @@ Nunca uses colores literales: usa clases (respetan el tema claro/oscuro):
 `d-caja` (rectángulo con borde), `d-caja-suave`, `d-linea`, `d-flecha`, `d-punteada`, `d-acento` (relleno del color
 de la línea), `d-acento-trazo`, `d-sobre-acento` (texto sobre el acento), `d-tenue` (texto secundario),
 `d-fondo`, `d-fondo-2`, `d-tinta`, `d-mono`, `d-rotulo`, `d-titulo`, `d-peq`, `d-ok`/`d-mal`/`d-aviso` (rellenos
-semánticos), `d-ok-trazo`/`d-mal-trazo`, `d-l1`…`d-l8` (rellenos de color de cada línea), `d-t1`…`d-t8` (trazos),
+semánticos), `d-ok-trazo`/`d-mal-trazo`, `d-sobre-ok`/`d-sobre-mal`/`d-sobre-aviso` (texto legible encima de esos rellenos), `d-l1`…`d-l8` (rellenos de color de cada línea), `d-t1`…`d-t8` (trazos),
 `d-codigo` (fondo de código), `d-solido`/`d-solido-trazo` (oscuro en los dos temas: muros, bloques sólidos), `d-codigo-texto`, `d-codigo-tenue`, `d-resalte` (resaltado de línea; es translúcido: si hay líneas detrás, pon debajo una forma `d-fondo`).
 El `<svg>` pone color de tinta, tipografía y 16px por herencia: una clase en un `<g>` (por ejemplo `d-peq` o `d-ok`) afecta a todos sus textos. En `data-texto`, `data-clases` y `data-mover` las entradas se separan con `;` seguido del número de paso, así que un texto puede contener `;` siempre que no vaya seguido de «número:». Deja margen en el `viewBox` para etiquetas.
 Puntas de flecha: dibújalas como `<path class="d-tinta" d="M… l12 8 -12 8z"/>` (sin `marker`).
@@ -224,6 +224,11 @@ Python (se ejecuta con Brython en el navegador; se verifica con Python real en l
 
 No uses `input()` en talleres (no funciona en todos los visores). La biblioteca estándar (`random`, `math`, `json`,
 `datetime`…) funciona; paquetes externos (`requests`, `pandas`…) no.
+
+JavaScript con código de preparación oculto: `<script type="text/plain" class="taller-preparacion">…</script>` dentro
+de un taller JS se ejecuta antes que el código de la persona, que puede usar lo que declara (por ejemplo, un
+simulador pequeño de una biblioteca). No se ve en el editor y no cambia los números de línea de los errores. Úsalo
+cuando el mismo código de apoyo se repetiría en varios talleres.
 
 SQL (SQLite real en el navegador):
 

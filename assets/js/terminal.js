@@ -543,7 +543,7 @@
       if (enMarco) return ejecutarMarco();
       var codigo = editores[0].editor.valor();
       if (!window.TerminalMotor) { linea("error", "No se pudo cargar el motor de ejecución."); return; }
-      var fuente = window.TerminalMotor.construirFuente(codigo, verificacion);
+      var fuente = window.TerminalMotor.construirFuente(codigo, verificacion, preparacion);
       var hubo = false;
       var totalLineas = codigo.split("\n").length;
       bEjecutar.disabled = true;

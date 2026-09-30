@@ -177,14 +177,16 @@
     return { formato: __formato };
   }
 
-  function construirFuente(codigo, verificacion) {
+  // preparacion: código oculto (por ejemplo, una pequeña biblioteca) que se ejecuta antes que el de la persona
+  // y cuyas declaraciones puede usar; cuenta en el desfase para que los números de línea sigan siendo los suyos.
+  function construirFuente(codigo, verificacion, preparacion) {
     var cuerpo = preludio.toString();
     cuerpo = cuerpo.slice(cuerpo.indexOf("{") + 1, cuerpo.lastIndexOf("return {"));
     var lineasPreludio = cuerpo.split("\n").length;
     var verif = verificacion && verificacion.trim()
       ? "function __verificar(){ var __r; try { __r = (function(salida, codigo, errores){\n" + verificacion + "\n})(__lineas.slice(), " + JSON.stringify(codigo) + ", __errores.slice()); } catch (e) { __r = 'La verificación falló: ' + (e && e.message); } __enviar('veredicto', __r === undefined ? true : __r); __enviar('fin'); }"
       : "function __verificar(){ __enviar('fin'); }";
-    var cabecera = "(function(){\n" + cuerpo + "\n" + verif + "\n(async function(){\n";
+    var cabecera = "(function(){\n" + cuerpo + "\n" + verif + "\n" + (preparacion ? preparacion + "\n" : "") + "(async function(){\n";
     var desfase = cabecera.split("\n").length - 1;
     cabecera = cabecera.replace("__DESFASE__", String(desfase));
     var fuente = cabecera + codigo + "\n})().then(function(){ __principalTerminado = true; __quizaTerminar(); }, function(e){ __errorEjecucion(e); __principalTerminado = true; __quizaTerminar(); });\n})();\n";

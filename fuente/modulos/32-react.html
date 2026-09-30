@@ -1,73 +1,655 @@
 <section id="ruta" data-parada="Lo que vas a lograr">
   <h2>Lo que vas a lograr</h2>
-  <p class="entradilla">Prueba.</p>
-  <div class="taller" data-modo="web" id="taller-prueba-a" data-titulo="Prueba A" data-alto="12rem">
+  <p class="entradilla">En la Estación 15 construiste una lista de tareas a mano: cada clic cambiaba unos datos y después había que acordarse de redibujar la pantalla. Funciona, pero cuando una app tiene decenas de pantallas y cientos de datos, mantener la vista al día se vuelve la parte más difícil del trabajo. React te quita ese trabajo: tú describes qué debe verse para cada estado de los datos, y React se encarga de actualizar la página. Es la biblioteca de interfaces más usada del mundo, y lo que aprendas aquí te servirá también para apps móviles y para cualquier otra herramienta moderna.</p>
+  <ul class="objetivos">
+    <li>Explicar qué problema resuelve una biblioteca de interfaces y qué significa «la interfaz es una función del estado».</li>
+    <li>Crear un proyecto de React con Vite, ejecutarlo en modo desarrollo y saber para qué sirve cada archivo.</li>
+    <li>Escribir JSX y dividir una interfaz en componentes que reciben datos por props, incluido <code>children</code>.</li>
+    <li>Guardar y cambiar datos con <code>useState</code>, responder a eventos y actualizar listas y objetos sin modificarlos.</li>
+    <li>Mostrar contenido según condiciones, pintar listas con <code>map</code> y <code>key</code>, y construir formularios controlados.</li>
+    <li>Compartir datos entre componentes levantando el estado al padre o con contexto.</li>
+    <li>Usar <code>useEffect</code> para sincronizarte con el mundo exterior, reconocer cuándo sobra, pedir datos mostrando carga y error, y crear tus propios hooks.</li>
+    <li>Navegar entre páginas con React Router, elegir cómo dar estilos e inspeccionar tu app con React DevTools.</li>
+    <li>Comparar React con Next.js, Vue, Svelte y Angular, y saber cuándo conviene cada uno.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="Antes de empezar">
+    <p>Esta estación se apoya en muchas anteriores. Necesitas manejar el DOM y los eventos (<a href="15-dom.html">Estación 15</a>, sobre todo la sección <a href="15-dom.html#estado">Estado, vista y tiempo</a>), <code>async</code>/<code>await</code> y <code>fetch</code> (<a href="16-asincronia.html">Estación 16</a>), <code>map</code>, <code>filter</code>, el operador spread y la desestructuración (<a href="11-colecciones.html">Estación 11</a>), las funciones flecha (<a href="10-funciones.html#flechas">Estación 10</a>), los módulos con <code>import</code> y <code>export</code> (<a href="22-ejecucion.html#modulos">Estación 22</a>) y npm (<a href="29-backend.html#npm">Estación 29</a>). Para crear proyectos en tu computadora necesitas Node.js instalado (<a href="05-herramientas.html#node">Estación 5</a>). Todos los talleres de esta estación funcionan en el navegador, sin instalar nada.</p>
+  </aside>
+</section>
+
+<section id="por-que" data-parada="Por qué React">
+  <h2>Por qué existe React</h2>
+  <p>Empieza por el problema. Imagina una tienda en línea. El número de productos del carrito aparece en cuatro sitios a la vez: en el icono de la cabecera, en la lista del carrito, en el total a pagar y en el botón «Pagar», que debe desactivarse si el carrito está vacío. Con lo que aprendiste en la Estación 15, cada vez que alguien añade un producto tu código tiene que recordar los cuatro sitios y cambiarlos uno por uno.</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Imperativo: das cada orden</p>
+      <pre><code class="language-js">let cantidad = 0;
+
+botonAnadir.addEventListener("click", () =&gt; {
+  cantidad = cantidad + 1;
+  insignia.textContent = cantidad;
+  resumen.textContent = `Productos: ${cantidad}`;
+  if (cantidad === 1) avisoVacio.remove();
+  botonPagar.disabled = false;
+  // ...y no olvides ningún otro sitio
+});</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Declarativo: describes el resultado</p>
+      <pre><code class="language-jsx">function Carrito() {
+  const [cantidad, setCantidad] = useState(0);
+  return (
+    &lt;&gt;
+      &lt;span className="insignia"&gt;{cantidad}&lt;/span&gt;
+      &lt;p&gt;Productos: {cantidad}&lt;/p&gt;
+      {cantidad === 0 &amp;&amp; &lt;p&gt;Tu carrito está vacío&lt;/p&gt;}
+      &lt;button disabled={cantidad === 0}&gt;Pagar&lt;/button&gt;
+      &lt;button onClick={() =&gt; setCantidad(cantidad + 1)}&gt;Añadir&lt;/button&gt;
+    &lt;/&gt;
+  );
+}</code></pre>
+    </div>
+  </div>
+  <p>El código de la izquierda es <strong>imperativo</strong>: le das a la computadora cada orden, paso a paso («cambia este texto», «quita ese aviso»). El de la derecha es <strong>declarativo</strong>: describes cómo debe verse la pantalla para cualquier valor de <code>cantidad</code>, y otra pieza de software se encarga de los pasos. No te preocupes por entender todavía cada símbolo de la derecha: al terminar esta estación lo leerás sin esfuerzo. Fíjate solo en una cosa: en ningún sitio dice «cambia el texto». Dice qué texto hay.</p>
+  <aside class="senal analogia">
+    <p>Es la diferencia entre darle a un taxista cada giro («a la derecha, dos cuadras, ahora a la izquierda») y darle la dirección de destino. Con la dirección, el taxista decide el camino. La analogía tiene un límite: el taxista puede elegir una ruta mala, mientras que React sigue siempre el mismo método, que puedes estudiar y predecir. Lo verás en la animación de más abajo.</p>
+  </aside>
+
+  <h3>La interfaz es una función del estado</h3>
+  <p>En la Estación 15 ya separaste el <strong>estado</strong> (los datos que describen cómo está la app ahora mismo) de la <strong>vista</strong> (lo que se ve), con una función <code>render()</code> que dibujaba la pantalla entera a partir del estado. React lleva esa idea hasta el final. Se resume en una fórmula que vas a oír mucho:</p>
+  <p><strong>interfaz = f(estado)</strong></p>
+  <p>Se lee «la interfaz es una función del estado». Igual que una función matemática, para un mismo estado siempre produce la misma interfaz. Si quieres que la pantalla cambie, no tocas la pantalla: cambias el estado, y React vuelve a calcular la interfaz.</p>
+  <aside class="senal clave">
+    <p>En React nunca modificas la página directamente. Cambias datos. La página es la consecuencia. Si alguna vez te descubres escribiendo <code>document.querySelector</code> dentro de un componente para cambiar un texto, detente: casi siempre hay una forma de hacerlo cambiando el estado.</p>
+  </aside>
+
+  <h3>Qué hace React cuando algo cambia</h3>
+  <p>Redibujar la página entera en cada clic sería lento y, además, borraría lo que la persona está escribiendo en un campo (lo viste en la Estación 15). React no hace eso. Mira qué pasa de verdad:</p>
+  <figure class="capsula" data-titulo="De un clic a la pantalla">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: el estado cantidad vale 0 y el componente Carrito produce una descripción de la interfaz. Al hacer clic en Añadir, el estado pasa a 1, React vuelve a llamar al componente, compara la descripción nueva con la anterior y solo actualiza en la pantalla el texto que cambió.">
+        <text class="d-rotulo" x="70" y="28" text-anchor="middle">Estado</text>
+        <text class="d-rotulo" x="225" y="28" text-anchor="middle">Componente</text>
+        <text class="d-rotulo" x="425" y="28" text-anchor="middle">Descripción (JSX)</text>
+        <text class="d-rotulo" x="633" y="28" text-anchor="middle">Pantalla (DOM)</text>
+
+        <rect class="d-caja" x="10" y="45" width="120" height="85" rx="8" data-clases="2:d-acento-trazo; 3:"/>
+        <text class="d-mono d-peq d-tenue" x="70" y="72" text-anchor="middle">cantidad</text>
+        <text class="d-mono" x="70" y="112" text-anchor="middle" style="font-size:30px" data-texto="1:0; 2:1">0</text>
+
+        <path class="d-linea" d="M130 88h14" data-clases="3:d-acento-trazo; 4:"/>
+        <path class="d-tinta" d="M144 80l10 8-10 8z"/>
+
+        <rect class="d-codigo" x="156" y="45" width="138" height="85" rx="8"/>
+        <text class="d-codigo-texto" x="225" y="82" text-anchor="middle" style="font-size:17px">Carrito()</text>
+        <text class="d-codigo-tenue" x="225" y="106" text-anchor="middle" style="font-size:13px">devuelve JSX</text>
+
+        <path class="d-linea" d="M294 88h14" data-clases="3:d-acento-trazo; 4:"/>
+        <path class="d-tinta" d="M308 80l10 8-10 8z"/>
+
+        <rect class="d-caja" x="320" y="45" width="210" height="95" rx="8"/>
+        <rect class="d-resalte" x="326" y="77" width="198" height="24" rx="4" data-pasos="4"/>
+        <text class="d-mono" x="332" y="70" style="font-size:13px">&lt;h2&gt;Carrito&lt;/h2&gt;</text>
+        <text class="d-mono" x="332" y="94" style="font-size:13px">&lt;p&gt;Productos: 0&lt;/p&gt;</text>
+        <text class="d-mono" x="332" y="118" style="font-size:13px">&lt;button&gt;Añadir&lt;/button&gt;</text>
+        <text class="d-peq d-tenue" x="425" y="158" text-anchor="middle" data-texto="1:la que se ve ahora; 3:anterior">la que se ve ahora</text>
+
+        <g data-pasos="3-">
+          <rect class="d-caja" x="320" y="172" width="210" height="95" rx="8" data-clases="3:d-acento-trazo; 4:"/>
+          <rect class="d-resalte" x="326" y="204" width="198" height="24" rx="4" data-pasos="4"/>
+          <text class="d-mono" x="332" y="197" style="font-size:13px">&lt;h2&gt;Carrito&lt;/h2&gt;</text>
+          <text class="d-mono" x="332" y="221" style="font-size:13px">&lt;p&gt;Productos: 1&lt;/p&gt;</text>
+          <text class="d-mono" x="332" y="245" style="font-size:13px">&lt;button&gt;Añadir&lt;/button&gt;</text>
+          <text class="d-peq d-tenue" x="425" y="285" text-anchor="middle">nueva</text>
+        </g>
+        <text class="d-mal" x="306" y="162" text-anchor="middle" style="font-size:24px" data-pasos="4">≠</text>
+
+        <g data-pasos="1-4">
+          <path class="d-linea" d="M530 92h14"/>
+          <path class="d-tinta" d="M544 84l10 8-10 8z"/>
+        </g>
+        <g data-pasos="5-">
+          <path class="d-linea d-acento-trazo" d="M530 219h14"/>
+          <path class="d-tinta" d="M544 211l10 8-10 8z"/>
+        </g>
+
+        <rect class="d-caja" x="556" y="45" width="156" height="215" rx="8"/>
+        <rect class="d-fondo-2" x="557" y="46" width="154" height="20" rx="7"/>
+        <text class="d-titulo" x="570" y="100" style="font-size:19px">Carrito</text>
+        <rect class="d-ok" x="564" y="120" width="140" height="30" rx="4" fill-opacity="0.35" data-pasos="5"/>
+        <text x="570" y="141" data-texto="1:Productos: 0; 5:Productos: 1">Productos: 0</text>
+        <rect class="d-acento-trazo" x="566" y="164" width="124" height="46" rx="10" fill="none" stroke-width="3" data-pasos="2"/>
+        <rect class="d-acento" x="571" y="169" width="114" height="36" rx="8"/>
+        <text class="d-sobre-acento d-rotulo" x="628" y="193" text-anchor="middle">Añadir</text>
+        <text class="d-peq d-tenue" x="634" y="240" text-anchor="middle" data-pasos="5">título y botón: sin tocar</text>
+
+        <g data-pasos="2">
+          <path class="d-punteada d-acento-trazo" d="M628 262v24H70v-148" fill="none"/>
+          <path class="d-tinta" d="M62 146l8-12 8 12z"/>
+          <rect class="d-fondo" x="232" y="274" width="250" height="24" rx="4"/>
+          <text class="d-mono d-peq" x="357" y="291" text-anchor="middle">clic → setCantidad(1)</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Así funciona una app de React. El estado (a la izquierda) dice que hay 0 productos. El componente <code>Carrito</code> lee ese estado y devuelve una descripción de la interfaz. React convirtió esa descripción en elementos reales del DOM, que es lo que ves a la derecha.</li>
+        <li>Haces clic en «Añadir». El código del clic no toca la pantalla: llama a <code>setCantidad(1)</code>, y el estado pasa a valer 1.</li>
+        <li>Como el estado cambió, React vuelve a llamar a la función <code>Carrito</code>. Obtiene una descripción nueva, con «Productos: 1». A este cálculo se le llama <strong>renderizar</strong>.</li>
+        <li data-duracion="6">React compara la descripción nueva con la anterior, elemento por elemento. El título y el botón son iguales; solo cambió un texto. Esta comparación se llama <strong>reconciliación</strong>.</li>
+        <li data-duracion="6">React aplica en el DOM solo ese cambio. El resto de la página no se toca: si hubiera un campo de texto con el cursor dentro, seguiría igual. Tú solo describiste el resultado; React calculó el camino.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Quizá leas en otros sitios la expresión <strong>DOM virtual</strong> (<em>virtual DOM</em>). Así se llamó durante años a esas descripciones: objetos de JavaScript, baratos de crear y de comparar, que imitan la forma del DOM real. La documentación actual de React casi no usa el término, pero la idea es la de la animación: comparar descripciones es rápido; tocar el DOM real es lo caro, así que React lo toca lo menos posible.</p>
+
+  <h3>Componentes: piezas de interfaz</h3>
+  <p>La segunda idea de React es el <strong>componente</strong>: una pieza de interfaz con nombre propio, que junta estructura, aspecto y comportamiento. Una tienda se arma con componentes como <code>Cabecera</code>, <code>Buscador</code>, <code>TarjetaProducto</code> y <code>Carrito</code>. Cada uno se escribe una vez y se usa todas las veces que haga falta, igual que una función (<a href="10-funciones.html#por-que">Estación 10</a>). En React, de hecho, un componente <em>es</em> una función.</p>
+
+  <h3>Qué es React exactamente, y en qué versión está</h3>
+  <p>React es una <strong>biblioteca</strong> (en inglés, <em>library</em>): un conjunto de código que tu programa llama cuando lo necesita. Su propia web lo define como «la biblioteca para interfaces de usuario web y nativas». Solo se ocupa de la interfaz: no trae de serie navegación entre páginas, ni forma de pedir datos, ni estilos. Para eso se combina con otras herramientas, o se usa dentro de un <strong>framework</strong> (en español, «marco de trabajo»): un sistema más grande que decide la estructura del proyecto y llama a tu código, como Next.js. La diferencia práctica: tú llamas a una biblioteca; un framework te llama a ti.</p>
+  <ul>
+    <li>Lo creó Jordan Walke en Facebook (hoy Meta), que lo publicó como código abierto en 2013. Desde febrero de 2026 lo cuida la <strong>React Foundation</strong>, una fundación de la Linux Foundation en la que participan varias empresas.</li>
+    <li>La versión mayor actual es <strong>React 19</strong>, publicada en diciembre de 2024. La más reciente, a septiembre de 2026, es la 19.3 (del 9 de septiembre de 2026).</li>
+    <li>En la encuesta de Stack Overflow de 2025, el 44,7 % de quienes respondieron usaba React, más que cualquier otra herramienta de interfaces.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="Por qué los talleres usan React 18.3.1">
+    <p>Los talleres de esta página cargan React 18.3.1. El motivo es técnico: React 19 dejó de publicar los archivos «UMD», los que se cargan con una simple etiqueta <code>&lt;script&gt;</code>, y eso es justo lo que necesita un editor dentro del navegador. Todo lo que aprenderás (componentes, props, estado, eventos, listas, formularios, efectos, contexto y hooks) funciona igual en React 19. Cuando algo sea exclusivo de React 19 te lo diré. En tu computadora, con Vite, siempre instalarás la versión más reciente.</p>
+  </aside>
+
+  <h3>Tu primer componente</h3>
+  <p>Este es un taller de React. Tiene dos pestañas: HTML y CSS. Tu código va en la pestaña HTML, dentro de la etiqueta <code>&lt;script type="text/babel"&gt;</code>. Las tres etiquetas <code>&lt;script src="…"&gt;</code> de arriba cargan React, ReactDOM (la parte de React que habla con el DOM del navegador) y <strong>Babel</strong>, un traductor que convierte el código de React en JavaScript normal. No hace falta tocarlas. <strong>Predice</strong> qué va a mostrar la vista previa y después pulsa «Ejecutar».</p>
+  <div class="taller" data-modo="web" id="taller-hola-react" data-titulo="Predice: tu primer componente" data-alto="10rem">
     <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
 &lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
 &lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
 &lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
 &lt;script type="text/babel"&gt;
-const { useState, useEffect } = React;
-function Contador() {
-  const [n, setN] = useState(0);
-  const [t, setT] = useState("");
-  const [datos, setDatos] = useState(null);
-  useEffect(() =&gt; { setTimeout(() =&gt; setDatos(["a","b"]), 50); }, []);
-  console.log("render", n);
+function App() {
+  const nombre = "Lyra";
+  const nivel = 7;
   return (
     &lt;div&gt;
-      &lt;button onClick={() =&gt; setN(n + 1)}&gt;Clics: {n}&lt;/button&gt;
-      &lt;input value={t} onChange={(e) =&gt; setT(e.target.value)} /&gt;
-      &lt;p id="eco"&gt;{t}&lt;/p&gt;
-      &lt;ul&gt;{["x","y"].map((x) =&gt; &lt;li&gt;{x}&lt;/li&gt;)}&lt;/ul&gt;
-      {datos ? &lt;p id="d"&gt;{datos.join(",")}&lt;/p&gt; : &lt;p&gt;Cargando…&lt;/p&gt;}
+      &lt;h1&gt;Hola, {nombre}&lt;/h1&gt;
+      &lt;p&gt;Nivel {nivel}. Te faltan {10 - nivel} para el jefe final.&lt;/p&gt;
     &lt;/div&gt;
   );
 }
-ReactDOM.createRoot(document.getElementById("root")).render(&lt;Contador /&gt;);
+
+const raiz = ReactDOM.createRoot(document.getElementById("root"));
+raiz.render(&lt;App /&gt;);
 &lt;/script&gt;</textarea>
-    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; }</textarea>
-    <script type="text/plain" class="taller-verificar">
-var b = document.querySelector("button");
-if (!b) return "no hay botón";
-ReactDOM.flushSync(function () { b.click(); b.click(); });
-var input = document.querySelector("input");
-var setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
-ReactDOM.flushSync(function () { setter.call(input, "hola"); input.dispatchEvent(new Event("input", { bubbles: true })); });
-var d = document.querySelector("#d");
-return "boton=" + b.textContent + " eco=" + document.querySelector("#eco").textContent + " datos=" + (d ? d.textContent : "NO") + " salida=" + JSON.stringify(salida);
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+h1 { margin: 0 0 .5rem; }</textarea>
+  </div>
+  <p>Si predijiste «Hola, Lyra» y «Nivel 7. Te faltan 3 para el jefe final», ya entiendes la pieza central: dentro de lo que parece HTML, las llaves <code>{ }</code> abren una ventana a JavaScript. Lo que hay dentro se calcula y su resultado aparece en la pantalla. Las dos últimas líneas conectan React con la página: <code>createRoot</code> toma el <code>&lt;div id="root"&gt;</code> del HTML como <strong>raíz</strong> (el sitio donde React va a dibujar) y <code>render(&lt;App /&gt;)</code> le dice qué dibujar dentro.</p>
+  <aside class="senal ojo" data-titulo="El aviso amarillo de Babel">
+    <p>En la consola del taller verás un aviso en inglés: <em>You are using the in-browser Babel transformer. Be sure to precompile your scripts for production</em>. Dice «estás traduciendo el código en el navegador; en producción, tradúcelo antes». Tiene razón: traducir en el navegador de cada visitante es lento. Para aprender es perfecto; para una app de verdad usarás Vite, que traduce una sola vez en tu computadora. Lo verás en la próxima sección.</p>
+  </aside>
+  <p><strong>Modifica:</strong> cambia el nivel a 9 y añade un tercer elemento, <code>&lt;p&gt;Oro: {nivel * 150} monedas&lt;/p&gt;</code>, dentro del <code>&lt;div&gt;</code>. Después prueba a borrar la etiqueta de cierre <code>&lt;/div&gt;</code> y ejecuta: la consola mostrará un error de Babel con un recorte del código y una flecha <code>&gt;</code> que señala dónde se dio cuenta del problema. Los números de línea de esos errores cuentan desde la etiqueta <code>&lt;script type="text/babel"&gt;</code>, no desde el principio de la pestaña.</p>
+</section>
+
+<section id="vite" data-parada="Crear un proyecto">
+  <h2>Crear un proyecto con Vite</h2>
+  <p>Los talleres de esta página traducen tu código en el navegador cada vez que pulsas «Ejecutar». Para una app de verdad eso no sirve: sería lento para cada visitante y no podrías repartir el código en muchos archivos ni instalar paquetes de npm con comodidad. Hace falta una <strong>herramienta de construcción</strong> (en inglés, <em>build tool</em>): un programa que, en tu computadora, hace tres trabajos.</p>
+  <ul>
+    <li><strong>En desarrollo</strong>, levanta un servidor local que traduce el JSX al vuelo y recarga la página en cuanto guardas un archivo.</li>
+    <li><strong>Resuelve los <code>import</code></strong>: tanto los de tus archivos como los de los paquetes que instalaste con npm.</li>
+    <li><strong>Para publicar</strong>, genera una versión optimizada: pocos archivos, pequeños, sin espacios ni comentarios, listos para subir a internet.</li>
+  </ul>
+  <p>La herramienta que se usa hoy para empezar con React es <strong>Vite</strong> (se pronuncia «vit», que en francés significa «rápido»). La creó en 2020 Evan You, el autor de Vue, y hoy sirve para casi cualquier biblioteca de interfaces. Ya la mencionaron la <a href="22-ejecucion.html#modulos">Estación 22</a> y la <a href="26-testing.html#herramientas">Estación 26</a>. A septiembre de 2026 la versión actual es Vite 8, que empaqueta el código con un motor nuevo llamado Rolldown.</p>
+  <aside class="senal error" data-titulo="Tutoriales viejos: create-react-app">
+    <p>En muchos cursos y videos verás el comando <code>npx create-react-app</code>. El equipo de React lo declaró obsoleto en febrero de 2025 y ya no recibe mantenimiento. Si un tutorial empieza así, es anterior a 2025: sus ideas de React siguen valiendo, pero crea el proyecto con Vite.</p>
+  </aside>
+
+  <h3>Paso a paso</h3>
+  <p>Esto lo haces en la terminal de tu computadora, no en esta página. Vite necesita Node.js 20.19 o posterior (o 22.12 o posterior); lo más sencillo es tener la versión LTS más reciente, como aprendiste en la <a href="05-herramientas.html#node">Estación 5</a>. Compruébalo con <code>node --version</code>.</p>
+  <ol class="pasos">
+    <li><div><p>Ve a la carpeta donde guardas tus proyectos y pide a npm que cree uno nuevo con la plantilla de React. La primera vez, npm te pedirá permiso para descargar <code>create-vite</code>: responde <kbd>y</kbd>.</p>
+      <pre class="consola"><code><span class="prompt">$</span> npm create vite@latest mi-tienda</code></pre>
+      <p><code>npm create vite@latest</code> significa «ejecuta la última versión del creador de proyectos de Vite». <code>mi-tienda</code> es el nombre de la carpeta que se va a crear.</p></div></li>
+    <li><div><p>El asistente te hace unas preguntas en inglés. Muévete con las flechas y confirma con <kbd>Enter</kbd>:</p>
+      <div class="tabla">
+        <table>
+          <thead><tr><th scope="col">Pregunta</th><th scope="col">Qué significa</th><th scope="col">Qué elegir ahora</th></tr></thead>
+          <tbody>
+            <tr><td><em>Select a framework</em></td><td>Qué biblioteca de interfaces usarás</td><td>React</td></tr>
+            <tr><td><em>Select a variant</em></td><td>En qué lenguaje, y si quieres activar React Compiler</td><td>JavaScript (cuando domines la <a href="23-typescript.html">Estación 23</a>, elige TypeScript)</td></tr>
+            <tr><td><em>Which linter to use?</em></td><td>Qué <strong>linter</strong> instalar: un programa que revisa tu código en busca de errores y malas prácticas sin ejecutarlo</td><td>Oxlint (la opción por defecto) o ESLint; los dos sirven</td></tr>
+            <tr><td><em>Install with npm and start now?</em></td><td>Si instala los paquetes y arranca el servidor ya</td><td>No, para hacerlo tú y ver cada paso</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Al terminar, muestra los siguientes pasos:</p>
+      <pre class="consola"><code><span class="salida">Scaffolding project in /home/tu/mi-tienda...
+Done. Now run:
+
+  cd mi-tienda
+  npm install
+  npm run dev</span></code></pre>
+      <p><em>Scaffolding</em> significa «montando el andamio»: está copiando los archivos de la plantilla. En tu terminal se verá con colores y algunos adornos; aquí está simplificado.</p></div></li>
+    <li><div><p>Entra en la carpeta e instala las dependencias. Recuerda de la <a href="29-backend.html#npm">Estación 29</a> que <code>npm install</code> lee <code>package.json</code> y descarga todo en <code>node_modules</code>:</p>
+      <pre class="consola"><code><span class="prompt">$</span> cd mi-tienda
+<span class="prompt">$</span> npm install
+<span class="salida">added 24 packages, and audited 25 packages in 16s
+
+9 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities</span></code></pre>
+      <p>Los números cambiarán con el tiempo. Lo importante es la última línea: ningún paquete tiene fallos de seguridad conocidos.</p></div></li>
+    <li><div><p>Arranca el servidor de desarrollo:</p>
+      <pre class="consola"><code><span class="prompt">$</span> npm run dev
+<span class="salida">  VITE v8.3.1  ready in 566 ms
+
+  Local:   http://localhost:5173/
+  Network: use --host to expose</span></code></pre>
+      <p>Abre <code>http://localhost:5173/</code> en el navegador. <code>localhost</code> es tu propia computadora y 5173 es el puerto que usa Vite (lo viste en la <a href="29-backend.html">Estación 29</a>). Verás la página de bienvenida con un botón que cuenta clics. El servidor sigue en marcha mientras la terminal esté abierta; para pararlo, pulsa <kbd>Ctrl</kbd> + <kbd>C</kbd>.</p></div></li>
+    <li><div><p>Abre la carpeta en tu editor, cambia el texto <em>Get started</em> de <code>src/App.jsx</code> por «Mi tienda» y guarda. La página se actualiza sola en menos de un segundo, sin recargar. Esto se llama <strong>HMR</strong> (<em>Hot Module Replacement</em>, «reemplazo de módulos en caliente»); en React se le llama también <em>Fast Refresh</em>, y conserva el estado: si el contador iba por 5, sigue en 5 después de guardar.</p></div></li>
+  </ol>
+  <aside class="senal nota" data-titulo="Qué versión de React tienes">
+    <p>La plantilla instala la última versión de React. Para comprobar cuál tienes, mira la sección <code>dependencies</code> de <code>package.json</code> o escribe <code>npm ls react</code> dentro del proyecto. En septiembre de 2026 muestra <code>react@19.3.0</code>.</p>
+  </aside>
+
+  <h3>Qué hay dentro del proyecto</h3>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 350" role="img" aria-label="Estructura de un proyecto de React creado con Vite. index.html carga src/main.jsx, que importa App.jsx. package.json guarda dependencias y scripts, vite.config.js la configuración, public los archivos que se sirven tal cual y node_modules los paquetes descargados, que no se suben a Git.">
+      <g class="d-mono" style="font-size:15px">
+        <text x="34" y="40">mi-tienda/</text>
+        <text x="54" y="66">index.html</text>
+        <text x="54" y="92">package.json</text>
+        <text x="54" y="118">vite.config.js</text>
+        <text x="54" y="144">public/</text>
+        <text x="54" y="170">src/</text>
+        <text x="74" y="196">main.jsx</text>
+        <text x="74" y="222">App.jsx</text>
+        <text class="d-tenue" x="74" y="248">App.css</text>
+        <text class="d-tenue" x="74" y="274">index.css</text>
+        <text class="d-tenue" x="74" y="300">assets/</text>
+        <text x="54" y="326">node_modules/</text>
+      </g>
+      <g>
+        <circle class="d-acento" cx="20" cy="61" r="10"/>
+        <text class="d-sobre-acento d-peq" x="20" y="66" text-anchor="middle">1</text>
+        <circle class="d-acento" cx="40" cy="191" r="10"/>
+        <text class="d-sobre-acento d-peq" x="40" y="196" text-anchor="middle">2</text>
+        <circle class="d-acento" cx="40" cy="217" r="10"/>
+        <text class="d-sobre-acento d-peq" x="40" y="222" text-anchor="middle">3</text>
+      </g>
+      <g class="d-linea" fill="none">
+        <path d="M166 61H240L318 42"/>
+        <path d="M190 87H240L318 88"/>
+        <path d="M210 113H240L318 134"/>
+        <path d="M138 139H240L318 180"/>
+        <path d="M166 191H240L318 226"/>
+        <path d="M158 217H240L318 272"/>
+        <path d="M200 321H240L318 318"/>
+      </g>
+      <g style="font-size:14px">
+        <rect class="d-caja-suave" x="322" y="22" width="390" height="40" rx="6"/>
+        <text x="332" y="38">La única página HTML. Tiene el div con id «root»</text>
+        <text x="332" y="56">y carga src/main.jsx.</text>
+        <rect class="d-caja-suave" x="322" y="68" width="390" height="40" rx="6"/>
+        <text x="332" y="84">Ficha del proyecto: dependencias (react, vite…)</text>
+        <text x="332" y="102">y scripts: dev, build, lint y preview.</text>
+        <rect class="d-caja-suave" x="322" y="114" width="390" height="40" rx="6"/>
+        <text x="332" y="130">Configuración de Vite. Aquí se activa el plugin</text>
+        <text x="332" y="148">de React, que entiende JSX.</text>
+        <rect class="d-caja-suave" x="322" y="160" width="390" height="40" rx="6"/>
+        <text x="332" y="176">Archivos que se sirven tal cual, sin procesar,</text>
+        <text x="332" y="194">como el icono de la pestaña.</text>
+        <rect class="d-caja-suave" x="322" y="206" width="390" height="40" rx="6"/>
+        <text x="332" y="222">Punto de entrada: crea la raíz de React y dibuja</text>
+        <text x="332" y="240">&lt;App /&gt; dentro de &lt;StrictMode&gt;.</text>
+        <rect class="d-caja-suave" x="322" y="252" width="390" height="40" rx="6"/>
+        <text x="332" y="268">Tu componente principal: empiezas aquí. Sus</text>
+        <text x="332" y="286">estilos están en App.css e index.css.</text>
+        <rect class="d-caja-suave" x="322" y="298" width="390" height="40" rx="6"/>
+        <text x="332" y="314">Paquetes descargados por npm install. No se</text>
+        <text x="332" y="332">edita ni se sube a Git: está en .gitignore.</text>
+      </g>
+    </svg>
+    <figcaption>El proyecto que crea la plantilla de React de Vite (hay más archivos, como <code>README.md</code>, <code>.gitignore</code> y la configuración del linter). Los números marcan el orden de arranque: el navegador pide <code>index.html</code> (1), que carga <code>main.jsx</code> (2), que importa <code>App.jsx</code> (3). Tras <code>npm run build</code> aparece además la carpeta <code>dist</code>, con la versión para publicar.</figcaption>
+  </figure>
+  <p>Estos son los dos archivos que importan al principio. <code>src/main.jsx</code> casi nunca se toca:</p>
+  <pre><code class="language-jsx">import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.jsx'
+
+createRoot(document.getElementById('root')).render(
+  &lt;StrictMode&gt;
+    &lt;App /&gt;
+  &lt;/StrictMode&gt;,
+)</code></pre>
+  <ul>
+    <li>Las dos primeras líneas importan piezas de los paquetes <code>react</code> y <code>react-dom</code>. Con Vite no existen las variables globales <code>React</code> y <code>ReactDOM</code> de los talleres: cada archivo importa lo que usa (<a href="22-ejecucion.html#modulos">Estación 22</a>).</li>
+    <li><code>import './index.css'</code> importa una hoja de estilos. No es JavaScript estándar: es un servicio de Vite, que mete ese CSS en la página.</li>
+    <li><code>&lt;StrictMode&gt;</code> es el <strong>modo estricto</strong>: un envoltorio que solo actúa en desarrollo y hace comprobaciones extra para detectar errores pronto. Por ejemplo, ejecuta ciertas partes de tu código dos veces a propósito. Volverás a él en la sección de efectos.</li>
+  </ul>
+  <p>Y <code>src/App.jsx</code> es tu primer componente. La plantilla trae una página de bienvenida larga; reducida a lo esencial, es esto:</p>
+  <pre><code class="language-jsx">import { useState } from 'react'
+import './App.css'
+
+function App() {
+  const [count, setCount] = useState(0)
+
+  return (
+    &lt;button onClick={() =&gt; setCount((count) =&gt; count + 1)}&gt;
+      Count is {count}
+    &lt;/button&gt;
+  )
+}
+
+export default App</code></pre>
+  <p>La última línea, <code>export default App</code>, permite que <code>main.jsx</code> lo importe. Los archivos de componentes usan la extensión <code>.jsx</code> para que las herramientas sepan que contienen JSX. Por convención, cada componente importante va en su propio archivo con su nombre (<code>TarjetaProducto.jsx</code>) y los componentes se agrupan en una carpeta <code>src/components</code>.</p>
+
+  <h3>Los scripts del proyecto</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Comando</th><th scope="col">Qué hace</th><th scope="col">Cuándo</th></tr></thead>
+      <tbody>
+        <tr><td><code>npm run dev</code></td><td>Servidor de desarrollo con recarga instantánea en <code>localhost:5173</code></td><td>Mientras programas</td></tr>
+        <tr><td><code>npm run build</code></td><td>Genera la carpeta <code>dist</code>: HTML, un JavaScript y un CSS optimizados</td><td>Antes de publicar</td></tr>
+        <tr><td><code>npm run preview</code></td><td>Sirve la carpeta <code>dist</code> para probar la versión final</td><td>Después de <code>build</code></td></tr>
+        <tr><td><code>npm run lint</code></td><td>Revisa el código con el linter</td><td>Antes de cada commit</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Así se ve la construcción de la plantilla recién creada:</p>
+  <pre class="consola"><code><span class="prompt">$</span> npm run build
+<span class="salida">dist/index.html                   0.45 kB │ gzip:  0.29 kB
+dist/assets/index-DykytF2W.css    4.10 kB │ gzip:  1.47 kB
+dist/assets/index-CyBHeG3D.js   222.52 kB │ gzip: 69.26 kB
+built in 718ms</span></code></pre>
+  <p>Todo tu código y React caben en un único archivo JavaScript de unos 220 kB, que viaja comprimido (<em>gzip</em>) en unos 70 kB. Las letras raras del nombre, como <code>CyBHeG3D</code>, cambian cada vez que cambia el contenido: así el navegador sabe cuándo debe descargar la versión nueva en vez de usar la que tenía guardada. La carpeta <code>dist</code> es una web estática: la puedes publicar en GitHub Pages (<a href="24-git.html">Estación 24</a>) o en los servicios que verás en la <a href="35-devops.html">Estación 35</a>.</p>
+
+  <h3>Practica: explora el proyecto</h3>
+  <p>Esta terminal simulada tiene un proyecto recién creado con Vite (no tiene npm; ese lo usarás en tu computadora). Tu misión: mira el contenido de <code>src/main.jsx</code> con <code>cat</code> y después crea la carpeta <code>src/components</code> con dos archivos vacíos, <code>TarjetaProducto.jsx</code> y <code>Carrito.jsx</code>.</p>
+  <div class="terminal-sim" data-titulo="Un proyecto de Vite por dentro" data-inicio="/home/tu">
+    <script type="application/json" class="terminal-sistema">{"mi-tienda": {"index.html": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <title>Vite + React</title>\n  </head>\n  <body>\n    <div id=\"root\"></div>\n    <script type=\"module\" src=\"/src/main.jsx\"><\/script>\n  </body>\n</html>", "package.json": "{\n  \"name\": \"mi-tienda\",\n  \"private\": true,\n  \"version\": \"0.0.0\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"dev\": \"vite\",\n    \"build\": \"vite build\",\n    \"lint\": \"oxlint\",\n    \"preview\": \"vite preview\"\n  },\n  \"dependencies\": {\n    \"react\": \"^19.3.0\",\n    \"react-dom\": \"^19.3.0\"\n  }\n}", "vite.config.js": "import react from '@vitejs/plugin-react'\nimport { defineConfig } from 'vite'\n\nexport default defineConfig({\n  plugins: [react()],\n})", "public": {"favicon.svg": "<svg>...</svg>"}, "src": {"main.jsx": "import { StrictMode } from 'react'\nimport { createRoot } from 'react-dom/client'\nimport './index.css'\nimport App from './App.jsx'\n\ncreateRoot(document.getElementById('root')).render(\n  <StrictMode>\n    <App />\n  </StrictMode>,\n)", "App.jsx": "import { useState } from 'react'\nimport './App.css'\n\nfunction App() {\n  const [count, setCount] = useState(0)\n  return (\n    <button onClick={() => setCount((count) => count + 1)}>\n      Count is {count}\n    </button>\n  )\n}\n\nexport default App", "App.css": "", "index.css": "", "assets": {"react.svg": "<svg>...</svg>"}}, "README.md": "# React + Vite"}}</script>
+    <div class="terminal-instrucciones"><p>Empieza con <code>cd mi-tienda</code> y <code>ls</code>. Usa <code>cat src/main.jsx</code> para leer el archivo, <code>mkdir</code> para crear la carpeta y <code>touch</code> para crear los archivos (acepta varios nombres a la vez).</p></div>
+    <script type="text/plain" class="terminal-mision">
+      var leyo = historial.some(function (c) { return /^cat\s+.*main\.jsx/.test(c.trim()); });
+      if (!leyo) return "Primero lee el punto de entrada: entra en mi-tienda y escribe cat src/main.jsx.";
+      var src = sistema["mi-tienda"] && sistema["mi-tienda"].src;
+      var comp = src && src.components;
+      if (!comp || typeof comp !== "object") return "Ahora crea la carpeta components dentro de src (por ejemplo, desde mi-tienda: mkdir src/components).";
+      var faltan = ["TarjetaProducto.jsx", "Carrito.jsx"].filter(function (f) { return comp[f] === undefined; });
+      return faltan.length === 0 || "Dentro de src/components todavía faltan: " + faltan.join(", ") + ".";
     </script>
   </div>
 
-  <div class="taller" data-modo="web" id="taller-prueba-b" data-titulo="Prueba B" data-alto="8rem">
+  <h3>Talleres frente a proyecto real</h3>
+  <p>El código de React es el mismo en los dos sitios. Solo cambia cómo llega React a tu código:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">Talleres de esta página</th><th scope="col">Proyecto con Vite</th></tr></thead>
+      <tbody>
+        <tr><td>Versión de React</td><td>18.3.1</td><td>La más reciente (19.3 en septiembre de 2026)</td></tr>
+        <tr><td>Quién traduce el JSX</td><td>Babel, en el navegador, en cada ejecución</td><td>Vite, en tu computadora</td></tr>
+        <tr><td>Cómo usas los hooks</td><td><code>const { useState } = React;</code></td><td><code>import { useState } from "react";</code></td></tr>
+        <tr><td>Crear la raíz</td><td><code>ReactDOM.createRoot(…)</code></td><td><code>import { createRoot } from "react-dom/client";</code></td></tr>
+        <tr><td>Archivos</td><td>Todo en un solo <code>&lt;script type="text/babel"&gt;</code></td><td>Un archivo <code>.jsx</code> por componente, con <code>import</code> y <code>export</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="jsx" data-parada="JSX y componentes">
+  <h2>JSX, componentes y props</h2>
+  <p>Ya escribiste JSX sin saber su nombre. <strong>JSX</strong> es una extensión de la sintaxis de JavaScript que permite escribir etiquetas parecidas a HTML dentro del código. El navegador no la entiende: antes de ejecutarse, una herramienta (Babel en los talleres, Vite en tu proyecto) la convierte en JavaScript normal. Ver esa conversión quita mucho misterio:</p>
+  <pre><code class="language-jsx">// Lo que escribes
+const titulo = &lt;h1 className="grande"&gt;Hola&lt;/h1&gt;;
+
+// Lo que se ejecuta (en los talleres, con Babel)
+const titulo = React.createElement("h1", { className: "grande" }, "Hola");
+
+// Lo que devuelve: un objeto normal de JavaScript, más o menos así
+// { type: "h1", props: { className: "grande", children: "Hola" } }</code></pre>
+  <p>Una etiqueta JSX es, por tanto, una <strong>expresión</strong>: un trozo de código que produce un valor. Puedes guardarla en una variable, devolverla con <code>return</code> o meterla en un array. Ese objeto no es un elemento del DOM: es la descripción que React usa para crearlo o actualizarlo. En los proyectos con Vite la conversión usa otra función (<code>jsx()</code>, del paquete <code>react/jsx-runtime</code>) y por eso no hace falta importar <code>React</code> en cada archivo, pero la idea es la misma.</p>
+
+  <h3>Las reglas de JSX</h3>
+  <p>JSX se parece tanto a HTML que es fácil olvidar que no lo es. Estas son las diferencias que más errores causan:</p>
+  <ol>
+    <li><strong>Un solo elemento raíz.</strong> Un componente devuelve un único elemento. Si quieres devolver varios hermanos sin añadir un <code>&lt;div&gt;</code> de más, envuélvelos en un <strong>fragmento</strong>: <code>&lt;&gt; … &lt;/&gt;</code>, que agrupa sin crear nada en el DOM.</li>
+    <li><strong>Todas las etiquetas se cierran.</strong> <code>&lt;img&gt;</code>, <code>&lt;input&gt;</code> y <code>&lt;br&gt;</code> se escriben <code>&lt;img /&gt;</code>, <code>&lt;input /&gt;</code> y <code>&lt;br /&gt;</code>.</li>
+    <li><strong>Atributos en camelCase.</strong> Como JSX es JavaScript, los atributos siguen sus nombres de propiedades: <code>class</code> pasa a ser <code>className</code> (porque <code>class</code> es una palabra reservada), <code>for</code> pasa a ser <code>htmlFor</code>, <code>onclick</code> pasa a ser <code>onClick</code> y <code>tabindex</code>, <code>tabIndex</code>. Los atributos <code>aria-*</code> y <code>data-*</code> se escriben igual que en HTML.</li>
+    <li><strong>Llaves para JavaScript.</strong> Entre <code>{ }</code> va cualquier expresión: variables, cuentas, llamadas a funciones, un operador ternario. No van instrucciones como <code>if</code>, <code>for</code> o <code>let</code>.</li>
+    <li><strong><code>style</code> recibe un objeto.</strong> <code>style="color: red"</code> se escribe <code>style={{ color: "red", fontSize: 20 }}</code>: las llaves de fuera abren JavaScript y las de dentro son el objeto. Las propiedades van en camelCase y los números sin unidad se entienden como píxeles.</li>
+    <li><strong>Comentarios con llaves.</strong> Dentro del JSX se escriben <code>{/* así */}</code>; <code>&lt;!-- --&gt;</code> no funciona.</li>
+  </ol>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">HTML pegado tal cual</p>
+      <pre><code class="language-jsx">return (
+  &lt;label for="correo"&gt;Correo&lt;/label&gt;
+  &lt;input id="correo" class="campo"&gt;
+);</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">JSX correcto</p>
+      <pre><code class="language-jsx">return (
+  &lt;&gt;
+    &lt;label htmlFor="correo"&gt;Correo&lt;/label&gt;
+    &lt;input id="correo" className="campo" /&gt;
+  &lt;/&gt;
+);</code></pre>
+    </div>
+  </div>
+  <aside class="senal error">
+    <p>El error más común al empezar es escribir <code>class</code> en vez de <code>className</code>. React lo acepta y lo arregla, pero muestra en la consola un aviso en rojo: <em>Invalid DOM property `class`. Did you mean `className`?</em> Los avisos de React en desarrollo llevan marcas como <code>%s</code> en los talleres; léelos igual, porque casi siempre te dicen exactamente qué cambiar.</p>
+  </aside>
+
+  <h3>Qué se ve y qué no</h3>
+  <p>No todos los valores se muestran igual cuando los pones entre llaves. <strong>Predice</strong> qué aparece en cada párrafo y después ejecuta:</p>
+  <div class="taller" data-modo="web" id="taller-jsx-predice" data-titulo="Predice: valores dentro de las llaves" data-alto="17rem">
     <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
 &lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
 &lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
 &lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
 &lt;script type="text/babel"&gt;
 function App() {
+  const jugador = { nombre: "Lyra", monedas: 1250 };
+  const logros = ["Primer jefe", "Sin daño", "Contrarreloj"];
   return (
-    &lt;h1&gt;Hola&lt;/h1&gt;
-    &lt;p&gt;Dos raíces&lt;/p&gt;
+    &lt;&gt;
+      &lt;h2&gt;{jugador.nombre.toUpperCase()}&lt;/h2&gt;
+      &lt;p&gt;Monedas: {jugador.monedas * 2}&lt;/p&gt;
+      &lt;p&gt;¿Es VIP? {jugador.monedas &gt; 1000}&lt;/p&gt;
+      &lt;p&gt;{jugador.monedas &gt; 1000 ? "Cliente VIP" : "Cliente normal"}&lt;/p&gt;
+      &lt;p&gt;Logros: {logros.length}&lt;/p&gt;
+      &lt;p&gt;Nada: {null}{undefined}{false}&lt;/p&gt;
+      &lt;p style={{ color: "rebeccapurple", fontWeight: "bold" }}&gt;
+        Nivel {Math.floor(jugador.monedas / 500)}
+      &lt;/p&gt;
+    &lt;/&gt;
   );
 }
+
 ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
 &lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+h2, p { margin: 0 0 .4rem; }</textarea>
   </div>
-  <div class="taller" data-modo="web" id="taller-prueba-c" data-titulo="Prueba C" data-alto="8rem">
+  <p>La sorpresa suele estar en «¿Es VIP?», que sale vacío. <code>true</code>, <code>false</code>, <code>null</code> y <code>undefined</code> no se dibujan: React los ignora. Eso es útil (lo usarás para mostrar cosas solo a veces), pero si quieres ver la palabra, conviértela en texto con un ternario. Los números y los textos se muestran tal cual, y un array muestra sus elementos uno detrás de otro.</p>
+  <p><strong>Modifica:</strong> añade <code>&lt;p&gt;{logros}&lt;/p&gt;</code> y mira cómo salen los tres logros pegados. Después prueba <code>&lt;p&gt;{jugador}&lt;/p&gt;</code>: la consola mostrará <em>Objects are not valid as a React child</em>. Un objeto no se puede dibujar directamente; hay que elegir qué propiedad mostrar.</p>
+
+  <h3>Componentes: funciones que devuelven JSX</h3>
+  <p>Un componente de React es una función que devuelve JSX. Dos reglas lo distinguen de una función cualquiera:</p>
+  <ul>
+    <li><strong>Su nombre empieza con mayúscula</strong>: <code>TarjetaProducto</code>, no <code>tarjetaProducto</code>. En JSX, una etiqueta en minúscula (<code>&lt;button&gt;</code>) es un elemento HTML; una con mayúscula (<code>&lt;TarjetaProducto /&gt;</code>) es un componente tuyo. A este estilo de nombres, con mayúscula al inicio de cada palabra, se le llama <strong>PascalCase</strong>.</li>
+    <li><strong>Se usa como una etiqueta</strong>, no se llama con paréntesis. Escribes <code>&lt;TarjetaProducto /&gt;</code> y React decide cuándo llamar a la función.</li>
+  </ul>
+  <p>Para pasarle datos a un componente se usan <strong>props</strong> (de <em>properties</em>, «propiedades»). Se escriben como atributos al usar el componente, y la función los recibe todos juntos en un objeto, su primer parámetro. Lo habitual es desestructurarlo en la misma línea (<a href="11-colecciones.html#desestructurar">Estación 11</a>):</p>
+  <pre><code class="language-jsx">function TarjetaProducto({ nombre, precio, oferta = false }) {
+  return (
+    &lt;article className="tarjeta"&gt;
+      &lt;h3&gt;{nombre}&lt;/h3&gt;
+      &lt;p&gt;${precio.toFixed(2)}&lt;/p&gt;
+      {oferta &amp;&amp; &lt;span className="etiqueta"&gt;Oferta&lt;/span&gt;}
+    &lt;/article&gt;
+  );
+}
+
+// Usarlo tres veces con datos distintos
+&lt;TarjetaProducto nombre="Café de Colombia" precio={12.5} oferta /&gt;
+&lt;TarjetaProducto nombre="Taza de cerámica" precio={8} /&gt;
+&lt;TarjetaProducto nombre="Molinillo" precio={34.9} /&gt;</code></pre>
+  <ul>
+    <li>Los textos van entre comillas (<code>nombre="Café"</code>); cualquier otro valor va entre llaves (<code>precio={12.5}</code>, <code>activo={true}</code>, <code>lista={productos}</code>).</li>
+    <li>Un atributo sin valor, como <code>oferta</code>, equivale a <code>oferta={true}</code>.</li>
+    <li><code>oferta = false</code> es un <strong>valor por defecto</strong>: si no pasas esa prop, vale <code>false</code>.</li>
+    <li>El <code>$</code> de <code>${precio.toFixed(2)}</code> es el signo de pesos que se ve en pantalla: está fuera de las llaves, así que es texto normal, no una plantilla literal.</li>
+  </ul>
+  <aside class="senal ojo">
+    <p>Las props son de solo lectura. Un componente nunca debe cambiar sus props (<code>precio = precio * 2</code> dentro de <code>TarjetaProducto</code> está prohibido). Si un dato tiene que cambiar, es estado, y lo verás en la próxima sección. Además, un componente debe ser una <strong>función pura</strong> (<a href="21-paradigmas.html#funcional">Estación 21</a>): con las mismas props devuelve siempre el mismo JSX y, mientras se ejecuta, no modifica nada de fuera. React puede llamar a tus componentes cuando quiera y las veces que quiera, así que no deben tener sorpresas.</p>
+  </aside>
+
+  <h3>Pensar en componentes</h3>
+  <p>Antes de escribir código, los equipos que usan React dibujan la interfaz y la dividen en cajas. Cada caja con una responsabilidad clara se convierte en un componente, y las cajas dentro de otras cajas forman un árbol:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 320" role="img" aria-label="A la izquierda, el boceto de una tienda con cajas de colores: Cabecera con la insignia del carrito, Buscador y ListaProductos con tres tarjetas de producto. A la derecha, el mismo árbol de componentes: App contiene Cabecera, que contiene InsigniaCarrito, Buscador y ListaProductos, que contiene TarjetaProducto repetida tres veces.">
+      <text class="d-peq d-tenue" x="12" y="14">App</text>
+      <rect class="d-caja" x="10" y="20" width="300" height="290" rx="8"/>
+      <rect class="d-t1" x="22" y="32" width="276" height="44" rx="6" fill="none" stroke-width="3"/>
+      <text class="d-titulo" x="34" y="60" style="font-size:18px">Mi tienda</text>
+      <rect class="d-t2" x="200" y="40" width="88" height="28" rx="14" fill="none" stroke-width="3"/>
+      <text class="d-peq" x="244" y="59" text-anchor="middle">Carrito 2</text>
+      <rect class="d-t3" x="22" y="88" width="276" height="36" rx="6" fill="none" stroke-width="3"/>
+      <rect class="d-caja-suave" x="32" y="96" width="256" height="20" rx="4"/>
+      <text class="d-peq d-tenue" x="40" y="111">Buscar…</text>
+      <rect class="d-t4" x="22" y="136" width="276" height="164" rx="6" fill="none" stroke-width="3"/>
+      <g>
+        <rect class="d-t5" x="32" y="146" width="82" height="144" rx="6" fill="none" stroke-width="3"/>
+        <rect class="d-caja-suave" x="40" y="156" width="66" height="50" rx="4"/>
+        <rect class="d-fondo-2" x="40" y="216" width="60" height="8" rx="4"/>
+        <rect class="d-fondo-2" x="40" y="232" width="40" height="8" rx="4"/>
+        <rect class="d-acento" x="40" y="256" width="66" height="22" rx="6"/>
+      </g>
+      <g>
+        <rect class="d-t5" x="119" y="146" width="82" height="144" rx="6" fill="none" stroke-width="3"/>
+        <rect class="d-caja-suave" x="127" y="156" width="66" height="50" rx="4"/>
+        <rect class="d-fondo-2" x="127" y="216" width="60" height="8" rx="4"/>
+        <rect class="d-fondo-2" x="127" y="232" width="40" height="8" rx="4"/>
+        <rect class="d-acento" x="127" y="256" width="66" height="22" rx="6"/>
+      </g>
+      <g>
+        <rect class="d-t5" x="206" y="146" width="82" height="144" rx="6" fill="none" stroke-width="3"/>
+        <rect class="d-caja-suave" x="214" y="156" width="66" height="50" rx="4"/>
+        <rect class="d-fondo-2" x="214" y="216" width="60" height="8" rx="4"/>
+        <rect class="d-fondo-2" x="214" y="232" width="40" height="8" rx="4"/>
+        <rect class="d-acento" x="214" y="256" width="66" height="22" rx="6"/>
+      </g>
+
+      <g class="d-linea" fill="none">
+        <path d="M376 62v156"/>
+        <path d="M376 86h24"/>
+        <path d="M416 102v28h24"/>
+        <path d="M376 174h24"/>
+        <path d="M376 218h24"/>
+        <path d="M416 234v28h24"/>
+      </g>
+      <g class="d-mono" style="font-size:15px">
+        <rect class="d-caja" x="360" y="30" width="80" height="32" rx="6"/>
+        <text x="400" y="51" text-anchor="middle">App</text>
+        <rect class="d-t1" x="400" y="70" width="110" height="32" rx="6" fill="none" stroke-width="3"/>
+        <text x="455" y="91" text-anchor="middle">Cabecera</text>
+        <rect class="d-t2" x="440" y="114" width="160" height="32" rx="6" fill="none" stroke-width="3"/>
+        <text x="520" y="135" text-anchor="middle">InsigniaCarrito</text>
+        <rect class="d-t3" x="400" y="158" width="110" height="32" rx="6" fill="none" stroke-width="3"/>
+        <text x="455" y="179" text-anchor="middle">Buscador</text>
+        <rect class="d-t4" x="400" y="202" width="160" height="32" rx="6" fill="none" stroke-width="3"/>
+        <text x="480" y="223" text-anchor="middle">ListaProductos</text>
+        <rect class="d-t5" x="440" y="246" width="170" height="32" rx="6" fill="none" stroke-width="3"/>
+        <text x="525" y="267" text-anchor="middle">TarjetaProducto</text>
+      </g>
+      <text class="d-peq d-tenue" x="620" y="267">×3</text>
+    </svg>
+    <figcaption>Del boceto al árbol de componentes. Cada color es un componente. <code>TarjetaProducto</code> se escribe una vez y se usa tres veces con datos distintos. Los componentes de dentro se llaman <strong>hijos</strong> y el que los contiene, <strong>padre</strong>.</figcaption>
+  </figure>
+  <aside class="senal oficio">
+    <p>La documentación oficial propone un método en cinco pasos llamado «Pensar en React»: divide la interfaz en una jerarquía de componentes, construye primero una versión estática (sin estado, solo props), encuentra el estado mínimo que necesitas, decide en qué componente vive y, por último, añade el flujo de datos de los hijos hacia arriba. Esta estación sigue ese orden. Una buena regla para dividir: si una parte de la interfaz hace una sola cosa y podría tener nombre propio, merece ser un componente.</p>
+  </aside>
+
+  <h3>children: componentes que envuelven</h3>
+  <p>Lo que escribes entre la etiqueta de apertura y la de cierre de un componente le llega en una prop especial llamada <strong><code>children</code></strong> («hijos»). Sirve para crear componentes que funcionan como marcos: una tarjeta, un panel, una ventana modal. El marco decide el borde y el título; quien lo usa decide el contenido.</p>
+  <pre><code class="language-jsx">function Panel({ titulo, children }) {
+  return (
+    &lt;section className="panel"&gt;
+      &lt;h2&gt;{titulo}&lt;/h2&gt;
+      {children}
+    &lt;/section&gt;
+  );
+}
+
+&lt;Panel titulo="Tu pedido"&gt;
+  &lt;p&gt;3 productos&lt;/p&gt;
+  &lt;button&gt;Pagar&lt;/button&gt;
+&lt;/Panel&gt;</code></pre>
+  <p>A construir interfaces metiendo componentes dentro de otros se le llama <strong>composición</strong>, y es la forma de reutilizar código en React (la <a href="21-paradigmas.html#composicion">Estación 21</a> explica por qué se prefiere a la herencia).</p>
+  <div class="taller" data-modo="web" id="taller-catalogo-props" data-titulo="Modifica: un catálogo con props y children" data-alto="21rem" data-auto>
     <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
 &lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
 &lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
 &lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
 &lt;script type="text/babel"&gt;
-const { useState, useEffect } = React;
-function App() {
-  const [n, setN] = useState(0);
-  useEffect(() =&gt; { console.log("efecto: montar"); return () =&gt; console.log("efecto: limpiar"); }, []);
-  console.log("render");
-  return &lt;h1 class="x" onClick={() => setN(1)}&gt;Hola {n}&lt;/h1&gt;;
+function Panel({ titulo, children }) {
+  return (
+    &lt;section className="panel"&gt;
+      &lt;h2&gt;{titulo}&lt;/h2&gt;
+      {children}
+    &lt;/section&gt;
+  );
 }
-ReactDOM.createRoot(document.getElementById("root")).render(&lt;React.StrictMode&gt;&lt;App /&gt;&lt;/React.StrictMode&gt;);
+
+function TarjetaProducto({ nombre, precio, oferta = false }) {
+  return (
+    &lt;article className="tarjeta"&gt;
+      &lt;h3&gt;{nombre}&lt;/h3&gt;
+      &lt;p&gt;${precio.toFixed(2)}&lt;/p&gt;
+      {oferta &amp;&amp; &lt;span className="etiqueta"&gt;Oferta&lt;/span&gt;}
+    &lt;/article&gt;
+  );
+}
+
+function App() {
+  return (
+    &lt;Panel titulo="Café de especialidad"&gt;
+      &lt;div className="rejilla"&gt;
+        &lt;TarjetaProducto nombre="Café de Colombia" precio={12.5} oferta /&gt;
+        &lt;TarjetaProducto nombre="Taza de cerámica" precio={8} /&gt;
+        &lt;TarjetaProducto nombre="Molinillo" precio={34.9} /&gt;
+      &lt;/div&gt;
+    &lt;/Panel&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
 &lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+.panel { border: 2px solid #999; border-radius: 12px; padding: .5rem 1rem 1rem; }
+.panel h2 { margin: .3rem 0 .8rem; }
+.rejilla { display: flex; flex-wrap: wrap; gap: .8rem; }
+.tarjeta { border: 1px solid #bbb; border-radius: 8px; padding: .6rem .8rem; min-width: 9rem; }
+.tarjeta h3 { margin: 0 0 .3rem; font-size: 1rem; }
+.tarjeta p { margin: 0 0 .4rem; }
+.etiqueta { background: #ffe08a; color: #3a2a00; border-radius: 99px; padding: .1rem .6rem; font-size: .8rem; font-weight: bold; }</textarea>
   </div>
+  <p><strong>Modifica:</strong> (1) añade un cuarto producto, «Filtro de papel», a 3.25, en oferta; (2) añade a <code>TarjetaProducto</code> una prop <code>agotado</code> que, si es verdadera, muestre un párrafo «Sin existencias»; (3) usa un segundo <code>Panel</code> con el título «Accesorios» y mueve dentro la taza y el molinillo. Fíjate en que no tocaste <code>Panel</code> para darle contenido distinto: eso es <code>children</code>.</p>
+  <div class="parsons" data-titulo="Ordena el componente" data-lenguaje="jsx">
+    <ol>
+      <li>function Saludo({ nombre, nivel }) {</li>
+      <li data-sangria="1">return (</li>
+      <li data-sangria="2">&lt;div className="saludo"&gt;</li>
+      <li data-sangria="3">&lt;h2&gt;Hola, {nombre}&lt;/h2&gt;</li>
+      <li data-sangria="3">&lt;p&gt;Nivel {nivel}&lt;/p&gt;</li>
+      <li data-sangria="2">&lt;/div&gt;</li>
+      <li data-sangria="1">);</li>
+      <li>}</li>
+    </ol>
+  </div>
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>Todo lo que pones entre llaves se muestra como texto, nunca como HTML. Si un comentario de un usuario contiene <code>&lt;img src=x onerror="…"&gt;</code>, React lo muestra como letras y no ejecuta nada. Es la protección contra la inyección de código que viste en el taller de <code>innerHTML</code> de la <a href="15-dom.html#cambiar">Estación 15</a>, activada por defecto. La única forma de saltársela tiene un nombre que avisa: <code>dangerouslySetInnerHTML</code> («asignar innerHTML peligrosamente»). Úsala solo con HTML que hayas limpiado antes; la <a href="31-seguridad.html">Estación 31</a> explica cómo.</p>
+  </aside>
 </section>

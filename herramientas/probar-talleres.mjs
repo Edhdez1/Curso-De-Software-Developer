@@ -28,9 +28,9 @@ function verificacionEsperada(esperado) {
     "return 'Imprimiste más líneas de las esperadas. Sobra: «' + real[esp.length] + '».';";
 }
 
-export function ejecutar(codigo, verificacion, tiempo = 4000) {
+export function ejecutar(codigo, verificacion, tiempo = 4000, preparacion = "") {
   return new Promise((resolver) => {
-    const { fuente } = Motor.construirFuente(codigo, verificacion || "");
+    const { fuente } = Motor.construirFuente(codigo, verificacion || "", preparacion);
     const r = { salida: [], errores: [], excepcion: null, veredicto: undefined, fin: false, tiempoAgotado: false };
     const temporizadores = new Set();
     let terminado = false;
@@ -162,7 +162,7 @@ async function probarArchivo(archivo) {
     if (t.modo === "web") continue;
     const inicial = t.fuentes[0] ? t.fuentes[0].codigo : "";
     probados++;
-    const correr = (codigo, verif) => t.modo === "python" ? ejecutarPython(codigo, verif) : t.modo === "sql" ? ejecutarSQL(codigo, t.preparacion, verif) : ejecutar(codigo, verif, t.tiempo);
+    const correr = (codigo, verif) => t.modo === "python" ? ejecutarPython(codigo, verif) : t.modo === "sql" ? ejecutarSQL(codigo, t.preparacion, verif) : ejecutar(codigo, verif, t.tiempo, t.preparacion);
     const ri = await correr(inicial, t.verificacion);
     if (ri.tiempoAgotado && !t.arreglar) problemas.push(`${t.id}: el código inicial no termina (¿bucle infinito o setInterval?)`);
     if (t.ejercicio && t.verificacion && ri.veredicto === true) problemas.push(`${t.id}: el código inicial YA pasa la verificación (el ejercicio no exige nada)`);
