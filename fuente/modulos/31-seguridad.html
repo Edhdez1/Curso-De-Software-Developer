@@ -907,15 +907,16 @@ const token = Array.from(bytes, (b) =&gt; b.toString(16).padStart(2, "0")).join(
   <aside class="senal error">
     <p>Escribir contraseñas en los registros. Un <code>console.log(req.body)</code> olvidado en la ruta de inicio de sesión deja todas las contraseñas en texto plano en los archivos de registro, que suelen tener muchas menos protecciones que la base de datos. Registra el intento («login fallido para ana desde tal IP»), nunca su contenido.</p>
   </aside>
-  <p>Para cerrar, ordena los pasos que sigue un servidor bien diseñado al recibir un intento de inicio de sesión. Dos de ellos pueden ir en cualquier orden entre sí:</p>
-  <div class="parsons" data-titulo="Ordena el inicio de sesión seguro" data-lenguaje="text" data-exito="Así lo hace un servidor bien diseñado: primero se frena a los robots, después se verifica y solo al final se crea la sesión.">
+  <p>Para cerrar, ordena los pasos que sigue un servidor bien diseñado al recibir un intento de inicio de sesión, con las sangrías correctas. El segundo y el tercer paso pueden ir en cualquier orden entre sí:</p>
+  <div class="parsons" data-titulo="Ordena el inicio de sesión seguro" data-lenguaje="text" data-exito="Así lo hace un servidor bien diseñado: primero frena a los robots, después verifica y, solo si todo está bien, crea la sesión. Fíjate en que los dos casos de error comparten el mismo mensaje.">
     <ol>
       <li>Recibir el nombre y la contraseña por HTTPS</li>
       <li data-grupo="a">Comprobar que esa IP no superó el límite de intentos</li>
-      <li data-grupo="a">Buscar al usuario en la base de datos con una consulta parametrizada</li>
-      <li>Verificar la contraseña con argon2.verify(hashGuardado, intento)</li>
-      <li>Si falla: contar el intento y responder «usuario o contraseña incorrectos»</li>
-      <li>Si acierta: crear una sesión nueva con un identificador aleatorio</li>
+      <li data-grupo="a">Buscar al usuario con una consulta parametrizada</li>
+      <li>Si no existe o argon2.verify(hashGuardado, intento) falla:</li>
+      <li data-sangria="1">sumar un intento fallido</li>
+      <li data-sangria="1">responder «usuario o contraseña incorrectos» y terminar</li>
+      <li>Crear una sesión nueva con un identificador aleatorio</li>
       <li>Enviar la cookie de sesión con HttpOnly, Secure y SameSite</li>
     </ol>
   </div>
@@ -1252,7 +1253,7 @@ app.delete("/api/comentarios/:id", exigirRol("moderadora", "admin"), borrarComen
       <text class="d-peq" x="360" y="206" text-anchor="middle">con la clave pública: es Luis.</text>
       <rect class="d-mal-trazo" x="10" y="248" width="700" height="44" rx="8"/>
       <text class="d-rotulo" x="26" y="275" style="font-size:15px">Sitio falso arena-login.example:</text>
-      <text x="268" y="275" style="font-size:15px">el navegador no ofrece la passkey. No hay nada que robar.</text>
+      <text x="238" y="275" style="font-size:15px">el navegador no ofrece la passkey. No hay nada que robar.</text>
     </svg>
     <figcaption>Iniciar sesión con una passkey es responder a un reto nuevo cada vez, con una firma. El servidor nunca recibe ni guarda nada que permita suplantarte, y el navegador solo usa la passkey en el dominio para el que se creó.</figcaption>
   </figure>
@@ -1260,4 +1261,1319 @@ app.delete("/api/comentarios/:id", exigirRol("moderadora", "admin"), borrarComen
   <aside class="senal nota" data-titulo="Impacto">
     <p>Cada método de acceso deja fuera a alguien. No todo el mundo tiene un teléfono moderno, ni puede usar la huella, ni recibe SMS en su zona. Ofrece más de una opción, explica cada paso en lenguaje claro y cuida la recuperación de la cuenta: para mucha gente, perder el acceso a su cuenta es perder años de progreso, compras o fotos.</p>
   </aside>
+</section>
+
+<section id="navegador" data-parada="HTTPS, CORS y CSRF">
+  <h2>HTTPS, CORS y CSRF</h2>
+  <p>El navegador es tu aliado en seguridad: aplica reglas que protegen a quien usa tu app aunque tu código no haga nada. Pero esas reglas tienen matices, y los malentendidos sobre ellas causan tanto fallos de seguridad como horas perdidas depurando. Esta sección las mira desde el lado de quien programa.</p>
+
+  <h3>HTTPS, desde el lado del servidor</h3>
+  <p>En la <a href="03-internet.html#https">Estación 3</a> viste qué protege HTTPS (confidencialidad, integridad y autenticación del servidor) y qué no (que el sitio sea honesto). Como autora o autor de una app, tus tareas son:</p>
+  <ul>
+    <li><strong>Todo por HTTPS</strong>, sin excepciones, también las páginas «sin importancia»: cualquier página servida por HTTP se puede modificar por el camino para inyectar código. Las plataformas de publicación y Let's Encrypt emiten y renuevan los certificados de forma automática (lo harás en la <a href="35-devops.html">Estación 35</a>).</li>
+    <li><strong>Redirigir</strong> cualquier petición HTTP a su versión HTTPS con un <code>301</code>.</li>
+    <li><strong>Enviar la cabecera HSTS</strong> (<em>HTTP Strict Transport Security</em>): <code>Strict-Transport-Security: max-age=31536000; includeSubDomains</code>. Le dice al navegador «durante un año, conéctate a este dominio solo por HTTPS, aunque alguien escriba <code>http://</code>». Así se evita que la primera conexión de cada visita pueda ser interceptada.</li>
+    <li><strong>Nada de contenido mixto</strong>: una página HTTPS que carga scripts por HTTP pierde la protección. Los navegadores bloquean esos scripts.</li>
+    <li><strong>Cookies con <code>Secure</code></strong> y ningún secreto en la URL: la ruta y la consulta viajan cifradas, pero terminan en historiales y registros.</li>
+  </ul>
+
+  <h3>La política del mismo origen</h3>
+  <p>El <strong>origen</strong> de una página es la combinación de su esquema, su dominio y su puerto. La <strong>política del mismo origen</strong> (<em>same-origin policy</em>) es la regla por la que el JavaScript de una página solo puede leer las respuestas y los datos de su propio origen. Sin ella, cualquier página que visitaras podría hacer <code>fetch</code> a tu correo o a tu banco (con tus cookies) y leer lo que responden.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Comparada con <code>https://arena.example</code></th><th scope="col">¿Mismo origen?</th><th scope="col">Por qué</th></tr></thead>
+      <tbody>
+        <tr><td><code>https://arena.example/tienda?x=1</code></td><td>Sí</td><td>La ruta y la consulta no cuentan.</td></tr>
+        <tr><td><code>http://arena.example</code></td><td>No</td><td>Cambia el esquema.</td></tr>
+        <tr><td><code>https://api.arena.example</code></td><td>No</td><td>Cambia el dominio (un subdominio es otro dominio).</td></tr>
+        <tr><td><code>https://arena.example:8443</code></td><td>No</td><td>Cambia el puerto.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal ojo">
+    <p>La política del mismo origen impide <em>leer</em> respuestas de otros orígenes, no <em>enviar</em> peticiones. Una página puede incluir imágenes de otro sitio, enviar formularios a otro sitio o hacer ciertos <code>fetch</code> sencillos, y el navegador los envía. Lo que no hace es entregarle la respuesta al JavaScript de esa página. Esa diferencia explica el CSRF, que verás al final.</p>
+  </aside>
+
+  <h3>CORS: cuando otro origen sí debe poder leer</h3>
+  <p>A veces quieres que otro origen lea tus respuestas. Tu juego está en <code>https://arena.example</code> y tu API en <code>https://api.arena.example</code>: son orígenes distintos, así que el navegador bloquearía las respuestas de tu propia API. <strong>CORS</strong> (<em>Cross-Origin Resource Sharing</em>, «intercambio de recursos entre orígenes») es el mecanismo con el que un servidor le dice al navegador: «a este otro origen, sí le dejo leer». Funciona con cabeceras:</p>
+  <ul>
+    <li>El navegador añade a cada petición entre orígenes la cabecera <code>Origin: https://arena.example</code>.</li>
+    <li>El servidor responde con <code>Access-Control-Allow-Origin: https://arena.example</code> (o <code>*</code>, «cualquiera») si lo permite.</li>
+    <li>El navegador compara. Si coincide, entrega la respuesta a tu JavaScript. Si no, la oculta y muestra en la consola el famoso error de CORS. Ojo: la petición sí llegó al servidor, y el servidor sí la procesó.</li>
+  </ul>
+  <p>Para las peticiones que pueden tener efectos más serios (métodos como <code>PUT</code> o <code>DELETE</code>, cuerpos con <code>Content-Type: application/json</code>, cabeceras propias como <code>Authorization</code>), el navegador primero pregunta. Envía una <strong>petición de comprobación previa</strong> (<em>preflight</em>) con el método <code>OPTIONS</code>, y solo si la respuesta lo autoriza envía la petición de verdad:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 320" role="img" aria-label="Diagrama de una petición con comprobación previa CORS. La página de arena.example quiere hacer un PUT con JSON a api.arena.example. Primero el navegador envía OPTIONS con Origin, Access-Control-Request-Method PUT y Access-Control-Request-Headers content-type. El servidor responde 204 con Access-Control-Allow-Origin arena.example, Allow-Methods GET, POST, PUT y Allow-Headers Content-Type. Después el navegador envía el PUT real y el servidor responde 200 con Access-Control-Allow-Origin. Solo entonces el JavaScript de la página puede leer la respuesta.">
+      <rect class="d-caja" x="10" y="16" width="190" height="290" rx="10"/>
+      <text class="d-rotulo" x="105" y="42" text-anchor="middle" style="font-size:15px">Navegador</text>
+      <text class="d-peq d-tenue" x="105" y="62" text-anchor="middle">página de</text>
+      <text class="d-mono d-peq" x="105" y="80" text-anchor="middle">arena.example</text>
+      <rect class="d-caja" x="520" y="16" width="190" height="290" rx="10"/>
+      <text class="d-rotulo" x="615" y="42" text-anchor="middle" style="font-size:15px">API</text>
+      <text class="d-mono d-peq" x="615" y="62" text-anchor="middle">api.arena.example</text>
+      <text class="d-mono d-peq" x="212" y="104">1. OPTIONS /puntuaciones/7</text>
+      <text class="d-mono d-peq d-tenue" x="212" y="122">Origin: https://arena.example</text>
+      <text class="d-mono d-peq d-tenue" x="212" y="140">…-Request-Method: PUT</text>
+      <path class="d-linea" d="M200 150H506"/>
+      <path class="d-tinta" d="M506 144l12 6 -12 6z"/>
+      <text class="d-mono d-peq" x="508" y="172" text-anchor="end">2. 204 No Content</text>
+      <text class="d-mono d-peq d-tenue" x="508" y="190" text-anchor="end">…-Allow-Origin: https://arena.example</text>
+      <text class="d-mono d-peq d-tenue" x="508" y="208" text-anchor="end">…-Allow-Methods: GET, POST, PUT</text>
+      <path class="d-punteada" d="M520 218H214"/>
+      <path class="d-tinta" d="M214 212l-12 6 12 6z"/>
+      <text class="d-mono d-peq" x="212" y="244">3. PUT /puntuaciones/7 (JSON)</text>
+      <path class="d-linea" d="M200 254H506"/>
+      <path class="d-tinta" d="M506 248l12 6 -12 6z"/>
+      <text class="d-mono d-peq" x="508" y="278" text-anchor="end">4. 200 OK + Allow-Origin</text>
+      <path class="d-punteada" d="M520 290H214"/>
+      <path class="d-tinta" d="M214 284l-12 6 12 6z"/>
+      <rect class="d-acento" x="24" y="226" width="162" height="64" rx="8"/>
+      <text class="d-sobre-acento d-peq d-rotulo" x="105" y="252" text-anchor="middle">Solo ahora tu</text>
+      <text class="d-sobre-acento d-peq d-rotulo" x="105" y="272" text-anchor="middle">JavaScript la lee</text>
+    </svg>
+    <figcaption>Los nombres completos de las cabeceras empiezan por <code>Access-Control-</code> (aquí abreviado como <code>…-</code>). Si el paso 2 no autoriza el método o el origen, el navegador ni siquiera envía el paso 3.</figcaption>
+  </figure>
+  <p>Con cookies hay una regla extra. Si tu <code>fetch</code> usa <code>credentials: "include"</code> para enviar cookies a otro origen, el servidor debe responder con el origen exacto (no vale <code>*</code>) y además con <code>Access-Control-Allow-Credentials: true</code>. Este taller simula, de forma simplificada, la decisión que toma el navegador. Predice cada línea:</p>
+  <div class="taller" id="taller-cors" data-titulo="Predice: ¿puede leer la respuesta?">
+    <textarea class="taller-codigo">// Simulación simplificada de la decisión del navegador
+function puedeLeer(pagina, destino, cabeceras, conCookies = false) {
+  const origen = new URL(pagina).origin;
+  if (origen === new URL(destino).origin) return "sí (mismo origen)";
+  const permitido = cabeceras["access-control-allow-origin"];
+  if (!permitido) return "NO: el servidor no envió Access-Control-Allow-Origin";
+  if (conCookies &amp;&amp; permitido === "*") return "NO: con cookies no vale el comodín *";
+  if (conCookies &amp;&amp; cabeceras["access-control-allow-credentials"] !== "true") return "NO: falta Allow-Credentials";
+  if (permitido === "*" || permitido === origen) return "sí (CORS lo permite)";
+  return "NO: el servidor solo permite " + permitido;
+}
+
+const juego = "https://arena.example/tienda";
+console.log(1, puedeLeer(juego, "https://arena.example/api/objetos", {}));
+console.log(2, puedeLeer(juego, "https://api.arena.example/objetos", {}));
+console.log(3, puedeLeer(juego, "https://api.arena.example/objetos", { "access-control-allow-origin": "*" }));
+console.log(4, puedeLeer("http://arena.example", "https://arena.example/api/objetos", {}));
+console.log(5, puedeLeer(juego, "https://api.arena.example/perfil",
+  { "access-control-allow-origin": "*" }, true));
+console.log(6, puedeLeer(juego, "https://api.arena.example/perfil",
+  { "access-control-allow-origin": "https://arena.example", "access-control-allow-credentials": "true" }, true));
+console.log(7, puedeLeer("https://sitio-trampa.example", "https://api.arena.example/perfil",
+  { "access-control-allow-origin": "https://arena.example", "access-control-allow-credentials": "true" }, true));</textarea>
+  </div>
+  <p>El caso 4 suele sorprender: <code>http://</code> y <code>https://</code> del mismo dominio son orígenes distintos. Y el caso 7 es CORS haciendo su trabajo: la API solo confía en tu juego, así que un sitio ajeno no puede leer el perfil de quien lo visita, aunque el navegador envíe sus cookies.</p>
+  <aside class="senal error" data-titulo="Tres malentendidos sobre CORS">
+    <p><strong>«CORS protege mi API».</strong> No. CORS lo aplica el navegador para proteger a <em>quien navega</em>. <code>curl</code>, un script o el servidor de un atacante ignoran CORS por completo; tu API sigue necesitando autenticación, autorización y validación.</p>
+    <p><strong>«El error de CORS se arregla en el frontend».</strong> No. Lo decide el servidor que responde. Poner <code>mode: "no-cors"</code> en tu <code>fetch</code> solo consigue una respuesta «opaca» que tu código tampoco puede leer.</p>
+    <p><strong>«Pongo que se permita cualquier origen y listo».</strong> Para datos públicos sin cookies, <code>*</code> está bien. Lo peligroso es devolver en <code>Access-Control-Allow-Origin</code> cualquier origen que llegue, tal cual, junto con <code>Allow-Credentials: true</code>: eso permite a cualquier sitio leer los datos privados de quien lo visite.</p>
+  </aside>
+  <p>En Express, con el paquete <code>cors</code> que mencionó la <a href="29-backend.html">Estación 29</a>, usa una lista de permitidos explícita:</p>
+  <pre><code class="language-js">import cors from "cors";
+
+const permitidos = ["https://arena.example", "http://localhost:5173"];
+app.use(cors({ origin: permitidos, credentials: true }));</code></pre>
+
+  <h3>CSRF: peticiones que tú no pediste</h3>
+  <p>Volvamos a la diferencia entre enviar y leer. Otra página no puede leer lo que responde tu API, pero sí puede hacer que el navegador le <em>envíe</em> una petición. Y el navegador adjunta las cookies de tu sitio. Si tu servidor solo mira la cookie para saber quién es, obedecerá. Esto se llama <strong>CSRF</strong> (<em>Cross-Site Request Forgery</em>, «falsificación de peticiones entre sitios»).</p>
+  <figure class="capsula" data-titulo="Un regalo que Luis no hizo">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: Luis tiene iniciada la sesión en arena.example y su navegador guarda la cookie. Abre sitio-trampa.example, que contiene un formulario oculto que se envía solo a arena.example para regalar 500 gemas. Sin SameSite, el navegador adjunta la cookie y arena.example, al ver una sesión válida, regala las gemas. Con SameSite igual a Lax, el navegador no adjunta la cookie en ese POST entre sitios y arena.example responde 401. Además, arena.example puede rechazar la petición por su cabecera Origin o porque le falta un token anti-CSRF.">
+        <rect class="d-mal-trazo" x="10" y="16" width="220" height="118" rx="10"/>
+        <text class="d-rotulo d-peq" x="120" y="40" text-anchor="middle">sitio-trampa.example</text>
+        <text class="d-peq d-tenue" x="120" y="82" text-anchor="middle" data-pasos="1">(Luis todavía no la visitó)</text>
+        <g data-pasos="2-">
+          <text class="d-mono d-peq" x="22" y="66">&lt;form method="POST"</text>
+          <text class="d-mono d-peq" x="22" y="86">  action="…/regalar"&gt;</text>
+          <text class="d-mono d-peq" x="22" y="106">form.submit()</text>
+          <text class="d-peq d-tenue" x="22" y="125">oculto y automático</text>
+        </g>
+        <rect class="d-caja" x="10" y="156" width="220" height="128" rx="10"/>
+        <text class="d-rotulo" x="120" y="180" text-anchor="middle" style="font-size:15px">Navegador de Luis</text>
+        <rect class="d-caja-suave" x="24" y="194" width="192" height="76" rx="6" data-clases="1:d-caja-suave; 3:d-acento-trazo; 4:d-caja-suave"/>
+        <text class="d-rotulo d-peq" x="120" y="214" text-anchor="middle">Cookie de arena.example</text>
+        <text class="d-mono d-peq" x="120" y="236" text-anchor="middle">sesion=a91…</text>
+        <text class="d-peq d-tenue" x="120" y="258" text-anchor="middle" data-texto="4:con SameSite=Lax">sin SameSite</text>
+        <g data-pasos="2">
+          <path class="d-punteada" d="M120 134V148"/>
+          <path class="d-tinta" d="M114 146l6 10 6 -10z"/>
+          <text class="d-peq" x="244" y="150">Luis abre un enlace de «gemas gratis»</text>
+        </g>
+        <g data-pasos="3-">
+          <text class="d-mono d-peq" x="360" y="160" text-anchor="middle">POST /api/regalar</text>
+          <text class="d-mono d-peq" x="360" y="178" text-anchor="middle">a=trampa&amp;gemas=500</text>
+          <text class="d-mono d-peq" x="360" y="196" text-anchor="middle" data-texto="4:(sin cookie de sesión); 5:Origin: https://sitio-trampa…">Cookie: sesion=a91…</text>
+          <path class="d-linea" d="M232 210H476"/>
+          <path class="d-tinta" d="M476 204l12 6 -12 6z"/>
+        </g>
+        <g data-pasos="5">
+          <text class="d-peq" x="360" y="244" text-anchor="middle">Y además, un token anti-CSRF</text>
+          <text class="d-peq" x="360" y="264" text-anchor="middle">que la trampa no puede conocer.</text>
+        </g>
+        <rect class="d-caja" x="490" y="16" width="220" height="268" rx="10"/>
+        <text class="d-rotulo" x="600" y="42" text-anchor="middle">arena.example</text>
+        <text class="d-peq" x="600" y="90" text-anchor="middle" data-texto="3:Llega un POST con; 4:Llega un POST; 5:Llega un POST desde">Luis inició sesión</text>
+        <text class="d-peq" x="600" y="112" text-anchor="middle" data-texto="3:una sesión válida:; 4:sin cookie de sesión:; 5:un origen no permitido:">hace un rato.</text>
+        <text class="d-rotulo" x="600" y="146" text-anchor="middle" style="font-size:15px" data-pasos="3-" data-clases="3:d-mal; 4:d-ok" data-texto="3:regala 500 gemas; 4:401, no hace nada; 5:403, rechazado">regala 500 gemas</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Luis inició sesión en <code>arena.example</code> hace un rato. Su navegador guarda la cookie de sesión, en este primer escenario sin el atributo <code>SameSite</code>.</li>
+        <li data-duracion="6">En otra pestaña abre un enlace de «gemas gratis». La página de <code>sitio-trampa.example</code> contiene un formulario oculto que apunta a <code>arena.example/api/regalar</code> y un script que lo envía en cuanto carga.</li>
+        <li data-duracion="7">El navegador envía el <code>POST</code> y, como la cookie es de <code>arena.example</code>, la adjunta. El servidor ve una sesión válida de Luis y regala 500 gemas a la cuenta trampa. La página trampa no puede leer la respuesta, pero no le hace falta: el daño ya está hecho.</li>
+        <li data-duracion="6">Mismo ataque, pero la cookie tiene <code>SameSite=Lax</code>. Como el <code>POST</code> lo provocó otro sitio, el navegador no adjunta la cookie. El servidor no ve ninguna sesión y responde <code>401</code>.</li>
+        <li data-duracion="7">Defensa en profundidad: el servidor también mira la cabecera <code>Origin</code>, que el navegador escribe y la página no puede falsificar, y rechaza los orígenes que no son el suyo. Muchas aplicaciones añaden además un token anti-CSRF en cada formulario.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Las defensas contra CSRF, de la más básica a la más completa:</p>
+  <ul>
+    <li><strong>Nunca cambies datos con <code>GET</code>.</strong> Un <code>GET</code> se puede provocar con una simple imagen, <code>&lt;img src="https://arena.example/api/borrar-cuenta"&gt;</code>. Los cambios van por <code>POST</code>, <code>PUT</code>, <code>PATCH</code> o <code>DELETE</code>, como aprendiste al diseñar tu API REST.</li>
+    <li><strong>Cookies con <code>SameSite=Lax</code> o <code>Strict</code></strong>, como en la sección anterior.</li>
+    <li><strong>Comprobar el origen</strong>: rechazar las peticiones que cambian datos si la cabecera <code>Origin</code> no es la tuya. Los navegadores actuales envían también <code>Sec-Fetch-Site</code>, que vale <code>same-origin</code>, <code>same-site</code>, <code>cross-site</code> o <code>none</code>; si vale <code>cross-site</code> en una ruta que cambia datos, es sospechosa.</li>
+    <li><strong>Tokens anti-CSRF</strong>: un valor aleatorio que el servidor mete en cada formulario de tu página y exige de vuelta en la petición. Un sitio ajeno no puede leerlo (la política del mismo origen se lo impide), así que no puede incluirlo.</li>
+    <li><strong>Confirmar lo delicado</strong>: pedir la contraseña o un segundo factor para cambiar el correo, borrar la cuenta o transferir algo de valor.</li>
+  </ul>
+  <aside class="senal clave">
+    <p>CORS y CSRF se confunden porque los dos hablan de «otros sitios», pero son cosas distintas. CORS decide quién puede <em>leer</em> tus respuestas desde el navegador. CSRF abusa de que otros sitios pueden hacer que el navegador <em>envíe</em> peticiones con tus cookies. Un formulario <code>POST</code> normal no pasa por la comprobación previa de CORS, así que CORS no te protege del CSRF.</p>
+  </aside>
+
+  <h3>Las cabeceras de seguridad, de un vistazo</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Cabecera</th><th scope="col">Para qué sirve</th></tr></thead>
+      <tbody>
+        <tr><td><code>Strict-Transport-Security</code></td><td>Obliga a usar HTTPS en las próximas visitas (HSTS).</td></tr>
+        <tr><td><code>Content-Security-Policy</code></td><td>Limita de dónde se cargan scripts y otros recursos; con <code>frame-ancestors</code>, quién puede meter tu página en un <code>iframe</code>.</td></tr>
+        <tr><td><code>X-Content-Type-Options: nosniff</code></td><td>Impide que el navegador «adivine» que un archivo de texto es un script y lo ejecute.</td></tr>
+        <tr><td><code>Referrer-Policy: strict-origin-when-cross-origin</code></td><td>No revela la ruta completa de tu página a otros sitios cuando alguien sigue un enlace.</td></tr>
+        <tr><td><code>Set-Cookie</code> con sus atributos</td><td><code>HttpOnly</code>, <code>Secure</code> y <code>SameSite</code>, como viste.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>En Express, <code>app.use(helmet())</code> pone valores razonables para casi todas. Para comprobar las de cualquier sitio, abre la pestaña Red de las DevTools, pulsa en la primera petición y mira las cabeceras de la respuesta.</p>
+</section>
+
+<section id="secretos" data-parada="Secretos y datos">
+  <h2>Secretos, dependencias y datos personales</h2>
+  <p>Las últimas piezas no tienen que ver con una petición concreta, sino con cómo cuidas tu proyecto entero: las claves que lo conectan con otros servicios, el código ajeno que instalas y los datos de las personas que confían en ti.</p>
+
+  <h3>Los secretos no viven en el código</h3>
+  <p>Un <strong>secreto</strong> es cualquier dato que da acceso a algo: la contraseña de la base de datos, la clave de la API de pagos o de correo, el secreto con el que firmas los JWT, el secreto de cliente de OAuth. En la <a href="29-backend.html#config">Estación 29</a> los sacaste del código con variables de entorno y un archivo <code>.env</code>, y en la <a href="24-git.html#commits">Estación 24</a> viste que un secreto subido a un repositorio público hay que darlo por robado. Las reglas completas:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Fuera del código y del repositorio.</strong> Los secretos se leen de <code>process.env</code>. El archivo <code>.env</code> va en <code>.gitignore</code> antes del primer commit, y en su lugar se sube un <code>.env.example</code> con los nombres y sin los valores.</p></div></li>
+    <li><div><p><strong>Nunca en el frontend.</strong> Todo lo que llega al navegador lo puede ver cualquiera con las DevTools, aunque esté «escondido» en un archivo minimizado. Cuidado con las herramientas de construcción: en Vite, por ejemplo, las variables cuyo nombre empieza por <code>VITE_</code> se copian dentro del JavaScript que descarga el navegador. Si el frontend necesita un servicio con clave, la llamada la hace tu backend.</p></div></li>
+    <li><div><p><strong>Un secreto por entorno</strong> y con el mínimo alcance: la clave de pruebas de la API de pagos en tu computadora, la de producción solo en el servidor. En producción, los secretos se guardan en el panel de la plataforma o en un gestor de secretos (lo verás en la <a href="35-devops.html">Estación 35</a>).</p></div></li>
+    <li><div><p><strong>Si se filtra, primero se anula.</strong> Revoca la clave en el servicio que la emitió y crea una nueva; después limpia el repositorio. Borrar el archivo en un commit nuevo no sirve, porque sigue en el historial. GitHub revisa los envíos a los repositorios públicos y bloquea muchos formatos de clave conocidos (<em>push protection</em>), pero no los reconoce todos.</p></div></li>
+  </ol>
+  <p>Practícalo en una terminal simulada. Tienes el proyecto <code>arena-api</code> con un <code>.env</code> que contiene dos secretos de mentira. Tu misión: que Git guarde el proyecto sin que los secretos entren nunca en un commit.</p>
+  <div class="terminal-sim" data-titulo="Misión: el primer commit sin secretos" data-inicio="/home/tu">
+    <script type="application/json" class="terminal-sistema">{"arena-api": {"servidor.js": "import express from \"express\";\nconst app = express();\nconst clavePagos = process.env.CLAVE_PAGOS;\napp.listen(3000);\n", "package.json": "{ \"name\": \"arena-api\", \"type\": \"module\" }\n", ".env": "CLAVE_PAGOS=clave-de-prueba-123\nJWT_SECRETO=otro-secreto-de-prueba\n"}}</script>
+    <div class="terminal-instrucciones">
+      <p>1. Entra con <code>cd arena-api</code> y mira todo con <code>ls -a</code> (los archivos que empiezan por punto están ocultos). Lee el secreto con <code>cat .env</code>.</p>
+      <p>2. Crea el <code>.gitignore</code>: <code>echo ".env" &gt; .gitignore</code></p>
+      <p>3. Crea <code>.env.example</code> con los nombres y sin valores: <code>echo "CLAVE_PAGOS=" &gt; .env.example</code> y después <code>echo "JWT_SECRETO=" &gt;&gt; .env.example</code></p>
+      <p>4. <code>git init</code>, <code>git add .</code> y comprueba con <code>git status</code> que <code>.env</code> no aparece. Termina con <code>git commit -m "Primer commit"</code>.</p>
+    </div>
+    <script type="text/plain" class="terminal-mision">
+var repo = sistema["arena-api"];
+if (!repo) return "No borres la carpeta arena-api.";
+if (repo[".env"] === undefined) return "No borres .env: tu servidor lo necesita en tu computadora. Solo hay que evitar que entre en Git.";
+if (repo[".gitignore"] === undefined || !/(^|\n)\s*\/?\.env\s*(\n|$)/.test(repo[".gitignore"])) return "Crea un .gitignore que tenga la línea .env (paso 2).";
+var ej = repo[".env.example"];
+if (ej === undefined || !/CLAVE_PAGOS=/.test(ej) || !/JWT_SECRETO=/.test(ej)) return "Crea .env.example con los nombres de las dos variables, sin valores (paso 3).";
+if (/clave-de-prueba|secreto-de-prueba/.test(ej)) return ".env.example no debe llevar los valores reales, solo los nombres.";
+if (!git || !git.commits.length) return "Ahora git init, git add . y git commit -m \"Primer commit\" (paso 4).";
+var conEnv = git.commits.some(function (c) { return Object.keys(c.arbol).some(function (k) { return k === ".env" || /\/\.env$/.test(k); }); });
+if (conEnv) return "Un commit contiene .env: los secretos quedaron en el historial. En la vida real tendrías que anular esas claves. Aquí, pulsa Reiniciar y crea el .gitignore antes del primer commit.";
+var ultimo = git.commits.reduce(function (a, b) { return (b.orden || 0) > (a.orden || 0) ? b : a; });
+var archivos = Object.keys(ultimo.arbol);
+var tiene = function (nombre) { return archivos.some(function (k) { return k === nombre || k.slice(-nombre.length - 1) === "/" + nombre; }); };
+if (!tiene("servidor.js") || !tiene(".gitignore") || !tiene(".env.example")) return "El commit debe incluir servidor.js, .gitignore y .env.example.";
+return true;
+    </script>
+  </div>
+
+  <h3>Mínimo privilegio en la práctica</h3>
+  <p>El principio de mínimo privilegio que viste al principio se traduce en decisiones muy concretas:</p>
+  <ul>
+    <li><strong>Base de datos</strong>: tu API se conecta con un usuario que solo puede hacer lo que la API necesita. Si alguien consigue una inyección SQL, el daño queda limitado a esos permisos. En PostgreSQL, por ejemplo:
+      <pre><code class="language-sql">CREATE ROLE api_arena WITH LOGIN PASSWORD '…';
+GRANT SELECT, INSERT, UPDATE ON TABLE usuarios, puntuaciones TO api_arena;
+-- sin DELETE, sin DROP y sin acceso al resto de tablas</code></pre>
+    </li>
+    <li><strong>Claves de servicios</strong>: pide solo los alcances que usas (solo enviar correos, no administrar la cuenta) y ponles fecha de caducidad cuando el servicio lo permita.</li>
+    <li><strong>Personas</strong>: quien administra usa una cuenta de administración aparte, con segundo factor, y solo cuando la necesita. No todo el equipo necesita acceso a producción.</li>
+    <li><strong>Programas</strong>: el servidor no se ejecuta como administrador del sistema, y cada servicio tiene sus propias credenciales, para poder revocar una sin tocar las demás.</li>
+  </ul>
+
+  <h3>La cadena de suministro: el código que no escribiste</h3>
+  <p>En la <a href="29-backend.html#npm">Estación 29</a> instalaste paquetes con npm. Cada uno trae sus propias dependencias, y un proyecto pequeño acaba ejecutando código de cientos de personas que no conoces. A ese conjunto de piezas ajenas, y a los procesos con los que se publican, se le llama <strong>cadena de suministro de software</strong>. Es tan importante que el OWASP Top 10:2025 le dedicó una categoría nueva, la A03. Tiene dos riesgos distintos:</p>
+  <ul>
+    <li><strong>Paquetes con vulnerabilidades conocidas</strong>: código honesto con un fallo que alguien descubrió y publicó. Se arregla actualizando.</li>
+    <li><strong>Paquetes maliciosos</strong>: código hecho para dañar. Llega por un nombre casi igual al de un paquete famoso (<em>typosquatting</em>: <code>expres</code> en lugar de <code>express</code>), o porque alguien roba la cuenta de quien mantiene un paquete legítimo y publica una versión envenenada. El 8 de septiembre de 2025 pasó con 18 paquetes muy usados, entre ellos <code>chalk</code> y <code>debug</code>, que sumaban unos 2 600 millones de descargas semanales: el mantenedor cayó en un correo de phishing. Días después apareció Shai-Hulud, el primer «gusano» de npm: robaba las credenciales de quien instalaba un paquete infectado y las usaba para infectar otros paquetes de esa persona. Afectó a más de 500.</li>
+  </ul>
+  <p>Contra el primer riesgo, npm trae una herramienta: <code>npm audit</code> compara tus dependencias con una base de datos pública de avisos de seguridad. Así se ve su salida en un proyecto con una versión antigua de <code>lodash</code> (recortada):</p>
+  <pre class="consola"><code><span class="prompt">$</span> npm audit
+<span class="salida"># npm audit report
+
+lodash  &lt;=4.17.23
+Severity: high
+Prototype Pollution in lodash - https://github.com/advisories/GHSA-p6mc-m468-83gw
+Command Injection in lodash - https://github.com/advisories/GHSA-35jh-r3h4-6jhm
+…
+fix available via `npm audit fix`
+node_modules/lodash
+
+1 high severity vulnerability
+
+To address all issues, run:
+  npm audit fix</span></code></pre>
+  <p>Reconoces dos palabras: contaminación del prototipo e inyección de comandos. <code>npm audit fix</code> actualiza a versiones corregidas que respetan los rangos de tu <code>package.json</code>. Si el arreglo exige una versión mayor, npm te sugerirá <code>npm audit fix --force</code>: úsalo con cuidado, porque un salto de versión mayor puede romper tu código (recuerda las versiones semánticas). Ejecuta tus pruebas después.</p>
+  <p>Contra los paquetes maliciosos, un conjunto de costumbres:</p>
+  <ul>
+    <li><strong>Menos dependencias.</strong> Antes de instalar algo, pregúntate si lo necesitas. Muchas utilidades pequeñas se escriben en diez líneas.</li>
+    <li><strong>Mira antes de instalar</strong>: el nombre exacto, que tenga un repositorio, mantenimiento reciente y un uso razonable. Desconfía de paquetes recién creados con nombres parecidos a otros famosos.</li>
+    <li><strong>Usa el archivo de bloqueo.</strong> Sube <code>package-lock.json</code> al repositorio e instala en los servidores y en la integración continua con <code>npm ci</code>, que instala exactamente esas versiones.</li>
+    <li><strong>No tengas prisa por lo recién publicado.</strong> Las versiones maliciosas suelen detectarse y retirarse en horas o días. Desde la versión 11.10, npm tiene la opción <code>min-release-age</code>: con <code>min-release-age=7</code> en tu archivo <code>.npmrc</code>, solo instala versiones publicadas hace más de siete días.</li>
+    <li><strong>Cuidado con los scripts de instalación.</strong> Un paquete puede ejecutar código al instalarse. npm 12, publicado en julio de 2026, bloquea por defecto los scripts de las dependencias salvo los que apruebes; pero Node 24 y 26 todavía incluyen npm 11 en septiembre de 2026 (compruébalo con <code>npm --version</code>). Con npm 11, puedes instalar con <code>npm install --ignore-scripts</code>.</li>
+    <li><strong>Actualizaciones automáticas y revisadas</strong>: herramientas como Dependabot, integrada en GitHub, abren un pull request cuando sale una versión corregida, y tus pruebas deciden si se puede fusionar.</li>
+    <li><strong>Protege tus propias cuentas</strong> de GitHub y npm con segundo factor, mejor con passkeys o llaves físicas: el ataque de septiembre de 2025 empezó con un correo de phishing.</li>
+  </ul>
+  <p>El mismo cuidado vale para los scripts que cargas desde otro servidor en tus páginas. El atributo <code>integrity</code> hace que el navegador solo ejecute el archivo si su hash coincide con el que esperas (se llama <em>Subresource Integrity</em>, SRI): <code>&lt;script src="https://cdnjs.cloudflare.com/…" integrity="sha384-…" crossorigin="anonymous"&gt;&lt;/script&gt;</code>. cdnjs te da la etiqueta completa, con su hash, al copiar el enlace.</p>
+
+  <h3>Enterarte a tiempo y fallar con elegancia</h3>
+  <p>Los puestos A09 y A10 del OWASP Top 10 recuerdan dos cosas que se olvidan. La primera: si nadie registra los intentos de inicio de sesión fallidos, las respuestas 403 o los cambios de contraseña, un ataque puede durar meses sin que nadie lo note. Registra esos eventos (sin contraseñas, tokens ni datos personales innecesarios) y configura alertas cuando algo se dispare. La segunda: los errores también son parte de la seguridad. Un error no controlado puede dejar una operación a medias o mostrar a quien ataca tu código, tus rutas o tu versión de la base de datos. Responde a la persona con un mensaje genérico, guarda el detalle en el registro, como hiciste con el manejador de errores de la <a href="29-backend.html#middleware">Estación 29</a>, y asegúrate de que, ante la duda, la respuesta sea «no».</p>
+
+  <h3>Los datos personales</h3>
+  <p>Un <strong>dato personal</strong> es cualquier información sobre una persona identificada o identificable: su nombre, su correo, su dirección IP, su ubicación, su historial de partidas. Algunos son <strong>datos sensibles</strong> y tienen protección especial: salud, datos biométricos (como una huella), origen étnico, ideas políticas o religiosas, vida u orientación sexual. Los de niñas, niños y adolescentes también la tienen, algo muy relevante si haces videojuegos.</p>
+  <p>Casi todas las leyes de protección de datos comparten los mismos principios:</p>
+  <ul>
+    <li><strong>Minimización</strong>: recoge solo lo que necesitas. Si solo necesitas saber que alguien tiene más de 13 años, no pidas su fecha de nacimiento completa.</li>
+    <li><strong>Finalidad</strong>: usa los datos solo para lo que dijiste, y explica para qué en un aviso de privacidad claro.</li>
+    <li><strong>Base legal y consentimiento</strong>: necesitas un motivo válido para tratar cada dato; a veces ese motivo es el consentimiento libre e informado de la persona.</li>
+    <li><strong>Conservación limitada</strong>: borra lo que ya no necesitas, como las cuentas inactivas desde hace años.</li>
+    <li><strong>Seguridad</strong>: todo lo que viste en esta estación es también una obligación legal.</li>
+    <li><strong>Derechos de las personas</strong>: acceder a sus datos, corregirlos, pedir que se borren y oponerse a ciertos usos. En varios países latinoamericanos se conocen como derechos ARCO (acceso, rectificación, cancelación y oposición). Tu app necesita una forma de atender esas peticiones, por ejemplo un botón para borrar la cuenta.</li>
+    <li><strong>Aviso de brechas</strong>: si te roban datos, muchas leyes obligan a avisar a la autoridad y, a veces, a las personas afectadas, en plazos cortos.</li>
+  </ul>
+  <p>Estas son algunas de las leyes que conviene conocer por su nombre:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Dónde</th><th scope="col">Norma</th></tr></thead>
+      <tbody>
+        <tr><td>Unión Europea</td><td>Reglamento General de Protección de Datos (<strong>RGPD</strong>, o GDPR en inglés), Reglamento (UE) 2016/679, aplicable desde 2018. En España se complementa con la Ley Orgánica 3/2018 (LOPDGDD). Se aplica también a apps de fuera de la UE que ofrecen servicios a personas que están en la UE, y sus multas llegan a 20 millones de euros o al 4 % de la facturación mundial.</td></tr>
+        <tr><td>Brasil</td><td>Lei Geral de Proteção de Dados (<strong>LGPD</strong>), Ley 13.709 de 2018.</td></tr>
+        <tr><td>México</td><td>Nueva Ley Federal de Protección de Datos Personales en Posesión de los Particulares, vigente desde el 21 de marzo de 2025. Tras la desaparición del INAI, la autoridad es la Secretaría Anticorrupción y Buen Gobierno.</td></tr>
+        <tr><td>Argentina</td><td>Ley 25.326 de Protección de los Datos Personales.</td></tr>
+        <tr><td>Colombia</td><td>Ley 1581 de 2012.</td></tr>
+        <tr><td>Chile</td><td>Ley 21.719, publicada en diciembre de 2024, que crea la Agencia de Protección de Datos Personales. Según su texto, entra en vigor el 1 de diciembre de 2026; en 2026 se discutió postergarla, así que comprueba su estado.</td></tr>
+        <tr><td>Perú y Uruguay</td><td>Ley 29733 (Perú) y Ley 18.331 (Uruguay).</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>Detrás de cada fila de tu tabla <code>usuarios</code> hay una persona que confió en ti. Una filtración puede exponer su dirección a alguien que la acosa, revelar su orientación sexual o permitir que le roben otras cuentas. Recoger menos datos es la medida de seguridad más barata que existe: lo que no guardas, no se puede filtrar. Esta sección es una introducción, no asesoría legal; si tu app va a tratar datos de mucha gente, de menores o datos sensibles, consulta a una persona experta en la ley de tu país.</p>
+  </aside>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>La seguridad es una forma de mirar tu programa: ¿cómo se puede usar de una forma que no quiero? Un modelo de amenazas ordena qué proteger primero, y el OWASP Top 10:2025 resume los riesgos más frecuentes, con la pérdida de control de acceso en cabeza.</li>
+    <li>Todo lo que cruza la frontera de confianza es sospechoso, incluido lo que envía tu propio juego. El servidor autentica, autoriza y valida en cada petición. En un juego en línea, el cliente pide y el servidor decide.</li>
+    <li>La inyección ocurre cuando un dato termina interpretado como código. Se evita separando código y datos: consultas parametrizadas en SQL, <code>execFile</code> con argumentos en lugar de <code>exec</code>, listas de permitidos para lo que no se puede parametrizar.</li>
+    <li>Contra el XSS: escapa la salida según el contexto (<code>textContent</code>, entidades HTML, solo URL <code>http</code> y <code>https</code>), sanea con DOMPurify cuando necesites HTML y añade una CSP como segunda capa.</li>
+    <li>Valida con listas de permitidos: tipo, tamaño, rango, formato y reglas del negocio. Nunca aceptes del cliente un valor que el servidor puede calcular, como un precio. Cuidado con las claves que vienen de fuera: <code>__proto__</code> contamina todos los objetos.</li>
+    <li>Las contraseñas se guardan con un hash lento y con sal (Argon2id, scrypt o bcrypt), nunca en texto plano ni cifradas. Longitud antes que símbolos, lista de contraseñas prohibidas, mensajes que no revelan si la cuenta existe y límite de intentos.</li>
+    <li>Las sesiones viven en el servidor y viajan en cookies <code>HttpOnly</code>, <code>Secure</code> y <code>SameSite</code>. Un JWT es legible por cualquiera y seguro solo por su firma: úsalo con vida corta, algoritmo fijo y secreto fuerte, y no como sustituto automático de las sesiones.</li>
+    <li>Autenticación es saber quién eres; autorización, qué puedes hacer. Comprueba el dueño de cada recurso en el servidor. OAuth 2.0 delega permisos sin compartir contraseñas, OpenID Connect añade el inicio de sesión, y las passkeys resisten el phishing porque están ligadas al dominio.</li>
+    <li>La política del mismo origen impide leer respuestas ajenas; CORS la relaja desde el servidor y no protege tu API de <code>curl</code>. El CSRF abusa de las cookies que el navegador envía solo, y se frena con <code>SameSite</code>, comprobando <code>Origin</code> y con tokens.</li>
+    <li>Secretos en variables de entorno y nunca en Git ni en el frontend; si se filtran, se anulan. Pocas dependencias, <code>npm audit</code>, archivo de bloqueo y mínimo privilegio en todo. Recoge solo los datos personales que necesitas, respeta la ley de cada lugar y practica ataques solo donde tienes permiso.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Todos los ejercicios son simulaciones: ninguno ataca nada real. Resuélvelos en orden; los primeros traen casi todo hecho y los últimos te dejan más libertad. Cada uno tiene un botón «Ejecutar» que comprueba tu solución. Usa las pistas después de intentarlo unos minutos.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-comentarios">
+    <h3>Muestra los comentarios sin peligro</h3>
+    <p>La función <code>escaparHTML</code> ya está escrita. El bucle genera el HTML de cada comentario, pero mete el autor y el texto tal cual. Arregla esa línea para que los dos pasen por <code>escaparHTML</code>. La salida debe ser exactamente:</p>
+    <pre class="consola"><code>&lt;li&gt;&lt;b&gt;Lyra&lt;/b&gt;: ¡GG! 5 &amp;lt; 7 &amp;amp; subiendo&lt;/li&gt;
+&lt;li&gt;&lt;b&gt;Leo&amp;quot;&amp;gt;&amp;lt;img src=x onerror=robar()&amp;gt;&lt;/b&gt;: hola&lt;/li&gt;</code></pre>
+    <div class="taller" id="taller-ej-comentarios" data-titulo="Ejercicio 1">
+      <textarea class="taller-codigo">function escaparHTML(texto) {
+  return String(texto)
+    .replaceAll("&amp;", "&amp;amp;")
+    .replaceAll("&lt;", "&amp;lt;")
+    .replaceAll("&gt;", "&amp;gt;")
+    .replaceAll('"', "&amp;quot;")
+    .replaceAll("'", "&amp;#39;");
+}
+
+const comentarios = [
+  { autor: "Lyra", texto: "¡GG! 5 &lt; 7 &amp; subiendo" },
+  { autor: 'Leo"&gt;&lt;img src=x onerror=robar()&gt;', texto: "hola" },
+];
+
+for (const c of comentarios) {
+  // Arregla esta línea: el autor y el texto deben pasar por escaparHTML
+  console.log(`&lt;li&gt;&lt;b&gt;${c.autor}&lt;/b&gt;: ${c.texto}&lt;/li&gt;`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp1 = "<li><b>Lyra</b>: ¡GG! 5 &lt; 7 &amp; subiendo</li>";
+var esp2 = "<li><b>Leo&quot;&gt;&lt;img src=x onerror=robar()&gt;</b>: hola</li>";
+if (salida[0] !== esp1) return "La primera línea debería ser «" + esp1 + "» y es «" + (salida[0] || "(nada)") + "». ¿Pasaste también el texto por escaparHTML?";
+if (salida[1] !== esp2) return "La segunda línea todavía deja pasar HTML en el nombre del autor. Usa escaparHTML(c.autor).";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Dentro de <code>${…}</code> puedes llamar a una función: <code>${escaparHTML(c.autor)}</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Las etiquetas <code>&lt;li&gt;</code> y <code>&lt;b&gt;</code> las escribes tú y no se escapan. Solo se escapan los datos que vienen de las personas.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function escaparHTML(texto) {
+  return String(texto)
+    .replaceAll("&amp;", "&amp;amp;")
+    .replaceAll("&lt;", "&amp;lt;")
+    .replaceAll("&gt;", "&amp;gt;")
+    .replaceAll('"', "&amp;quot;")
+    .replaceAll("'", "&amp;#39;");
+}
+
+const comentarios = [
+  { autor: "Lyra", texto: "¡GG! 5 &lt; 7 &amp; subiendo" },
+  { autor: 'Leo"&gt;&lt;img src=x onerror=robar()&gt;', texto: "hola" },
+];
+
+for (const c of comentarios) {
+  console.log(`&lt;li&gt;&lt;b&gt;${escaparHTML(c.autor)}&lt;/b&gt;: ${escaparHTML(c.texto)}&lt;/li&gt;`);
+}</code></pre>
+      <p>Fíjate en que también se escapa el comentario de Lyra, que es inofensivo: <code>5 &lt; 7</code> se muestra bien gracias a <code>&amp;lt;</code>. Escapar no daña los textos honestos; por eso se aplica siempre, sin intentar adivinar cuáles son peligrosos.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-cookie">
+    <h3>Una cookie de sesión bien puesta</h3>
+    <p>La función arma la cabecera <code>Set-Cookie</code> de la sesión, pero le faltan tres atributos de seguridad. Añádelos a la lista para que JavaScript no pueda leer la cookie, que solo viaje por HTTPS y que no se envíe en los formularios que otro sitio provoca.</p>
+    <div class="taller" id="taller-ej-cookie" data-titulo="Ejercicio 2">
+      <textarea class="taller-codigo">function cookieDeSesion(id) {
+  const partes = [
+    `__Host-sesion=${id}`,
+    "Path=/",
+    "Max-Age=1800",
+    // Añade aquí los tres atributos que faltan, uno por elemento
+  ];
+  return partes.join("; ");
+}
+
+console.log(cookieDeSesion("7fK2pQ9xLm"));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var c = salida[0] || "";
+var partes = c.split(/;\s*/);
+var tiene = function (a) { return partes.some(function (p) { return p.toLowerCase() === a.toLowerCase(); }); };
+if (partes[0] !== "__Host-sesion=7fK2pQ9xLm") return "La cookie debe empezar por __Host-sesion=7fK2pQ9xLm.";
+if (!tiene("HttpOnly")) return "Falta HttpOnly: sin él, un script inyectado podría leer la cookie.";
+if (!tiene("Secure")) return "Falta Secure: el prefijo __Host- lo exige y, sin él, la cookie podría viajar sin cifrar.";
+if (!tiene("SameSite=Lax") && !tiene("SameSite=Strict")) return "Falta SameSite=Lax (o SameSite=Strict) para frenar el CSRF.";
+if (partes.some(function (p) { return /^domain=/i.test(p); })) return "Con el prefijo __Host- no puede haber Domain.";
+if (!tiene("Path=/")) return "El prefijo __Host- exige Path=/.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista</summary><p>Cada atributo es un texto más dentro del array: <code>"HttpOnly"</code>, y así con los otros dos. Repasa la tabla de atributos de la sección <a href="#sesiones">Sesiones y tokens</a>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function cookieDeSesion(id) {
+  const partes = [
+    `__Host-sesion=${id}`,
+    "Path=/",
+    "Max-Age=1800",
+    "HttpOnly",
+    "Secure",
+    "SameSite=Lax",
+  ];
+  return partes.join("; ");
+}
+
+console.log(cookieDeSesion("7fK2pQ9xLm"));</code></pre>
+      <p><code>SameSite=Strict</code> también es válido. <code>Lax</code> es el equilibrio habitual: bloquea los <code>POST</code> que provoca otro sitio y mantiene la sesión cuando alguien llega a tu juego desde un enlace.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-parametros">
+    <h3>Del texto pegado a la consulta parametrizada</h3>
+    <p>La primera parte del código simula el controlador de una base de datos: acepta una consulta con huecos <code>?</code> y una lista de valores. La función <code>buscarJugador</code> está escrita de la forma vulnerable. Reescríbela para que use un hueco y pase el nombre como parámetro. Deben imprimirse <code>1</code> y <code>0</code>.</p>
+    <div class="taller" id="taller-ej-parametros" data-titulo="Ejercicio 3">
+      <textarea class="taller-codigo">// Simulación del controlador de una base de datos (no hace falta cambiarla)
+const usuarios = [
+  { id: 1, nombre: "ana" }, { id: 2, nombre: "luis" }, { id: 3, nombre: "sol" },
+];
+const db = {
+  consultar(sql, parametros = []) {
+    const huecos = (sql.match(/\?/g) || []).length;
+    if (huecos !== parametros.length) throw new Error(`La consulta tiene ${huecos} huecos y recibió ${parametros.length} valores`);
+    if (/'\s*OR\s*'1'\s*=\s*'1/i.test(sql)) return usuarios;   // la inyección funcionó
+    const m = sql.match(/WHERE nombre = (\?|'([^']*)')/);
+    if (!m) throw new Error("Esta simulación solo entiende consultas del tipo ... WHERE nombre = ?");
+    const valor = m[1] === "?" ? parametros[0] : m[2];
+    return usuarios.filter((u) =&gt; u.nombre === valor);
+  },
+};
+
+// ----- Tu código -----
+function buscarJugador(nombre) {
+  return db.consultar("SELECT id, nombre FROM usuarios WHERE nombre = '" + nombre + "'");
+}
+
+console.log(buscarJugador("luis").length);           // debería ser 1
+console.log(buscarJugador("x' OR '1'='1").length);   // debería ser 0</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (salida[0] !== "1") return "Buscar «luis» debería devolver 1 fila y devolvió " + (salida[0] || "(nada)") + ".";
+if (salida[1] !== "0") return "La búsqueda maliciosa todavía devuelve " + (salida[1] || "(nada)") + " filas. Usa un hueco ? y pasa el nombre en la lista de parámetros.";
+var tuyo = codigo.split("----- Tu código -----")[1] || "";
+if (/\+\s*nombre|\$\{\s*nombre/.test(tuyo)) return "Da el resultado correcto, pero todavía pegas nombre dentro del SQL. El valor debe viajar aparte.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El segundo argumento de <code>db.consultar</code> es un array con un valor por cada <code>?</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La consulta queda así: <code>"SELECT id, nombre FROM usuarios WHERE nombre = ?"</code>, sin comillas alrededor del hueco. Las comillas las pone (o no las necesita) la base de datos.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// Simulación del controlador de una base de datos (no hace falta cambiarla)
+const usuarios = [
+  { id: 1, nombre: "ana" }, { id: 2, nombre: "luis" }, { id: 3, nombre: "sol" },
+];
+const db = {
+  consultar(sql, parametros = []) {
+    const huecos = (sql.match(/\?/g) || []).length;
+    if (huecos !== parametros.length) throw new Error(`La consulta tiene ${huecos} huecos y recibió ${parametros.length} valores`);
+    if (/'\s*OR\s*'1'\s*=\s*'1/i.test(sql)) return usuarios;   // la inyección funcionó
+    const m = sql.match(/WHERE nombre = (\?|'([^']*)')/);
+    if (!m) throw new Error("Esta simulación solo entiende consultas del tipo ... WHERE nombre = ?");
+    const valor = m[1] === "?" ? parametros[0] : m[2];
+    return usuarios.filter((u) =&gt; u.nombre === valor);
+  },
+};
+
+// ----- Tu código -----
+function buscarJugador(nombre) {
+  return db.consultar("SELECT id, nombre FROM usuarios WHERE nombre = ?", [nombre]);
+}
+
+console.log(buscarJugador("luis").length);           // debería ser 1
+console.log(buscarJugador("x' OR '1'='1").length);   // debería ser 0</code></pre>
+      <p>Con el hueco, la atacante busca a alguien que se llame, literalmente, <code>x' OR '1'='1</code>, y no hay nadie. Es la misma forma que tienen <code>db.prepare(sql).get(valor)</code> en <code>node:sqlite</code> o <code>pool.query(sql, [valor])</code> en PostgreSQL.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-tienda">
+    <h3>La tienda que no se fía del precio</h3>
+    <p>El juego envía peticiones de compra, y la función <code>comprar</code> se lo cree todo. Corrígela para que el objeto exista en el catálogo, la cantidad sea un entero entre 1 y 99, el precio salga del catálogo (nunca del cuerpo) y no se pueda gastar más de lo que se tiene. Si algo falla, devuelve <code>{ ok: false, error: "…" }</code> con un mensaje a tu gusto. Solo la primera y la sexta compra deben salir bien.</p>
+    <div class="taller" id="taller-ej-tienda" data-titulo="Ejercicio 4">
+      <textarea class="taller-codigo">const catalogo = {
+  espada: { precio: 120 },
+  escudo: { precio: 80 },
+  pocion: { precio: 15 },
+};
+
+// cuerpo: lo que envía el juego. monedas: las que el servidor sabe que tiene el jugador.
+function comprar(cuerpo, monedas) {
+  const total = cuerpo.precio * cuerpo.cantidad;
+  return { ok: true, total, quedan: monedas - total };
+}
+
+const pruebas = [
+  [{ objeto: "pocion", cantidad: 2, precio: 15 }, 100],
+  [{ objeto: "espada", cantidad: 1, precio: 0 }, 100],
+  [{ objeto: "escudo", cantidad: -5, precio: 80 }, 100],
+  [{ objeto: "pocion", cantidad: 1.5, precio: 15 }, 100],
+  [{ objeto: "dragon", cantidad: 1, precio: 1 }, 100],
+  [{ objeto: "escudo", cantidad: 1 }, 100],
+  [{ objeto: "espada", cantidad: "1" }, 500],
+  [{ objeto: "constructor", cantidad: 1 }, 100],
+];
+for (const [cuerpo, monedas] of pruebas) console.log(JSON.stringify(comprar(cuerpo, monedas)));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = [true, false, false, false, false, true, false, false];
+var nombres = ["2 pociones", "espada con precio 0", "cantidad negativa", "cantidad 1.5", "objeto inexistente", "1 escudo", "cantidad \"1\" (texto)", "objeto \"constructor\""];
+var r = [];
+for (var i = 0; i < esperado.length; i++) {
+  try { r.push(JSON.parse(salida[i])); } catch (e) { return "La línea " + (i + 1) + " no es un JSON válido: " + (salida[i] || "(nada)"); }
+  if (r[i] === null || typeof r[i] !== "object") return "La línea " + (i + 1) + " debería ser un objeto con ok.";
+}
+for (var j = 0; j < esperado.length; j++) {
+  if (r[j].ok !== esperado[j]) return "Prueba " + (j + 1) + " (" + nombres[j] + "): debería dar ok: " + esperado[j] + " y dio " + salida[j] + ".";
+}
+if (r[0].total !== 30 || r[0].quedan !== 70) return "2 pociones cuestan 30 monedas y quedan 70.";
+if (r[5].total !== 80 || r[5].quedan !== 20) return "1 escudo cuesta 80 monedas y quedan 20.";
+if (/cuerpo\.precio|cuerpo\[["']precio/.test(codigo)) return "Da los resultados correctos, pero todavía lees cuerpo.precio. El precio debe salir solo del catálogo.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Valida primero y calcula después. Para el entero: <code>Number.isInteger(cuerpo.cantidad)</code> da <code>false</code> con <code>1.5</code> y con <code>"1"</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La última prueba es una trampa: <code>catalogo["constructor"]</code> existe, heredado del prototipo de los objetos. Comprueba que el objeto sea una clave propia del catálogo con <code>Object.hasOwn(catalogo, cuerpo.objeto)</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const catalogo = {
+  espada: { precio: 120 },
+  escudo: { precio: 80 },
+  pocion: { precio: 15 },
+};
+
+function comprar(cuerpo, monedas) {
+  if (!Object.hasOwn(catalogo, cuerpo.objeto)) return { ok: false, error: "Ese objeto no existe" };
+  const cantidad = cuerpo.cantidad;
+  if (!Number.isInteger(cantidad) || cantidad &lt; 1 || cantidad &gt; 99) return { ok: false, error: "Cantidad no válida" };
+  const total = catalogo[cuerpo.objeto].precio * cantidad;   // el precio es del servidor
+  if (total &gt; monedas) return { ok: false, error: "No te alcanzan las monedas" };
+  return { ok: true, total, quedan: monedas - total };
+}
+
+const pruebas = [
+  [{ objeto: "pocion", cantidad: 2, precio: 15 }, 100],
+  [{ objeto: "espada", cantidad: 1, precio: 0 }, 100],
+  [{ objeto: "escudo", cantidad: -5, precio: 80 }, 100],
+  [{ objeto: "pocion", cantidad: 1.5, precio: 15 }, 100],
+  [{ objeto: "dragon", cantidad: 1, precio: 1 }, 100],
+  [{ objeto: "escudo", cantidad: 1 }, 100],
+  [{ objeto: "espada", cantidad: "1" }, 500],
+  [{ objeto: "constructor", cantidad: 1 }, 100],
+];
+for (const [cuerpo, monedas] of pruebas) console.log(JSON.stringify(comprar(cuerpo, monedas)));</code></pre>
+      <p>La segunda prueba no falla por el precio 0, que ahora se ignora: falla porque la espada cuesta 120 y solo hay 100 monedas. En un servidor real, además, restarías las monedas en la base de datos dentro de una transacción, para que dos compras simultáneas no gasten el mismo dinero dos veces (lo viste en la <a href="30-bases-datos.html">Estación 30</a>).</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-permisos">
+    <h3>¿Quién puede tocar este comentario?</h3>
+    <p>Escribe la función <code>puede(usuario, accion, comentario)</code> del foro de «Arena». Las únicas acciones que existen son <code>"editar"</code> y <code>"borrar"</code>. Reglas: sin sesión (<code>null</code>) o con la cuenta suspendida no se puede nada; la administradora puede todo; cada persona puede editar y borrar sus propios comentarios; la moderadora puede borrar cualquier comentario, pero no editar los ajenos. Todo lo demás está prohibido.</p>
+    <div class="taller" id="taller-ej-permisos" data-titulo="Ejercicio 5">
+      <textarea class="taller-codigo">function puede(usuario, accion, comentario) {
+  // Escribe las reglas. Lo que no está permitido, está prohibido.
+  return true;
+}
+
+const ana = { nombre: "ana", rol: "jugadora" };
+const sol = { nombre: "sol", rol: "moderadora" };
+const ivan = { nombre: "iván", rol: "admin" };
+const leo = { nombre: "leo", rol: "jugadora", suspendido: true };
+const deAna = { id: 7, autor: "ana", texto: "¡GG!" };
+const deLeo = { id: 8, autor: "leo", texto: "hola" };
+
+const casos = [
+  [ana, "editar", deAna],
+  [ana, "borrar", deAna],
+  [sol, "borrar", deAna],
+  [sol, "editar", deAna],
+  [ivan, "editar", deAna],
+  [null, "borrar", deAna],
+  [leo, "borrar", deLeo],
+  [ana, "fijar", deAna],
+  [ana, "borrar", deLeo],
+];
+for (const [u, accion, c] of casos) {
+  console.log(`${u ? u.nombre : "anónimo"} ${accion} #${c.id}: ${puede(u, accion, c)}`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = [true, true, true, false, true, false, false, false, false];
+var motivo = ["Ana puede editar su propio comentario.", "Ana puede borrar su propio comentario.", "La moderadora puede borrar cualquier comentario.", "La moderadora no puede cambiar lo que escribió otra persona.", "La administradora puede todo.", "Sin sesión no se puede nada: comprueba que usuario no sea null antes de leer sus propiedades.", "Una cuenta suspendida no puede nada, ni siquiera con sus propios comentarios.", "«fijar» no es una acción que exista: niega por defecto.", "Ana no puede borrar el comentario de Leo."];
+for (var i = 0; i < esperado.length; i++) {
+  var m = /: (true|false)$/.exec(salida[i] || "");
+  if (!m) return "La línea " + (i + 1) + " debería terminar en true o false (¿devuelves siempre un booleano?).";
+  if ((m[1] === "true") !== esperado[i]) return "Caso " + (i + 1) + " (" + salida[i] + "): " + motivo[i];
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Empieza por los «no» generales: <code>if (!usuario || usuario.suspendido) return false;</code> y comprueba que la acción esté en <code>["editar", "borrar"]</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Después, los «sí» de más poder a menos: administradora, autor del comentario, moderadora que borra. Termina con <code>return false;</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const ACCIONES = ["editar", "borrar"];
+
+function puede(usuario, accion, comentario) {
+  if (!usuario || usuario.suspendido) return false;
+  if (!ACCIONES.includes(accion)) return false;
+  if (usuario.rol === "admin") return true;
+  if (comentario.autor === usuario.nombre) return true;
+  if (usuario.rol === "moderadora" &amp;&amp; accion === "borrar") return true;
+  return false;
+}
+
+const ana = { nombre: "ana", rol: "jugadora" };
+const sol = { nombre: "sol", rol: "moderadora" };
+const ivan = { nombre: "iván", rol: "admin" };
+const leo = { nombre: "leo", rol: "jugadora", suspendido: true };
+const deAna = { id: 7, autor: "ana", texto: "¡GG!" };
+const deLeo = { id: 8, autor: "leo", texto: "hola" };
+
+const casos = [
+  [ana, "editar", deAna],
+  [ana, "borrar", deAna],
+  [sol, "borrar", deAna],
+  [sol, "editar", deAna],
+  [ivan, "editar", deAna],
+  [null, "borrar", deAna],
+  [leo, "borrar", deLeo],
+  [ana, "fijar", deAna],
+  [ana, "borrar", deLeo],
+];
+for (const [u, accion, c] of casos) {
+  console.log(`${u ? u.nombre : "anónimo"} ${accion} #${c.id}: ${puede(u, accion, c)}`);
+}</code></pre>
+      <p>La última línea, <code>return false</code>, es el principio de negar por defecto: si mañana alguien añade una acción nueva y olvida escribir su regla, nadie podrá usarla hasta que se decida quién puede. En una API real, el <code>autor</code> se compararía por identificador, no por nombre, y el rol vendría de la sesión en el servidor, nunca del cuerpo de la petición.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-intentos">
+    <h3>Frena a los robots</h3>
+    <p>Completa un limitador de intentos de inicio de sesión. <code>registrarFallo(clave, ahora)</code> anota un fallo; <code>estaBloqueado(clave, ahora)</code> devuelve <code>true</code> si esa clave tiene al menos <code>maximo</code> fallos en los últimos <code>ventanaMs</code> milisegundos; <code>reiniciar(clave)</code> olvida sus fallos. El tiempo llega como argumento (en milisegundos) para poder probarlo sin esperar. Las pruebas del final deben dar <code>false</code> en todo menos en B y G.</p>
+    <div class="taller" id="taller-ej-intentos" data-titulo="Ejercicio 6">
+      <textarea class="taller-codigo">function crearLimitador({ maximo, ventanaMs }) {
+  const fallos = new Map();   // clave -&gt; lista con el momento (en ms) de cada fallo
+  return {
+    registrarFallo(clave, ahora) {
+      // anota el fallo
+    },
+    estaBloqueado(clave, ahora) {
+      // cuenta solo los fallos de los últimos ventanaMs milisegundos
+      return false;
+    },
+    reiniciar(clave) {
+      // olvida los fallos de esa clave (se llama tras un inicio de sesión correcto)
+    },
+  };
+}
+
+// ----- Pruebas (no las cambies) -----
+const lim = crearLimitador({ maximo: 3, ventanaMs: 60_000 });
+const t = 1_000_000;
+lim.registrarFallo("ana", t);
+lim.registrarFallo("ana", t + 1_000);
+console.log("A. Ana con 2 fallos:", lim.estaBloqueado("ana", t + 2_000));
+lim.registrarFallo("ana", t + 3_000);
+console.log("B. Ana con 3 fallos:", lim.estaBloqueado("ana", t + 4_000));
+console.log("C. Luis, sin fallos:", lim.estaBloqueado("luis", t + 4_000));
+console.log("D. Ana, dos minutos después:", lim.estaBloqueado("ana", t + 124_000));
+lim.registrarFallo("sol", t);
+lim.registrarFallo("sol", t + 30_000);
+lim.registrarFallo("sol", t + 70_000);
+console.log("E. Sol, 3 fallos repartidos en 70 s:", lim.estaBloqueado("sol", t + 71_000));
+lim.registrarFallo("iván", t);
+lim.registrarFallo("iván", t + 1_000);
+lim.reiniciar("iván");
+lim.registrarFallo("iván", t + 2_000);
+console.log("F. Iván, después de entrar bien:", lim.estaBloqueado("iván", t + 3_000));
+for (let i = 0; i &lt; 3; i++) lim.registrarFallo("luis", t + 200_000 + i);
+console.log("G. Luis, 3 fallos seguidos:", lim.estaBloqueado("luis", t + 200_010));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = ["false", "true", "false", "false", "false", "false", "true"];
+var explica = ["Con 2 fallos todavía no se bloquea.", "Con 3 fallos en pocos segundos debe bloquearse.", "Cada clave se cuenta por separado: Luis no tiene fallos.", "Los fallos de hace más de 60 segundos ya no cuentan.", "Sol tiene 3 fallos, pero uno es de hace 71 s: dentro de la ventana solo hay 2. La ventana se desliza con el tiempo.", "reiniciar debe olvidar los fallos anteriores: a Iván solo le queda 1.", "Tres fallos seguidos de Luis deben bloquearlo."];
+if (salida.length < 7) return "Deberían imprimirse 7 líneas de prueba (A a G).";
+for (var i = 0; i < 7; i++) {
+  var fin = (salida[i] || "").split(": ").pop();
+  if (fin !== esperado[i]) return "Prueba " + String.fromCharCode(65 + i) + ": " + explica[i] + " (dio " + fin + ").";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Guarda en el <code>Map</code> un array por clave: <code>fallos.set(clave, [...(fallos.get(clave) || []), ahora])</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para contar solo los recientes, filtra: <code>lista.filter((m) =&gt; ahora - m &lt; ventanaMs)</code>. Si guardas solo esos, además evitas que la lista crezca sin fin.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function crearLimitador({ maximo, ventanaMs }) {
+  const fallos = new Map();   // clave -&gt; lista con el momento (en ms) de cada fallo
+  const recientes = (clave, ahora) =&gt;
+    (fallos.get(clave) || []).filter((m) =&gt; ahora - m &lt; ventanaMs);
+  return {
+    registrarFallo(clave, ahora) {
+      const lista = recientes(clave, ahora);   // de paso, olvida los viejos
+      lista.push(ahora);
+      fallos.set(clave, lista);
+    },
+    estaBloqueado(clave, ahora) {
+      return recientes(clave, ahora).length &gt;= maximo;
+    },
+    reiniciar(clave) {
+      fallos.delete(clave);
+    },
+  };
+}
+
+// ----- Pruebas (no las cambies) -----
+const lim = crearLimitador({ maximo: 3, ventanaMs: 60_000 });
+const t = 1_000_000;
+lim.registrarFallo("ana", t);
+lim.registrarFallo("ana", t + 1_000);
+console.log("A. Ana con 2 fallos:", lim.estaBloqueado("ana", t + 2_000));
+lim.registrarFallo("ana", t + 3_000);
+console.log("B. Ana con 3 fallos:", lim.estaBloqueado("ana", t + 4_000));
+console.log("C. Luis, sin fallos:", lim.estaBloqueado("luis", t + 4_000));
+console.log("D. Ana, dos minutos después:", lim.estaBloqueado("ana", t + 124_000));
+lim.registrarFallo("sol", t);
+lim.registrarFallo("sol", t + 30_000);
+lim.registrarFallo("sol", t + 70_000);
+console.log("E. Sol, 3 fallos repartidos en 70 s:", lim.estaBloqueado("sol", t + 71_000));
+lim.registrarFallo("iván", t);
+lim.registrarFallo("iván", t + 1_000);
+lim.reiniciar("iván");
+lim.registrarFallo("iván", t + 2_000);
+console.log("F. Iván, después de entrar bien:", lim.estaBloqueado("iván", t + 3_000));
+for (let i = 0; i &lt; 3; i++) lim.registrarFallo("luis", t + 200_000 + i);
+console.log("G. Luis, 3 fallos seguidos:", lim.estaBloqueado("luis", t + 200_010));</code></pre>
+      <p>Esta técnica se llama <strong>ventana deslizante</strong>. En producción, el <code>Map</code> vive en la memoria de un solo proceso: si tu API corre en varios servidores, los contadores se guardan en un almacén compartido como Redis, que es lo que hacen los paquetes como <code>express-rate-limit</code> con su opción <code>store</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-contrasena">
+    <h3>Las reglas de contraseña de 2025</h3>
+    <p>Escribe <code>revisarContrasena(clave, opciones)</code> siguiendo las reglas del NIST que viste. Devuelve un array con los problemas encontrados, en este orden: <code>"corta"</code> si tiene menos de 15 caracteres (u 8 si <code>con2FA</code> es <code>true</code>), <code>"comun"</code> si está en la lista <code>COMUNES</code> sin importar mayúsculas, y <code>"usuario"</code> si contiene el nombre de usuario sin importar mayúsculas. No exijas símbolos ni pongas un máximo corto. Cuidado con la séptima prueba: cuenta caracteres, no unidades de JavaScript.</p>
+    <div class="taller" id="taller-ej-contrasena" data-titulo="Ejercicio 7">
+      <textarea class="taller-codigo">const COMUNES = ["123456", "password", "qwerty", "gato123", "iloveyou", "dragon",
+  "futbol", "contraseña", "contraseñasegura", "123456789012345"];
+
+function revisarContrasena(clave, { usuario = "", con2FA = false } = {}) {
+  const problemas = [];
+  // Tus reglas aquí
+  return problemas;
+}
+
+// ----- Pruebas (no las cambies) -----
+const pruebas = [
+  ["gato123", {}],
+  ["caballo bateria grapa correcta", {}],
+  ["Contraseñasegura", {}],
+  ["lyra-la-mejor-jugadora", { usuario: "Lyra" }],
+  ["tren-azul", { con2FA: true }],
+  ["tren-azul", {}],
+  ["𝄞".repeat(12), {}],
+  ["en un lugar de la mancha de cuyo nombre no quiero acordarme no ha mucho", {}],
+];
+for (const [clave, opciones] of pruebas) console.log(JSON.stringify(revisarContrasena(clave, opciones)));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = ['["corta","comun"]', '[]', '["comun"]', '["usuario"]', '[]', '["corta"]', '["corta"]', '[]'];
+var explica = ["«gato123» es corta y además es común.", "Una frase larga de palabras en minúsculas es una buena contraseña: no le exijas símbolos.", "«Contraseñasegura» está en la lista común si la comparas en minúsculas.", "Contiene «lyra», el nombre de usuario (compara en minúsculas).", "Con 2FA basta con 8 caracteres.", "Sin 2FA hacen falta 15 caracteres.", "Son 12 caracteres (clave de sol), aunque clave.length diga 24. Usa [...clave].length para contar caracteres.", "Una contraseña larga no se rechaza: el NIST pide permitir al menos 64 caracteres."];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "Prueba " + (i + 1) + ": se esperaba " + esperado[i] + " y salió " + (salida[i] || "(nada)") + ". " + explica[i];
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El mínimo depende de la opción: <code>const minimo = con2FA ? 8 : 15;</code></p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>"𝄞".length</code> vale 2, porque ese carácter ocupa dos unidades en JavaScript. <code>[..."𝄞"].length</code> vale 1: el operador de propagación separa por caracteres completos.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const COMUNES = ["123456", "password", "qwerty", "gato123", "iloveyou", "dragon",
+  "futbol", "contraseña", "contraseñasegura", "123456789012345"];
+
+function revisarContrasena(clave, { usuario = "", con2FA = false } = {}) {
+  const problemas = [];
+  const minimo = con2FA ? 8 : 15;
+  const enMinusculas = clave.toLowerCase();
+  if ([...clave].length &lt; minimo) problemas.push("corta");
+  if (COMUNES.includes(enMinusculas)) problemas.push("comun");
+  if (usuario &amp;&amp; enMinusculas.includes(usuario.toLowerCase())) problemas.push("usuario");
+  return problemas;
+}
+
+// ----- Pruebas (no las cambies) -----
+const pruebas = [
+  ["gato123", {}],
+  ["caballo bateria grapa correcta", {}],
+  ["Contraseñasegura", {}],
+  ["lyra-la-mejor-jugadora", { usuario: "Lyra" }],
+  ["tren-azul", { con2FA: true }],
+  ["tren-azul", {}],
+  ["𝄞".repeat(12), {}],
+  ["en un lugar de la mancha de cuyo nombre no quiero acordarme no ha mucho", {}],
+];
+for (const [clave, opciones] of pruebas) console.log(JSON.stringify(revisarContrasena(clave, opciones)));</code></pre>
+      <p>En un sistema real, la lista de contraseñas prohibidas tiene millones de entradas, sacadas de filtraciones públicas. Un servicio conocido, Have I Been Pwned, permite comprobar si una contraseña aparece en ellas sin enviarla: envías solo los primeros cinco caracteres de su hash SHA-1 y comparas tú la lista de coincidencias que te devuelve.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-juego">
+    <h3>Servidor autoritativo: nadie se teletransporta</h3>
+    <p>El servidor de un juego recibe mensajes de cada jugador y hoy los acepta todos. Reescribe <code>procesar</code> para que devuelva <code>"rechazado"</code> y no cambie nada cuando: las coordenadas no son números finitos, el destino se sale del mapa (0 a 100 en cada eje), el paso mide más de <code>PASO_MAXIMO</code>, se dispara sin munición o antes de que pasen <code>ESPERA_DISPARO</code> milisegundos desde el último disparo, o el tipo de mensaje no existe. Solo el paso corto y los dos disparos espaciados deben salir <code>"ok"</code>.</p>
+    <div class="taller" id="taller-ej-juego" data-titulo="Ejercicio 8">
+      <textarea class="taller-codigo">const MAPA = 100;            // el mapa va de 0 a 100 en x y en y
+const PASO_MAXIMO = 1;       // distancia máxima por mensaje de movimiento
+const ESPERA_DISPARO = 500;  // milisegundos mínimos entre dos disparos
+
+function procesar(jugador, mensaje, ahora) {
+  if (mensaje.tipo === "mover") {
+    jugador.x = mensaje.x;
+    jugador.y = mensaje.y;
+    return "ok";
+  }
+  if (mensaje.tipo === "disparar") {
+    jugador.municion -= 1;
+    jugador.ultimoDisparo = ahora;
+    return "ok";
+  }
+  return "ok";
+}
+
+// ----- Pruebas (no las cambies) -----
+const lyra = { x: 10, y: 10, municion: 2, ultimoDisparo: -Infinity };
+const leo = { x: 0.5, y: 50, municion: 0, ultimoDisparo: -Infinity };
+const casos = [
+  ["paso corto", lyra, { tipo: "mover", x: 10.8, y: 10.5 }, 0],
+  ["teletransporte", lyra, { tipo: "mover", x: 60, y: 60 }, 100],
+  ["coordenada NaN", lyra, { tipo: "mover", x: NaN, y: 10 }, 200],
+  ["coordenada en texto", lyra, { tipo: "mover", x: "11", y: 10.5 }, 300],
+  ["salir del mapa", leo, { tipo: "mover", x: -0.3, y: 50 }, 300],
+  ["disparo", lyra, { tipo: "disparar" }, 400],
+  ["disparo muy seguido", lyra, { tipo: "disparar" }, 600],
+  ["segundo disparo", lyra, { tipo: "disparar" }, 1000],
+  ["sin munición", lyra, { tipo: "disparar" }, 2000],
+  ["acción inventada", lyra, { tipo: "volar" }, 2100],
+];
+for (const [nombre, jugador, mensaje, ahora] of casos) console.log(`${nombre}: ${procesar(jugador, mensaje, ahora)}`);
+console.log(`Lyra: x=${lyra.x}, y=${lyra.y}, munición=${lyra.municion}`);
+console.log(`Leo: x=${leo.x}, y=${leo.y}`);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = ["paso corto: ok", "teletransporte: rechazado", "coordenada NaN: rechazado", "coordenada en texto: rechazado", "salir del mapa: rechazado", "disparo: ok", "disparo muy seguido: rechazado", "segundo disparo: ok", "sin munición: rechazado", "acción inventada: rechazado", "Lyra: x=10.8, y=10.5, munición=0", "Leo: x=0.5, y=50"];
+var pistas = ["", "Mide la distancia con Math.hypot(dx, dy) y compárala con PASO_MAXIMO.", "Cualquier comparación con NaN da false, así que «NaN > 1» no lo detiene. Usa Number.isFinite.", "\"11\" es un texto. Number.isFinite(\"11\") da false.", "Comprueba que x e y queden entre 0 y MAPA.", "", "Deben pasar al menos ESPERA_DISPARO ms desde ultimoDisparo.", "", "Sin munición no se puede disparar.", "Niega por defecto: un tipo desconocido se rechaza.", "Un mensaje rechazado no debe cambiar el estado del jugador.", "Un mensaje rechazado no debe cambiar el estado del jugador."];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "Se esperaba «" + esperado[i] + "» y salió «" + (salida[i] || "(nada)") + "». " + pistas[i];
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Valida en este orden: tipos, límites del mapa, distancia. Solo si todo está bien, modifica <code>jugador</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para el disparo: <code>if (jugador.municion &lt;= 0) return "rechazado";</code> y <code>if (ahora - jugador.ultimoDisparo &lt; ESPERA_DISPARO) return "rechazado";</code>. Con <code>ultimoDisparo: -Infinity</code>, el primer disparo siempre está permitido.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const MAPA = 100;            // el mapa va de 0 a 100 en x y en y
+const PASO_MAXIMO = 1;       // distancia máxima por mensaje de movimiento
+const ESPERA_DISPARO = 500;  // milisegundos mínimos entre dos disparos
+
+function procesar(jugador, mensaje, ahora) {
+  if (mensaje.tipo === "mover") {
+    const { x, y } = mensaje;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return "rechazado";
+    if (x &lt; 0 || x &gt; MAPA || y &lt; 0 || y &gt; MAPA) return "rechazado";
+    if (Math.hypot(x - jugador.x, y - jugador.y) &gt; PASO_MAXIMO) return "rechazado";
+    jugador.x = x;
+    jugador.y = y;
+    return "ok";
+  }
+  if (mensaje.tipo === "disparar") {
+    if (jugador.municion &lt;= 0) return "rechazado";
+    if (ahora - jugador.ultimoDisparo &lt; ESPERA_DISPARO) return "rechazado";
+    jugador.municion -= 1;
+    jugador.ultimoDisparo = ahora;
+    return "ok";
+  }
+  return "rechazado";
+}
+
+// ----- Pruebas (no las cambies) -----
+const lyra = { x: 10, y: 10, municion: 2, ultimoDisparo: -Infinity };
+const leo = { x: 0.5, y: 50, municion: 0, ultimoDisparo: -Infinity };
+const casos = [
+  ["paso corto", lyra, { tipo: "mover", x: 10.8, y: 10.5 }, 0],
+  ["teletransporte", lyra, { tipo: "mover", x: 60, y: 60 }, 100],
+  ["coordenada NaN", lyra, { tipo: "mover", x: NaN, y: 10 }, 200],
+  ["coordenada en texto", lyra, { tipo: "mover", x: "11", y: 10.5 }, 300],
+  ["salir del mapa", leo, { tipo: "mover", x: -0.3, y: 50 }, 300],
+  ["disparo", lyra, { tipo: "disparar" }, 400],
+  ["disparo muy seguido", lyra, { tipo: "disparar" }, 600],
+  ["segundo disparo", lyra, { tipo: "disparar" }, 1000],
+  ["sin munición", lyra, { tipo: "disparar" }, 2000],
+  ["acción inventada", lyra, { tipo: "volar" }, 2100],
+];
+for (const [nombre, jugador, mensaje, ahora] of casos) console.log(`${nombre}: ${procesar(jugador, mensaje, ahora)}`);
+console.log(`Lyra: x=${lyra.x}, y=${lyra.y}, munición=${lyra.municion}`);
+console.log(`Leo: x=${leo.x}, y=${leo.y}`);</code></pre>
+      <p>La trampa de <code>NaN</code> es real: <code>NaN &gt; 1</code> y <code>NaN &lt;= 1</code> son las dos <code>false</code>, así que una comprobación escrita como «rechaza si la distancia es mayor que 1» deja pasar el <code>NaN</code> y el jugador acaba en una posición inválida que puede romper la física para todos. En un juego real, además, el tiempo lo mide el servidor con su propio reloj, nunca con uno que envíe el cliente.</p>
+    </details>
+  </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: auditoría de seguridad de «Arena»</h2>
+  <p>Te acaban de pasar el código de la API de «Arena», simulada como funciones para que corra en el navegador. Funciona, pero nadie la revisó pensando en seguridad. Al final del código hay una <strong>auditoría automática</strong>: un pequeño programa que la ataca de seis formas distintas e imprime <code>[OK]</code> o <code>[VULNERABLE]</code> para cada una. En la industria, a este trabajo se le llama auditoría o prueba de penetración (<em>pentest</em>): alguien ataca el sistema con permiso, entrega una lista de hallazgos y el equipo los corrige. Tu misión es corregirlos todos sin tocar la auditoría.</p>
+  <ol class="pasos">
+    <li><div><p>Ejecuta el código tal cual y lee las seis líneas de la auditoría. Para cada hallazgo, piensa a qué riesgo del OWASP Top 10:2025 corresponde y en qué sección de esta estación está su defensa.</p></div></li>
+    <li><div><p><strong>Contraseñas.</strong> En <code>registrar</code>, genera una sal con <code>generarSal()</code> y guarda <code>sal</code> y <code>hash: hashLento(sal, clave)</code> en lugar de <code>clave</code>.</p></div></li>
+    <li><div><p><strong>Inicio de sesión.</strong> En <code>iniciarSesion</code>, compara <code>hashLento(u.sal, clave)</code> con <code>u.hash</code>, y responde el mismo mensaje cuando el usuario no existe y cuando la contraseña falla.</p></div></li>
+    <li><div><p><strong>Límite de intentos.</strong> Cuenta en el <code>Map</code> <code>fallos</code> los fallos seguidos de cada nombre. Con 5 o más, responde que hay demasiados intentos sin comprobar nada más. Cuando alguien entra bien, borra sus fallos.</p></div></li>
+    <li><div><p><strong>Comentarios.</strong> En <code>comentarioHTML</code>, pasa el autor y el texto por <code>escaparHTML</code>.</p></div></li>
+    <li><div><p><strong>Perfiles.</strong> En <code>verPerfil</code>, incluye el correo solo si quien pregunta (<code>actual</code>) es la dueña del perfil.</p></div></li>
+    <li><div><p><strong>Puntuaciones.</strong> En <code>subirPuntuacion</code>, acepta solo números enteros entre 0 y 100 000; si no, devuelve <code>false</code> sin guardar nada.</p></div></li>
+    <li><div><p>Ejecuta hasta ver seis <code>[OK]</code>. Después compara tu código con la solución de referencia: hay más de una forma correcta.</p></div></li>
+  </ol>
+  <div class="taller" id="taller-proyecto" data-titulo="Proyecto: la API de Arena" data-tiempo="8">
+    <textarea class="taller-codigo">// ===== Herramientas (no hace falta cambiarlas) =====
+// Hash de juguete para esta simulación. En un servidor real usarías argon2.hash y argon2.verify.
+function hashLento(sal, clave) {
+  let h = 2166136261;
+  const texto = sal + ":" + clave;
+  for (let vuelta = 0; vuelta &lt; 1000; vuelta++) {
+    for (let i = 0; i &lt; texto.length; i++) {
+      h = Math.imul(h ^ texto.charCodeAt(i), 16777619) &gt;&gt;&gt; 0;
+    }
+  }
+  return h.toString(16).padStart(8, "0");
+}
+function generarSal() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) =&gt; b.toString(16).padStart(2, "0")).join("");
+}
+function escaparHTML(texto) {
+  return String(texto).replaceAll("&amp;", "&amp;amp;").replaceAll("&lt;", "&amp;lt;").replaceAll("&gt;", "&amp;gt;")
+    .replaceAll('"', "&amp;quot;").replaceAll("'", "&amp;#39;");
+}
+
+// ===== La API de «Arena» (aquí trabajas tú) =====
+const usuarios = new Map();      // nombre -&gt; datos guardados
+const fallos = new Map();        // nombre -&gt; intentos fallidos seguidos
+const puntuaciones = [];
+
+function registrar(nombre, clave, email) {
+  usuarios.set(nombre, { nombre, clave, email, puntos: 0 });
+}
+
+function iniciarSesion(nombre, clave) {
+  const u = usuarios.get(nombre);
+  if (!u) return "No existe ese usuario";
+  if (u.clave !== clave) return "Contraseña incorrecta";
+  return "Bienvenida, " + nombre;
+}
+
+function comentarioHTML(autor, texto) {
+  return `&lt;li&gt;&lt;b&gt;${autor}&lt;/b&gt;: ${texto}&lt;/li&gt;`;
+}
+
+function verPerfil(actual, nombre) {
+  const u = usuarios.get(nombre);
+  if (!u) return null;
+  return { nombre: u.nombre, email: u.email, puntos: u.puntos };
+}
+
+function subirPuntuacion(actual, puntos) {
+  puntuaciones.push({ jugador: actual, puntos });
+  return true;
+}
+
+// ===== AUDITORÍA (no la modifiques) =====
+function auditar() {
+  const marca = (ok, texto) =&gt; console.log((ok ? "[OK] " : "[VULNERABLE] ") + texto);
+  const clave = "caballo bateria grapa";
+  registrar("ana", clave, "ana@correo.example");
+  registrar("luis", clave, "luis@correo.example");
+  const a = usuarios.get("ana"), l = usuarios.get("luis");
+  const guardado = JSON.stringify([...usuarios.values()]);
+  marca(!guardado.includes(clave) &amp;&amp; !!a.hash &amp;&amp; !!a.sal &amp;&amp; a.hash !== l.hash,
+    "1. Las contraseñas se guardan como hash con sal, nunca en texto plano");
+  const noExiste = iniciarSesion("nadie", "x"), falla = iniciarSesion("ana", "x");
+  marca(noExiste === falla, "2. El mensaje no revela si la cuenta existe");
+  const anaEntra = String(iniciarSesion("ana", clave)).startsWith("Bienvenida");
+  for (let i = 0; i &lt; 5; i++) iniciarSesion("luis", "adivinando" + i);
+  const luisBloqueado = !String(iniciarSesion("luis", clave)).startsWith("Bienvenida");
+  marca(anaEntra &amp;&amp; luisBloqueado, "3. Tras 5 fallos seguidos no se puede entrar, pero con la clave correcta y sin fallos sí");
+  const html = comentarioHTML('Leo&lt;img src=x onerror="robar()"&gt;', "5 &lt; 7");
+  marca(!html.includes("&lt;img") &amp;&amp; html.includes("5 &amp;lt; 7"), "4. Los comentarios se escapan antes de convertirse en HTML");
+  const ajeno = verPerfil("ana", "luis") || {}, propio = verPerfil("ana", "ana") || {};
+  marca(ajeno.email === undefined &amp;&amp; ajeno.nombre === "luis" &amp;&amp; propio.email === "ana@correo.example",
+    "5. Cada persona ve su correo, pero no el de las demás");
+  const antes = puntuaciones.length;
+  const malos = [-5, 1e9, "999", 12.5, NaN].map((p) =&gt; subirPuntuacion("ana", p));
+  const bueno = subirPuntuacion("ana", 420);
+  marca(malos.every((r) =&gt; r === false) &amp;&amp; bueno === true &amp;&amp; puntuaciones.length === antes + 1,
+    "6. Solo se aceptan puntuaciones enteras entre 0 y 100000");
+}
+auditar();</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (codigo.indexOf("// ===== AUDITORÍA (no la modifiques) =====") === -1) return "No borres la auditoría del final: es la que comprueba tu trabajo.";
+var vulnerables = salida.filter(function (l) { return /^\[VULNERABLE\]/.test(l); });
+var bien = salida.filter(function (l) { return /^\[OK\]/.test(l); }).length;
+if (vulnerables.length) return "Quedan " + vulnerables.length + " hallazgo" + (vulnerables.length > 1 ? "s" : "") + " por corregir. El primero: «" + vulnerables[0].replace("[VULNERABLE] ", "") + "».";
+if (bien !== 6) return "La auditoría debería imprimir seis líneas [OK]. ¿Se interrumpió el programa por un error?";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <pre><code class="language-js">// ===== Herramientas (no hace falta cambiarlas) =====
+// Hash de juguete para esta simulación. En un servidor real usarías argon2.hash y argon2.verify.
+function hashLento(sal, clave) {
+  let h = 2166136261;
+  const texto = sal + ":" + clave;
+  for (let vuelta = 0; vuelta &lt; 1000; vuelta++) {
+    for (let i = 0; i &lt; texto.length; i++) {
+      h = Math.imul(h ^ texto.charCodeAt(i), 16777619) &gt;&gt;&gt; 0;
+    }
+  }
+  return h.toString(16).padStart(8, "0");
+}
+function generarSal() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) =&gt; b.toString(16).padStart(2, "0")).join("");
+}
+function escaparHTML(texto) {
+  return String(texto).replaceAll("&amp;", "&amp;amp;").replaceAll("&lt;", "&amp;lt;").replaceAll("&gt;", "&amp;gt;")
+    .replaceAll('"', "&amp;quot;").replaceAll("'", "&amp;#39;");
+}
+
+// ===== La API de «Arena» (aquí trabajas tú) =====
+const usuarios = new Map();      // nombre -&gt; datos guardados
+const fallos = new Map();        // nombre -&gt; intentos fallidos seguidos
+const puntuaciones = [];
+
+const MAX_FALLOS = 5;
+
+function registrar(nombre, clave, email) {
+  const sal = generarSal();
+  usuarios.set(nombre, { nombre, sal, hash: hashLento(sal, clave), email, puntos: 0 });
+}
+
+function iniciarSesion(nombre, clave) {
+  const generico = "Usuario o contraseña incorrectos";
+  if ((fallos.get(nombre) || 0) &gt;= MAX_FALLOS) return "Demasiados intentos. Prueba más tarde.";
+  const u = usuarios.get(nombre);
+  if (!u || hashLento(u.sal, clave) !== u.hash) {
+    fallos.set(nombre, (fallos.get(nombre) || 0) + 1);
+    return generico;
+  }
+  fallos.delete(nombre);
+  return "Bienvenida, " + nombre;
+}
+
+function comentarioHTML(autor, texto) {
+  return `&lt;li&gt;&lt;b&gt;${escaparHTML(autor)}&lt;/b&gt;: ${escaparHTML(texto)}&lt;/li&gt;`;
+}
+
+function verPerfil(actual, nombre) {
+  const u = usuarios.get(nombre);
+  if (!u) return null;
+  const publico = { nombre: u.nombre, puntos: u.puntos };
+  if (actual === nombre) publico.email = u.email;   // el correo, solo para su dueña
+  return publico;
+}
+
+function subirPuntuacion(actual, puntos) {
+  if (!Number.isInteger(puntos) || puntos &lt; 0 || puntos &gt; 100000) return false;
+  puntuaciones.push({ jugador: actual, puntos });
+  return true;
+}
+
+// ===== AUDITORÍA (no la modifiques) =====
+function auditar() {
+  const marca = (ok, texto) =&gt; console.log((ok ? "[OK] " : "[VULNERABLE] ") + texto);
+  const clave = "caballo bateria grapa";
+  registrar("ana", clave, "ana@correo.example");
+  registrar("luis", clave, "luis@correo.example");
+  const a = usuarios.get("ana"), l = usuarios.get("luis");
+  const guardado = JSON.stringify([...usuarios.values()]);
+  marca(!guardado.includes(clave) &amp;&amp; !!a.hash &amp;&amp; !!a.sal &amp;&amp; a.hash !== l.hash,
+    "1. Las contraseñas se guardan como hash con sal, nunca en texto plano");
+  const noExiste = iniciarSesion("nadie", "x"), falla = iniciarSesion("ana", "x");
+  marca(noExiste === falla, "2. El mensaje no revela si la cuenta existe");
+  const anaEntra = String(iniciarSesion("ana", clave)).startsWith("Bienvenida");
+  for (let i = 0; i &lt; 5; i++) iniciarSesion("luis", "adivinando" + i);
+  const luisBloqueado = !String(iniciarSesion("luis", clave)).startsWith("Bienvenida");
+  marca(anaEntra &amp;&amp; luisBloqueado, "3. Tras 5 fallos seguidos no se puede entrar, pero con la clave correcta y sin fallos sí");
+  const html = comentarioHTML('Leo&lt;img src=x onerror="robar()"&gt;', "5 &lt; 7");
+  marca(!html.includes("&lt;img") &amp;&amp; html.includes("5 &amp;lt; 7"), "4. Los comentarios se escapan antes de convertirse en HTML");
+  const ajeno = verPerfil("ana", "luis") || {}, propio = verPerfil("ana", "ana") || {};
+  marca(ajeno.email === undefined &amp;&amp; ajeno.nombre === "luis" &amp;&amp; propio.email === "ana@correo.example",
+    "5. Cada persona ve su correo, pero no el de las demás");
+  const antes = puntuaciones.length;
+  const malos = [-5, 1e9, "999", 12.5, NaN].map((p) =&gt; subirPuntuacion("ana", p));
+  const bueno = subirPuntuacion("ana", 420);
+  marca(malos.every((r) =&gt; r === false) &amp;&amp; bueno === true &amp;&amp; puntuaciones.length === antes + 1,
+    "6. Solo se aceptan puntuaciones enteras entre 0 y 100000");
+}
+auditar();</code></pre>
+    <p>Cada hallazgo corresponde a un riesgo del OWASP Top 10:2025: la contraseña en texto plano es una falla criptográfica (A04); los mensajes que delatan cuentas y los intentos ilimitados son fallas de autenticación (A07); el comentario sin escapar es una inyección, en su forma de XSS (A05); el perfil que muestra el correo de otras personas es pérdida de control de acceso (A01); y aceptar cualquier puntuación es un diseño inseguro que confía en el cliente (A06). Fíjate en que en la solución los fallos se cuentan también para nombres que no existen: así, el comportamiento con cuentas inexistentes es idéntico al de las reales.</p>
+  </details>
+  <p><strong>Para ir más allá:</strong> lleva estas defensas a la API real de la <a href="29-backend.html">Estación 29</a>, con paquetes de verdad. Es un buen proyecto para tu portafolio:</p>
+  <ul>
+    <li>Contraseñas con <code>argon2</code>, sesiones con <code>express-session</code> y cookies <code>HttpOnly</code>, <code>Secure</code> y <code>SameSite=Lax</code>.</li>
+    <li><code>express-rate-limit</code> en la ruta de inicio de sesión, con la ventana deslizante del ejercicio 6.</li>
+    <li>Validación de cada cuerpo con Zod y consultas parametrizadas en SQLite.</li>
+    <li><code>helmet</code> para las cabeceras de seguridad y <code>cors</code> con una lista de orígenes permitidos.</li>
+    <li>Un registro de eventos de seguridad (inicios de sesión fallidos, respuestas 403) sin datos sensibles, y pruebas automáticas de cada defensa, como aprendiste en la <a href="26-testing.html">Estación 26</a>.</li>
+  </ul>
+  <h3>Lista de comprobación antes de publicar</h3>
+  <p>Guárdala y repásala con cada proyecto que vayas a publicar:</p>
+  <ul>
+    <li>Todo el sitio va por HTTPS, con redirección desde HTTP y la cabecera HSTS.</li>
+    <li>Cada ruta que cambia datos comprueba quién eres (autenticación) y si puedes (autorización), en el servidor.</li>
+    <li>Cada dato que entra se valida con una lista de permitidos; nada que el servidor pueda calcular se acepta del cliente.</li>
+    <li>Todas las consultas a la base de datos usan parámetros.</li>
+    <li>Todo dato ajeno se escapa al mostrarse; no hay <code>innerHTML</code> ni <code>dangerouslySetInnerHTML</code> con datos de personas sin sanear.</li>
+    <li>Las contraseñas se guardan con Argon2id (o bcrypt), hay límite de intentos y los mensajes no revelan si una cuenta existe.</li>
+    <li>Las cookies de sesión tienen <code>HttpOnly</code>, <code>Secure</code> y <code>SameSite</code>, y la sesión caduca y se puede cerrar.</li>
+    <li>Hay una CSP y las cabeceras de seguridad básicas (<code>helmet</code>).</li>
+    <li>CORS permite solo los orígenes que necesitas.</li>
+    <li>Ningún secreto está en el código, en el repositorio ni en el frontend; <code>.env</code> está en <code>.gitignore</code>.</li>
+    <li><code>npm audit</code> no muestra vulnerabilidades graves y el archivo de bloqueo está en el repositorio.</li>
+    <li>La base de datos se usa con un usuario de permisos mínimos y hay copias de seguridad.</li>
+    <li>Los errores muestran un mensaje genérico y se registran con detalle, sin contraseñas ni tokens.</li>
+    <li>Recoges solo los datos personales que necesitas y explicas para qué en un aviso de privacidad.</li>
+  </ul>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Varias opciones incorrectas son ideas que circulan mucho en tutoriales y foros: si caes en alguna, la explicación te dirá por qué no funciona.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Qué diferencia hay entre autenticación y autorización?</p>
+      <ol class="opciones">
+        <li>Ninguna: es la misma idea con dos nombres.<p class="explica">Son pasos distintos, y la mayoría de los fallos reales ocurren en el segundo.</p></li>
+        <li>La autenticación decide qué puedes hacer y la autorización comprueba quién eres.<p class="explica">Es al revés. Primero se sabe quién eres y después se decide qué puedes hacer.</p></li>
+        <li>La autenticación comprueba quién eres; la autorización decide qué puedes hacer.<p class="explica">Correcto. Iniciar sesión es autenticarse; que el servidor compruebe que el pedido es tuyo es autorizar.</p></li>
+        <li>La autenticación ocurre en el navegador y la autorización en el servidor.<p class="explica">Las dos decisiones se toman en el servidor. El navegador está fuera de la frontera de confianza.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Cuál es la forma correcta de guardar las contraseñas de tus usuarios?</p>
+      <ol class="opciones">
+        <li>Cifradas, para poder enviárselas por correo si las olvidan.<p class="explica">El cifrado es reversible: quien consiga la clave las lee todas. Y nunca hace falta recuperar una contraseña; se envía un enlace para crear otra.</p></li>
+        <li>Con Argon2id o bcrypt, que añaden una sal aleatoria y son lentos a propósito.<p class="explica">Correcto. Cada hash es único gracias a la sal, y cada intento de adivinarlo cuesta caro.</p></li>
+        <li>Con SHA-256, porque un hash no se puede invertir.<p class="explica">No se invierte, pero se adivina: una tarjeta gráfica prueba miles de millones de SHA-256 por segundo, y sin sal sirven las tablas precalculadas.</p></li>
+        <li>En texto plano, en una tabla a la que solo accede el servidor.<p class="explica">Así estaban las de RockYou. Diseña pensando que la base de datos se filtrará algún día.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Por qué una consulta parametrizada evita la inyección SQL?</p>
+      <ol class="opciones">
+        <li>Porque borra las comillas de lo que escribe la persona.<p class="explica">No borra nada: el nombre O'Brien llega intacto. Quitar caracteres a mano es frágil y rompe datos honestos.</p></li>
+        <li>Porque la base de datos rechaza cualquier texto que contenga OR.<p class="explica">Eso sería una lista de prohibidos, y fallaría con mil variantes. Además, «OR» puede aparecer en textos legítimos.</p></li>
+        <li>Porque cifra el valor antes de enviarlo.<p class="explica">No hay cifrado de por medio. La clave es el canal por el que viaja el valor.</p></li>
+        <li>Porque la estructura de la consulta se fija antes y el valor llega aparte, siempre como dato.<p class="explica">Correcto. Aunque el valor tenga comillas u OR, ya no puede cambiar la forma de la consulta.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Quieres mostrar en la tabla de récords el nombre que eligió cada jugador. ¿Qué haces?</p>
+      <ol class="opciones">
+        <li>Lo insertas con <code>textContent</code> (o lo escapas, si generas el HTML en el servidor).<p class="explica">Correcto. Así el nombre se ve tal cual y nunca se interpreta como HTML.</p></li>
+        <li>Lo insertas con <code>innerHTML</code> después de quitarle las etiquetas <code>&lt;script&gt;</code>.<p class="explica">Una <code>&lt;img onerror&gt;</code>, las mayúsculas o una etiqueta partida esquivan ese filtro.</p></li>
+        <li>Lo guardas ya escapado en la base de datos y lo insertas con <code>innerHTML</code>.<p class="explica">Se escapa en la salida, según el destino. Si escapas al guardar, ese dato saldrá mal en un JSON o en un correo, o se escapará dos veces.</p></li>
+        <li>Da igual cómo lo insertes si el formulario de registro ya validó el nombre en el navegador.<p class="explica">La validación del navegador se salta con las DevTools o con <code>curl</code>. Cualquier dato puede llegar a tu base de datos.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Qué atributo de una cookie impide que el JavaScript de la página la lea?</p>
+      <ol class="opciones">
+        <li><code>Secure</code><p class="explica"><code>Secure</code> hace que solo viaje por HTTPS, pero JavaScript podría leerla.</p></li>
+        <li><code>SameSite=Strict</code><p class="explica"><code>SameSite</code> controla si se envía en peticiones que provoca otro sitio. No tiene que ver con JavaScript.</p></li>
+        <li><code>HttpOnly</code><p class="explica">Correcto. Con <code>HttpOnly</code>, <code>document.cookie</code> no la muestra, y un XSS no puede llevársela.</p></li>
+        <li><code>Max-Age=0</code><p class="explica">Eso le pide al navegador que la borre.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Tu juego en <code>https://arena.example</code> hace <code>fetch</code> a tu API en <code>https://api.arena.example</code>, y la consola muestra un error de CORS. ¿Dónde se arregla?</p>
+      <ol class="opciones">
+        <li>En el <code>fetch</code>, añadiendo <code>mode: "no-cors"</code>.<p class="explica">Así obtienes una respuesta «opaca» que tu código tampoco puede leer. El error desaparece, el problema no.</p></li>
+        <li>En el servidor de la API, respondiendo con <code>Access-Control-Allow-Origin: https://arena.example</code>.<p class="explica">Correcto. Es el servidor quien autoriza a otro origen a leer sus respuestas.</p></li>
+        <li>Desactivando la seguridad del navegador mientras desarrollas.<p class="explica">Funcionaría en tu computadora y fallaría para todas las demás personas.</p></li>
+        <li>No tiene arreglo: el navegador nunca deja leer respuestas de otro dominio.<p class="explica">Para eso existe CORS: permite relajar la política del mismo origen de forma controlada.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Qué afirmación sobre un JWT firmado con HS256 es correcta?</p>
+      <ol class="opciones">
+        <li>Su contenido va cifrado: sin el secreto no se puede leer.<p class="explica">Solo está codificado en base64url. Lo decodificaste en un taller sin conocer el secreto.</p></li>
+        <li>Se puede invalidar al instante borrándolo del servidor.<p class="explica">El servidor no guarda los JWT. Valen hasta que caducan, salvo que mantengas una lista de revocados.</p></li>
+        <li>El servidor debe aceptar el algoritmo que indique la cabecera del token.<p class="explica">La cabecera la escribe quien envía el token. Aceptar <code>"alg": "none"</code> ha abierto sistemas enteros. Fija los algoritmos al verificar.</p></li>
+        <li>Cualquiera puede leer su contenido, pero sin el secreto nadie puede fabricar una firma válida.<p class="explica">Correcto. Por eso no se guardan datos sensibles en él y el secreto debe ser largo y aleatorio.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Subiste por error tu <code>.env</code> con la clave de la API de pagos a un repositorio público. ¿Qué haces primero?</p>
+      <ol class="opciones">
+        <li>Revocar esa clave en el servicio de pagos y crear una nueva.<p class="explica">Correcto. Hay que suponer que alguien ya la copió; hay programas que buscan claves en GitHub minutos después de cada envío.</p></li>
+        <li>Borrar el archivo en un commit nuevo.<p class="explica">El archivo sigue en el historial, y la clave sigue funcionando.</p></li>
+        <li>Hacer privado el repositorio.<p class="explica">Ayuda para el futuro, pero no deshace las copias que ya se hicieron.</p></li>
+        <li>Añadir <code>.env</code> al <code>.gitignore</code>.<p class="explica">Es lo que había que hacer antes del primer commit. Ahora no saca la clave del historial ni la anula.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Al terminar una partida, el cliente de tu juego envía <code>{"monedasGanadas": 5000}</code>. ¿Qué debería hacer el servidor?</p>
+      <ol class="opciones">
+        <li>Aceptarlo si la petición llega con una sesión válida.<p class="explica">La sesión dice <em>quién</em> envía el mensaje, no que el número sea verdad.</p></li>
+        <li>Aceptarlo si no supera un máximo razonable.<p class="explica">Mejor que nada, pero cualquiera podría ganar el máximo en cada partida sin jugar.</p></li>
+        <li>No aceptar cantidades del cliente: calcular las monedas a partir de lo que el propio servidor sabe de la partida.<p class="explica">Correcto. El cliente envía intenciones; el servidor decide los resultados.</p></li>
+        <li>Aceptarlo, porque el código del juego lo escribiste tú.<p class="explica">Se ejecuta en la computadora de otra persona, que puede modificarlo o enviar peticiones sin usarlo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Cómo ayuda una cookie con <code>SameSite=Lax</code> contra un ataque CSRF?</p>
+      <ol class="opciones">
+        <li>Cifra la cookie para que la página trampa no pueda leerla.<p class="explica">La página trampa no necesita leer la cookie: le basta con que el navegador la envíe.</p></li>
+        <li>El navegador no la adjunta al <code>POST</code> que provoca otro sitio, así que el servidor no ve ninguna sesión.<p class="explica">Correcto. Sin cookie, la petición falsificada llega como anónima y se rechaza.</p></li>
+        <li>Hace que el servidor rechace las peticiones que llegan por HTTP.<p class="explica">Eso se parece más a lo que hacen <code>Secure</code> y HSTS.</p></li>
+        <li>No ayuda: contra el CSRF solo sirve CORS.<p class="explica">CORS controla quién lee respuestas. Un formulario <code>POST</code> normal ni siquiera pasa por su comprobación previa.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Según la guía SP 800-63B-4 del NIST, ¿qué regla de contraseñas es correcta?</p>
+      <ol class="opciones">
+        <li>Exigir al menos una mayúscula, un número y un símbolo.<p class="explica">La guía lo prohíbe: la gente responde de forma predecible y no se gana seguridad.</p></li>
+        <li>Obligar a cambiarla cada 90 días.<p class="explica">También lo prohíbe, salvo que haya indicios de que la contraseña se filtró.</p></li>
+        <li>Limitarla a 16 caracteres para que sea fácil de recordar.<p class="explica">Al contrario: hay que permitir al menos 64, para frases largas y gestores de contraseñas.</p></li>
+        <li>Pedir al menos 15 caracteres si es el único factor, y rechazar las contraseñas comunes o filtradas.<p class="explica">Correcto. La longitud y la lista de bloqueo protegen más que los símbolos obligatorios.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Por qué una passkey resiste el phishing?</p>
+      <ol class="opciones">
+        <li>Porque es mucho más larga que una contraseña.<p class="explica">La longitud no ayuda si tú misma se la entregas a un sitio falso. La clave está en otra parte.</p></li>
+        <li>Porque el servidor la guarda cifrada.<p class="explica">El servidor solo guarda la clave pública, que no sirve para entrar. Y eso protege frente a filtraciones, no frente al phishing.</p></li>
+        <li>Porque el navegador solo la usa en el dominio para el que se creó, y en un sitio falso no aparece.<p class="explica">Correcto. La comprobación del dominio la hace el navegador, no la persona, así que un sitio parecido no la engaña.</p></li>
+        <li>Porque cambia cada 30 segundos.<p class="explica">Eso describe los códigos TOTP de las apps de verificación, que sí se pueden pedir en una página falsa.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Modelo de amenazas</dt><dd>Ejercicio ordenado para decidir qué proteger en un sistema, de quién y por dónde podría atacarse, y qué defensas aplicar primero.</dd>
+    <dt>Frontera de confianza</dt><dd>Línea entre lo que controlas (tu servidor, tu base de datos) y lo que no (el navegador, la red, las herramientas de otras personas). Todo lo que la cruza hacia dentro se comprueba.</dd>
+    <dt>Principio de mínimo privilegio</dt><dd>Cada persona, programa o clave tiene solo los permisos imprescindibles para su tarea, durante el tiempo imprescindible.</dd>
+    <dt>Defensa en profundidad</dt><dd>Usar varias capas de protección independientes para que el fallo de una no deje el sistema abierto.</dd>
+    <dt>OWASP Top 10</dt><dd>Lista de los diez riesgos de seguridad más importantes en aplicaciones web, publicada por la fundación OWASP. La edición vigente es la de 2025.</dd>
+    <dt>Inyección</dt><dd>Ataque en el que un dato enviado por alguien termina interpretado como código por otro programa: una base de datos, una shell o el navegador.</dd>
+    <dt>Consulta parametrizada</dt><dd>Consulta SQL escrita con huecos (<code>?</code> o <code>$1</code>) cuyos valores se envían aparte, siempre como datos. Es la defensa principal contra la inyección SQL.</dd>
+    <dt>Escapar</dt><dd>Reemplazar los caracteres con significado especial en un lenguaje por una forma que solo significa «este carácter, tal cual», por ejemplo <code>&lt;</code> por <code>&amp;lt;</code> en HTML.</dd>
+    <dt>Sanear (sanitizar)</dt><dd>Analizar un contenido, como un fragmento de HTML, y quedarse solo con las partes de una lista de permitidos, eliminando el resto.</dd>
+    <dt>CSP (Content Security Policy)</dt><dd>Cabecera HTTP con la que el servidor indica al navegador de dónde puede cargar y ejecutar scripts y otros recursos. Frena la mayoría de los XSS aunque se cuelen.</dd>
+    <dt>Contaminación del prototipo</dt><dd>Ataque en el que una clave como <code>__proto__</code>, enviada por alguien, añade propiedades al prototipo compartido por todos los objetos de un programa JavaScript.</dd>
+    <dt>Autenticación</dt><dd>Comprobar quién es una persona o un programa, por ejemplo con una contraseña, una passkey o un segundo factor.</dd>
+    <dt>Autorización</dt><dd>Decidir qué puede hacer alguien cuya identidad ya se conoce, por ejemplo si puede ver un pedido o borrar un comentario.</dd>
+    <dt>Autenticación multifactor (MFA)</dt><dd>Exigir dos o más pruebas de tipos distintos (algo que sabes, que tienes o que eres) para iniciar sesión. Con dos factores se llama también verificación en dos pasos o 2FA.</dd>
+    <dt>Sal (salt)</dt><dd>Valor aleatorio, distinto para cada cuenta, que se mezcla con la contraseña antes de calcular su hash y se guarda junto a él. Hace que cada hash sea único e inutiliza las tablas precalculadas.</dd>
+    <dt>Argon2id</dt><dd>Algoritmo de hash para contraseñas, lento a propósito y exigente en memoria. Es la primera recomendación de OWASP; bcrypt y scrypt son alternativas.</dd>
+    <dt>Cookie de sesión</dt><dd>Cookie que guarda el identificador aleatorio de una sesión del servidor. Debe llevar <code>HttpOnly</code>, <code>Secure</code> y <code>SameSite</code>.</dd>
+    <dt>JWT (JSON Web Token)</dt><dd>Token formado por una cabecera, un contenido y una firma, codificados en base64url. Cualquiera puede leer su contenido; la firma impide modificarlo sin el secreto.</dd>
+    <dt>IDOR</dt><dd>Siglas en inglés de «referencia directa insegura a objetos»: acceder a un recurso ajeno cambiando su identificador (por ejemplo, en la URL) porque el servidor no comprueba a quién pertenece.</dd>
+    <dt>OAuth 2.0</dt><dd>Estándar de autorización delegada: permite que una app acceda a algo concreto de tu cuenta en otro servicio, con un token de acceso y sin conocer tu contraseña.</dd>
+    <dt>OpenID Connect (OIDC)</dt><dd>Capa sobre OAuth 2.0 para iniciar sesión con otra cuenta («Iniciar sesión con…»). Entrega un ID token, un JWT que dice quién eres.</dd>
+    <dt>Passkey (llave de acceso)</dt><dd>Credencial basada en un par de claves criptográficas ligado a un dominio. La clave privada no sale de tu dispositivo; el servidor guarda la pública. Resiste el phishing.</dd>
+    <dt>Política del mismo origen</dt><dd>Regla del navegador por la que el JavaScript de una página solo puede leer respuestas de su propio origen (mismo esquema, dominio y puerto).</dd>
+    <dt>CORS</dt><dd>Mecanismo de cabeceras HTTP con el que un servidor permite que páginas de otros orígenes lean sus respuestas. Lo aplica el navegador y no protege al servidor.</dd>
+    <dt>CSRF</dt><dd>Ataque en el que otro sitio hace que tu navegador envíe una petición a una web donde tienes la sesión iniciada, aprovechando que las cookies viajan solas.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación. Algunos muestran ataques en entornos de práctica: recuerda que solo se prueban donde tienes permiso.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=tdtAmH3ZSAI" data-canal="Migma" data-idioma="es" data-nivel="intro" data-duracion="16 min" data-por-que="La inyección SQL explicada con calma, desde la consulta pegada hasta por qué funciona.">Inyección SQL: El Hackeo Más Sencillo y Peligroso que Existe</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=lG2XpAgy0Ns" data-canal="El Pingüino de Mario" data-idioma="es" data-nivel="intro" data-duracion="16 min" data-por-que="Demostración de XSS en un laboratorio y de lo que puede hacer el código inyectado.">¿Qué es Cross-site Scripting (XSS)? Demostración y RIESGOS de esta VULNERABILIDAD</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=zGCjxCqxVY4" data-canal="Fazt Code" data-idioma="es" data-nivel="profundo" data-duracion="24 min" data-por-que="Qué es CORS, por qué aparece el error y cómo se configura en el servidor.">CORS - ¿Que es Cors y como solucionarlo?</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=UqnnhAZxRac" data-canal="midulive" data-idioma="es" data-nivel="curso" data-duracion="1 h 41 min" data-por-que="Clase completa: registro, contraseñas con hash, sesiones, cookies y JWT en Node.js, programando en directo.">Aprende Autenticación de Usuario, Sesión, Cookies y JWT con Node.js</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://top10.owasp.org/2025/es/">OWASP Top 10:2025 en español (OWASP)</a><p>Cada riesgo con su descripción, ejemplos de ataque y cómo prevenirlo.</p></li>
+    <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html">Password Storage Cheat Sheet (OWASP)</a><p>La referencia sobre cómo guardar contraseñas, con los parámetros recomendados para cada algoritmo. En inglés; la colección completa de hojas cubre casi todos los temas de esta estación.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/HTTP/Guides/CORS">Intercambio de recursos de origen cruzado, CORS (MDN)</a><p>Todas las cabeceras de CORS y cuándo hay comprobación previa, con ejemplos.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/HTTP/Guides/Cookies">Cookies HTTP (MDN)</a><p>Cómo se crean, envían y protegen las cookies, con sus atributos.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/Security">Seguridad web (MDN)</a><p>Punto de entrada a la documentación de seguridad de MDN: HTTPS, CSP, política del mismo origen y ataques comunes.</p></li>
+    <li><a href="https://portswigger.net/web-security">Web Security Academy (PortSwigger)</a><p>Laboratorios gratuitos en línea para practicar de forma legal cada tipo de ataque que viste aquí. En inglés.</p></li>
+  </ul>
 </section>

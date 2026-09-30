@@ -144,7 +144,7 @@ SELECT visitas FROM contador;</textarea>
         <text x="480" y="64">precio</text>
         <text x="570" y="64">anio</text>
       </g>
-      <g class="d-mono d-tenue" style="font-size:12px">
+      <g class="d-mono d-tenue" style="font-size:11px">
         <text x="110" y="81" text-anchor="middle">INTEGER</text>
         <text x="150" y="81">TEXT NOT NULL</text>
         <text x="350" y="81">TEXT</text>
@@ -262,7 +262,7 @@ id INT AUTO_INCREMENT PRIMARY KEY</code></pre>
     </table>
   </div>
   <aside class="senal clave">
-    <p>La base de datos es la última línea de defensa. Tu API debería validar los datos antes de guardarlos (lo viste en la Estación 29), pero el código tiene errores y a veces hay varios programas escribiendo en la misma base. Las restricciones se cumplen siempre, venga el dato de donde venga.</p>
+    <p>La base de datos es la última línea de defensa. Tu API debería validar los datos antes de guardarlos (lo viste en la <a href="29-backend.html#validar">Estación 29</a>), pero el código tiene errores y a veces hay varios programas escribiendo en la misma base. Las restricciones se cumplen siempre, venga el dato de donde venga.</p>
   </aside>
 
   <h3>Insertar filas</h3>
@@ -439,7 +439,7 @@ SELECT nombre, COALESCE(email, 'sin correo') AS contacto FROM clientes;</textare
   </div>
   <p>Solo aparecen dos resultados: la primera consulta no devolvió ninguna fila, así que no hay nada que mostrar. La segunda usa <code>IS NULL</code>, el operador correcto (su contrario es <code>IS NOT NULL</code>). La tercera usa <code>COALESCE</code>, una función que devuelve el primero de sus argumentos que no sea <code>NULL</code>: es la forma de mostrar «sin correo» en vez de un hueco.</p>
   <aside class="senal error">
-    <p>Escribir <code>= NULL</code> o <code>&lt;&gt; NULL</code>. No dan error: simplemente no devuelven nada, y crees que no hay datos. Para preguntar por la falta de valor usa siempre <code>IS NULL</code> o <code>IS NOT NULL</code>.</p>
+    <p>Escribir <code>= NULL</code> o <code>&lt;&gt; NULL</code>. No dan error: no devuelven nada, y crees que no hay datos. Para preguntar por la falta de valor usa siempre <code>IS NULL</code> o <code>IS NOT NULL</code>.</p>
   </aside>
   <p><code>NULL</code> también se contagia en los cálculos: <code>5 + NULL</code> es <code>NULL</code>, y <code>'Hola ' || NULL</code> también. Tiene sentido: si no sabes cuánto vale algo, tampoco sabes cuánto vale ese algo más 5. Al ordenar, SQLite y MySQL ponen los <code>NULL</code> al principio en orden ascendente y PostgreSQL, al final. Si te importa, dilo tú: <code>ORDER BY email NULLS LAST</code> funciona en SQLite y en PostgreSQL.</p>
   <aside class="senal oficio">
@@ -449,7 +449,7 @@ SELECT nombre, COALESCE(email, 'sin correo') AS contacto FROM clientes;</textare
 
 <section id="cambiar" data-parada="Cambiar y transacciones">
   <h2>Cambiar datos con cuidado</h2>
-  <p>Ya sabes crear filas y leerlas. Cambiarlas y borrarlas es igual de fácil, y justo por eso es peligroso: una sola línea puede modificar un millón de filas, y la base de datos no pregunta «¿estás seguro?». En esta sección aprenderás las dos instrucciones y las redes de seguridad que usan los equipos profesionales.</p>
+  <p>Ya sabes crear filas y leerlas. Cambiarlas y borrarlas se hace con instrucciones igual de cortas, y justo por eso es peligroso: una sola línea puede modificar un millón de filas, y la base de datos no pregunta «¿estás seguro?». En esta sección aprenderás las dos instrucciones y las redes de seguridad que usan los equipos profesionales.</p>
 
   <h3>UPDATE: cambiar filas</h3>
   <p><code>UPDATE</code> cambia los valores de las filas que cumplen el <code>WHERE</code>. En <code>SET</code> escribes qué columnas cambian y su valor nuevo, que puede calcularse a partir del actual:</p>
@@ -1193,10 +1193,11 @@ ZRANGE ranking 0 2 REV WITHSCORES</code></pre>
   <div class="traza" data-titulo="Node.js y SQLite, línea a línea" data-rotulo-memoria="Variables">
     <pre><code class="language-js">import { DatabaseSync } from "node:sqlite";
 const db = new DatabaseSync("juego.db");
-db.exec(`CREATE TABLE IF NOT EXISTS jugadores (
-  id INTEGER PRIMARY KEY,
-  nombre TEXT NOT NULL,
-  puntos INTEGER NOT NULL)`);
+db.exec(`
+  CREATE TABLE IF NOT EXISTS jugadores (
+    id INTEGER PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    puntos INTEGER NOT NULL)`);
 const insertar = db.prepare(
   "INSERT INTO jugadores (nombre, puntos) VALUES (?, ?)");
 const info = insertar.run("Ana", 120);
@@ -1208,13 +1209,13 @@ db.close();</code></pre>
     <script type="application/json">[
       {"linea": 1, "vars": {}, "nota": "Importa DatabaseSync del módulo node:sqlite. El prefijo node: indica que es un módulo que viene con Node; no está en npm."},
       {"linea": 2, "vars": {"db": "conexión con juego.db"}, "nota": "Abre el archivo juego.db, o lo crea vacío si no existe. Todo lo que hagas con db se guarda en ese archivo. Con \":memory:\" en lugar del nombre, la base viviría solo en memoria."},
-      {"linea": 6, "vars": {"db": "conexión con juego.db"}, "nota": "exec ejecuta SQL que no devuelve filas. IF NOT EXISTS evita un error la segunda vez que arranques el programa, cuando la tabla ya exista."},
-      {"linea": 8, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos"}, "nota": "prepare prepara la consulta una vez y la deja lista para usarla muchas veces. Cada ? es un hueco para un valor que llegará después: un parámetro."},
-      {"linea": 9, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }"}, "nota": "run rellena los huecos con \"Ana\" y 120, en orden, y ejecuta. Devuelve cuántas filas cambiaron y el id que recibió la fila nueva."},
-      {"linea": 10, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }"}, "nota": "La misma consulta preparada se reutiliza con otros valores. Leo recibe el id 2."},
-      {"linea": 12, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }", "ranking": "[ { nombre: 'Ana', puntos: 120 }, { nombre: 'Leo', puntos: 90 } ]"}, "nota": "all devuelve todas las filas como un array de objetos: uno por fila, con las columnas como propiedades. get devolvería solo la primera fila, o undefined si no hay ninguna."},
-      {"linea": 13, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }", "ranking": "[ { nombre: 'Ana', puntos: 120 }, { nombre: 'Leo', puntos: 90 } ]"}, "salida": "1 Ana", "nota": "Desde aquí son datos normales de JavaScript: un número y un array de objetos, como los de la Estación 11."},
-      {"linea": 14, "vars": {"insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }", "ranking": "[ { nombre: 'Ana', puntos: 120 }, { nombre: 'Leo', puntos: 90 } ]"}, "nota": "close cierra la conexión. Los datos ya están en juego.db: si ejecutas el programa otra vez, Ana y Leo seguirán ahí (y se añadirán de nuevo, porque ninguna regla lo impide)."}
+      {"linea": 7, "vars": {"db": "conexión con juego.db"}, "nota": "exec ejecuta SQL que no devuelve filas. IF NOT EXISTS evita un error la segunda vez que arranques el programa, cuando la tabla ya exista."},
+      {"linea": 9, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos"}, "nota": "prepare prepara la consulta una vez y la deja lista para usarla muchas veces. Cada ? es un hueco para un valor que llegará después: un parámetro."},
+      {"linea": 10, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }"}, "nota": "run rellena los huecos con \"Ana\" y 120, en orden, y ejecuta. Devuelve cuántas filas cambiaron y el id que recibió la fila nueva."},
+      {"linea": 11, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }"}, "nota": "La misma consulta preparada se reutiliza con otros valores. Leo recibe el id 2."},
+      {"linea": 13, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }", "ranking": "[ { nombre: 'Ana', puntos: 120 }, { nombre: 'Leo', puntos: 90 } ]"}, "nota": "all devuelve todas las filas como un array de objetos: uno por fila, con las columnas como propiedades. get devolvería solo la primera fila, o undefined si no hay ninguna."},
+      {"linea": 14, "vars": {"db": "conexión con juego.db", "insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }", "ranking": "[ { nombre: 'Ana', puntos: 120 }, { nombre: 'Leo', puntos: 90 } ]"}, "salida": "1 Ana", "nota": "Desde aquí son datos normales de JavaScript: un número y un array de objetos, como los de la Estación 11."},
+      {"linea": 15, "vars": {"insertar": "consulta preparada con 2 huecos", "info": "{ changes: 1, lastInsertRowid: 1 }", "ranking": "[ { nombre: 'Ana', puntos: 120 }, { nombre: 'Leo', puntos: 90 } ]"}, "nota": "close cierra la conexión. Los datos ya están en juego.db: si ejecutas el programa otra vez, Ana y Leo seguirán ahí (y se añadirán de nuevo, porque ninguna regla lo impide)."}
     ]</script>
   </div>
   <p>Para probarlo en tu computadora, guarda el código como <code>juego.js</code> dentro de un proyecto cuyo <code>package.json</code> tenga <code>"type": "module"</code> (lo viste en la Estación 29) y ejecútalo:</p>
@@ -1225,7 +1226,7 @@ db.close();</code></pre>
   <aside class="senal nota" data-titulo="Síncrono o asíncrono">
     <p><code>DatabaseSync</code>, como su nombre indica, es <strong>síncrono</strong>: mientras la consulta se ejecuta, tu programa espera y no atiende nada más. Con SQLite suele durar microsegundos, porque el archivo está en la misma máquina, y por eso <code>better-sqlite3</code> también funciona así. Pero una consulta muy pesada bloquearía el bucle de eventos que viste en la <a href="29-backend.html#node">Estación 29</a>. Las librerías de PostgreSQL y MySQL son asíncronas: la base de datos está en otra máquina, así que se usan con <code>await</code>.</p>
   </aside>
-  <p>Con PostgreSQL, el código se parece mucho. La dirección de la base, con su usuario y contraseña, llega en una variable de entorno para no escribir secretos en el código, y los huecos se escriben <code>$1</code>, <code>$2</code>… en lugar de <code>?</code>:</p>
+  <p>Con PostgreSQL, el código se parece mucho. La dirección de la base, con su usuario y contraseña, llega en una variable de entorno para no escribir secretos en el código (<a href="29-backend.html#config">Estación 29</a>), y los huecos se escriben <code>$1</code>, <code>$2</code>… en lugar de <code>?</code>:</p>
   <pre><code class="language-js">import pg from "pg";
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -1288,7 +1289,7 @@ console.log(rows);   // [ { nombre: 'Ana', puntos: 120 } ]</code></pre>
     </figcaption>
   </figure>
 
-  <p>Este ataque se llama <strong>inyección SQL</strong> (en inglés, <em>SQL injection</em>): meter código SQL a través de un dato. Lleva más de veinticinco años en las listas de los fallos de seguridad más graves y sigue apareciendo en aplicaciones reales. Compruébalo sin riesgo. Primero, la función que arma la consulta pegando textos. <strong>Predice</strong> las tres líneas:</p>
+  <p>Este ataque se llama <strong>inyección SQL</strong> (en inglés, <em>SQL injection</em>): meter código SQL a través de un dato. Se describió públicamente por primera vez en 1998, y todavía hoy figura en las listas de los fallos de seguridad más graves, como el OWASP Top 10, porque sigue apareciendo en aplicaciones reales. Compruébalo sin riesgo. Primero, la función que arma la consulta pegando textos. <strong>Predice</strong> las tres líneas:</p>
   <div class="taller" id="taller-inyeccion-js" data-titulo="Predice: la consulta que arma tu código">
     <textarea class="taller-codigo">function consultaPegada(nombre) {
   return "SELECT fecha, juego FROM compras WHERE cliente = '" + nombre + "'";
@@ -1301,14 +1302,14 @@ console.log(consultaPegada("Bernardo O'Higgins"));</textarea>
   <p>La segunda línea es la consulta del ataque. La tercera muestra que no hace falta mala intención para romperla: un apellido con apóstrofo deja una comilla sin cerrar y la consulta falla. Ahora ejecuta la consulta del ataque contra una tabla de verdad:</p>
   <div class="taller" data-modo="sql" id="taller-inyeccion-sql" data-titulo="Ejecuta la consulta inyectada">
     <script type="text/plain" class="taller-preparacion">CREATE TABLE compras (id INTEGER PRIMARY KEY, cliente TEXT NOT NULL, fecha TEXT NOT NULL, juego TEXT NOT NULL);
-INSERT INTO compras (cliente, fecha, juego) VALUES ('Ana', '2026-09-01', 'Bosque Eterno'), ('Ana', '2026-09-03', 'Mazmorra 64'), ('Luis', '2026-09-04', 'Cohete Loco'), ('Sofía', '2026-09-05', 'Bosque Eterno'), ('Ana', '2026-09-15', 'Puzle Cuántico'), ('Luis', '2026-09-20', 'Mazmorra 64');</script>
+INSERT INTO compras (cliente, fecha, juego) VALUES ('Ana', '2026-09-01', 'Bosque Eterno'), ('Ana', '2026-09-03', 'Mazmorra 64'), ('Luis', '2026-09-04', 'Cohete Loco'), ('Sofía', '2026-09-05', 'Bosque Eterno'), ('Sofía', '2026-09-10', 'Neón Runner'), ('Marta', '2026-09-12', 'Reino de Hielo'), ('Ana', '2026-09-15', 'Puzle Cuántico'), ('Luis', '2026-09-20', 'Mazmorra 64');</script>
     <textarea class="taller-codigo">-- Lo que tu API quería: las compras de una persona
 SELECT fecha, juego FROM compras WHERE cliente = 'Ana';
 
 -- Lo que armó con el texto de la atacante
 SELECT fecha, juego FROM compras WHERE cliente = 'x' OR '1'='1';</textarea>
   </div>
-  <p>La primera devuelve 3 filas; la segunda, las 6 de la tabla: los datos de todos los clientes. La defensa es la <strong>consulta parametrizada</strong>, la que ya usaste en la traza: escribes la consulta con huecos y pasas los valores por separado. La base de datos nunca los interpreta como código.</p>
+  <p>La primera devuelve 3 filas; la segunda, las 8 de la tabla: los datos de todos los clientes. La defensa es la <strong>consulta parametrizada</strong>, la que ya usaste en la traza: escribes la consulta con huecos y pasas los valores por separado. La base de datos nunca los interpreta como código.</p>
   <div class="comparar">
     <div>
       <p class="comparar-rotulo mal">Vulnerable</p>
@@ -1377,12 +1378,12 @@ const top = await prisma.jugador.findMany({
       <tbody>
         <tr><td>SQL directo</td><td>Control total; ves exactamente qué se ejecuta; nada extra que aprender</td><td>Sin tipos automáticos; convertir filas a objetos a mano; si concatenas, riesgo de inyección</td></tr>
         <tr><td>Constructor de consultas</td><td>Tipos de TypeScript; consultas que se arman por partes; parámetros automáticos</td><td>Otra API que aprender; lo muy complejo a veces se escribe mejor en SQL</td></tr>
-        <tr><td>ORM</td><td>Muy productivo; relaciones fáciles; suele traer migraciones</td><td>Esconde el SQL: cuando algo va lento, cuesta ver por qué</td></tr>
+        <tr><td>ORM</td><td>Muy productivo; relaciones cómodas de consultar; suele traer migraciones</td><td>Esconde el SQL: cuando algo va lento, cuesta ver por qué</td></tr>
       </tbody>
     </table>
   </div>
   <aside class="senal ojo" data-titulo="El problema N+1">
-    <p>Con un ORM es fácil escribir sin darte cuenta: «trae los 100 clientes» y, dentro de un bucle, «trae las compras de este cliente». Son 1 + 100 consultas donde bastaba una con <code>JOIN</code>. Se llama <strong>problema N+1</strong> y es la causa más común de apps lentas con ORM. Los ORMs ofrecen formas de cargar las relaciones de una vez (en Prisma, <code>include</code>); para detectarlo, activa el registro de las consultas que genera tu ORM y cuéntalas.</p>
+    <p>Con un ORM puedes escribir sin darte cuenta: «trae los 100 clientes» y, dentro de un bucle, «trae las compras de este cliente». Son 1 + 100 consultas donde bastaba una con <code>JOIN</code>. Se llama <strong>problema N+1</strong> y es la causa más común de apps lentas con ORM. Los ORMs ofrecen formas de cargar las relaciones de una vez (en Prisma, <code>include</code>); para detectarlo, activa el registro de las consultas que genera tu ORM y cuéntalas.</p>
   </aside>
   <aside class="senal clave">
     <p>Aprende SQL antes que cualquier ORM. Un ORM genera SQL, y el día que una consulta vaya lenta o devuelva algo raro, tendrás que leer ese SQL para entender qué pasa. Además, los ORMs cambian cada pocos años; SQL lleva cincuenta.</p>
@@ -1414,7 +1415,7 @@ ALTER TABLE jugadores ADD COLUMN pais TEXT;</code></pre>
 var api = sistema["juego-api"];
 if (!api || !api.migraciones) return "La carpeta juego-api/migraciones ya no existe. Pulsa «Reiniciar» para empezar de nuevo.";
 var m = api.migraciones;
-if (m["001_crear_jugadores.sql"] === undefined || m["001_crear_jugadores.sql"].indexOf("CREATE TABLE jugadores") === -1) return "La migración 001 cambió o desapareció. Una migración ya aplicada no se toca: pulsa «Reiniciar».";
+if (m["001_crear_jugadores.sql"] === undefined || m["001_crear_jugadores.sql"].trim() !== "CREATE TABLE jugadores (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, puntos INTEGER NOT NULL DEFAULT 0);") return "La migración 001 cambió o desapareció. Una migración ya aplicada no se toca: pulsa «Reiniciar».";
 if (m["002_agregar_pais.sql"] === undefined) return "Paso 2: crea 002_agregar_pais.sql dentro de migraciones con echo y >.";
 if (!/ALTER TABLE\s+jugadores\s+ADD COLUMN\s+pais/i.test(m["002_agregar_pais.sql"])) return "002_agregar_pais.sql debería contener: ALTER TABLE jugadores ADD COLUMN pais TEXT;";
 if (m["003_indice_puntos.sql"] === undefined) return "Paso 3: crea 003_indice_puntos.sql con el CREATE INDEX.";
@@ -1836,19 +1837,19 @@ ORDER BY ventas DESC, j.titulo;</code></pre>
   <div class="taller" data-modo="sql" id="taller-proyecto" data-titulo="Proyecto: la base de datos de tu juego" data-exito="Tu base de datos tiene tablas relacionadas, reglas, un índice, transacciones y consultas. Es un diseño real: puedes llevarlo tal cual a tu computadora.">
     <textarea class="taller-codigo">PRAGMA foreign_keys = ON;
 
--- 1. Crea las cuatro tablas: jugadores, partidas, logros y jugador_logros
+-- Paso 2. Crea las cuatro tablas: jugadores, partidas, logros y jugador_logros
 
 
--- 2. Crea un índice sobre partidas (jugador_id)
+-- Paso 3. Crea un índice sobre partidas (jugador_id)
 
 
--- 3. Carga los datos de ejemplo dentro de una transacción (BEGIN … COMMIT)
+-- Paso 4. Carga los datos de ejemplo dentro de una transacción (BEGIN … COMMIT)
 
 
--- 4. Un jugador supera el nivel 3 y gana dos logros: todo en otra transacción
+-- Paso 5. Un jugador supera el nivel 3 y gana dos logros: todo en otra transacción
 
 
--- 5. Consultas: ranking, logros por jugador y jugadores sin partidas
+-- Paso 6. Consultas: ranking, logros por jugador y jugadores sin partidas
 </textarea>
     <script type="text/plain" class="taller-verificar">
 if (!/PRAGMA\s+foreign_keys\s*=\s*ON/i.test(codigo)) return "Deja la primera línea, PRAGMA foreign_keys = ON;, para que SQLite compruebe las claves foráneas.";
@@ -1866,7 +1867,7 @@ return true;
   <details class="solucion"><summary>Ver una solución de referencia</summary>
     <pre><code class="language-sql">PRAGMA foreign_keys = ON;
 
--- 1. Tablas
+-- Paso 2. Tablas
 CREATE TABLE jugadores (
   id     INTEGER PRIMARY KEY,
   nombre TEXT NOT NULL UNIQUE,
@@ -1891,10 +1892,10 @@ CREATE TABLE jugador_logros (
   PRIMARY KEY (jugador_id, logro_id)
 );
 
--- 2. Índice para los JOIN entre partidas y jugadores
+-- Paso 3. Índice para los JOIN entre partidas y jugadores
 CREATE INDEX idx_partidas_jugador ON partidas (jugador_id);
 
--- 3. Datos de ejemplo, en una sola transacción
+-- Paso 4. Datos de ejemplo, en una sola transacción
 BEGIN;
 INSERT INTO jugadores (nombre, pais) VALUES
   ('Ana', 'Colombia'), ('Leo', 'Perú'), ('Sol', 'México'), ('Iker', 'Chile');
@@ -1912,14 +1913,14 @@ INSERT INTO jugador_logros (jugador_id, logro_id, fecha) VALUES
   (2, 1, '2026-09-02'), (3, 1, '2026-09-03'), (3, 2, '2026-09-04');
 COMMIT;
 
--- 4. Leo supera el nivel 3 con 820 puntos y gana dos logros
+-- Paso 5. Leo supera el nivel 3 con 820 puntos y gana dos logros
 BEGIN;
 INSERT INTO partidas (jugador_id, nivel, puntos, fecha) VALUES (2, 3, 820, '2026-09-07');
 INSERT INTO jugador_logros (jugador_id, logro_id, fecha) VALUES (2, 2, '2026-09-07');
 INSERT INTO jugador_logros (jugador_id, logro_id, fecha) VALUES (2, 3, '2026-09-07');
 COMMIT;
 
--- 5a. Ranking: los 3 mejores según su récord
+-- Paso 6a. Ranking: los 3 mejores según su récord
 SELECT j.nombre, MAX(p.puntos) AS record
 FROM partidas AS p
 JOIN jugadores AS j ON j.id = p.jugador_id
@@ -1927,14 +1928,14 @@ GROUP BY j.id, j.nombre
 ORDER BY record DESC
 LIMIT 3;
 
--- 5b. Logros por jugador, incluidos los que no tienen ninguno
+-- Paso 6b. Logros por jugador, incluidos los que no tienen ninguno
 SELECT j.nombre, COUNT(jl.logro_id) AS logros
 FROM jugadores AS j
 LEFT JOIN jugador_logros AS jl ON jl.jugador_id = j.id
 GROUP BY j.id, j.nombre
 ORDER BY logros DESC, j.nombre;
 
--- 5c. Jugadores que nunca jugaron
+-- Paso 6c. Jugadores que nunca jugaron
 SELECT nombre
 FROM jugadores AS j
 WHERE NOT EXISTS (SELECT 1 FROM partidas AS p WHERE p.jugador_id = j.id);</code></pre>
@@ -1961,7 +1962,7 @@ app.get("/api/ranking", (req, res) =&gt; {
 });
 app.listen(3000);</code></pre>
   <p>Visita <code>http://localhost:3000/api/ranking?limite=3</code> o pruébalo con <code>curl</code>. Fíjate en que el límite que llega en la URL viaja como parámetro, nunca pegado en el SQL, y en que se acota a un máximo para que nadie pida un millón de filas.</p>
-  <p><strong>Para ir más allá:</strong> añade una ruta <code>POST /api/partidas</code> que guarde una partida validando los datos; usa tablas <code>STRICT</code>; guarda solo el récord de cada jugador con <code>INSERT … ON CONFLICT (jugador_id) DO UPDATE</code> (se llama <em>upsert</em> y lo explica la documentación de SQLite); o pasa el proyecto a PostgreSQL y comprueba cuántas líneas tienes que cambiar.</p>
+  <p><strong>Para ir más allá:</strong> añade una ruta <code>POST /api/partidas</code> que guarde una partida validando los datos; usa tablas <code>STRICT</code>; crea una tabla <code>records</code> con <code>jugador_id</code> como clave primaria y actualiza el récord de cada jugador con <code>INSERT … ON CONFLICT (jugador_id) DO UPDATE</code>, que inserta la fila si no existe y la actualiza si ya existe (se llama <em>upsert</em> y lo explica la documentación de SQLite); o pasa el proyecto a PostgreSQL y comprueba cuántas líneas tienes que cambiar.</p>
 </section>
 
 <section id="autoevaluacion" data-parada="Autoevaluación">
@@ -1982,7 +1983,7 @@ app.listen(3000);</code></pre>
       <ol class="opciones">
         <li>Ninguna fila.<p class="explica">Correcto. Comparar con <code>NULL</code> da «desconocido», nunca verdadero. Hay que usar <code>IS NULL</code>.</p></li>
         <li>Los dos clientes sin correo.<p class="explica">Es lo que casi todo el mundo espera, y por eso es un error tan común. Eso lo hace <code>WHERE email IS NULL</code>.</p></li>
-        <li>Un error de sintaxis.<p class="explica">La consulta es válida y se ejecuta; simplemente no devuelve nada. Por eso el error pasa desapercibido.</p></li>
+        <li>Un error de sintaxis.<p class="explica">La consulta es válida y se ejecuta, pero no devuelve nada. Por eso el error pasa desapercibido.</p></li>
         <li>Todos los clientes.<p class="explica">No: la condición no es verdadera para ninguna fila.</p></li>
       </ol>
     </div>
@@ -2068,4 +2069,57 @@ app.listen(3000);</code></pre>
       </ol>
     </div>
   </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Base de datos</dt><dd>Colección de datos organizada y guardada de forma permanente, pensada para consultarse y modificarse de forma segura.</dd>
+    <dt>Sistema gestor de bases de datos (SGBD)</dt><dd>Programa que administra una base de datos, como SQLite, PostgreSQL o MySQL. En inglés, <em>database management system</em> (DBMS).</dd>
+    <dt>SQL</dt><dd>Lenguaje declarativo estándar para crear, consultar y modificar bases de datos relacionales. De <em>Structured Query Language</em>.</dd>
+    <dt>Tabla</dt><dd>Estructura del modelo relacional que guarda un tipo de cosa en filas y columnas.</dd>
+    <dt>Fila (registro)</dt><dd>Una cosa concreta dentro de una tabla: un cliente, un juego, una compra.</dd>
+    <dt>Columna (campo)</dt><dd>Una propiedad que tienen todas las filas de una tabla, con nombre, tipo y restricciones.</dd>
+    <dt>Esquema</dt><dd>Descripción de las tablas de una base de datos: sus columnas, tipos, claves y reglas.</dd>
+    <dt>Clave primaria</dt><dd>Columna (o conjunto de columnas) cuyo valor identifica cada fila: no se repite y no puede faltar.</dd>
+    <dt>Clave foránea</dt><dd>Columna cuyo valor debe existir como clave primaria en otra tabla. Conecta tablas y evita filas huérfanas.</dd>
+    <dt>Restricción</dt><dd>Regla que la base de datos comprueba en cada cambio, como <code>NOT NULL</code>, <code>UNIQUE</code> o <code>CHECK</code>. En inglés, <em>constraint</em>.</dd>
+    <dt>NULL</dt><dd>Marca de «dato desconocido o inexistente». No es igual a nada, ni a otro <code>NULL</code>: se pregunta con <code>IS NULL</code>.</dd>
+    <dt>JOIN</dt><dd>Operación que combina filas de dos tablas según una condición. <code>INNER JOIN</code> muestra solo las parejas; <code>LEFT JOIN</code> conserva todas las filas de la izquierda.</dd>
+    <dt>Función de agregación</dt><dd>Función que resume muchas filas en un valor: <code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code>, <code>MAX</code>. Con <code>GROUP BY</code> se calcula por grupos.</dd>
+    <dt>Subconsulta</dt><dd>Consulta <code>SELECT</code> escrita entre paréntesis dentro de otra consulta.</dd>
+    <dt>Índice</dt><dd>Estructura ordenada (normalmente un árbol B) que permite encontrar filas sin recorrer toda la tabla. Acelera lecturas y hace algo más lentas las escrituras.</dd>
+    <dt>Transacción</dt><dd>Grupo de operaciones que se aplican todas o ninguna. Empieza con <code>BEGIN</code> y termina con <code>COMMIT</code> o <code>ROLLBACK</code>.</dd>
+    <dt>ACID</dt><dd>Las cuatro garantías de las transacciones: atomicidad, consistencia, aislamiento y durabilidad.</dd>
+    <dt>Normalización</dt><dd>Método para repartir los datos en tablas de modo que cada dato viva en un solo lugar. Se aplica por etapas llamadas formas normales (1FN, 2FN, 3FN).</dd>
+    <dt>Modelo entidad-relación</dt><dd>Forma de diseñar una base de datos con entidades, atributos y relaciones, que se dibuja en un diagrama antes de crear las tablas.</dd>
+    <dt>NoSQL</dt><dd>Nombre para las bases de datos que no usan tablas relacionales: de documentos, clave-valor, grafos, columnas anchas o vectoriales.</dd>
+    <dt>Inyección SQL</dt><dd>Ataque que mete código SQL a través de un dato que el programa pega dentro de una consulta.</dd>
+    <dt>Consulta parametrizada</dt><dd>Consulta escrita con huecos (<code>?</code> o <code>$1</code>) cuyos valores se envían por separado, de modo que nunca se interpretan como código.</dd>
+    <dt>ORM</dt><dd>Herramienta que permite trabajar con la base de datos mediante objetos y métodos, y genera el SQL por ti. De <em>object-relational mapping</em>.</dd>
+    <dt>Migración</dt><dd>Archivo numerado con un cambio del esquema de la base de datos, que se guarda en Git y se aplica en orden en todos los entornos.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de hacer los talleres, no antes. Te servirán para repasar con otras voces y otros ejemplos; algunos usan MySQL o PostgreSQL, así que verás pequeñas diferencias de dialecto que ya sabes reconocer.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=xz1fJ7M2g-o" data-canal="BettaTech" data-idioma="es" data-nivel="intro" data-duracion="25 min" data-por-que="Un repaso general de qué es una base de datos y de los distintos tipos que existen, ideal para asentar el mapa completo.">Todo lo que necesitas saber sobre Bases de Datos en 25 minutos</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=6of9yHaGC78" data-canal="midulive" data-idioma="es" data-nivel="intro" data-duracion="53 min" data-por-que="Una clase de SQL desde cero en menos de una hora, para repasar las consultas escribiéndolas junto al profesor.">Curso de SQL desde cero | Bases de Datos para principiantes</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=D_Alt-GY-xo" data-canal="Bluuweb" data-idioma="es" data-nivel="profundo" data-duracion="18 min" data-por-que="Otra explicación de las formas normales con un ejemplo distinto al de esta estación.">Normalización en bases de datos (1FN, 2FN, 3FN)</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=OuJerKzV5T0" data-canal="MoureDev by Brais Moure" data-idioma="es" data-nivel="curso" data-duracion="6 h 52 min" data-por-que="Un curso completo para cuando quieras practicar SQL durante horas con un motor instalado en tu computadora.">Curso COMPLETO de SQL y BASES DE DATOS Desde Cero para PRINCIPIANTES</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://www.sqlite.org/lang.html">SQL As Understood By SQLite (documentación oficial de SQLite)</a><p>La referencia de cada instrucción de SQLite, con diagramas de su sintaxis. En inglés. Consulta también sus páginas sobre claves foráneas y tipos de datos.</p></li>
+    <li><a href="https://www.postgresql.org/docs/current/tutorial.html">Tutorial de PostgreSQL (documentación oficial)</a><p>El tutorial del propio proyecto PostgreSQL: instalación, SQL básico y funciones avanzadas como transacciones y funciones de ventana. En inglés.</p></li>
+    <li><a href="https://nodejs.org/api/sqlite.html">SQLite en Node.js: módulo node:sqlite (documentación de Node.js)</a><p>La API completa de <code>DatabaseSync</code>, con su estado de estabilidad y los cambios de cada versión. Revísala para tu versión de Node. En inglés.</p></li>
+    <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html">SQL Injection Prevention Cheat Sheet (OWASP)</a><p>La guía de referencia para prevenir la inyección SQL: consultas parametrizadas, listas de valores permitidos y por qué no escapar a mano. En inglés.</p></li>
+    <li><a href="https://use-the-index-luke.com/es">Use The Index, Luke (Markus Winand)</a><p>Una guía gratuita sobre índices y rendimiento de SQL para programadores, con versión en español.</p></li>
+    <li><a href="https://sqlbolt.com/">SQLBolt</a><p>Lecciones cortas con ejercicios interactivos en el navegador para seguir practicando consultas. En inglés.</p></li>
+  </ul>
 </section>

@@ -87,7 +87,7 @@ export function ejecutarPython(codigo, verificacion) {
 const AYUDANTE_SQL = `
 import sqlite3, json, sys
 datos = json.loads(sys.stdin.read())
-db = sqlite3.connect(":memory:")
+db = sqlite3.connect(":memory:", isolation_level=None)  # sin transacciones implícitas, como sql.js
 res = []
 error = None
 try:

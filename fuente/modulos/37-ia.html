@@ -1,0 +1,284 @@
+<section id="ruta" data-parada="Lo que vas a lograr">
+  <h2>Lo que vas a lograr</h2>
+  <p class="entradilla">Hasta aquí has escrito cada línea de código tú. En esta estación vas a trabajar con un agente de inteligencia artificial que lee tu proyecto, edita archivos y ejecuta comandos: Claude Code. Bien usado, te ahorra horas de trabajo repetitivo y te enseña cosas nuevas. Mal usado, llena tu proyecto de código que nadie entiende, ni siquiera tú. La diferencia la marca el criterio, y ese criterio es justo lo que has construido en todas las estaciones anteriores.</p>
+  <ul class="objetivos">
+    <li>Explicar qué es un agente de programación, cómo trabaja en bucle y por qué a veces se equivoca con total seguridad.</li>
+    <li>Instalar Claude Code, iniciar una sesión y elegir el modo de permisos adecuado para cada tarea.</li>
+    <li>Escribir un <code>CLAUDE.md</code> que sirva de verdad y configurar permisos en <code>.claude/settings.json</code>.</li>
+    <li>Distinguir comandos con barra, skills, plugins, marketplaces y servidores MCP, e instalar cada uno.</li>
+    <li>Automatizar reglas con hooks (formatear, proteger secretos, exigir pruebas) y delegar revisiones en subagentes.</li>
+    <li>Trabajar con un flujo explorar → planificar → implementar → probar → revisar → commit, y revisar cada diff antes de aceptarlo.</li>
+    <li>Montar un kit para crear apps y juegos: context7, Playwright, hooks, subagentes de revisión, Impeccable y 21st.</li>
+    <li>Proteger tus secretos, reconocer la inyección de instrucciones y conocer los límites y la ética de programar con IA.</li>
+    <li>Usar la IA para aprender más, no menos: estilos de salida para aprender, pistas en lugar de soluciones y reglas personales.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="Antes de empezar">
+    <p>Esta estación reúne casi todo el curso. Necesitas moverte por la terminal y tener Node.js (<a href="05-herramientas.html">Estación 5: Tu taller</a>), manejar commits, ramas y <code>git diff</code> (<a href="24-git.html">Estación 24: Git y GitHub</a>), escribir pruebas automáticas (<a href="26-testing.html">Estación 26: Pruebas</a>), guardar configuración en variables de entorno (<a href="29-backend.html#config">Estación 29</a>) y proteger secretos (<a href="31-seguridad.html#secretos">Estación 31</a>). También te conviene releer <a href="01-bienvenida.html#ia">La IA: tutor, no piloto</a>, de la Estación 1: aquí damos el siguiente paso.</p>
+    <p>Cómo funciona un modelo de lenguaje por dentro (tokens, entrenamiento, atención) y cómo meter uno en tus propias apps lo viste en la <a href="41-modelos-lenguaje.html">Estación 41: Modelos de lenguaje en tus apps y juegos</a>. Aquí basta con una idea intuitiva, que repasamos en la primera sección.</p>
+    <p>Para usar Claude Code de verdad necesitas una cuenta de pago. Todos los talleres de esta página funcionan sin ella: simulan las piezas para que entiendas cómo encajan antes de gastar nada.</p>
+  </aside>
+  <aside class="senal ojo" data-titulo="Una herramienta que cambia cada semana">
+    <p>Claude Code publica versiones nuevas casi a diario. Esta estación describe la versión 2.1 de finales de septiembre de 2026. Comprueba la tuya con <code>claude --version</code> y, si algo no coincide, manda la <a href="https://code.claude.com/docs/es/overview">documentación oficial</a>, que también está en español. Las ideas de fondo (agente, instrucciones del proyecto, skills, MCP, hooks) cambian mucho más despacio y existen, con otros nombres, en otras herramientas de IA para programar.</p>
+  </aside>
+</section>
+
+<section id="agentes" data-parada="Qué es un agente">
+  <h2>De la IA que conversa a la IA que actúa</h2>
+  <p>En la Estación 1 usaste la IA como tutora dentro de un chat: tú preguntabas, ella respondía y tú decidías qué hacer con la respuesta. Un agente de programación va un paso más allá: no solo responde, también actúa. Abre tus archivos, los cambia, ejecuta tus pruebas y lee los errores. Para trabajar con algo así sin perder el control necesitas dos cosas: una idea clara de qué es y por qué falla, y unas reglas de trabajo. Esta sección te da lo primero.</p>
+
+  <h3>La idea mínima de cómo funciona un modelo</h3>
+  <p>Un <strong>modelo de lenguaje grande</strong> (en inglés, <em>large language model</em> o <strong>LLM</strong>) es un programa entrenado con enormes cantidades de texto para hacer una sola cosa: dado un texto, predecir cómo sigue. Trabaja con <strong>tokens</strong>, trozos de texto que pueden ser una palabra, parte de una palabra o un signo. Escribe su respuesta token a token, eligiendo cada vez uno probable según todo lo anterior. Claude, el modelo de Anthropic que usa Claude Code, es un LLM. En la <a href="41-modelos-lenguaje.html">Estación 41</a> tienes el detalle; para programar con él te bastan cuatro consecuencias:</p>
+  <ul>
+    <li><strong>Solo ve lo que está en su ventana de contexto.</strong> La <strong>ventana de contexto</strong> es todo el texto que el modelo tiene delante en un momento dado: sus instrucciones, la conversación, los archivos que leyó y la salida de los comandos que ejecutó. Lo que no está ahí, no existe para él. Tiene un tamaño máximo y, cuando se llena, el modelo trabaja peor.</li>
+    <li><strong>No recuerda nada entre conversaciones</strong>, salvo lo que se le vuelva a dar. Por eso existen archivos como <code>CLAUDE.md</code>, que verás más adelante.</li>
+    <li><strong>Su conocimiento tiene fecha.</strong> Aprendió de textos hasta una <strong>fecha de corte</strong>. Si una biblioteca cambió después, el modelo te propondrá la forma antigua con total naturalidad.</li>
+    <li><strong>Genera texto probable, no texto verdadero.</strong> Cuando no sabe algo, no se queda callado: completa con lo que suena bien. A eso se le llama <strong>alucinación</strong>, y sale con el mismo tono seguro que las respuestas correctas.</li>
+  </ul>
+  <aside class="senal analogia">
+    <p>Piensa en el autocompletado del teclado de tu teléfono, pero entrenado con una biblioteca entera y capaz de escribir párrafos coherentes. Igual que el teclado propone «nos vemos mañana» porque es lo habitual, no porque sepa tus planes, el modelo propone la función que suele aparecer en proyectos parecidos al tuyo. La analogía se queda corta en algo importante: un modelo actual razona en varios pasos, sigue instrucciones largas y encuentra errores sutiles. Pero el origen de sus fallos es el mismo: completa lo probable.</p>
+  </aside>
+  <aside class="senal clave">
+    <p>Un modelo no consulta la realidad: genera lo probable. Lo que lo acerca a la realidad son las herramientas que le das para comprobar: leer tus archivos de verdad, ejecutar tus pruebas, consultar la documentación actual. Casi todo lo que aprenderás en esta estación sirve para darle esas comprobaciones y para comprobar tú lo que hace.</p>
+  </aside>
+
+  <h3>Tres formas de programar con IA</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Forma</th><th scope="col">Qué hace</th><th scope="col">Quién ejecuta y comprueba</th></tr></thead>
+      <tbody>
+        <tr><td>Autocompletado en el editor</td><td>Sugiere la línea o el bloque que estás escribiendo. La aceptas con una tecla.</td><td>Tú. Solo ve el archivo abierto y lo que tiene alrededor.</td></tr>
+        <tr><td>Chat</td><td>Responde preguntas y propone código que tú copias y pegas.</td><td>Tú. No ve tu proyecto salvo lo que le pegues.</td></tr>
+        <tr><td>Agente</td><td>Lee tu proyecto, edita archivos, ejecuta comandos y repite hasta cumplir la tarea.</td><td>El agente ejecuta y comprueba dentro de los límites que le pones. Tú revisas el resultado.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Un <strong>agente</strong> es un modelo de lenguaje conectado a <strong>herramientas</strong> y metido en un bucle. Una herramienta (en inglés, <em>tool</em>) es una acción concreta que el modelo puede pedir: leer un archivo, editarlo, buscar texto, ejecutar un comando en la terminal. Fíjate en el verbo: el modelo solo <em>pide</em>. Quien ejecuta la acción de verdad es el programa que lo rodea, al que se llama <strong>arnés</strong> (en inglés, <em>harness</em>). Claude Code es un arnés: recibe la petición del modelo, comprueba si tiene permiso, ejecuta la herramienta y le devuelve el resultado. Esa separación es la que te permite poner límites.</p>
+  <p>La documentación oficial describe el trabajo del agente en tres fases que se repiten: <strong>reunir contexto</strong>, <strong>actuar</strong> y <strong>verificar</strong>. Míralo con una tarea pequeña de un juego:</p>
+  <figure class="capsula" data-titulo="El bucle del agente">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 280" role="img" aria-label="Animación: una persona pide arreglar el marcador de un juego. El agente reúne contexto leyendo dos archivos, actúa editando el código, verifica ejecutando las pruebas, que fallan; vuelve a actuar con otra edición, verifica de nuevo y las pruebas pasan; al final entrega un informe y el diff para que la persona lo revise.">
+        <rect class="d-caja" x="12" y="16" width="196" height="92" rx="8"/>
+        <text class="d-rotulo" x="26" y="42">Tu petición</text>
+        <text x="26" y="68" style="font-size:15px">«El marcador suma</text>
+        <text x="26" y="88" style="font-size:15px">mal: arréglalo»</text>
+        <rect class="d-caja" x="12" y="136" width="196" height="122" rx="8" data-clases="7:d-acento-trazo"/>
+        <text class="d-rotulo" x="26" y="162">Lo que revisas tú</text>
+        <text class="d-tenue d-peq" x="26" y="188" data-pasos="1-6">(esperando…)</text>
+        <g data-pasos="7-" class="d-peq">
+          <text x="26" y="190">juego.js: 1 línea cambiada</text>
+          <text x="26" y="212">pruebas: 3 de 3 pasan</text>
+          <text x="26" y="234">el commit lo decides tú</text>
+        </g>
+        <g data-pasos="2-">
+          <path class="d-flecha" d="M208 40 H290"/>
+          <path class="d-tinta" d="M300 40 l-12 -6 v12 z"/>
+        </g>
+        <rect class="d-caja" x="300" y="16" width="180" height="46" rx="23" data-clases="2:d-acento; 3:"/>
+        <text x="390" y="45" text-anchor="middle" data-clases="2:d-sobre-acento; 3:">1 · Reunir contexto</text>
+        <rect class="d-caja" x="420" y="142" width="150" height="46" rx="23" data-clases="3:d-acento; 4:; 5:d-acento; 6:"/>
+        <text x="495" y="171" text-anchor="middle" data-clases="3:d-sobre-acento; 4:; 5:d-sobre-acento; 6:">2 · Actuar</text>
+        <rect class="d-caja" x="246" y="142" width="150" height="46" rx="23" data-clases="4:d-mal; 5:; 6:d-ok; 7:"/>
+        <text x="321" y="171" text-anchor="middle" data-clases="4:d-sobre-mal; 5:; 6:d-sobre-ok; 7:">3 · Verificar</text>
+        <path class="d-flecha" d="M440 62 L474 132"/>
+        <path class="d-tinta" d="M478 140 L467.2 132 L478 126.6 z"/>
+        <path class="d-flecha" d="M420 165 H408"/>
+        <path class="d-tinta" d="M396 165 l12 -6 v12 z"/>
+        <path class="d-flecha" d="M300 142 L334 74"/>
+        <path class="d-tinta" d="M338 66 L338 79.4 L327.2 74 z"/>
+        <text class="d-rotulo" x="385" y="118" text-anchor="middle" data-texto="1:; 2:vuelta 1; 5:vuelta 2; 7:2 vueltas">vuelta 1</text>
+        <g data-pasos="7-">
+          <path class="d-flecha" d="M246 165 H220"/>
+          <path class="d-tinta" d="M208 165 l12 -6 v12 z"/>
+        </g>
+        <rect class="d-caja-suave" x="596" y="16" width="112" height="172" rx="8"/>
+        <text class="d-rotulo d-peq" x="652" y="38" text-anchor="middle">Herramientas</text>
+        <rect class="d-caja" x="606" y="50" width="92" height="32" rx="6" data-clases="2:d-acento; 3:"/>
+        <text class="d-mono d-peq" x="652" y="71" text-anchor="middle" data-clases="2:d-sobre-acento; 3:">leer</text>
+        <rect class="d-caja" x="606" y="96" width="92" height="32" rx="6" data-clases="3:d-acento; 4:; 5:d-acento; 6:"/>
+        <text class="d-mono d-peq" x="652" y="117" text-anchor="middle" data-clases="3:d-sobre-acento; 4:; 5:d-sobre-acento; 6:">editar</text>
+        <rect class="d-caja" x="606" y="142" width="92" height="32" rx="6" data-clases="4:d-acento; 5:; 6:d-acento; 7:"/>
+        <text class="d-mono d-peq" x="652" y="163" text-anchor="middle" data-clases="4:d-sobre-acento; 5:; 6:d-sobre-acento; 7:">ejecutar</text>
+        <rect class="d-codigo" x="246" y="212" width="462" height="46" rx="6"/>
+        <text class="d-codigo-texto" x="260" y="241" style="font-size:14px" data-texto="1:Claude Code espera tu petición.; 2:[leer] juego.js y juego.test.js; 3:[editar] Math.round(puntos + extra); 4:[ejecutar] npm test → 1 prueba falla: da 105; 5:[editar] Number(puntos) + Number(extra); 6:[ejecutar] npm test → las 3 pruebas pasan; 7:Informe: qué cambió, por qué y cómo se comprobó">Claude Code espera tu petición.</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Le pides una tarea en lenguaje normal. Todavía no ha pasado nada: el modelo solo ha leído tu frase y lo que Claude Code carga al empezar.</li>
+        <li>Primero reúne contexto. El modelo pide leer <code>juego.js</code> y su prueba; Claude Code ejecuta la herramienta «leer» y le devuelve el contenido, que entra en su ventana de contexto.</li>
+        <li>Actúa: propone una edición y Claude Code la aplica. Este primer intento redondea el resultado, pero no ataca la causa: los puntos llegan como texto (<code>"10"</code>) y <code>+</code> concatena.</li>
+        <li data-duracion="6">Verifica: ejecuta <code>npm test</code>. Una prueba falla: <code>sumarPuntos("10", 5)</code> da 105. Sin esa prueba, el agente habría dado el trabajo por bueno, porque el cambio «parecía» razonable.</li>
+        <li>Con el mensaje de error en su contexto, vuelve a actuar: convierte los dos valores a número antes de sumar. Empieza la segunda vuelta del bucle.</li>
+        <li>Verifica otra vez y las tres pruebas pasan. El bucle termina porque tiene una señal clara de éxito, no porque el código tenga buena pinta.</li>
+        <li data-duracion="6">Te devuelve un informe y el diff. El bucle del agente termina aquí; el tuyo, no: revisas el cambio y decides si entra en un commit.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>El caso de la cápsula es el error de tipos que viste en la <a href="07-variables.html#conversiones">Estación 7</a>. Ahora lo vas a ver en un simulador. No es un modelo de verdad: sigue un guion fijo, pero reproduce el comportamiento que importa. Antes de pulsar «Ejecutar», <strong>predice</strong>: ¿cuántas vueltas dará el agente y con qué resultado termina? Después cambia <code>pruebas: true</code> por <code>pruebas: false</code>, o quita <code>"ejecutar"</code> de la lista, y vuelve a ejecutar.</p>
+  <div class="taller" id="taller-bucle" data-titulo="Predice y modifica: el agente con y sin pruebas">
+    <script type="text/plain" class="taller-preparacion">// ─── Simulador de un agente: sigue un guion fijo para mostrar el bucle. No hace falta que lo leas. ───
+function agente(tarea, opciones) {
+  var op = opciones || {};
+  var herramientas = op.herramientas || [];
+  var puede = function (h) { return herramientas.indexOf(h) !== -1; };
+  var codigo = "return puntos + extra;";
+  var versiones = {
+    "return puntos + extra;": function (p, e) { return p + e; },
+    "return Math.round(puntos + extra);": function (p, e) { return Math.round(p + e); },
+    "return Number(puntos) + Number(extra);": function (p, e) { return Number(p) + Number(e); }
+  };
+  var probar = function () {
+    var f = versiones[codigo];
+    var casos = [["10", 5, 15], [0, 0, 0], ["7", "3", 10]];
+    var fallo = casos.filter(function (c) { return f(c[0], c[1]) !== c[2]; })[0];
+    return fallo ? "falla: sumarPuntos(" + JSON.stringify(fallo[0]) + ", " + JSON.stringify(fallo[1]) + ") dio " + JSON.stringify(f(fallo[0], fallo[1])) + " y se esperaba " + fallo[2] : "pasan las 3 pruebas";
+  };
+  console.log("Tarea: " + tarea);
+  if (puede("leer")) console.log("[leer] juego.js: sumarPuntos(puntos, extra) { " + codigo + " }");
+  else console.log("[sin leer] no ve el código: trabaja con lo que imagina que hay");
+  var intentos = ["return Math.round(puntos + extra);", "return Number(puntos) + Number(extra);"];
+  for (var i = 0; i < intentos.length; i++) {
+    var vuelta = i + 1;
+    if (!puede("editar")) { console.log("[sin editar] solo puede sugerirte un cambio por escrito"); return "sin cambios en el proyecto"; }
+    codigo = intentos[i];
+    console.log("Vuelta " + vuelta + " [editar] " + codigo);
+    if (puede("ejecutar") && op.pruebas) {
+      var r = probar();
+      console.log("Vuelta " + vuelta + " [ejecutar] npm test: " + r);
+      if (r.indexOf("pasan") === 0) return "terminado tras " + vuelta + " vueltas, con las pruebas en verde";
+    } else {
+      console.log("Vuelta " + vuelta + " sin forma de comprobar: el cambio parece razonable y da la tarea por terminada");
+      return "terminado sin verificar (si lo compruebas tú: " + probar() + ")";
+    }
+  }
+  return "se agotaron los intentos";
+}
+</script>
+    <textarea class="taller-codigo">// agente() está preparado en esta página. Tú decides qué herramientas tiene.
+const resultado = agente("El marcador suma mal los puntos: arréglalo", {
+  herramientas: ["leer", "editar", "ejecutar"],
+  pruebas: true
+});
+console.log("Resultado:", resultado);</textarea>
+  </div>
+  <p>Con pruebas, el agente se equivoca en la primera vuelta, lo descubre y lo corrige solo. Sin pruebas, hace el mismo primer cambio, no tiene nada que le diga que está mal y termina tan tranquilo. Es exactamente lo que recomienda la guía oficial de buenas prácticas: dale al agente una forma de comprobar su trabajo (pruebas, un compilador, una captura de pantalla que comparar). Sin ella, la única señal de «terminado» es que el trabajo <em>parece</em> terminado, y el sistema de verificación pasas a ser tú.</p>
+  <aside class="senal oficio">
+    <p>Las personas que mejor trabajan con agentes invierten primero en comprobaciones: una batería de pruebas que se ejecuta en segundos, un comando de compilación, un linter. Cuanto más rápida y fiable es la comprobación, más trabajo puedes delegar sin miedo. Por eso la <a href="26-testing.html">Estación 26</a> es, en la práctica, la estación que más multiplica lo que puedes hacer con IA.</p>
+  </aside>
+
+  <h3>Claude Code</h3>
+  <p><strong>Claude Code</strong> es el agente de programación de Anthropic. Funciona en la terminal, como extensión de VS Code y de los editores de JetBrains, en una aplicación de escritorio y en el navegador (claude.ai/code). En todos los casos el bucle es el mismo; cambia dónde lo ves. En esta estación usamos la terminal, porque es donde se ve mejor qué está pasando y porque todo lo demás se configura con los mismos archivos.</p>
+  <p>Trae de serie herramientas para leer, buscar y editar archivos, ejecutar comandos, buscar en la web y consultar documentación. Todo lo que puedes hacer tú en la terminal, puede pedirlo él. Y ahí está la clave de la siguiente sección:</p>
+  <aside class="senal ojo">
+    <p>Los comandos que ejecuta un agente corren en tu computadora, con tus permisos de usuario. Puede borrar archivos, instalar paquetes o subir cambios a GitHub igual que tú. Por eso Claude Code tiene modos de permisos, reglas que bloquean acciones y puntos de control para deshacer. Aprende a usarlos antes de dejarle hacer tareas largas.</p>
+  </aside>
+</section>
+
+<section id="empezar" data-parada="Instalar y empezar">
+  <h2>Instalar Claude Code y primera sesión</h2>
+  <p>Instalarlo lleva unos minutos. Lo que de verdad cuesta es acostumbrarse a hablar con un programa que actúa, y decidir cuánta libertad le das. Empieza por lo práctico.</p>
+
+  <h3>Lo que necesitas</h3>
+  <ul>
+    <li><strong>Sistema</strong>: macOS 13 o posterior, Windows 10 (versión 1809) o posterior, o Linux (Ubuntu 20.04, Debian 10, Alpine 3.19 o posteriores). Al menos 4 GB de RAM y conexión a internet.</li>
+    <li><strong>Cuenta</strong>: una suscripción de pago de Claude (Pro, Max, Team o Enterprise) o una cuenta de la <strong>Consola de Claude</strong> (platform.claude.com), donde pagas por uso con créditos. El plan gratuito de claude.ai no incluye Claude Code. Los precios y los límites de uso cambian; consúltalos en la página oficial de precios antes de decidir.</li>
+    <li><strong>Un proyecto con Git</strong>. Técnicamente no es obligatorio, pero trabajar con un agente sin control de versiones es trabajar sin red.</li>
+  </ul>
+
+  <h3>Instalación</h3>
+  <ol class="pasos">
+    <li><div><p>Abre una terminal (lo aprendiste en la <a href="05-herramientas.html#terminal">Estación 5</a>) y ejecuta el instalador oficial de tu sistema. En macOS, Linux y WSL:</p>
+      <pre class="consola"><code><span class="prompt">$</span> curl -fsSL https://claude.ai/install.sh | bash</code></pre>
+      <p>En Windows, desde PowerShell:</p>
+      <pre class="consola"><code><span class="prompt">PS&gt;</span> irm https://claude.ai/install.ps1 | iex</code></pre>
+      <p>Esta instalación, llamada nativa, se actualiza sola en segundo plano. También existen <code>brew install --cask claude-code</code> (Homebrew) y <code>winget install Anthropic.ClaudeCode</code> (WinGet), pero esas dos no se actualizan solas.</p></div></li>
+    <li><div><p>Cierra la terminal, abre una nueva y comprueba que el programa existe. Si la respuesta es «command not found», la carpeta de instalación todavía no está en tu PATH: la guía oficial de solución de problemas explica cómo añadirla.</p>
+      <pre class="consola"><code><span class="prompt">$</span> claude --version
+<span class="salida">2.1.285 (Claude Code)</span>
+<span class="prompt">$</span> claude doctor</code></pre>
+      <p><code>claude doctor</code> revisa la instalación y tus archivos de configuración sin abrir una sesión. Tu número de versión será otro: lo importante es que responda.</p></div></li>
+    <li><div><p>Entra en la carpeta de un proyecto y arranca Claude Code. La primera vez se abre el navegador para que inicies sesión; después te pregunta si confías en esa carpeta. Di que sí solo en proyectos tuyos o que conoces: un proyecto puede traer configuración que ejecuta programas.</p>
+      <pre class="consola"><code><span class="prompt">$</span> cd ~/proyectos/marcador
+<span class="prompt">$</span> claude</code></pre></div></li>
+    <li><div><p>Empieza preguntando, no pidiendo cambios. Así ves cómo explora sin riesgo:</p>
+      <pre><code class="language-text">¿Qué hace este proyecto? ¿Cómo se ejecutan sus pruebas?</code></pre></div></li>
+  </ol>
+  <aside class="senal ojo" data-titulo="curl … | bash">
+    <p>El primer comando descarga un programa de internet y lo ejecuta en el acto. Es la forma habitual de instalar herramientas de desarrollo, y también una de las favoritas de quien quiere colarte algo. Hazlo solo con direcciones oficiales que hayas comprobado (aquí, <code>claude.ai</code>) y, si quieres ver antes qué hace, descárgalo y léelo: <code>curl -fsSL https://claude.ai/install.sh | less</code>. Recuerda esta idea: más adelante verás que Claude Code bloquea por defecto que un agente haga esto mismo por su cuenta.</p>
+  </aside>
+  <aside class="senal nota" data-titulo="En Windows">
+    <p>Puedes usar Claude Code en Windows directamente o dentro de WSL (el Linux integrado en Windows). Si lo usas directamente, instala también Git para Windows: así Claude Code puede usar Bash para ejecutar comandos; sin él, usa PowerShell. Si trabajas en WSL, instala y ejecuta <code>claude</code> dentro de la terminal de WSL.</p>
+  </aside>
+
+  <h3>Cómo se habla con Claude Code</h3>
+  <p>Escribes en lenguaje normal y pulsas <kbd>Enter</kbd>. Algunas teclas y prefijos cambian lo que ocurre:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Escribes o pulsas</th><th scope="col">Qué hace</th></tr></thead>
+      <tbody>
+        <tr><td><code>@src/juego.js</code></td><td>Menciona un archivo con autocompletado. Claude lo lee antes de responder: es más preciso que describir dónde está el código.</td></tr>
+        <tr><td><code>!npm test</code></td><td>Modo terminal: ejecuta el comando tú mismo, sin pasar por el modelo, y añade su salida a la conversación.</td></tr>
+        <tr><td><code>/</code></td><td>Abre el menú de comandos y skills disponibles.</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Interrumpe a Claude en mitad de su turno para corregir el rumbo. Lo hecho hasta ahí se queda.</td></tr>
+        <tr><td><kbd>Esc</kbd> <kbd>Esc</kbd></td><td>Con la línea vacía, abre el menú para rebobinar la conversación y el código a un punto anterior.</td></tr>
+        <tr><td><kbd>Mayús</kbd> + <kbd>Tab</kbd></td><td>Cambia el modo de permisos (lo ves en la barra de estado).</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>C</kbd></td><td>Interrumpe; si no hay nada en marcha, borra la línea, y una segunda vez sale del programa.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Los <strong>comandos con barra</strong> (en inglés, <em>slash commands</em>) son órdenes que empiezan por <code>/</code> y que maneja Claude Code, no el modelo. Estos son los que usarás a diario:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Comando</th><th scope="col">Para qué sirve</th></tr></thead>
+      <tbody>
+        <tr><td><code>/help</code></td><td>Lista la ayuda y los comandos disponibles.</td></tr>
+        <tr><td><code>/init</code></td><td>Analiza el proyecto y crea un primer <code>CLAUDE.md</code>.</td></tr>
+        <tr><td><code>/context</code></td><td>Muestra cuánto de la ventana de contexto está ocupado y por qué.</td></tr>
+        <tr><td><code>/clear</code></td><td>Empieza una conversación nueva, con el contexto vacío. Úsalo al cambiar de tarea.</td></tr>
+        <tr><td><code>/compact</code></td><td>Resume la conversación para liberar contexto sin perder el hilo.</td></tr>
+        <tr><td><code>/diff</code></td><td>Muestra los cambios en tus archivos, incluidos los que hizo Claude.</td></tr>
+        <tr><td><code>/rewind</code></td><td>Rebobina conversación, código o ambos a un punto anterior.</td></tr>
+        <tr><td><code>/model</code></td><td>Cambia de modelo (por ejemplo, entre Sonnet y Opus).</td></tr>
+        <tr><td><code>/permissions</code></td><td>Revisa y edita las reglas de permisos.</td></tr>
+        <tr><td><code>/usage</code></td><td>Muestra el costo de la sesión y cuánto te queda del límite de tu plan.</td></tr>
+        <tr><td><code>/exit</code></td><td>Sale de Claude Code.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Desde la terminal, fuera de una sesión, también puedes usar <code>claude -c</code> (continuar la última conversación de esa carpeta), <code>claude -r</code> (elegir una conversación anterior) y <code>claude -p "pregunta"</code>, que responde una vez y termina, útil dentro de scripts.</p>
+
+  <h3>Los modos de permisos</h3>
+  <p>Un <strong>modo de permisos</strong> decide qué puede hacer Claude sin preguntarte primero. Lo cambias en cualquier momento con <kbd>Mayús</kbd> + <kbd>Tab</kbd> o al arrancar con <code>claude --permission-mode nombre</code>:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Modo (nombre en la configuración)</th><th scope="col">Qué hace sin preguntar</th><th scope="col">Cuándo usarlo</th></tr></thead>
+      <tbody>
+        <tr><td>Manual (<code>default</code>)</td><td>Solo leer. Pregunta antes de editar, ejecutar comandos o salir a la red.</td><td>Tus primeras semanas, código delicado, proyectos que no conoces.</td></tr>
+        <tr><td>Aceptar ediciones (<code>acceptEdits</code>)</td><td>Leer, editar archivos de la carpeta del proyecto y comandos básicos de archivos (<code>mkdir</code>, <code>mv</code>, <code>cp</code>…).</td><td>Cuando revisas los cambios después con <code>git diff</code>.</td></tr>
+        <tr><td>Plan (<code>plan</code>)</td><td>Investiga y propone un plan, pero no edita tu código hasta que lo apruebas.</td><td>Antes de cualquier cambio grande o en código que no entiendes.</td></tr>
+        <tr><td>Automático (<code>auto</code>)</td><td>Casi todo, pero un segundo modelo, el <strong>clasificador</strong>, revisa cada acción y bloquea las que parecen peligrosas.</td><td>Tareas largas en las que confías en la dirección general.</td></tr>
+        <tr><td>No preguntar (<code>dontAsk</code>)</td><td>Solo lo que hayas autorizado con reglas; el resto se deniega.</td><td>Scripts y servidores de integración continua.</td></tr>
+        <tr><td>Saltar permisos (<code>bypassPermissions</code>)</td><td>Todo.</td><td>Solo dentro de un contenedor o máquina virtual aislada. Nunca en tu computadora.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Desde la versión 2.1.283, las sesiones interactivas en la terminal y en VS Code empiezan en modo automático, siempre que tu modelo y tu organización lo permitan. Es cómodo, pero la documentación oficial lo dice sin rodeos: reduce las preguntas, no garantiza la seguridad. Mientras aprendes, te conviene ver cada acción. Para que todas tus sesiones empiecen en Manual, guarda esto en <code>~/.claude/settings.json</code> (lo verás a fondo en la siguiente sección):</p>
+  <pre><code class="language-json">{
+  "permissions": {
+    "defaultMode": "default"
+  }
+}</code></pre>
+  <p>Con este modo verás en la barra de estado <code>⏸ manual mode on</code>, y Claude te enseñará cada edición y cada comando antes de ejecutarlo, con opciones para aprobar una vez, aprobar siempre ese tipo de acción o rechazar y explicar por qué.</p>
+  <aside class="senal error" data-titulo="Aprobar sin leer">
+    <p>Después de la décima pregunta de permiso, casi todo el mundo empieza a pulsar «sí» sin leer. Se llama <strong>fatiga de permisos</strong>, y convierte la protección en un trámite. La solución no es aprobarlo todo, sino autorizar de forma permanente lo que es seguro y repetitivo (como <code>npm test</code>) con reglas, para que las preguntas que queden sean pocas y merezcan tu atención. Lo harás en la siguiente sección.</p>
+  </aside>
+
+  <h3>Deshacer: puntos de control y Git</h3>
+  <p>Cada vez que envías un mensaje, Claude Code guarda un <strong>punto de control</strong> (en inglés, <em>checkpoint</em>) con el estado de los archivos que va a editar. Con <code>/rewind</code>, o pulsando <kbd>Esc</kbd> dos veces con la línea vacía, eliges un mensaje anterior y restauras el código, la conversación o ambos.</p>
+  <aside class="senal ojo" data-titulo="Los puntos de control no sustituyen a Git">
+    <p>Solo registran los cambios que Claude hace con sus herramientas de edición. Si ejecuta <code>rm archivo.txt</code> o <code>mv</code> desde la terminal, eso no se puede rebobinar, y tampoco lo que editen los subagentes que trabajan en segundo plano. Tu red de seguridad de verdad es Git: haz commit de lo que funciona antes de pedir un cambio grande, y trabaja cada tarea en su propia rama, como aprendiste en la <a href="24-git.html#ramas">Estación 24</a>.</p>
+  </aside>
+
+  <h3>El contexto se llena</h3>
+  <p>Cada archivo que Claude lee y cada salida de comando ocupa espacio en su ventana de contexto. Los modelos actuales admiten ventanas muy grandes, pero la guía oficial insiste en que el rendimiento baja a medida que se llenan: el modelo empieza a «olvidar» instrucciones del principio y comete más errores. Tres hábitos lo evitan: <code>/clear</code> al terminar una tarea y empezar otra que no tiene que ver; <code>/compact</code> cuando una tarea larga todavía no ha terminado; y <code>/context</code> para ver qué está ocupando el espacio.</p>
+</section>

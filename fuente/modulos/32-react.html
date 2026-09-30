@@ -653,3 +653,2256 @@ ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
     <p>Todo lo que pones entre llaves se muestra como texto, nunca como HTML. Si un comentario de un usuario contiene <code>&lt;img src=x onerror="…"&gt;</code>, React lo muestra como letras y no ejecuta nada. Es la protección contra la inyección de código que viste en el taller de <code>innerHTML</code> de la <a href="15-dom.html#cambiar">Estación 15</a>, activada por defecto. La única forma de saltársela tiene un nombre que avisa: <code>dangerouslySetInnerHTML</code> («asignar innerHTML peligrosamente»). Úsala solo con HTML que hayas limpiado antes; la <a href="31-seguridad.html">Estación 31</a> explica cómo.</p>
   </aside>
 </section>
+
+<section id="estado" data-parada="Estado y eventos">
+  <h2>Estado y eventos</h2>
+  <p>Hasta ahora tus componentes muestran siempre lo mismo. Una interfaz de verdad cambia: un contador sube, un carrito se llena, un menú se abre. Lo primero que se le ocurre a cualquiera es usar una variable normal. <strong>Investiga</strong> por qué no funciona: pulsa varias veces cada botón y compara la pantalla con la consola.</p>
+  <div class="taller" data-modo="web" id="taller-variable-normal" data-titulo="Investiga: variable normal frente a estado" data-alto="11rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState } = React;
+
+function ContadorRoto() {
+  let cuenta = 0;
+  function sumar() {
+    cuenta = cuenta + 1;
+    console.log("ContadorRoto: la variable vale", cuenta);
+  }
+  return &lt;button onClick={sumar}&gt;Variable normal: {cuenta}&lt;/button&gt;;
+}
+
+function Contador() {
+  const [cuenta, setCuenta] = useState(0);
+  function sumar() {
+    setCuenta(cuenta + 1);
+  }
+  return &lt;button onClick={sumar}&gt;Con useState: {cuenta}&lt;/button&gt;;
+}
+
+function App() {
+  return (
+    &lt;&gt;
+      &lt;p&gt;&lt;ContadorRoto /&gt;&lt;/p&gt;
+      &lt;p&gt;&lt;Contador /&gt; &lt;Contador /&gt;&lt;/p&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
+&lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+button { font-size: 1rem; padding: .4rem .8rem; }</textarea>
+  </div>
+  <p>El botón de la variable normal se queda en 0 aunque la consola diga que la variable sube. Hay dos motivos:</p>
+  <ol>
+    <li><strong>Cambiar una variable no avisa a React.</strong> React solo vuelve a llamar al componente cuando algo le dice que los datos cambiaron. Nadie se lo dijo.</li>
+    <li><strong>Las variables locales no sobreviven.</strong> Aunque React volviera a llamar a <code>ContadorRoto</code>, la primera línea haría <code>let cuenta = 0</code> otra vez. Cada llamada a una función empieza de cero (<a href="10-funciones.html#ambito">Estación 10</a>).</li>
+  </ol>
+  <p>El <strong>estado</strong> de un componente resuelve las dos cosas: es memoria que React guarda por ti entre una llamada y la siguiente, y cambiarla hace que React vuelva a renderizar. Fíjate también en los dos botones «Con useState»: son dos usos del mismo componente y cada uno lleva su propia cuenta. El estado pertenece a cada copia del componente en la pantalla, no a la función.</p>
+
+  <h3>useState</h3>
+  <pre><code class="language-jsx">import { useState } from "react";       // en los talleres: const { useState } = React;
+
+function Contador() {
+  const [cuenta, setCuenta] = useState(0);
+  // cuenta: el valor actual. setCuenta: la función que lo cambia. 0: el valor inicial.
+  return &lt;button onClick={() =&gt; setCuenta(cuenta + 1)}&gt;{cuenta}&lt;/button&gt;;
+}</code></pre>
+  <ul>
+    <li><code>useState(0)</code> crea una variable de estado cuyo valor inicial es 0. Devuelve un array con dos cosas, que se desestructuran en la misma línea: el valor actual y una función para cambiarlo.</li>
+    <li>El nombre es libre, pero la costumbre es <code>[algo, setAlgo]</code>: <code>[cuenta, setCuenta]</code>, <code>[abierto, setAbierto]</code>, <code>[productos, setProductos]</code>.</li>
+    <li>Llamar a <code>setCuenta(5)</code> no cambia <code>cuenta</code> en ese momento: le pide a React que vuelva a renderizar el componente, y en ese nuevo render <code>useState</code> devolverá 5.</li>
+  </ul>
+  <p><code>useState</code> es un <strong>hook</strong> («gancho»): una función especial de React, cuyo nombre empieza por <code>use</code>, que permite a un componente «engancharse» a una capacidad de React, como guardar estado. Verás varios: <code>useState</code>, <code>useEffect</code>, <code>useContext</code>, <code>useRef</code>… y aprenderás a crear los tuyos.</p>
+  <aside class="senal ojo" data-titulo="Las reglas de los hooks">
+    <p>React reconoce cada hook por el <em>orden</em> en que lo llamas: el primer <code>useState</code> del componente, el segundo, el tercero. Por eso hay dos reglas estrictas: (1) llama a los hooks solo en el nivel superior del componente, nunca dentro de un <code>if</code>, de un bucle o de una función interna; y (2) llámalos solo desde componentes o desde tus propios hooks, no desde funciones normales. Si un <code>if</code> se saltara un hook en un render, todos los siguientes se desordenarían. El linter de tu proyecto de Vite detecta estas faltas.</p>
+  </aside>
+
+  <h3>Eventos</h3>
+  <p>Los eventos funcionan como en la <a href="15-dom.html#eventos">Estación 15</a>, pero se escriben como props en camelCase: <code>onClick</code>, <code>onChange</code>, <code>onSubmit</code>, <code>onKeyDown</code>, <code>onMouseEnter</code>, <code>onFocus</code>. Se les pasa una función; React la llama con un objeto evento que tiene las propiedades de siempre (<code>target</code>, <code>key</code>, <code>preventDefault()</code>…).</p>
+  <pre><code class="language-jsx">function Tienda() {
+  const [mensaje, setMensaje] = useState("");
+
+  function manejarCompra(evento) {
+    console.log("Clic en", evento.target.textContent);
+    setMensaje("¡Añadido al carrito!");
+  }
+
+  return (
+    &lt;&gt;
+      &lt;button onClick={manejarCompra}&gt;Comprar&lt;/button&gt;           {/* pasa la función */}
+      &lt;button onClick={() =&gt; setMensaje("")}&gt;Limpiar&lt;/button&gt;  {/* o una flecha */}
+      &lt;p&gt;{mensaje}&lt;/p&gt;
+    &lt;/&gt;
+  );
+}</code></pre>
+  <aside class="senal error">
+    <p><code>onClick={manejarCompra()}</code>, con paréntesis, es el mismo error que <code>addEventListener("click", sumar())</code>: ejecuta la función <em>mientras se renderiza</em> y pasa su resultado. Si esa función cambia el estado, provoca un nuevo render, que la vuelve a ejecutar, que provoca otro render… React lo corta con el error <em>Too many re-renders. React limits the number of renders to prevent an infinite loop</em> («demasiados renders»). Si necesitas pasar un argumento, envuelve la llamada en una flecha: <code>onClick={() =&gt; comprar(producto)}</code>.</p>
+  </aside>
+  <p>Por costumbre, las funciones que manejan eventos se llaman <code>manejarAlgo</code> (en inglés, <code>handleSomething</code>), y las props que reciben esas funciones, <code>onAlgo</code>: <code>onComprar</code>, <code>onCerrar</code>.</p>
+
+  <h3>El estado es una foto</h3>
+  <p>Esta es la idea de React que más confunde al principio. Dentro de un render, el valor del estado <strong>no cambia</strong>, aunque llames a su función <code>set</code>. Cada render recibe una foto del estado de ese momento, y todo el código de ese render (incluidos los manejadores de eventos creados en él) ve esa foto. Sigue este botón, que intenta sumar tres de golpe:</p>
+  <div class="traza" data-titulo="Qué pasa al pulsar «+3»" data-rotulo-memoria="Lo que ve cada línea" data-rotulo-salida="Pantalla">
+    <pre><code class="language-jsx">function Contador() {
+  const [cuenta, setCuenta] = useState(0);
+
+  function sumarTres() {
+    setCuenta(cuenta + 1);
+    setCuenta(cuenta + 1);
+    setCuenta(cuenta + 1);
+  }
+
+  return &lt;button onClick={sumarTres}&gt;+3 (ahora: {cuenta})&lt;/button&gt;;
+}</code></pre>
+    <script type="application/json">[
+      {"linea": 2, "vars": {"cuenta": "0", "cola de React": "(vacía)"}, "nota": "Primer render. React llama a Contador(). useState(0) devuelve el valor guardado, que la primera vez es el inicial: 0."},
+      {"linea": 10, "vars": {"cuenta": "0", "cola de React": "(vacía)"}, "salida": "[ +3 (ahora: 0) ]", "nota": "El componente devuelve un botón. React lo muestra. La función sumarTres que va en onClick se creó en este render, así que para ella cuenta vale 0 para siempre."},
+      {"linea": 5, "vars": {"cuenta": "0", "cola de React": "que valga 1"}, "nota": "Haces clic. setCuenta(cuenta + 1) es setCuenta(0 + 1): no cambia cuenta ahora, solo apunta en una cola «en el próximo render, que valga 1»."},
+      {"linea": 6, "vars": {"cuenta": "0", "cola de React": "que valga 1, que valga 1"}, "nota": "cuenta sigue valiendo 0 en esta línea: es la foto de este render. Otra vez 0 + 1 = 1."},
+      {"linea": 7, "vars": {"cuenta": "0", "cola de React": "que valga 1 (tres veces)"}, "nota": "Y una tercera vez lo mismo. Las tres órdenes dicen exactamente lo mismo: «que valga 1»."},
+      {"linea": 2, "vars": {"cuenta": "1", "cola de React": "(vacía)"}, "nota": "Termina el manejador. React procesa la cola: que valga 1, que valga 1, que valga 1. Resultado: 1. Vuelve a llamar a Contador() y useState ahora devuelve 1."},
+      {"linea": 10, "vars": {"cuenta": "1", "cola de React": "(vacía)"}, "salida": "[ +3 (ahora: 1) ]", "nota": "La pantalla muestra 1, no 3. Para que las tres sumas se acumulen, cada una tiene que partir del valor pendiente, no de la foto. Eso se hace pasando una función: setCuenta(c => c + 1)."}
+    ]</script>
+  </div>
+  <p>La solución es pasarle a <code>set</code> una <strong>función de actualización</strong> en vez de un valor: <code>setCuenta(c =&gt; c + 1)</code>. React guarda la función en la cola y, al procesarla, le pasa el valor pendiente: la primera recibe 0 y devuelve 1, la segunda recibe 1 y devuelve 2, la tercera recibe 2 y devuelve 3. Por costumbre, el parámetro se llama con la inicial del estado (<code>c</code>) o <code>prev</code> (de «previo»). <strong>Predice</strong> qué muestra cada botón tras un clic, y después comprueba:</p>
+  <div class="taller" data-modo="web" id="taller-foto" data-titulo="Predice: valor frente a función de actualización" data-alto="12rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState } = React;
+
+function App() {
+  const [a, setA] = useState(0);
+  const [b, setB] = useState(0);
+
+  function sumarTresA() {
+    setA(a + 1);
+    setA(a + 1);
+    setA(a + 1);
+    console.log("Justo después de los set, a vale", a);
+  }
+
+  function sumarTresB() {
+    setB(c =&gt; c + 1);
+    setB(c =&gt; c + 1);
+    setB(c =&gt; c + 1);
+  }
+
+  return (
+    &lt;&gt;
+      &lt;p&gt;&lt;button onClick={sumarTresA}&gt;A +3&lt;/button&gt; A = {a}&lt;/p&gt;
+      &lt;p&gt;&lt;button onClick={sumarTresB}&gt;B +3&lt;/button&gt; B = {b}&lt;/p&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
+&lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; font-size: 1.1rem; }
+button { font-size: 1rem; margin-right: .5rem; }</textarea>
+  </div>
+  <p>A sube de uno en uno; B, de tres en tres. Y el <code>console.log</code> muestra el valor <em>anterior</em>: justo después de llamar a <code>setA</code>, <code>a</code> todavía es la foto vieja. Es el error de principiante más frecuente en React: «llamé a set y la variable no cambió». No cambió en ese render; cambiará en el siguiente. Regla práctica: si el valor nuevo depende del anterior (sumar, restar, alternar), usa la forma con función.</p>
+
+  <h3>Arrays y objetos en el estado: siempre copias nuevas</h3>
+  <p>El estado puede guardar cualquier valor: números, textos, booleanos, arrays y objetos. Con los dos últimos hay una trampa. Mira este código:</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Muta el array: la pantalla no cambia</p>
+      <pre><code class="language-jsx">function agregar(producto) {
+  carrito.push(producto);
+  setCarrito(carrito);
+}</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Crea un array nuevo</p>
+      <pre><code class="language-jsx">function agregar(producto) {
+  setCarrito([...carrito, producto]);
+}</code></pre>
+    </div>
+  </div>
+  <p>Para decidir si hace falta renderizar, React compara el valor nuevo con el anterior usando <code>Object.is</code>, que para arrays y objetos compara <em>referencias</em>, no contenidos (<a href="11-colecciones.html#referencias">Estación 11</a>). Con <code>push</code> el array es el mismo objeto, con un elemento más: para React «no cambió nada» y no renderiza. A no modificar un valor, sino crear uno nuevo con el cambio, se le llama <strong>inmutabilidad</strong> (<a href="21-paradigmas.html#funcional">Estación 21</a>). Estas son las operaciones que vas a usar todo el tiempo:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Quieres…</th><th scope="col">Evita (muta)</th><th scope="col">Usa (crea uno nuevo)</th></tr></thead>
+      <tbody>
+        <tr><td>Añadir al final</td><td><code>lista.push(x)</code></td><td><code>[...lista, x]</code></td></tr>
+        <tr><td>Añadir al principio</td><td><code>lista.unshift(x)</code></td><td><code>[x, ...lista]</code></td></tr>
+        <tr><td>Quitar uno</td><td><code>lista.splice(i, 1)</code></td><td><code>lista.filter(p =&gt; p.id !== id)</code></td></tr>
+        <tr><td>Cambiar uno</td><td><code>lista[i].cantidad++</code></td><td><code>lista.map(p =&gt; p.id === id ? { ...p, cantidad: p.cantidad + 1 } : p)</code></td></tr>
+        <tr><td>Ordenar</td><td><code>lista.sort(…)</code></td><td><code>lista.toSorted(…)</code> o <code>[...lista].sort(…)</code></td></tr>
+        <tr><td>Cambiar una propiedad de un objeto</td><td><code>perfil.nombre = "Ana"</code></td><td><code>{ ...perfil, nombre: "Ana" }</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Aquí tienes un carrito que ya añade productos de forma correcta. <strong>Modifica</strong> el código para: (1) que el botón «Quitar» de cada línea funcione, usando <code>filter</code>; (2) que el botón «+1» aumente la cantidad de esa línea, usando <code>map</code> y spread. El párrafo del total se recalcula solo, porque sale del estado.</p>
+  <div class="taller" data-modo="web" id="taller-carrito-inmutable" data-titulo="Modifica: quitar y cambiar sin mutar" data-alto="17rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState } = React;
+
+const CATALOGO = [
+  { id: 1, nombre: "Café", precio: 12.5 },
+  { id: 2, nombre: "Taza", precio: 8 },
+  { id: 3, nombre: "Filtro", precio: 3.25 },
+];
+
+function App() {
+  const [carrito, setCarrito] = useState([]);   // [{ id, nombre, precio, cantidad }]
+
+  function agregar(producto) {
+    if (carrito.some(l =&gt; l.id === producto.id)) return;   // ya está
+    setCarrito([...carrito, { ...producto, cantidad: 1 }]);
+  }
+
+  function quitar(id) {
+    // Tu código: deja en el carrito todas las líneas cuyo id NO sea este
+  }
+
+  function sumarUno(id) {
+    // Tu código: crea un array nuevo donde la línea con este id tenga cantidad + 1
+  }
+
+  const total = carrito.reduce((suma, l) =&gt; suma + l.precio * l.cantidad, 0);
+
+  return (
+    &lt;&gt;
+      &lt;p&gt;
+        {CATALOGO.map(p =&gt; (
+          &lt;button key={p.id} onClick={() =&gt; agregar(p)}&gt;Añadir {p.nombre}&lt;/button&gt;
+        ))}
+      &lt;/p&gt;
+      &lt;ul&gt;
+        {carrito.map(l =&gt; (
+          &lt;li key={l.id}&gt;
+            {l.nombre} × {l.cantidad}{" "}
+            &lt;button onClick={() =&gt; sumarUno(l.id)}&gt;+1&lt;/button&gt;{" "}
+            &lt;button onClick={() =&gt; quitar(l.id)}&gt;Quitar&lt;/button&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+      &lt;p&gt;&lt;strong&gt;Total: ${total.toFixed(2)}&lt;/strong&gt;&lt;/p&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
+&lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+button { margin: 0 .3rem .3rem 0; }
+li { margin-bottom: .3rem; }</textarea>
+  </div>
+  <details class="solucion"><summary>Ver una solución de las dos funciones</summary>
+    <pre><code class="language-jsx">function quitar(id) {
+  setCarrito(carrito.filter(l =&gt; l.id !== id));
+}
+
+function sumarUno(id) {
+  setCarrito(carrito.map(l =&gt;
+    l.id === id ? { ...l, cantidad: l.cantidad + 1 } : l
+  ));
+}</code></pre>
+    <p>En <code>sumarUno</code>, <code>{ ...l, cantidad: … }</code> copia todas las propiedades de la línea y reescribe solo <code>cantidad</code>. Las líneas que no cambian se devuelven tal cual (<code>: l</code>), sin copiarlas: no hace falta. Fíjate también en que <code>total</code> no es estado: se calcula en cada render a partir del carrito. Verás por qué es importante en la sección <a href="#compartir">Compartir estado</a>.</p>
+  </details>
+  <aside class="senal oficio">
+    <p>Cuando el estado es un objeto con muchos campos anidados, copiar a mano con spread se vuelve pesado. En los proyectos grandes se usa la biblioteca Immer o el hook <code>useReducer</code>, que concentra todos los cambios del estado en una sola función pura. Para empezar, spread, <code>map</code> y <code>filter</code> bastan.</p>
+  </aside>
+</section>
+
+<section id="listas" data-parada="Listas y formularios">
+  <h2>Condiciones, listas y formularios</h2>
+  <p>Casi todas las pantallas de una app combinan tres cosas: partes que aparecen solo a veces, listas que salen de un array y formularios. Con JSX no hay instrucciones especiales para ninguna de las tres: se resuelven con el JavaScript que ya conoces.</p>
+
+  <h3>Mostrar algo solo a veces</h3>
+  <p>Como dentro de las llaves no cabe un <code>if</code>, se usan tres técnicas, según el caso:</p>
+  <pre><code class="language-jsx">function Pedido({ productos, cargando, usuario }) {
+  // 1. if con return temprano: para casos que cambian toda la vista
+  if (cargando) {
+    return &lt;p&gt;Cargando tu pedido…&lt;/p&gt;;
+  }
+
+  return (
+    &lt;section&gt;
+      {/* 2. Ternario: elegir entre dos cosas */}
+      {usuario ? &lt;p&gt;Hola, {usuario.nombre}&lt;/p&gt; : &lt;button&gt;Iniciar sesión&lt;/button&gt;}
+
+      {/* 3. &amp;&amp;: mostrar algo o nada */}
+      {productos.length === 0 &amp;&amp; &lt;p&gt;Tu carrito está vacío.&lt;/p&gt;}
+    &lt;/section&gt;
+  );
+}</code></pre>
+  <p>El truco del <code>&amp;&amp;</code> sale de la <a href="08-decisiones.html#truthy">Estación 8</a>: si la izquierda es falsa, la expresión vale lo de la izquierda (que React no dibuja); si es verdadera, vale lo de la derecha. Y cuando un componente no debe mostrar nada, puede devolver <code>null</code>.</p>
+  <aside class="senal error" data-titulo="El 0 que aparece de la nada">
+    <p><code>{productos.length &amp;&amp; &lt;p&gt;Tienes productos&lt;/p&gt;}</code> muestra un <strong>0</strong> en pantalla cuando la lista está vacía. <code>0</code> es falsy, así que la expresión vale 0… y React sí dibuja los números. Pon siempre una comparación a la izquierda: <code>{productos.length &gt; 0 &amp;&amp; …}</code>.</p>
+  </aside>
+
+  <h3>Listas con map y key</h3>
+  <p>Para convertir un array de datos en elementos, usa <code>map</code> (<a href="11-colecciones.html#transformar">Estación 11</a>): cada dato se transforma en un trozo de JSX, y React dibuja el array resultante.</p>
+  <pre><code class="language-jsx">const juegos = [
+  { id: "a1", titulo: "Hollow Knight", precio: 15 },
+  { id: "b7", titulo: "Celeste", precio: 20 },
+  { id: "c3", titulo: "Stardew Valley", precio: 15 },
+];
+
+function ListaJuegos() {
+  return (
+    &lt;ul&gt;
+      {juegos.map(juego =&gt; (
+        &lt;li key={juego.id}&gt;{juego.titulo}: ${juego.precio}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+  <p>Cada elemento de la lista lleva una prop especial, <strong><code>key</code></strong> («clave»): un identificador que lo distingue de sus hermanos. React la usa para saber qué elemento es cuál entre un render y el siguiente. Sin ella, si insertas, borras o reordenas, React solo puede emparejar los elementos por su posición, y se equivoca. Si olvidas la key, la consola muestra el aviso <em>Each child in a list should have a unique "key" prop</em>.</p>
+  <p><strong>Investiga</strong> qué significa «se equivoca». Las dos listas son idénticas salvo la key: la de la izquierda usa la posición en el array (el índice) y la de la derecha, el id de cada tarea. Escribe «urgente» en la nota de «Comprar pan» en las <em>dos</em> listas y después pulsa «Añadir arriba» en cada una.</p>
+  <div class="taller" data-modo="web" id="taller-key" data-titulo="Investiga: key con índice frente a key con id" data-alto="15rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState } = React;
+let siguienteId = 4;
+
+function Lista({ titulo, usarIndice }) {
+  const [tareas, setTareas] = useState([
+    { id: 1, texto: "Comprar pan" },
+    { id: 2, texto: "Llamar a Leo" },
+    { id: 3, texto: "Estudiar React" },
+  ]);
+
+  function agregarArriba() {
+    const id = siguienteId++;
+    setTareas([{ id: id, texto: "Tarea nueva " + id }, ...tareas]);
+  }
+
+  return (
+    &lt;div className="lista"&gt;
+      &lt;h3&gt;{titulo}&lt;/h3&gt;
+      &lt;button onClick={agregarArriba}&gt;Añadir arriba&lt;/button&gt;
+      &lt;ul&gt;
+        {tareas.map((tarea, indice) =&gt; (
+          &lt;li key={usarIndice ? indice : tarea.id}&gt;
+            {tarea.texto} &lt;input placeholder="nota" /&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  );
+}
+
+function App() {
+  return (
+    &lt;div className="dos"&gt;
+      &lt;Lista titulo="key = índice" usarIndice={true} /&gt;
+      &lt;Lista titulo="key = id" usarIndice={false} /&gt;
+    &lt;/div&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
+&lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: .8rem; }
+.dos { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+.lista h3 { margin: 0 0 .4rem; }
+ul { padding-left: 1.2rem; }
+li { margin: .3rem 0; }
+input { width: 6rem; }</textarea>
+  </div>
+  <p>En la lista de la izquierda, «urgente» se queda en la primera fila, que ahora es «Tarea nueva». Antes del clic, la key 0 era «Comprar pan»; después, la key 0 es la tarea nueva. React ve la misma key, reutiliza el mismo <code>&lt;li&gt;</code> (con su campo y lo que escribiste dentro) y solo cambia el texto. En la derecha, la key 1 sigue siendo «Comprar pan», así que su nota viaja con ella. En una app real este fallo mezcla datos: el comentario de un cliente aparece en el pedido de otro.</p>
+  <ul>
+    <li>La key debe ser <strong>única entre hermanos</strong> (puede repetirse en otra lista) y <strong>estable</strong>: el mismo dato, la misma key, en todos los renders.</li>
+    <li>Lo ideal es el id que ya traen los datos (de la base de datos o de la API). Si los creas tú, genera el id al crear el dato, no al dibujarlo.</li>
+    <li>El índice solo vale si la lista nunca se reordena, ni se filtra, ni recibe elementos en medio.</li>
+    <li><code>key={Math.random()}</code> es el peor caso: una key distinta en cada render obliga a React a destruir y crear de nuevo todos los elementos, y se pierde todo lo que tenían dentro.</li>
+    <li>La key va en el elemento de más afuera que devuelve el <code>map</code>. Si ese elemento es un componente, la pones en él: <code>&lt;TarjetaProducto key={p.id} {...p} /&gt;</code>. El componente no la recibe como prop: es solo para React.</li>
+  </ul>
+  <p>Ese <code>{...p}</code> es otro atajo que verás mucho: pasa todas las propiedades del objeto <code>p</code> como props, igual que escribir <code>nombre={p.nombre} precio={p.precio}</code>.</p>
+  <p>Para mostrar solo una parte de la lista, encadena <code>filter</code> y <code>map</code>. Para ordenarla, no ordenes el estado: ordena una copia justo antes de dibujar.</p>
+  <pre><code class="language-jsx">const baratos = juegos
+  .filter(j =&gt; j.precio &lt;= 15)
+  .toSorted((a, b) =&gt; a.titulo.localeCompare(b.titulo));
+
+return &lt;ul&gt;{baratos.map(j =&gt; &lt;li key={j.id}&gt;{j.titulo}&lt;/li&gt;)}&lt;/ul&gt;;</code></pre>
+
+  <h3>Formularios controlados</h3>
+  <p>En la <a href="15-dom.html#formularios">Estación 15</a> leías el valor de un campo cuando hacía falta, con <code>campo.value</code>. En React lo habitual es otra cosa: guardar el contenido del campo en el estado y hacer que el campo muestre siempre ese estado. Es un <strong>campo controlado</strong>: React controla lo que muestra.</p>
+  <pre><code class="language-jsx">const [texto, setTexto] = useState("");
+
+&lt;input value={texto} onChange={e =&gt; setTexto(e.target.value)} /&gt;</code></pre>
+  <p>Cada tecla dispara <code>onChange</code> (en React, <code>onChange</code> salta con cada cambio, como el evento <code>input</code> del DOM), el manejador guarda el nuevo texto en el estado, React vuelve a renderizar y el campo muestra el estado. Parece un rodeo, pero a cambio el valor está siempre disponible en <code>texto</code>, sin buscarlo en el DOM, y puedes validarlo, transformarlo o limitarlo mientras se escribe.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Campo</th><th scope="col">Se controla con</th><th scope="col">Se lee en el manejador con</th></tr></thead>
+      <tbody>
+        <tr><td><code>&lt;input&gt;</code> de texto, número, correo…</td><td><code>value</code></td><td><code>e.target.value</code> (siempre texto: convierte con <code>Number()</code> si hace falta)</td></tr>
+        <tr><td><code>&lt;textarea&gt;</code></td><td><code>value</code> (no se escribe el texto entre etiquetas)</td><td><code>e.target.value</code></td></tr>
+        <tr><td><code>&lt;select&gt;</code></td><td><code>value</code> en el <code>select</code>, no <code>selected</code> en la opción</td><td><code>e.target.value</code></td></tr>
+        <tr><td><code>&lt;input type="checkbox"&gt;</code></td><td><code>checked</code></td><td><code>e.target.checked</code> (verdadero o falso)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal error">
+    <p>Si pones <code>value={texto}</code> sin <code>onChange</code>, el campo queda bloqueado: escribes y no pasa nada, porque React vuelve a mostrar el estado, que no cambió. React avisa en la consola: <em>You provided a `value` prop to a form field without an `onChange` handler</em>. Y si el valor inicial es <code>undefined</code> y luego pasa a ser texto, verás otro aviso (<em>changing an uncontrolled input to be controlled</em>): inicializa siempre con <code>useState("")</code>.</p>
+  </aside>
+  <p>Este formulario añade tareas a una lista. Fíjate en tres detalles: <code>e.preventDefault()</code> en <code>onSubmit</code> evita que el navegador recargue la página (como en la Estación 15); el botón se desactiva mientras el texto no es válido; y <code>valido</code> no es estado, sino un valor calculado a partir del estado.</p>
+  <div class="taller" data-modo="web" id="taller-formulario-controlado" data-titulo="Modifica: un formulario controlado" data-alto="17rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState } = React;
+
+function App() {
+  const [texto, setTexto] = useState("");
+  const [prioridad, setPrioridad] = useState("media");
+  const [tareas, setTareas] = useState([]);
+
+  const valido = texto.trim().length &gt;= 3;
+
+  function manejarEnvio(e) {
+    e.preventDefault();
+    if (!valido) return;
+    setTareas([...tareas, { id: Date.now(), texto: texto.trim(), prioridad: prioridad }]);
+    setTexto("");
+  }
+
+  return (
+    &lt;&gt;
+      &lt;form onSubmit={manejarEnvio}&gt;
+        &lt;label htmlFor="texto"&gt;Tarea &lt;/label&gt;
+        &lt;input id="texto" value={texto} onChange={e =&gt; setTexto(e.target.value)} /&gt;
+        &lt;label htmlFor="prioridad"&gt; Prioridad &lt;/label&gt;
+        &lt;select id="prioridad" value={prioridad} onChange={e =&gt; setPrioridad(e.target.value)}&gt;
+          &lt;option value="alta"&gt;Alta&lt;/option&gt;
+          &lt;option value="media"&gt;Media&lt;/option&gt;
+          &lt;option value="baja"&gt;Baja&lt;/option&gt;
+        &lt;/select&gt;{" "}
+        &lt;button disabled={!valido}&gt;Añadir&lt;/button&gt;
+        &lt;p className="ayuda"&gt;{texto.length} caracteres{texto !== "" &amp;&amp; !valido &amp;&amp; " (mínimo 3)"}&lt;/p&gt;
+      &lt;/form&gt;
+      &lt;ul&gt;
+        {tareas.map(t =&gt; &lt;li key={t.id} className={t.prioridad}&gt;{t.texto}&lt;/li&gt;)}
+      &lt;/ul&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
+&lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+.ayuda { color: #555; font-size: .9rem; margin: .3rem 0 0; }
+li.alta { font-weight: bold; }
+li.baja { color: #666; }</textarea>
+  </div>
+  <p><strong>Modifica:</strong> (1) limita el texto a 40 caracteres cambiando el <code>onChange</code> por <code>e =&gt; setTexto(e.target.value.slice(0, 40))</code>, y comprueba que no puedes escribir más; (2) añade una casilla «Urgente» controlada con <code>checked</code> y guarda ese dato en cada tarea; (3) muestra junto a cada tarea un texto «(urgente)» solo si lo es.</p>
+  <aside class="senal nota" data-titulo="Novedad de React 19: acciones de formulario">
+    <p>React 19 permite pasar una función a la prop <code>action</code> de un <code>&lt;form&gt;</code>. Al enviarlo, React la llama con un objeto <code>FormData</code> que contiene los valores de los campos (identificados por su atributo <code>name</code>), puede ser asíncrona, y al terminar vacía los campos no controlados. Los hooks <code>useActionState</code> y <code>useFormStatus</code> te dicen si el envío sigue en curso. Es muy cómodo para formularios que se envían a un servidor. No funciona en los talleres (usan React 18), pero lo verás en proyectos nuevos:</p>
+    <pre><code class="language-jsx">function Suscripcion() {
+  async function suscribir(formData) {
+    await guardarCorreo(formData.get("correo"));
+  }
+  return (
+    &lt;form action={suscribir}&gt;
+      &lt;input name="correo" type="email" required /&gt;
+      &lt;button&gt;Suscribirme&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+  </aside>
+  <aside class="senal ojo" data-titulo="Accesibilidad">
+    <p>Todo lo que aprendiste en la <a href="17-diseno-ux.html#accesibilidad">Estación 17</a> sigue valiendo: cada campo con su <code>&lt;label htmlFor&gt;</code>, botones de verdad (<code>&lt;button&gt;</code>, no un <code>&lt;div onClick&gt;</code>), mensajes de error que se leen en voz alta. React no hace tu interfaz accesible ni inaccesible: eso depende del HTML que generes.</p>
+  </aside>
+</section>
+
+<section id="compartir" data-parada="Compartir estado">
+  <h2>Compartir estado entre componentes</h2>
+  <p>Hasta ahora cada estado vivía en un solo componente. En una app real, varios componentes necesitan el mismo dato. En la tienda, la lista de productos <em>cambia</em> el carrito (al pulsar «Añadir») y el resumen de la cabecera lo <em>muestra</em>. Son componentes hermanos, y en React la información solo viaja de padres a hijos, a través de las props. ¿Dónde se pone entonces el carrito?</p>
+  <figure class="capsula" data-titulo="Levantar el estado">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: el estado carrito está en ListaProductos y ResumenCarrito no puede verlo. Se sube el estado a App, que pasa el carrito a ResumenCarrito y la función onAgregar a ListaProductos y a cada Producto. Al pulsar Añadir en el café, la llamada sube hasta App, que actualiza el estado, y ResumenCarrito muestra 1 producto.">
+        <g class="d-linea" fill="none">
+          <path d="M340 65L200 125" data-clases="3:d-acento-trazo; 4:d-acento-trazo; 5:"/>
+          <path d="M380 65L520 125" data-clases="3:d-acento-trazo; 4:; 5:d-acento-trazo"/>
+          <path d="M160 165L100 225" data-clases="3:d-acento-trazo; 4:d-acento-trazo; 5:"/>
+          <path d="M200 165L260 225" data-clases="3:d-acento-trazo; 4:; 5:"/>
+        </g>
+        <g data-pasos="1">
+          <path class="d-punteada d-mal-trazo" d="M265 145H455" fill="none"/>
+          <rect class="d-fondo" x="318" y="132" width="84" height="24" rx="4"/>
+          <text class="d-peq d-mal" x="360" y="149" text-anchor="middle">sin acceso</text>
+        </g>
+
+        <rect class="d-caja" x="275" y="25" width="170" height="40" rx="8"/>
+        <text class="d-mono" x="360" y="51" text-anchor="middle">App</text>
+        <rect class="d-caja" x="95" y="125" width="170" height="40" rx="8"/>
+        <text class="d-mono" x="180" y="151" text-anchor="middle" style="font-size:15px">ListaProductos</text>
+        <rect class="d-caja" x="455" y="125" width="170" height="40" rx="8" data-clases="5:d-ok-trazo"/>
+        <text class="d-mono" x="540" y="151" text-anchor="middle" style="font-size:15px">ResumenCarrito</text>
+        <text class="d-peq d-mal" x="540" y="190" text-anchor="middle" data-clases="1:d-mal; 3:" data-texto="1:¿carrito? no lo ve; 3:Muestra: 0 productos; 5:Muestra: 1 producto">¿carrito? no lo ve</text>
+        <rect class="d-caja" x="30" y="225" width="140" height="40" rx="8" data-clases="4:d-acento-trazo; 5:"/>
+        <text class="d-mono" x="100" y="251" text-anchor="middle" style="font-size:15px">Producto café</text>
+        <rect class="d-caja" x="190" y="225" width="140" height="40" rx="8"/>
+        <text class="d-mono" x="260" y="251" text-anchor="middle" style="font-size:15px">Producto taza</text>
+
+        <g data-mover="2:translate(70px,-54px)">
+          <rect class="d-acento" x="40" y="85" width="150" height="28" rx="14"/>
+          <text class="d-sobre-acento d-mono d-peq" x="115" y="104" text-anchor="middle" data-texto="1:carrito: []; 5:carrito: [café]">carrito: []</text>
+        </g>
+
+        <g data-pasos="3,5">
+          <rect class="d-fondo" x="424" y="84" width="110" height="22" rx="4"/>
+          <text class="d-mono d-peq" x="479" y="100" text-anchor="middle">carrito</text>
+        </g>
+        <g data-pasos="3">
+          <rect class="d-fondo" x="200" y="84" width="110" height="22" rx="4"/>
+          <text class="d-mono d-peq" x="255" y="100" text-anchor="middle">onAgregar</text>
+          <rect class="d-fondo" x="125" y="186" width="110" height="22" rx="4"/>
+          <text class="d-mono d-peq" x="180" y="202" text-anchor="middle">onAgregar</text>
+        </g>
+        <g data-pasos="4">
+          <path class="d-acento" d="M-7-7L7 0L-7 7z" transform="translate(130 195) rotate(-45)"/>
+          <path class="d-acento" d="M-7-7L7 0L-7 7z" transform="translate(270 95) rotate(-23)"/>
+          <rect class="d-fondo" x="10" y="272" width="190" height="24" rx="4"/>
+          <text class="d-mono d-peq" x="105" y="289" text-anchor="middle">onAgregar(café)</text>
+        </g>
+        <g data-pasos="5">
+          <rect class="d-fondo" x="470" y="20" width="190" height="24" rx="4"/>
+          <text class="d-mono d-peq" x="565" y="37" text-anchor="middle">setCarrito([café])</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>El carrito vive como estado en <code>ListaProductos</code>. <code>ResumenCarrito</code> también lo necesita, pero no puede verlo: en React los datos solo viajan de padre a hijo, y los hermanos no se ven entre sí.</li>
+        <li>La solución se llama <strong>levantar el estado</strong>: moverlo al ancestro común más cercano de los componentes que lo necesitan. Aquí, <code>App</code>.</li>
+        <li data-duracion="6"><code>App</code> pasa hacia abajo, como props, lo que cada hijo necesita: el carrito a <code>ResumenCarrito</code>, y una función <code>onAgregar</code> a <code>ListaProductos</code>, que la reenvía a cada <code>Producto</code>.</li>
+        <li data-duracion="6">Al pulsar «Añadir» en el café, <code>Producto</code> llama a <code>onAgregar(café)</code>. Como esa función la creó <code>App</code>, el aviso sube por la cadena de props hasta el dueño del estado.</li>
+        <li data-duracion="7"><code>App</code> llama a <code>setCarrito</code> con un array nuevo. React vuelve a renderizar <code>App</code> y sus hijos, y <code>ResumenCarrito</code> recibe el carrito nuevo. Los datos bajan; los eventos suben.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>A este recorrido (los datos bajan por props, los cambios suben llamando a funciones que también llegaron por props) se le llama <strong>flujo de datos en un solo sentido</strong> (en inglés, <em>one-way data flow</em>). Al principio parece mucho cableado. A cambio, cuando algo se ve mal, sabes dónde buscar: el dato tiene un único dueño, y solo el dueño lo cambia. En código:</p>
+  <pre><code class="language-jsx">function App() {
+  const [carrito, setCarrito] = useState([]);
+
+  function agregar(producto) {
+    setCarrito([...carrito, producto]);
+  }
+
+  return (
+    &lt;&gt;
+      &lt;ResumenCarrito carrito={carrito} /&gt;
+      &lt;ListaProductos productos={CATALOGO} onAgregar={agregar} /&gt;
+    &lt;/&gt;
+  );
+}
+
+function ListaProductos({ productos, onAgregar }) {
+  return productos.map(p =&gt; &lt;Producto key={p.id} producto={p} onAgregar={onAgregar} /&gt;);
+}
+
+function Producto({ producto, onAgregar }) {
+  return &lt;button onClick={() =&gt; onAgregar(producto)}&gt;Añadir {producto.nombre}&lt;/button&gt;;
+}
+
+function ResumenCarrito({ carrito }) {
+  return &lt;p&gt;Carrito: {carrito.length} productos&lt;/p&gt;;
+}</code></pre>
+  <div class="taller" data-modo="web" id="taller-levantar" data-titulo="Modifica: estado compartido" data-alto="14rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState } = React;
+
+const CATALOGO = [
+  { id: 1, nombre: "Café", precio: 12.5 },
+  { id: 2, nombre: "Taza", precio: 8 },
+];
+
+function App() {
+  const [carrito, setCarrito] = useState([]);
+
+  function agregar(producto) {
+    setCarrito([...carrito, producto]);
+  }
+
+  return (
+    &lt;&gt;
+      &lt;ResumenCarrito carrito={carrito} /&gt;
+      &lt;ListaProductos productos={CATALOGO} onAgregar={agregar} /&gt;
+    &lt;/&gt;
+  );
+}
+
+function ListaProductos({ productos, onAgregar }) {
+  return (
+    &lt;div className="lista"&gt;
+      {productos.map(p =&gt; &lt;Producto key={p.id} producto={p} onAgregar={onAgregar} /&gt;)}
+    &lt;/div&gt;
+  );
+}
+
+function Producto({ producto, onAgregar }) {
+  return (
+    &lt;article className="producto"&gt;
+      &lt;h3&gt;{producto.nombre}&lt;/h3&gt;
+      &lt;p&gt;${producto.precio.toFixed(2)}&lt;/p&gt;
+      &lt;button onClick={() =&gt; onAgregar(producto)}&gt;Añadir&lt;/button&gt;
+    &lt;/article&gt;
+  );
+}
+
+function ResumenCarrito({ carrito }) {
+  const total = carrito.reduce((suma, p) =&gt; suma + p.precio, 0);
+  return (
+    &lt;header className="resumen"&gt;
+      Carrito: {carrito.length} productos · Total ${total.toFixed(2)}
+    &lt;/header&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
+&lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+.resumen { background: #eef; border-radius: 8px; padding: .5rem .8rem; margin-bottom: .8rem; }
+.lista { display: flex; gap: .8rem; }
+.producto { border: 1px solid #bbb; border-radius: 8px; padding: .5rem .8rem; }
+.producto h3, .producto p { margin: 0 0 .3rem; }</textarea>
+  </div>
+  <p><strong>Modifica:</strong> añade a <code>ResumenCarrito</code> un botón «Vaciar» que deje el carrito vacío. <code>ResumenCarrito</code> no puede cambiar el estado por sí mismo: tendrás que crear una función <code>vaciar</code> en <code>App</code> y pasársela como prop <code>onVaciar</code>. Después, haz que el botón solo aparezca si el carrito tiene algo.</p>
+
+  <h3>Una sola fuente de verdad: no dupliques el estado</h3>
+  <p>El total del carrito se calcula en cada render a partir del carrito; no es estado. Es tentador guardarlo aparte, «para tenerlo a mano»:</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Dos estados que deben coincidir</p>
+      <pre><code class="language-jsx">const [carrito, setCarrito] = useState([]);
+const [total, setTotal] = useState(0);
+
+function agregar(p) {
+  setCarrito([...carrito, p]);
+  setTotal(total + p.precio);
+}
+// ¿Y al quitar? ¿Y al vaciar? ¿Y si cambia un precio?</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Un estado y un valor derivado</p>
+      <pre><code class="language-jsx">const [carrito, setCarrito] = useState([]);
+
+const total = carrito.reduce(
+  (suma, p) =&gt; suma + p.precio, 0
+);
+// Siempre correcto, sin esfuerzo</code></pre>
+    </div>
+  </div>
+  <aside class="senal clave">
+    <p>Guarda en el estado lo mínimo imprescindible y calcula todo lo demás al renderizar. El total, la cantidad de productos, si el formulario es válido, la lista filtrada por un buscador: todos son <strong>valores derivados</strong>. Si un dato se puede calcular a partir de props o de otro estado, no debe ser estado. Así es imposible que dos datos se contradigan, el mismo problema que la Estación 15 resolvía con <code>render()</code>.</p>
+  </aside>
+
+  <h3>Contexto: datos para todo un árbol</h3>
+  <p>Levantar el estado funciona muy bien entre padres e hijos cercanos. Pero hay datos que necesita media aplicación: la persona que inició sesión, el tema claro u oscuro, el idioma. Si viven en <code>App</code>, tendrías que pasarlos por props a través de cinco o seis niveles de componentes que no los usan, solo para que lleguen abajo. A eso se le llama <strong>perforación de props</strong> (en inglés, <em>prop drilling</em>), y es incómodo de mantener.</p>
+  <p>El <strong>contexto</strong> (<em>context</em>) resuelve ese caso: un componente de arriba ofrece un valor, y cualquier componente de debajo, a cualquier profundidad, puede leerlo directamente. Tiene tres pasos:</p>
+  <pre><code class="language-jsx">import { createContext, useContext, useState } from "react";
+
+// 1. Crear el contexto (fuera de los componentes), con un valor por defecto
+const TemaContext = createContext("claro");
+
+// 2. Ofrecer un valor a todo lo que hay dentro
+function App() {
+  const [tema, setTema] = useState("claro");
+  return (
+    &lt;TemaContext value={tema}&gt;          {/* React 18: &lt;TemaContext.Provider value={tema}&gt; */}
+      &lt;Pagina /&gt;
+      &lt;button onClick={() =&gt; setTema(tema === "claro" ? "oscuro" : "claro")}&gt;
+        Cambiar tema
+      &lt;/button&gt;
+    &lt;/TemaContext&gt;
+  );
+}
+
+// 3. Leerlo donde haga falta, sin recibirlo por props
+function Boton({ children }) {
+  const tema = useContext(TemaContext);
+  return &lt;button className={"boton-" + tema}&gt;{children}&lt;/button&gt;;
+}</code></pre>
+  <p>Al componente que ofrece el valor se le llama <strong>proveedor</strong> (<em>provider</em>). En React 19 el propio contexto sirve de proveedor, <code>&lt;TemaContext value={…}&gt;</code>; en React 18, y en código anterior a 2025, verás <code>&lt;TemaContext.Provider value={…}&gt;</code>, que sigue funcionando. Cuando el valor del proveedor cambia, React vuelve a renderizar todos los componentes que lo leen. Pruébalo (este taller usa la forma de React 18):</p>
+  <div class="taller" data-modo="web" id="taller-contexto" data-titulo="Modifica: tema con contexto" data-alto="13rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState, useContext, createContext } = React;
+
+const TemaContext = createContext("claro");
+
+function App() {
+  const [tema, setTema] = useState("claro");
+  return (
+    &lt;TemaContext.Provider value={tema}&gt;
+      &lt;div className={"pagina " + tema}&gt;
+        &lt;button onClick={() =&gt; setTema(tema === "claro" ? "oscuro" : "claro")}&gt;
+          Cambiar a tema {tema === "claro" ? "oscuro" : "claro"}
+        &lt;/button&gt;
+        &lt;Tienda /&gt;
+      &lt;/div&gt;
+    &lt;/TemaContext.Provider&gt;
+  );
+}
+
+// Tienda y Estante no saben nada del tema: no lo reciben ni lo pasan
+function Tienda() {
+  return &lt;Estante /&gt;;
+}
+
+function Estante() {
+  return &lt;Etiqueta texto="Oferta de la semana" /&gt;;
+}
+
+function Etiqueta({ texto }) {
+  const tema = useContext(TemaContext);
+  return &lt;p className="etiqueta"&gt;{texto} (tema: {tema})&lt;/p&gt;;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
+&lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 0; }
+.pagina { padding: 1rem; min-height: 8rem; }
+.pagina.claro { background: #fff; color: #222; }
+.pagina.oscuro { background: #1e1e2a; color: #eee; }
+.etiqueta { border: 2px dashed currentColor; border-radius: 8px; padding: .5rem; display: inline-block; }</textarea>
+  </div>
+  <p><strong>Modifica:</strong> crea un segundo contexto, <code>UsuarioContext</code>, con el valor <code>"Lyra"</code>, envuelve la página con su proveedor y haz que <code>Etiqueta</code> muestre también «Hola, Lyra» leyéndolo con <code>useContext</code>.</p>
+  <aside class="senal ojo">
+    <p>El contexto no sustituye a las props. Si un dato va de un padre a su hijo, pásalo por props: se ve claramente de dónde viene. Reserva el contexto para datos que necesitan muchos componentes lejanos. Y recuerda que el contexto solo reparte el dato; el estado sigue viviendo en un componente (<code>App</code> en el ejemplo), y se cambia como siempre, con su función <code>set</code>. Para estados globales muy grandes, los equipos usan bibliotecas como Zustand o Redux Toolkit; para datos que vienen de un servidor, TanStack Query, que verás en la sección siguiente.</p>
+  </aside>
+</section>
+
+<section id="efectos" data-parada="Efectos y datos">
+  <h2>Efectos, datos y hooks propios</h2>
+  <p>Un componente debe ser puro: recibe props y estado, devuelve JSX, y no toca nada de fuera mientras se renderiza. Pero una app necesita hablar con el mundo exterior: pedir datos a un servidor, poner un temporizador, guardar en <code>localStorage</code>, escuchar el tamaño de la ventana, conectarse a un chat. Nada de eso es «calcular JSX». Para eso existen los <strong>efectos</strong>: código que React ejecuta <em>después</em> de actualizar la pantalla, para sincronizar el componente con un sistema externo a React.</p>
+  <pre><code class="language-jsx">import { useEffect, useState } from "react";
+
+function Reloj({ velocidad }) {
+  const [ticks, setTicks] = useState(0);
+
+  useEffect(() =&gt; {
+    const id = setInterval(() =&gt; setTicks(t =&gt; t + 1), velocidad);   // 1. el efecto
+    return () =&gt; clearInterval(id);                                   // 2. la limpieza
+  }, [velocidad]);                                                    // 3. las dependencias
+
+  return &lt;p&gt;Ticks: {ticks}&lt;/p&gt;;
+}</code></pre>
+  <ol>
+    <li><strong>El efecto</strong> es la función que le pasas a <code>useEffect</code>. React la ejecuta después de pintar.</li>
+    <li><strong>La limpieza</strong> es la función que el efecto devuelve (opcional). React la ejecuta antes de repetir el efecto y cuando el componente desaparece. Deshace lo que hizo el efecto: para el intervalo, cierra la conexión, quita el escuchador.</li>
+    <li><strong>Las dependencias</strong> son un array con los valores de props y estado que usa el efecto. React repite el efecto solo si alguno cambió desde el render anterior.</li>
+  </ol>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Cómo lo escribes</th><th scope="col">Cuándo se ejecuta el efecto</th></tr></thead>
+      <tbody>
+        <tr><td><code>useEffect(fn, [])</code></td><td>Una vez, al aparecer el componente en pantalla (al <strong>montarse</strong>). La limpieza, al desaparecer (al <strong>desmontarse</strong>).</td></tr>
+        <tr><td><code>useEffect(fn, [a, b])</code></td><td>Al montarse y cada vez que <code>a</code> o <code>b</code> cambien.</td></tr>
+        <tr><td><code>useEffect(fn)</code></td><td>Después de <em>cada</em> render. Casi nunca es lo que quieres.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figure class="capsula" data-titulo="La vida de un efecto">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Animación: línea de tiempo de un componente Reloj. Al montarse se renderiza y después arranca un intervalo de 1000 milisegundos. Cada tic provoca un render sin repetir el efecto. Al cambiar la velocidad, React limpia el intervalo viejo y arranca uno de 500. Al desmontarse, React ejecuta la última limpieza. En desarrollo, StrictMode ejecuta efecto, limpieza y efecto otra vez al montar.">
+        <g data-pasos="1-4">
+          <text class="d-peq d-tenue" x="16" y="76">Componente</text>
+          <text class="d-peq d-tenue" x="16" y="136">Renders</text>
+          <text class="d-peq d-tenue" x="16" y="196">Efecto</text>
+          <path class="d-linea" d="M120 250H690"/>
+          <path class="d-tinta" d="M690 242l12 8-12 8z"/>
+          <text class="d-peq d-tenue" x="690" y="274" text-anchor="end">tiempo</text>
+
+          <path class="d-punteada" d="M150 44V250" fill="none"/>
+          <text class="d-peq" x="150" y="36" text-anchor="middle">montar</text>
+          <g data-pasos="3-">
+            <path class="d-punteada" d="M420 44V250" fill="none"/>
+            <text class="d-peq" x="420" y="36" text-anchor="middle">cambia la velocidad</text>
+          </g>
+          <g data-pasos="4-">
+            <path class="d-punteada" d="M620 44V250" fill="none"/>
+            <text class="d-peq" x="620" y="36" text-anchor="middle">desmontar</text>
+          </g>
+
+          <rect class="d-caja-suave" x="150" y="58" width="270" height="26" rx="4"/>
+          <text class="d-peq" x="160" y="76">en pantalla</text>
+          <rect class="d-caja-suave" x="420" y="58" width="200" height="26" rx="4" data-pasos="3-"/>
+
+          <circle class="d-acento" cx="150" cy="130" r="8"/>
+          <g data-pasos="2-">
+            <circle class="d-acento" cx="230" cy="130" r="8"/>
+            <circle class="d-acento" cx="300" cy="130" r="8"/>
+            <circle class="d-acento" cx="370" cy="130" r="8"/>
+            <text class="d-peq d-tenue" x="300" y="160" text-anchor="middle">un render por tic</text>
+          </g>
+          <g data-pasos="3-">
+            <circle class="d-acento" cx="420" cy="130" r="8"/>
+            <circle class="d-acento" cx="465" cy="130" r="8"/>
+            <circle class="d-acento" cx="510" cy="130" r="8"/>
+            <circle class="d-acento" cx="555" cy="130" r="8"/>
+            <circle class="d-acento" cx="600" cy="130" r="8"/>
+          </g>
+
+          <rect class="d-ok" x="160" y="180" width="256" height="30" rx="6" fill-opacity="0.45"/>
+          <text class="d-mono d-peq" x="170" y="200">setInterval(…, 1000)</text>
+          <g data-pasos="3-">
+            <path class="d-mal-trazo" d="M416 174v42" stroke-width="4"/>
+            <text class="d-peq d-mal" x="412" y="232" text-anchor="end">limpieza</text>
+            <rect class="d-ok" x="428" y="180" width="188" height="30" rx="6" fill-opacity="0.45"/>
+            <text class="d-mono d-peq" x="438" y="200">setInterval(…, 500)</text>
+          </g>
+          <g data-pasos="4-">
+            <path class="d-mal-trazo" d="M616 174v42" stroke-width="4"/>
+            <text class="d-peq d-mal" x="612" y="232" text-anchor="end">limpieza</text>
+          </g>
+        </g>
+
+        <g data-pasos="5">
+          <text class="d-titulo" x="360" y="50" text-anchor="middle" style="font-size:20px">En desarrollo, con StrictMode, al montar:</text>
+          <rect class="d-caja" x="30" y="100" width="140" height="56" rx="8"/>
+          <text x="100" y="134" text-anchor="middle">render</text>
+          <path class="d-linea" d="M170 128h26"/><path class="d-tinta" d="M196 120l10 8-10 8z"/>
+          <rect class="d-ok" x="208" y="100" width="140" height="56" rx="8" fill-opacity="0.45"/>
+          <text x="278" y="134" text-anchor="middle">efecto</text>
+          <path class="d-linea" d="M348 128h26"/><path class="d-tinta" d="M374 120l10 8-10 8z"/>
+          <rect class="d-mal" x="386" y="100" width="140" height="56" rx="8" fill-opacity="0.35"/>
+          <text x="456" y="134" text-anchor="middle">limpieza</text>
+          <path class="d-linea" d="M526 128h26"/><path class="d-tinta" d="M552 120l10 8-10 8z"/>
+          <rect class="d-ok" x="564" y="100" width="140" height="56" rx="8" fill-opacity="0.45"/>
+          <text x="634" y="134" text-anchor="middle">efecto otra vez</text>
+          <path class="d-acento-trazo" d="M278 170v20H634v-20" fill="none" stroke-width="3"/>
+          <text class="d-peq" x="456" y="214" text-anchor="middle">ensayo: montar, desmontar y volver a montar</text>
+          <text class="d-peq d-tenue" x="360" y="258" text-anchor="middle">En producción el efecto se ejecuta una sola vez al montar.</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>La línea de abajo es el tiempo. El componente <code>Reloj</code> aparece en pantalla: se monta. React lo renderiza, pinta la pantalla y solo después ejecuta el efecto, que arranca un intervalo de 1000 ms.</li>
+        <li>Cada segundo, el intervalo cambia el estado y el componente se vuelve a renderizar. El efecto <em>no</em> se repite: su dependencia, <code>velocidad</code>, no cambió, así que el mismo intervalo sigue en marcha.</li>
+        <li data-duracion="7">Alguien cambia la velocidad a 500, y <code>velocidad</code> es una dependencia. React ejecuta primero la limpieza del efecto anterior (<code>clearInterval</code>) y después el efecto nuevo, con un intervalo de 500 ms.</li>
+        <li data-duracion="6">El componente desaparece de la pantalla: se desmonta. React ejecuta la última limpieza. Sin ella, el intervalo seguiría vivo para siempre, gastando batería y cambiando un estado que nadie ve.</li>
+        <li data-duracion="7">En desarrollo, dentro de <code>StrictMode</code>, React hace un ensayo al montar: ejecuta el efecto, lo limpia y lo vuelve a ejecutar enseguida. Si la limpieza está bien escrita, no notas nada; si falta, el fallo aparece antes de publicar.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Este taller tiene exactamente ese reloj, dentro de <code>React.StrictMode</code> y con mensajes en la consola. <strong>Investiga:</strong> ejecútalo y lee la consola (verás el ensayo de StrictMode: efecto, limpieza, efecto). Después cambia la velocidad y quita y pon el reloj, y relaciona cada mensaje con un paso de la animación.</p>
+  <div class="taller" data-modo="web" id="taller-reloj" data-titulo="Investiga: efecto, limpieza y StrictMode" data-alto="10rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState, useEffect } = React;
+
+function Reloj({ velocidad }) {
+  const [ticks, setTicks] = useState(0);
+
+  useEffect(() =&gt; {
+    console.log("efecto: arranco un intervalo de", velocidad, "ms");
+    const id = setInterval(() =&gt; setTicks(t =&gt; t + 1), velocidad);
+    return () =&gt; {
+      console.log("limpieza: paro el intervalo de", velocidad, "ms");
+      clearInterval(id);
+    };
+  }, [velocidad]);
+
+  return &lt;p className="reloj"&gt;Ticks: {ticks}&lt;/p&gt;;
+}
+
+function App() {
+  const [visible, setVisible] = useState(true);
+  const [velocidad, setVelocidad] = useState(1000);
+  return (
+    &lt;&gt;
+      &lt;button onClick={() =&gt; setVisible(!visible)}&gt;{visible ? "Quitar" : "Poner"} el reloj&lt;/button&gt;{" "}
+      &lt;button onClick={() =&gt; setVelocidad(velocidad === 1000 ? 500 : 1000)}&gt;Velocidad: {velocidad} ms&lt;/button&gt;
+      {visible &amp;&amp; &lt;Reloj velocidad={velocidad} /&gt;}
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  &lt;React.StrictMode&gt;
+    &lt;App /&gt;
+  &lt;/React.StrictMode&gt;
+);
+&lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+.reloj { font-size: 2rem; font-weight: bold; margin: .6rem 0; font-variant-numeric: tabular-nums; }</textarea>
+  </div>
+  <p><strong>Modifica:</strong> borra las cuatro líneas del <code>return</code> de limpieza y ejecuta. Los ticks suben de dos en dos: el ensayo de StrictMode dejó dos intervalos vivos, porque nadie paró el primero. Eso mismo pasaría en producción al quitar y poner el reloj. Vuelve a poner la limpieza y comprueba que todo se arregla.</p>
+  <aside class="senal ojo" data-titulo="No mientas sobre las dependencias">
+    <p>Todo valor de props o estado que uses dentro del efecto debe estar en el array de dependencias. Si usas <code>velocidad</code> y no la pones, el efecto se queda con la foto del primer render y nunca verá el valor nuevo. El linter de React (la regla <code>react-hooks/exhaustive-deps</code>) te avisa cuando falta alguna. Si una dependencia te molesta, la solución no es quitarla del array, sino cambiar el código para no necesitarla (por ejemplo, con la función de actualización <code>t =&gt; t + 1</code>, que no necesita leer <code>ticks</code>).</p>
+  </aside>
+
+  <h3>Cuándo NO usar useEffect</h3>
+  <p>Los efectos son la herramienta de React que más se usa mal. La documentación oficial tiene una página entera titulada «Quizás no necesites un efecto». La pregunta clave es: <em>¿estoy sincronizando con algo externo a React?</em> Si la respuesta es no, probablemente sobra.</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Efecto para calcular datos</p>
+      <pre><code class="language-jsx">const [busqueda, setBusqueda] = useState("");
+const [filtrados, setFiltrados] = useState(juegos);
+
+useEffect(() =&gt; {
+  setFiltrados(
+    juegos.filter(j =&gt; j.titulo.includes(busqueda))
+  );
+}, [busqueda]);</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Calcular al renderizar</p>
+      <pre><code class="language-jsx">const [busqueda, setBusqueda] = useState("");
+
+const filtrados = juegos.filter(j =&gt;
+  j.titulo.includes(busqueda)
+);</code></pre>
+    </div>
+  </div>
+  <p>La versión de la izquierda renderiza dos veces por cada tecla (una con la lista vieja, otra con la nueva), tiene un estado duplicado que puede desincronizarse y es más larga. La de la derecha es un valor derivado. Estos son los casos típicos en los que sobra un efecto:</p>
+  <ul>
+    <li><strong>Transformar datos para mostrarlos</strong> (filtrar, ordenar, sumar): calcúlalos directamente en el cuerpo del componente.</li>
+    <li><strong>Reaccionar a lo que hace el usuario</strong> (enviar la compra al pulsar «Pagar», mostrar un aviso al añadir): hazlo en el manejador del evento, que sabe exactamente qué pasó. Un efecto no sabe <em>por qué</em> cambió el estado.</li>
+    <li><strong>Reiniciar el estado cuando cambia una prop</strong> (vaciar el formulario de comentarios al cambiar de producto): dale al componente una <code>key</code> distinta, <code>&lt;Comentarios key={producto.id} /&gt;</code>, y React lo creará de cero.</li>
+    <li><strong>Encadenar efectos</strong> que cambian estados que disparan otros efectos: casi siempre se reemplazan por un solo manejador de eventos que calcula todo a la vez.</li>
+  </ul>
+  <aside class="senal error">
+    <p>Un efecto sin array de dependencias que cambia estado crea un bucle infinito: el efecto cambia el estado, el cambio provoca un render, el render ejecuta el efecto… La pestaña se congela o la consola se llena de <em>Maximum update depth exceeded</em>. Lo mismo pasa si pones en las dependencias un objeto o un array que se crea nuevo en cada render: para <code>Object.is</code>, siempre es «distinto».</p>
+  </aside>
+
+  <h3>Pedir datos a un servidor</h3>
+  <p>El caso de uso clásico de un efecto es cargar datos cuando aparece un componente o cuando cambia lo que se busca. Junta lo que aprendiste en la <a href="16-asincronia.html#fetch">Estación 16</a> (<code>fetch</code>, <code>async</code>/<code>await</code>) y los estados de la sección <a href="16-asincronia.html#interfaz">Carga, error y vacío</a>:</p>
+  <pre><code class="language-jsx">function Productos({ categoria }) {
+  const [productos, setProductos] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() =&gt; {
+    let ignorar = false;              // ¿esta respuesta ya no interesa?
+
+    async function cargar() {
+      setCargando(true);
+      setError(null);
+      try {
+        const respuesta = await fetch(`https://api.ejemplo.com/productos?categoria=${categoria}`);
+        if (!respuesta.ok) throw new Error(`Error ${respuesta.status}`);
+        const datos = await respuesta.json();
+        if (!ignorar) setProductos(datos);
+      } catch (e) {
+        if (!ignorar) setError(e.message);
+      } finally {
+        if (!ignorar) setCargando(false);
+      }
+    }
+
+    cargar();
+    return () =&gt; { ignorar = true; };  // limpieza: descarta respuestas viejas
+  }, [categoria]);
+
+  if (cargando) return &lt;p&gt;Cargando…&lt;/p&gt;;
+  if (error) return &lt;p role="alert"&gt;No se pudieron cargar los productos: {error}&lt;/p&gt;;
+  if (productos.length === 0) return &lt;p&gt;No hay productos en esta categoría.&lt;/p&gt;;
+  return &lt;ul&gt;{productos.map(p =&gt; &lt;li key={p.id}&gt;{p.nombre}&lt;/li&gt;)}&lt;/ul&gt;;
+}</code></pre>
+  <ul>
+    <li>La función del efecto no puede ser <code>async</code>: debe devolver una función de limpieza o nada, y una función <code>async</code> devuelve una promesa. Por eso se declara una función <code>async</code> dentro y se llama enseguida.</li>
+    <li>La variable <code>ignorar</code> evita una <strong>condición de carrera</strong>: una situación en la que el resultado depende de qué respuesta llega primero. Si eliges «Cafés» y enseguida «Tazas», hay dos peticiones en vuelo. Si la de cafés llega la última, pisaría la lista de tazas. Con la limpieza, el efecto de cafés queda marcado como «ignorar» en cuanto la categoría cambia, y su respuesta se descarta. También puedes cancelar la petición de verdad con <code>AbortController</code> (<a href="16-asincronia.html#interfaz">Estación 16</a>).</li>
+  </ul>
+  <p>En el taller, el servidor está simulado (la vista previa no puede pedir datos a sitios externos): «Cafés» tarda 1,5 segundos, «Tazas» 0,3 y «Error» falla. <strong>Investiga:</strong> pulsa «Cafés» y, enseguida, «Tazas». Todo va bien. Ahora borra los tres <code>if (!ignorar)</code> (deja solo las llamadas <code>set</code>), ejecuta y repite: al cabo de un segundo y medio, el título dice «Tazas» y la lista muestra cafés.</p>
+  <div class="taller" data-modo="web" id="taller-carrera" data-titulo="Investiga: carga, error y carreras" data-alto="13rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState, useEffect } = React;
+
+// Servidor simulado: devuelve una promesa, como fetch
+const DATOS = {
+  cafes: [{ id: 1, nombre: "Colombia" }, { id: 2, nombre: "Etiopía" }, { id: 3, nombre: "Guatemala" }],
+  tazas: [{ id: 4, nombre: "Cerámica" }, { id: 5, nombre: "Vidrio" }],
+  filtros: [],
+};
+const RETRASO = { cafes: 1500, tazas: 300, filtros: 500, error: 700 };
+function pedirProductos(categoria) {
+  return new Promise((resolver, rechazar) =&gt; {
+    setTimeout(() =&gt; {
+      if (categoria === "error") rechazar(new Error("el servidor respondió 500"));
+      else resolver(DATOS[categoria]);
+    }, RETRASO[categoria]);
+  });
+}
+
+function Productos({ categoria }) {
+  const [productos, setProductos] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() =&gt; {
+    let ignorar = false;
+    async function cargar() {
+      setCargando(true);
+      setError(null);
+      try {
+        const datos = await pedirProductos(categoria);
+        if (!ignorar) setProductos(datos);
+      } catch (e) {
+        if (!ignorar) setError(e.message);
+      } finally {
+        if (!ignorar) setCargando(false);
+      }
+    }
+    cargar();
+    return () =&gt; { ignorar = true; };
+  }, [categoria]);
+
+  if (cargando) return &lt;p&gt;Cargando…&lt;/p&gt;;
+  if (error) return &lt;p role="alert" className="error"&gt;No se pudieron cargar: {error}&lt;/p&gt;;
+  if (productos.length === 0) return &lt;p&gt;No hay productos en esta categoría.&lt;/p&gt;;
+  return &lt;ul&gt;{productos.map(p =&gt; &lt;li key={p.id}&gt;{p.nombre}&lt;/li&gt;)}&lt;/ul&gt;;
+}
+
+function App() {
+  const [categoria, setCategoria] = useState("cafes");
+  const categorias = { cafes: "Cafés", tazas: "Tazas", filtros: "Filtros", error: "Error" };
+  return (
+    &lt;&gt;
+      &lt;p&gt;
+        {Object.entries(categorias).map(([clave, nombre]) =&gt; (
+          &lt;button key={clave} onClick={() =&gt; setCategoria(clave)} aria-pressed={categoria === clave}&gt;
+            {nombre}
+          &lt;/button&gt;
+        ))}
+      &lt;/p&gt;
+      &lt;h3&gt;{categorias[categoria]}&lt;/h3&gt;
+      &lt;Productos categoria={categoria} /&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
+&lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+button { margin-right: .4rem; }
+button[aria-pressed="true"] { font-weight: bold; outline: 2px solid #555; }
+h3 { margin: .2rem 0; }
+.error { color: #b3261e; }</textarea>
+  </div>
+  <aside class="senal oficio">
+    <p>Escribir a mano el efecto de carga está muy bien para entenderlo, pero en proyectos reales casi nadie lo hace. Se usa una biblioteca como <strong>TanStack Query</strong> o SWR, que añaden caché (no repetir peticiones que ya hiciste), reintentos, recarga al volver a la pestaña y protección contra carreras, todo con una línea: <code>const { data, isPending, error } = useQuery(…)</code>. Los frameworks como Next.js o React Router cargan los datos antes de mostrar la página. Y React 19 añadió <code>use(promesa)</code>, que junto con el componente <code>&lt;Suspense&gt;</code> permite «esperar» datos directamente en el render. Aprende primero el efecto a mano: es lo que esas herramientas hacen por dentro.</p>
+  </aside>
+
+  <h3>Refs: cuando necesitas el elemento del DOM</h3>
+  <p>A veces sí necesitas un elemento real del DOM: poner el cursor en un campo, desplazarte hasta un mensaje, medir un tamaño. Para eso está <code>useRef</code>. Una <strong>ref</strong> es una caja con una propiedad <code>current</code> que React no vigila: cambiarla no provoca renders. Si se la pasas a un elemento con la prop <code>ref</code>, React guarda en <code>current</code> el elemento del DOM:</p>
+  <pre><code class="language-jsx">function Buscador() {
+  const campo = useRef(null);
+  return (
+    &lt;&gt;
+      &lt;input ref={campo} placeholder="Buscar juego" /&gt;
+      &lt;button onClick={() =&gt; campo.current.focus()}&gt;Buscar&lt;/button&gt;
+    &lt;/&gt;
+  );
+}</code></pre>
+  <p>Las refs también sirven para guardar valores que no se muestran, como el id de un <code>setInterval</code>. En React 19, además, tus propios componentes pueden recibir <code>ref</code> como una prop más; antes hacía falta envolverlos en <code>forwardRef</code>, que verás en código antiguo.</p>
+
+  <h3>Tus propios hooks</h3>
+  <p>Cuando la misma combinación de estado y efectos aparece en varios componentes, puedes extraerla a una función propia. Un <strong>hook personalizado</strong> (<em>custom hook</em>) es una función cuyo nombre empieza por <code>use</code> y que llama a otros hooks. Este guarda un valor en el estado y, además, lo copia en <code>localStorage</code> cada vez que cambia, para que sobreviva a una recarga (<a href="15-dom.html#guardar">Estación 15</a>):</p>
+  <pre><code class="language-jsx">function useLocalStorage(clave, valorInicial) {
+  const [valor, setValor] = useState(() =&gt; {
+    const guardado = localStorage.getItem(clave);
+    return guardado !== null ? JSON.parse(guardado) : valorInicial;
+  });
+
+  useEffect(() =&gt; {
+    localStorage.setItem(clave, JSON.stringify(valor));   // sincronizar con algo externo: ¡un buen efecto!
+  }, [clave, valor]);
+
+  return [valor, setValor];
+}
+
+// Se usa igual que useState
+const [carrito, setCarrito] = useLocalStorage("carrito", []);</code></pre>
+  <ul>
+    <li><code>useState(() =&gt; …)</code> recibe una función en vez de un valor: es un <strong>inicializador perezoso</strong>. React solo la ejecuta en el primer render, así no lees <code>localStorage</code> en cada render.</li>
+    <li>Un hook comparte <em>lógica</em>, no estado. Si dos componentes llaman a <code>useLocalStorage</code>, cada uno tiene su propio <code>valor</code>, como si hubieran escrito el <code>useState</code> y el <code>useEffect</code> ellos mismos.</li>
+    <li>El nombre debe empezar por <code>use</code>: así tú, el linter y React saben que dentro se aplican las reglas de los hooks.</li>
+  </ul>
+  <p><strong>Modifica:</strong> este taller es una lista de deseos que usa el hook. Añade un par de juegos y vuelve a pulsar «Ejecutar»: la lista sigue ahí (el <code>localStorage</code> del taller dura entre ejecuciones; «Reiniciar» lo borra). Después crea un segundo hook, <code>useAlternar(inicial)</code>, que devuelva un booleano y una función que lo invierta, y úsalo para mostrar u ocultar la lista con un botón.</p>
+  <div class="taller" data-modo="web" id="taller-hook-propio" data-titulo="Modifica: un hook que recuerda" data-alto="14rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState, useEffect } = React;
+
+function useLocalStorage(clave, valorInicial) {
+  const [valor, setValor] = useState(() =&gt; {
+    const guardado = localStorage.getItem(clave);
+    return guardado !== null ? JSON.parse(guardado) : valorInicial;
+  });
+  useEffect(() =&gt; {
+    localStorage.setItem(clave, JSON.stringify(valor));
+  }, [clave, valor]);
+  return [valor, setValor];
+}
+
+function ListaDeseos() {
+  const [deseos, setDeseos] = useLocalStorage("deseos", []);
+  const [texto, setTexto] = useState("");
+
+  function agregar(e) {
+    e.preventDefault();
+    if (texto.trim() === "") return;
+    setDeseos([...deseos, { id: Date.now(), titulo: texto.trim() }]);
+    setTexto("");
+  }
+
+  return (
+    &lt;&gt;
+      &lt;form onSubmit={agregar}&gt;
+        &lt;label htmlFor="juego"&gt;Juego &lt;/label&gt;
+        &lt;input id="juego" value={texto} onChange={e =&gt; setTexto(e.target.value)} /&gt;{" "}
+        &lt;button&gt;Añadir&lt;/button&gt;
+      &lt;/form&gt;
+      &lt;ul&gt;
+        {deseos.map(d =&gt; (
+          &lt;li key={d.id}&gt;
+            {d.titulo}{" "}
+            &lt;button onClick={() =&gt; setDeseos(deseos.filter(x =&gt; x.id !== d.id))}&gt;Quitar&lt;/button&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+      &lt;p&gt;{deseos.length} juegos en tu lista.&lt;/p&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;ListaDeseos /&gt;);
+&lt;/script&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+li { margin: .25rem 0; }</textarea>
+  </div>
+</section>
+
+<section id="herramientas" data-parada="Rutas y herramientas">
+  <h2>Rutas, estilos y herramientas</h2>
+  <p>Con componentes, estado y efectos ya puedes construir cualquier pantalla. Para una app completa faltan tres piezas que React deja en manos de otras herramientas: navegar entre páginas, organizar los estilos e inspeccionar lo que pasa por dentro. Esta sección las presenta y cierra con las buenas prácticas que usan los equipos.</p>
+
+  <h3>Varias páginas: React Router</h3>
+  <p>Una app de React típica es una <strong>SPA</strong> (<em>Single Page Application</em>, «aplicación de una sola página»): el navegador carga un único <code>index.html</code> y, cuando navegas, JavaScript cambia el contenido sin pedir una página nueva al servidor. La dirección de la barra sí cambia, para que funcionen el botón «Atrás», los marcadores y los enlaces compartidos. La biblioteca más usada para esto es <strong>React Router</strong>, que relaciona cada dirección (ruta) con un componente. Su versión actual es la 8 (junio de 2026), y se instala así:</p>
+  <pre class="consola"><code><span class="prompt">$</span> npm install react-router</code></pre>
+  <p>Primero, envuelve la app en un <code>BrowserRouter</code>, que conecta React Router con la barra de direcciones:</p>
+  <pre><code class="language-jsx">// src/main.jsx
+import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router";
+import App from "./App.jsx";
+
+createRoot(document.getElementById("root")).render(
+  &lt;BrowserRouter&gt;
+    &lt;App /&gt;
+  &lt;/BrowserRouter&gt;
+);</code></pre>
+  <p>Después, declara qué componente corresponde a cada ruta:</p>
+  <pre><code class="language-jsx">// src/App.jsx
+import { Routes, Route, NavLink } from "react-router";
+import Inicio from "./paginas/Inicio.jsx";
+import DetalleProducto from "./paginas/DetalleProducto.jsx";
+import Carrito from "./paginas/Carrito.jsx";
+import NoEncontrada from "./paginas/NoEncontrada.jsx";
+
+export default function App() {
+  return (
+    &lt;&gt;
+      &lt;nav&gt;
+        &lt;NavLink to="/"&gt;Inicio&lt;/NavLink&gt;
+        &lt;NavLink to="/carrito"&gt;Carrito&lt;/NavLink&gt;
+      &lt;/nav&gt;
+      &lt;Routes&gt;
+        &lt;Route path="/" element={&lt;Inicio /&gt;} /&gt;
+        &lt;Route path="/producto/:id" element={&lt;DetalleProducto /&gt;} /&gt;
+        &lt;Route path="/carrito" element={&lt;Carrito /&gt;} /&gt;
+        &lt;Route path="*" element={&lt;NoEncontrada /&gt;} /&gt;
+      &lt;/Routes&gt;
+    &lt;/&gt;
+  );
+}</code></pre>
+  <ul>
+    <li><code>&lt;Routes&gt;</code> mira la dirección actual y muestra el <code>element</code> de la ruta que coincide. <code>path="*"</code> coincide con cualquier cosa: es la página «no encontrada».</li>
+    <li><code>:id</code> es un <strong>segmento dinámico</strong>: <code>/producto/7</code> y <code>/producto/42</code> muestran el mismo componente con distinto dato.</li>
+    <li><code>&lt;NavLink&gt;</code> y <code>&lt;Link&gt;</code> son enlaces que cambian de página sin recargar. <code>NavLink</code> añade además la clase <code>active</code> al enlace de la página actual, para resaltarlo con CSS.</li>
+  </ul>
+  <p>Dentro de una página, dos hooks de React Router hacen el resto: <code>useParams</code> lee los segmentos dinámicos y <code>useNavigate</code> cambia de página desde el código (por ejemplo, después de pagar).</p>
+  <pre><code class="language-jsx">// src/paginas/DetalleProducto.jsx
+import { useParams, useNavigate, Link } from "react-router";
+import { CATALOGO } from "../datos.js";
+
+export default function DetalleProducto() {
+  const { id } = useParams();             // en /producto/7, id vale "7" (un texto)
+  const navegar = useNavigate();
+  const producto = CATALOGO.find(p =&gt; p.id === Number(id));
+
+  if (!producto) return &lt;p&gt;Ese producto no existe. &lt;Link to="/"&gt;Volver&lt;/Link&gt;&lt;/p&gt;;
+  return (
+    &lt;article&gt;
+      &lt;h1&gt;{producto.nombre}&lt;/h1&gt;
+      &lt;button onClick={() =&gt; navegar("/carrito")}&gt;Ir al carrito&lt;/button&gt;
+    &lt;/article&gt;
+  );
+}</code></pre>
+  <div class="parsons" data-titulo="Ordena la configuración de rutas" data-lenguaje="jsx" data-exito="¡Correcto! Las tres rutas pueden ir en cualquier orden: React Router elige la más específica.">
+    <ol>
+      <li>&lt;BrowserRouter&gt;</li>
+      <li data-sangria="1">&lt;Routes&gt;</li>
+      <li data-sangria="2" data-grupo="r">&lt;Route path="/" element={&lt;Inicio /&gt;} /&gt;</li>
+      <li data-sangria="2" data-grupo="r">&lt;Route path="/producto/:id" element={&lt;DetalleProducto /&gt;} /&gt;</li>
+      <li data-sangria="2" data-grupo="r">&lt;Route path="*" element={&lt;NoEncontrada /&gt;} /&gt;</li>
+      <li data-sangria="1">&lt;/Routes&gt;</li>
+      <li>&lt;/BrowserRouter&gt;</li>
+    </ol>
+  </div>
+  <aside class="senal error">
+    <p>Dos fallos frecuentes. (1) Usar <code>&lt;a href="/carrito"&gt;</code> en vez de <code>&lt;Link to="/carrito"&gt;</code>: el navegador recarga la página entera y se pierde todo el estado (el carrito queda vacío). (2) Copiar de tutoriales anteriores a 2026 <code>import … from "react-router-dom"</code>: en la versión 8 ese paquete desapareció y todo se importa de <code>"react-router"</code>. Las ideas (<code>Routes</code>, <code>Route</code>, <code>Link</code>, <code>useParams</code>) son las mismas desde la versión 6.</p>
+  </aside>
+  <aside class="senal ojo" data-titulo="Al publicar una SPA">
+    <p>Si publicas la carpeta <code>dist</code> y alguien recarga la página en <code>/carrito</code>, el servidor buscará un archivo <code>carrito</code> que no existe y responderá 404. Hay que configurar el servidor para que devuelva <code>index.html</code> en cualquier ruta; React Router se encarga del resto. Cada servicio de publicación tiene su forma de hacerlo; lo verás en la <a href="35-devops.html">Estación 35</a>.</p>
+  </aside>
+  <p>React Router tiene además un «modo framework», heredero de un proyecto llamado Remix, que añade carga de datos antes de mostrar cada página y renderizado en el servidor. Es una de las dos opciones que recomienda la documentación de React para proyectos grandes, junto con Next.js.</p>
+
+  <h3>Estilos</h3>
+  <p>React no impone una forma de escribir CSS. Estas son las opciones más comunes en 2026:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Opción</th><th scope="col">Cómo se usa</th><th scope="col">Ventajas</th><th scope="col">Cuidado con</th></tr></thead>
+      <tbody>
+        <tr><td>CSS normal</td><td><code>import "./App.css"</code> y <code>className="tarjeta"</code></td><td>Lo que ya sabes de la <a href="14-css.html">Estación 14</a>; sin nada que instalar</td><td>Todas las clases son globales: dos componentes con <code>.titulo</code> chocan</td></tr>
+        <tr><td>CSS Modules</td><td>Archivo <code>Tarjeta.module.css</code>; <code>className={estilos.titulo}</code></td><td>Cada clase es local al componente; Vite lo trae de serie</td><td>Un archivo de CSS por componente</td></tr>
+        <tr><td>Tailwind CSS</td><td>Clases de utilidad: <code>className="p-4 rounded-lg bg-white"</code></td><td>Muy rápido para maquetar; diseño coherente; muy usado en empresas</td><td>El JSX se llena de clases; hay que aprender sus nombres</td></tr>
+        <tr><td><code>style</code> en línea</td><td><code>style={{ width: progreso + "%" }}</code></td><td>Valores que cambian con el estado</td><td>No admite <code>:hover</code> ni media queries; úsalo poco</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Con <strong>CSS Modules</strong>, Vite cambia el nombre de cada clase por uno único (algo como <code>_titulo_x7k2p_1</code>), así que puedes llamar <code>.titulo</code> a una clase en cada componente sin que choquen:</p>
+  <pre><code class="language-css">/* src/components/Tarjeta.module.css */
+.tarjeta { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; }
+.titulo { margin: 0; font-size: 1.1rem; }</code></pre>
+  <pre><code class="language-jsx">// src/components/Tarjeta.jsx
+import estilos from "./Tarjeta.module.css";
+
+export default function Tarjeta({ titulo, children }) {
+  return (
+    &lt;article className={estilos.tarjeta}&gt;
+      &lt;h3 className={estilos.titulo}&gt;{titulo}&lt;/h3&gt;
+      {children}
+    &lt;/article&gt;
+  );
+}</code></pre>
+  <p><strong>Tailwind CSS</strong> (versión 4.3 en 2026) sigue otra filosofía: en vez de escribir CSS, combinas clases pequeñas que hacen una sola cosa cada una (<code>p-4</code> es un relleno de 1rem, <code>font-bold</code> es negrita). Con Vite se instala con <code>npm install tailwindcss @tailwindcss/vite</code>, se añade <code>tailwindcss()</code> a la lista de <code>plugins</code> de <code>vite.config.js</code> y se escribe <code>@import "tailwindcss";</code> al principio de <code>src/index.css</code>. Después:</p>
+  <pre><code class="language-jsx">&lt;button className="rounded-lg bg-violet-700 px-4 py-2 font-bold text-white hover:bg-violet-800"&gt;
+  Añadir al carrito
+&lt;/button&gt;</code></pre>
+  <p>Para poner o quitar una clase según el estado, construye el texto con una plantilla literal: <code>className={`tarea ${hecha ? "hecha" : ""}`}</code>. Muchos proyectos usan la pequeña biblioteca <code>clsx</code> para eso.</p>
+
+  <h3>React DevTools</h3>
+  <p><strong>React Developer Tools</strong> es una extensión oficial para Chrome, Firefox y Edge (para Safari existe el paquete <code>react-devtools</code> de npm) que añade dos pestañas a las herramientas del navegador (<kbd>F12</kbd>) en cualquier página hecha con React:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 270" role="img" aria-label="Esquema de la pestaña Components de React DevTools. A la izquierda, el árbol de componentes con App, Cabecera, ListaProductos y dos TarjetaProducto; una está seleccionada. A la derecha, el inspector muestra sus props (nombre Café, precio 12.5), sus hooks (un estado con valor false) y qué componentes la renderizaron.">
+      <rect class="d-caja" x="10" y="10" width="700" height="250" rx="8"/>
+      <rect class="d-fondo-2" x="11" y="11" width="698" height="32" rx="7"/>
+      <g class="d-peq">
+        <text x="30" y="32">Elements</text>
+        <text x="110" y="32">Console</text>
+        <rect class="d-acento" x="178" y="16" width="112" height="24" rx="5"/>
+        <text class="d-sobre-acento" x="234" y="33" text-anchor="middle">Components</text>
+        <text x="306" y="32">Profiler</text>
+      </g>
+      <path class="d-linea" d="M360 43V260"/>
+      <g class="d-mono" style="font-size:14px">
+        <text x="28" y="72">App</text>
+        <text x="48" y="98">Cabecera</text>
+        <text x="68" y="124">InsigniaCarrito</text>
+        <text x="48" y="150">ListaProductos</text>
+        <rect class="d-resalte" x="60" y="160" width="290" height="24" rx="4"/>
+        <text x="68" y="177">TarjetaProducto key="1"</text>
+        <text x="68" y="203">TarjetaProducto key="2"</text>
+      </g>
+      <text class="d-titulo" x="378" y="72" style="font-size:17px">TarjetaProducto</text>
+      <g class="d-peq">
+        <text class="d-tenue" x="378" y="102">props</text>
+        <text class="d-mono" x="394" y="124">nombre: "Café"</text>
+        <text class="d-mono" x="394" y="144">precio: 12.5</text>
+        <text class="d-tenue" x="378" y="174">hooks</text>
+        <text class="d-mono" x="394" y="196">State: false</text>
+        <text class="d-tenue" x="378" y="226">rendered by</text>
+        <text class="d-mono" x="394" y="248">ListaProductos, App</text>
+      </g>
+      <rect class="d-acento-trazo" x="386" y="182" width="150" height="22" rx="4" fill="none" stroke-width="2"/>
+      <text class="d-peq d-tenue" x="548" y="197">se puede editar</text>
+    </svg>
+    <figcaption>Esquema de la pestaña <em>Components</em>. A la izquierda, el árbol de componentes real de la página (no el del DOM). A la derecha, el componente seleccionado: sus props, sus hooks con el valor actual del estado, y quién lo renderizó. Puedes cambiar un estado a mano y ver cómo reacciona la interfaz.</figcaption>
+  </figure>
+  <ul>
+    <li><strong>Components</strong>: el árbol de componentes, con las props y el estado de cada uno. Sirve para responder «¿qué valor tiene este estado ahora?» sin llenar el código de <code>console.log</code>.</li>
+    <li><strong>Profiler</strong>: grabas una interacción (por ejemplo, escribir en el buscador) y te muestra qué componentes se renderizaron y cuánto tardó cada uno. En sus ajustes, la opción <em>Highlight updates when components render</em> dibuja un borde en cada componente que se renderiza, en directo.</li>
+  </ul>
+  <p>La extensión no funciona dentro de los talleres de esta página (cada uno corre en un marco aislado), pero sí en tu proyecto de Vite. Instálala desde la tienda de extensiones de tu navegador buscando «React Developer Tools».</p>
+
+  <h3>Buenas prácticas de oficio</h3>
+  <ul>
+    <li><strong>Componentes pequeños y puros.</strong> Si un componente pasa de unas 150 líneas o hace dos cosas, divídelo.</li>
+    <li><strong>Estado mínimo, lo más abajo posible.</strong> Guarda solo lo imprescindible, deriva el resto y ponlo en el componente más bajo que lo necesite. Súbelo solo cuando otro componente lo necesite también.</li>
+    <li><strong>Nunca mutes</strong> estado ni props. Crea arrays y objetos nuevos.</li>
+    <li><strong>Keys estables</strong>, sacadas de los datos.</li>
+    <li><strong>Efectos solo para sincronizar</strong> con sistemas externos, siempre con su limpieza.</li>
+    <li><strong>Deja que las herramientas te vigilen.</strong> Ejecuta el linter antes de cada commit (<code>npm run lint</code>) y, cuando el proyecto crezca, usa TypeScript (<a href="23-typescript.html">Estación 23</a>): la plantilla <code>react-ts</code> de Vite ya viene preparada. Las props se describen con un tipo y el editor te avisa si olvidas una:</li>
+  </ul>
+  <pre><code class="language-tsx">type Props = {
+  nombre: string;
+  precio: number;
+  oferta?: boolean;          // el ? la hace opcional
+};
+
+export function TarjetaProducto({ nombre, precio, oferta = false }: Props) {
+  return &lt;h3&gt;{nombre}: ${precio.toFixed(2)}{oferta &amp;&amp; " (oferta)"}&lt;/h3&gt;;
+}
+
+// &lt;TarjetaProducto nombre="Café" /&gt;
+// Error: Property 'precio' is missing in type '{ nombre: string; }'
+// but required in type 'Props'.</code></pre>
+  <ul>
+    <li><strong>Prueba como lo haría una persona.</strong> Los componentes se prueban con Vitest (<a href="26-testing.html#herramientas">Estación 26</a>) y React Testing Library, que dibuja el componente en un DOM simulado y lo usa como un usuario: busca por texto o por rol, hace clic y comprueba lo que se ve. Se instala con <code>npm install -D vitest jsdom @testing-library/react @testing-library/user-event</code> y se activa el DOM simulado añadiendo <code>test: { environment: "jsdom" }</code> a <code>vite.config.js</code>:</li>
+  </ul>
+  <pre><code class="language-jsx">// src/Contador.test.jsx
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { expect, test } from "vitest";
+import Contador from "./Contador.jsx";
+
+test("suma uno al pulsar el botón", async () =&gt; {
+  render(&lt;Contador /&gt;);
+  await userEvent.click(screen.getByRole("button", { name: "Sumar" }));
+  expect(screen.getByText("Clics: 1")).toBeTruthy();
+});</code></pre>
+  <ul>
+    <li><strong>Rendimiento: mide antes de optimizar.</strong> React es rápido por defecto. En código de otros verás <code>memo</code>, <code>useMemo</code> y <code>useCallback</code>, que evitan cálculos o renders repetidos. Desde octubre de 2025 existe <strong>React Compiler</strong> 1.0, una herramienta que añade esas optimizaciones automáticamente al construir (en Vite, la variante «JavaScript + React Compiler»). Usa el Profiler para encontrar el componente lento de verdad antes de tocar nada.</li>
+    <li><strong>Accesibilidad desde el principio</strong>: HTML semántico, etiquetas en los campos, foco visible y navegación con teclado (<a href="17-diseno-ux.html#accesibilidad">Estación 17</a>).</li>
+  </ul>
+</section>
+
+<section id="panorama" data-parada="Otras opciones">
+  <h2>Next.js, Vue, Svelte y Angular</h2>
+  <p>React no es la única forma de construir interfaces, ni siempre la mejor. Conviene conocer el panorama para saber qué estás eligiendo y para no asustarte cuando un equipo use otra cosa. La buena noticia: las ideas de esta estación (componentes, datos que entran, estado que cambia, efectos, rutas) existen en todas estas herramientas con otros nombres.</p>
+
+  <h3>Un framework construido sobre React: Next.js</h3>
+  <p>Una SPA como la que crea Vite tiene un punto débil: al abrirla, el navegador recibe un HTML casi vacío (<code>&lt;div id="root"&gt;&lt;/div&gt;</code>) y tiene que descargar y ejecutar todo el JavaScript antes de mostrar nada. En un teléfono modesto eso se nota, y los buscadores ven peor el contenido. La solución es el <strong>renderizado en el servidor</strong> (<em>SSR</em>, <em>server-side rendering</em>): el servidor ejecuta los componentes de React y envía el HTML ya hecho, y después el navegador lo «hidrata», es decir, le conecta los eventos para que sea interactivo.</p>
+  <p><strong>Next.js</strong>, creado por la empresa Vercel, es el framework de React más usado. Su versión mayor actual es la 16 (octubre de 2025). Añade a React:</p>
+  <ul>
+    <li><strong>Rutas por carpetas</strong>: el archivo <code>app/productos/[id]/page.jsx</code> es la página <code>/productos/7</code>, sin configurar un router.</li>
+    <li><strong>Renderizado en el servidor</strong> y generación de páginas estáticas al construir.</li>
+    <li><strong>Server Components</strong>: componentes que se ejecutan solo en el servidor. Pueden leer una base de datos directamente y no envían su JavaScript al navegador. Los que necesitan estado o eventos se marcan con la línea <code>"use client"</code> al principio del archivo.</li>
+    <li>Rutas de API para escribir el backend en el mismo proyecto, optimización de imágenes y más.</li>
+  </ul>
+  <p>Se crea con <code>npx create-next-app@latest</code>. Es la opción natural para tiendas, blogs, webs de empresa y cualquier cosa que deba aparecer bien en Google. A cambio, es más complejo: tienes que pensar qué parte corre en el servidor y cuál en el navegador. Aprende React «puro» primero; Next.js será mucho más fácil después.</p>
+
+  <h3>Las alternativas a React</h3>
+  <p>El mismo contador, escrito en cuatro herramientas. Fíjate en lo que cambia (la sintaxis) y en lo que no (un valor que cambia y una interfaz que lo refleja):</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo">React</p>
+      <pre><code class="language-jsx">function Contador() {
+  const [cuenta, setCuenta] = useState(0);
+  return (
+    &lt;button onClick={() =&gt; setCuenta(c =&gt; c + 1)}&gt;
+      Clics: {cuenta}
+    &lt;/button&gt;
+  );
+}</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo">Vue (archivo Contador.vue)</p>
+      <pre><code class="language-html">&lt;script setup&gt;
+import { ref } from "vue";
+const cuenta = ref(0);
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;button @click="cuenta++"&gt;Clics: {{ cuenta }}&lt;/button&gt;
+&lt;/template&gt;</code></pre>
+    </div>
+  </div>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo">Svelte 5 (archivo Contador.svelte)</p>
+      <pre><code class="language-html">&lt;script&gt;
+  let cuenta = $state(0);
+&lt;/script&gt;
+
+&lt;button onclick={() =&gt; cuenta++}&gt;
+  Clics: {cuenta}
+&lt;/button&gt;</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo">Angular (archivo contador.ts)</p>
+      <pre><code class="language-ts">import { Component, signal } from "@angular/core";
+
+@Component({
+  selector: "app-contador",
+  template: `&lt;button (click)="sumar()"&gt;Clics: {{ cuenta() }}&lt;/button&gt;`,
+})
+export class Contador {
+  cuenta = signal(0);
+  sumar() { this.cuenta.update(c =&gt; c + 1); }
+}</code></pre>
+    </div>
+  </div>
+  <ul>
+    <li><strong>Vue</strong> (creado por Evan You en 2014; versión 3.5) usa plantillas parecidas al HTML con atributos especiales (<code>v-if</code>, <code>v-for</code>, <code>@click</code>) y junta plantilla, lógica y estilos en un archivo <code>.vue</code>. Cuando cambias <code>cuenta</code>, Vue sabe exactamente qué partes dependen de ella, sin volver a ejecutar el componente entero. Su framework equivalente a Next.js es Nuxt.</li>
+    <li><strong>Svelte</strong> (creado por Rich Harris en 2016; versión 5, de octubre de 2024) es un <strong>compilador</strong>: al construir, convierte tus componentes en JavaScript que actualiza el DOM directamente, sin una biblioteca que compare descripciones en el navegador. Resultado: muy poco código y archivos pequeños. <code>$state</code> es una de sus «runas», marcas que le dicen al compilador qué es reactivo. Su framework es SvelteKit.</li>
+    <li><strong>Angular</strong> (de Google; la versión actual es la 22, de junio de 2026) es un framework completo: trae de serie router, formularios, cliente HTTP, pruebas y una estructura muy definida, y se escribe siempre en TypeScript. Usa <strong>señales</strong> (<code>signal</code>) para la reactividad. No confundir con AngularJS, su antecesor de 2010, que ya no tiene soporte.</li>
+  </ul>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">Qué es</th><th scope="col">Uso en 2025*</th><th scope="col">Punto fuerte</th><th scope="col">Elígelo si…</th></tr></thead>
+      <tbody>
+        <tr><td><strong>React</strong></td><td>Biblioteca de interfaces</td><td>44,7 %</td><td>El ecosistema y la oferta de empleo más grandes; React Native para móviles</td><td>Quieres la opción con más recursos, más empleo y más bibliotecas</td></tr>
+        <tr><td><strong>Next.js</strong></td><td>Framework sobre React</td><td>20,8 %</td><td>Servidor, SEO y rendimiento de la primera carga</td><td>Haces una web pública, una tienda o una app con backend en el mismo proyecto</td></tr>
+        <tr><td><strong>Angular</strong></td><td>Framework completo</td><td>18,2 %</td><td>Todo incluido y con convenciones fuertes</td><td>Trabajas en una empresa grande con muchos equipos y apps de gestión</td></tr>
+        <tr><td><strong>Vue</strong></td><td>Framework progresivo</td><td>17,6 %</td><td>Curva de aprendizaje suave y documentación excelente</td><td>Quieres algo sencillo de empezar, o añadir interactividad a una web existente</td></tr>
+        <tr><td><strong>Svelte</strong></td><td>Compilador de interfaces</td><td>7,2 %</td><td>Poco código y poco JavaScript enviado al navegador</td><td>Te importa mucho el peso de la página o disfrutas de una sintaxis mínima</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>* Porcentaje de quienes respondieron la encuesta de Stack Overflow de 2025 que usaban cada herramienta. Una encuesta así no representa a todo el mundo, pero sirve para comparar tamaños.</p>
+  <aside class="senal oficio">
+    <p>Para tu primer empleo, lo que más pesa es lo que piden las ofertas de tu ciudad o de las empresas remotas que te interesan: busca «desarrollador frontend» en un portal de empleo y cuenta cuántas piden cada herramienta. Y no saltes de una a otra al principio. Quien domina de verdad una, junto con JavaScript, HTML y CSS, aprende la siguiente en una o dos semanas, porque los conceptos se repiten.</p>
+  </aside>
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>Cada kilobyte de JavaScript lo paga quien visita tu página: en tiempo de descarga, en datos móviles y en batería. Para alguien con un teléfono barato y un plan de datos limitado, una SPA pesada puede tardar varios segundos en responder. El renderizado en el servidor, las herramientas que envían menos JavaScript y medir con Lighthouse (<a href="17-diseno-ux.html#rendimiento">Estación 17</a>) son formas de construir una web que funcione para todas las personas, no solo para quien tiene el último modelo.</p>
+  </aside>
+  <p>Para apps de teléfono y de escritorio, React tiene primos directos: <strong>React Native</strong> (con Expo) usa los mismos componentes, props, estado y hooks para crear apps nativas de Android e iOS. Lo verás en la <a href="33-moviles-escritorio.html">Estación 33</a>.</p>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>React es una biblioteca para construir interfaces de forma declarativa: describes qué debe verse para cada estado y React actualiza el DOM. La idea central es <strong>interfaz = f(estado)</strong>. Al cambiar el estado, React vuelve a renderizar, compara la descripción nueva con la anterior y toca solo lo que cambió.</li>
+    <li>Los proyectos se crean con Vite (<code>npm create vite@latest</code>), se desarrollan con <code>npm run dev</code> y se construyen con <code>npm run build</code>. <code>create-react-app</code> está obsoleto. La versión actual es React 19 (19.3 en septiembre de 2026); los talleres usan 18.3.1, con las mismas bases.</li>
+    <li>JSX es JavaScript con etiquetas: un solo elemento raíz (o un fragmento <code>&lt;&gt;&lt;/&gt;</code>), etiquetas cerradas, <code>className</code> y <code>htmlFor</code>, y llaves para las expresiones. Lo que va entre llaves se muestra como texto, así que está protegido contra la inyección de HTML.</li>
+    <li>Un componente es una función con nombre en mayúscula que devuelve JSX. Recibe datos por props (de solo lectura) y lo que va entre sus etiquetas le llega en <code>children</code>. Debe ser puro.</li>
+    <li><code>useState</code> guarda datos entre renders y, al cambiarlos, provoca un render. El estado es una foto: dentro de un render no cambia. Si el valor nuevo depende del anterior, usa la función de actualización: <code>setCuenta(c =&gt; c + 1)</code>.</li>
+    <li>Nunca mutes arrays ni objetos del estado: crea copias con spread, <code>map</code> y <code>filter</code>. Guarda el estado mínimo y calcula lo demás (totales, filtros, validaciones) al renderizar.</li>
+    <li>Condiciones con <code>if</code> y <code>return</code>, ternario o <code>&amp;&amp;</code> (cuidado con el 0). Listas con <code>map</code> y una <code>key</code> única y estable sacada de los datos, no del índice. Formularios controlados con <code>value</code> y <code>onChange</code>.</li>
+    <li>Los datos bajan por props y los eventos suben llamando a funciones recibidas por props. Si dos componentes necesitan el mismo estado, levántalo al ancestro común. Para datos que usa medio árbol, usa contexto.</li>
+    <li><code>useEffect</code> sincroniza con sistemas externos (red, temporizadores, <code>localStorage</code>) después de pintar, con sus dependencias y su limpieza. Si no hay nada externo, casi seguro que no necesitas un efecto. Al pedir datos, muestra carga, error y vacío, y descarta respuestas viejas.</li>
+    <li>React Router da varias páginas a una SPA; CSS Modules y Tailwind organizan los estilos; React DevTools muestra el árbol, las props y el estado. Next.js añade servidor a React, y Vue, Svelte y Angular resuelven lo mismo con otra sintaxis.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Todos los ejercicios son talleres de React. Escribe tu código dentro de <code>&lt;script type="text/babel"&gt;</code>, en la pestaña HTML, y pulsa «Ejecutar». La comprobación usa tu página como lo haría una persona: hace clics, escribe en los campos y envía formularios. Si algo falla, mira primero la consola del taller: los avisos de React suelen decir exactamente qué pasa. Las soluciones muestran solo el código que va dentro de <code>&lt;script type="text/babel"&gt;</code>. Inténtalo unos minutos antes de abrir las pistas: la solución está para comparar, no para copiar.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-jugadores">
+    <h3>Tarjetas de jugador</h3>
+    <p>Completa el componente <code>Jugador</code> para que reciba las props <code>nombre</code> y <code>nivel</code> y devuelva un <code>&lt;article&gt;</code> con la clase <code>jugador</code>, que contenga un <code>&lt;h3&gt;</code> con el nombre y un <code>&lt;p&gt;</code> con el texto <code>Nivel 7</code> (con el nivel que toque). Después úsalo dos veces en <code>App</code>: Lyra, de nivel 7, y Bruno, de nivel 3.</p>
+    <div class="taller" data-modo="web" id="taller-ej-jugadores" data-titulo="Ejercicio 1" data-alto="12rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+function Jugador() {
+  // 1. Recibe las props nombre y nivel (desestructúralas entre llaves)
+  // 2. Devuelve un article con className "jugador", un h3 con el nombre y un p con "Nivel ..."
+  return null;
+}
+
+function App() {
+  return (
+    &lt;div className="equipo"&gt;
+      {/* 3. Usa Jugador dos veces: Lyra (nivel 7) y Bruno (nivel 3) */}
+    &lt;/div&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
+&lt;/script&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+.equipo { display: flex; gap: 1rem; }
+.jugador { border: 2px solid #888; border-radius: 10px; padding: .5rem 1rem; }
+.jugador h3, .jugador p { margin: .2rem 0; }</textarea>
+      <script type="text/plain" class="taller-verificar">
+var cartas = document.querySelectorAll(".jugador");
+if (cartas.length !== 2) return "Debería haber 2 elementos con la clase «jugador» y hay " + cartas.length + ". ¿Usaste className (no class) y escribiste dos <Jugador />?";
+var h = [].map.call(cartas, function (c) { var t = c.querySelector("h3"); return t ? t.textContent.trim() : ""; });
+if (h[0] !== "Lyra" || h[1] !== "Bruno") return "Los títulos deberían ser «Lyra» y «Bruno», en ese orden. Ahora son: «" + h.join("», «") + "».";
+var p = [].map.call(cartas, function (c) { var t = c.querySelector("p"); return t ? t.textContent.replace(/\s+/g, " ").trim() : ""; });
+if (p[0] !== "Nivel 7" || p[1] !== "Nivel 3") return "Los párrafos deberían decir «Nivel 7» y «Nivel 3». Ahora dicen: «" + p.join("», «") + "».";
+var cuerpo = (codigo.html.match(/function Jugador[\s\S]*?\n}/) || [""])[0];
+if (/Lyra|Bruno/.test(cuerpo)) return "No escribas los nombres dentro de Jugador: deben llegar por props desde App.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La primera línea queda así: <code>function Jugador({ nombre, nivel }) {</code>. Dentro, usa <code>{nombre}</code> y <code>{nivel}</code> en el JSX.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para usarlo: <code>&lt;Jugador nombre="Lyra" nivel={7} /&gt;</code>. Los textos van entre comillas; los números, entre llaves.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-jsx">function Jugador({ nombre, nivel }) {
+  return (
+    &lt;article className="jugador"&gt;
+      &lt;h3&gt;{nombre}&lt;/h3&gt;
+      &lt;p&gt;Nivel {nivel}&lt;/p&gt;
+    &lt;/article&gt;
+  );
+}
+
+function App() {
+  return (
+    &lt;div className="equipo"&gt;
+      &lt;Jugador nombre="Lyra" nivel={7} /&gt;
+      &lt;Jugador nombre="Bruno" nivel={3} /&gt;
+    &lt;/div&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);</code></pre>
+      <p>Un tercer jugador cuesta una sola línea. Esa es la ventaja de los componentes: la estructura se escribe una vez y los datos cambian.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-arregla-contador">
+    <h3>Arregla el contador</h3>
+    <p>Este contador tiene tres errores. Ejecútalo, lee la consola y corrígelos de uno en uno. Al terminar, «Sumar» debe subir de uno en uno y «Reiniciar» debe volver a <code>Clics: 0</code>, sin avisos rojos en la consola.</p>
+    <div class="taller" data-modo="web" id="taller-ej-arregla" data-titulo="Ejercicio 2" data-alto="9rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState } = React;
+
+function Contador() {
+  let [clics, setClics] = useState(0);
+  return (
+    &lt;div class="contador"&gt;
+      &lt;p&gt;Clics: {clics}&lt;/p&gt;
+      &lt;button onClick={setClics(clics + 1)}&gt;Sumar&lt;/button&gt;
+      &lt;button onClick={() =&gt; clics = 0}&gt;Reiniciar&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;Contador /&gt;);
+&lt;/script&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; font-size: 1.1rem; }
+button { font-size: 1rem; margin-right: .4rem; }</textarea>
+      <script type="text/plain" class="taller-verificar">
+function clic(el) { ReactDOM.flushSync(function () { el.click(); }); }
+function textoDe(sel) { var e = document.querySelector(sel); return e ? e.textContent.replace(/\s+/g, " ").trim() : null; }
+var p = document.querySelector(".contador p");
+if (!p) return "No se ve el contador. Mira la consola: dice «Too many re-renders». ¿Qué hace onClick={setClics(clics + 1)} mientras se renderiza?";
+if (/\bclass=/.test(codigo.html.split("text/babel")[1] || "")) return "En JSX no se escribe class, sino className.";
+var bs = document.querySelectorAll(".contador button");
+clic(bs[0]); clic(bs[0]); clic(bs[0]);
+if (textoDe(".contador p") !== "Clics: 3") return "Tras tres clics en «Sumar» debería decir «Clics: 3» y dice «" + textoDe(".contador p") + "».";
+clic(bs[1]);
+if (textoDe(".contador p") !== "Clics: 0") return "«Reiniciar» debería volver a «Clics: 0» y se ve «" + textoDe(".contador p") + "». Cambiar la variable no avisa a React: usa setClics.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El primer error, <em>Too many re-renders</em>, viene de <code>onClick={setClics(clics + 1)}</code>: con paréntesis, la función se ejecuta al renderizar. Envuélvela en una flecha.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Cuando ya se vea, la consola avisará de <code>class</code>. Y «Reiniciar» asigna la variable directamente, lo que no provoca ningún render. ¿Qué función cambia el estado?</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-jsx">const { useState } = React;
+
+function Contador() {
+  const [clics, setClics] = useState(0);
+  return (
+    &lt;div className="contador"&gt;
+      &lt;p&gt;Clics: {clics}&lt;/p&gt;
+      &lt;button onClick={() =&gt; setClics(clics + 1)}&gt;Sumar&lt;/button&gt;
+      &lt;button onClick={() =&gt; setClics(0)}&gt;Reiniciar&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;Contador /&gt;);</code></pre>
+      <p>Además se cambió <code>let</code> por <code>const</code>: nunca reasignas <code>clics</code> directamente, así que <code>const</code> deja clara esa intención.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-lista-compra">
+    <h3>Lista de la compra</h3>
+    <p>Completa <code>ListaCompra</code>: debe mostrar solo los productos con cantidad mayor que 0, cada uno en un <code>&lt;li&gt;</code> con el texto <code>Pan (2)</code> y una key sacada de su id. Debajo, un párrafo con la clase <code>resumen</code> que diga <code>2 productos por comprar</code> (con el número que toque) o, si no queda ninguno, <code>Nada que comprar</code>. <code>App</code> la usa dos veces, una con productos y otra con una lista vacía, para probar los dos casos.</p>
+    <div class="taller" data-modo="web" id="taller-ej-lista" data-titulo="Ejercicio 3" data-alto="13rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const COMPRAS = [
+  { id: "a1", nombre: "Pan", cantidad: 2 },
+  { id: "b2", nombre: "Leche", cantidad: 1 },
+  { id: "c3", nombre: "Café", cantidad: 0 },
+];
+
+function ListaCompra({ items }) {
+  // Quédate solo con los items con cantidad mayor que 0
+  const pendientes = items;
+  return (
+    &lt;section className="lista-compra"&gt;
+      &lt;ul&gt;
+        {/* Un &lt;li&gt; por item pendiente, con el texto «Pan (2)» y su key */}
+      &lt;/ul&gt;
+      {/* Un &lt;p className="resumen"&gt;: «2 productos por comprar» o «Nada que comprar» */}
+    &lt;/section&gt;
+  );
+}
+
+function App() {
+  return (
+    &lt;&gt;
+      &lt;ListaCompra items={COMPRAS} /&gt;
+      &lt;ListaCompra items={[]} /&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
+&lt;/script&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+.lista-compra { border: 1px solid #bbb; border-radius: 8px; padding: .2rem 1rem; margin-bottom: .8rem; }
+.resumen { font-weight: bold; }</textarea>
+      <script type="text/plain" class="taller-verificar">
+var listas = document.querySelectorAll(".lista-compra");
+if (listas.length !== 2) return "Deberían verse 2 listas con la clase lista-compra. ¿Hay algún error en la consola?";
+var t = [].map.call(listas[0].querySelectorAll("li"), function (l) { return l.textContent.replace(/\s+/g, " ").trim(); });
+if (t.length !== 2) return "La primera lista debería tener 2 elementos (Pan y Leche; el café tiene cantidad 0) y tiene " + t.length + ".";
+if (t[0] !== "Pan (2)" || t[1] !== "Leche (1)") return "Los elementos deberían ser «Pan (2)» y «Leche (1)». Ahora: «" + t.join("», «") + "».";
+var r1 = listas[0].querySelector(".resumen"), r2 = listas[1].querySelector(".resumen");
+if (!r1 || r1.textContent.replace(/\s+/g, " ").trim() !== "2 productos por comprar") return "El resumen de la primera lista debería decir «2 productos por comprar».";
+if (listas[1].querySelectorAll("li").length !== 0) return "La segunda lista está vacía: no debería tener elementos.";
+if (!r2 || r2.textContent.trim() !== "Nada que comprar") return "Con la lista vacía, el resumen debería decir «Nada que comprar».";
+if (!/key=\{\s*\w+\.id\s*\}/.test(codigo.html)) return "Falta la key de cada <li>: usa el id de cada producto, por ejemplo key={item.id}.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>items.filter(item =&gt; item.cantidad &gt; 0)</code> te da los pendientes. Después, <code>pendientes.map(item =&gt; &lt;li key={item.id}&gt;…&lt;/li&gt;)</code> dentro del <code>&lt;ul&gt;</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para el resumen, un ternario: <code>pendientes.length &gt; 0 ? … : "Nada que comprar"</code>. Para el texto con número, una plantilla literal.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-jsx">const COMPRAS = [
+  { id: "a1", nombre: "Pan", cantidad: 2 },
+  { id: "b2", nombre: "Leche", cantidad: 1 },
+  { id: "c3", nombre: "Café", cantidad: 0 },
+];
+
+function ListaCompra({ items }) {
+  const pendientes = items.filter(item =&gt; item.cantidad &gt; 0);
+  return (
+    &lt;section className="lista-compra"&gt;
+      &lt;ul&gt;
+        {pendientes.map(item =&gt; (
+          &lt;li key={item.id}&gt;{item.nombre} ({item.cantidad})&lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+      &lt;p className="resumen"&gt;
+        {pendientes.length &gt; 0 ? `${pendientes.length} productos por comprar` : "Nada que comprar"}
+      &lt;/p&gt;
+    &lt;/section&gt;
+  );
+}
+
+function App() {
+  return (
+    &lt;&gt;
+      &lt;ListaCompra items={COMPRAS} /&gt;
+      &lt;ListaCompra items={[]} /&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);</code></pre>
+      <p><code>pendientes</code> es un valor derivado: sale de las props en cada render, sin estado. Si quisieras decir «1 producto» en singular, bastaría otro ternario dentro de la plantilla.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-chat">
+    <h3>Formulario de chat</h3>
+    <p>Convierte el campo <code>#mensaje</code> en un campo controlado. Requisitos: el botón «Enviar» está desactivado mientras el mensaje esté vacío o tenga solo espacios; un párrafo con la clase <code>contador</code> muestra los caracteres escritos con el formato <code>4/80</code>; el campo no admite más de 80 caracteres; al enviar, el mensaje (sin espacios en los extremos) se añade a la lista y el campo queda vacío.</p>
+    <div class="taller" data-modo="web" id="taller-ej-chat" data-titulo="Ejercicio 4" data-alto="13rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState } = React;
+
+function Chat() {
+  const [mensajes, setMensajes] = useState([]);
+  // 1. Crea el estado texto
+
+  function manejarEnvio(e) {
+    e.preventDefault();
+    // 3. Añade el mensaje a la lista y vacía el campo
+  }
+
+  return (
+    &lt;&gt;
+      &lt;form onSubmit={manejarEnvio}&gt;
+        &lt;input id="mensaje" placeholder="Escribe un mensaje" /&gt;{" "}
+        &lt;button&gt;Enviar&lt;/button&gt;
+        {/* 2. Controla el campo, desactiva el botón y muestra el contador */}
+      &lt;/form&gt;
+      &lt;ul className="mensajes"&gt;
+        {mensajes.map(m =&gt; &lt;li key={m.id}&gt;{m.texto}&lt;/li&gt;)}
+      &lt;/ul&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;Chat /&gt;);
+&lt;/script&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+input { width: 16rem; }
+.contador { color: #555; font-size: .9rem; margin: .3rem 0; }
+.mensajes li { background: #eef; border-radius: 12px; padding: .3rem .7rem; margin: .3rem 0; list-style: none; width: fit-content; }</textarea>
+      <script type="text/plain" class="taller-verificar">
+function escribir(el, texto) { var s = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set; ReactDOM.flushSync(function () { s.call(el, texto); el.dispatchEvent(new Event("input", { bubbles: true })); }); }
+function enviar(form) { ReactDOM.flushSync(function () { form.requestSubmit(); }); }
+function textoDe(sel) { var e = document.querySelector(sel); return e ? e.textContent.replace(/\s+/g, " ").trim() : null; }
+var input = document.querySelector("#mensaje"), form = document.querySelector("form"), boton = form && form.querySelector("button");
+if (!input || !form || !boton) return "Falta el formulario con el campo #mensaje y el botón.";
+if (!boton.disabled) return "Con el campo vacío, el botón debería estar desactivado (prop disabled).";
+escribir(input, "Hola");
+if (input.value !== "Hola") return "El campo no conserva lo que se escribe. ¿Tiene value={texto} y un onChange que llama a setTexto?";
+if (document.querySelector("form button").disabled) return "Con texto escrito, el botón debería activarse.";
+if (textoDe(".contador") !== "4/80") return "Con «Hola» escrito, el párrafo .contador debería decir «4/80» y dice «" + textoDe(".contador") + "».";
+enviar(form);
+var lis = document.querySelectorAll(".mensajes li");
+if (lis.length !== 1 || lis[0].textContent.trim() !== "Hola") return "Al enviar, «Hola» debería aparecer en la lista .mensajes.";
+if (input.value !== "") return "Después de enviar, el campo debería quedar vacío.";
+escribir(input, "   ");
+if (!document.querySelector("form button").disabled) return "Un mensaje con solo espacios no cuenta: el botón debería seguir desactivado (usa trim).";
+escribir(input, new Array(101).join("x"));
+if (input.value.length !== 80) return "El campo debería cortar el texto en 80 caracteres y tiene " + input.value.length + ". Prueba con slice(0, 80) en el onChange.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El campo queda así: <code>&lt;input id="mensaje" value={texto} onChange={e =&gt; setTexto(e.target.value)} /&gt;</code>. Para el límite, recorta dentro del <code>onChange</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Calcula <code>const vacio = texto.trim() === "";</code> y úsalo en <code>disabled={vacio}</code> y al principio de <code>manejarEnvio</code>. Cada mensaje nuevo necesita un id para su key: <code>{ id: Date.now(), texto: texto.trim() }</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-jsx">const { useState } = React;
+
+function Chat() {
+  const [mensajes, setMensajes] = useState([]);
+  const [texto, setTexto] = useState("");
+  const vacio = texto.trim() === "";
+
+  function manejarEnvio(e) {
+    e.preventDefault();
+    if (vacio) return;
+    setMensajes([...mensajes, { id: Date.now(), texto: texto.trim() }]);
+    setTexto("");
+  }
+
+  return (
+    &lt;&gt;
+      &lt;form onSubmit={manejarEnvio}&gt;
+        &lt;input
+          id="mensaje"
+          placeholder="Escribe un mensaje"
+          value={texto}
+          onChange={e =&gt; setTexto(e.target.value.slice(0, 80))}
+        /&gt;{" "}
+        &lt;button disabled={vacio}&gt;Enviar&lt;/button&gt;
+        &lt;p className="contador"&gt;{texto.length}/80&lt;/p&gt;
+      &lt;/form&gt;
+      &lt;ul className="mensajes"&gt;
+        {mensajes.map(m =&gt; &lt;li key={m.id}&gt;{m.texto}&lt;/li&gt;)}
+      &lt;/ul&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;Chat /&gt;);</code></pre>
+      <p>Con un campo controlado, el límite de 80 caracteres y el contador son una línea cada uno. En HTML también existe el atributo <code>maxLength</code>, que hace lo mismo sin JavaScript; los dos enfoques son válidos.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-buscador">
+    <h3>Buscador sin efectos</h3>
+    <p>Este buscador funciona, pero está mal hecho: usa un efecto y un estado duplicado para la lista filtrada. Reescríbelo con un solo estado (<code>busqueda</code>) y la lista calculada al renderizar. Además, cuando no haya resultados, muestra un párrafo con la clase <code>vacio</code> y el texto <code>Ningún juego coincide</code>. La búsqueda no debe distinguir mayúsculas de minúsculas.</p>
+    <div class="taller" data-modo="web" id="taller-ej-buscador" data-titulo="Ejercicio 5" data-alto="15rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState, useEffect } = React;
+
+const JUEGOS = ["Celeste", "Hollow Knight", "Hades", "Stardew Valley", "Cuphead", "Ori and the Blind Forest"];
+
+function Buscador() {
+  const [busqueda, setBusqueda] = useState("");
+  const [resultados, setResultados] = useState(JUEGOS);
+
+  useEffect(() =&gt; {
+    setResultados(JUEGOS.filter(j =&gt; j.toLowerCase().includes(busqueda.toLowerCase())));
+  }, [busqueda]);
+
+  return (
+    &lt;&gt;
+      &lt;label htmlFor="buscar"&gt;Buscar &lt;/label&gt;
+      &lt;input id="buscar" value={busqueda} onChange={e =&gt; setBusqueda(e.target.value)} /&gt;
+      &lt;p className="cuenta"&gt;Mostrando {resultados.length} de {JUEGOS.length}&lt;/p&gt;
+      &lt;ul className="resultados"&gt;
+        {resultados.map(j =&gt; &lt;li key={j}&gt;{j}&lt;/li&gt;)}
+      &lt;/ul&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;Buscador /&gt;);
+&lt;/script&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+.cuenta { color: #555; }
+.vacio { font-style: italic; }</textarea>
+      <script type="text/plain" class="taller-verificar">
+function escribir(el, texto) { var s = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set; ReactDOM.flushSync(function () { s.call(el, texto); el.dispatchEvent(new Event("input", { bubbles: true })); }); }
+function textoDe(sel) { var e = document.querySelector(sel); return e ? e.textContent.replace(/\s+/g, " ").trim() : null; }
+var js = codigo.html.split("text/babel")[1] || "";
+if (/useEffect\s*\(/.test(js)) return "Todavía hay un useEffect. La lista filtrada se puede calcular directamente al renderizar: bórralo.";
+if ((js.match(/useState\s*\(/g) || []).length > 1) return "Sobra un estado: la lista filtrada no es estado, es un valor derivado de busqueda.";
+var input = document.querySelector("#buscar");
+if (!input) return "Falta el campo #buscar.";
+function n() { return document.querySelectorAll(".resultados li").length; }
+if (n() !== 6) return "Sin búsqueda deberían verse los 6 juegos y se ven " + n() + ".";
+escribir(input, "a");
+if (n() !== 4) return "Buscando «a» deberían verse 4 juegos y se ven " + n() + ".";
+if (textoDe(".cuenta") !== "Mostrando 4 de 6") return "El párrafo .cuenta debería decir «Mostrando 4 de 6» y dice «" + textoDe(".cuenta") + "».";
+escribir(input, "HOLLOW");
+if (n() !== 1) return "La búsqueda no debe distinguir mayúsculas: «HOLLOW» debería encontrar Hollow Knight.";
+escribir(input, "zzz");
+if (n() !== 0 || textoDe(".vacio") !== "Ningún juego coincide") return "Sin resultados debería verse el párrafo .vacio con el texto «Ningún juego coincide».";
+escribir(input, "");
+if (document.querySelector(".vacio")) return "Cuando hay resultados, el párrafo .vacio no debería verse.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Borra la línea de <code>resultados</code> con <code>useState</code> y el <code>useEffect</code> entero. En su lugar: <code>const resultados = JUEGOS.filter(…)</code>, con la misma condición que tenía el efecto.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para el mensaje: <code>{resultados.length === 0 &amp;&amp; &lt;p className="vacio"&gt;Ningún juego coincide&lt;/p&gt;}</code>. Quita también <code>useEffect</code> de la primera línea si ya no lo usas.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-jsx">const { useState } = React;
+
+const JUEGOS = ["Celeste", "Hollow Knight", "Hades", "Stardew Valley", "Cuphead", "Ori and the Blind Forest"];
+
+function Buscador() {
+  const [busqueda, setBusqueda] = useState("");
+  const resultados = JUEGOS.filter(j =&gt;
+    j.toLowerCase().includes(busqueda.toLowerCase())
+  );
+
+  return (
+    &lt;&gt;
+      &lt;label htmlFor="buscar"&gt;Buscar &lt;/label&gt;
+      &lt;input id="buscar" value={busqueda} onChange={e =&gt; setBusqueda(e.target.value)} /&gt;
+      &lt;p className="cuenta"&gt;Mostrando {resultados.length} de {JUEGOS.length}&lt;/p&gt;
+      {resultados.length === 0 &amp;&amp; &lt;p className="vacio"&gt;Ningún juego coincide&lt;/p&gt;}
+      &lt;ul className="resultados"&gt;
+        {resultados.map(j =&gt; &lt;li key={j}&gt;{j}&lt;/li&gt;)}
+      &lt;/ul&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;Buscador /&gt;);</code></pre>
+      <p>Menos código, un render por tecla en vez de dos, y es imposible que la lista y la búsqueda no coincidan. Aquí la key es el propio título porque los títulos no se repiten; con datos reales, usarías un id.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-talla">
+    <h3>Levanta el estado: elige tu talla</h3>
+    <p>La página de una camiseta tiene dos componentes hermanos: <code>SelectorTalla</code>, con tres botones, y <code>Resumen</code>, que debería decir <code>Talla elegida: M</code> y activar el botón «Añadir al carrito» cuando hay una talla elegida. Ahora la talla vive dentro de <code>SelectorTalla</code> y <code>Resumen</code> no puede verla. Levanta el estado a <code>App</code> y pásalo por props a los dos. El botón elegido debe seguir marcado con <code>aria-pressed="true"</code>.</p>
+    <div class="taller" data-modo="web" id="taller-ej-talla" data-titulo="Ejercicio 6" data-alto="12rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState } = React;
+const TALLAS = ["S", "M", "L"];
+
+function SelectorTalla() {
+  const [talla, setTalla] = useState(null);
+  return (
+    &lt;div className="tallas"&gt;
+      {TALLAS.map(t =&gt; (
+        &lt;button key={t} aria-pressed={talla === t} onClick={() =&gt; setTalla(t)}&gt;{t}&lt;/button&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}
+
+function Resumen() {
+  const talla = null;   // Resumen no puede ver la talla de SelectorTalla...
+  return (
+    &lt;div className="resumen"&gt;
+      &lt;p&gt;{talla ? "Talla elegida: " + talla : "Elige una talla"}&lt;/p&gt;
+      &lt;button disabled={!talla}&gt;Añadir al carrito&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+
+function App() {
+  return (
+    &lt;&gt;
+      &lt;h2&gt;Camiseta Terminal&lt;/h2&gt;
+      &lt;SelectorTalla /&gt;
+      &lt;Resumen /&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
+&lt;/script&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+h2 { margin: 0 0 .5rem; }
+.tallas button { font-size: 1rem; min-width: 2.6rem; margin-right: .3rem; }
+.tallas button[aria-pressed="true"] { background: #333; color: #fff; }</textarea>
+      <script type="text/plain" class="taller-verificar">
+function clic(el) { ReactDOM.flushSync(function () { el.click(); }); }
+function textoDe(sel) { var e = document.querySelector(sel); return e ? e.textContent.replace(/\s+/g, " ").trim() : null; }
+var bs = [].slice.call(document.querySelectorAll(".tallas button"));
+if (bs.length !== 3) return "Deberían verse los 3 botones de talla dentro de .tallas.";
+if (textoDe(".resumen p") !== "Elige una talla") return "Al principio el resumen debería decir «Elige una talla».";
+var agregar = document.querySelector(".resumen button");
+if (!agregar || !agregar.disabled) return "El botón de .resumen debería estar desactivado mientras no haya talla.";
+var m = bs.filter(function (b) { return b.textContent.trim() === "M"; })[0];
+clic(m);
+if (m.getAttribute("aria-pressed") !== "true") return "El botón pulsado debería tener aria-pressed=\"true\".";
+if (textoDe(".resumen p") !== "Talla elegida: M") return "Tras pulsar M, el resumen debería decir «Talla elegida: M» y dice «" + textoDe(".resumen p") + "». ¿Levantaste el estado a App y se lo pasas a Resumen?";
+if (document.querySelector(".resumen button").disabled) return "Con una talla elegida, el botón «Añadir al carrito» debería activarse.";
+var app = ((codigo.html.split("text/babel")[1] || "").match(/function App\s*\([\s\S]*?\n}/) || [""])[0];
+if (!/useState/.test(app)) return "El estado de la talla debería vivir en App, el ancestro común de los dos componentes.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Mueve la línea del <code>useState</code> a <code>App</code>. <code>SelectorTalla</code> necesitará dos props: la talla actual (para marcar el botón) y una función para elegir. <code>Resumen</code> solo necesita la talla.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>App</code>: <code>&lt;SelectorTalla talla={talla} onElegir={setTalla} /&gt;</code> y <code>&lt;Resumen talla={talla} /&gt;</code>. En <code>SelectorTalla</code>, el clic llama a <code>onElegir(t)</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-jsx">const { useState } = React;
+const TALLAS = ["S", "M", "L"];
+
+function SelectorTalla({ talla, onElegir }) {
+  return (
+    &lt;div className="tallas"&gt;
+      {TALLAS.map(t =&gt; (
+        &lt;button key={t} aria-pressed={talla === t} onClick={() =&gt; onElegir(t)}&gt;{t}&lt;/button&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}
+
+function Resumen({ talla }) {
+  return (
+    &lt;div className="resumen"&gt;
+      &lt;p&gt;{talla ? "Talla elegida: " + talla : "Elige una talla"}&lt;/p&gt;
+      &lt;button disabled={!talla}&gt;Añadir al carrito&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+
+function App() {
+  const [talla, setTalla] = useState(null);
+  return (
+    &lt;&gt;
+      &lt;h2&gt;Camiseta Terminal&lt;/h2&gt;
+      &lt;SelectorTalla talla={talla} onElegir={setTalla} /&gt;
+      &lt;Resumen talla={talla} /&gt;
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);</code></pre>
+      <p>Ahora <code>SelectorTalla</code> y <code>Resumen</code> no tienen estado propio: solo muestran lo que reciben y avisan hacia arriba. A estos componentes se les llama «controlados» por su padre, igual que los campos de formulario controlados.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-marcador">
+    <h3>Marcador en línea: pedir datos</h3>
+    <p>Completa <code>Marcador</code> para que pida las puntuaciones al servidor simulado con <code>pedirPuntuaciones(modo)</code> dentro de un efecto. Mientras espera, muestra <code>Cargando…</code>. Si todo va bien, muestra una lista <code>&lt;ol className="puntuaciones"&gt;</code> con un elemento por jugador con el formato <code>Lyra: 980</code>. Si falla, muestra un párrafo con la clase <code>error</code> que incluya el mensaje del error (y ninguna lista). <code>App</code> usa dos marcadores: uno con el servidor normal y otro con el servidor caído.</p>
+    <div class="taller" data-modo="web" id="taller-ej-marcador" data-titulo="Ejercicio 7" data-alto="13rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState, useEffect } = React;
+
+const PUNTUACIONES = [
+  { id: 1, nombre: "Lyra", puntos: 980 },
+  { id: 2, nombre: "Bruno", puntos: 870 },
+  { id: 3, nombre: "Ana", puntos: 640 },
+];
+
+// Servidor simulado (no lo cambies): responde en 40 ms
+function pedirPuntuaciones(modo) {
+  return new Promise((resolver, rechazar) =&gt; {
+    setTimeout(() =&gt; {
+      if (modo === "caido") rechazar(new Error("servidor caído"));
+      else resolver(PUNTUACIONES);
+    }, 40);
+  });
+}
+
+function Marcador({ modo }) {
+  // Tu código: estados para los datos, la carga y el error,
+  // y un efecto que llame a pedirPuntuaciones(modo)
+  return &lt;p&gt;Cargando…&lt;/p&gt;;
+}
+
+function App() {
+  return (
+    &lt;div className="dos"&gt;
+      &lt;section&gt;&lt;h3&gt;Servidor normal&lt;/h3&gt;&lt;Marcador modo="normal" /&gt;&lt;/section&gt;
+      &lt;section&gt;&lt;h3&gt;Servidor caído&lt;/h3&gt;&lt;Marcador modo="caido" /&gt;&lt;/section&gt;
+    &lt;/div&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
+&lt;/script&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+.dos { display: flex; gap: 2rem; flex-wrap: wrap; }
+h3 { margin: 0 0 .3rem; }
+.error { color: #b3261e; }</textarea>
+      <script type="text/plain" class="taller-verificar">
+var secciones = document.querySelectorAll(".dos section");
+if (secciones.length !== 2) return "Deberían verse las dos secciones de App.";
+var js = codigo.html.split("text/babel")[1] || "";
+if (!/useEffect\s*\(/.test(js)) return "Pide los datos dentro de un useEffect.";
+if (!/\[\s*modo\s*\]/.test(js)) return "El efecto usa modo: ponlo en el array de dependencias, [modo].";
+var lis = secciones[0].querySelectorAll("ol.puntuaciones li");
+if (lis.length !== 3) return "Con el servidor normal deberían verse 3 puntuaciones en una lista ol con la clase puntuaciones (se ven " + lis.length + "). ¿Guardas los datos con su función set cuando llegan?";
+if (lis[0].textContent.replace(/\s+/g, " ").trim() !== "Lyra: 980") return "Cada puntuación debería verse como «Lyra: 980». La primera es «" + lis[0].textContent.trim() + "».";
+var err = secciones[1].querySelector(".error");
+if (!err) return "Con el servidor caído debería verse un párrafo con la clase error. ¿Usas try/catch y un estado para el error?";
+if (err.textContent.indexOf("servidor caído") === -1) return "El párrafo de error debería incluir el motivo, «servidor caído» (está en e.message).";
+if (secciones[1].querySelector("ol.puntuaciones")) return "Si hubo un error, no muestres la lista.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Necesitas tres estados: <code>puntuaciones</code> (empieza en <code>[]</code>), <code>cargando</code> (empieza en <code>true</code>) y <code>error</code> (empieza en <code>null</code>). Después del efecto, tres <code>if</code> con <code>return</code>: cargando, error y, al final, la lista.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Copia la estructura del ejemplo de la sección <a href="#efectos">Efectos y datos</a>: una función <code>async</code> dentro del efecto con <code>try</code>, <code>catch</code> y <code>finally</code>, la variable <code>ignorar</code> y <code>[modo]</code> como dependencias.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-jsx">const { useState, useEffect } = React;
+
+const PUNTUACIONES = [
+  { id: 1, nombre: "Lyra", puntos: 980 },
+  { id: 2, nombre: "Bruno", puntos: 870 },
+  { id: 3, nombre: "Ana", puntos: 640 },
+];
+
+function pedirPuntuaciones(modo) {
+  return new Promise((resolver, rechazar) =&gt; {
+    setTimeout(() =&gt; {
+      if (modo === "caido") rechazar(new Error("servidor caído"));
+      else resolver(PUNTUACIONES);
+    }, 40);
+  });
+}
+
+function Marcador({ modo }) {
+  const [puntuaciones, setPuntuaciones] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() =&gt; {
+    let ignorar = false;
+    async function cargar() {
+      setCargando(true);
+      setError(null);
+      try {
+        const datos = await pedirPuntuaciones(modo);
+        if (!ignorar) setPuntuaciones(datos);
+      } catch (e) {
+        if (!ignorar) setError(e.message);
+      } finally {
+        if (!ignorar) setCargando(false);
+      }
+    }
+    cargar();
+    return () =&gt; { ignorar = true; };
+  }, [modo]);
+
+  if (cargando) return &lt;p&gt;Cargando…&lt;/p&gt;;
+  if (error) return &lt;p className="error"&gt;No se pudo cargar: {error}&lt;/p&gt;;
+  return (
+    &lt;ol className="puntuaciones"&gt;
+      {puntuaciones.map(p =&gt; &lt;li key={p.id}&gt;{p.nombre}: {p.puntos}&lt;/li&gt;)}
+    &lt;/ol&gt;
+  );
+}
+
+function App() {
+  return (
+    &lt;div className="dos"&gt;
+      &lt;section&gt;&lt;h3&gt;Servidor normal&lt;/h3&gt;&lt;Marcador modo="normal" /&gt;&lt;/section&gt;
+      &lt;section&gt;&lt;h3&gt;Servidor caído&lt;/h3&gt;&lt;Marcador modo="caido" /&gt;&lt;/section&gt;
+    &lt;/div&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);</code></pre>
+      <p>Cambia el 40 del servidor simulado por 2000 y ejecuta: verás el estado de carga durante dos segundos. Un mismo componente, con un <code>modo</code> distinto, recorre caminos diferentes: por eso conviene probar siempre el caso de error.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-hook">
+    <h3>Tu propio hook: useContador</h3>
+    <p><code>Vidas</code> y <code>Monedas</code> repiten la misma lógica: un número que sube, baja sin pasar de 0 y vuelve a su valor inicial. Crea un hook <code>useContador(inicial)</code> que devuelva un objeto <code>{ valor, sumar, restar, reiniciar }</code> y cambia los dos componentes para que lo usen. Al terminar, <code>useState</code> solo debe aparecer una vez en todo el código, dentro del hook.</p>
+    <div class="taller" data-modo="web" id="taller-ej-hook" data-titulo="Ejercicio 8" data-alto="12rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="root"&gt;&lt;/div&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.js" crossorigin&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js" crossorigin&gt;&lt;/script&gt;
+&lt;script type="text/babel"&gt;
+const { useState } = React;
+
+// 1. Crea aquí el hook useContador(inicial).
+//    Devuelve { valor, sumar, restar, reiniciar }.
+//    restar nunca baja de 0; reiniciar vuelve al valor inicial.
+
+function Vidas() {
+  const [vidas, setVidas] = useState(3);
+  return (
+    &lt;section className="panel" id="vidas"&gt;
+      &lt;p className="valor"&gt;Vidas: {vidas}&lt;/p&gt;
+      &lt;button onClick={() =&gt; setVidas(v =&gt; v + 1)}&gt;Curar&lt;/button&gt;
+      &lt;button onClick={() =&gt; setVidas(v =&gt; Math.max(0, v - 1))}&gt;Perder vida&lt;/button&gt;
+      &lt;button onClick={() =&gt; setVidas(3)}&gt;Nueva partida&lt;/button&gt;
+    &lt;/section&gt;
+  );
+}
+
+function Monedas() {
+  const [monedas, setMonedas] = useState(0);
+  return (
+    &lt;section className="panel" id="monedas"&gt;
+      &lt;p className="valor"&gt;Monedas: {monedas}&lt;/p&gt;
+      &lt;button onClick={() =&gt; setMonedas(m =&gt; m + 1)}&gt;Ganar&lt;/button&gt;
+      &lt;button onClick={() =&gt; setMonedas(m =&gt; Math.max(0, m - 1))}&gt;Gastar&lt;/button&gt;
+      &lt;button onClick={() =&gt; setMonedas(0)}&gt;Vaciar&lt;/button&gt;
+    &lt;/section&gt;
+  );
+}
+
+// 2. Cambia Vidas y Monedas para que usen useContador en vez de useState.
+
+function App() {
+  return (
+    &lt;div className="dos"&gt;
+      &lt;Vidas /&gt;
+      &lt;Monedas /&gt;
+    &lt;/div&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);
+&lt;/script&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; }
+.dos { display: flex; gap: 1rem; flex-wrap: wrap; }
+.panel { border: 2px solid #888; border-radius: 10px; padding: .5rem 1rem; }
+.valor { font-size: 1.3rem; font-weight: bold; margin: .2rem 0 .5rem; }
+button { margin-right: .3rem; }</textarea>
+      <script type="text/plain" class="taller-verificar">
+function clic(el) { ReactDOM.flushSync(function () { el.click(); }); }
+function textoDe(sel) { var e = document.querySelector(sel); return e ? e.textContent.replace(/\s+/g, " ").trim() : null; }
+var js = codigo.html.split("text/babel")[1] || "";
+if (!/function\s+useContador\s*\(|const\s+useContador\s*=/.test(js)) return "Falta el hook: crea una función llamada useContador.";
+if ((js.match(/useState\s*\(/g) || []).length !== 1) return "useState solo debería aparecer una vez, dentro de useContador. Vidas y Monedas deben usar el hook.";
+if ((js.match(/useContador\s*\(\s*\d/g) || []).length < 2) return "Usa el hook en los dos componentes: useContador(3) en Vidas y useContador(0) en Monedas.";
+function btn(id, texto) { return [].filter.call(document.querySelectorAll("#" + id + " button"), function (b) { return b.textContent.trim() === texto; })[0]; }
+function val(id) { return textoDe("#" + id + " .valor"); }
+if (!btn("vidas", "Perder vida") || !btn("monedas", "Ganar")) return "Faltan los botones de Vidas o de Monedas: conserva los mismos textos.";
+if (val("vidas") !== "Vidas: 3" || val("monedas") !== "Monedas: 0") return "Al empezar debería verse «Vidas: 3» y «Monedas: 0».";
+clic(btn("monedas", "Ganar")); clic(btn("monedas", "Ganar"));
+if (val("monedas") !== "Monedas: 2") return "Tras ganar dos monedas debería verse «Monedas: 2» y se ve «" + val("monedas") + "».";
+if (val("vidas") !== "Vidas: 3") return "Las vidas no deberían cambiar al ganar monedas: cada llamada al hook tiene su propio estado.";
+for (var i = 0; i < 5; i++) clic(btn("vidas", "Perder vida"));
+if (val("vidas") !== "Vidas: 0") return "Las vidas no deben bajar de 0 (se ve «" + val("vidas") + "»). ¿restar usa Math.max(0, …)?";
+clic(btn("vidas", "Nueva partida"));
+if (val("vidas") !== "Vidas: 3") return "«Nueva partida» debería volver a 3, el valor inicial.";
+clic(btn("monedas", "Vaciar"));
+if (val("monedas") !== "Monedas: 0") return "«Vaciar» debería volver a 0.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El hook empieza así: <code>function useContador(inicial) { const [valor, setValor] = useState(inicial); …</code>. Dentro, crea las tres funciones con flechas y devuélvelas en un objeto junto con <code>valor</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>Vidas</code>: <code>const vidas = useContador(3);</code>, y después <code>{vidas.valor}</code> y <code>onClick={vidas.restar}</code>. Aquí no hacen falta flechas en los <code>onClick</code>: <code>vidas.restar</code> ya es una función sin argumentos.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-jsx">const { useState } = React;
+
+function useContador(inicial) {
+  const [valor, setValor] = useState(inicial);
+  const sumar = () =&gt; setValor(v =&gt; v + 1);
+  const restar = () =&gt; setValor(v =&gt; Math.max(0, v - 1));
+  const reiniciar = () =&gt; setValor(inicial);
+  return { valor, sumar, restar, reiniciar };
+}
+
+function Vidas() {
+  const vidas = useContador(3);
+  return (
+    &lt;section className="panel" id="vidas"&gt;
+      &lt;p className="valor"&gt;Vidas: {vidas.valor}&lt;/p&gt;
+      &lt;button onClick={vidas.sumar}&gt;Curar&lt;/button&gt;
+      &lt;button onClick={vidas.restar}&gt;Perder vida&lt;/button&gt;
+      &lt;button onClick={vidas.reiniciar}&gt;Nueva partida&lt;/button&gt;
+    &lt;/section&gt;
+  );
+}
+
+function Monedas() {
+  const monedas = useContador(0);
+  return (
+    &lt;section className="panel" id="monedas"&gt;
+      &lt;p className="valor"&gt;Monedas: {monedas.valor}&lt;/p&gt;
+      &lt;button onClick={monedas.sumar}&gt;Ganar&lt;/button&gt;
+      &lt;button onClick={monedas.restar}&gt;Gastar&lt;/button&gt;
+      &lt;button onClick={monedas.reiniciar}&gt;Vaciar&lt;/button&gt;
+    &lt;/section&gt;
+  );
+}
+
+function App() {
+  return (
+    &lt;div className="dos"&gt;
+      &lt;Vidas /&gt;
+      &lt;Monedas /&gt;
+    &lt;/div&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(&lt;App /&gt;);</code></pre>
+      <p><code>{ valor, sumar, restar, reiniciar }</code> es la forma abreviada de <code>{ valor: valor, sumar: sumar, … }</code>. Devolver un objeto permite usar solo lo que necesites; <code>useState</code> devuelve un array porque así puedes elegir los nombres al desestructurar. Las dos opciones son habituales.</p>
+    </details>
+  </article>
+</section>

@@ -634,8 +634,11 @@
           "var tablaTexto=" + window.TerminalMotor.tablaTexto.toString() + ";" +
           "initSqlJs().then(function(SQL){var db=new SQL.Database();window.__resultados=[];" +
           "try{db.run(" + sinCierre(JSON.stringify(preparacion)) + ");}catch(e){console.error('Error en los datos de ejemplo: '+e.message);}" +
-          "try{var res=db.exec(" + sinCierre(JSON.stringify(partes.sql)) + ");res.forEach(function(r){window.__resultados.push(r);tablaTexto(r.columns,r.values).forEach(function(l){console.log(l);});});" +
-          "if(!res.length)console.log('Listo: la instrucción se ejecutó y no devolvió filas.');}catch(e){console.error('Error de SQL: '+e.message);}" +
+          // Instrucción por instrucción: los SELECT sin filas también cuentan como resultado (igual que en las pruebas)
+          // y, si una instrucción falla, se conservan los resultados de las anteriores.
+          "var n=0;try{var it=db.iterateStatements(" + sinCierre(JSON.stringify(partes.sql)) + "),paso;while(!(paso=it.next()).done){var st=paso.value,cols=st.getColumnNames(),vals=[];while(st.step())vals.push(st.get());" +
+          "if(cols.length){n++;window.__resultados.push({columns:cols,values:vals});tablaTexto(cols,vals).forEach(function(l){console.log(l);});}}" +
+          "if(!n)console.log('Listo: la instrucción se ejecutó y no devolvió filas.');}catch(e){console.error('Error de SQL: '+e.message);}" +
           "window.__terminar();}).catch(function(e){console.error('No se pudo cargar SQLite: '+e.message);window.__terminar();});<\/script></body></html>";
       } else {
         var antesJs = cabeza + "<style>" + partes.css + "</style></head><body>" + partes.html + "<script>";

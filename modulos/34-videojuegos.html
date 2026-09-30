@@ -13,7 +13,7 @@
 <a class="saltar" href="#contenido">Saltar al contenido</a>
 <header class="barra">
   <a class="marca" href="../index.html" aria-label="Terminal: volver al mapa del curso"><svg viewBox="0 0 32 20" aria-hidden="true"><rect x="0" y="7" width="27" height="6" rx="3" fill="var(--lc)"/><circle cx="10" cy="10" r="4.2" fill="var(--suelo)" stroke="var(--tinta)" stroke-width="2"/><rect x="25" y="1" width="6" height="18" rx="2" fill="var(--tinta)"/></svg><span class="marca-texto">Terminal</span></a>
-  <span class="barra-lugar"><span class="roundel" aria-hidden="true">7</span>Línea 7 · Construir productos · Estación 34 de 39</span>
+  <span class="barra-lugar"><span class="roundel" aria-hidden="true">7</span>Línea 7 · Construir productos · Estación 34 de 44</span>
   <nav class="barra-acciones" aria-label="Navegación general">
     <a class="barra-enlace" href="../index.html#red"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h5l3-6 4 12 3-6h3"/></svg><span>Mapa</span></a>
     <a class="barra-enlace" href="../glosario.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"/></svg><span>Glosario</span></a>
@@ -50,6 +50,13 @@
       <li><a href="#canvas">Canvas y sprites</a></li>
       <li><a href="#controles">Teclado, ratón y táctil</a></li>
       <li><a href="#fisica">Física y salto</a></li>
+      <li><a href="#colisiones">Colisiones</a></li>
+      <li><a href="#partida">Estados, récord y sonido</a></li>
+      <li><a href="#mundo">Mapas, cámara y azar</a></li>
+      <li><a href="#diseno">Game feel y diseño</a></li>
+      <li><a href="#motores">Motores y publicar</a></li>
+      <li><a href="#resumen">Resumen</a></li>
+      <li><a href="#practica">Práctica</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -418,7 +425,7 @@ function dibujoQueToca(t) {
   return Math.floor(t * POR_SEGUNDO) % DIBUJOS;
 }
 
-for (const t of [0, 0.05, 0.1, 0.2, 0.25, 0.5, 1]) {
+for (const t of [0, 0.05, 0.1, 0.17, 0.25, 0.4, 1.3]) {
   console.log(`t = ${t} s → dibujo ${dibujoQueToca(t)}`);
 }</textarea>
   </div>
@@ -779,8 +786,8 @@ for (let f = 1; f &lt;= 7; f++) {
           <path d="M260 75l-8 12h16z" data-pasos="4"/>
           <path d="M440 234l-8 -12h16z" data-pasos="6"/>
         </g>
-        <path class="d-punteada" d="M60 106H540" data-pasos="5"/>
-        <text class="d-peq d-tenue" x="60" y="98" data-pasos="5">la cima: 75 px sobre el suelo</text>
+        <path class="d-punteada" d="M60 130H540" data-pasos="5"/>
+        <text class="d-peq d-tenue" x="60" y="122" data-pasos="5">la cima: 75 px sobre el suelo</text>
         <text class="d-rotulo" x="570" y="40" data-texto="1:En el suelo; 2:¡Salto!; 3:Fotograma 1; 4:Fotograma 3; 5:Fotograma 4; 6:Fotograma 6; 7:Fotograma 7">En el suelo</text>
         <text xml:space="preserve" class="d-mono" x="570" y="80" data-texto="1:vy = 0; 2:vy = -400; 3:vy = -300; 4:vy = -100; 5:vy = 0; 6:vy = 200; 7:vy = 0">vy = 0</text>
         <text xml:space="preserve" class="d-mono" x="570" y="110" data-texto="1:y = 200; 2:y = 200; 3:y = 162.5; 4:y = 125; 5:y = 125; 6:y = 162.5; 7:y = 200">y = 200</text>
@@ -1001,6 +1008,2214 @@ requestAnimationFrame(bucle);
   </div>
   <p>Con gravedad baja, el salto llega a la misma altura pero tarda mucho: parece la Luna. Con gravedad alta, el salto es rápido y seco. Con fricción 0, el perro patina como en hielo. Ninguno de esos valores es «correcto»: son decisiones de diseño. Encontrar los que se sienten bien lleva horas de probar y ajustar, y es una de las partes más importantes del trabajo.</p>
 </section>
+
+<section id="colisiones" data-parada="Colisiones">
+  <h2>Colisiones: que nada atraviese nada</h2>
+  <p>En el laboratorio de física, el perro no se hundía en el suelo porque había una comprobación escrita a mano: «si <code>y</code> pasa de 200, déjalo en 200». Con un suelo plano vale, pero un nivel tiene plataformas, paredes, huesos y enemigos. Necesitas una forma general de responder a dos preguntas distintas:</p>
+  <ul>
+    <li><strong>Detección de colisiones</strong>: ¿se están tocando estas dos cosas?</li>
+    <li><strong>Respuesta a la colisión</strong>: y si se tocan, ¿qué hacemos? Sacar al perro de la pared, sumar un hueso, restar vida.</li>
+  </ul>
+  <p>Para detectar choques, los juegos casi nunca usan la forma exacta del dibujo. Usan una forma geométrica sencilla que lo envuelve, la <strong>caja de colisión</strong> (en inglés, <em>hitbox</em>). No tiene por qué coincidir con el dibujo: la del personaje suele ser un poco más pequeña que el sprite, para que un roce con la punta de la oreja no cuente como golpe. Quien juega no ve las cajas, pero sí nota cuándo el juego es justo.</p>
+
+  <h3>Rectángulos: AABB</h3>
+  <p>La forma más usada es un rectángulo alineado con los ejes, es decir, sin girar. Se llama <strong>AABB</strong>, del inglés <em>axis-aligned bounding box</em>, «caja envolvente alineada con los ejes». Con los objetos <code>{ x, y, ancho, alto }</code> que ya usas, dos rectángulos se solapan si se cumplen cuatro condiciones a la vez:</p>
+  <pre><code class="language-js">function chocan(a, b) {
+  return a.x &lt; b.x + b.ancho &amp;&amp;    // el borde izquierdo de a está antes del derecho de b
+         a.x + a.ancho &gt; b.x &amp;&amp;    // el borde derecho de a está después del izquierdo de b
+         a.y &lt; b.y + b.alto &amp;&amp;     // el borde de arriba de a está por encima del de abajo de b
+         a.y + a.alto &gt; b.y;        // el borde de abajo de a está por debajo del de arriba de b
+}</code></pre>
+  <p>Leída al revés, la idea es más fácil: dos rectángulos <em>no</em> se tocan si uno está completamente a la izquierda, a la derecha, encima o debajo del otro. Basta con que falle una condición para que no haya choque:</p>
+  <figure class="capsula" data-titulo="AABB: cuatro preguntas">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Animación: el rectángulo A, el perro, está quieto y el rectángulo B, una caja, se acerca. A la derecha se evalúan las cuatro condiciones de AABB con los números de cada paso. Cuando B se solapa en horizontal pero está encima, falla una condición. Cuando baja y se solapan en los dos ejes, se cumplen las cuatro y hay choque. Al sacar A hacia arriba, los bordes se tocan pero la cuarta condición ya no se cumple.">
+        <g data-mover="4:translate(0px,-40px)">
+          <rect class="d-l6" x="120" y="110" width="140" height="80" rx="4"/>
+          <text class="d-rotulo" x="190" y="156" text-anchor="middle">A (perro)</text>
+        </g>
+        <g data-mover="2:translate(-130px,0px); 3:translate(-130px,110px)">
+          <rect class="d-caja" x="330" y="40" width="120" height="50" rx="4" fill-opacity="0.85"/>
+          <text class="d-rotulo" x="390" y="71" text-anchor="middle">B (caja)</text>
+        </g>
+        <rect class="d-mal" x="200" y="150" width="60" height="40" fill-opacity="0.75" data-pasos="3"/>
+        <text class="d-peq" x="20" y="262" data-texto="1:Lejos: B está a la derecha y encima; 2:Se solapan en horizontal, pero B está encima; 3:Se solapan en los dos ejes: la zona roja; 4:A sale por el lado con menos solapamiento: arriba">Lejos: B está a la derecha y encima</text>
+        <g class="d-mono" style="font-size:14px">
+          <text x="480" y="36">A.x &lt; B.x + B.ancho</text>
+          <text x="480" y="84">A.x + A.ancho &gt; B.x</text>
+          <text x="480" y="132">A.y &lt; B.y + B.alto</text>
+          <text x="480" y="180">A.y + A.alto &gt; B.y</text>
+        </g>
+        <g class="d-mono d-peq d-tenue">
+          <text x="480" y="56" data-texto="1:120 &lt; 450; 2:120 &lt; 320; 4:120 &lt; 320">120 &lt; 450</text>
+          <text x="480" y="104" data-texto="1:260 &gt; 330; 2:260 &gt; 200">260 &gt; 330</text>
+          <text x="480" y="152" data-texto="1:110 &lt; 90; 3:110 &lt; 200; 4:70 &lt; 200">110 &lt; 90</text>
+          <text x="480" y="200" data-texto="1:190 &gt; 40; 3:190 &gt; 150; 4:150 &gt; 150">190 &gt; 40</text>
+        </g>
+        <g class="d-rotulo">
+          <text x="690" y="56" text-anchor="end" data-texto="1:sí">sí</text>
+          <text x="690" y="104" text-anchor="end" data-texto="1:no; 2:sí">no</text>
+          <text x="690" y="152" text-anchor="end" data-texto="1:no; 3:sí">no</text>
+          <text x="690" y="200" text-anchor="end" data-texto="1:sí; 4:no">sí</text>
+        </g>
+        <path class="d-linea" d="M480 218H700"/>
+        <text class="d-rotulo" x="480" y="248" data-texto="1:¿Chocan? No; 3:¿Chocan? Sí; 4:¿Chocan? No, solo se tocan">¿Chocan? No</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>A es el perro y B una caja. B está a la derecha y por encima de A. De las cuatro condiciones fallan dos, así que no hay choque. Con que falle una ya bastaría.</li>
+        <li>B se desplaza a la izquierda. Ahora se solapan en horizontal (las dos primeras condiciones se cumplen), pero B sigue entero por encima de A: su borde de abajo (90) no llega al de arriba de A (110). No hay choque.</li>
+        <li data-duracion="6">B baja. Ahora se solapan en los dos ejes y se cumplen las cuatro condiciones: hay choque. La zona roja es el solapamiento: 60 píxeles en horizontal y 40 en vertical.</li>
+        <li data-duracion="7">La respuesta: sacar a A por donde menos se ha metido, aquí hacia arriba, 40 píxeles. Ahora el borde de abajo de A (150) coincide con el de arriba de B (150): se tocan, pero <code>150 &gt; 150</code> es falso. Que dos cajas estén borde con borde no cuenta como choque, y es justo lo que quieres cuando el perro está de pie sobre una plataforma.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Predice el resultado de cada caso antes de ejecutar. Dibuja los rectángulos en un papel si te ayuda:</p>
+  <div class="taller" id="taller-aabb" data-titulo="Predice: ¿chocan?">
+    <textarea class="taller-codigo">function chocan(a, b) {
+  return a.x &lt; b.x + b.ancho &amp;&amp;
+         a.x + a.ancho &gt; b.x &amp;&amp;
+         a.y &lt; b.y + b.alto &amp;&amp;
+         a.y + a.alto &gt; b.y;
+}
+
+const perro = { x: 100, y: 100, ancho: 30, alto: 24 };   // ocupa x 100-130, y 100-124
+
+console.log("1:", chocan(perro, { x: 120, y: 110, ancho: 40, alto: 40 }));
+console.log("2:", chocan(perro, { x: 200, y: 100, ancho: 40, alto: 40 }));
+console.log("3:", chocan(perro, { x: 130, y: 100, ancho: 40, alto: 40 }));
+console.log("4:", chocan(perro, { x: 110, y: 50, ancho: 10, alto: 60 }));
+console.log("5:", chocan(perro, { x: 90, y: 90, ancho: 60, alto: 60 }));</textarea>
+  </div>
+  <p>El caso 3 es el borde con borde: <code>false</code>. El caso 4 es una caja estrecha que entra desde arriba: solo ocupa 10 píxeles de ancho, pero se solapa. Y el caso 5 envuelve al perro por completo: también es un choque, aunque ningún borde se cruce.</p>
+
+  <h3>Círculos, y un círculo contra un rectángulo</h3>
+  <p>Las monedas, las pelotas y las explosiones se describen mejor con círculos. Ya lo resolviste en la nave de la <a href="18-matematicas.html#proyecto">Estación 18</a>: dos círculos chocan si la distancia entre sus centros es menor que la suma de sus radios. Como la raíz cuadrada es relativamente cara y no cambia la comparación, muchos juegos comparan los cuadrados:</p>
+  <pre><code class="language-js">function circulosChocan(a, b) {
+  const dx = a.x - b.x, dy = a.y - b.y;
+  const radios = a.r + b.r;
+  return dx * dx + dy * dy &lt; radios * radios;    // sin Math.sqrt
+}
+
+// Un círculo (un hueso) contra un rectángulo (el perro):
+// busca el punto del rectángulo más cercano al centro y mide hasta él
+function circuloTocaRect(c, r) {
+  const cercanoX = Math.max(r.x, Math.min(c.x, r.x + r.ancho));   // clamp
+  const cercanoY = Math.max(r.y, Math.min(c.y, r.y + r.alto));
+  const dx = c.x - cercanoX, dy = c.y - cercanoY;
+  return dx * dx + dy * dy &lt; c.r * c.r;
+}</code></pre>
+  <p>El truco del segundo caso es el <code>clamp</code> (limitar un valor entre un mínimo y un máximo) que ya usaste: el punto del rectángulo más cercano al centro del círculo es el centro «encerrado» dentro del rectángulo. Si está más cerca que el radio, se tocan.</p>
+
+  <h3>La respuesta: primero un eje, después el otro</h3>
+  <p>Detectar es la mitad. Si el perro cae sobre una plataforma y se mete 6 píxeles en ella, hay que sacarlo. Pero ¿hacia dónde? Si solo sabes que las cajas se solapan, no sabes si el perro llegó desde arriba (y debe quedarse de pie) o desde un lado (y debe pararse contra la pared). La solución clásica para juegos de plataformas es mover y resolver <strong>un eje cada vez</strong>:</p>
+  <ol class="pasos">
+    <li><div><p>Mueve solo en horizontal (<code>x += vx * dt</code>). Si ahora choca con algo, el choque es por un lado: si iba hacia la derecha, pégalo al borde izquierdo del obstáculo; si iba hacia la izquierda, al derecho. Pon <code>vx</code> a 0.</p></div></li>
+    <li><div><p>Mueve solo en vertical (<code>y += vy * dt</code>). Si choca, es por arriba o por abajo: si caía, colócalo encima del obstáculo y anota que pisa el suelo; si subía, se dio en la cabeza: colócalo debajo. Pon <code>vy</code> a 0.</p></div></li>
+  </ol>
+  <pre><code class="language-js">function moverYResolver(perro, plataformas, dt) {
+  perro.x += perro.vx * dt;                       // 1. eje x
+  for (const p of plataformas) {
+    if (!chocan(perro, p)) continue;
+    if (perro.vx &gt; 0) perro.x = p.x - perro.ancho;      // venía por la izquierda
+    else if (perro.vx &lt; 0) perro.x = p.x + p.ancho;     // venía por la derecha
+    perro.vx = 0;
+  }
+  perro.y += perro.vy * dt;                       // 2. eje y
+  perro.enSuelo = false;
+  for (const p of plataformas) {
+    if (!chocan(perro, p)) continue;
+    if (perro.vy &gt; 0) { perro.y = p.y - perro.alto; perro.enSuelo = true; }  // aterriza
+    else if (perro.vy &lt; 0) perro.y = p.y + p.alto;                            // cabezazo
+    perro.vy = 0;
+  }
+}</code></pre>
+  <p>Fíjate en que <code>enSuelo</code> no se guarda «para siempre»: se recalcula en cada fotograma. Mientras el perro está de pie, la gravedad lo empuja un poquito hacia abajo en cada vuelta, la colisión lo devuelve arriba y marca <code>enSuelo = true</code>. Así, si camina más allá del borde de una plataforma, en el siguiente fotograma ya no hay nada debajo y empieza a caer sin que nadie tenga que avisarle.</p>
+  <p>Ahora ordena un fotograma completo de un juego de plataformas. Mueve y resuelve primero el eje x y después el y. Algunas líneas pueden ir en cualquier orden entre sí:</p>
+  <div class="parsons" data-titulo="Ordena un fotograma de plataformas" data-lenguaje="js">
+    <ol>
+      <li>function actualizar(dt) {</li>
+      <li data-sangria="1">const direccion = leerDireccion();</li>
+      <li data-sangria="1" data-grupo="a">perro.vx = acelerarOFrenar(perro.vx, direccion, dt);</li>
+      <li data-sangria="1" data-grupo="a">if (saltoRecienPulsado() &amp;&amp; perro.enSuelo) perro.vy = VEL_SALTO;</li>
+      <li data-sangria="1" data-grupo="a">perro.vy = Math.min(perro.vy + GRAVEDAD * dt, CAIDA_MAX);</li>
+      <li data-sangria="1">perro.x += perro.vx * dt;</li>
+      <li data-sangria="1">resolverChoquesEnX(perro);</li>
+      <li data-sangria="1">perro.y += perro.vy * dt;</li>
+      <li data-sangria="1">resolverChoquesEnY(perro);   // aquí se sabe si pisa el suelo</li>
+      <li data-sangria="1" data-grupo="b">recogerHuesos(perro);</li>
+      <li data-sangria="1" data-grupo="b">moverCamara(perro);</li>
+      <li>}</li>
+    </ol>
+  </div>
+
+  <h3>El efecto túnel</h3>
+  <p>La detección que has visto comprueba si dos cajas se solapan <em>en este fotograma</em>. No mira qué pasó entre el anterior y este. Si algo va muy rápido o el obstáculo es muy fino, puede estar a un lado en un fotograma y al otro lado en el siguiente, sin solaparse nunca. Atraviesa la pared como un fantasma. Se llama <strong>efecto túnel</strong> (en inglés, <em>tunneling</em>).</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 220" role="img" aria-label="Efecto túnel. Una pelota rápida está a la izquierda de una pared fina en el fotograma 1 y a la derecha en el fotograma 2. En ninguno de los dos fotogramas la pelota se solapa con la pared, así que la comprobación no detecta el choque aunque el recorrido, dibujado con una línea discontinua, la atraviesa.">
+      <rect class="d-solido" x="352" y="30" width="16" height="150"/>
+      <text class="d-peq d-tenue" x="360" y="204" text-anchor="middle">pared de 16 px</text>
+      <path class="d-punteada" d="M200 105H540"/>
+      <circle class="d-l6" cx="180" cy="105" r="22"/>
+      <circle class="d-l6" cx="560" cy="105" r="22"/>
+      <text class="d-rotulo" x="180" y="60" text-anchor="middle">Fotograma 1</text>
+      <text class="d-rotulo" x="560" y="60" text-anchor="middle">Fotograma 2</text>
+      <text class="d-peq" x="180" y="152" text-anchor="middle">no se solapa</text>
+      <text class="d-peq" x="560" y="152" text-anchor="middle">no se solapa</text>
+      <text xml:space="preserve" class="d-mono d-peq" x="370" y="130" text-anchor="middle" dx="60">avanza 380 px</text>
+    </svg>
+    <figcaption>A 60 FPS, una pelota que va a 23 000 px/s avanza unos 380 píxeles por fotograma: salta por encima de una pared de 16 sin tocarla nunca.</figcaption>
+  </figure>
+  <p>Hay varias defensas, y se combinan:</p>
+  <ul>
+    <li><strong>Limitar la velocidad y el <code>dt</code></strong>, como ya haces con <code>CAIDA_MAX</code> y el <code>Math.min</code> del bucle. Regla práctica: que nada avance en un fotograma más de lo que mide el obstáculo más fino.</li>
+    <li><strong>Obstáculos gruesos</strong>. Un suelo de una casilla entera es más seguro que una línea de 2 píxeles.</li>
+    <li><strong>Subpasos</strong>: si algo va muy rápido, divide su movimiento de este fotograma en varios trozos y comprueba colisiones en cada uno.</li>
+    <li><strong>Detección continua</strong>: los motores de física calculan el recorrido entero y en qué momento exacto choca. En Godot o Unity es una opción del cuerpo físico (suele llamarse <em>continuous collision detection</em>).</li>
+  </ul>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuando hay cientos de objetos</p><p>Comprobar cada objeto contra todos los demás son n × n comparaciones: con 500 balas y enemigos, 250 000 por fotograma. Es el crecimiento cuadrático de la <a href="20-algoritmos.html#big-o">Estación 20</a>. Los juegos lo evitan con una <strong>fase amplia</strong>: dividen el mundo en una cuadrícula, guardan en cada celda qué objetos hay (con un mapa, como las tablas hash de la <a href="19-estructuras-datos.html#hash">Estación 19</a>) y solo comparan objetos de la misma celda o de las vecinas. Los motores lo traen hecho. En un juego pequeño, compararlo todo es perfectamente válido: no optimices antes de medir.</p></div></aside>
+
+  <h3>Plataformas y huesos</h3>
+  <p>Este taller junta la física de la sección anterior con las colisiones. Hay plataformas, un bloque para chocar de lado y huesos para recoger. Pulsa <kbd>H</kbd> para ver las cajas de colisión: es la primera herramienta de depuración de cualquier juego.</p>
+  <div class="taller" data-modo="web" id="taller-colisiones" data-titulo="Pruébalo: plataformas y huesos" data-alto="20rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas id="juego" width="480" height="270" tabindex="0"&gt;&lt;/canvas&gt;
+&lt;p&gt;Clic en el lienzo. Flechas o A/D para correr, Espacio para saltar, H para ver las cajas.&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; }
+canvas { display: block; width: 100%; max-width: 480px; background: #8ecae6; border-radius: 8px; touch-action: none; }
+p { margin: 6px 0 0; font-size: 14px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const lienzo = document.querySelector("#juego");
+const ctx = lienzo.getContext("2d");
+const GRAVEDAD = 1500, VEL_MAX = 190, ACELERACION = 1400, FRICCION = 1600, CAIDA_MAX = 700;
+const VEL_SALTO = -Math.sqrt(2 * GRAVEDAD * 100);   // salto de 100 px
+
+const plataformas = [
+  { x: 0, y: 240, ancho: 480, alto: 30 },     // el suelo
+  { x: 50, y: 170, ancho: 100, alto: 16 },
+  { x: 200, y: 115, ancho: 90, alto: 16 },
+  { x: 340, y: 165, ancho: 110, alto: 16 },
+  { x: 250, y: 196, ancho: 30, alto: 44 },    // un bloque para chocar de lado
+];
+let huesos = [{ x: 100, y: 150, r: 9 }, { x: 245, y: 95, r: 9 }, { x: 395, y: 145, r: 9 }, { x: 440, y: 222, r: 9 }];
+const perro = { x: 20, y: 200, ancho: 30, alto: 24, vx: 0, vy: 0, enSuelo: false };
+let recogidos = 0;
+let verCajas = false;
+
+function chocan(a, b) {
+  return a.x &lt; b.x + b.ancho &amp;&amp; a.x + a.ancho &gt; b.x &amp;&amp; a.y &lt; b.y + b.alto &amp;&amp; a.y + a.alto &gt; b.y;
+}
+function circuloTocaRect(c, r) {
+  const cx = Math.max(r.x, Math.min(c.x, r.x + r.ancho));
+  const cy = Math.max(r.y, Math.min(c.y, r.y + r.alto));
+  return (c.x - cx) ** 2 + (c.y - cy) ** 2 &lt; c.r ** 2;
+}
+
+function moverYResolver(dt) {
+  perro.x += perro.vx * dt;
+  for (const p of plataformas) {
+    if (!chocan(perro, p)) continue;
+    if (perro.vx &gt; 0) perro.x = p.x - perro.ancho;
+    else if (perro.vx &lt; 0) perro.x = p.x + p.ancho;
+    perro.vx = 0;
+  }
+  perro.x = Math.max(0, Math.min(lienzo.width - perro.ancho, perro.x));   // bordes del lienzo
+  perro.y += perro.vy * dt;
+  perro.enSuelo = false;
+  for (const p of plataformas) {
+    if (!chocan(perro, p)) continue;
+    if (perro.vy &gt; 0) { perro.y = p.y - perro.alto; perro.enSuelo = true; }
+    else if (perro.vy &lt; 0) perro.y = p.y + p.alto;
+    perro.vy = 0;
+  }
+}
+
+// Entrada
+const teclas = new Set(), recienPulsadas = new Set();
+addEventListener("keydown", (e) =&gt; {
+  if (["ArrowLeft", "ArrowRight", "ArrowUp", "Space"].includes(e.code)) e.preventDefault();
+  if (!e.repeat) recienPulsadas.add(e.code);
+  teclas.add(e.code);
+});
+addEventListener("keyup", (e) =&gt; teclas.delete(e.code));
+addEventListener("blur", () =&gt; teclas.clear());
+lienzo.addEventListener("pointerdown", () =&gt; lienzo.focus());
+const pulsa = (...c) =&gt; c.some((k) =&gt; teclas.has(k));
+
+function actualizar(dt) {
+  const direccion = (pulsa("ArrowRight", "KeyD") ? 1 : 0) - (pulsa("ArrowLeft", "KeyA") ? 1 : 0);
+  if (direccion !== 0) perro.vx += direccion * ACELERACION * dt;
+  else perro.vx -= Math.sign(perro.vx) * Math.min(Math.abs(perro.vx), FRICCION * dt);
+  perro.vx = Math.max(-VEL_MAX, Math.min(VEL_MAX, perro.vx));
+  if ((recienPulsadas.has("Space") || recienPulsadas.has("ArrowUp")) &amp;&amp; perro.enSuelo) perro.vy = VEL_SALTO;
+  if (!pulsa("Space", "ArrowUp") &amp;&amp; perro.vy &lt; VEL_SALTO / 3) perro.vy = VEL_SALTO / 3;
+  perro.vy = Math.min(perro.vy + GRAVEDAD * dt, CAIDA_MAX);
+  moverYResolver(dt);
+
+  const antes = huesos.length;
+  huesos = huesos.filter((h) =&gt; !circuloTocaRect(h, perro));   // se quedan los que no toca
+  recogidos += antes - huesos.length;
+  if (recienPulsadas.has("KeyH")) verCajas = !verCajas;
+  recienPulsadas.clear();
+}
+
+function dibujar() {
+  ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+  for (const p of plataformas) {
+    ctx.fillStyle = "#7f5539";
+    ctx.fillRect(p.x, p.y, p.ancho, p.alto);
+    ctx.fillStyle = "#6a994e";
+    ctx.fillRect(p.x, p.y, p.ancho, 6);
+  }
+  for (const h of huesos) {
+    ctx.fillStyle = "#fffdf7";
+    ctx.fillRect(h.x - 8, h.y - 3, 16, 6);
+    for (const [dx, dy] of [[-8, -3], [-8, 3], [8, -3], [8, 3]]) {
+      ctx.beginPath(); ctx.arc(h.x + dx, h.y + dy, 3.5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  ctx.fillStyle = "#9c6644";
+  ctx.fillRect(perro.x, perro.y, perro.ancho, perro.alto);
+  if (verCajas) {
+    ctx.strokeStyle = "#e63946";
+    ctx.lineWidth = 1;
+    for (const p of [...plataformas, perro]) ctx.strokeRect(p.x + 0.5, p.y + 0.5, p.ancho - 1, p.alto - 1);
+    for (const h of huesos) { ctx.beginPath(); ctx.arc(h.x, h.y, h.r, 0, Math.PI * 2); ctx.stroke(); }
+  }
+  ctx.fillStyle = "#1d3557";
+  ctx.font = "bold 16px system-ui, sans-serif";
+  ctx.fillText(`Huesos: ${recogidos}/4` + (perro.enSuelo ? "   (en el suelo)" : ""), 10, 22);
+}
+
+let anterior = null;
+function bucle(ahora) {
+  const dt = anterior === null ? 0 : Math.min((ahora - anterior) / 1000, 1 / 30);
+  anterior = ahora;
+  actualizar(dt);
+  dibujar();
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);
+
+// Modifica: 1) Borra la línea «perro.enSuelo = false;», sube a una plataforma,
+// sal por el borde y pulsa saltar en el aire: ¿qué pasa y por qué?
+// 2) Añade una plataforma y un hueso encima (actualiza el «/4» del marcador).</textarea>
+  </div>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Dibuja lo invisible</p><p>Cuando una colisión «no funciona», casi nunca es un problema de la fórmula: es que la caja no está donde crees. Dibuja las cajas de colisión, los vectores de velocidad o el estado del personaje encima del juego, con una tecla para activarlo. Los motores lo traen de serie: en Godot, el menú <em>Depurar</em> tiene una opción para ver las formas de colisión mientras juegas.</p></div></aside>
+</section>
+
+<section id="partida" data-parada="Estados, récord y sonido">
+  <h2>La partida: estados, puntuación, récord y sonido</h2>
+  <p>Ya tienes un perro que corre, salta y choca. Todavía no es un juego: no empieza, no termina, no se puede pausar y no hay nada que conseguir. Esta sección añade lo que convierte una demostración en un juego: pantallas, reglas para ganar y perder, una puntuación que recordar y sonido.</p>
+
+  <h3>Una máquina de estados para la partida</h3>
+  <p>Un juego pasa por momentos muy distintos: el menú del principio, la partida, la pausa y la pantalla final. En cada uno, las mismas teclas significan cosas diferentes (Enter empieza en el menú, pero no hace nada mientras juegas) y el bucle hace un trabajo distinto. Es exactamente la <strong>máquina de estados</strong> del patrón State de la <a href="25-codigo-limpio.html#patrones">Estación 25</a>: un conjunto fijo de estados, uno activo a la vez, y transiciones que dicen qué evento lleva de uno a otro.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 310" role="img" aria-label="Máquina de estados de la partida. Del Menú se pasa a Jugando con Enter o un toque. De Jugando se pasa a Pausa con Escape o cuando la pestaña se oculta, y de Pausa se vuelve a Jugando con Escape. De Jugando se pasa a Fin cuando se pone el sol o no quedan huesos. De Fin se vuelve al Menú con Enter.">
+      <rect class="d-caja" x="30" y="120" width="150" height="64" rx="12"/>
+      <text class="d-rotulo" x="105" y="148" text-anchor="middle">Menú</text>
+      <text class="d-peq d-tenue" x="105" y="170" text-anchor="middle">espera</text>
+      <rect class="d-acento" x="290" y="120" width="150" height="64" rx="12"/>
+      <text class="d-rotulo d-sobre-acento" x="365" y="148" text-anchor="middle">Jugando</text>
+      <text class="d-peq d-sobre-acento" x="365" y="170" text-anchor="middle">actualiza y dibuja</text>
+      <rect class="d-caja" x="550" y="24" width="150" height="64" rx="12"/>
+      <text class="d-rotulo" x="625" y="52" text-anchor="middle">Pausa</text>
+      <text class="d-peq d-tenue" x="625" y="74" text-anchor="middle">solo dibuja</text>
+      <rect class="d-caja" x="550" y="200" width="150" height="64" rx="12"/>
+      <text class="d-rotulo" x="625" y="228" text-anchor="middle">Fin</text>
+      <text class="d-peq d-tenue" x="625" y="250" text-anchor="middle">muestra los puntos</text>
+      <g class="d-linea">
+        <path d="M180 152H278"/>
+        <path d="M365 120V46H538"/>
+        <path d="M550 76L446 136"/>
+        <path d="M440 170L540 222"/>
+        <path d="M625 264V292H105V196"/>
+      </g>
+      <g class="d-tinta">
+        <path d="M290 152l-12 -8v16z"/>
+        <path d="M550 46l-12 -8v16z"/>
+        <path d="M440 139.5l14.5 -1.5 -6.5 -12z"/>
+        <path d="M550 227l-14.5 0.5 5.5 -12.5z"/>
+        <path d="M105 184l-8 12h16z"/>
+      </g>
+      <g class="d-peq">
+        <text x="229" y="142" text-anchor="middle">Enter</text>
+        <text x="229" y="174" text-anchor="middle" class="d-tenue">o un toque</text>
+        <text x="380" y="38">Escape o pestaña oculta</text>
+        <text x="505" y="126" text-anchor="middle">Escape</text>
+        <text x="418" y="222" text-anchor="middle">se pone el sol</text>
+        <text x="418" y="240" text-anchor="middle">o no quedan huesos</text>
+        <text x="365" y="286" text-anchor="middle">Enter</text>
+      </g>
+    </svg>
+    <figcaption>Los estados de una partida de Saltarín y los eventos que llevan de uno a otro. Un evento que no tiene flecha desde el estado actual se ignora: pulsar Escape en el menú no hace nada.</figcaption>
+  </figure>
+  <p>En código basta con una variable <code>estado</code> y un bloque por estado en <code>actualizar</code> y en <code>dibujar</code>. Cada bloque solo mira las entradas que le importan:</p>
+  <pre><code class="language-js">let estado = "menu";      // "menu" | "jugando" | "pausa" | "fin"
+
+function actualizar(dt) {
+  if (estado === "menu") {
+    if (recienPulsadas.has("Enter")) { nuevaPartida(); estado = "jugando"; }
+  } else if (estado === "jugando") {
+    if (recienPulsadas.has("Escape")) estado = "pausa";
+    else jugar(dt);                          // física, colisiones, tiempo…
+  } else if (estado === "pausa") {
+    if (recienPulsadas.has("Escape")) estado = "jugando";
+  } else if (estado === "fin") {
+    if (recienPulsadas.has("Enter")) estado = "menu";
+  }
+  recienPulsadas.clear();
+}
+
+// Pausar solo cuando la pestaña se oculta: nadie quiere perder mientras contesta un mensaje
+document.addEventListener("visibilitychange", () =&gt; {
+  if (document.hidden &amp;&amp; estado === "jugando") estado = "pausa";
+});</code></pre>
+  <p>Fíjate en la pausa: el estado <code>pausa</code> no llama a <code>jugar</code>, así que el mundo se congela, pero <code>dibujar</code> sigue pintando el nivel quieto con el cartel de pausa encima. Es el beneficio de separar actualizar y dibujar. Cuando el juego crece, cada estado se convierte en una escena con sus propios <code>actualizar</code> y <code>dibujar</code>, organizadas en la pila de escenas de la <a href="28-arquitectura.html#videojuegos">Estación 28</a>.</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Salir de un estado y entrar en otro en el mismo fotograma</p><p>Si en el menú compruebas «¿Enter?» y pasas a <code>jugando</code>, y justo debajo, en el mismo fotograma, el código de <code>jugando</code> vuelve a mirar las teclas, el mismo Enter puede disparar dos transiciones. Usa <code>if … else if</code> para que en cada vuelta solo se ejecute el bloque de un estado, y vacía <code>recienPulsadas</code> al final.</p></div></aside>
+
+  <h3>Puntuación y récord</h3>
+  <p>La puntuación es una variable más del estado. El <strong>récord</strong> es distinto: tiene que sobrevivir a que cierres la página. Para eso está <code>localStorage</code>, que usaste en la <a href="15-dom.html#guardar">Estación 15</a>. Guarda textos, así que al leer hay que convertir, y la primera vez que se juega no hay nada guardado:</p>
+  <pre><code class="language-js">const CLAVE = "saltarin-record";
+let record = Number(localStorage.getItem(CLAVE)) || 0;   // null → 0, "1200" → 1200
+
+function terminarPartida() {
+  estado = "fin";
+  if (puntos &gt; record) {
+    record = puntos;
+    localStorage.setItem(CLAVE, String(record));    // solo se escribe si se bate
+  }
+}</code></pre>
+  <p><code>Number(null)</code> da 0 y <code>Number("hola")</code> da <code>NaN</code>; el <code>|| 0</code> convierte cualquiera de los dos en 0. Pon a la clave un nombre con el juego delante (<code>"saltarin-record"</code>, no <code>"record"</code>): todas las páginas de un mismo sitio comparten el mismo <code>localStorage</code>, y en itch.io muchos juegos se sirven desde el mismo dominio.</p>
+  <p>Este taller es un juego completo de una pantalla, con los cuatro estados, puntuación y récord. Los huesos caen cada vez más rápido. Juega una partida, vuelve a ejecutar el taller y comprueba que el récord sigue ahí (el botón «Reiniciar» del taller lo borra).</p>
+  <div class="taller" data-modo="web" id="taller-estados" data-titulo="Atrapa huesos: estados y récord" data-alto="20rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas id="juego" width="480" height="270" tabindex="0"&gt;&lt;/canvas&gt;
+&lt;p&gt;Clic en el lienzo y Enter para empezar. Flechas o arrastrar el dedo para moverte, Escape para pausar.&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; }
+canvas { display: block; width: 100%; max-width: 480px; background: #8ecae6; border-radius: 8px; touch-action: none; }
+p { margin: 6px 0 0; font-size: 14px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const lienzo = document.querySelector("#juego");
+const ctx = lienzo.getContext("2d");
+const ANCHO = lienzo.width, ALTO = lienzo.height;
+const CLAVE = "atrapa-huesos-record";
+
+let estado = "menu";                // menu | jugando | pausa | fin
+let puntos = 0, fallos = 0, huesos = [], espera = 0, nuevoRecord = false;
+let record = Number(localStorage.getItem(CLAVE)) || 0;
+const perro = { x: 218, y: 206, ancho: 44, alto: 30, velocidad: 280 };
+
+// Entrada
+const teclas = new Set(), recienPulsadas = new Set();
+addEventListener("keydown", (e) =&gt; {
+  if (["ArrowLeft", "ArrowRight", "Space", "Escape"].includes(e.code)) e.preventDefault();
+  if (!e.repeat) recienPulsadas.add(e.code);
+  teclas.add(e.code);
+});
+addEventListener("keyup", (e) =&gt; teclas.delete(e.code));
+addEventListener("blur", () =&gt; teclas.clear());
+lienzo.addEventListener("pointerdown", (e) =&gt; { lienzo.focus(); recienPulsadas.add("Enter"); seguirDedo(e); });
+lienzo.addEventListener("pointermove", (e) =&gt; { if (e.buttons) seguirDedo(e); });
+function seguirDedo(e) {
+  if (estado !== "jugando") return;
+  const caja = lienzo.getBoundingClientRect();
+  perro.x = (e.clientX - caja.left) * ANCHO / caja.width - perro.ancho / 2;
+}
+document.addEventListener("visibilitychange", () =&gt; {
+  if (document.hidden &amp;&amp; estado === "jugando") estado = "pausa";
+});
+
+function nuevaPartida() {
+  puntos = 0; fallos = 0; huesos = []; espera = 0.5; nuevoRecord = false;
+}
+function terminar() {
+  estado = "fin";
+  if (puntos &gt; record) {
+    record = puntos;
+    nuevoRecord = true;
+    localStorage.setItem(CLAVE, String(record));
+  }
+}
+
+function jugar(dt) {
+  const direccion = (teclas.has("ArrowRight") ? 1 : 0) - (teclas.has("ArrowLeft") ? 1 : 0);
+  perro.x += direccion * perro.velocidad * dt;
+  perro.x = Math.max(0, Math.min(ANCHO - perro.ancho, perro.x));
+
+  espera -= dt;                                  // ¿toca soltar otro hueso?
+  if (espera &lt;= 0) {
+    huesos.push({ x: 20 + Math.random() * (ANCHO - 40), y: -10, vy: 110 + puntos * 8 });
+    espera = Math.max(0.4, 1.2 - puntos * 0.04); // cada vez más seguido
+  }
+  const quedan = [];
+  for (const h of huesos) {
+    h.y += h.vy * dt;
+    const atrapado = h.y &gt; perro.y &amp;&amp; h.y &lt; perro.y + perro.alto &amp;&amp; h.x &gt; perro.x - 6 &amp;&amp; h.x &lt; perro.x + perro.ancho + 6;
+    if (atrapado) puntos++;
+    else if (h.y &gt; ALTO) fallos++;
+    else quedan.push(h);
+  }
+  huesos = quedan;
+  if (fallos &gt;= 3) terminar();
+}
+
+function actualizar(dt) {
+  if (estado === "menu") {
+    if (recienPulsadas.has("Enter") || recienPulsadas.has("Space")) { nuevaPartida(); estado = "jugando"; }
+  } else if (estado === "jugando") {
+    if (recienPulsadas.has("Escape")) estado = "pausa";
+    else jugar(dt);
+  } else if (estado === "pausa") {
+    if (recienPulsadas.has("Escape") || recienPulsadas.has("Enter")) estado = "jugando";
+  } else if (estado === "fin") {
+    if (recienPulsadas.has("Enter")) estado = "menu";
+  }
+  recienPulsadas.clear();
+}
+
+function cartel(titulo, detalle) {
+  ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+  ctx.fillRect(0, 0, ANCHO, ALTO);
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.font = "bold 30px system-ui, sans-serif";
+  ctx.fillText(titulo, ANCHO / 2, ALTO / 2 - 10);
+  ctx.font = "16px system-ui, sans-serif";
+  ctx.fillText(detalle, ANCHO / 2, ALTO / 2 + 22);
+}
+
+function dibujar() {
+  ctx.clearRect(0, 0, ANCHO, ALTO);
+  ctx.fillStyle = "#6a994e";
+  ctx.fillRect(0, 236, ANCHO, 34);
+  ctx.fillStyle = "#9c6644";
+  ctx.fillRect(perro.x, perro.y, perro.ancho, perro.alto);
+  ctx.fillStyle = "#fffdf7";
+  for (const h of huesos) ctx.fillRect(h.x - 9, h.y - 3, 18, 6);
+  ctx.fillStyle = "#1d3557";
+  ctx.textAlign = "left";
+  ctx.font = "bold 16px system-ui, sans-serif";
+  ctx.fillText(`Puntos: ${puntos}   Fallos: ${fallos}/3   Récord: ${record}`, 10, 22);
+
+  if (estado === "menu") cartel("ATRAPA HUESOS", "Enter o toca para empezar");
+  else if (estado === "pausa") cartel("Pausa", "Escape para seguir");
+  else if (estado === "fin") cartel(nuevoRecord ? "¡Nuevo récord!" : "Fin de la partida", `${puntos} puntos. Enter para volver al menú`);
+}
+
+let anterior = null;
+function bucle(ahora) {
+  const dt = anterior === null ? 0 : Math.min((ahora - anterior) / 1000, 1 / 30);
+  anterior = ahora;
+  actualizar(dt);
+  dibujar();
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);
+
+// Modifica: 1) Añade un hueso dorado (con probabilidad 0.1) que valga 5 puntos.
+// 2) Haz que en la pausa se pueda pulsar R para volver al menú.</textarea>
+  </div>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Récords en línea</p><p>Una tabla de récords compartida por todos los jugadores necesita un servidor y una base de datos, como los de las <a href="29-backend.html">Estaciones 29</a> y <a href="30-bases-datos.html">30</a>. Y una regla de oro de la <a href="31-seguridad.html">Estación 31</a>: el servidor no puede fiarse de la puntuación que envía el navegador, porque cualquiera puede abrir la consola y mandar un millón de puntos. Los juegos serios validan en el servidor que la puntuación es posible (por ejemplo, que no se consiguieron 5000 puntos en 3 segundos) o repiten la partida allí a partir de las teclas pulsadas.</p></div></aside>
+  <p>Con los datos en una tabla, la clasificación es una consulta con <code>GROUP BY</code> y <code>MAX</code>, como las de la <a href="30-bases-datos.html#resumir">Estación 30</a>. Cada persona aparece una sola vez, con su mejor partida:</p>
+  <div class="taller" data-modo="sql" id="taller-sql-records" data-titulo="La tabla de récords">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE partidas (id INTEGER PRIMARY KEY, jugador TEXT NOT NULL, puntos INTEGER NOT NULL, fecha TEXT NOT NULL);
+INSERT INTO partidas (jugador, puntos, fecha) VALUES
+('lyra', 900, '2026-09-20'), ('toño', 1450, '2026-09-20'), ('lyra', 1600, '2026-09-21'),
+('mei', 700, '2026-09-21'), ('toño', 1100, '2026-09-22'), ('sol', 1600, '2026-09-22'),
+('mei', 1350, '2026-09-23'), ('lyra', 1200, '2026-09-24'), ('sol', 400, '2026-09-25');</script>
+    <textarea class="taller-codigo">-- Las 3 mejores personas, con su mejor partida
+SELECT jugador, MAX(puntos) AS mejor, COUNT(*) AS partidas
+FROM partidas
+GROUP BY jugador
+ORDER BY mejor DESC, jugador
+LIMIT 3;
+
+-- Modifica: muestra solo las partidas de septiembre del 22 en adelante
+-- (añade WHERE fecha &gt;= '2026-09-22' antes de GROUP BY).</textarea>
+  </div>
+
+  <h3>Sonido con Web Audio</h3>
+  <p>El sonido es la mitad de la sensación de un juego: un salto sin sonido se siente flojo. El navegador ofrece la <strong>Web Audio API</strong>, pensada para audio interactivo y preciso. Funciona como una mesa de mezclas: hay un <strong>contexto de audio</strong> (<code>AudioContext</code>) y dentro de él <strong>nodos</strong> que se conectan en cadena. Unos producen sonido (un oscilador, un archivo), otros lo transforman (el volumen, un filtro) y el último es la salida: los altavoces.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 150" role="img" aria-label="Grafo de audio: un oscilador, que produce el tono, se conecta a un nodo de ganancia, que controla el volumen, y este a un volumen general que termina en los altavoces, llamado destination.">
+      <rect class="d-caja" x="20" y="40" width="150" height="64" rx="10"/>
+      <text class="d-rotulo" x="95" y="68" text-anchor="middle">Oscilador</text>
+      <text class="d-peq d-tenue" x="95" y="90" text-anchor="middle">produce el tono</text>
+      <rect class="d-caja" x="200" y="40" width="150" height="64" rx="10"/>
+      <text class="d-rotulo" x="275" y="68" text-anchor="middle">Ganancia</text>
+      <text class="d-peq d-tenue" x="275" y="90" text-anchor="middle">volumen del efecto</text>
+      <rect class="d-caja" x="380" y="40" width="150" height="64" rx="10"/>
+      <text class="d-rotulo" x="455" y="68" text-anchor="middle">Ganancia</text>
+      <text class="d-peq d-tenue" x="455" y="90" text-anchor="middle">volumen general</text>
+      <rect class="d-acento" x="560" y="40" width="150" height="64" rx="10"/>
+      <text class="d-rotulo d-sobre-acento" x="635" y="68" text-anchor="middle">destination</text>
+      <text class="d-peq d-sobre-acento" x="635" y="90" text-anchor="middle">los altavoces</text>
+      <g class="d-linea"><path d="M170 72H188M350 72H368M530 72H548"/></g>
+      <g class="d-tinta"><path d="M200 72l-12 -7v14z"/><path d="M380 72l-12 -7v14z"/><path d="M560 72l-12 -7v14z"/></g>
+      <text xml:space="preserve" class="d-mono d-peq d-tenue" x="20" y="134">oscilador.connect(ganancia).connect(general).connect(audio.destination)</text>
+    </svg>
+    <figcaption>Un efecto de sonido sintetizado: el oscilador genera una onda, un nodo de ganancia le da forma al volumen y todos los efectos pasan por un volumen general, que es el que controla el botón de silencio.</figcaption>
+  </figure>
+  <p>Hay una regla que sorprende a todo el mundo la primera vez. Los navegadores tienen una <strong>política de reproducción automática</strong> (<em>autoplay policy</em>): una página no puede empezar a sonar sin que la persona haya interactuado con ella. Si creas el <code>AudioContext</code> antes de cualquier clic o tecla, nace en estado <code>"suspended"</code> (suspendido) y no suena nada, sin ningún error. Hay que crearlo o reanudarlo con <code>resume()</code> dentro de un evento de la persona, como un <code>keydown</code> o un <code>pointerdown</code>. Por eso tantos juegos web empiezan con «Haz clic para jugar».</p>
+  <pre><code class="language-js">let audio = null, general = null;
+
+function desbloquearAudio() {               // llámala desde keydown o pointerdown
+  if (!audio) {
+    audio = new AudioContext();
+    general = audio.createGain();           // volumen general
+    general.connect(audio.destination);
+  }
+  if (audio.state === "suspended") audio.resume();
+}
+
+function sonar(frecuencia, duracion, tipo = "square", frecuenciaFinal = frecuencia) {
+  if (!audio || audio.state !== "running") return;   // aún no hay permiso para sonar
+  const t = audio.currentTime;                       // el reloj del audio, en segundos
+  const osc = audio.createOscillator();              // uno NUEVO por cada sonido
+  const volumen = audio.createGain();
+  osc.type = tipo;                                   // "sine", "square", "sawtooth", "triangle"
+  osc.frequency.setValueAtTime(frecuencia, t);
+  osc.frequency.exponentialRampToValueAtTime(frecuenciaFinal, t + duracion);
+  volumen.gain.setValueAtTime(0.2, t);
+  volumen.gain.exponentialRampToValueAtTime(0.001, t + duracion);   // se apaga suave
+  osc.connect(volumen).connect(general);
+  osc.start(t);
+  osc.stop(t + duracion);
+}</code></pre>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Un oscilador solo suena una vez</p><p>Es tentador crear un oscilador al principio y llamar a <code>start()</code> cada vez que el perro salta. No funciona: un oscilador, igual que una fuente de archivo (<code>AudioBufferSourceNode</code>), solo se puede arrancar una vez, y la segunda llamada lanza un error. Se crea uno nuevo para cada sonido; son muy baratos y el navegador los descarta al terminar.</p></div></aside>
+  <p>Los sonidos sintetizados dan un toque retro y no necesitan archivos. Para efectos grabados o música, se descarga el archivo una vez, se decodifica y se reproduce tantas veces como quieras:</p>
+  <pre><code class="language-js">async function cargarSonido(url) {
+  const respuesta = await fetch(url);
+  const datos = await respuesta.arrayBuffer();
+  return audio.decodeAudioData(datos);        // un AudioBuffer: se guarda y se reutiliza
+}
+
+function reproducir(buffer) {
+  const fuente = audio.createBufferSource();  // también una fuente nueva cada vez
+  fuente.buffer = buffer;
+  fuente.connect(general);
+  fuente.start();
+}
+
+// const ladrido = await cargarSonido("sonidos/ladrido.mp3");
+// reproducir(ladrido);</code></pre>
+  <p>Para la música de fondo, más larga, suele bastar un elemento de audio: <code>const musica = new Audio("musica.mp3"); musica.loop = true; musica.play();</code>. Su <code>play()</code> devuelve una promesa que se rechaza si todavía no hubo interacción, así que llámalo también desde un evento de la persona.</p>
+  <div class="taller" data-modo="web" id="taller-sonido" data-titulo="Pruébalo: efectos de sonido sintetizados" data-alto="13rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div class="botones"&gt;
+  &lt;button type="button" id="saltar"&gt;Saltar&lt;/button&gt;
+  &lt;button type="button" id="hueso"&gt;Hueso&lt;/button&gt;
+  &lt;button type="button" id="golpe"&gt;Caída&lt;/button&gt;
+  &lt;button type="button" id="fin"&gt;Se pone el sol&lt;/button&gt;
+&lt;/div&gt;
+&lt;label&gt;Volumen general &lt;input type="range" id="volumen" min="0" max="1" step="0.05" value="0.6"&gt;&lt;/label&gt;
+&lt;p id="estado"&gt;Estado del audio: todavía no existe&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; }
+.botones { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+button { padding: 10px 14px; font: inherit; }
+label { display: flex; gap: 8px; align-items: center; max-width: 420px; }
+input { flex: 1; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">let audio = null, general = null;
+const textoEstado = document.querySelector("#estado");
+
+function desbloquearAudio() {
+  if (!audio) {
+    audio = new AudioContext();
+    general = audio.createGain();
+    general.gain.value = Number(document.querySelector("#volumen").value);
+    general.connect(audio.destination);
+    audio.addEventListener("statechange", () =&gt; {
+      textoEstado.textContent = "Estado del audio: " + audio.state;
+    });
+  }
+  if (audio.state === "suspended") audio.resume();
+  textoEstado.textContent = "Estado del audio: " + audio.state;
+}
+
+// retraso: segundos a esperar antes de sonar (para hacer melodías)
+function sonar(frecuencia, duracion, tipo = "square", frecuenciaFinal = frecuencia, retraso = 0) {
+  if (!audio) return;
+  const t = audio.currentTime + retraso;
+  const osc = audio.createOscillator();
+  const volumen = audio.createGain();
+  osc.type = tipo;
+  osc.frequency.setValueAtTime(frecuencia, t);
+  osc.frequency.exponentialRampToValueAtTime(frecuenciaFinal, t + duracion);
+  volumen.gain.setValueAtTime(0.2, t);
+  volumen.gain.exponentialRampToValueAtTime(0.001, t + duracion);
+  osc.connect(volumen).connect(general);
+  osc.start(t);
+  osc.stop(t + duracion);
+}
+
+const efectos = {
+  saltar: () =&gt; sonar(300, 0.15, "square", 600),                 // sube: boing
+  hueso: () =&gt; { sonar(660, 0.08, "square"); sonar(990, 0.12, "square", 990, 0.08); },
+  golpe: () =&gt; sonar(220, 0.4, "sawtooth", 55),                   // baja: fracaso
+  fin: () =&gt; [523, 392, 330, 262].forEach((f, i) =&gt; sonar(f, 0.2, "triangle", f, i * 0.2)),
+};
+
+for (const [nombre, efecto] of Object.entries(efectos)) {
+  document.getElementById(nombre).addEventListener("click", () =&gt; {
+    desbloquearAudio();            // dentro del clic: aquí el navegador sí deja sonar
+    efecto();
+  });
+}
+document.querySelector("#volumen").addEventListener("input", (e) =&gt; {
+  if (general) general.gain.value = Number(e.target.value);
+});
+
+// Modifica: crea un efecto «ladrido» con dos notas cortas de tipo "sawtooth"
+// y un botón para él. Prueba los cuatro tipos de onda con el mismo sonido.</textarea>
+  </div>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Sonido con respeto</p><p>Ofrece siempre un botón de silencio y volúmenes separados para música y efectos: mucha gente juega con otra cosa sonando o en un lugar público. No dejes que nada importante dependa solo del sonido (un enemigo que llega por la espalda también debe verse), por las personas que no oyen o que juegan en silencio. Y si usas sonidos de otros, revisa su licencia: lo verás en la sección de motores y recursos.</p></div></aside>
+</section>
+
+<section id="mundo" data-parada="Mapas, cámara y azar">
+  <h2>El mundo: mapas de casillas, cámara, entidades y azar</h2>
+  <p>Un nivel de verdad no cabe en una pantalla y no se escribe plataforma a plataforma con coordenadas. Esta sección resuelve cuatro problemas de los juegos más grandes: cómo describir un nivel entero de forma cómoda, cómo mostrar solo el trozo donde está el perro, cómo organizar muchos objetos distintos y cómo crear niveles con ayuda del azar.</p>
+
+  <h3>Mapas de casillas</h3>
+  <p>Mira un juego de plataformas clásico con atención y verás que el mundo está hecho de cuadrados iguales: bloques de césped, de tierra, de ladrillo. Es un <strong>mapa de casillas</strong> (en inglés, <em>tilemap</em>): una cuadrícula en la que cada celda dice qué hay en ella. Cada tipo de casilla (<em>tile</em>) se dibuja una vez en la hoja de sprites y se repite. Para un juego pequeño, el mapa puede ser un array de textos, uno por fila, donde cada carácter es una casilla:</p>
+  <pre><code class="language-js">const TILE = 30;          // cada casilla mide 30 × 30 píxeles
+const MAPA = [
+  "................",
+  "......h.........",
+  ".....###....h...",
+  ".s.........###..",
+  "#####..#########",
+];                        // # suelo · h hueso · s salida · . aire</code></pre>
+  <p>Leer el nivel así es casi como verlo. Y cambiarlo es editar texto. La pieza clave es pasar de una posición en píxeles a una casilla y al revés, con la división entera de la <a href="18-matematicas.html#modulo">Estación 18</a>:</p>
+  <pre><code class="language-js">const columna = Math.floor(x / TILE);    // de píxeles a casilla
+const fila = Math.floor(y / TILE);
+const xCasilla = columna * TILE;           // de casilla a píxeles (su esquina)
+const casilla = MAPA[fila][columna];       // "#", "h", "." …</code></pre>
+  <p>Predice qué casilla hay bajo cada punto, y qué devuelve <code>solidaEn</code> fuera del mapa:</p>
+  <div class="taller" id="taller-casillas" data-titulo="Predice: de píxeles a casillas">
+    <textarea class="taller-codigo">const TILE = 30;
+const MAPA = [
+  "................",
+  "......h.........",
+  ".....###....h...",
+  ".s.........###..",
+  "#####..#########",
+];
+
+function casillaEn(x, y) {
+  const columna = Math.floor(x / TILE);
+  const fila = Math.floor(y / TILE);
+  return { columna, fila, tipo: MAPA[fila]?.[columna] ?? "fuera" };
+}
+
+function solidaEn(columna, fila) {
+  if (columna &lt; 0 || columna &gt;= MAPA[0].length) return true;   // paredes invisibles a los lados
+  if (fila &lt; 0 || fila &gt;= MAPA.length) return false;           // arriba y abajo: aire
+  return MAPA[fila][columna] === "#";
+}
+
+console.log(casillaEn(15, 135));     // dentro del suelo, a la izquierda
+console.log(casillaEn(200, 125));    // el agujero
+console.log(casillaEn(185, 45));     // ¿qué hay aquí?
+console.log(casillaEn(29.9, 0), casillaEn(30, 0));   // el borde exacto
+console.log(solidaEn(-1, 2), solidaEn(3, 99));</textarea>
+  </div>
+  <p>El operador <code>?.</code> (encadenamiento opcional) evita el error si la fila no existe, y <code>??</code> da un valor por defecto: si te suenan poco, repásalos en las Estaciones <a href="11-colecciones.html">11</a> y <a href="08-decisiones.html">8</a>. Fíjate en el borde: 29,9 cae en la columna 0 y 30 ya es la columna 1.</p>
+  <p>Con el mapa, las colisiones se vuelven baratas. En vez de comparar el perro con todas las plataformas del nivel, basta mirar las pocas casillas que toca su caja: con una caja de 30 × 24 píxeles, como mucho cuatro. Da igual que el nivel tenga diez casillas o diez mil. Es el mismo «mover un eje y resolver» de la sección anterior, preguntando al mapa:</p>
+  <pre><code class="language-js">function moverYChocar(e, dt) {
+  e.x += e.vx * dt;                                     // eje x
+  const arriba = Math.floor(e.y / TILE), abajo = Math.floor((e.y + e.alto - 1) / TILE);
+  for (let f = arriba; f &lt;= abajo; f++) {
+    const derecha = Math.floor((e.x + e.ancho - 1) / TILE), izquierda = Math.floor(e.x / TILE);
+    if (e.vx &gt; 0 &amp;&amp; solidaEn(derecha, f)) { e.x = derecha * TILE - e.ancho; e.vx = 0; }
+    if (e.vx &lt; 0 &amp;&amp; solidaEn(izquierda, f)) { e.x = (izquierda + 1) * TILE; e.vx = 0; }
+  }
+  e.y += e.vy * dt;                                     // eje y
+  e.enSuelo = false;
+  const izq = Math.floor(e.x / TILE), der = Math.floor((e.x + e.ancho - 1) / TILE);
+  for (let c = izq; c &lt;= der; c++) {
+    const pies = Math.floor((e.y + e.alto - 1) / TILE), cabeza = Math.floor(e.y / TILE);
+    if (e.vy &gt; 0 &amp;&amp; solidaEn(c, pies)) { e.y = pies * TILE - e.alto; e.vy = 0; e.enSuelo = true; }
+    if (e.vy &lt; 0 &amp;&amp; solidaEn(c, cabeza)) { e.y = (cabeza + 1) * TILE; e.vy = 0; }
+  }
+}</code></pre>
+  <p>El <code>- 1</code> de <code>e.x + e.ancho - 1</code> es importante: una caja que va de x = 0 a x = 30 ocupa los píxeles 0 a 29, así que su borde derecho está en la columna 0, no en la 1. Sin ese <code>- 1</code>, el perro se quedaría enganchado en paredes que solo roza. Para dibujar, se aplica la misma idea: solo se pintan las columnas que caben en la pantalla, no el nivel entero.</p>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Editores de niveles</p><p>Para niveles grandes nadie escribe textos a mano: se usa un editor visual. <strong>Tiled</strong> es gratuito, de código abierto y muy usado; <strong>LDtk</strong> es otro editor gratuito pensado para juegos 2D. Los dos guardan el mapa en JSON (<a href="11-colecciones.html#json">Estación 11</a>), que tu juego lee con <code>fetch</code>. Phaser y Godot tienen soporte para mapas de casillas, y el editor de Godot incluye el suyo, con el nodo <code>TileMapLayer</code>.</p></div></aside>
+
+  <h3>La cámara</h3>
+  <p>El nivel mide 1440 píxeles de ancho y la pantalla 480. La <strong>cámara</strong> es un rectángulo del tamaño de la pantalla que se mueve por el mundo y decide qué trozo se ve. A partir de aquí hay dos sistemas de coordenadas: las <strong>coordenadas del mundo</strong> (dónde está el perro en el nivel) y las <strong>coordenadas de pantalla</strong> (dónde se pinta). La relación es una resta: <code>pantalla = mundo - cámara</code>.</p>
+  <figure class="capsula" data-titulo="Una cámara que sigue al perro">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Animación: una franja representa un nivel de 1440 píxeles y un marco representa la pantalla de 480. El perro avanza por el nivel. Al principio la cámara no puede pasar del borde izquierdo; después se centra en el perro; al final se detiene en el borde derecho del mundo y el perro deja de estar centrado. La fórmula limita la posición de la cámara entre 0 y 960.">
+        <rect class="d-caja-suave" x="20" y="60" width="680" height="110" rx="4"/>
+        <g class="d-l3">
+          <rect x="20" y="150" width="120" height="20"/><rect x="152" y="150" width="90" height="20"/><rect x="270" y="150" width="160" height="20"/><rect x="445" y="150" width="255" height="20"/>
+          <rect x="180" y="118" width="45" height="8"/><rect x="330" y="104" width="40" height="8"/><rect x="520" y="112" width="50" height="8"/>
+        </g>
+        <g data-mover="2:translate(47.2px,0px); 3:translate(283.4px,0px); 4:translate(566.7px,0px)">
+          <rect class="d-l6" x="67.2" y="136" width="14" height="14" rx="2"/>
+        </g>
+        <rect class="d-acento-trazo" x="20" y="52" width="226.7" height="126" rx="6" style="fill:none;stroke-width:5" data-mover="3:translate(224.3px,0px); 4:translate(453.3px,0px)"/>
+        <g class="d-linea"><path d="M20 190v10M246.7 190v10M473.3 190v10M700 190v10M20 195H700"/></g>
+        <g class="d-mono d-peq d-tenue">
+          <text x="20" y="216" text-anchor="middle">0</text><text x="246.7" y="216" text-anchor="middle">480</text><text x="473.3" y="216" text-anchor="middle">960</text><text x="700" y="216" text-anchor="end">1440</text>
+        </g>
+        <text class="d-peq d-tenue" x="20" y="40">el mundo (1440 px) y, en el marco, lo que muestra la pantalla (480 px)</text>
+        <text xml:space="preserve" class="d-mono" x="20" y="246">camara.x = limitar(perro.x + 15 - 240, 0, 960)</text>
+        <text xml:space="preserve" class="d-mono" x="20" y="272" data-texto="1:perro.x = 100  →  limitar(-125, 0, 960) = 0; 2:perro.x = 200  →  limitar(-25, 0, 960) = 0; 3:perro.x = 700  →  limitar(475, 0, 960) = 475; 4:perro.x = 1300  →  limitar(1075, 0, 960) = 960; 5:en pantalla: 1300 - 960 = 340 (no 240: no está centrado)">perro.x = 100  →  limitar(-125, 0, 960) = 0</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>El nivel mide 1440 píxeles y la pantalla, 480. El marco es la cámara. La fórmula quiere poner al perro en el centro: su centro (<code>perro.x + 15</code>) menos media pantalla (240). Pero con el perro en 100 daría -125, y a la izquierda del 0 no hay mundo que mostrar. <code>limitar</code> (el <code>clamp</code> de siempre) la deja en 0.</li>
+        <li>El perro avanza hasta 200. Todavía está en la primera media pantalla: la cámara sigue en 0 y el perro se mueve por la pantalla.</li>
+        <li data-duracion="6">En 700, la cuenta da 475, dentro de los límites. La cámara se mueve con el perro, que queda en el centro de la pantalla. Ahora es el mundo el que parece desplazarse.</li>
+        <li data-duracion="6">En 1300, la cuenta daría 1075, pero la cámara no puede pasar de 960 (1440 - 480): se mostraría el vacío más allá del final del nivel. Se queda en el borde.</li>
+        <li data-duracion="7">Para dibujar se resta la cámara a todo: el perro, en 1300 del mundo, se pinta en 1300 - 960 = 340 de la pantalla. Como la cámara está en el borde, el perro ya no está centrado y avanza hacia el final de la pantalla.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>No hace falta restar la cámara a mano en cada <code>fillRect</code>. El contexto del lienzo puede desplazar todo lo que se pinte con <code>translate</code>, entre un <code>save()</code> y un <code>restore()</code>:</p>
+  <pre><code class="language-js">function dibujar() {
+  dibujarCielo();                         // el fondo no se mueve con la cámara
+  ctx.save();
+  ctx.translate(-Math.round(camara.x), 0);  // todo lo de dentro, en coordenadas del mundo
+  dibujarMapa();
+  dibujarHuesos();
+  dibujarPerro();
+  ctx.restore();
+  dibujarMarcador();                      // el HUD, en coordenadas de pantalla: siempre en su sitio
+}</code></pre>
+  <p>Tres mejoras hacen que la cámara se sienta bien:</p>
+  <ul>
+    <li><strong>Seguir con suavidad.</strong> En vez de saltar al objetivo, la cámara recorre en cada fotograma una parte de la distancia que le falta: el <code>lerp</code> de la <a href="18-matematicas.html#angulos">Estación 18</a>. Para que no dependa de los FPS, la fracción se multiplica por <code>dt</code>: <code>camara.x += (objetivo - camara.x) * Math.min(1, 8 * dt)</code>.</li>
+    <li><strong>Redondear.</strong> Si la cámara está en 100,4, los píxeles del pixel art caen entre dos píxeles de la pantalla y tiemblan. <code>Math.round</code> al trasladar lo evita.</li>
+    <li><strong>Paralaje.</strong> Los fondos lejanos se mueven más despacio que el primer plano: dibuja las colinas desplazadas solo un 30 % de lo que se mueve la cámara (<code>camara.x * 0.3</code>) y el mundo gana profundidad, como cuando miras por la ventanilla de un tren.</li>
+  </ul>
+
+  <h3>Entidades: organizar muchas cosas distintas</h3>
+  <p>Un nivel tiene huesos, enemigos, partículas, plataformas que se mueven. A cada una de esas cosas con vida propia se le llama <strong>entidad</strong>. Todas tienen la misma forma de trabajar (se actualizan y se dibujan), así que se guardan en una lista y el bucle las recorre sin saber qué es cada una. Es el polimorfismo de la <a href="21-paradigmas.html#herencia">Estación 21</a>:</p>
+  <pre><code class="language-js">class Gato {                              // un enemigo que patrulla
+  constructor(x, y) { Object.assign(this, { x, y, ancho: 28, alto: 22, vx: 50, vivo: true }); }
+  actualizar(dt, mundo) {
+    this.x += this.vx * dt;
+    // Da la vuelta si delante hay pared o no hay suelo: así no se cae de la plataforma
+    const delante = this.vx &gt; 0 ? this.x + this.ancho : this.x;
+    const col = Math.floor(delante / TILE), fila = Math.floor(this.y / TILE);
+    if (solidaEn(col, fila) || !solidaEn(col, fila + 1)) this.vx = -this.vx;
+    if (chocan(this, mundo.perro)) mundo.perroHerido();
+  }
+  dibujar(ctx) { ctx.fillStyle = "#3d405b"; ctx.fillRect(this.x, this.y, this.ancho, this.alto); }
+}
+
+let entidades = [new Gato(300, 186), new Hueso(420, 170)];
+
+function actualizarEntidades(dt) {
+  for (const e of entidades) e.actualizar(dt, mundo);
+  entidades = entidades.filter((e) =&gt; e.vivo);     // se quitan las muertas DESPUÉS de recorrer
+}</code></pre>
+  <p>Ese gato es inteligencia artificial en su versión más pequeña: cuatro líneas que patrullan una plataforma sin caerse. Con otras pocas líneas, un enemigo puede perseguir al perro (resta de vectores y normalizar, como el círculo rojo de la Estación 18). Los enemigos que vigilan, oyen, deciden entre varias tácticas y encuentran caminos por el nivel tienen su propia estación: la <a href="37-ia-personajes.html">Estación 37: IA para personajes y mundos</a>.</p>
+  <p>Fíjate en el comentario de la última línea. Quitar elementos de una lista <em>mientras</em> la recorres hacia delante es un error clásico de los juegos: predice qué imprime cada versión cuando el perro recoge dos huesos seguidos en el mismo fotograma.</p>
+  <div class="taller" id="taller-borrar" data-titulo="Predice: borrar mientras recorres">
+    <textarea class="taller-codigo">const huesos = ["h1", "h2", "h3", "h4"];
+const tocados = ["h2", "h3"];      // el perro toca estos dos en el mismo fotograma
+
+// Versión 1: splice mientras se recorre hacia delante
+const lista1 = [...huesos];
+for (let i = 0; i &lt; lista1.length; i++) {
+  if (tocados.includes(lista1[i])) lista1.splice(i, 1);
+}
+console.log("Hacia delante:", lista1);
+
+// Versión 2: splice recorriendo hacia atrás
+const lista2 = [...huesos];
+for (let i = lista2.length - 1; i &gt;= 0; i--) {
+  if (tocados.includes(lista2[i])) lista2.splice(i, 1);
+}
+console.log("Hacia atrás:", lista2);
+
+// Versión 3: filter crea una lista nueva con los que se quedan
+console.log("Con filter:", huesos.filter((h) =&gt; !tocados.includes(h)));</textarea>
+  </div>
+  <p>En la primera versión, <code>h3</code> sobrevive. Al borrar <code>h2</code> (posición 1), todo lo que venía detrás se corre una posición: <code>h3</code> pasa a la 1, pero el bucle ya va por la 2 y se lo salta. Recorrer hacia atrás, o marcar las entidades como muertas y filtrarlas al final, lo evita. Cuando el juego crece, esta organización evoluciona hacia el sistema entidad-componente (ECS) de la <a href="28-arquitectura.html#videojuegos">Estación 28</a>, que es como trabajan por dentro muchos motores.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Un archivo para cada cosa</p><p>Los talleres de esta estación caben en un archivo. Un juego real se divide en módulos (<a href="22-ejecucion.html#modulos">Estación 22</a>): <code>entrada.js</code>, <code>fisica.js</code>, <code>mapa.js</code>, <code>entidades/gato.js</code>, <code>escenas/menu.js</code>… Cada uno exporta lo suyo y el archivo principal solo arranca el bucle. Así varias personas pueden trabajar a la vez sin pisarse, como en la game jam de la <a href="27-proceso.html#jam">Estación 27</a>.</p></div></aside>
+
+  <h3>El nivel de Saltarín</h3>
+  <p>Todo junto: mapa de casillas, colisiones contra el mapa, cámara suave con límites, colinas con paralaje, el sprite animado, tiempo de coyote y un gato que patrulla. Si caes por un agujero o el gato te toca, vuelves a la salida.</p>
+  <div class="taller" data-modo="web" id="taller-nivel" data-titulo="El nivel completo con cámara" data-alto="20rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas id="juego" width="480" height="270" tabindex="0"&gt;&lt;/canvas&gt;
+&lt;p&gt;Clic en el lienzo. Flechas o A/D para correr, Espacio para saltar.&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; }
+canvas { display: block; width: 100%; max-width: 480px; border-radius: 8px; image-rendering: pixelated; touch-action: none; }
+p { margin: 6px 0 0; font-size: 14px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const lienzo = document.querySelector("#juego");
+const ctx = lienzo.getContext("2d");
+const ANCHO = lienzo.width, ALTO = lienzo.height, TILE = 30;
+const GRAVEDAD = 1500, VEL_MAX = 190, ACELERACION = 1400, FRICCION = 1600, CAIDA_MAX = 700;
+const VEL_SALTO = -Math.sqrt(2 * GRAVEDAD * 100), COYOTE = 0.1;
+
+const MAPA = [
+  "................................................",
+  "................................................",
+  "........................h.......................",
+  "..........h............###..............h.......",
+  ".........###.....h..........###........###......",
+  "...............#####...h........................",
+  ".s....h..............#####.....h..........h.....",
+  "#########..######.............######..##########",
+  "#########..######..##########.######..##########",
+];
+const MUNDO_ANCHO = MAPA[0].length * TILE, MUNDO_ALTO = MAPA.length * TILE;
+
+// Hoja de sprites del perro (la del taller de sprites)
+const PALETA = { M: "#9c6644", O: "#2b2d42", C: "#ede0d4", N: "#7f5539" };
+const CUERPO = ["........N.N.", "........MMMM", "N.......MOMMO", ".N......MMMM", ".MMMMMMMMMM.", ".MMMMMMMMM..", ".MCCCCCCMM.."];
+const PATAS = [[".M.M....M.M.", ".M.M....M.M.", ".O.O....O.O."], ["..M.M..M.M..", ".M...MM...M.", "O....OO....O"],
+               [".M.M....M.M.", "..MM.....MM.", "..OO.....OO."], ["M..M...M..M.", "M...M.M...M.", "O....O.....O"]];
+const hoja = document.createElement("canvas");
+hoja.width = 13 * 4; hoja.height = 10;
+const pincel = hoja.getContext("2d");
+PATAS.forEach((patas, i) =&gt; [...CUERPO, ...patas].forEach((fila, y) =&gt; [...fila].forEach((c, x) =&gt; {
+  if (PALETA[c]) { pincel.fillStyle = PALETA[c]; pincel.fillRect(i * 13 + x, y, 1, 1); }
+})));
+
+// Mundo
+let salida = { x: 0, y: 0 }, huesos = [], total = 0, recogidos = 0;
+MAPA.forEach((fila, f) =&gt; [...fila].forEach((c, col) =&gt; {
+  if (c === "h") huesos.push({ x: col * TILE + 15, y: f * TILE + 18, r: 9 });
+  if (c === "s") salida = { x: col * TILE, y: f * TILE };
+}));
+total = huesos.length;
+const perro = { x: salida.x, y: salida.y, ancho: 30, alto: 24, vx: 0, vy: 0, enSuelo: false, coyote: 0, mira: 1, t: 0 };
+const gato = { x: 1170, y: 188, ancho: 28, alto: 22, vx: 50 };
+const camara = { x: 0 };
+
+function solidaEn(col, fila) {
+  if (col &lt; 0 || col &gt;= MAPA[0].length) return true;
+  if (fila &lt; 0 || fila &gt;= MAPA.length) return false;
+  return MAPA[fila][col] === "#";
+}
+function chocan(a, b) {
+  return a.x &lt; b.x + b.ancho &amp;&amp; a.x + a.ancho &gt; b.x &amp;&amp; a.y &lt; b.y + b.alto &amp;&amp; a.y + a.alto &gt; b.y;
+}
+function moverYChocar(e, dt) {
+  e.x += e.vx * dt;
+  const arriba = Math.floor(e.y / TILE), abajo = Math.floor((e.y + e.alto - 1) / TILE);
+  for (let f = arriba; f &lt;= abajo; f++) {
+    const der = Math.floor((e.x + e.ancho - 1) / TILE), izq = Math.floor(e.x / TILE);
+    if (e.vx &gt; 0 &amp;&amp; solidaEn(der, f)) { e.x = der * TILE - e.ancho; e.vx = 0; }
+    if (e.vx &lt; 0 &amp;&amp; solidaEn(izq, f)) { e.x = (izq + 1) * TILE; e.vx = 0; }
+  }
+  e.y += e.vy * dt;
+  e.enSuelo = false;
+  const izq = Math.floor(e.x / TILE), der = Math.floor((e.x + e.ancho - 1) / TILE);
+  for (let c = izq; c &lt;= der; c++) {
+    const pies = Math.floor((e.y + e.alto - 1) / TILE), cabeza = Math.floor(e.y / TILE);
+    if (e.vy &gt; 0 &amp;&amp; solidaEn(c, pies)) { e.y = pies * TILE - e.alto; e.vy = 0; e.enSuelo = true; }
+    if (e.vy &lt; 0 &amp;&amp; solidaEn(c, cabeza)) { e.y = (cabeza + 1) * TILE; e.vy = 0; }
+  }
+}
+function volverALaSalida() {
+  Object.assign(perro, { x: salida.x, y: salida.y, vx: 0, vy: 0 });
+}
+
+// Entrada
+const teclas = new Set(), recienPulsadas = new Set();
+addEventListener("keydown", (e) =&gt; {
+  if (["ArrowLeft", "ArrowRight", "ArrowUp", "Space"].includes(e.code)) e.preventDefault();
+  if (!e.repeat) recienPulsadas.add(e.code);
+  teclas.add(e.code);
+});
+addEventListener("keyup", (e) =&gt; teclas.delete(e.code));
+addEventListener("blur", () =&gt; teclas.clear());
+lienzo.addEventListener("pointerdown", () =&gt; lienzo.focus());
+const pulsa = (...c) =&gt; c.some((k) =&gt; teclas.has(k));
+
+function actualizar(dt) {
+  const direccion = (pulsa("ArrowRight", "KeyD") ? 1 : 0) - (pulsa("ArrowLeft", "KeyA") ? 1 : 0);
+  if (direccion !== 0) { perro.vx += direccion * ACELERACION * dt; perro.mira = direccion; }
+  else perro.vx -= Math.sign(perro.vx) * Math.min(Math.abs(perro.vx), FRICCION * dt);
+  perro.vx = Math.max(-VEL_MAX, Math.min(VEL_MAX, perro.vx));
+  perro.coyote = perro.enSuelo ? COYOTE : perro.coyote - dt;
+  if ((recienPulsadas.has("Space") || recienPulsadas.has("ArrowUp")) &amp;&amp; perro.coyote &gt; 0) {
+    perro.vy = VEL_SALTO;
+    perro.coyote = 0;
+  }
+  if (!pulsa("Space", "ArrowUp") &amp;&amp; perro.vy &lt; VEL_SALTO / 3) perro.vy = VEL_SALTO / 3;
+  perro.vy = Math.min(perro.vy + GRAVEDAD * dt, CAIDA_MAX);
+  moverYChocar(perro, dt);
+  perro.t += dt;
+  if (perro.y &gt; MUNDO_ALTO + 60) volverALaSalida();       // cayó por un agujero
+
+  // El gato patrulla sin caerse
+  gato.x += gato.vx * dt;
+  const delante = gato.vx &gt; 0 ? gato.x + gato.ancho : gato.x;
+  const col = Math.floor(delante / TILE), fila = Math.floor(gato.y / TILE);
+  if (solidaEn(col, fila) || !solidaEn(col, fila + 1)) gato.vx = -gato.vx;
+  if (chocan(perro, gato)) volverALaSalida();
+
+  for (const h of huesos) {
+    const cx = Math.max(perro.x, Math.min(h.x, perro.x + perro.ancho));
+    const cy = Math.max(perro.y, Math.min(h.y, perro.y + perro.alto));
+    if ((h.x - cx) ** 2 + (h.y - cy) ** 2 &lt; h.r ** 2) h.recogido = true;
+  }
+  recogidos += huesos.filter((h) =&gt; h.recogido).length;
+  huesos = huesos.filter((h) =&gt; !h.recogido);
+
+  // Cámara: centrar al perro, sin salirse del mundo, con suavidad
+  const objetivo = Math.max(0, Math.min(perro.x + perro.ancho / 2 - ANCHO / 2, MUNDO_ANCHO - ANCHO));
+  camara.x += (objetivo - camara.x) * Math.min(1, 8 * dt);
+  recienPulsadas.clear();
+}
+
+function dibujar() {
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = "#8ecae6";
+  ctx.fillRect(0, 0, ANCHO, ALTO);
+  ctx.fillStyle = "rgba(255, 255, 255, 0.55)";           // colinas: paralaje al 30 %
+  for (let i = -1; i &lt; 4; i++) {
+    const x = i * 200 - (camara.x * 0.3) % 200;
+    ctx.beginPath(); ctx.arc(x + 100, ALTO - 40, 90, Math.PI, 0); ctx.fill();
+  }
+
+  ctx.save();
+  ctx.translate(-Math.round(camara.x), 0);               // desde aquí, coordenadas del mundo
+  const primera = Math.floor(camara.x / TILE), ultima = Math.ceil((camara.x + ANCHO) / TILE);
+  for (let f = 0; f &lt; MAPA.length; f++) {
+    for (let c = primera; c &lt;= ultima; c++) {            // solo las columnas visibles
+      if (MAPA[f][c] !== "#") continue;
+      const tieneEncima = f &gt; 0 &amp;&amp; MAPA[f - 1][c] === "#";
+      ctx.fillStyle = "#7f5539";
+      ctx.fillRect(c * TILE, f * TILE, TILE, TILE);
+      if (!tieneEncima) { ctx.fillStyle = "#6a994e"; ctx.fillRect(c * TILE, f * TILE, TILE, 9); }
+    }
+  }
+  ctx.fillStyle = "#fffdf7";
+  for (const h of huesos) {
+    ctx.fillRect(h.x - 8, h.y - 3, 16, 6);
+    for (const [dx, dy] of [[-8, -3], [-8, 3], [8, -3], [8, 3]]) { ctx.beginPath(); ctx.arc(h.x + dx, h.y + dy, 3.5, 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.fillStyle = "#3d405b";
+  ctx.fillRect(gato.x, gato.y, gato.ancho, gato.alto);
+  ctx.fillRect(gato.x + 3, gato.y - 6, 6, 6);            // orejas
+  ctx.fillRect(gato.x + gato.ancho - 9, gato.y - 6, 6, 6);
+
+  const dibujo = !perro.enSuelo ? 3 : Math.abs(perro.vx) &lt; 10 ? 0 : Math.floor(perro.t * 12) % 3;
+  ctx.save();
+  ctx.translate(Math.round(perro.x + perro.ancho / 2), Math.round(perro.y + perro.alto));
+  ctx.scale(perro.mira, 1);
+  ctx.drawImage(hoja, dibujo * 13, 0, 13, 10, -19.5, -24, 39, 30);
+  ctx.restore();
+  ctx.restore();                                         // vuelve a coordenadas de pantalla
+
+  ctx.fillStyle = "#1d3557";
+  ctx.font = "bold 16px system-ui, sans-serif";
+  ctx.fillText(`Huesos: ${recogidos}/${total}`, 10, 22);
+}
+
+let anterior = null;
+function bucle(ahora) {
+  const dt = anterior === null ? 0 : Math.min((ahora - anterior) / 1000, 1 / 30);
+  anterior = ahora;
+  actualizar(dt);
+  dibujar();
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);
+
+// Modifica: 1) Cambia 8 * dt por 2 * dt en la cámara, y luego quita el suavizado.
+// 2) Cambia el paralaje de 0.3 a 1 y a 0. 3) Edita MAPA: añade un tramo nuevo.</textarea>
+  </div>
+
+  <h3>Azar y generación procedural</h3>
+  <p>Diseñar niveles a mano da el mejor resultado, pero lleva mucho tiempo. La <strong>generación procedural</strong> consiste en que un programa cree contenido (niveles, mazmorras, árboles, misiones) a partir de reglas y números al azar. La usan desde los juegos de exploración infinitos hasta los que cambian de nivel en cada partida. Ya tienes las piezas de la <a href="18-matematicas.html#azar">Estación 18</a>: números al azar en un rango, generadores con <strong>semilla</strong> (la misma semilla produce siempre el mismo nivel) y barajar con Fisher-Yates.</p>
+  <p>La lección más importante es que el azar sin reglas produce basura: plataformas imposibles de alcanzar o agujeros más anchos que el salto. La generación útil es <em>azar dentro de límites que salen del diseño</em>. Si el perro salta 100 píxeles de alto (3 casillas) y cruza unos 3 huecos de ancho, el generador nunca debe pedir más:</p>
+  <div class="taller" id="taller-procedural" data-titulo="Predice y modifica: un nivel con semilla">
+    <textarea class="taller-codigo">// El generador con semilla de la Estación 18 (mulberry32)
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla &gt;&gt;&gt; 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t &gt;&gt;&gt; 7), 61 | t)) ^ t;
+    return ((t ^ (t &gt;&gt;&gt; 14)) &gt;&gt;&gt; 0) / 4294967296;
+  };
+}
+
+const HUECO_MAX = 3;      // casillas de ancho que el salto puede cruzar
+const SUBIDA_MAX = 2;     // casillas que se puede subir de un tramo al siguiente
+
+// Devuelve la altura del suelo de cada columna (0 = agujero)
+function generarNivel(semilla, columnas) {
+  const azar = crearAzar(semilla);
+  const entero = (min, max) =&gt; Math.floor(azar() * (max - min + 1)) + min;
+  const alturas = [];
+  let altura = 2;
+  while (alturas.length &lt; columnas) {
+    const largo = entero(2, 5);                       // un tramo de suelo
+    for (let i = 0; i &lt; largo; i++) alturas.push(altura);
+    const hayHueco = azar() &lt; 0.4;                    // a veces, un agujero
+    if (hayHueco) {
+      const ancho = entero(1, HUECO_MAX);
+      for (let i = 0; i &lt; ancho; i++) alturas.push(0);
+    }
+    // Siguiente tramo: tras un agujero no se sube (saltar lejos Y alto es demasiado)
+    altura += hayHueco ? entero(-1, 0) : entero(-2, SUBIDA_MAX);
+    altura = Math.max(1, Math.min(5, altura));
+  }
+  return alturas.slice(0, columnas);
+}
+
+function mostrar(alturas) {
+  for (let fila = 5; fila &gt;= 1; fila--) {
+    console.log(alturas.map((a) =&gt; (a &gt;= fila ? "#" : ".")).join(""));
+  }
+}
+
+mostrar(generarNivel(42, 40));
+console.log("");
+mostrar(generarNivel(42, 40));     // misma semilla: ¿qué saldrá?
+console.log("");
+mostrar(generarNivel(7, 40));
+
+// Modifica: HUECO_MAX = 6. ¿Seguiría siendo un nivel justo con este salto?</textarea>
+  </div>
+  <p>Las dos primeras salidas son idénticas: la semilla hace que el «azar» sea reproducible. Por eso los juegos con retos diarios usan la fecha como semilla, y por eso puedes guardar la semilla de una partida en la que apareció un error para reproducirlo después.</p>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>El azar en los juegos se diseña. Un «azar justo» para las personas no siempre es el azar matemático: si en un juego de piezas sale cuatro veces seguidas la misma pieza, se siente trampa aunque sea posible. Muchos juegos usan una <strong>bolsa</strong>: meten todas las piezas en una lista, la barajan con Fisher-Yates y las sacan en orden; cuando se vacía, se rellena. Así cada pieza sale una vez por bolsa y nunca hay rachas imposibles. Para terrenos, cuevas y mazmorras más orgánicas existen técnicas como el ruido de Perlin o los autómatas celulares, que verás en la <a href="37-ia-personajes.html">Estación 37</a>.</p></div></aside>
+</section>
+
+<section id="diseno" data-parada="Game feel y diseño">
+  <h2>Game feel y diseño: que se sienta bien y que sea divertido</h2>
+  <p>Con lo que llevas, Saltarín funciona. Pero «funciona» no es lo mismo que «da gusto jugarlo». Esta sección trata de lo que separa un prototipo de un juego que la gente quiere repetir: primero, la sensación inmediata de controlar algo; después, el diseño de las reglas, la dificultad y cómo comprobar con personas reales que todo eso funciona.</p>
+
+  <h3>Game feel y «jugo»</h3>
+  <p>El <strong>game feel</strong> («sensación de juego») es la sensación física de controlar algo en un juego: si el personaje responde al instante, si pesa, si los golpes se notan. Es el tema del libro <em>Game Feel</em> de Steve Swink. Una parte la pusiste ya con la física: aceleración, salto variable, tiempo de coyote. La otra parte es el <strong>jugo</strong> (en inglés, <em>juice</em>): efectos que no cambian las reglas pero multiplican la respuesta a cada acción. El término se popularizó con la charla <em>Juice it or lose it</em>, de Martin Jonasson y Petri Purho (2012), en la que un juego de romper ladrillos muy soso se transforma, sin cambiar sus reglas, añadiendo efectos uno a uno. Estos son los más usados:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Efecto</th><th scope="col">Qué es</th><th scope="col">Cómo se programa</th></tr></thead>
+      <tbody>
+        <tr><td>Sacudida de pantalla</td><td>La cámara tiembla un instante con un golpe o una explosión</td><td>Desplazar la cámara al azar, cada vez menos</td></tr>
+        <tr><td>Partículas</td><td>Chispas, polvo o migas que salen disparadas y se desvanecen</td><td>Muchos puntos pequeños con velocidad, gravedad y tiempo de vida</td></tr>
+        <tr><td>Parada de impacto (<em>hit stop</em>)</td><td>El juego se congela unas centésimas al golpear, para que el golpe «pese»</td><td>Saltarse <code>actualizar</code> durante 50 a 100 ms</td></tr>
+        <tr><td>Estirar y aplastar (<em>squash and stretch</em>)</td><td>El personaje se estira al saltar y se aplasta al caer, como en los dibujos animados</td><td>Escalar el sprite y devolverlo a su tamaño con <code>lerp</code></td></tr>
+        <tr><td>Suavizado (<em>easing</em>)</td><td>Las cosas aceleran y frenan en vez de moverse a velocidad fija</td><td>Las curvas de <em>easing</em> de la <a href="18-matematicas.html#angulos">Estación 18</a></td></tr>
+        <tr><td>Sonido</td><td>Cada acción importante tiene su sonido, con pequeñas variaciones</td><td>Web Audio, cambiando un poco la frecuencia al azar</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La sacudida más convincente no es un temblor de tamaño fijo. Squirrel Eiserloh lo explicó en una charla de la GDC de 2016 con una idea llamada <strong>trauma</strong>: cada golpe suma trauma (entre 0 y 1), el trauma se va calmando solo, y la sacudida es proporcional al trauma <em>al cuadrado</em>. Así los golpes pequeños apenas se notan y los grandes se sienten fuertes:</p>
+  <pre><code class="language-js">let trauma = 0;                                   // de 0 (calma) a 1 (terremoto)
+function golpe(fuerza) { trauma = Math.min(1, trauma + fuerza); }
+
+// En actualizar: el trauma se calma solo
+trauma = Math.max(0, trauma - 1.5 * dt);
+
+// En dibujar, antes de pintar el mundo
+const sacudida = trauma * trauma * 10;            // píxeles como mucho
+ctx.translate((Math.random() * 2 - 1) * sacudida, (Math.random() * 2 - 1) * sacudida);
+
+// Partículas: un puñado de puntos en direcciones al azar (seno y coseno, Estación 18)
+function explosion(x, y) {
+  for (let i = 0; i &lt; 15; i++) {
+    const angulo = Math.random() * Math.PI * 2, rapidez = 60 + Math.random() * 140;
+    particulas.push({ x, y, vx: Math.cos(angulo) * rapidez, vy: Math.sin(angulo) * rapidez, vida: 0.6 });
+  }
+}</code></pre>
+  <p>Compara tú. En este taller el perro recoge huesos que aparecen en sitios al azar. Juega un rato con todas las casillas desmarcadas y después ve activándolas una a una. Las reglas no cambian en ningún momento.</p>
+  <div class="taller" data-modo="web" id="taller-jugo" data-titulo="Con jugo y sin jugo" data-alto="24rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas id="juego" width="480" height="240" tabindex="0"&gt;&lt;/canvas&gt;
+&lt;div class="opciones"&gt;
+  &lt;label&gt;&lt;input type="checkbox" id="particulas"&gt; Partículas&lt;/label&gt;
+  &lt;label&gt;&lt;input type="checkbox" id="sacudida"&gt; Sacudida&lt;/label&gt;
+  &lt;label&gt;&lt;input type="checkbox" id="estirar"&gt; Estirar y aplastar&lt;/label&gt;
+  &lt;label&gt;&lt;input type="checkbox" id="parada"&gt; Parada de impacto&lt;/label&gt;
+  &lt;label&gt;&lt;input type="checkbox" id="sonido"&gt; Sonido&lt;/label&gt;
+&lt;/div&gt;
+&lt;p&gt;Clic en el lienzo. Flechas o A/D para moverte y Espacio para saltar.&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; font-size: 14px; }
+canvas { display: block; width: 100%; max-width: 480px; background: #8ecae6; border-radius: 8px; touch-action: none; }
+.opciones { display: flex; flex-wrap: wrap; gap: 4px 14px; max-width: 480px; margin-top: 6px; }
+p { margin: 6px 0 0; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const lienzo = document.querySelector("#juego");
+const ctx = lienzo.getContext("2d");
+const ANCHO = lienzo.width, SUELO = 206, GRAVEDAD = 1800;
+const VEL_SALTO = -Math.sqrt(2 * GRAVEDAD * 120);
+const activo = (id) =&gt; document.getElementById(id).checked;
+
+const perro = { x: 60, y: SUELO - 30, ancho: 40, alto: 30, vx: 0, vy: 0, enSuelo: true, escalaX: 1, escalaY: 1 };
+let hueso = nuevoHueso(), particulas = [], trauma = 0, congelado = 0, puntos = 0;
+function nuevoHueso() { return { x: 100 + Math.random() * 340, y: 80 + Math.random() * 90, r: 10 }; }
+
+// Sonido mínimo (ver la sección anterior)
+let audio = null;
+function sonar(f1, f2, duracion, tipo = "square") {
+  if (!activo("sonido") || !audio) return;
+  const t = audio.currentTime, osc = audio.createOscillator(), vol = audio.createGain();
+  osc.type = tipo;
+  osc.frequency.setValueAtTime(f1 * (0.95 + Math.random() * 0.1), t);    // pequeña variación
+  osc.frequency.exponentialRampToValueAtTime(f2, t + duracion);
+  vol.gain.setValueAtTime(0.15, t);
+  vol.gain.exponentialRampToValueAtTime(0.001, t + duracion);
+  osc.connect(vol).connect(audio.destination);
+  osc.start(t); osc.stop(t + duracion);
+}
+
+const teclas = new Set(), recienPulsadas = new Set();
+addEventListener("keydown", (e) =&gt; {
+  if (["ArrowLeft", "ArrowRight", "ArrowUp", "Space"].includes(e.code)) e.preventDefault();
+  if (!e.repeat) recienPulsadas.add(e.code);
+  teclas.add(e.code);
+  if (!audio) audio = new AudioContext();
+  if (audio.state === "suspended") audio.resume();
+});
+addEventListener("keyup", (e) =&gt; teclas.delete(e.code));
+addEventListener("blur", () =&gt; teclas.clear());
+lienzo.addEventListener("pointerdown", () =&gt; lienzo.focus());
+
+function explosion(x, y, cantidad, color) {
+  for (let i = 0; i &lt; cantidad; i++) {
+    const angulo = Math.random() * Math.PI * 2, rapidez = 60 + Math.random() * 160;
+    particulas.push({ x, y, vx: Math.cos(angulo) * rapidez, vy: Math.sin(angulo) * rapidez - 60, vida: 0.6, color });
+  }
+}
+
+function actualizar(dt) {
+  if (congelado &gt; 0) { congelado -= dt; recienPulsadas.clear(); return; }   // parada de impacto
+  const direccion = (teclas.has("ArrowRight") || teclas.has("KeyD") ? 1 : 0) - (teclas.has("ArrowLeft") || teclas.has("KeyA") ? 1 : 0);
+  perro.vx = direccion * 220;
+  if ((recienPulsadas.has("Space") || recienPulsadas.has("ArrowUp")) &amp;&amp; perro.enSuelo) {
+    perro.vy = VEL_SALTO;
+    perro.enSuelo = false;
+    if (activo("estirar")) { perro.escalaX = 0.7; perro.escalaY = 1.35; }
+    sonar(300, 600, 0.15);
+  }
+  perro.vy += GRAVEDAD * dt;
+  perro.x = Math.max(0, Math.min(ANCHO - perro.ancho, perro.x + perro.vx * dt));
+  perro.y += perro.vy * dt;
+  if (perro.y + perro.alto &gt;= SUELO) {
+    if (!perro.enSuelo) {                                                     // acaba de aterrizar
+      if (activo("estirar")) { perro.escalaX = 1.4; perro.escalaY = 0.65; }
+      if (activo("particulas")) explosion(perro.x + perro.ancho / 2, SUELO, 6, "#b08968");
+      if (activo("sacudida")) trauma = Math.min(1, trauma + 0.15);
+      sonar(120, 60, 0.08, "triangle");
+    }
+    perro.y = SUELO - perro.alto; perro.vy = 0; perro.enSuelo = true;
+  }
+  // Recoger el hueso
+  const cx = Math.max(perro.x, Math.min(hueso.x, perro.x + perro.ancho));
+  const cy = Math.max(perro.y, Math.min(hueso.y, perro.y + perro.alto));
+  if ((hueso.x - cx) ** 2 + (hueso.y - cy) ** 2 &lt; hueso.r ** 2) {
+    puntos++;
+    if (activo("particulas")) explosion(hueso.x, hueso.y, 18, "#fffdf7");
+    if (activo("sacudida")) trauma = Math.min(1, trauma + 0.5);
+    if (activo("parada")) congelado = 0.08;
+    sonar(660, 1320, 0.12);
+    hueso = nuevoHueso();
+  }
+  // Volver poco a poco a la escala normal, calmar el trauma, mover partículas
+  perro.escalaX += (1 - perro.escalaX) * Math.min(1, 12 * dt);
+  perro.escalaY += (1 - perro.escalaY) * Math.min(1, 12 * dt);
+  trauma = Math.max(0, trauma - 1.5 * dt);
+  for (const p of particulas) { p.vy += 500 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vida -= dt; }
+  particulas = particulas.filter((p) =&gt; p.vida &gt; 0);
+  recienPulsadas.clear();
+}
+
+function dibujar() {
+  ctx.clearRect(0, 0, ANCHO, lienzo.height);
+  ctx.save();
+  const sacudida = trauma * trauma * 12;
+  ctx.translate((Math.random() * 2 - 1) * sacudida, (Math.random() * 2 - 1) * sacudida);
+  ctx.fillStyle = "#6a994e";
+  ctx.fillRect(-20, SUELO, ANCHO + 40, 60);
+  ctx.fillStyle = "#fffdf7";
+  ctx.fillRect(hueso.x - 9, hueso.y - 3, 18, 6);
+  for (const [dx, dy] of [[-9, -3], [-9, 3], [9, -3], [9, 3]]) { ctx.beginPath(); ctx.arc(hueso.x + dx, hueso.y + dy, 4, 0, Math.PI * 2); ctx.fill(); }
+  for (const p of particulas) {
+    ctx.globalAlpha = p.vida / 0.6;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+  }
+  ctx.globalAlpha = 1;
+  // El perro se escala desde sus pies, no desde su esquina
+  const ancho = perro.ancho * perro.escalaX, alto = perro.alto * perro.escalaY;
+  ctx.fillStyle = "#9c6644";
+  ctx.fillRect(perro.x + (perro.ancho - ancho) / 2, perro.y + perro.alto - alto, ancho, alto);
+  ctx.restore();
+  ctx.fillStyle = "#1d3557";
+  ctx.font = "bold 16px system-ui, sans-serif";
+  ctx.fillText(`Huesos: ${puntos}`, 10, 22);
+}
+
+let anterior = null;
+function bucle(ahora) {
+  const dt = anterior === null ? 0 : Math.min((ahora - anterior) / 1000, 1 / 30);
+  anterior = ahora;
+  actualizar(dt);
+  dibujar();
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);
+
+// Modifica: exagera cada efecto (30 partículas, trauma + 1, parada de 0.3 s).
+// ¿En qué punto deja de ayudar y empieza a molestar?</textarea>
+  </div>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Impacto</p><p>El jugo también puede hacer daño. Las sacudidas marean a algunas personas y los destellos rápidos pueden provocar crisis en personas con epilepsia fotosensible; las pautas de accesibilidad web piden que nada destelle más de tres veces por segundo. Añade opciones para reducir o quitar sacudidas, destellos y movimiento de cámara, como recomiendan las guías de accesibilidad de juegos de la <a href="17-diseno-ux.html#criterio">Estación 17</a>. Y recuerda que el jugo acompaña a la información, no la sustituye: si la pantalla tiembla tanto que no se ve al enemigo, el efecto está estropeando el juego.</p></div></aside>
+
+  <h3>MDA: de las reglas a lo que se siente</h3>
+  <p>¿Por qué un juego es divertido? En 2004, Robin Hunicke, Marc LeBlanc y Robert Zubek propusieron un marco para pensarlo, <strong>MDA</strong>, que se sigue enseñando en todas las escuelas de diseño de juegos. Separa un juego en tres capas:</p>
+  <ul>
+    <li><strong>Mecánicas</strong>: las reglas y el código. El perro salta 100 píxeles, el sol se pone en 60 segundos, cada hueso vale 100 puntos.</li>
+    <li><strong>Dinámicas</strong>: el comportamiento que aparece cuando alguien juega con esas reglas. Arriesgarse por un hueso difícil, planear una ruta, correr al final cuando queda poco tiempo.</li>
+    <li><strong>Estéticas</strong>: lo que siente la persona que juega. Desafío, prisa, satisfacción, curiosidad.</li>
+  </ul>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 280" role="img" aria-label="El marco MDA: tres cajas en fila, Mecánicas, Dinámicas y Estéticas. Una flecha por encima va de izquierda a derecha: quien diseña empieza por las mecánicas. Una flecha por debajo va de derecha a izquierda: quien juega empieza por las estéticas. Debajo de cada caja, un ejemplo de Saltarín.">
+      <path class="d-linea" d="M90 44H620"/>
+      <path class="d-tinta" d="M632 44l-12 -8v16z"/>
+      <text class="d-peq" x="360" y="32" text-anchor="middle">quien diseña empieza aquí: escribe reglas y espera provocar sensaciones</text>
+      <rect class="d-caja" x="20" y="64" width="200" height="70" rx="12"/>
+      <text class="d-rotulo" x="120" y="96" text-anchor="middle">Mecánicas</text>
+      <text class="d-peq d-tenue" x="120" y="118" text-anchor="middle">reglas y código</text>
+      <rect class="d-caja" x="260" y="64" width="200" height="70" rx="12"/>
+      <text class="d-rotulo" x="360" y="96" text-anchor="middle">Dinámicas</text>
+      <text class="d-peq d-tenue" x="360" y="118" text-anchor="middle">lo que pasa al jugar</text>
+      <rect class="d-acento" x="500" y="64" width="200" height="70" rx="12"/>
+      <text class="d-rotulo d-sobre-acento" x="600" y="96" text-anchor="middle">Estéticas</text>
+      <text class="d-peq d-sobre-acento" x="600" y="118" text-anchor="middle">lo que se siente</text>
+      <g class="d-linea"><path d="M220 99H248M460 99H488"/></g>
+      <g class="d-tinta"><path d="M260 99l-12 -7v14z"/><path d="M500 99l-12 -7v14z"/></g>
+      <path class="d-linea" d="M100 158H630"/>
+      <path class="d-tinta" d="M88 158l12 -8v16z"/>
+      <text class="d-peq" x="360" y="178" text-anchor="middle">quien juega empieza aquí: siente primero y solo después descubre las reglas</text>
+      <g class="d-peq">
+        <text x="120" y="212" text-anchor="middle">saltar 100 px</text>
+        <text x="120" y="232" text-anchor="middle">el sol se pone en 60 s</text>
+        <text x="120" y="252" text-anchor="middle">100 puntos por hueso</text>
+        <text x="360" y="212" text-anchor="middle">arriesgarse por un hueso</text>
+        <text x="360" y="232" text-anchor="middle">planear la ruta</text>
+        <text x="360" y="252" text-anchor="middle">correr al final</text>
+        <text x="600" y="212" text-anchor="middle">desafío</text>
+        <text x="600" y="232" text-anchor="middle">prisa</text>
+        <text x="600" y="252" text-anchor="middle">satisfacción</text>
+      </g>
+    </svg>
+    <figcaption>El marco MDA (Hunicke, LeBlanc y Zubek, 2004). Quien diseña solo controla las mecánicas; las estéticas aparecen, o no, a través de las dinámicas. Por eso hay que probar el juego con personas.</figcaption>
+  </figure>
+  <p>La clave está en la dirección de las flechas. Tú solo puedes escribir mecánicas; lo que la persona siente surge de cómo esas reglas interactúan cuando alguien juega. Por eso un cambio pequeño en una regla (el sol se pone en 40 segundos en vez de 60) puede cambiar por completo la sensación: de paseo tranquilo a carrera contrarreloj. El artículo original propone ocho tipos de estética, entre ellas el desafío, el descubrimiento, la fantasía, la narrativa, la expresión y el compañerismo. Pregúntate cuál buscas antes de escribir una línea: esa respuesta decide qué mecánicas tienen sentido.</p>
+
+  <h3>El bucle principal</h3>
+  <p>Todo juego tiene un <strong>bucle principal</strong> (en inglés, <em>core loop</em>): la acción que la persona repite una y otra vez. No confundas este bucle de diseño con el bucle de juego del código. En Saltarín hay tres, uno dentro de otro:</p>
+  <ul>
+    <li><strong>De segundos</strong>: correr, saltar, aterrizar. Si esto no se siente bien, nada más importa: por eso el game feel va primero.</li>
+    <li><strong>De minutos</strong>: ver un hueso, planear cómo llegar, conseguirlo, buscar el siguiente antes de que se ponga el sol.</li>
+    <li><strong>De sesiones</strong>: terminar la partida, ver la puntuación, querer batir el récord y volver a empezar.</li>
+  </ul>
+  <p>En una game jam, lo primero que se construye es el bucle de segundos con formas simples (rectángulos grises, sin arte), para comprobar si es divertido antes de invertir en nada más. Es el primer jugable del plan de la <a href="27-proceso.html#jam">Estación 27</a>.</p>
+
+  <h3>La curva de dificultad</h3>
+  <p>El psicólogo Mihaly Csikszentmihalyi llamó <strong>flujo</strong> (<em>flow</em>) al estado en que estás tan metido en una actividad que pierdes la noción del tiempo. Aparece cuando el desafío está a la altura de tu habilidad: si es demasiado difícil, hay ansiedad y frustración; si es demasiado fácil, aburrimiento. Como quien juega mejora mientras juega, la dificultad tiene que subir con ella.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Gráfico del canal de flujo. El eje horizontal es la habilidad de quien juega y el vertical, el desafío. Una banda diagonal es el canal de flujo; por encima está la zona de ansiedad y por debajo la de aburrimiento. Una línea en zigzag sube dentro de la banda: la dificultad sube, baja un poco para descansar y vuelve a subir.">
+      <path class="d-linea" d="M80 260H680M80 260V30"/>
+      <path class="d-tinta" d="M692 260l-12 -8v16z"/>
+      <path class="d-tinta" d="M80 18l-8 12h16z"/>
+      <text class="d-rotulo" x="680" y="286" text-anchor="end">habilidad de quien juega</text>
+      <g transform="rotate(-90 40 145)"><text class="d-rotulo" x="40" y="145" text-anchor="middle">desafío</text></g>
+      <path class="d-caja-suave" d="M80 200L80 260L140 260L660 60L660 30L620 30Z"/>
+      <text class="d-rotulo" x="440" y="150" text-anchor="middle" transform="rotate(-24 440 150)">canal de flujo</text>
+      <text class="d-peq" x="200" y="80">ansiedad</text>
+      <text class="d-peq d-tenue" x="200" y="100">demasiado difícil</text>
+      <text class="d-peq" x="520" y="220">aburrimiento</text>
+      <text class="d-peq d-tenue" x="520" y="240">demasiado fácil</text>
+      <path class="d-acento-trazo" style="fill:none;stroke-width:4" d="M110 240L200 190L230 205L320 150L350 165L440 112L470 128L560 78L590 92L640 64"/>
+      <text class="d-peq" x="330" y="190">sube, descansa, sube</text>
+    </svg>
+    <figcaption>El canal de flujo. Una buena curva de dificultad no sube en línea recta: alterna tramos de tensión con pequeños descansos, y siempre queda dentro de la banda.</figcaption>
+  </figure>
+  <p>En la práctica, una curva así se construye con un patrón que usan muchos juegos para enseñar sin tutoriales: <strong>presentar</strong> una mecánica en un sitio seguro (un hueco pequeño sobre suelo firme), <strong>practicarla</strong> con algo de riesgo (el mismo hueco, pero sobre un agujero), <strong>complicarla</strong> combinándola con otra (hueco más gato que patrulla) y, a veces, <strong>sorprender</strong> con un giro (el gato ahora está al otro lado del hueco). Así la persona aprende jugando, no leyendo instrucciones. En el taller de «Atrapa huesos» ya hiciste una curva sencilla: los huesos caen más rápido y más seguido con cada punto.</p>
+
+  <h3>Probar con personas</h3>
+  <p>Nadie puede juzgar su propio juego: tú conoces cada salto de memoria y sabes qué hay que hacer. La única forma de saber si se entiende y si es divertido es mirar a otra persona jugar. Es el <strong>playtesting</strong> (prueba de juego), la versión para juegos de las pruebas con usuarios de la <a href="17-diseno-ux.html#ux">Estación 17</a>.</p>
+  <ol class="pasos">
+    <li><div><p>Decide qué quieres averiguar: «¿se entiende que hay que recoger los huesos antes de que se ponga el sol?», «¿el primer agujero es demasiado difícil?».</p></div></li>
+    <li><div><p>Dale el juego a alguien sin explicarle nada, como lo encontraría en itch.io. Pídele que piense en voz alta: qué ve, qué intenta, qué espera que pase.</p></div></li>
+    <li><div><p>Calla y observa. No ayudes, no expliques, no te justifiques. Cada vez que sientas el impulso de decir «es que hay que…», apúntalo: ahí hay un problema de diseño.</p></div></li>
+    <li><div><p>Apunta hechos, no opiniones: dónde se atasca, dónde muere, qué no descubre, cuándo sonríe, cuándo deja el juego.</p></div></li>
+    <li><div><p>Al final, pregunta cosas abiertas: «¿Qué fue lo más frustrante?», «¿Qué harías si tuvieras más tiempo?». Escucha los problemas que cuenta; sus soluciones, tómalas con cautela.</p></div></li>
+    <li><div><p>Cambia pocas cosas y vuelve a probar con otra persona. Unas pocas pruebas por ronda, con personas distintas, encuentran la mayoría de los problemas grandes.</p></div></li>
+  </ol>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Los números también juegan</p><p>Además de mirar, puedes medir: registra dónde muere la gente, cuánto tarda en cada tramo o en qué punto abandona. Un mapa de las muertes dibujado encima del nivel señala el salto injusto mejor que cualquier opinión. Si envías esos datos a un servidor, avisa a quien juega y no recojas nada que no necesites: es su información (<a href="31-seguridad.html">Estación 31</a>).</p></div></aside>
+</section>
+
+<section id="motores" data-parada="Motores y publicar">
+  <h2>Motores, recursos libres y publicar tu juego</h2>
+  <p>Todo lo que has programado a mano (el bucle, el dibujo, la entrada, la física, las colisiones, los mapas, la cámara, el sonido) es lo que trae hecho un <strong>motor de videojuegos</strong>: un conjunto de herramientas y bibliotecas para crear juegos, casi siempre con un editor visual. Ahora que sabes cómo funciona cada pieza por dentro, entenderás qué hace el motor por ti y podrás elegir con criterio.</p>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>Programar un juego pequeño sin motor, como has hecho, es la mejor forma de aprender. Para un juego más grande, usar un motor es casi siempre la decisión sensata: te ahorra meses y resuelve problemas (exportar a móvil, física robusta, herramientas para artistas) que no quieres resolver tú. Las ideas de esta estación son las mismas en todos: el bucle, <code>dt</code>, las colisiones, las cajas, la cámara, los estados.</p></div></aside>
+
+  <h3>Los motores más usados</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Motor</th><th scope="col">Lenguaje</th><th scope="col">Sobre todo</th><th scope="col">Coste (septiembre de 2026)</th><th scope="col">Encaja con…</th></tr></thead>
+      <tbody>
+        <tr><td>Canvas a mano</td><td>JavaScript</td><td>2D en el navegador</td><td>Gratis</td><td>Aprender, prototipos, juegos de una pantalla</td></tr>
+        <tr><td>Phaser 4</td><td>JavaScript o TypeScript</td><td>2D en el navegador</td><td>Gratis, código abierto (licencia MIT)</td><td>Juegos web, jams, quien ya sabe JavaScript</td></tr>
+        <tr><td>Godot 4</td><td>GDScript (y C#)</td><td>2D y 3D</td><td>Gratis, código abierto (MIT), sin regalías</td><td>Juegos independientes 2D y 3D; exporta a escritorio, móvil y web</td></tr>
+        <tr><td>Unity 6</td><td>C#</td><td>2D y 3D</td><td>Plan Personal gratis hasta 200 000 USD de ingresos y financiación en 12 meses</td><td>Móvil, estudios, muchas plataformas incluidas consolas</td></tr>
+        <tr><td>Unreal Engine 5</td><td>C++ y Blueprints (programación visual)</td><td>3D de alta calidad</td><td>Gratis hasta 1 millón USD de ingresos brutos por juego; después, 5 % de regalías</td><td>3D realista; pide una computadora potente</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Las versiones cambian a menudo: a septiembre de 2026, las estables más recientes son Phaser 4.2.1 y Godot 4.7.2. Comprueba la tuya en la web oficial de cada motor antes de seguir un tutorial, porque entre versiones cambian nombres y funciones (entre Godot 3 y 4, o entre Phaser 3 y 4, bastantes). Los costes y licencias también cambian: léelos en la web del motor antes de empezar un proyecto comercial.</p>
+
+  <h3>Phaser: el mismo juego, en menos líneas</h3>
+  <p><strong>Phaser</strong> es el motor 2D más popular para juegos web. Se organiza en <strong>escenas</strong> (como las de la <a href="28-arquitectura.html#videojuegos">Estación 28</a>) con tres funciones: <code>preload</code> carga imágenes y sonidos, <code>create</code> monta el nivel y <code>update</code> se ejecuta en cada fotograma. Trae física «arcade» con cajas AABB, gravedad y colisiones. Mira cuánto de lo que programaste se reduce a una línea. Este taller carga Phaser 4.2.1 desde un CDN:</p>
+  <div class="taller" data-modo="web" id="taller-phaser" data-titulo="Saltarín en Phaser 4" data-alto="20rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/4.2.1/phaser.min.js"&gt;&lt;/script&gt;
+&lt;div id="juego"&gt;&lt;/div&gt;
+&lt;p&gt;Clic en el juego. Flechas para moverte y saltar.&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; }
+#juego canvas { display: block; width: 100%; max-width: 480px; height: auto; border-radius: 8px; }
+p { margin: 6px 0 0; font-size: 14px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">class Nivel extends Phaser.Scene {
+  constructor() { super("nivel"); }
+
+  create() {
+    // En un juego real: this.load.image("perro", "perro.png") en preload().
+    // Aquí las texturas se dibujan con código para no depender de archivos.
+    const g = this.make.graphics({ x: 0, y: 0 }, false);
+    g.fillStyle(0x9c6644); g.fillRect(0, 0, 30, 24); g.generateTexture("perro", 30, 24);
+    g.clear(); g.fillStyle(0x6a994e); g.fillRect(0, 0, 90, 16); g.generateTexture("plataforma", 90, 16);
+    g.clear(); g.fillStyle(0xfffdf7); g.fillRect(0, 0, 18, 8); g.generateTexture("hueso", 18, 8);
+    g.destroy();
+
+    this.plataformas = this.physics.add.staticGroup();          // no se mueven
+    this.plataformas.create(240, 262, "plataforma").setScale(5.4, 1).refreshBody();
+    this.plataformas.create(110, 190, "plataforma");
+    this.plataformas.create(250, 130, "plataforma");
+    this.plataformas.create(390, 190, "plataforma");
+
+    this.perro = this.physics.add.sprite(40, 200, "perro");
+    this.perro.setCollideWorldBounds(true);                     // no se sale de la pantalla
+    this.physics.add.collider(this.perro, this.plataformas);    // colisiones y respuesta
+
+    this.huesos = this.physics.add.staticGroup();
+    for (const [x, y] of [[110, 170], [250, 110], [390, 170]]) this.huesos.create(x, y, "hueso");
+    this.recogidos = 0;
+    this.marcador = this.add.text(10, 8, "Huesos: 0/3", { fontFamily: "system-ui", fontSize: "18px", color: "#1d3557" });
+    this.physics.add.overlap(this.perro, this.huesos, (perro, hueso) =&gt; {
+      hueso.destroy();
+      this.recogidos++;
+      this.marcador.setText(`Huesos: ${this.recogidos}/3`);
+    });
+
+    this.teclas = this.input.keyboard.createCursorKeys();       // flechas, espacio, shift
+  }
+
+  update() {                                                    // una vez por fotograma
+    const t = this.teclas;
+    if (t.left.isDown) this.perro.setVelocityX(-190);
+    else if (t.right.isDown) this.perro.setVelocityX(190);
+    else this.perro.setVelocityX(0);
+    const enSuelo = this.perro.body.blocked.down || this.perro.body.touching.down;
+    if (Phaser.Input.Keyboard.JustDown(t.up) &amp;&amp; enSuelo) this.perro.setVelocityY(-520);
+  }
+}
+
+new Phaser.Game({
+  type: Phaser.AUTO,                  // WebGL si se puede; si no, Canvas
+  width: 480,
+  height: 270,
+  parent: "juego",
+  backgroundColor: "#8ecae6",
+  physics: { default: "arcade", arcade: { gravity: { y: 1300 } } },
+  scene: Nivel,
+});
+
+// Modifica: añade el objeto debug: true dentro de arcade ({ gravity: …, debug: true })
+// para ver las cajas de colisión, como la tecla H de tus talleres.</textarea>
+  </div>
+  <p>Reconoce las piezas: <code>update</code> es tu <code>actualizar</code>; <code>setVelocityX</code> y la gravedad de la configuración hacen la física; <code>collider</code> es tu «mover y resolver»; <code>overlap</code> detecta sin empujar, como los huesos; y <code>JustDown</code> es tu «recién pulsada». Phaser multiplica por <code>dt</code> por ti.</p>
+
+  <h3>Godot: nodos y escenas</h3>
+  <p><strong>Godot</strong> es un motor completo, gratuito y de código abierto, con editor propio para Windows, macOS y Linux (también hay una versión que funciona en el navegador). Su idea central es el <strong>nodo</strong>: una pieza con una función concreta (un sprite, una forma de colisión, una cámara, un sonido). Los nodos se organizan en árbol (los árboles de la <a href="19-estructuras-datos.html#arboles">Estación 19</a>), y un árbol de nodos guardado en un archivo es una <strong>escena</strong>. Una escena se puede reutilizar dentro de otra tantas veces como quieras: el perro es una escena, cada hueso es una copia de la escena hueso, y el nivel es una escena que las contiene.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 320" role="img" aria-label="Árbol de nodos de un nivel en Godot. El nodo raíz Nivel, de tipo Node2D, tiene cuatro hijos: TileMapLayer con el suelo; Perro, de tipo CharacterBody2D, que es una escena propia con un AnimatedSprite2D, un CollisionShape2D y una Camera2D; Hueso, de tipo Area2D, otra escena con un Sprite2D y un CollisionShape2D, repetida ocho veces; y HUD, de tipo CanvasLayer, con un Label para el marcador.">
+      <rect class="d-caja" x="20" y="14" width="210" height="36" rx="8"/>
+      <text class="d-rotulo" x="36" y="38">Nivel <tspan class="d-peq d-tenue">Node2D</tspan></text>
+      <path class="d-linea" d="M40 50V287M40 83H60M40 129H60M40 225H60M40 287H60"/>
+      <rect class="d-caja" x="60" y="66" width="250" height="34" rx="8"/>
+      <text class="d-rotulo" x="74" y="89">TileMapLayer <tspan class="d-peq d-tenue">el suelo</tspan></text>
+      <rect class="d-acento" x="60" y="112" width="250" height="34" rx="8"/>
+      <text class="d-rotulo d-sobre-acento" x="74" y="135">Perro <tspan class="d-peq">CharacterBody2D</tspan></text>
+      <rect class="d-acento" x="60" y="208" width="250" height="34" rx="8"/>
+      <text class="d-rotulo d-sobre-acento" x="74" y="231">Hueso <tspan class="d-peq">Area2D</tspan> ×8</text>
+      <rect class="d-caja" x="60" y="270" width="250" height="34" rx="8"/>
+      <text class="d-rotulo" x="74" y="293">HUD <tspan class="d-peq d-tenue">CanvasLayer</tspan></text>
+      <path class="d-linea" d="M310 129H325M325 104V180M325 104H345M325 142H345M325 180H345"/>
+      <path class="d-linea" d="M310 225H325M325 206V244M325 206H345M325 244H345"/>
+      <path class="d-linea" d="M310 287H345"/>
+      <g class="d-caja"><rect x="345" y="91" width="190" height="26" rx="6"/><rect x="345" y="129" width="190" height="26" rx="6"/><rect x="345" y="167" width="190" height="26" rx="6"/><rect x="345" y="193" width="190" height="26" rx="6"/><rect x="345" y="231" width="190" height="26" rx="6"/><rect x="345" y="274" width="190" height="26" rx="6"/></g>
+      <g class="d-mono d-peq">
+        <text x="357" y="109">AnimatedSprite2D</text><text x="357" y="147">CollisionShape2D</text><text x="357" y="185">Camera2D</text>
+        <text x="357" y="211">Sprite2D</text><text x="357" y="249">CollisionShape2D</text><text x="357" y="292">Label</text>
+      </g>
+      <g class="d-peq d-tenue">
+        <text x="552" y="118">escena perro.tscn:</text>
+        <text x="552" y="136">dibujo, caja de</text>
+        <text x="552" y="154">colisión y cámara</text>
+        <text x="552" y="214">escena hueso.tscn,</text>
+        <text x="552" y="232">instanciada 8 veces</text>
+        <text x="552" y="292">el marcador</text>
+      </g>
+    </svg>
+    <figcaption>Un nivel de Saltarín en Godot: un árbol de nodos. Los nodos de color son escenas propias (<code>.tscn</code>) usadas dentro del nivel. Es composición, como en la <a href="21-paradigmas.html#composicion">Estación 21</a>: el perro no hereda de «cosa con cámara»; tiene un nodo cámara.</figcaption>
+  </figure>
+  <p>El código se escribe en <strong>GDScript</strong>, un lenguaje propio de Godot con una sintaxis parecida a Python: los bloques se marcan con sangría, no con llaves. Este es el script del perro, casi igual que la plantilla que ofrece Godot 4 al crear un script para un <code>CharacterBody2D</code>:</p>
+  <pre><code class="language-gdscript">extends CharacterBody2D
+
+const VELOCIDAD = 190.0
+const VEL_SALTO = -550.0
+
+func _physics_process(delta):          # se llama en cada paso de física; delta es tu dt
+    if not is_on_floor():
+        velocity += get_gravity() * delta    # la gravedad de los ajustes del proyecto
+
+    if Input.is_action_just_pressed("ui_accept") and is_on_floor():
+        velocity.y = VEL_SALTO               # «recién pulsada»: un salto por pulsación
+
+    var direccion = Input.get_axis("ui_left", "ui_right")   # -1, 0 o 1
+    if direccion:
+        velocity.x = direccion * VELOCIDAD
+    else:
+        velocity.x = move_toward(velocity.x, 0, VELOCIDAD)  # frenar
+
+    move_and_slide()                         # mover y resolver colisiones, como moverYChocar</code></pre>
+  <p>Y el del hueso. Un <code>Area2D</code> detecta cuándo entra algo en su forma sin empujarlo (como el <code>overlap</code> de Phaser) y avisa con una <strong>señal</strong>, el patrón Observer de la <a href="25-codigo-limpio.html#patrones">Estación 25</a>:</p>
+  <pre><code class="language-gdscript">extends Area2D
+
+signal recogido                          # otros nodos (el marcador) pueden suscribirse
+
+func _ready():
+    body_entered.connect(_al_entrar)     # suscribirse a la señal del propio Area2D
+
+func _al_entrar(cuerpo):
+    if cuerpo.name == "Perro":
+        recogido.emit()
+        queue_free()                     # eliminar el hueso del árbol al final del fotograma</code></pre>
+  <p>Fíjate en <code>_physics_process</code>: Godot separa el paso de física (fijo, 60 veces por segundo por defecto) del dibujo, exactamente el paso fijo de la Estación 28. Y <code>queue_free()</code> no borra el nodo en mitad del recorrido, sino al final del fotograma: la misma precaución que tu <code>filter</code> de entidades. Para empezar con Godot, su documentación oficial tiene un tutorial completo, «Tu primer juego 2D», traducido al español.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Godot, C# y la web</p><p>Godot también admite C#, pero a septiembre de 2026 los proyectos de Godot 4 escritos en C# todavía no se pueden exportar para el navegador; con GDScript, sí. Si tu objetivo es publicar en itch.io para jugar en la web, empieza con GDScript. Compruébalo en la página de exportación de la documentación de tu versión, porque es una de las funciones en las que el equipo está trabajando.</p></div></aside>
+
+  <h3>Unity y Unreal</h3>
+  <p><strong>Unity</strong> es uno de los motores más usados de la industria, sobre todo en móvil. Se programa en C#, un lenguaje con llaves y tipos, parecido a TypeScript (<a href="23-typescript.html">Estación 23</a>). Un objeto del juego (<em>GameObject</em>) es un contenedor al que se añaden componentes: un sprite, un cuerpo físico, tus scripts. Un script del perro en Unity 6 se vería así:</p>
+  <pre><code class="language-csharp">using UnityEngine;
+using UnityEngine.InputSystem;             // el sistema de entrada actual de Unity
+
+public class Perro : MonoBehaviour
+{
+    public float velocidad = 5f;           // en unidades del mundo por segundo
+    public float impulsoSalto = 8f;
+    Rigidbody2D cuerpo;
+
+    void Start()                           // una vez, al empezar
+    {
+        cuerpo = GetComponent&lt;Rigidbody2D&gt;();
+    }
+
+    void Update()                          // una vez por fotograma
+    {
+        var teclado = Keyboard.current;
+        if (teclado == null) return;
+        float direccion = 0f;
+        if (teclado.leftArrowKey.isPressed) direccion -= 1f;
+        if (teclado.rightArrowKey.isPressed) direccion += 1f;
+        cuerpo.linearVelocityX = direccion * velocidad;
+        if (teclado.spaceKey.wasPressedThisFrame)   // falta comprobar que pisa el suelo
+            cuerpo.linearVelocityY = impulsoSalto;  // positivo: en Unity, y crece hacia ARRIBA
+    }
+}</code></pre>
+  <p>Un detalle para no confundirte: en Unity la y crece hacia arriba, como en el plano del colegio, así que saltar es sumar. En Canvas, Phaser y Godot 2D crece hacia abajo. <strong>Unreal Engine</strong>, de Epic Games, es el motor de muchos juegos 3D de gran presupuesto. Se programa en C++ o con <strong>Blueprints</strong>, un sistema visual en el que conectas bloques en lugar de escribir código. Es muy potente, pero exige una computadora potente y su curva de aprendizaje es la más empinada de los cuatro.</p>
+
+  <h3>Cómo elegir</h3>
+  <p>No hay un motor mejor: hay uno mejor para tu proyecto y tu momento. Hazte estas preguntas, en este orden:</p>
+  <ol>
+    <li><strong>¿Qué quieres terminar?</strong> Un juego pequeño 2D para la web en un fin de semana: Canvas o Phaser, con lo que ya sabes. Un juego 2D más grande para escritorio y móvil: Godot o Unity. Un juego 3D con gráficos realistas: Unreal o Unity.</li>
+    <li><strong>¿Qué sabes ya?</strong> Con JavaScript, Phaser es el paso natural. Si vas a aprender un motor completo desde cero, Godot es ligero, gratuito y amable para empezar.</li>
+    <li><strong>¿Dónde se publicará?</strong> Para jugar en el navegador sin instalar nada, Phaser y Godot con GDScript exportan a la web. Para consolas, Unity y Unreal tienen el camino más recorrido (Godot necesita, para consolas, empresas externas que hacen la adaptación).</li>
+    <li><strong>¿Con quién trabajas?</strong> En un equipo manda lo que conoce la mayoría. En una jam, no aprendas un motor nuevo: usa el que ya dominas (<a href="27-proceso.html#jam">Estación 27</a>).</li>
+  </ol>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Motores y Git</p><p>Los proyectos de motor tienen archivos grandes y binarios (imágenes, sonidos, modelos) que Git no fusiona bien. Usa el <code>.gitignore</code> oficial de tu motor (Godot y Unity generan carpetas que no deben subirse) y acordad en el equipo quién toca cada escena, como viste en la <a href="24-git.html">Estación 24</a>. Para archivos muy pesados existe Git LFS, una extensión de Git para archivos grandes.</p></div></aside>
+
+  <h3>Recursos libres y licencias</h3>
+  <p>No hace falta que dibujes y compongas todo. Hay miles de sprites, sonidos, músicas y fuentes que sus autores comparten para que los uses en tus juegos. Pero «lo encontré en internet» no significa «puedo usarlo»: cada recurso tiene una <strong>licencia</strong>, el permiso que te da su autor y sus condiciones. Las más comunes en recursos para juegos son de Creative Commons:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Licencia</th><th scope="col">Qué te permite</th><th scope="col">Qué te pide</th></tr></thead>
+      <tbody>
+        <tr><td>CC0 (dominio público)</td><td>Todo, también en juegos comerciales</td><td>Nada. Dar crédito es un detalle, no una obligación</td></tr>
+        <tr><td>CC BY (atribución)</td><td>Todo, también en juegos comerciales</td><td>Mencionar a la autora o autor y la licencia, por ejemplo en los créditos</td></tr>
+        <tr><td>CC BY-SA (atribución, compartir igual)</td><td>Usarlo y modificarlo</td><td>Atribución y, si lo modificas, compartir tu versión con la misma licencia</td></tr>
+        <tr><td>OGA-BY</td><td>Como CC BY</td><td>Atribución. La creó OpenGameArt para quitar la restricción de CC BY sobre plataformas con protección anticopia</td></tr>
+        <tr><td>GPL</td><td>Usarlo y modificarlo</td><td>Condiciones pensadas para software; en arte generan dudas. Si no estás seguro, evítala</td></tr>
+        <tr><td>Sin licencia o «todos los derechos reservados»</td><td>Nada</td><td>Pedir permiso. Los sprites extraídos de juegos comerciales tampoco se pueden usar</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Tres sitios para empezar: <strong>Kenney</strong> (kenney.nl) publica miles de recursos de calidad con licencia CC0, libres incluso para juegos comerciales; <strong>OpenGameArt</strong> (opengameart.org) reúne recursos de muchos autores con licencias CC0, CC BY, CC BY-SA, OGA-BY y GPL, indicada en cada uno; y la sección de recursos de <strong>itch.io</strong>, con paquetes gratuitos y de pago, cada uno con su licencia. Apunta desde el primer día en un archivo <code>CREDITOS.md</code> qué usas, de quién es, de dónde lo sacaste y con qué licencia: al final de una jam no te acordarás.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Contenido generado con IA</p><p>Si usas inteligencia artificial generativa para crear arte, sonido o texto, las tiendas piden declararlo: Steam tiene un apartado para contarlo en la ficha del juego, e itch.io exige marcar los recursos generados con IA y permite indicarlo también en los juegos. Además, la situación legal de los derechos de autor sobre contenido generado cambia según el país. Pregunta en cada jam si lo permite: muchas no lo hacen.</p></div></aside>
+
+  <h3>Game jams</h3>
+  <p>En la <a href="27-proceso.html#jam">Estación 27</a> viste cómo se organiza un equipo en una game jam: un tema, 48 o 72 horas, una idea pequeña, congelar funciones a tiempo y entregar antes del último minuto. Con esta estación ya tienes lo que faltaba: hacer el juego. Para tu primera jam, busca en la página de jams de itch.io una de principiantes o de temática sencilla, usa lo que ya sabes (Canvas o Phaser) y aplica el orden de esta sección de diseño: primero el bucle de segundos con rectángulos, después el resto.</p>
+
+  <h3>Publicar en itch.io</h3>
+  <p><strong>itch.io</strong> es la tienda más usada para juegos independientes y de jams. Publicar es gratis, los juegos web se juegan directamente en la página, y tú decides el precio (gratis, «paga lo que quieras» o un precio mínimo) y qué parte de cada venta quieres dejarle a la plataforma. Un juego de Canvas o Phaser se sube tal cual. Un juego de Godot se exporta antes a web desde el editor (<em>Proyecto → Exportar</em>), y el resultado es también una carpeta con un <code>index.html</code>.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Prepara la carpeta.</strong> El archivo de entrada tiene que llamarse <code>index.html</code> y estar en la raíz. Usa rutas relativas (<code>sprites/perro.png</code>, nunca <code>/sprites/perro.png</code> ni <code>C:\…</code>), y nombres en minúsculas y sin espacios.</p></div></li>
+    <li><div><p><strong>Pruébala como si fuera un servidor.</strong> Abre la carpeta con un servidor local (por ejemplo, <code>npx serve .</code>, como en el README de Saltarín) y juega de principio a fin. Abrir el <code>index.html</code> con doble clic no es una buena prueba: algunas cosas, como <code>fetch</code> de un mapa JSON, fallan sin servidor.</p></div></li>
+    <li><div><p><strong>Comprime el contenido</strong> de la carpeta en un ZIP, de modo que <code>index.html</code> quede en la raíz del ZIP. itch.io admite hasta 1000 archivos, 500 MB en total y 200 MB por archivo.</p></div></li>
+    <li><div><p><strong>Crea el proyecto</strong> desde el panel de tu cuenta, elige el tipo de proyecto de juego HTML y sube el ZIP. Si aparece la casilla para indicar que el archivo se jugará en el navegador, márcala.</p></div></li>
+    <li><div><p><strong>Configura cómo se ve</strong>: el tamaño del marco (por ejemplo, 960 × 540, el doble de 480 × 270), el botón de pantalla completa y la opción <em>Mobile Friendly</em> si funciona en el móvil.</p></div></li>
+    <li><div><p><strong>Rellena la página</strong>: descripción, controles, 3 a 5 capturas, etiquetas y créditos con las licencias de lo que uses. Guárdala primero como borrador, pruébala en la propia página y, cuando todo funcione, hazla pública.</p></div></li>
+  </ol>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Funciona en mi computadora, pero no en itch.io</p><p>El fallo más común es este: tu código carga <code>sprites/Perro.png</code> y el archivo se llama <code>perro.png</code>. En Windows y macOS funciona, porque sus discos, por defecto, no distinguen mayúsculas de minúsculas; el servidor de itch.io sí las distingue, y la imagen no carga. Escribe todos los nombres de archivo en minúsculas y comprueba en la consola del navegador (<kbd>F12</kbd>) los errores de carga de la versión publicada.</p></div></aside>
+  <p>Practícalo en esta terminal simulada. La carpeta <code>saltarin</code> tiene los fallos típicos: el <code>index.html</code> quedó dentro de una subcarpeta y un sprite tiene mayúsculas que no coinciden con el código.</p>
+  <div class="terminal-sim" data-titulo="Preparar Saltarín para itch.io" data-inicio="/home/tu">
+    <script type="application/json" class="terminal-sistema">{"saltarin": {"build": {"index.html": "<canvas id=\"juego\"></canvas><script src=\"juego.js\"></script>"}, "juego.js": "// carga sprites/perro.png y sonidos/salto.mp3", "sprites": {"Perro.PNG": "(imagen)", "hueso.png": "(imagen)"}, "sonidos": {"salto.mp3": "(sonido)"}, "notas.txt": "ideas sueltas"}}</script>
+    <div class="terminal-instrucciones">
+      <p>1. Entra en <code>saltarin</code> y mira qué hay con <code>ls</code> (y dentro de <code>build</code> y <code>sprites</code>).</p>
+      <p>2. Mueve <code>index.html</code> de <code>build</code> a la raíz de <code>saltarin</code> y borra la carpeta <code>build</code>, que queda vacía.</p>
+      <p>3. Renombra <code>sprites/Perro.PNG</code> a <code>sprites/perro.png</code>, que es como lo carga <code>juego.js</code>.</p>
+      <p>4. Crea un archivo <code>CREDITOS.md</code> en <code>saltarin</code> que diga de dónde salen los sonidos (por ejemplo, con <code>echo</code>).</p>
+    </div>
+    <script type="text/plain" class="terminal-mision">
+var s = sistema.saltarin;
+if (!s || typeof s !== "object") return "La carpeta saltarin ya no está. Pulsa «Reiniciar».";
+if (s["index.html"] === undefined) return "Paso 2: mueve el index.html a la raíz. Desde saltarin: mv build/index.html .";
+if (s.build !== undefined) return "Paso 2: la carpeta build ya está vacía. Bórrala con rmdir build.";
+if (!s.sprites || typeof s.sprites !== "object") return "No encuentro la carpeta sprites. Pulsa «Reiniciar» si la borraste.";
+if (s.sprites["Perro.PNG"] !== undefined || s.sprites["perro.png"] === undefined) return "Paso 3: renombra el sprite. Desde saltarin: mv sprites/Perro.PNG sprites/perro.png";
+if (s["CREDITOS.md"] === undefined) return "Paso 4: crea CREDITOS.md, por ejemplo: echo \"Sonidos: Kenney (CC0)\" > CREDITOS.md";
+if (!String(s["CREDITOS.md"]).trim()) return "CREDITOS.md está vacío. Escribe algo dentro con echo \"…\" > CREDITOS.md";
+return true;
+    </script>
+  </div>
+  <p>Después de itch.io hay otros destinos. Un juego web puede vivir en cualquier hosting estático, como GitHub Pages (<a href="24-git.html#pages">Estación 24</a>) o los servicios de la <a href="35-devops.html">Estación 35</a>. Para las tiendas de móviles, un juego web se puede envolver como app (<a href="33-moviles-escritorio.html">Estación 33</a>), y Godot y Unity exportan directamente. Y para Steam, la tienda más grande de juegos de PC, necesitas una versión de escritorio y pagar 100 dólares por cada juego, que Valve te devuelve cuando ese juego alcanza 1000 dólares de ingresos.</p>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Todo juego es un <strong>bucle</strong> que en cada fotograma lee la entrada, actualiza el mundo y lo dibuja. En el navegador se repite con <code>requestAnimationFrame</code>. Las velocidades se escriben en unidades por segundo y se multiplican por <code>dt</code>, limitado a un máximo. <code>actualizar</code> no dibuja y <code>dibujar</code> no cambia el estado.</li>
+    <li>El <strong>canvas</strong> trabaja en modo inmediato: no recuerda formas, así que en cada fotograma se borra y se repinta todo, de atrás hacia delante. Su tamaño real lo dan los atributos <code>width</code> y <code>height</code>; los ángulos van en radianes; las imágenes cargan de forma asíncrona.</li>
+    <li>Un <strong>sprite</strong> animado es un recorte de una hoja de sprites (<code>drawImage</code> con nueve argumentos) elegido según el tiempo: <code>Math.floor(t * porSegundo) % dibujos</code>. <code>save</code>, <code>translate</code>, <code>scale(-1, 1)</code> y <code>restore</code> lo colocan y lo reflejan.</li>
+    <li>Los eventos de teclado solo <strong>anotan</strong> en un conjunto; el bucle pregunta. Usa <code>e.code</code>, <code>preventDefault</code> en las teclas del juego y vacía el conjunto en <code>blur</code>. Distingue teclas mantenidas de recién pulsadas. Los eventos de puntero sirven para ratón, dedo y lápiz, con <code>touch-action: none</code>.</li>
+    <li>La <strong>física</strong> de un plataformas: la aceleración cambia la velocidad y la velocidad cambia la posición. La gravedad suma a <code>vy</code>; saltar es un impulso negativo de <code>-√(2 · g · altura)</code>. Frena sin pasarte, limita las velocidades y añade trampas amables: salto variable, tiempo de coyote y búfer de salto.</li>
+    <li>Dos rectángulos (<strong>AABB</strong>) chocan si se cumplen cuatro condiciones; dos círculos, si la distancia es menor que la suma de radios. La respuesta se resuelve un eje cada vez, y <code>enSuelo</code> se recalcula en cada fotograma. Cuidado con el efecto túnel.</li>
+    <li>La partida es una <strong>máquina de estados</strong> (menú, jugando, pausa, fin): la pausa deja de actualizar pero sigue dibujando. El récord se guarda en <code>localStorage</code> y se lee con <code>Number(…) || 0</code>. Un servidor nunca debe fiarse de la puntuación que envía el navegador.</li>
+    <li>El <strong>sonido</strong> se hace con un <code>AudioContext</code> y nodos conectados. Solo puede sonar después de una interacción de la persona, y cada oscilador o fuente se usa una sola vez.</li>
+    <li>Los niveles se describen con <strong>mapas de casillas</strong> (<code>Math.floor(x / TILE)</code>), la <strong>cámara</strong> resta su posición a todo lo del mundo (con límites, suavidad y píxeles redondeados) y el HUD se dibuja fuera de ella. Las entidades viven en una lista y se eliminan después de recorrerla. La generación procedural es azar dentro de límites de diseño.</li>
+    <li>El <strong>jugo</strong> (partículas, sacudidas, parada de impacto) multiplica la sensación sin cambiar las reglas, con opciones para reducirlo. MDA recuerda que solo controlas las mecánicas: comprueba las sensaciones mirando jugar a otras personas. Motores como Phaser, Godot, Unity y Unreal traen hecho todo lo anterior; revisa siempre las licencias de los recursos y publica en itch.io con un <code>index.html</code> en la raíz y nombres en minúsculas.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Los ejercicios trabajan las piezas de un juego una a una, como funciones que se pueden comprobar sin pantalla: exactamente cómo se prueban las partes de un juego real. Todos tienen un botón «Ejecutar» que comprueba tu solución. Intenta cada uno unos minutos antes de abrir las pistas; la solución está para comparar, no para copiar.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-delta-time"><header class="ejercicio-cabeza"><h3>Arregla la velocidad que depende de la pantalla</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>La función <code>mover</code> tiene el error más clásico: mueve la bola 3 píxeles por fotograma, así que va más rápido en las pantallas de más hercios. Corrígela para que use <code>VELOCIDAD</code> (en píxeles por segundo) y <code>dt</code>. Cuando esté bien, las tres líneas dirán <code>150 px en un segundo</code>.</p>
+    <div class="taller" id="taller-ej-delta" data-titulo="Ejercicio 1">
+      <textarea class="taller-codigo">const VELOCIDAD = 150;   // píxeles por segundo
+
+function mover(bola, dt) {
+  bola.x = bola.x + 3;   // corrige esta línea
+}
+
+// Simula un segundo de juego en tres pantallas. No cambies nada de aquí abajo.
+for (const hz of [30, 60, 144]) {
+  const bola = { x: 0 };
+  for (let i = 0; i &lt; hz; i++) mover(bola, 1 / hz);
+  console.log(`${hz} Hz: ${Math.round(bola.x)} px en un segundo`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/dt/.test(codigo.split("// Simula")[0].replace(/function mover\(bola, dt\)/, ""))) return "Usa dt dentro de mover: multiplica la velocidad por el tiempo transcurrido.";
+var esperado = ["30 Hz: 150 px en un segundo", "60 Hz: 150 px en un segundo", "144 Hz: 150 px en un segundo"];
+for (var i = 0; i < 3; i++) if (salida[i] !== esperado[i]) return "La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] || "(nada)") + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>¿Cuántos píxeles tiene que avanzar la bola en un fotograma que dura <code>dt</code> segundos, si en un segundo avanza <code>VELOCIDAD</code>?</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Distancia = velocidad × tiempo. La línea queda como <code>bola.x = bola.x + VELOCIDAD * …</code></p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const VELOCIDAD = 150;   // píxeles por segundo
+
+function mover(bola, dt) {
+  bola.x = bola.x + VELOCIDAD * dt;
+}
+
+// Simula un segundo de juego en tres pantallas. No cambies nada de aquí abajo.
+for (const hz of [30, 60, 144]) {
+  const bola = { x: 0 };
+  for (let i = 0; i &lt; hz; i++) mover(bola, 1 / hz);
+  console.log(`${hz} Hz: ${Math.round(bola.x)} px en un segundo`);
+}</code></pre>
+      <p>Con 30 Hz, cada fotograma dura 1/30 de segundo y la bola avanza 5 píxeles; con 144 Hz, unos 1,04. Al cabo de un segundo, las tres han recorrido 150. El <code>Math.round</code> esconde el error mínimo de los decimales que viste en la Estación 7.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-chocan"><header class="ejercicio-cabeza"><h3>¿Chocan? Escribe la comprobación AABB</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>Completa <code>chocan(a, b)</code> para que devuelva <code>true</code> si los dos rectángulos se solapan y <code>false</code> si no (si solo se tocan borde con borde, no cuenta). Cada rectángulo es un objeto <code>{ x, y, ancho, alto }</code>. La salida correcta es: <code>true</code>, <code>false</code>, <code>false</code>, <code>false</code>, <code>true</code>, <code>true</code>.</p>
+    <div class="taller" id="taller-ej-chocan" data-titulo="Ejercicio 2">
+      <textarea class="taller-codigo">function chocan(a, b) {
+  // Escribe aquí las cuatro condiciones, unidas con &amp;&amp;
+  return false;
+}
+
+// Pruebas. No cambies nada de aquí abajo.
+const perro = { x: 50, y: 50, ancho: 30, alto: 20 };
+console.log(chocan(perro, { x: 70, y: 60, ancho: 20, alto: 20 }));   // se solapan
+console.log(chocan(perro, { x: 100, y: 50, ancho: 20, alto: 20 }));  // a la derecha
+console.log(chocan(perro, { x: 80, y: 50, ancho: 20, alto: 20 }));   // borde con borde
+console.log(chocan(perro, { x: 50, y: 10, ancho: 30, alto: 30 }));   // encima, sin tocar
+console.log(chocan(perro, { x: 55, y: 30, ancho: 10, alto: 25 }));   // entra desde arriba
+console.log(chocan(perro, { x: 0, y: 0, ancho: 200, alto: 200 }));   // lo envuelve</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/a\.x/.test(codigo) || !/b\.ancho/.test(codigo)) return "La función debe comparar las propiedades de a y b (a.x, b.x + b.ancho…).";
+var esperado = ["true", "false", "false", "false", "true", "true"];
+for (var i = 0; i < esperado.length; i++) if (salida[i] !== esperado[i]) return "La prueba " + (i + 1) + " debería dar " + esperado[i] + " y da " + (salida[i] || "(nada)") + ". Dibuja los dos rectángulos en un papel.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Hay choque si el borde izquierdo de <code>a</code> está antes del borde derecho de <code>b</code> (<code>a.x &lt; b.x + b.ancho</code>), y lo mismo al revés, y lo mismo en vertical.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Si la prueba 3 te da <code>true</code>, estás usando <code>&lt;=</code> o <code>&gt;=</code>. Con los bordes justo en el mismo sitio (80 y 80) no hay solapamiento: usa comparaciones estrictas.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function chocan(a, b) {
+  return a.x &lt; b.x + b.ancho &amp;&amp;
+         a.x + a.ancho &gt; b.x &amp;&amp;
+         a.y &lt; b.y + b.alto &amp;&amp;
+         a.y + a.alto &gt; b.y;
+}
+
+// Pruebas. No cambies nada de aquí abajo.
+const perro = { x: 50, y: 50, ancho: 30, alto: 20 };
+console.log(chocan(perro, { x: 70, y: 60, ancho: 20, alto: 20 }));   // se solapan
+console.log(chocan(perro, { x: 100, y: 50, ancho: 20, alto: 20 }));  // a la derecha
+console.log(chocan(perro, { x: 80, y: 50, ancho: 20, alto: 20 }));   // borde con borde
+console.log(chocan(perro, { x: 50, y: 10, ancho: 30, alto: 30 }));   // encima, sin tocar
+console.log(chocan(perro, { x: 55, y: 30, ancho: 10, alto: 25 }));   // entra desde arriba
+console.log(chocan(perro, { x: 0, y: 0, ancho: 200, alto: 200 }));   // lo envuelve</code></pre>
+      <p>Otra forma equivalente es escribir cuándo <em>no</em> chocan y negarlo: <code>return !(a.x + a.ancho &lt;= b.x || b.x + b.ancho &lt;= a.x || a.y + a.alto &lt;= b.y || b.y + b.alto &lt;= a.y);</code>. Son las leyes de De Morgan de la <a href="18-matematicas.html#logica">Estación 18</a>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-salto"><header class="ejercicio-cabeza"><h3>Un salto a medida</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Quien diseña el nivel quiere decidir la altura del salto en píxeles, no la velocidad. Completa <code>velocidadDeSalto(altura, gravedad)</code>, que devuelve el impulso vertical (negativo, hacia arriba) para subir exactamente esa altura, y <code>tiempoHastaLaCima(altura, gravedad)</code>, que devuelve los segundos que tarda en llegar arriba. La salida debe ser:</p>
+    <pre class="consola"><code>100 px con g = 1500: -547.7 px/s, 0.37 s
+64 px con g = 800: -320.0 px/s, 0.40 s
+150 px con g = 2000: -774.6 px/s, 0.39 s</code></pre>
+    <div class="taller" id="taller-ej-salto" data-titulo="Ejercicio 3">
+      <textarea class="taller-codigo">function velocidadDeSalto(altura, gravedad) {
+  return 0;
+}
+
+function tiempoHastaLaCima(altura, gravedad) {
+  return 0;
+}
+
+// Pruebas. No cambies nada de aquí abajo.
+for (const [altura, g] of [[100, 1500], [64, 800], [150, 2000]]) {
+  const v = velocidadDeSalto(altura, g);
+  const t = tiempoHastaLaCima(altura, g);
+  console.log(`${altura} px con g = ${g}: ${v.toFixed(1)} px/s, ${t.toFixed(2)} s`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/Math\.sqrt|\*\*\s*0?\.5/.test(codigo)) return "Necesitas una raíz cuadrada (Math.sqrt) para calcular la velocidad.";
+var esperado = ["100 px con g = 1500: -547.7 px/s, 0.37 s", "64 px con g = 800: -320.0 px/s, 0.40 s", "150 px con g = 2000: -774.6 px/s, 0.39 s"];
+for (var i = 0; i < 3; i++) {
+  if (salida[i] !== esperado[i]) {
+    if (salida[i] && salida[i].indexOf(esperado[i].split(": ")[1].replace("-", "")) !== -1) return "Casi: la velocidad tiene que ser negativa, porque en pantalla subir es restar a y.";
+    return "La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] || "(nada)") + "».";
+  }
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La fórmula de la sección de física: <code>-Math.sqrt(2 * gravedad * altura)</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La gravedad le resta a la velocidad de subida <code>gravedad</code> píxeles por segundo cada segundo. ¿Cuántos segundos hacen falta para gastar toda la velocidad inicial? Divide la velocidad (sin el signo) entre la gravedad. Puedes llamar a <code>velocidadDeSalto</code> desde la otra función.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function velocidadDeSalto(altura, gravedad) {
+  return -Math.sqrt(2 * gravedad * altura);
+}
+
+function tiempoHastaLaCima(altura, gravedad) {
+  return -velocidadDeSalto(altura, gravedad) / gravedad;
+}
+
+// Pruebas. No cambies nada de aquí abajo.
+for (const [altura, g] of [[100, 1500], [64, 800], [150, 2000]]) {
+  const v = velocidadDeSalto(altura, g);
+  const t = tiempoHastaLaCima(altura, g);
+  console.log(`${altura} px con g = ${g}: ${v.toFixed(1)} px/s, ${t.toFixed(2)} s`);
+}</code></pre>
+      <p>También vale <code>Math.sqrt(2 * altura / gravedad)</code> para el tiempo: es la misma cuenta despejada de otra forma. Con estas dos funciones, quien diseña puede pedir «un salto de 3 casillas que dure menos de medio segundo» y el código elige la gravedad y el impulso.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-estados"><header class="ejercicio-cabeza"><h3>La máquina de la partida</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Completa la tabla <code>TRANSICIONES</code> y la función <code>siguienteEstado(estado, evento)</code>. Las reglas son las del diagrama de la sección de la partida: desde <code>menu</code>, <code>enter</code> lleva a <code>jugando</code>; desde <code>jugando</code>, <code>escape</code> lleva a <code>pausa</code> y <code>solPuesto</code> o <code>sinHuesos</code> llevan a <code>fin</code>; desde <code>pausa</code>, <code>escape</code> vuelve a <code>jugando</code>; desde <code>fin</code>, <code>enter</code> lleva a <code>menu</code>. Un evento sin transición no cambia el estado. La salida esperada es:</p>
+    <pre class="consola"><code>escape → menu
+enter → jugando
+enter → jugando
+escape → pausa
+enter → pausa
+escape → jugando
+solPuesto → fin
+escape → fin
+enter → menu
+enter → jugando</code></pre>
+    <div class="taller" id="taller-ej-estados" data-titulo="Ejercicio 4">
+      <textarea class="taller-codigo">const TRANSICIONES = {
+  menu: { enter: "jugando" },
+  // completa jugando, pausa y fin
+};
+
+function siguienteEstado(estado, evento) {
+  // Si hay transición para ese evento, devuelve el estado nuevo; si no, el mismo
+  return estado;
+}
+
+// Pruebas. No cambies nada de aquí abajo.
+let estado = "menu";
+const eventos = ["escape", "enter", "enter", "escape", "enter", "escape", "solPuesto", "escape", "enter", "enter"];
+for (const evento of eventos) {
+  estado = siguienteEstado(estado, evento);
+  console.log(`${evento} → ${estado}`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = ["escape → menu", "enter → jugando", "enter → jugando", "escape → pausa", "enter → pausa", "escape → jugando", "solPuesto → fin", "escape → fin", "enter → menu", "enter → jugando"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "El evento " + (i + 1) + " debería dar «" + esperado[i] + "» y da «" + (salida[i] || "(nada)") + "». Revisa la tabla o qué devuelves cuando no hay transición.";
+}
+if (!/sinHuesos/.test(codigo)) return "Casi: falta la transición sinHuesos → fin desde jugando (no sale en las pruebas, pero es parte de las reglas).";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La tabla tiene un objeto por estado, y dentro, una propiedad por evento: <code>jugando: { escape: "pausa", solPuesto: "fin", sinHuesos: "fin" }</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Busca con <code>TRANSICIONES[estado][evento]</code>. Si da <code>undefined</code>, devuelve <code>estado</code>. El operador <code>??</code> lo hace en una línea.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const TRANSICIONES = {
+  menu: { enter: "jugando" },
+  jugando: { escape: "pausa", solPuesto: "fin", sinHuesos: "fin" },
+  pausa: { escape: "jugando" },
+  fin: { enter: "menu" },
+};
+
+function siguienteEstado(estado, evento) {
+  return TRANSICIONES[estado]?.[evento] ?? estado;
+}
+
+// Pruebas. No cambies nada de aquí abajo.
+let estado = "menu";
+const eventos = ["escape", "enter", "enter", "escape", "enter", "escape", "solPuesto", "escape", "enter", "enter"];
+for (const evento of eventos) {
+  estado = siguienteEstado(estado, evento);
+  console.log(`${evento} → ${estado}`);
+}</code></pre>
+      <p>La tabla separa las reglas del código que las aplica: añadir un estado nuevo (por ejemplo, <code>tienda</code>) es añadir una línea a la tabla, sin tocar la función. Es la tabla de transiciones de la <a href="25-codigo-limpio.html#patrones">Estación 25</a>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-record"><header class="ejercicio-cabeza"><h3>Un récord que sobrevive</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Escribe <code>cargarRecord(almacen)</code>, que devuelve el récord guardado como número (0 si no hay nada o si lo guardado no es un número), y <code>guardarSiEsRecord(almacen, puntos)</code>, que guarda los puntos solo si superan el récord y devuelve <code>true</code> si lo han batido o <code>false</code> si no. El <code>almacen</code> se comporta igual que <code>localStorage</code> (solo guarda textos), así que tu código funcionaría con el de verdad. La salida esperada es <code>0</code>, <code>true</code>, <code>300</code>, <code>false</code>, <code>300 number</code>, <code>0</code>, <code>true</code>.</p>
+    <div class="taller" id="taller-ej-record" data-titulo="Ejercicio 5">
+      <textarea class="taller-codigo">// Imita a localStorage: guarda textos por clave. No lo cambies.
+function crearAlmacen(inicial = {}) {
+  const datos = { ...inicial };
+  return {
+    getItem: (clave) =&gt; (clave in datos ? datos[clave] : null),
+    setItem: (clave, valor) =&gt; { datos[clave] = String(valor); },
+  };
+}
+const CLAVE = "saltarin-record";
+
+function cargarRecord(almacen) {
+  // Tu código aquí
+}
+
+function guardarSiEsRecord(almacen, puntos) {
+  // Tu código aquí
+}
+
+// Pruebas. No cambies nada de aquí abajo.
+const partidas = crearAlmacen();
+console.log(cargarRecord(partidas));             // nunca se jugó
+console.log(guardarSiEsRecord(partidas, 300));
+console.log(cargarRecord(partidas));
+console.log(guardarSiEsRecord(partidas, 120));
+console.log(cargarRecord(partidas), typeof cargarRecord(partidas));
+console.log(cargarRecord(crearAlmacen({ "saltarin-record": "hola" })));          // dato estropeado
+console.log(guardarSiEsRecord(crearAlmacen({ "saltarin-record": "900" }), 1000));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = ["0", "true", "300", "false", "300 number", "0", "true"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) {
+    if (i === 6 && salida[i] === "false") return "La última prueba da false: estás comparando textos. «1000» < «900» porque se comparan letra a letra. Convierte con Number antes de comparar.";
+    if (i === 4 && /string/.test(salida[i] || "")) return "cargarRecord devuelve un texto. Conviértelo en número con Number(…).";
+    return "La prueba " + (i + 1) + " debería dar «" + esperado[i] + "» y da «" + (salida[i] || "(nada)") + "».";
+  }
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>almacen.getItem(CLAVE)</code> devuelve <code>null</code> si no hay nada. <code>Number(null)</code> da 0 y <code>Number("hola")</code> da <code>NaN</code>: <code>|| 0</code> convierte los dos casos en 0.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>guardarSiEsRecord</code>, reutiliza <code>cargarRecord</code> para obtener el récord actual como número. Si <code>puntos</code> no lo supera, devuelve <code>false</code> sin guardar nada.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// Imita a localStorage: guarda textos por clave. No lo cambies.
+function crearAlmacen(inicial = {}) {
+  const datos = { ...inicial };
+  return {
+    getItem: (clave) =&gt; (clave in datos ? datos[clave] : null),
+    setItem: (clave, valor) =&gt; { datos[clave] = String(valor); },
+  };
+}
+const CLAVE = "saltarin-record";
+
+function cargarRecord(almacen) {
+  return Number(almacen.getItem(CLAVE)) || 0;
+}
+
+function guardarSiEsRecord(almacen, puntos) {
+  if (puntos &lt;= cargarRecord(almacen)) return false;
+  almacen.setItem(CLAVE, String(puntos));
+  return true;
+}
+
+// Pruebas. No cambies nada de aquí abajo.
+const partidas = crearAlmacen();
+console.log(cargarRecord(partidas));             // nunca se jugó
+console.log(guardarSiEsRecord(partidas, 300));
+console.log(cargarRecord(partidas));
+console.log(guardarSiEsRecord(partidas, 120));
+console.log(cargarRecord(partidas), typeof cargarRecord(partidas));
+console.log(cargarRecord(crearAlmacen({ "saltarin-record": "hola" })));          // dato estropeado
+console.log(guardarSiEsRecord(crearAlmacen({ "saltarin-record": "900" }), 1000));</code></pre>
+      <p>Pasar el almacén como parámetro, en vez de usar <code>localStorage</code> directamente dentro de la función, es lo que permite probarla sin navegador. Es la inyección de dependencias que viste con los dobles de prueba de la <a href="26-testing.html#dobles">Estación 26</a>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-suelo"><header class="ejercicio-cabeza"><h3>¿Qué hay debajo?</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Muchos juegos necesitan saber dónde está el suelo bajo un punto: para dibujar la sombra del personaje, o para que un enemigo no se tire por un precipicio. Completa <code>sueloDebajo(x, y)</code>: busca en la columna del punto, desde la fila que contiene <code>y</code> hacia abajo, la primera casilla <code>#</code>, y devuelve la y en píxeles de su borde de arriba. Si no hay ninguna, devuelve <code>null</code>. La salida esperada es <code>60</code>, <code>20</code>, <code>null</code>, <code>60</code>, <code>null</code>, <code>60</code>.</p>
+    <div class="taller" id="taller-ej-suelo" data-titulo="Ejercicio 6">
+      <textarea class="taller-codigo">const TILE = 20;
+const MAPA = [
+  "..........",
+  "....##....",
+  "..........",
+  "###...####",
+];
+
+function sueloDebajo(x, y) {
+  // 1. ¿En qué columna está x? ¿En qué fila está y?
+  // 2. Recorre las filas desde esa hacia abajo
+  // 3. Devuelve la y del primer "#" que encuentres, o null
+}
+
+// Pruebas. No cambies nada de aquí abajo.
+console.log(sueloDebajo(10, 0));
+console.log(sueloDebajo(90, 0));
+console.log(sueloDebajo(90, 45));
+console.log(sueloDebajo(59.9, 0));
+console.log(sueloDebajo(60, 0));
+console.log(sueloDebajo(130, 50));</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/Math\.floor/.test(codigo)) return "Convierte píxeles en casillas con Math.floor(x / TILE).";
+var esperado = ["60", "20", "null", "60", "null", "60"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) {
+    if (i === 4 && salida[i] === "60") return "La prueba 5 (x = 60) cae en la columna 3, que no tiene suelo: revisa cómo calculas la columna.";
+    return "La prueba " + (i + 1) + " debería dar " + esperado[i] + " y da " + (salida[i] || "(nada)") + ".";
+  }
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>const columna = Math.floor(x / TILE);</code> y la fila de partida, igual con <code>y</code>. Después, un <code>for</code> desde esa fila mientras <code>fila &lt; MAPA.length</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Dentro del bucle: si <code>MAPA[fila][columna] === "#"</code>, devuelve <code>fila * TILE</code>. Si el bucle termina sin encontrar nada, devuelve <code>null</code> después del bucle.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const TILE = 20;
+const MAPA = [
+  "..........",
+  "....##....",
+  "..........",
+  "###...####",
+];
+
+function sueloDebajo(x, y) {
+  const columna = Math.floor(x / TILE);
+  for (let fila = Math.floor(y / TILE); fila &lt; MAPA.length; fila++) {
+    if (MAPA[fila][columna] === "#") return fila * TILE;
+  }
+  return null;
+}
+
+// Pruebas. No cambies nada de aquí abajo.
+console.log(sueloDebajo(10, 0));
+console.log(sueloDebajo(90, 0));
+console.log(sueloDebajo(90, 45));
+console.log(sueloDebajo(59.9, 0));
+console.log(sueloDebajo(60, 0));
+console.log(sueloDebajo(130, 50));</code></pre>
+      <p>La prueba 3 empieza debajo del bloque flotante y ya no lo ve: en la columna 4 no hay suelo más abajo, es un agujero. Las pruebas 4 y 5 son el borde exacto entre dos columnas.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-camara"><header class="ejercicio-cabeza"><h3>Una cámara con límites y suavidad</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>Escribe dos funciones. <code>objetivoCamara(perroX, anchoPerro, anchoPantalla, anchoMundo)</code> devuelve la x de la cámara que centra al perro, limitada para no mostrar nada fuera del mundo; si el mundo es más estrecho que la pantalla, la cámara se queda en 0. <code>seguir(camaraX, objetivo, dt, rapidez)</code> devuelve la nueva posición de la cámara tras acercarse al objetivo una fracción <code>rapidez * dt</code> de la distancia, sin pasarse nunca. La salida esperada es <code>0</code>, <code>475</code>, <code>960</code>, <code>0</code>, <code>63.3</code>, <code>475.0</code>.</p>
+    <div class="taller" id="taller-ej-camara" data-titulo="Ejercicio 7">
+      <textarea class="taller-codigo">function objetivoCamara(perroX, anchoPerro, anchoPantalla, anchoMundo) {
+  return 0;
+}
+
+function seguir(camaraX, objetivo, dt, rapidez) {
+  return camaraX;
+}
+
+// Pruebas. No cambies nada de aquí abajo.
+console.log(objetivoCamara(100, 30, 480, 1440));
+console.log(objetivoCamara(700, 30, 480, 1440));
+console.log(objetivoCamara(1300, 30, 480, 1440));
+console.log(objetivoCamara(300, 30, 480, 400));     // mundo más estrecho que la pantalla
+console.log(seguir(0, 475, 1 / 60, 8).toFixed(1));
+console.log(seguir(0, 475, 1, 8).toFixed(1));       // un fotograma larguísimo: no debe pasarse</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = ["0", "475", "960", "0", "63.3", "475.0"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) {
+    if (i === 3 && salida[i] === "-80") return "Con un mundo más estrecho que la pantalla sale -80. Aplica el límite de 0 al final, después del límite máximo.";
+    if (i === 5 && salida[i] !== "475.0") return "Con dt = 1 y rapidez 8, la cámara se pasa del objetivo. Limita la fracción con Math.min(1, rapidez * dt).";
+    return "La prueba " + (i + 1) + " debería dar " + esperado[i] + " y da " + (salida[i] || "(nada)") + ".";
+  }
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El objetivo sin límites es el centro del perro menos media pantalla: <code>perroX + anchoPerro / 2 - anchoPantalla / 2</code>. Después limítalo entre 0 y <code>anchoMundo - anchoPantalla</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El orden de <code>Math.min</code> y <code>Math.max</code> importa cuando el máximo es negativo: <code>Math.max(0, Math.min(x, maximo))</code> garantiza que el resultado nunca baja de 0. Para <code>seguir</code>, es un <code>lerp</code> con <code>t = Math.min(1, rapidez * dt)</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function objetivoCamara(perroX, anchoPerro, anchoPantalla, anchoMundo) {
+  const centrado = perroX + anchoPerro / 2 - anchoPantalla / 2;
+  return Math.max(0, Math.min(centrado, anchoMundo - anchoPantalla));
+}
+
+function seguir(camaraX, objetivo, dt, rapidez) {
+  const t = Math.min(1, rapidez * dt);
+  return camaraX + (objetivo - camaraX) * t;
+}
+
+// Pruebas. No cambies nada de aquí abajo.
+console.log(objetivoCamara(100, 30, 480, 1440));
+console.log(objetivoCamara(700, 30, 480, 1440));
+console.log(objetivoCamara(1300, 30, 480, 1440));
+console.log(objetivoCamara(300, 30, 480, 400));     // mundo más estrecho que la pantalla
+console.log(seguir(0, 475, 1 / 60, 8).toFixed(1));
+console.log(seguir(0, 475, 1, 8).toFixed(1));       // un fotograma larguísimo: no debe pasarse</code></pre>
+      <p>Sin el <code>Math.min(1, …)</code>, un fotograma largo (la pestaña estuvo oculta) daría <code>t = 8</code> y la cámara saltaría ocho veces más allá del objetivo. Es el mismo cuidado que el límite de <code>dt</code> del bucle.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-pasable"><header class="ejercicio-cabeza"><h3>¿Se puede pasar este nivel?</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>Un generador procedural necesita comprobar sus niveles. Cada nivel es un array con la altura del suelo de cada columna (0 es un agujero). Escribe <code>esPasable(alturas, huecoMax, subidaMax)</code>, que devuelve <code>false</code> si el nivel empieza o termina en un agujero, si algún agujero es más ancho que <code>huecoMax</code> columnas, o si desde un tramo de suelo al siguiente hay que subir más de <code>subidaMax</code> (bajar siempre se puede). En otro caso, <code>true</code>. La salida esperada es <code>true</code>, <code>false</code>, <code>false</code>, <code>true</code>, <code>true</code>, <code>false</code>, <code>false</code>.</p>
+    <div class="taller" id="taller-ej-pasable" data-titulo="Ejercicio 8">
+      <textarea class="taller-codigo">function esPasable(alturas, huecoMax, subidaMax) {
+  return true;
+}
+
+// Pruebas. No cambies nada de aquí abajo.
+const pruebas = [
+  [2, 2, 2, 0, 0, 3, 3, 3],   // agujero de 2 y subida de 1
+  [2, 2, 0, 0, 0, 0, 2, 2],   // agujero de 4
+  [1, 1, 4, 4],               // subida de 3
+  [3, 3, 0, 1, 1],            // bajar al otro lado de un agujero
+  [2, 0, 0, 4],               // agujero de 2 y subida de 2
+  [0, 2, 2],                  // empieza en un agujero
+  [2, 2, 0],                  // termina en un agujero
+];
+for (const nivel of pruebas) console.log(esPasable(nivel, 3, 2));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = ["true", "false", "false", "true", "true", "false", "false"];
+var nombres = ["agujero de 2 y subida de 1", "agujero de 4", "subida de 3", "bajar tras un agujero", "agujero de 2 y subida de 2", "empieza en un agujero", "termina en un agujero"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La prueba " + (i + 1) + " (" + nombres[i] + ") debería dar " + esperado[i] + " y da " + (salida[i] || "(nada)") + ".";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Comprueba primero los extremos: <code>alturas[0]</code> y <code>alturas[alturas.length - 1]</code> no pueden ser 0.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Recorre las columnas llevando dos datos: cuántos agujeros seguidos llevas (<code>hueco</code>) y la altura del último suelo que pisaste. Al encontrar un 0, suma al hueco y compáralo con <code>huecoMax</code>. Al encontrar suelo, compara la subida con el último suelo, actualiza esa altura y pon el hueco a 0.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function esPasable(alturas, huecoMax, subidaMax) {
+  if (alturas[0] === 0 || alturas[alturas.length - 1] === 0) return false;
+  let ultimoSuelo = alturas[0];
+  let hueco = 0;
+  for (const altura of alturas) {
+    if (altura === 0) {
+      hueco++;
+      if (hueco &gt; huecoMax) return false;
+    } else {
+      if (altura - ultimoSuelo &gt; subidaMax) return false;
+      ultimoSuelo = altura;
+      hueco = 0;
+    }
+  }
+  return true;
+}
+
+// Pruebas. No cambies nada de aquí abajo.
+const pruebas = [
+  [2, 2, 2, 0, 0, 3, 3, 3],   // agujero de 2 y subida de 1
+  [2, 2, 0, 0, 0, 0, 2, 2],   // agujero de 4
+  [1, 1, 4, 4],               // subida de 3
+  [3, 3, 0, 1, 1],            // bajar al otro lado de un agujero
+  [2, 0, 0, 4],               // agujero de 2 y subida de 2
+  [0, 2, 2],                  // empieza en un agujero
+  [2, 2, 0],                  // termina en un agujero
+];
+for (const nivel of pruebas) console.log(esPasable(nivel, 3, 2));</code></pre>
+      <p>Un comprobador como este se puede usar de dos formas: dentro del generador, para descartar niveles malos y generar otro con la siguiente semilla, o en las pruebas automáticas, generando mil niveles y comprobando que todos pasan. Una versión más exigente tendría en cuenta el agujero y la subida a la vez, como hacía el generador de la sección del mundo.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-doble-salto"><header class="ejercicio-cabeza"><h3>Doble salto</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>Añade una mecánica nueva al juego: un segundo salto en el aire. Modifica solo la función <code>intentarSaltar()</code>. Cuando el perro salta desde el suelo, recarga <code>perro.saltosEnElAire = 1</code>. Cuando está en el aire y le queda algún salto, salta igual (pon <code>perro.vy = VEL_SALTO</code>) y gasta uno. Sin saltos, no hace nada. Pruébalo en el lienzo antes de comprobarlo.</p>
+    <div class="taller" data-modo="web" id="taller-ej-doble" data-titulo="Ejercicio 9" data-alto="18rem">
+      <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas id="juego" width="480" height="230" tabindex="0"&gt;&lt;/canvas&gt;
+&lt;p&gt;Clic en el lienzo. Flechas para correr, Espacio para saltar (y volver a saltar en el aire).&lt;/p&gt;</textarea>
+      <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; }
+canvas { display: block; width: 100%; max-width: 480px; background: #8ecae6; border-radius: 8px; }
+p { margin: 6px 0 0; font-size: 14px; }</textarea>
+      <textarea class="taller-codigo" data-lenguaje="js">const lienzo = document.querySelector("#juego");
+const ctx = lienzo.getContext("2d");
+const SUELO = 200, GRAVEDAD = 1500;
+const VEL_SALTO = -Math.sqrt(2 * GRAVEDAD * 90);
+const perro = { x: 60, y: SUELO - 24, ancho: 30, alto: 24, vy: 0, enSuelo: true, saltosEnElAire: 0 };
+
+function intentarSaltar() {
+  // Modifica esta función para permitir un salto en el aire
+  if (perro.enSuelo) {
+    perro.vy = VEL_SALTO;
+  }
+}
+
+const teclas = new Set();
+addEventListener("keydown", (e) =&gt; {
+  if (["ArrowLeft", "ArrowRight", "Space"].includes(e.code)) e.preventDefault();
+  if (e.code === "Space" &amp;&amp; !e.repeat) intentarSaltar();
+  teclas.add(e.code);
+});
+addEventListener("keyup", (e) =&gt; teclas.delete(e.code));
+lienzo.addEventListener("pointerdown", () =&gt; lienzo.focus());
+
+function actualizar(dt) {
+  const direccion = (teclas.has("ArrowRight") ? 1 : 0) - (teclas.has("ArrowLeft") ? 1 : 0);
+  perro.x = Math.max(0, Math.min(lienzo.width - perro.ancho, perro.x + direccion * 200 * dt));
+  perro.vy += GRAVEDAD * dt;
+  perro.y += perro.vy * dt;
+  perro.enSuelo = false;
+  if (perro.y + perro.alto &gt;= SUELO) { perro.y = SUELO - perro.alto; perro.vy = 0; perro.enSuelo = true; }
+}
+
+function dibujar() {
+  ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+  ctx.fillStyle = "#6a994e";
+  ctx.fillRect(0, SUELO, lienzo.width, lienzo.height - SUELO);
+  ctx.fillStyle = "#9c6644";
+  ctx.fillRect(perro.x, perro.y, perro.ancho, perro.alto);
+  ctx.fillStyle = "#1d3557";
+  ctx.font = "15px system-ui, sans-serif";
+  ctx.fillText(`Saltos en el aire: ${perro.saltosEnElAire}`, 10, 22);
+}
+
+let anterior = null;
+function bucle(ahora) {
+  const dt = anterior === null ? 0 : Math.min((ahora - anterior) / 1000, 1 / 30);
+  anterior = ahora;
+  actualizar(dt);
+  dibujar();
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (typeof intentarSaltar !== "function") return "No encuentro la función intentarSaltar.";
+perro.enSuelo = true; perro.vy = 0; perro.saltosEnElAire = 0;
+intentarSaltar();
+if (perro.vy !== VEL_SALTO) return "Desde el suelo, intentarSaltar debe poner perro.vy = VEL_SALTO.";
+if (perro.saltosEnElAire !== 1) return "Al saltar desde el suelo, recarga perro.saltosEnElAire = 1.";
+perro.enSuelo = false; perro.vy = 200;
+intentarSaltar();
+if (perro.vy !== VEL_SALTO) return "En el aire, con un salto disponible, el perro debería volver a saltar (perro.vy = VEL_SALTO).";
+if (perro.saltosEnElAire !== 0) return "Después del salto en el aire, perro.saltosEnElAire debería quedar en 0.";
+perro.vy = 200;
+intentarSaltar();
+if (perro.vy !== 200) return "Sin saltos en el aire disponibles, intentarSaltar no debe hacer nada: ahora permite saltar sin límite.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La función tiene dos casos: <code>if (perro.enSuelo) { … } else if (perro.saltosEnElAire &gt; 0) { … }</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En el primer caso, además de saltar, pon <code>perro.saltosEnElAire = 1</code>. En el segundo, salta y resta uno con <code>perro.saltosEnElAire--</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const lienzo = document.querySelector("#juego");
+const ctx = lienzo.getContext("2d");
+const SUELO = 200, GRAVEDAD = 1500;
+const VEL_SALTO = -Math.sqrt(2 * GRAVEDAD * 90);
+const perro = { x: 60, y: SUELO - 24, ancho: 30, alto: 24, vy: 0, enSuelo: true, saltosEnElAire: 0 };
+
+function intentarSaltar() {
+  if (perro.enSuelo) {
+    perro.vy = VEL_SALTO;
+    perro.saltosEnElAire = 1;          // recarga al saltar desde el suelo
+  } else if (perro.saltosEnElAire &gt; 0) {
+    perro.vy = VEL_SALTO;
+    perro.saltosEnElAire--;            // gasta el salto en el aire
+  }
+}
+
+const teclas = new Set();
+addEventListener("keydown", (e) =&gt; {
+  if (["ArrowLeft", "ArrowRight", "Space"].includes(e.code)) e.preventDefault();
+  if (e.code === "Space" &amp;&amp; !e.repeat) intentarSaltar();
+  teclas.add(e.code);
+});
+addEventListener("keyup", (e) =&gt; teclas.delete(e.code));
+lienzo.addEventListener("pointerdown", () =&gt; lienzo.focus());
+
+function actualizar(dt) {
+  const direccion = (teclas.has("ArrowRight") ? 1 : 0) - (teclas.has("ArrowLeft") ? 1 : 0);
+  perro.x = Math.max(0, Math.min(lienzo.width - perro.ancho, perro.x + direccion * 200 * dt));
+  perro.vy += GRAVEDAD * dt;
+  perro.y += perro.vy * dt;
+  perro.enSuelo = false;
+  if (perro.y + perro.alto &gt;= SUELO) { perro.y = SUELO - perro.alto; perro.vy = 0; perro.enSuelo = true; }
+}
+
+function dibujar() {
+  ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+  ctx.fillStyle = "#6a994e";
+  ctx.fillRect(0, SUELO, lienzo.width, lienzo.height - SUELO);
+  ctx.fillStyle = "#9c6644";
+  ctx.fillRect(perro.x, perro.y, perro.ancho, perro.alto);
+  ctx.fillStyle = "#1d3557";
+  ctx.font = "15px system-ui, sans-serif";
+  ctx.fillText(`Saltos en el aire: ${perro.saltosEnElAire}`, 10, 22);
+}
+
+let anterior = null;
+function bucle(ahora) {
+  const dt = anterior === null ? 0 : Math.min((ahora - anterior) / 1000, 1 / 30);
+  anterior = ahora;
+  actualizar(dt);
+  dibujar();
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);</code></pre>
+      <p>Esta versión recarga el salto extra al saltar desde el suelo. Si el perro sale de una plataforma caminando, sin saltar, conserva el salto que le quedara. Muchos juegos prefieren recargarlo al aterrizar: prueba a mover la recarga al <code>if</code> de <code>actualizar</code> que detecta el suelo. Las dos son decisiones de diseño válidas; lo importante es que sean coherentes.</p>
+    </details>
+  </article>
+</section>
   </main>
 </div>
 
@@ -1020,6 +3235,8 @@ requestAnimationFrame(bucle);
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-gdscript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
 <script src="../assets/js/motor.js"></script>
 <script src="../assets/js/terminal.js"></script>
 <script src="../assets/js/practicas.js"></script>
