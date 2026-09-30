@@ -885,12 +885,14 @@
     var filas = $$("[data-linea-horas]", caja);
     var totalEl = $("[data-total-meses]", caja);
     var juniorEl = $("[data-junior-meses]", caja);
+    var totalFecha = $("[data-total-fecha]", caja), juniorFecha = $("[data-junior-fecha]", caja);
+    var laborable = $("[data-horas-laborable]", caja), finde = $("[data-horas-finde]", caja);
     var totalHoras = parseFloat(caja.getAttribute("data-total-horas"));
     var consolidacion = parseFloat(caja.getAttribute("data-consolidacion"));
     function meses(h, porSemana) { return h / porSemana / 4.345; }
     function formato(m) {
       if (m < 1) return Math.max(1, Math.round(m * 4.345)) + " sem.";
-      if (m < 24) return (Math.round(m * 2) / 2).toString().replace(".", ",") + " meses";
+      if (m < 24) { var r = Math.round(m * 2) / 2; return r.toString().replace(".", ",") + (r === 1 ? " mes" : " meses"); }
       return (Math.round(m / 12 * 10) / 10).toString().replace(".", ",") + " años";
     }
     function pintar() {
@@ -907,11 +909,35 @@
       });
       if (totalEl) totalEl.textContent = formato(meses(totalHoras, h));
       if (juniorEl) juniorEl.textContent = formato(meses(totalHoras + consolidacion, h));
+      if (totalFecha) totalFecha.textContent = fecha(totalHoras / h);
+      if (juniorFecha) juniorFecha.textContent = fecha((totalHoras + consolidacion) / h);
       almacen.cambiar(function (d) { d.horasSemana = h; });
     }
-    var previo = almacen.leer().horasSemana;
-    if (previo) entrada.value = previo;
-    entrada.addEventListener("input", pintar);
+    // Fecha aproximada de llegada contando desde hoy («hacia abril de 2027»).
+    function fecha(semanas) {
+      var d = new Date(Date.now() + semanas * 7 * 864e5);
+      try { return "hacia " + d.toLocaleDateString("es", { month: "long", year: "numeric" }); } catch (e) { return ""; }
+    }
+    // Horas por día: de lunes a viernes y el fin de semana; mueven el control de horas por semana.
+    function porDias() {
+      var a = parseFloat(laborable.value) || 0, b = parseFloat(finde.value) || 0;
+      if (!a && !b) return;
+      entrada.value = Math.max(1, Math.min(60, Math.round(a * 5 + b * 2)));
+      almacen.cambiar(function (d) { d.horasDia = [a, b]; });
+      pintar();
+    }
+    var guardado = almacen.leer();
+    if (guardado.horasSemana) entrada.value = guardado.horasSemana;
+    if (laborable && finde) {
+      if (guardado.horasDia) { laborable.value = guardado.horasDia[0] || ""; finde.value = guardado.horasDia[1] || ""; }
+      laborable.addEventListener("input", porDias);
+      finde.addEventListener("input", porDias);
+    }
+    entrada.addEventListener("input", function () {
+      // Si se mueve el control a mano, los campos por días dejan de valer.
+      if (laborable && finde) { laborable.value = ""; finde.value = ""; almacen.cambiar(function (d) { d.horasDia = null; }); }
+      pintar();
+    });
     pintar();
   }
 

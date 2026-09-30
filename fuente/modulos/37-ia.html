@@ -1436,11 +1436,11 @@ return true;
   <h3>Estilos de salida para aprender</h3>
   <p>Un <strong>estilo de salida</strong> (en inglés, <em>output style</em>) cambia cómo responde Claude durante toda la sesión. Claude Code trae cuatro además del normal (<em>Default</em>): <em>Proactive</em> (empieza a trabajar sin preguntar lo rutinario), <em>Concise</em> (respuestas cortas) y los dos que más te interesan:</p>
   <ul>
-    <li><strong>Explanatory</strong>: hace la tarea como siempre, pero añade bloques <code>★ Insight</code> con dos o tres puntos que explican por qué eligió esa solución y qué patrón de tu código siguió.</li>
+    <li><strong>Explanatory</strong>: hace la tarea como siempre, pero añade bloques titulados <code>Insight</code> con dos o tres puntos que explican por qué eligió esa solución y qué patrón de tu código siguió.</li>
     <li><strong>Learning</strong>: además de esas explicaciones, te deja a ti las partes con decisiones de verdad. Escribe lo rutinario, marca en el archivo un hueco con el comentario <code>TODO(human)</code>, te explica el contexto, qué tienes que escribir y qué debes tener en cuenta, y espera a que lo hagas. Después comenta tu código y sigue.</li>
   </ul>
   <pre class="consola"><code><span class="prompt">&gt;</span> /output-style learning</code></pre>
-  <p>Se cambia con <code>/output-style</code> (desde la versión 2.1.269) o desde <code>/config</code>, y la elección se guarda en <code>.claude/settings.local.json</code>. Para usarlo en todos tus proyectos, escribe <code>"outputStyle": "Learning"</code> en <code>~/.claude/settings.json</code>; en el archivo, el nombre distingue mayúsculas. Así se ve una petición del modo Learning:</p>
+  <p>Se cambia con <code>/output-style</code> (desde la versión 2.1.269) o desde <code>/config</code>, y la elección se guarda en <code>.claude/settings.local.json</code>. Para usarlo en todos tus proyectos, escribe <code>"outputStyle": "Learning"</code> en <code>~/.claude/settings.json</code>; en el archivo, el nombre distingue mayúsculas. Así se ve una petición del modo Learning (las etiquetas aparecen en inglés):</p>
   <pre><code class="language-text">● Learn by Doing
 Context: El nivel ya carga los bloques y detecta las colisiones, pero
   todavía no decide qué pasa cuando la pelota toca un bloque dorado.
@@ -1487,4 +1487,704 @@ Estoy atascado con: $ARGUMENTS
   <aside class="senal oficio">
     <p>Muchas personas que programan con agentes a diario mantienen una práctica deliberada sin IA: un rato a la semana resolviendo problemas a mano, o una tarea de cada proyecto hecha sin ayuda. Es como el piloto de avión que aterriza en manual de vez en cuando aunque el piloto automático lo haga bien: la habilidad que no se usa se pierde, y el día que el agente se equivoque la vas a necesitar.</p>
   </aside>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Un modelo de lenguaje genera texto probable, no verdadero. Solo ve lo que hay en su ventana de contexto, no recuerda entre sesiones y su conocimiento tiene fecha de corte. Por eso alucina con seguridad.</li>
+    <li>Un agente es un modelo con herramientas en un bucle: reunir contexto, actuar y verificar. El modelo pide; el arnés (Claude Code) ejecuta y aplica tus límites. Sin una forma de comprobar su trabajo, el agente se detiene cuando el código <em>parece</em> terminado.</li>
+    <li>Los modos de permisos deciden qué se hace sin preguntar: Manual, aceptar ediciones, plan, automático, no preguntar y saltar permisos (solo en entornos aislados). Mientras aprendes, Manual y plan. Los puntos de control ayudan a deshacer, pero tu red de seguridad es Git.</li>
+    <li><code>CLAUDE.md</code> es lo que Claude debe saber: corto, concreto y comprobable, sin secretos. <code>settings.json</code> es lo que se permite: reglas <code>allow</code>, <code>ask</code> y <code>deny</code>, evaluadas en el orden deny → ask → allow.</li>
+    <li>Las skills (<code>SKILL.md</code>) son recetas y conocimiento que se cargan cuando hacen falta; los servidores MCP añaden herramientas externas (<code>claude mcp add</code>, <code>.mcp.json</code>); los plugins empaquetan varias piezas y se instalan desde marketplaces con <code>/plugin</code>.</li>
+    <li>Los hooks son comandos que Claude Code ejecuta siempre en un evento (<code>PreToolUse</code>, <code>PostToolUse</code>, <code>Stop</code>…). Reciben un JSON por la entrada estándar y bloquean con el código de salida 2. Los subagentes trabajan con su propio contexto y sirven para explorar y para revisar con ojos nuevos.</li>
+    <li>Flujo con criterio: rama nueva, explorar, planificar, implementar en pasos pequeños, probar (también a mano), revisar el diff línea por línea y hacer commits pequeños. Si no puedes explicar una línea, no la subas.</li>
+    <li>El kit para apps y juegos: claude-code-setup para recomendaciones, context7 para documentación actual, Playwright para ver lo que se construye, hooks de formato, protección y pruebas, un subagente revisor, y frontend-design, Impeccable y 21st para la interfaz. Instala solo lo que resuelve un problema real.</li>
+    <li>Seguridad: secretos fuera del alcance del agente, reglas <code>deny</code> contra lo peligroso, desconfianza ante contenido ajeno (inyección de instrucciones) y ante paquetes que no conoces. Lo que hace el agente lo firmas tú.</li>
+    <li>Para aprender: el estilo de salida Learning, reglas de aprendiz en tu <code>CLAUDE.md</code> personal, una skill de pistas y una escalera de delegación que subes a medida que dominas cada tema.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Estos ejercicios usan validadores y simuladores preparados en la página, así que no necesitas Claude Code para hacerlos. Todo lo que escribas aquí (el JSON de un hook, un <code>CLAUDE.md</code>, una skill) sirve tal cual en un proyecto real. Intenta cada uno unos minutos antes de abrir las pistas.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-hook-json">
+    <h3>Arregla el JSON del hook</h3>
+    <p>Alguien del equipo escribió este hook para formatear con Prettier cada archivo que Claude edite o cree, pero no se ejecuta nunca. Tiene tres errores. Ejecuta, lee el informe del validador, corrige y repite hasta que no quede ninguno.</p>
+    <div class="taller" id="taller-ej-hook-json" data-titulo="Ejercicio 1">
+      <script type="text/plain" class="taller-preparacion">// ─── Validador de la clave "hooks" de settings.json. No hace falta que lo leas. ───
+var __validacionHooks = null;
+var __eventos = ["SessionStart", "Setup", "UserPromptSubmit", "UserPromptExpansion", "PreToolUse", "PermissionRequest", "PermissionDenied", "PostToolUse", "PostToolUseFailure", "PostToolBatch", "Notification", "MessageDisplay", "SubagentStart", "SubagentStop", "TaskCreated", "TaskCompleted", "Stop", "StopFailure", "TeammateIdle", "InstructionsLoaded", "ConfigChange", "CwdChanged", "DirectoryAdded", "FileChanged", "WorktreeCreate", "WorktreeRemove", "PreCompact", "PostCompact", "PreModelSwitch", "PostModelSwitch", "Elicitation", "ElicitationResult", "SessionEnd"];
+var __deHerramienta = ["PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest", "PermissionDenied"];
+var __sinMatcher = ["UserPromptSubmit", "PostToolBatch", "Stop", "TeammateIdle", "TaskCreated", "TaskCompleted", "WorktreeCreate", "WorktreeRemove", "MessageDisplay", "CwdChanged"];
+var __herramientas = ["Bash", "Edit", "Write", "Read", "Glob", "Grep", "WebFetch", "WebSearch", "NotebookEdit", "Agent", "PowerShell", "Skill"];
+function validarSettings(texto) {
+  var errores = [], avisos = [], resumen = [], mapa = {};
+  var obj;
+  try { obj = JSON.parse(texto); }
+  catch (e) {
+    console.log("Error: el JSON no es válido (" + e.message + ").");
+    console.log("Pistas: comillas dobles en claves y textos, una coma entre elementos y ninguna después del último, cada { y [ cerrado.");
+    __validacionHooks = { errores: 1, avisos: 0, mapa: {} };
+    return;
+  }
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) errores.push("el archivo debe ser un objeto { … }.");
+  else if (!obj.hooks) avisos.push("no hay clave \"hooks\".");
+  else if (typeof obj.hooks !== "object" || Array.isArray(obj.hooks)) errores.push("\"hooks\" debe ser un objeto con un evento por clave.");
+  else Object.keys(obj.hooks).forEach(function (ev) {
+    if (__eventos.indexOf(ev) === -1) {
+      var parecido = __eventos.filter(function (x) { return x.toLowerCase() === ev.toLowerCase(); })[0];
+      errores.push(parecido ? "«" + ev + "» no existe: los nombres distinguen mayúsculas. ¿Querías «" + parecido + "»?" : "«" + ev + "» no es un evento de Claude Code.");
+      return;
+    }
+    var grupos = obj.hooks[ev];
+    if (!Array.isArray(grupos)) { errores.push("el valor de " + ev + " debe ser una lista [ … ] de grupos."); return; }
+    mapa[ev] = [];
+    grupos.forEach(function (g, i) {
+      var donde = ev + " (grupo " + (i + 1) + ")";
+      if (!g || typeof g !== "object") { errores.push(donde + ": cada grupo es un objeto { matcher, hooks }."); return; }
+      if (g.command || g.type) errores.push(donde + ": \"type\" y \"command\" van dentro de la lista \"hooks\" del grupo, no directamente en el grupo.");
+      var m = g.matcher;
+      if (m !== undefined && typeof m !== "string") errores.push(donde + ": matcher debe ser un texto.");
+      if (__deHerramienta.indexOf(ev) !== -1) {
+        if (!m) avisos.push(donde + ": sin matcher se ejecuta con todas las herramientas. ¿Es lo que quieres?");
+        else m.split("|").forEach(function (t) {
+          if (/^[a-z]+$/.test(t)) {
+            var bien = __herramientas.filter(function (h) { return h.toLowerCase() === t; })[0];
+            if (bien) errores.push(donde + ": «" + t + "» no coincide con nada; la herramienta se llama «" + bien + "».");
+          }
+        });
+      } else if (m && __sinMatcher.indexOf(ev) !== -1) avisos.push(donde + ": " + ev + " no usa matcher; se ignora.");
+      if (!Array.isArray(g.hooks) || !g.hooks.length) { errores.push(donde + ": falta la lista \"hooks\": [ { \"type\": \"command\", \"command\": \"…\" } ]."); return; }
+      var comandos = [];
+      g.hooks.forEach(function (h) {
+        if (!h || typeof h !== "object") { errores.push(donde + ": cada hook es un objeto { type, command }."); return; }
+        if (h.matcher !== undefined) errores.push(donde + ": \"matcher\" va en el grupo, al lado de \"hooks\", no dentro de cada hook.");
+        if (["command", "http", "prompt", "agent", "mcp_tool"].indexOf(h.type) === -1) errores.push(donde + ": \"type\" debe ser \"command\" (u otro tipo avanzado); encontré " + JSON.stringify(h.type) + ".");
+        else if (h.type === "command" && (typeof h.command !== "string" || !h.command.trim())) errores.push(donde + ": falta el texto de \"command\".");
+        else if (h.type === "command") { comandos.push(h.command); resumen.push(ev + " [" + (m || "todas") + "] → " + h.command); }
+      });
+      mapa[ev].push({ matcher: m || "", comandos: comandos });
+    });
+  });
+  resumen.forEach(function (r) { console.log("Hook: " + r); });
+  avisos.forEach(function (a) { console.log("Aviso: " + a); });
+  errores.forEach(function (e) { console.log("Error: " + e); });
+  console.log("Resultado: " + errores.length + " errores, " + avisos.length + " avisos");
+  __validacionHooks = { errores: errores.length, avisos: avisos.length, mapa: mapa };
+}
+</script>
+      <textarea class="taller-codigo">const settings = `{
+  "hooks": {
+    "postToolUse": [
+      {
+        "hooks": [
+          { "matcher": "Edit|Write", "type": "command", "command": "npx prettier --write ." }
+        ]
+      }
+    ],
+  }
+}`;
+
+validarSettings(settings);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var v = __validacionHooks;
+if (!v) return "Deja la última línea: validarSettings(settings);";
+if (v.errores) return "El validador todavía encuentra errores. Corrígelos de uno en uno, empezando por el primero.";
+var g = (v.mapa.PostToolUse || [])[0];
+if (!g) return "El evento debe llamarse exactamente PostToolUse.";
+var partes = g.matcher.split("|");
+if (partes.indexOf("Edit") === -1 || partes.indexOf("Write") === -1) return "El grupo necesita \"matcher\": \"Edit|Write\", al lado de \"hooks\".";
+if (!g.comandos.some(function (c) { return /prettier/.test(c); })) return "No quites el comando de Prettier.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El primer error es de sintaxis: en JSON no puede haber una coma después del último elemento de una lista o de un objeto. Mira el final de la lista de <code>postToolUse</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Los nombres de evento distinguen mayúsculas: se escribe <code>PostToolUse</code>. Y <code>"matcher"</code> va en el grupo, al mismo nivel que <code>"hooks"</code>, no dentro del objeto que tiene <code>type</code> y <code>command</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const settings = `{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "npx prettier --write ." }
+        ]
+      }
+    ]
+  }
+}`;
+
+validarSettings(settings);</code></pre>
+      <p>Los tres errores son los más frecuentes con hooks: una coma de más que invalida todo el archivo, un evento mal escrito que Claude Code no reconoce y un <code>matcher</code> en el nivel equivocado. En un proyecto real, <code>npx prettier --write .</code> formatea todo el proyecto en cada edición; el ejemplo de la estación, con <code>jq</code>, formatea solo el archivo editado, que es más rápido.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-claude-md">
+    <h3>Completa el CLAUDE.md</h3>
+    <p>Este <code>CLAUDE.md</code> de una tienda de cartas coleccionables está a medias. Sigue los tres comentarios: añade los dos comandos entre comillas invertidas (<code>npm run dev</code> para arrancar y <code>npm test</code> para probar), cambia la regla vaga por una concreta y añade una regla sobre el archivo <code>.env</code>. El revisor tiene que terminar sin errores ni avisos.</p>
+    <div class="taller" id="taller-ej-claude-md" data-titulo="Ejercicio 2">
+      <script type="text/plain" class="taller-preparacion">// ─── Revisor de CLAUDE.md. No hace falta que lo leas. ───
+var __revisionClaudeMd = null, __ultimoClaudeMd = "";
+function revisarClaudeMd(texto) {
+  if (typeof texto !== "string") { console.log("Error: revisarClaudeMd necesita un texto."); __revisionClaudeMd = { errores: 1, avisos: 0 }; return; }
+  __ultimoClaudeMd = texto;
+  var lineas = texto.split("\n");
+  var errores = [], avisos = [], bien = [];
+  var secreto = texto.match(/sk-ant-[\w-]+|sk-[A-Za-z0-9]{16,}|\b(password|contraseña|clave|api_?key|token|secret)\b\s*[:=]\s*\S{4,}/i);
+  if (secreto) errores.push("parece un secreto («" + secreto[0].slice(0, 18) + "…»). CLAUDE.md se sube a Git: las claves van en .env.");
+  if (lineas.length > 200) avisos.push("tiene " + lineas.length + " líneas; la guía recomienda menos de 200.");
+  if (!lineas.some(function (l) { return /^#{1,3} \S/.test(l); })) avisos.push("no tiene títulos (# y ##): agrupa las instrucciones por temas.");
+  else bien.push("está organizado con títulos");
+  var enCodigo = texto.match(/`[^`\n]+`/g) || [];
+  var comandos = enCodigo.filter(function (c) { return /(npm|npx|pnpm|yarn|node|bun|python|pytest|make|cargo|go |git )/.test(c); });
+  if (!comandos.length) avisos.push("no dice qué comandos usar: escribe al menos cómo se arranca y cómo se prueba, entre comillas invertidas (`npm test`).");
+  else bien.push("incluye comandos: " + comandos.slice(0, 3).join(", "));
+  if (comandos.length && !comandos.some(function (c) { return /test|vitest|jest|pytest/.test(c); })) avisos.push("no dice cómo se ejecutan las pruebas.");
+  var vagas = ["buen código", "código limpio", "buenas prácticas", "ten cuidado", "sé cuidadoso", "hazlo bien", "código de calidad", "eres un experto", "programador experto", "como un experto"];
+  vagas.forEach(function (v) { if (texto.toLowerCase().indexOf(v) !== -1) avisos.push("instrucción vaga: «" + v + "». ¿Cómo comprobarías que se cumple? Escribe una regla concreta."); });
+  var imp = (texto.match(/IMPORTANTE/g) || []).length;
+  if (imp > 1) avisos.push("usa «IMPORTANTE» " + imp + " veces: si todo es importante, nada lo es.");
+  bien.forEach(function (b) { console.log("Bien: " + b); });
+  avisos.forEach(function (a) { console.log("Aviso: " + a); });
+  errores.forEach(function (e) { console.log("Error: " + e); });
+  console.log("Resultado: " + errores.length + " errores, " + avisos.length + " avisos, " + lineas.length + " líneas");
+  __revisionClaudeMd = { errores: errores.length, avisos: avisos.length };
+}
+</script>
+      <textarea class="taller-codigo">const claudeMd = [
+  "# Tienda de cartas",
+  "App de React (en `web/`) y API de Express (en `api/`).",
+  "",
+  "## Comandos",
+  // 1. Añade una línea para arrancar: `npm run dev`
+  // 2. Añade una línea para probar: `npm test`
+  "",
+  "## Reglas",
+  "- Escribe código de calidad.",
+  // 3. Cambia la regla de arriba por una concreta y añade otra sobre `.env`
+].join("\n");
+
+revisarClaudeMd(claudeMd);</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!__revisionClaudeMd) return "Deja la última línea: revisarClaudeMd(claudeMd);";
+if (__revisionClaudeMd.errores || __revisionClaudeMd.avisos) return "El revisor todavía muestra errores o avisos. Léelos en la salida.";
+var t = __ultimoClaudeMd;
+if (!/`npm run dev`/.test(t)) return "Falta el comando para arrancar, entre comillas invertidas: `npm run dev`.";
+if (!/`npm test`/.test(t)) return "Falta el comando de pruebas, entre comillas invertidas: `npm test`.";
+if (!/\.env/.test(t)) return "Añade una regla sobre el archivo .env (por ejemplo, que Claude no lo lea ni lo edite).";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Cada línea es un texto entre comillas dobles dentro de la lista, seguido de una coma. Por ejemplo: <code>"- `npm run dev`: arranca la web y la API",</code>. Las comillas invertidas van dentro de las dobles sin problema.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Una regla concreta se puede comprobar mirando el código: «Usa 2 espacios de sangría», «Los componentes de React van en <code>web/src/componentes/</code>». Para el <code>.env</code>: «No leas ni edites <code>.env</code>; si falta una variable, añádela sin valor a <code>.env.example</code>».</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const claudeMd = [
+  "# Tienda de cartas",
+  "App de React (en `web/`) y API de Express (en `api/`).",
+  "",
+  "## Comandos",
+  "- `npm run dev`: arranca la web y la API",
+  "- `npm test`: ejecuta las pruebas (deben pasar antes de terminar una tarea)",
+  "",
+  "## Reglas",
+  "- Usa 2 espacios de sangría y comillas dobles.",
+  "- No leas ni edites `.env`: si falta una variable, añádela sin valor a `.env.example`."
+].join("\n");
+
+revisarClaudeMd(claudeMd);</code></pre>
+      <p>Fíjate en que la regla del <code>.env</code> dice también qué hacer en su lugar. Las instrucciones que ofrecen una alternativa se siguen mejor que las prohibiciones a secas. Y recuerda que esta regla es una petición: la protección de verdad es la regla <code>deny</code> y el hook.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-permisos">
+    <h3>Reglas de permisos a medida</h3>
+    <p>Escribe las listas <code>allow</code>, <code>ask</code> y <code>deny</code> para que Claude Code, en modo Manual, se comporte así: las pruebas (<code>npm test</code>) y cualquier script <code>npm run …</code> se ejecutan sin preguntar; un <code>git push</code> normal pregunta; un <code>git push --force</code>, cualquier lectura de <code>.env</code> o <code>.env.algo</code> y cualquier <code>rm -rf</code> se bloquean. <code>probarReglas</code> comprueba diez acciones y te dice cuántas aciertas.</p>
+    <div class="taller" id="taller-ej-permisos" data-titulo="Ejercicio 3">
+      <script type="text/plain" class="taller-preparacion">// ─── Simulador simplificado de las reglas de permisos (modo Manual) y banco de pruebas. No hace falta que lo leas. ───
+var __resultadoReglas = null;
+function __patron(p) {
+  var fin = / \*$/.test(p);
+  var cuerpo = fin ? p.slice(0, -2) : p;
+  var re = cuerpo.split("*").map(function (t) { return t.replace(/[.+?^${}()|[\]\\]/g, "\\$&"); }).join(".*");
+  return new RegExp("^" + re + (fin ? "( .*)?" : "") + "$");
+}
+function __ruta(r) { return String(r).trim().replace(/^\.\//, ""); }
+function __patronRuta(p) {
+  var re = __ruta(p).split("**").map(function (t) { return t.split("*").map(function (u) { return u.replace(/[.+?^${}()|[\]\\]/g, "\\$&"); }).join("[^/]*"); }).join(".*");
+  return new RegExp("^" + re + "$");
+}
+function __partes(accion) {
+  var m = /^(\w+)\((.*)\)$/.exec(String(accion).trim());
+  return m ? { herramienta: m[1], argumento: m[2] } : { herramienta: "Bash", argumento: String(accion).trim() };
+}
+function __coincide(regla, herramienta, argumento) {
+  var r = __partes(regla);
+  if (r.herramienta !== herramienta) return false;
+  if (herramienta === "Bash") return __patron(r.argumento).test(argumento);
+  return __patronRuta(r.argumento).test(__ruta(argumento));
+}
+var __soloLectura = /^(ls|cat|pwd|echo|head|tail|grep|wc|find|diff|git status|git diff|git log)( |$)/;
+function __unaAccion(reglas, herramienta, argumento) {
+  var lista = function (n) { return (reglas && reglas[n]) || []; };
+  var hay = function (n) { return lista(n).some(function (r) { return __coincide(r, herramienta, argumento); }); };
+  if (herramienta === "Bash") {
+    var lee = /^(cat|head|tail) +(\S+)$/.exec(argumento);
+    if (lee && lista("deny").some(function (r) { return __coincide(r, "Read", lee[2]); })) return "denegado";
+  }
+  if (hay("deny")) return "denegado";
+  if (hay("ask")) return "preguntar";
+  if (hay("allow")) return "permitido";
+  if (herramienta === "Read" || herramienta === "Grep" || herramienta === "Glob") return "permitido";
+  if (herramienta === "Bash" && __soloLectura.test(argumento)) return "permitido";
+  return "preguntar";
+}
+function decidirPermiso(reglas, accion) {
+  var p = __partes(accion);
+  var trozos = p.herramienta === "Bash" ? p.argumento.split(/\s*(?:&&|\|\||;|\|)\s*/).filter(Boolean) : [p.argumento];
+  var res = trozos.map(function (t) { return __unaAccion(reglas, p.herramienta, t); });
+  return res.indexOf("denegado") !== -1 ? "denegado" : res.indexOf("preguntar") !== -1 ? "preguntar" : "permitido";
+}
+function probarReglas(reglas) {
+  var casos = [
+    ["Bash(npm test)", "permitido"], ["Bash(npm run lint)", "permitido"], ["Bash(npm run build)", "permitido"],
+    ["Bash(npm install express)", "preguntar"], ["Bash(git push origin main)", "preguntar"],
+    ["Bash(git push --force origin main)", "denegado"], ["Read(./.env)", "denegado"],
+    ["Bash(cat .env.production)", "denegado"], ["Edit(src/app.js)", "preguntar"], ["Bash(rm -rf dist)", "denegado"]
+  ];
+  var aciertos = 0;
+  casos.forEach(function (c) {
+    var r = decidirPermiso(reglas, c[0]);
+    if (r === c[1]) aciertos++;
+    console.log((r === c[1] ? "bien   " : "revisa ") + (r + "          ").slice(0, 10) + "← " + c[0] + (r === c[1] ? "" : "  (se esperaba: " + c[1] + ")"));
+  });
+  console.log("Aciertos: " + aciertos + " de " + casos.length);
+  __resultadoReglas = { aciertos: aciertos, total: casos.length };
+}
+</script>
+      <textarea class="taller-codigo">const reglas = {
+  allow: [],
+  ask: [],
+  deny: []
+};
+
+probarReglas(reglas);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var r = __resultadoReglas;
+if (!r) return "Deja la última línea: probarReglas(reglas);";
+if (r.aciertos < r.total) return "Llevas " + r.aciertos + " de " + r.total + ". Mira las líneas marcadas con «revisa».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Con <code>"Bash(npm run *)"</code> cubres todos los scripts de npm de una vez. Y recuerda el orden: <code>deny</code> gana a <code>ask</code>, así que puedes tener <code>"Bash(git push *)"</code> en <code>ask</code> y <code>"Bash(git push --force *)"</code> en <code>deny</code> a la vez.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para bloquear <code>cat .env.production</code> no hace falta una regla de Bash: una regla <code>Read</code> sobre el archivo también bloquea los comandos que lo leen. <code>"Read(./.env.*)"</code> cubre todos los <code>.env.algo</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const reglas = {
+  allow: ["Bash(npm test)", "Bash(npm run *)"],
+  ask: ["Bash(git push *)"],
+  deny: ["Read(./.env)", "Read(./.env.*)", "Bash(git push --force *)", "Bash(rm -rf *)"]
+};
+
+probarReglas(reglas);</code></pre>
+      <p><code>npm install express</code> y <code>Edit(src/app.js)</code> preguntan sin que escribas nada: es el comportamiento por defecto del modo Manual para lo que ninguna regla cubre. Una regla <code>ask</code> tiene sentido para cosas que, sin ella, se permitirían: por ejemplo, un comando que otra regla <code>allow</code> más general dejaría pasar.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-skill">
+    <h3>Tu primera skill</h3>
+    <p>Escribe el <code>SKILL.md</code> de una skill <code>nuevo-enemigo</code> para tu juego. Requisitos: un nombre válido; una descripción que diga qué hace y cuándo usarla; que solo la puedas lanzar tú, porque crea archivos; y unas instrucciones con al menos tres pasos numerados que usen <code>$ARGUMENTS</code> (el nombre del enemigo) y terminen ejecutando <code>npm test</code>.</p>
+    <div class="taller" id="taller-ej-skill" data-titulo="Ejercicio 4">
+      <script type="text/plain" class="taller-preparacion">// ─── Validador de SKILL.md (estándar Agent Skills y campos de Claude Code). No hace falta que lo leas. ───
+var __validacionSkill = null;
+function __frontmatter(texto) {
+  var lineas = String(texto).split("\n");
+  if (lineas[0].trim() !== "---") return { error: "la primera línea tiene que ser --- (así empieza el frontmatter)." };
+  var fin = -1;
+  for (var i = 1; i < lineas.length; i++) if (lineas[i].trim() === "---") { fin = i; break; }
+  if (fin === -1) return { error: "falta la segunda línea --- que cierra el frontmatter." };
+  var campos = {};
+  for (var j = 1; j < fin; j++) {
+    var l = lineas[j];
+    if (!l.trim()) continue;
+    var m = /^([A-Za-z_-]+):\s*(.*)$/.exec(l);
+    if (!m) return { error: "no entiendo la línea «" + l + "» del frontmatter: cada línea es clave: valor." };
+    campos[m[1]] = m[2].trim();
+  }
+  return { campos: campos, cuerpo: lineas.slice(fin + 1).join("\n") };
+}
+function validarSkill(texto) {
+  var f = __frontmatter(texto), errores = [], avisos = [];
+  if (f.error) { console.log("Error: " + f.error); __validacionSkill = { errores: 1, avisos: 0, campos: {}, cuerpo: "" }; return; }
+  var c = f.campos;
+  if (!c.name) errores.push("falta name.");
+  else if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(c.name) || c.name.length > 64) errores.push("name «" + c.name + "» no es válido: solo minúsculas, números y guiones sueltos (por ejemplo, nuevo-nivel).");
+  if (!c.description) errores.push("falta description: es lo que Claude lee para decidir cuándo usar la skill.");
+  else {
+    if (c.description.length > 1024) errores.push("description pasa de 1024 caracteres.");
+    if (c.description.length < 40) avisos.push("description es muy corta: di qué hace y cuándo usarla.");
+    if (!/cuando/i.test(c.description)) avisos.push("description no dice cuándo usarla (por ejemplo, «Úsala cuando…»).");
+  }
+  var dmi = c["disable-model-invocation"];
+  if (dmi !== undefined && ["true", "false"].indexOf(dmi) === -1) errores.push("disable-model-invocation debe ser true o false.");
+  var conocidos = ["name", "description", "disable-model-invocation", "user-invocable", "allowed-tools", "argument-hint", "when_to_use", "model", "context", "agent", "license", "arguments", "paths", "effort", "compatibility", "metadata"];
+  Object.keys(c).forEach(function (k) { if (conocidos.indexOf(k) === -1) avisos.push("campo desconocido «" + k + "»: Claude Code lo ignora sin avisar. ¿Está bien escrito?"); });
+  if (!f.cuerpo.trim()) errores.push("el cuerpo está vacío: debajo del frontmatter van las instrucciones.");
+  console.log("Comando: /" + (c.name || "(sin nombre)") + (dmi === "true" ? " (solo lo lanzas tú)" : " (lo puedes lanzar tú o Claude)"));
+  avisos.forEach(function (a) { console.log("Aviso: " + a); });
+  errores.forEach(function (e) { console.log("Error: " + e); });
+  console.log("Resultado: " + errores.length + " errores, " + avisos.length + " avisos");
+  __validacionSkill = { errores: errores.length, avisos: avisos.length, campos: c, cuerpo: f.cuerpo };
+}
+</script>
+      <textarea class="taller-codigo">const skill = [
+  "---",
+  "name: Nuevo Enemigo",
+  "description: enemigos",
+  "---",
+  "Haz un enemigo."
+].join("\n");
+
+validarSkill(skill);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var v = __validacionSkill;
+if (!v) return "Deja la última línea: validarSkill(skill);";
+if (v.errores) return "Corrige los errores del informe.";
+if (v.avisos) return "Quedan avisos: léelos y mejora la descripción o los campos.";
+if (v.campos.name !== "nuevo-enemigo") return "La skill debe llamarse nuevo-enemigo.";
+if (v.campos["disable-model-invocation"] !== "true") return "Esta skill crea archivos: añade disable-model-invocation: true para que solo la lances tú.";
+if (v.cuerpo.indexOf("$ARGUMENTS") === -1) return "Usa $ARGUMENTS en las instrucciones para recibir el nombre del enemigo.";
+var pasos = v.cuerpo.split("\n").filter(function (l) { return /^\s*\d+\.\s+\S/.test(l); }).length;
+if (pasos < 3) return "Escribe al menos tres pasos numerados (1., 2., 3.).";
+if (!/npm test/.test(v.cuerpo)) return "Incluye un paso que ejecute npm test para comprobar el resultado.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El nombre se escribe como el de una carpeta: <code>nuevo-enemigo</code>. La descripción funciona mejor con dos partes: qué hace («Crea un enemigo nuevo a partir de la plantilla») y cuándo («Úsala cuando se pida añadir un enemigo»).</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El frontmatter termina en la segunda línea <code>---</code>. Debajo, cada paso es una línea de la lista que empieza por <code>"1. </code>, <code>"2. </code>… Por ejemplo: <code>"1. Copia `src/enemigos/plantilla.js` a `src/enemigos/$ARGUMENTS.js`.",</code></p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const skill = [
+  "---",
+  "name: nuevo-enemigo",
+  "description: Crea un enemigo nuevo del juego a partir de la plantilla. Úsala cuando se pida añadir un enemigo o un jefe.",
+  "disable-model-invocation: true",
+  "---",
+  "",
+  "Crea el enemigo llamado $ARGUMENTS:",
+  "",
+  "1. Copia `src/enemigos/plantilla.js` a `src/enemigos/$ARGUMENTS.js`.",
+  "2. Pregúntame su vida, su velocidad y su ataque antes de rellenarlo.",
+  "3. Regístralo al final de la lista de `src/enemigos/index.js`.",
+  "4. Ejecuta `npm test` y corrige lo que falle."
+].join("\n");
+
+validarSkill(skill);</code></pre>
+      <p>En un proyecto real guardarías el texto (sin las comillas ni las comas de JavaScript) en <code>.claude/skills/nuevo-enemigo/SKILL.md</code> y lo usarías con <code>/nuevo-enemigo murcielago</code>. El paso 2 es un buen hábito: obliga a que las decisiones de diseño del juego las tomes tú.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-mcp">
+    <h3>El .mcp.json del equipo</h3>
+    <p>Tu equipo quiere compartir dos servidores MCP: context7 (un servidor <code>http</code> en <code>https://mcp.context7.com/mcp</code>, con la cabecera <code>Authorization</code> que lee la clave de la variable <code>CONTEXT7_API_KEY</code>) y Playwright (un servidor <code>stdio</code> que se arranca con <code>npx</code> y los argumentos <code>-y</code> y <code>@playwright/mcp@latest</code>). Alguien escribió esta primera versión con tres problemas; arréglala. Aquí la configuración es un objeto de JavaScript: el validador la convierte a JSON y te enseña cómo quedaría el archivo.</p>
+    <div class="taller" id="taller-ej-mcp" data-titulo="Ejercicio 5">
+      <script type="text/plain" class="taller-preparacion">// ─── Validador de .mcp.json. No hace falta que lo leas. ───
+var __validacionMcp = null;
+function validarMcp(entrada) {
+  var errores = [], avisos = [], obj;
+  try { obj = typeof entrada === "string" ? JSON.parse(entrada) : JSON.parse(JSON.stringify(entrada)); }
+  catch (e) { console.log("Error: no es JSON válido (" + e.message + ")."); __validacionMcp = { errores: 1, avisos: 0, servidores: {} }; return; }
+  var servidores = obj && obj.mcpServers;
+  if (!servidores || typeof servidores !== "object" || Array.isArray(servidores)) { errores.push("falta la clave mcpServers con un objeto dentro."); servidores = {}; }
+  Object.keys(servidores).forEach(function (n) {
+    var s = servidores[n] || {};
+    var tipo = s.type || (s.command ? "stdio" : s.url ? "http" : "");
+    if (["http", "stdio", "sse"].indexOf(tipo) === -1) { errores.push(n + ": type debe ser \"http\" o \"stdio\"."); return; }
+    if (tipo === "stdio") {
+      if (typeof s.command !== "string" || !s.command.trim()) errores.push(n + ": falta command, el programa que arranca el servidor.");
+      else if (/\s/.test(s.command.trim())) errores.push(n + ": command es solo el programa (por ejemplo \"npx\"); los argumentos van en la lista args.");
+      if (s.args !== undefined && (!Array.isArray(s.args) || s.args.some(function (a) { return typeof a !== "string"; }))) errores.push(n + ": args debe ser una lista de textos.");
+    } else if (typeof s.url !== "string" || !/^https:\/\//.test(s.url)) errores.push(n + ": url debe empezar por https:// (tiene " + JSON.stringify(s.url) + ").");
+    [s.headers, s.env].forEach(function (grupo) {
+      if (!grupo || typeof grupo !== "object") return;
+      Object.keys(grupo).forEach(function (k) {
+        var v = String(grupo[k]);
+        if (v.indexOf("${") === -1 && /(sk-|ctx7sk|api[_-]?key|token|bearer\s+\S{8,})/i.test(v)) errores.push(n + ": «" + k + "» lleva una clave escrita en el archivo, que iría a Git. Usa ${VARIABLE} para leerla del entorno.");
+      });
+    });
+    console.log("Servidor " + n + " (" + tipo + "): " + (tipo === "stdio" ? s.command + " " + (s.args || []).join(" ") : s.url));
+  });
+  if (!Object.keys(servidores).length) avisos.push("no hay ningún servidor.");
+  avisos.forEach(function (a) { console.log("Aviso: " + a); });
+  errores.forEach(function (e) { console.log("Error: " + e); });
+  console.log("Resultado: " + errores.length + " errores, " + avisos.length + " avisos");
+  if (!errores.length) console.log("Así quedaría .mcp.json:\n" + JSON.stringify(obj, null, 2));
+  __validacionMcp = { errores: errores.length, avisos: avisos.length, servidores: servidores };
+}
+</script>
+      <textarea class="taller-codigo">const mcp = {
+  mcpServers: {
+    context7: {
+      type: "http",
+      url: "http://mcp.context7.com/mcp",
+      headers: { Authorization: "Bearer ctx7sk-9f8e7d6c5b4a3210" }
+    },
+    playwright: {
+      type: "stdio",
+      command: "npx -y @playwright/mcp@latest"
+    }
+  }
+};
+
+validarMcp(mcp);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var v = __validacionMcp;
+if (!v) return "Deja la última línea: validarMcp(mcp);";
+if (v.errores) return "Corrige los errores del informe.";
+var c = v.servidores.context7, p = v.servidores.playwright;
+if (!c || !p) return "Tiene que haber dos servidores: context7 y playwright.";
+if (c.type !== "http" || c.url !== "https://mcp.context7.com/mcp") return "context7 es un servidor http en https://mcp.context7.com/mcp.";
+if (!c.headers || !/\$\{CONTEXT7_API_KEY/.test(c.headers.Authorization || "")) return "La cabecera Authorization de context7 debe leer la clave con ${CONTEXT7_API_KEY:-} (o ${CONTEXT7_API_KEY}).";
+if (p.command !== "npx" || !Array.isArray(p.args) || p.args.indexOf("@playwright/mcp@latest") === -1 || p.args.indexOf("-y") === -1) return "playwright se arranca con command: \"npx\" y args: [\"-y\", \"@playwright/mcp@latest\"].";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Los tres problemas: una dirección sin cifrar (<code>http://</code> en lugar de <code>https://</code>), una clave escrita tal cual en el archivo y un <code>command</code> que mezcla el programa con sus argumentos.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La cabecera queda así: <code>Authorization: "Bearer ${CONTEXT7_API_KEY:-}"</code>. Dentro de unas comillas dobles normales, <code>${…}</code> es texto corriente para JavaScript; es Claude Code quien lo sustituye al leer <code>.mcp.json</code>. Para Playwright: <code>command: "npx", args: ["-y", "@playwright/mcp@latest"]</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const mcp = {
+  mcpServers: {
+    context7: {
+      type: "http",
+      url: "https://mcp.context7.com/mcp",
+      headers: { Authorization: "Bearer ${CONTEXT7_API_KEY:-}" }
+    },
+    playwright: {
+      type: "stdio",
+      command: "npx",
+      args: ["-y", "@playwright/mcp@latest"]
+    }
+  }
+};
+
+validarMcp(mcp);</code></pre>
+      <p>La forma <code>${CONTEXT7_API_KEY:-}</code> significa «el valor de la variable, o nada si no existe»: así el servidor funciona sin clave (con los límites anónimos) y cada persona del equipo puede poner la suya en su entorno. Si alguna vez subiste una clave a Git por error, no basta con quitarla: anúlala y crea otra.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-guardia">
+    <h3>Un hook de protección sin falsos positivos</h3>
+    <p>La función <code>decidir</code> del hook que viste en la estación bloquea <code>.env.example</code> sin motivo. Reescríbela para que bloquee (código 2, con un mensaje) cualquier archivo llamado <code>.env</code> o que empiece por <code>.env.</code> (como <code>.env.local</code>) excepto <code>.env.example</code>, cualquier <code>package-lock.json</code> y cualquier archivo dentro de una carpeta <code>.git</code>, y deje pasar (código 0) todo lo demás, incluidas rutas de Windows y peticiones sin ruta. <code>probarHook</code> la pone a prueba con quince casos que no ves.</p>
+    <div class="taller" id="taller-ej-guardia" data-titulo="Ejercicio 6">
+      <script type="text/plain" class="taller-preparacion">// ─── Banco de pruebas del hook. No hace falta que lo leas. ───
+var __resultadoHook = null;
+function probarHook(decidir) {
+  var casos = [
+    [".env", 2], ["/proyecto/.env", 2], ["config/.env.production", 2], [".env.local", 2], ["C:\\proyecto\\.env", 2],
+    ["package-lock.json", 2], ["web/package-lock.json", 2], [".git/config", 2], ["/proyecto/.git/HEAD", 2],
+    [".env.example", 0], ["web/.env.example", 0], ["src/juego.js", 0], [".github/workflows/pruebas.yml", 0], ["src/env.js", 0], [null, 0]
+  ];
+  var aciertos = 0;
+  casos.forEach(function (c) {
+    var entrada = c[0] === null ? { tool_name: "Bash", tool_input: { command: "ls" } } : { tool_name: "Edit", tool_input: { file_path: c[0] } };
+    var r;
+    try { r = decidir(entrada); } catch (e) { console.log("revisa  " + (c[0] || "(sin ruta)") + ": tu función lanzó un error: " + e.message); return; }
+    var ok = r && r.codigo === c[1] && (c[1] === 0 || (typeof r.mensaje === "string" && r.mensaje.trim() !== ""));
+    if (ok) aciertos++;
+    console.log((ok ? "bien    " : "revisa  ") + (c[1] === 2 ? "debe bloquear: " : "debe dejar:    ") + (c[0] || "(petición sin ruta)") + (ok ? "" : "  (devolvió " + JSON.stringify(r) + ")"));
+  });
+  console.log("Aciertos: " + aciertos + " de " + casos.length);
+  __resultadoHook = { aciertos: aciertos, total: casos.length };
+}
+</script>
+      <textarea class="taller-codigo">function decidir(entrada) {
+  const ruta = String(entrada.tool_input.file_path || "").replaceAll("\\", "/");
+  const protegidos = [".env", "package-lock.json", ".git/"];
+  for (const patron of protegidos) {
+    if (ruta.includes(patron)) {
+      return { codigo: 2, mensaje: `Bloqueado: ${ruta} coincide con '${patron}'` };
+    }
+  }
+  return { codigo: 0, mensaje: "" };
+}
+
+probarHook(decidir);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var r = __resultadoHook;
+if (!r) return "Deja la última línea: probarHook(decidir);";
+if (r.aciertos < r.total) return "Llevas " + r.aciertos + " de " + r.total + ". Mira las líneas marcadas con «revisa».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Deja de buscar trozos de texto en toda la ruta y trabaja con sus partes: <code>ruta.split("/")</code> te da una lista de carpetas y, al final, el nombre del archivo. Así <code>.github</code> ya no se confunde con <code>.git</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Comprueba primero la excepción: si el nombre es exactamente <code>.env.example</code>, devuelve código 0. Después, <code>nombre === ".env" || nombre.startsWith(".env.")</code>. Para la carpeta, <code>partes.includes(".git")</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function decidir(entrada) {
+  const ruta = String(entrada.tool_input.file_path || "").replaceAll("\\", "/");
+  const partes = ruta.split("/");
+  const nombre = partes[partes.length - 1];
+  if (nombre === ".env.example") return { codigo: 0, mensaje: "" };
+  if (nombre === ".env" || nombre.startsWith(".env.")) {
+    return { codigo: 2, mensaje: `Bloqueado: ${ruta} guarda secretos` };
+  }
+  if (nombre === "package-lock.json") {
+    return { codigo: 2, mensaje: "Bloqueado: el archivo de bloqueo solo lo cambia npm" };
+  }
+  if (partes.includes(".git")) {
+    return { codigo: 2, mensaje: "Bloqueado: la carpeta .git la gestiona Git" };
+  }
+  return { codigo: 0, mensaje: "" };
+}
+
+probarHook(decidir);</code></pre>
+      <p>Para usarla como hook real, léela con <code>JSON.parse(readFileSync(0, "utf8"))</code>, escribe el mensaje con <code>console.error</code> y termina con <code>process.exit(r.codigo)</code>, como en <code>proteger.mjs</code>. Separar la decisión en una función pura tiene otra ventaja: la puedes cubrir con pruebas de Vitest como cualquier otra función.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-pruebas-ia">
+    <h3>La prueba que protege el error</h3>
+    <p>La regla de negocio de <code>aplicarCupon(total, cupon)</code> es esta: el cupón <code>BIENVENIDA</code> resta 5, pero el total nunca baja de 0; el cupón <code>MITAD</code> deja la mitad del total; cualquier otro cupón no cambia nada; y los cupones no distinguen mayúsculas (<code>mitad</code> vale igual que <code>MITAD</code>). Un asistente implementó la función y escribió las pruebas de abajo. Todas pasan en verde. Reescribe la lista <code>casos</code> a partir de la regla, no del código: tus casos deben pasar con una implementación correcta y detectar los dos errores de la implementación del asistente. Usa al menos cinco casos.</p>
+    <div class="taller" id="taller-ej-pruebas-ia" data-titulo="Ejercicio 7">
+      <script type="text/plain" class="taller-preparacion">// ─── Banco de pruebas: tu lista de casos contra dos implementaciones. No hace falta que lo leas. ───
+var __resultadoCasos = null;
+function __cuponAsistente(total, cupon) {
+  if (cupon === "BIENVENIDA") return total - 5;
+  if (cupon === "MITAD") return total / 2;
+  return total;
+}
+function __cuponCorrecto(total, cupon) {
+  var c = String(cupon).toUpperCase();
+  if (c === "BIENVENIDA") return Math.max(0, total - 5);
+  if (c === "MITAD") return total / 2;
+  return total;
+}
+function evaluarCasos(casos) {
+  if (!Array.isArray(casos)) { console.log("casos tiene que ser una lista."); return; }
+  var pasanCorrecta = 0, fallanAsistente = 0, negativo = false, minusculas = false, validos = true;
+  casos.forEach(function (c, i) {
+    if (!c || typeof c.total !== "number" || typeof c.cupon !== "string" || typeof c.esperado !== "number") { validos = false; console.log("Caso " + (i + 1) + ": cada caso necesita total (número), cupon (texto) y esperado (número)."); return; }
+    var bien = __cuponCorrecto(c.total, c.cupon) === c.esperado;
+    var asis = __cuponAsistente(c.total, c.cupon) === c.esperado;
+    if (bien) pasanCorrecta++;
+    if (!asis) fallanAsistente++;
+    if (bien && !asis && c.cupon.toUpperCase() === "BIENVENIDA" && c.total < 5) negativo = true;
+    if (bien && !asis && c.cupon !== c.cupon.toUpperCase()) minusculas = true;
+    console.log("aplicarCupon(" + c.total + ", " + JSON.stringify(c.cupon) + ") esperado " + c.esperado + " | correcta: " + (bien ? "pasa" : "FALLA") + " | asistente: " + (asis ? "pasa" : "FALLA"));
+  });
+  console.log("Con una implementación correcta pasan " + pasanCorrecta + " de " + casos.length + ".");
+  console.log("Con la del asistente fallan " + fallanAsistente + " de " + casos.length + ".");
+  __resultadoCasos = { total: casos.length, validos: validos, pasanCorrecta: pasanCorrecta, negativo: negativo, minusculas: minusculas };
+}
+</script>
+      <textarea class="taller-codigo">// Pruebas que escribió el asistente leyendo su propio código
+const casos = [
+  { total: 20, cupon: "BIENVENIDA", esperado: 15 },
+  { total: 3, cupon: "BIENVENIDA", esperado: -2 },
+  { total: 10, cupon: "MITAD", esperado: 5 },
+  { total: 10, cupon: "NADA", esperado: 10 }
+];
+
+evaluarCasos(casos);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var r = __resultadoCasos;
+if (!r) return "Deja la última línea: evaluarCasos(casos);";
+if (!r.validos) return "Revisa el formato de los casos: { total: número, cupon: \"texto\", esperado: número }.";
+if (r.pasanCorrecta < r.total) return "Algún caso falla con una implementación correcta: su valor esperado no sigue la regla. Míralo en la salida (correcta: FALLA).";
+if (r.total < 5) return "Usa al menos cinco casos.";
+if (!r.negativo) return "Todavía no detectas el primer error: ¿qué debería pasar con BIENVENIDA cuando el total es menor que 5?";
+if (!r.minusculas) return "Todavía no detectas el segundo error: la regla dice que los cupones no distinguen mayúsculas.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Mira la segunda prueba del asistente: espera −2. ¿Qué dice la regla sobre el total? Nunca baja de 0. Esa prueba no comprueba la regla: copia lo que hace el código.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La regla tiene cuatro frases y cada una merece al menos un caso. La última (mayúsculas) no tiene ninguno. Prueba también el borde: un total de exactamente 5 con <code>BIENVENIDA</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const casos = [
+  { total: 20, cupon: "BIENVENIDA", esperado: 15 },
+  { total: 3, cupon: "BIENVENIDA", esperado: 0 },
+  { total: 5, cupon: "BIENVENIDA", esperado: 0 },
+  { total: 10, cupon: "MITAD", esperado: 5 },
+  { total: 10, cupon: "mitad", esperado: 5 },
+  { total: 10, cupon: "NADA", esperado: 10 }
+];
+
+evaluarCasos(casos);</code></pre>
+      <p>La técnica es la de la <a href="26-testing.html#casos">Estación 26</a>: un caso por cada frase de la regla, más los bordes. La diferencia es de dónde salen los valores esperados: de la regla, que es la especificación, y nunca de ejecutar el código para ver qué devuelve. Cuando una IA te proponga pruebas, pregúntate por cada valor esperado: ¿de dónde sale este número?</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-diff">
+    <h3>Un revisor automático de diffs</h3>
+    <p>Escribe <code>revisarDiff(diff)</code>, que recibe el texto de un <code>git diff</code> y devuelve una lista de alertas <code>{ tipo, texto }</code>, una por cada línea problemática. Solo cuentan las líneas <strong>añadidas</strong> (empiezan por <code>+</code>) y <strong>quitadas</strong> (empiezan por <code>-</code>); las que empiezan por <code>+++</code> o <code>---</code> son la cabecera con el nombre del archivo. Los tipos son: <code>"secreto"</code>, una línea añadida que contiene <code>sk-</code> seguido de al menos 10 letras, números o guiones; <code>"only"</code>, una línea añadida con <code>.only(</code> (una prueba aislada que hace que las demás no se ejecuten); <code>"console.log"</code>, una línea añadida con <code>console.log(</code>; y <code>"prueba-borrada"</code>, una línea quitada que contiene <code>test(</code> o <code>it(</code>. <code>probarRevisor</code> la prueba con tres diffs que no ves.</p>
+    <div class="taller" id="taller-ej-diff" data-titulo="Ejercicio 8">
+      <script type="text/plain" class="taller-preparacion">// ─── Banco de pruebas del revisor de diffs. No hace falta que lo leas. ───
+var __resultadoRevisor = null;
+function probarRevisor(revisar) {
+  var diffs = [
+    { nombre: "pruebas del marcador", esperado: ["only", "prueba-borrada"], texto: ["--- a/test/marcador.test.js", "+++ b/test/marcador.test.js", "@@ -1,9 +1,6 @@", " import { sumarPuntos } from \"../src/marcador.js\";", "-test(\"suma texto y número\", () => {", "-  expect(sumarPuntos(\"10\", 5)).toBe(15);", "-});", "+test.only(\"suma dos números\", () => {", "   expect(sumarPuntos(10, 5)).toBe(15);", " });"].join("\n") },
+    { nombre: "configuración", esperado: ["console.log", "secreto"], texto: ["--- a/src/config.js", "+++ b/src/config.js", "@@ -1,3 +1,4 @@", " export const PUERTO = 3000;", "-export const CLAVE = process.env.CLAVE_API;", "+export const CLAVE = \"sk-ant-EJEMPLO-no-real-0001\";", "+console.log(\"clave cargada\", CLAVE);"].join("\n") },
+    { nombre: "física", esperado: [], texto: ["--- a/src/fisica.js", "+++ b/src/fisica.js", "@@ -10,8 +10,7 @@", " export function mover(obj, dt) {", "-  console.log(obj.x);", "-  obj.x += obj.vx;", "+  obj.x += obj.vx * dt;", "   return obj;", " }"].join("\n") }
+  ];
+  var aciertos = 0;
+  diffs.forEach(function (d) {
+    var r;
+    try { r = revisar(d.texto); } catch (e) { console.log("Diff «" + d.nombre + "»: tu función lanzó un error: " + e.message); return; }
+    if (!Array.isArray(r)) { console.log("Diff «" + d.nombre + "»: revisarDiff debe devolver una lista."); return; }
+    var tipos = r.map(function (a) { return a && a.tipo; }).filter(function (t, i, l) { return l.indexOf(t) === i; }).sort();
+    var ok = JSON.stringify(tipos) === JSON.stringify(d.esperado);
+    if (ok) aciertos++;
+    console.log((ok ? "bien    " : "revisa  ") + "diff «" + d.nombre + "»: encontraste " + JSON.stringify(tipos) + (ok ? "" : ", se esperaba " + JSON.stringify(d.esperado)));
+  });
+  console.log("Aciertos: " + aciertos + " de " + diffs.length);
+  __resultadoRevisor = { aciertos: aciertos, total: diffs.length };
+}
+</script>
+      <textarea class="taller-codigo">function revisarDiff(diff) {
+  const alertas = [];
+  for (const linea of diff.split("\n")) {
+    // Ojo: las líneas añadidas empiezan por "+" y las quitadas por "-",
+    // pero "+++" y "---" son la cabecera con el nombre del archivo.
+    if (linea.includes("console.log(")) {
+      alertas.push({ tipo: "console.log", texto: linea });
+    }
+  }
+  return alertas;
+}
+
+const ejemplo = `--- a/src/juego.js
++++ b/src/juego.js
+@@ -1,4 +1,5 @@
+ const vidas = 3;
+-console.log("inicio");
++console.log("vidas:", vidas);
++const CLAVE = "sk-ant-EJEMPLO-no-real-0002";`;
+
+console.log(revisarDiff(ejemplo));
+probarRevisor(revisarDiff);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var r = __resultadoRevisor;
+if (!r) return "Deja la última línea: probarRevisor(revisarDiff);";
+if (r.aciertos < r.total) return "Llevas " + r.aciertos + " de " + r.total + " diffs. Mira qué tipos sobran o faltan en cada uno.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Calcula dos booleanos al principio de cada vuelta: <code>const anadida = linea.startsWith("+") &amp;&amp; !linea.startsWith("+++");</code> y lo mismo para <code>quitada</code> con <code>"-"</code> y <code>"---"</code>. Después, cada regla usa uno de los dos.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para los secretos, una expresión regular: <code>/sk-[A-Za-z0-9-]{10,}/.test(linea)</code>. Para las pruebas borradas: <code>/\b(test|it)\(/.test(linea)</code>. El <code>\b</code> evita que <code>submit(</code> cuente como <code>it(</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function revisarDiff(diff) {
+  const alertas = [];
+  for (const linea of diff.split("\n")) {
+    const anadida = linea.startsWith("+") &amp;&amp; !linea.startsWith("+++");
+    const quitada = linea.startsWith("-") &amp;&amp; !linea.startsWith("---");
+    if (anadida &amp;&amp; /sk-[A-Za-z0-9-]{10,}/.test(linea)) alertas.push({ tipo: "secreto", texto: linea });
+    if (anadida &amp;&amp; linea.includes(".only(")) alertas.push({ tipo: "only", texto: linea });
+    if (anadida &amp;&amp; linea.includes("console.log(")) alertas.push({ tipo: "console.log", texto: linea });
+    if (quitada &amp;&amp; /\b(test|it)\(/.test(linea)) alertas.push({ tipo: "prueba-borrada", texto: linea });
+  }
+  return alertas;
+}
+
+probarRevisor(revisarDiff);</code></pre>
+      <p>Quitar un <code>console.log</code> no es un problema, ponerlo sí: por eso esa regla solo mira las líneas añadidas. Un revisor así no entiende el código, solo busca patrones, pero es rápido y nunca se cansa. Podrías convertirlo en un hook de <code>PreToolUse</code> sobre <code>git commit</code>, o en un paso de la integración continua, para que la revisión mecánica ocurra sola y tu atención quede para lo que un patrón no ve.</p>
+    </details>
+  </article>
 </section>

@@ -389,6 +389,20 @@ ${suyas.map((m) => `    <li><a href="modulos/${archivoModulo(m)}" data-slug="${m
   }).join("\n");
 }
 
+// Ejemplo de ritmo intensivo que pidió la persona: 4 h de lunes a viernes y 8 h el sábado y el domingo.
+function ejemploIntensivo(total, consolidacion) {
+  const porSemana = 5 * 4 + 2 * 8;
+  const sem = (h) => h / porSemana;
+  const mes = (h) => (Math.round((h / porSemana / 4.345) * 2) / 2).toString().replace(".", ",");
+  const min = tiempo?.totalMin ?? total, max = tiempo?.totalMax ?? total;
+  const cMin = tiempo?.consolidacionMin ?? consolidacion, cMax = tiempo?.consolidacionMax ?? consolidacion;
+  return `<div class="horarios-ejemplo">
+  <h3>Ejemplo: 4 horas de lunes a viernes y 8 el sábado y el domingo</h3>
+  <p>Son <strong>${porSemana} horas por semana</strong>, casi una jornada completa. Con ese ritmo terminas el curso en unas <strong>${Math.round(sem(total))} semanas (${mes(total)} meses)</strong>, entre ${mes(min)} y ${mes(max)} meses según lo rápido que avances. Sumando los proyectos propios, llegas al nivel junior en unos <strong>${mes(total + consolidacion)} meses</strong> (entre ${mes(min + cMin)} y ${mes(max + cMax)}).</p>
+  <p>Es un ritmo exigente: guarda al menos medio día libre a la semana y duerme bien, porque lo aprendido se asienta al descansar. Si notas que rindes menos, baja a 25 o 30 horas: tardarás unas semanas más, pero llegarás.</p>
+</div>`;
+}
+
 function notasTiempo() {
   if (!tiempo) return "";
   const lista = (xs) => (xs || []).map((x) => `<li>${esc(x)}</li>`).join("");
@@ -421,6 +435,7 @@ function portada() {
     .replaceAll("{{MAPA}}", mapaRed())
     .replaceAll("{{INDICE_LINEAS}}", indiceLineas())
     .replaceAll("{{FILAS_HORARIO}}", filasHorario)
+    .replaceAll("{{EJEMPLO_INTENSIVO}}", ejemploIntensivo(totalHoras, consolidacion))
     .replaceAll("{{TOTAL_HORAS}}", String(totalHoras))
     .replaceAll("{{CONSOLIDACION}}", String(consolidacion))
     .replaceAll("{{NUM_MODULOS}}", String(modulos.length))
