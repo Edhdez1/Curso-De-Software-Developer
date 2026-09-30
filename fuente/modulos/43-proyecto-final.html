@@ -937,7 +937,7 @@ jobs:
   <p>Las opciones <code>--health-*</code> hacen que GitHub espere a que PostgreSQL acepte conexiones antes de seguir; sin ellas, las primeras pruebas fallarían de vez en cuando porque la base todavía está arrancando. La contraseña <code>prueba</code> puede estar en el archivo porque esa base existe solo durante la ejecución y nadie de fuera puede conectarse. Las claves de verdad, nunca: van en los secretos del repositorio o de la plataforma.</p>
 
   <h3>El flujo de cada cambio</h3>
-  <p>Cada historia sigue el mismo camino, el flujo de GitHub de la <a href="24-git.html#colaborar">Estación 24</a>, aunque trabajes sola. Proteger <code>main</code> con un <em>ruleset</em> que exija pull request y CI en verde (<a href="35-devops.html#proyecto">Estación 35</a>) te obliga a respetarlo en los días de prisa. Ordena el recorrido de una historia, desde el issue hasta producción:</p>
+  <p>Cada historia sigue el mismo camino, el flujo de GitHub de la <a href="24-git.html#colaborar">Estación 24</a>, aunque trabajes sin equipo. Proteger <code>main</code> con un <em>ruleset</em> que exija pull request y CI en verde (<a href="35-devops.html#proyecto">Estación 35</a>) te obliga a respetarlo en los días de prisa. Ordena el recorrido de una historia, desde el issue hasta producción:</p>
   <div class="parsons" data-titulo="Ordena: de la historia a producción" data-lenguaje="text" data-exito="Correcto. Es el ciclo que repetirás decenas de veces en cada proyecto: pequeño, probado, revisado y publicado.">
     <ol>
       <li>Crear el issue con la historia y sus criterios de aceptación</li>
@@ -1048,11 +1048,11 @@ Express sirve web/dist y la API bajo /api (ver docs/decisiones/0001).
 /api/          @ana-dev
 /web/          @luis-dev
 /api/migraciones/  @ana-dev @luis-dev</code></pre>
-  <p>Si además activas en el ruleset la opción de exigir la revisión de los dueños del código, ningún cambio en esas carpetas entra sin la aprobación de alguien de su línea. Cuando una línea tiene dos dueños, como la de las migraciones, GitHub pide la revisión a los dos y basta con que apruebe uno. Revisad con las preguntas de la <a href="27-proceso.html#revision">Estación 27</a>: primero si funciona y se entiende, después el estilo.</p>
-  <p><strong>Repartir por historias, no por capas.</strong> Si una persona hace «todo el frontend» y otra «todo el backend», la primera se pasa semanas esperando a la segunda. Repartid historias completas, de la pantalla a la base de datos. El contrato de la API de la sección de diseño permite trabajar en paralelo: quien hace la pantalla puede simular las respuestas mientras la ruta se termina.</p>
+  <p>Si además activas en el ruleset la opción de exigir la revisión de los dueños del código, ningún cambio en esas carpetas entra sin la aprobación de alguien de su línea. Cuando una línea tiene dos dueños, como la de las migraciones, GitHub pide la revisión a los dos y basta con que apruebe uno. Revisen con las preguntas de la <a href="27-proceso.html#revision">Estación 27</a>: primero si funciona y se entiende, después el estilo.</p>
+  <p><strong>Repartir por historias, no por capas.</strong> Si una persona hace «todo el frontend» y otra «todo el backend», la primera se pasa semanas esperando a la segunda. Repartan historias completas, de la pantalla a la base de datos. El contrato de la API de la sección de diseño permite trabajar en paralelo: quien hace la pantalla puede simular las respuestas mientras la ruta se termina.</p>
   <p><strong>Un ritmo sencillo.</strong> Planificación de 30 minutos al empezar cada semana; tres líneas por escrito cada día que trabajes (qué hice, qué haré, qué me bloquea); y al cerrar cada hito, una demo y una retrospectiva de 30 minutos.</p>
   <aside class="senal error" data-titulo="Los conflictos de siempre">
-    <p>Tres archivos chocan en casi todos los equipos. Las <strong>migraciones</strong>: si dos personas crean a la vez la <code>002-…sql</code>, choca el número; usad la fecha y la hora en el nombre (<code>20261012-1530-categorias.sql</code>). El <strong><code>package-lock.json</code></strong>: no lo resuelvas a mano; acepta una versión y ejecuta <code>npm install</code> para regenerarlo. Y los <strong>niveles del juego</strong>: un archivo por nivel, y cada nivel con una sola persona responsable a la vez.</p>
+    <p>Tres archivos chocan en casi todos los equipos. Las <strong>migraciones</strong>: si dos personas crean a la vez la <code>002-…sql</code>, choca el número; usen la fecha y la hora en el nombre (<code>20261012-1530-categorias.sql</code>). El <strong><code>package-lock.json</code></strong>: no lo resuelvas a mano; acepta una versión y ejecuta <code>npm install</code> para regenerarlo. Y los <strong>niveles del juego</strong>: un archivo por nivel, y cada nivel con una sola persona responsable a la vez.</p>
   </aside>
 </section>
 
@@ -1860,7 +1860,7 @@ export function accionDelPerro(estadoDiscreto) {
   const valores = politica[estadoDiscreto] ?? [0, 0, 0, 0];   // estado nunca visto: todo a cero
   return ACCIONES[valores.indexOf(Math.max(...valores))];
 }</code></pre>
-  <p>Sé honesta con las dificultades: el comportamiento depende muchísimo de cómo diseñes la recompensa, el agente puede aprender trucos absurdos que la maximizan sin parecerse a un perro (un fallo que en inglés se llama <em>reward hacking</em>) y es difícil de depurar. Un buen término medio es combinar: la máquina de estados decide cuándo perseguir, y la política aprendida decide cómo, solo en ese estado.</p>
+  <p>No escondas las dificultades: el comportamiento depende muchísimo de cómo diseñes la recompensa, el agente puede aprender trucos absurdos que la maximizan sin parecerse a un perro (un fallo que en inglés se llama <em>reward hacking</em>) y es difícil de depurar. Un buen término medio es combinar: la máquina de estados decide cuándo perseguir, y la política aprendida decide cómo, solo en ese estado.</p>
 
   <h3>App, opción 1: sugerir la categoría con aprendizaje automático</h3>
   <p>Cuando alguien escribe un hábito nuevo, Racha propone una categoría (salud, estudio, hogar, personas) que la persona puede cambiar. Es una tarea de <strong>clasificación</strong> de la <a href="39-aprendizaje-automatico.html">Estación 39</a>, y el algoritmo más sencillo que funciona es el de los <strong>k vecinos más cercanos</strong>: busca los ejemplos conocidos que más se parecen al nombre nuevo y les hace votar. Aquí, el parecido entre dos nombres es la proporción de palabras que comparten (el índice de Jaccard). Predice las cinco sugerencias y ejecuta:</p>
@@ -2385,6 +2385,6 @@ detecté gracias a la Estación 31.
   </div>
   <p>Una regla para decidir si un proyecto está listo para tu portafolio: <strong>ningún criterio en el nivel 1 y al menos la mitad en el nivel 3 o superior</strong>. El nivel 4 no es obligatorio en nada: es la dirección en la que seguir mejorando el proyecto cuando ya esté publicado.</p>
   <aside class="senal clave">
-    <p>Evalúa lo que existe, no lo que ibas a hacer. «Iba a poner pruebas de integración» es nivel 2 en pruebas. La rúbrica solo es útil si eres más estricta contigo que nadie; así, cuando alguien de fuera la use, no habrá sorpresas.</p>
+    <p>Evalúa lo que existe, no lo que ibas a hacer. «Iba a poner pruebas de integración» es nivel 2 en pruebas. La rúbrica solo es útil si te exiges más que nadie; así, cuando alguien de fuera la use, no habrá sorpresas.</p>
   </aside>
 </section>
