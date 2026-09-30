@@ -47,6 +47,7 @@
     <ol>
       <li><a href="#ruta">Lo que vas a lograr</a></li>
       <li><a href="#git-github">Git y GitHub</a></li>
+      <li><a href="#commits">Buenos commits</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -192,6 +193,279 @@ core.editor=code --wait</span></code></pre>
   <p>Tu número de versión puede ser otro. Todo lo de esta estación funciona desde Git 2.23 (de 2019), que es cuando aparecieron <code>git switch</code> y <code>git restore</code>. Si tienes una versión anterior, actualízala desde <code>git-scm.com</code>. Si en la lista falta <code>user.name</code>, <code>user.email</code> o <code>init.defaultbranch</code>, vuelve a la <a href="05-herramientas.html#git">Estación 5</a> y configúralos. El correo lo cambiarás en la sección de <a href="#github">GitHub</a> por uno privado.</p>
   <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>Cuando no sepas qué hace un comando, pregúntale a Git: <code>git help commit</code> abre el manual completo, y <code>git commit -h</code> muestra un resumen corto de sus opciones. Y lee siempre lo que Git escribe: sus mensajes suelen incluir una línea que empieza por <code>(use "git ...")</code> con el comando que probablemente necesitas.</p></div></aside>
 </section>
+
+<section id="commits" data-parada="Buenos commits">
+  <h2>El ciclo del commit, a fondo</h2>
+  <p>Ya conoces el ciclo básico: cambias archivos, los preparas con <code>git add</code> y los guardas con <code>git commit</code>. Parece poca cosa, pero la diferencia entre un historial útil y uno inservible está en los detalles: qué entra en cada commit, qué se queda fuera y qué dice el mensaje. Un buen historial se lee como el diario de un proyecto; uno malo es una lista de «cambios», «más cambios» y «arreglo».</p>
+
+  <h3>Los estados de un archivo</h3>
+  <p>Para Git, cada archivo de tu carpeta está en uno de estos estados. <code>git status</code> te lo dice, y conviene leerlo con calma:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Estado</th><th scope="col">Qué significa</th><th scope="col">Cómo aparece en <code>git status</code></th><th scope="col">En <code>git status -s</code></th></tr></thead>
+      <tbody>
+        <tr><td>Sin seguimiento</td><td>Git lo ve, pero nunca lo ha guardado</td><td><em>Untracked files</em></td><td><code>??</code></td></tr>
+        <tr><td>Modificado</td><td>Cambió desde el último commit y no está preparado</td><td><em>Changes not staged for commit</em></td><td><code> M</code> (la M a la derecha)</td></tr>
+        <tr><td>Preparado</td><td>Está en el área de preparación: entrará en el próximo commit</td><td><em>Changes to be committed</em></td><td><code>M </code> o <code>A </code> (a la izquierda)</td></tr>
+        <tr><td>Confirmado</td><td>Está igual que en el último commit</td><td>No aparece: <em>nothing to commit, working tree clean</em></td><td>No aparece</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La versión corta, <code>git status -s</code> (de <em>short</em>), usa dos columnas: la izquierda habla del área de preparación y la derecha de la carpeta de trabajo. Así, <code>MM juego.js</code> significa que preparaste una parte de los cambios de <code>juego.js</code> y después seguiste cambiándolo. Sí, eso es posible: el área de preparación guarda el archivo <em>tal como estaba al hacer <code>git add</code></em>, no una referencia al archivo.</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">«Pero si ya hice git add»</p><p>Un tropiezo clásico: haces <code>git add juego.js</code>, sigues editando <code>juego.js</code>, haces commit… y el commit no tiene tus últimos cambios. Es correcto: se guardó la versión que preparaste. Antes de cada commit, mira <code>git status</code>: si el archivo aparece a la vez en <em>Changes to be committed</em> y en <em>Changes not staged</em>, te falta otro <code>git add</code>.</p></div></aside>
+
+  <h3>Preparar con precisión</h3>
+  <p>El área de preparación existe para que decidas qué entra en cada commit. Estas son las formas de usarla:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Comando</th><th scope="col">Qué prepara</th></tr></thead>
+      <tbody>
+        <tr><td><code>git add juego.js</code></td><td>Ese archivo, tal como está ahora</td></tr>
+        <tr><td><code>git add sprites/</code></td><td>Todo lo que hay dentro de la carpeta <code>sprites</code></td></tr>
+        <tr><td><code>git add .</code></td><td>Todo lo nuevo, modificado o borrado en la carpeta actual y sus subcarpetas</td></tr>
+        <tr><td><code>git add -p juego.js</code></td><td>Te enseña cada trozo de cambio y te pregunta si lo preparas (<kbd>y</kbd> sí, <kbd>n</kbd> no, <kbd>q</kbd> salir). Útil cuando un mismo archivo tiene dos cambios que no tienen nada que ver</td></tr>
+        <tr><td><code>git restore --staged juego.js</code></td><td>Lo contrario: saca el archivo del área de preparación. Tus cambios siguen en el archivo; solo dejan de estar preparados</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>¿Por qué complicarse en vez de hacer siempre <code>git add .</code>? Porque un commit debería contener <strong>un solo cambio lógico</strong>: «añade el contador de puntos», no «añade el contador de puntos, cambia los colores y arregla un error del menú». Si mañana el contador de puntos resulta ser un problema, podrás deshacer ese commit sin perder los colores ni el arreglo. Y quien revise tu trabajo entenderá cada paso por separado.</p>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>Usar <code>git add .</code> está bien cuando sabes exactamente qué hay en la carpeta. Mira siempre <code>git status</code> antes: es la forma más barata de descubrir que ibas a guardar un archivo de contraseñas, una carpeta de 300 MB o un borrador que no querías compartir.</p></div></aside>
+
+  <h3>Ver exactamente qué cambió: git diff</h3>
+  <p><code>git status</code> te dice <em>qué archivos</em> cambiaron. <code>git diff</code> te dice <em>qué líneas</em>. Hay tres comparaciones posibles, según qué dos zonas quieras comparar:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 230" role="img" aria-label="Diagrama: tres cajas en fila, carpeta de trabajo, área de preparación y último commit. git diff compara la carpeta de trabajo con la preparación. git diff --staged compara la preparación con el último commit. git diff HEAD compara la carpeta de trabajo directamente con el último commit.">
+      <rect class="d-caja" x="10" y="72" width="200" height="90" rx="10"/>
+      <rect class="d-caja" x="260" y="72" width="200" height="90" rx="10"/>
+      <rect class="d-caja" x="510" y="72" width="200" height="90" rx="10"/>
+      <text class="d-rotulo" x="110" y="112" text-anchor="middle">Carpeta de trabajo</text>
+      <text class="d-rotulo" x="360" y="112" text-anchor="middle">Preparación</text>
+      <text class="d-rotulo" x="610" y="112" text-anchor="middle">Último commit</text>
+      <text class="d-peq d-tenue" x="110" y="138" text-anchor="middle">lo que ves en el editor</text>
+      <text class="d-peq d-tenue" x="360" y="138" text-anchor="middle">lo que hiciste con git add</text>
+      <text class="d-peq d-tenue" x="610" y="138" text-anchor="middle">HEAD</text>
+      <path class="d-acento-trazo" d="M110 66V48H360V66"/>
+      <path class="d-acento-trazo" d="M360 66V48H610V66" transform="translate(0,-26)"/>
+      <path class="d-linea" d="M362 40V66"/>
+      <text xml:space="preserve" class="d-mono d-peq" x="235" y="40" text-anchor="middle">git diff</text>
+      <text xml:space="preserve" class="d-mono d-peq" x="485" y="14" text-anchor="middle">git diff --staged</text>
+      <path class="d-punteada" d="M110 168V196H610V168"/>
+      <text xml:space="preserve" class="d-mono d-peq" x="360" y="218" text-anchor="middle">git diff HEAD</text>
+    </svg>
+    <figcaption>Tres comparaciones: <code>git diff</code> muestra lo que cambiaste y todavía no preparaste; <code>git diff --staged</code>, lo que ya preparaste y entrará en el próximo commit; <code>git diff HEAD</code>, todo lo que cambió desde el último commit.</figcaption>
+  </figure>
+  <p>Así se lee la salida de <code>git diff</code>. En este ejemplo cambiaste la velocidad de 5 a 8 y añadiste una línea:</p>
+  <pre class="consola"><code><span class="prompt">$</span> git diff
+<span class="salida">diff --git a/juego.js b/juego.js
+index 3b18e51..a1c2f0d 100644
+--- a/juego.js
++++ b/juego.js
+@@ -1,2 +1,3 @@
+ let vidas = 3;
+-let velocidad = 5;
++let velocidad = 8;
++let puntos = 0;</span></code></pre>
+  <ul>
+    <li><code>--- a/juego.js</code> es la versión anterior y <code>+++ b/juego.js</code> la nueva.</li>
+    <li><code>@@ -1,2 +1,3 @@</code> dice dónde está el cambio: en la versión anterior, un trozo que empieza en la línea 1 y tiene 2 líneas; en la nueva, empieza en la línea 1 y tiene 3.</li>
+    <li>Las líneas que empiezan con un espacio no cambiaron: están ahí como contexto.</li>
+    <li>Las que empiezan con <code>-</code> se quitaron y las que empiezan con <code>+</code> se añadieron. Git no tiene la idea de «línea modificada»: un cambio en una línea aparece como la línea vieja quitada y la nueva añadida.</li>
+  </ul>
+  <p>Si la salida es más larga que la pantalla, Git la muestra dentro de un visor: bájala con las flechas o con la barra espaciadora y sal con <kbd>q</kbd>. VS Code muestra lo mismo con colores si haces clic en un archivo del panel Control de código fuente.</p>
+
+  <p>Ahora practica. En esta misión vas a hacer lo que se hace a diario en un proyecto real: tienes dos cambios distintos en dos archivos y los guardas en dos commits separados, cada uno con su mensaje.</p>
+  <div class="terminal-sim" data-titulo="Misión: dos cambios, dos commits" data-inicio="/home/tu">
+    <div class="terminal-instrucciones">
+      <ol>
+        <li>Prepara el escenario: <code>cd juego</code>, <code>git init</code>, <code>git add .</code> y <code>git commit -m "feat: primera versión del juego"</code>.</li>
+        <li>Haz dos cambios: <code>echo "let puntos = 0;" &gt;&gt; juego.js</code> y <code>echo "h1 { color: gold; }" &gt;&gt; estilos.css</code>.</li>
+        <li>Mira qué pasó con <code>git status</code> y qué líneas cambiaron con <code>git diff</code>.</li>
+        <li>Guarda el cambio de <code>juego.js</code> solo, en un commit: <code>git add juego.js</code> y <code>git commit -m "feat: añade el contador de puntos"</code>.</li>
+        <li>Después guarda el de <code>estilos.css</code> en otro commit con el mensaje <code>style: pinta el título de dorado</code>, y termina con <code>git log --oneline</code>.</li>
+      </ol>
+    </div>
+    <script type="application/json" class="terminal-sistema">{"juego": {"index.html": "<h1>Salta</h1>\n", "juego.js": "let vidas = 3;\n", "estilos.css": "body { margin: 0; }\n"}}</script>
+    <script type="text/plain" class="terminal-mision">
+if (!git) return "Paso 1: entra en juego (cd juego) y crea el repositorio con git init.";
+if (git.raiz !== "/home/tu/juego") return "El repositorio se creó en " + git.raiz + " y debía estar en /home/tu/juego. Pulsa «Reiniciar» y haz git init dentro de juego.";
+if (git.commits.length < 1) return "Paso 1: guarda la primera versión con git add . y git commit -m \"feat: primera versión del juego\".";
+var j = sistema.juego || {};
+if ((j["juego.js"] || "").indexOf("puntos") === -1 || (j["estilos.css"] || "").indexOf("gold") === -1) return "Paso 2: añade las dos líneas con echo y >> (dos signos, para no borrar lo que había).";
+if (!historial.some(function (c) { return /^git diff/.test(c); })) return "Paso 3: antes de preparar nada, mira qué cambió con git status y git diff.";
+function cambios(c) {
+  var padre = null;
+  git.commits.forEach(function (x) { if (c.padres[0] === x.id) padre = x; });
+  var a = padre ? padre.arbol : {}, b = c.arbol, lista = [];
+  Object.keys(Object.assign({}, a, b)).forEach(function (k) { if (a[k] !== b[k]) lista.push(k); });
+  return lista.sort().join(",");
+}
+var soloJs = git.commits.filter(function (c) { return c.padres.length && cambios(c) === "juego.js"; });
+var soloCss = git.commits.filter(function (c) { return c.padres.length && cambios(c) === "estilos.css"; });
+var mezclado = git.commits.some(function (c) { return c.padres.length && cambios(c) === "estilos.css,juego.js"; });
+if (mezclado) return "Un commit guardó juego.js y estilos.css juntos. La idea era separarlos. Pulsa «Reiniciar» y prepara cada archivo por su lado (git add juego.js, commit; git add estilos.css, commit).";
+if (!soloJs.length) return "Paso 4: prepara solo juego.js (git add juego.js) y haz commit.";
+if (!soloCss.length) return "Paso 5: ahora prepara estilos.css y haz su propio commit.";
+var conv = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([a-z0-9-]+\))?!?: \S/;
+if (!conv.test(soloJs[0].mensaje) || !conv.test(soloCss[0].mensaje)) return "Casi: los mensajes deberían seguir la forma «tipo: descripción», por ejemplo «feat: añade el contador de puntos».";
+if (!git.limpio) return "Queda algo sin guardar. Mira git status.";
+if (!historial.some(function (c) { return /^git log/.test(c); })) return "Último paso: mira tu historial con git log --oneline.";
+return true;
+    </script>
+  </div>
+  <p>Tres commits, cada uno con una sola idea. Dentro de un mes, si el título dorado no gusta, podrás deshacer solo ese commit sin tocar el contador de puntos.</p>
+
+  <h3>Lo que no debe entrar: .gitignore</h3>
+  <p>Algunos archivos no deben guardarse nunca en el repositorio:</p>
+  <ul>
+    <li><strong>Dependencias descargadas</strong>, como la carpeta <code>node_modules</code> que crea npm. Pueden ser cientos de megas y cualquiera puede volver a descargarlas con un comando.</li>
+    <li><strong>Secretos</strong>: contraseñas, claves de APIs, el archivo <code>.env</code> donde se suelen guardar. Lo que entra en un repositorio lo puede leer cualquiera que tenga acceso a él.</li>
+    <li><strong>Archivos generados</strong>: versiones compiladas o empaquetadas (carpetas como <code>dist</code> o <code>build</code>) que se fabrican a partir del código.</li>
+    <li><strong>Basura del sistema y de programas</strong>: <code>.DS_Store</code> de macOS, <code>Thumbs.db</code> de Windows, registros <code>*.log</code>, archivos temporales.</li>
+  </ul>
+  <p>Para eso existe el archivo <strong><code>.gitignore</code></strong>: un archivo de texto en la raíz del repositorio con una regla por línea. Git no mostrará como «sin seguimiento» nada de lo que coincida, y <code>git add .</code> lo dejará fuera. El propio <code>.gitignore</code> sí se guarda en el repositorio, para que todo el equipo comparta las mismas reglas.</p>
+  <pre><code class="language-text"># Las líneas que empiezan con # son comentarios
+node_modules/     # la carpeta node_modules, esté donde esté
+.env              # un archivo llamado exactamente .env
+*.log             # cualquier archivo que termine en .log
+/dist             # dist solo en la raíz del proyecto
+sprites/*.psd     # los .psd que estén directamente en sprites
+!importante.log   # excepción: este sí se guarda</code></pre>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Regla</th><th scope="col">Significado</th></tr></thead>
+      <tbody>
+        <tr><td><code>*</code></td><td>Cualquier cantidad de caracteres, excepto <code>/</code>. <code>*.log</code> son todos los archivos que terminan en <code>.log</code></td></tr>
+        <tr><td><code>?</code></td><td>Exactamente un carácter cualquiera</td></tr>
+        <tr><td><code>**</code></td><td>Cualquier cantidad de carpetas: <code>docs/**/*.pdf</code> son los PDF dentro de <code>docs</code>, a cualquier profundidad</td></tr>
+        <tr><td>Termina en <code>/</code></td><td>Solo carpetas: <code>build/</code> ignora una carpeta <code>build</code>, pero no un archivo llamado <code>build</code></td></tr>
+        <tr><td>Empieza con <code>/</code> o tiene <code>/</code> en medio</td><td>La ruta se cuenta desde donde está el <code>.gitignore</code>. Sin barra, la regla vale en cualquier carpeta</td></tr>
+        <tr><td>Empieza con <code>!</code></td><td>Excepción: vuelve a incluir algo que una regla anterior ignoraba. Si ignoraste la carpeta entera, no puedes rescatar un archivo de dentro</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Este taller imita cómo decide Git. Arriba están las reglas; abajo, los archivos de un proyecto. <strong>Predice</strong> cuáles se ignorarán antes de ejecutar.</p>
+  <div class="taller" id="taller-gitignore" data-titulo="¿Qué ignora este .gitignore?">
+    <textarea class="taller-codigo">// Las reglas de tu .gitignore, una por línea:
+const reglas = `
+node_modules/
+.env
+*.log
+`;
+
+const archivos = [
+  "index.html",
+  "juego.js",
+  ".env",
+  "errores.log",
+  "logs/partida.log",
+  "node_modules/phaser/phaser.js",
+  "dist/juego.min.js",
+  "sprites/heroe.png",
+  "sprites/borrador.psd",
+];
+
+for (const archivo of archivos) {
+  console.log((ignorado(archivo, reglas) ? "ignorado   " : "se guarda  ") + archivo);
+}
+
+// ---- Desde aquí, una imitación simplificada de cómo decide Git. ----
+// No hace falta que la entiendas ahora: juega con las reglas de arriba.
+function aExpresion(patron) {
+  const r = patron.replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replace(/\*\*/g, "\u0000").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]").replace(/\u0000/g, ".*");
+  return new RegExp("^" + r + "$");
+}
+function ignorado(ruta, texto) {
+  const partes = ruta.split("/");
+  let resultado = false;
+  for (let linea of texto.split("\n")) {
+    linea = linea.trim();
+    if (!linea || linea.startsWith("#")) continue;
+    const negar = linea.startsWith("!");
+    if (negar) linea = linea.slice(1);
+    const soloCarpetas = linea.endsWith("/");
+    if (soloCarpetas) linea = linea.slice(0, -1);
+    const anclada = linea.includes("/");
+    if (linea.startsWith("/")) linea = linea.slice(1);
+    const expresion = aExpresion(linea);
+    const tope = soloCarpetas ? partes.length - 1 : partes.length;
+    for (let i = 0; i < tope; i++) {
+      const candidato = anclada ? partes.slice(0, i + 1).join("/") : partes[i];
+      if (expresion.test(candidato)) resultado = !negar;
+    }
+  }
+  return resultado;
+}</textarea>
+    <script type="text/plain" class="taller-verificar">
+var estado = {};
+salida.forEach(function (l) { var m = l.match(/^(ignorado|se guarda)\s+(.+)$/); if (m) estado[m[2]] = m[1]; });
+if (estado["dist/juego.min.js"] !== "ignorado") return "Predijiste y ejecutaste. Ahora modifica: añade una regla para ignorar la carpeta dist.";
+if (estado["sprites/borrador.psd"] !== "ignorado") return "Bien con dist. Añade otra regla para ignorar los archivos .psd (los originales de Photoshop, que pesan mucho).";
+if (estado["sprites/heroe.png"] !== "se guarda" || estado["juego.js"] !== "se guarda" || estado["index.html"] !== "se guarda") return "Cuidado: alguna regla ignora demasiado. index.html, juego.js y sprites/heroe.png deben guardarse.";
+return true;
+    </script>
+  </div>
+  <p>Con las reglas iniciales se ignoran <code>.env</code>, los dos <code>.log</code> (el de la raíz y el de <code>logs</code>, porque <code>*.log</code> no tiene barra y vale en cualquier carpeta) y todo lo que está dentro de <code>node_modules</code>. Para completar el taller añade <code>dist/</code> y <code>*.psd</code>.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">.gitignore no borra el pasado</p><p><code>.gitignore</code> solo afecta a archivos que Git todavía no sigue. Si ya hiciste commit de <code>node_modules</code> o de <code>.env</code>, añadirlos a <code>.gitignore</code> no los saca del repositorio. Tienes que dejar de seguirlos con <code>git rm --cached .env</code> (quita el archivo del repositorio pero lo deja en tu disco) y hacer un commit. Aun así, la versión antigua sigue en el historial.</p></div></aside>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Impacto</p><p>Si subes por error una clave o contraseña a un repositorio público, date por hecho que alguien la copió: hay programas que recorren GitHub buscando claves minutos después de cada push. Borrarla en un commit nuevo no basta, porque sigue en el historial. Lo correcto es <strong>anular la clave</strong> (cambiar la contraseña o revocar la clave en el servicio que la emitió) y crear una nueva. GitHub revisa los envíos a los repositorios públicos nuevos y bloquea muchos tipos de claves conocidas antes de que se publiquen (<em>push protection</em>), pero no las reconoce todas. Verás más sobre secretos en la <a href="31-seguridad.html">Estación 31</a>.</p></div></aside>
+  <p>No hace falta escribir el <code>.gitignore</code> desde cero. Al crear un repositorio en GitHub puedes elegir una plantilla para tu lenguaje (por ejemplo, <em>Node</em>), y el repositorio público <code>github/gitignore</code> tiene plantillas para casi cualquier tecnología, incluidos motores de videojuegos como Unity y Godot.</p>
+
+  <h3>Mensajes que cuentan una historia</h3>
+  <p>El mensaje de un commit es para una persona que no está en tu cabeza: tu equipo, o tú dentro de seis meses. La propia documentación de Git recomienda empezar con una línea corta, de menos de unos 50 caracteres, que resuma el cambio; después una línea en blanco, y después, si hace falta, una explicación más larga. Estas reglas ayudan:</p>
+  <ul>
+    <li>La primera línea dice <strong>qué</strong> hace el commit, con un verbo en presente: «Añade el contador de puntos», «Corrige el doble salto». Imagina que completa la frase «Si aplicas este commit, …».</li>
+    <li>El cuerpo explica <strong>por qué</strong>, si no es evidente: qué problema había, qué alternativa descartaste. El <em>cómo</em> ya está en el código.</li>
+    <li>Un commit, un cambio lógico. Si el mensaje necesita un «y», probablemente son dos commits.</li>
+  </ul>
+  <p>Con <code>-m</code> puedes escribir los dos párrafos: el primer <code>-m</code> es el título y el segundo, el cuerpo.</p>
+  <pre class="consola"><code><span class="prompt">$</span> git commit -m "fix: evita el doble salto en el aire" -m "El personaje podía saltar otra vez antes de tocar el suelo si se pulsaba la tecla muy rápido. Ahora solo salta si enSuelo es true."</code></pre>
+
+  <h4>Conventional Commits</h4>
+  <p>Muchos equipos siguen una convención llamada <strong>Conventional Commits</strong> (en español, «commits convencionales»). El mensaje empieza con un tipo que dice qué clase de cambio es:</p>
+  <pre><code class="language-text">tipo(ámbito opcional): descripción
+
+cuerpo opcional
+
+notas al pie opcionales</code></pre>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Tipo</th><th scope="col">Úsalo cuando…</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td><code>feat</code></td><td>Añades una funcionalidad nueva</td><td><code>feat: añade el modo multijugador</code></td></tr>
+        <tr><td><code>fix</code></td><td>Corriges un error</td><td><code>fix(menu): el botón Salir no respondía</code></td></tr>
+        <tr><td><code>docs</code></td><td>Solo cambias documentación</td><td><code>docs: explica cómo instalar el juego</code></td></tr>
+        <tr><td><code>style</code></td><td>Cambias el formato del código sin cambiar lo que hace (espacios, comas). Muchos equipos lo usan también para cambios visuales de CSS</td><td><code>style: ordena las propiedades CSS</code></td></tr>
+        <tr><td><code>refactor</code></td><td>Reorganizas el código sin cambiar lo que hace</td><td><code>refactor: separa la física en su propio archivo</code></td></tr>
+        <tr><td><code>test</code></td><td>Añades o corriges pruebas</td><td><code>test: prueba el cálculo de puntos</code></td></tr>
+        <tr><td><code>perf</code>, <code>build</code>, <code>ci</code>, <code>chore</code></td><td>Rendimiento, construcción, automatización, tareas de mantenimiento</td><td><code>chore: actualiza las dependencias</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El <strong>ámbito</strong> entre paréntesis dice qué parte del proyecto toca: <code>fix(menu):</code>, <code>feat(nivel-2):</code>. Si un cambio rompe algo que funcionaba de otra forma (por ejemplo, las partidas guardadas antiguas dejan de cargarse), se marca con <code>!</code> antes de los dos puntos, <code>feat!: nuevo formato de partidas</code>, o con una nota al pie que empieza por <code>BREAKING CHANGE:</code>.</p>
+  <p>¿Para qué tanta regla? Para que las personas y los programas entiendan el historial. Hay herramientas que leen estos mensajes y calculan solas el número de la siguiente versión con el sistema <strong>SemVer</strong> (versionado semántico, tres números <code>MAYOR.MENOR.PARCHE</code>, como <code>2.4.1</code>): un <code>fix</code> sube el parche, un <code>feat</code> sube el menor y un cambio que rompe sube el mayor. Lo practicarás en un reto.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">¿En español o en inglés?</p><p>Los tipos (<code>feat</code>, <code>fix</code>…) se escriben siempre en inglés, porque las herramientas los buscan así. La descripción puede ir en el idioma del equipo. En proyectos de código abierto internacionales se escribe en inglés; en un equipo que habla español, en español. Lo importante es ser constante.</p></div></aside>
+
+  <h4>Cuando Git abre un editor (y es Vim)</h4>
+  <p>Si escribes <code>git commit</code> sin <code>-m</code>, Git abre un editor para que escribas el mensaje con calma. En la Estación 5 configuraste VS Code para esto (<code>core.editor "code --wait"</code>): se abre una pestaña, escribes el mensaje en la primera línea, guardas y cierras la pestaña. Las líneas que empiezan con <code>#</code> son explicaciones de Git y no se guardan. Si cierras la pestaña sin escribir nada, Git cancela el commit: <em>Aborting commit due to empty commit message.</em></p>
+  <p>Pero si no configuraste el editor, o estás en otra computadora, Git suele abrir <strong>Vim</strong>, un editor de terminal que no se usa como los demás: al abrirlo no puedes escribir, y ninguna tecla habitual lo cierra. No es tu culpa; es un rito de paso. Así se sale:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Quieres…</th><th scope="col">Pulsa</th></tr></thead>
+      <tbody>
+        <tr><td>Empezar a escribir el mensaje</td><td><kbd>i</kbd> (abajo aparece <code>-- INSERT --</code>)</td></tr>
+        <tr><td>Dejar de escribir</td><td><kbd>Esc</kbd></td></tr>
+        <tr><td>Guardar y salir (el commit se hace)</td><td><kbd>Esc</kbd> y después escribe <code>:wq</code> y pulsa <kbd>Enter</kbd></td></tr>
+        <tr><td>Salir sin guardar (el commit se cancela)</td><td><kbd>Esc</kbd> y después escribe <code>:q!</code> y pulsa <kbd>Enter</kbd></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Corregir el último commit: --amend</h4>
+  <p>Acabas de hacer un commit y ves que el mensaje tiene una falta, o que olvidaste un archivo. Si <strong>todavía no lo compartiste</strong> (no hiciste <code>push</code>, que verás más adelante), puedes rehacerlo:</p>
+  <pre class="consola"><code><span class="prompt">$</span> git add sonido-salto.wav          <span class="salida"># el archivo que olvidaste (opcional)</span>
+<span class="prompt">$</span> git commit --amend -m "feat: añade el sonido del salto"</code></pre>
+  <p><code>--amend</code> («enmendar») no edita el commit anterior: crea uno nuevo, con otro hash, que lo reemplaza. Por eso solo debe usarse con commits que nadie más tiene. La terminal de práctica de esta página no tiene <code>--amend</code>: pruébalo en tu computadora.</p>
+</section>
   </main>
 </div>
 
@@ -210,6 +484,7 @@ core.editor=code --wait</span></code></pre>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 <script src="../assets/js/motor.js"></script>
 <script src="../assets/js/terminal.js"></script>
 <script src="../assets/js/practicas.js"></script>

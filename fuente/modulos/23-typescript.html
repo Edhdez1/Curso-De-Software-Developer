@@ -687,3 +687,339 @@ config.volumen = 100;
     <p>Los tipos de utilidad no crean datos ni hacen nada al ejecutarse: transforman descripciones. Te permiten escribir la forma de tus datos una sola vez (<code>Producto</code>) y derivar el resto. Si mañana añades <code>stock</code> a <code>Producto</code>, <code>NuevoProducto</code> y <code>Partial&lt;Producto&gt;</code> lo incluyen solos.</p>
   </aside>
 </section>
+
+<section id="uniones" data-parada="Uniones y narrowing">
+  <h2>Uniones, tipos literales y estrechamiento</h2>
+  <p>En la vida real, muchos valores pueden ser de más de una forma. Un código de pedido puede llegar como número o como texto. Una búsqueda puede encontrar un producto o no encontrar nada. Una descarga puede estar «cargando», «lista» o en «error». TypeScript tiene una herramienta precisa para esto, y es probablemente la que más vas a usar.</p>
+
+  <h3>Uniones: esto o aquello</h3>
+  <p>Una <strong>unión</strong> es un tipo que admite valores de varios tipos. Se escribe separándolos con una barra vertical <code>|</code>, que se lee «o»:</p>
+  <pre><code class="language-ts">type Id = number | string;
+
+let pedido: Id = 1042;
+pedido = "A-1042";      // también vale
+pedido = true;          // error TS2322: Type 'boolean' is not assignable to type 'Id'.</code></pre>
+  <p>La contrapartida: con una unión, TypeScript solo te deja usar lo que tienen en común <em>todos</em> sus miembros. Si <code>valor</code> es <code>string | number</code>, no puedes llamar a <code>valor.toUpperCase()</code>, porque si resulta ser un número, el programa fallaría:</p>
+  <pre><code class="language-ts">function grita(valor: string | number) {
+  return valor.toUpperCase();
+}
+// error TS2339: Property 'toUpperCase' does not exist on type 'string | number'.
+//   Property 'toUpperCase' does not exist on type 'number'.</code></pre>
+  <p>La segunda línea del error explica el motivo: «no existe en el tipo <code>number</code>». Para usar <code>toUpperCase</code> primero tienes que averiguar qué es <code>valor</code> en ese momento. Enseguida verás cómo.</p>
+
+  <h3>Tipos literales: solo estos valores exactos</h3>
+  <p>En la traza de la sección anterior viste que <code>const nombre = "Lyra"</code> tiene el tipo <code>"Lyra"</code>. Un <strong>tipo literal</strong> es un tipo que admite un único valor exacto. Solo, no sirve de mucho. Combinado en una unión, es una herramienta excelente para describir opciones cerradas:</p>
+  <pre><code class="language-ts">type Estado = "cargando" | "listo" | "error";
+type Direccion = "arriba" | "abajo" | "izquierda" | "derecha";
+type Dado = 1 | 2 | 3 | 4 | 5 | 6;
+
+let estado: Estado = "cargando";
+estado = "listo";         // bien
+estado = "terminado";     // error TS2322: Type '"terminado"' is not assignable to type 'Estado'.
+
+const rumbo: Direccion = "arrriba";
+// error TS2820: Type '"arrriba"' is not assignable to type 'Direccion'. Did you mean '"arriba"'?</code></pre>
+  <p>Compara con usar <code>string</code>: cualquier errata (<code>"arrriba"</code>, <code>"Arriba"</code>, <code>"up"</code>) pasaría sin aviso y tu personaje se quedaría quieto sin que nadie supiera por qué. Con la unión de literales, TypeScript rechaza la errata, sugiere la palabra correcta y el editor te ofrece las cuatro opciones al escribir la comilla.</p>
+
+  <h3>null y undefined: el valor que puede faltar</h3>
+  <p>Con el modo estricto, <code>null</code> y <code>undefined</code> no caben en cualquier sitio: un <code>string</code> es siempre un texto. Si un valor puede faltar, lo dices con una unión. Y muchas funciones de JavaScript ya vienen con esa unión puesta:</p>
+  <pre><code class="language-ts">let ganador: string | null = null;           // todavía no hay ganador
+
+const encontrado = [3, 8, 12].find((n) =&gt; n &gt; 10);   // number | undefined
+const boton = document.querySelector("button");       // HTMLButtonElement | null
+
+boton.addEventListener("click", () =&gt; {});
+// error TS18047: 'boton' is possibly 'null'.</code></pre>
+  <p>«<code>boton</code> es posiblemente <code>null</code>»: si la página no tuviera ningún botón, <code>querySelector</code> devolvería <code>null</code> y el programa se rompería con el <code>TypeError</code> de siempre. Tony Hoare, que introdujo la referencia nula en 1965, la llamó años después «mi error de mil millones de dólares» por todos los fallos que ha causado. El modo estricto convierte ese error de ejecución en un aviso antes de ejecutar.</p>
+
+  <h3>Estrechar el tipo: narrowing</h3>
+  <p>¿Cómo se usa entonces un valor de tipo unión? Comprobando qué es con JavaScript normal. TypeScript sigue tus <code>if</code> y, dentro de cada rama, sabe qué tipo queda. A esto se le llama <strong>estrechamiento de tipos</strong> (en inglés, <em>narrowing</em>): el tipo se va haciendo más estrecho, más preciso, a medida que tu código descarta posibilidades.</p>
+  <figure class="capsula" data-titulo="El tipo se estrecha">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: la función formato recibe v de tipo string o number. Al principio solo se puede usar lo común a los dos. La comprobación typeof v igual a string divide el camino: dentro del if v es string y se puede usar toUpperCase; después del return, v solo puede ser number y se puede usar toFixed. Al compilar, el typeof se conserva porque es JavaScript real.">
+        <rect class="d-codigo" x="10" y="10" width="380" height="200" rx="8"/>
+        <text class="d-codigo-tenue" x="24" y="32" style="font-size:13px">formato.ts</text>
+        <rect class="d-resalte" x="16" y="45" width="368" height="24" rx="4" data-mover="2:translate(0px,26px); 3:translate(0px,52px); 4:translate(0px,104px); 5:translate(0px,26px)"/>
+        <text class="d-codigo-texto" x="24" y="62" style="font-size:14px">function formato(v: string | number) {</text>
+        <text class="d-codigo-texto" x="24" y="88" style="font-size:14px">  if (typeof v === "string") {</text>
+        <text class="d-codigo-texto" x="24" y="114" style="font-size:14px">    return v.toUpperCase();</text>
+        <text class="d-codigo-texto" x="24" y="140" style="font-size:14px">  }</text>
+        <text class="d-codigo-texto" x="24" y="166" style="font-size:14px">  return v.toFixed(2);</text>
+        <text class="d-codigo-texto" x="24" y="192" style="font-size:14px">}</text>
+        <rect class="d-caja" x="410" y="10" width="300" height="200" rx="10"/>
+        <text class="d-rotulo" x="560" y="40" text-anchor="middle" data-texto="1:Tipo de v al entrar; 2:La pregunta; 3:Tipo de v en la línea 3; 4:Tipo de v en la línea 5; 5:Y en el .js…">Tipo de v al entrar</text>
+        <rect class="d-acento" x="428" y="62" width="124" height="38" rx="19" data-clases="3:d-acento; 4:d-caja-suave; 5:d-acento"/>
+        <text class="d-sobre-acento d-mono" x="490" y="87" text-anchor="middle" data-clases="4:d-tenue; 5:d-sobre-acento">string</text>
+        <rect class="d-acento" x="568" y="62" width="124" height="38" rx="19" data-clases="3:d-caja-suave; 4:d-acento"/>
+        <text class="d-sobre-acento d-mono" x="630" y="87" text-anchor="middle" data-clases="3:d-tenue; 4:d-sobre-acento">number</text>
+        <text class="d-peq" x="428" y="132" data-texto="1:Solo lo que tienen en común:; 2:typeof es JavaScript normal.; 3:Solo string. Puedes usar:; 4:Solo number. Puedes usar:; 5:La comprobación typeof">Solo lo que tienen en común:</text>
+        <text class="d-peq d-mono" x="428" y="156" data-texto="1:toString(), valueOf()…; 2:TypeScript sabe qué significa; 3:toUpperCase(), length…; 4:toFixed(), toPrecision()…; 5:sigue en el .js: se ejecuta">toString(), valueOf()…</text>
+        <text class="d-peq d-mono" x="428" y="180" data-texto="1: ; 2:cada respuesta; 3: ; 4: ; 5:de verdad">&#160;</text>
+        <rect class="d-caja-suave" x="10" y="226" width="700" height="66" rx="10"/>
+        <text class="d-peq" x="28" y="253" data-texto="1:Si aquí escribieras v.toUpperCase(), tsc diría:; 2:Si la respuesta es sí, se entra en el if. Si es no,; 3:Dentro del if, TypeScript ya descartó number:; 4:Si el if no se cumplió, v no era string. Solo queda:; 5:En dist/formato.js queda:">Si aquí escribieras v.toUpperCase(), tsc diría:</text>
+        <text class="d-peq d-mono" x="28" y="277" data-texto="1:Property 'toUpperCase' does not exist on type 'number'; 2:se salta el bloque y se sigue en la línea 5.; 3:v es string, y toUpperCase existe.; 4:v es number, y toFixed existe.; 5:if (typeof v === &quot;string&quot;) {">Property 'toUpperCase' does not exist on type 'number'</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>La función recibe <code>v</code>, que puede ser <code>string</code> o <code>number</code>. Al entrar, TypeScript no sabe cuál de los dos es, así que solo te deja usar lo que tienen los dos en común.</li>
+        <li><code>typeof v === "string"</code> es una comprobación de JavaScript de toda la vida. TypeScript sabe lo que significa: si es cierta, <code>v</code> es un texto; si no, no lo es.</li>
+        <li>Dentro del <code>if</code>, TypeScript ya descartó <code>number</code>. El tipo de <code>v</code> se ha estrechado a <code>string</code>, y <code>toUpperCase()</code> está permitido.</li>
+        <li data-duracion="6">La línea 5 solo se alcanza si el <code>if</code> no se cumplió, porque dentro había un <code>return</code>. Así que aquí <code>v</code> ya no puede ser un texto: TypeScript lo estrecha a <code>number</code> y permite <code>toFixed()</code>.</li>
+        <li data-duracion="6">Al compilar, desaparece <code>: string | number</code>, pero el <code>typeof</code> se queda: es código que se ejecuta de verdad. El estrechamiento no es magia de TypeScript; es TypeScript entendiendo las comprobaciones que tú ya escribías en JavaScript.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>TypeScript entiende muchas formas de comprobar, todas de JavaScript normal:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Comprobación</th><th scope="col">Ejemplo</th><th scope="col">Qué descarta</th></tr></thead>
+      <tbody>
+        <tr><td><code>typeof</code></td><td><code>if (typeof v === "string")</code></td><td>Tipos básicos: <code>string</code>, <code>number</code>, <code>boolean</code>…</td></tr>
+        <tr><td>Igualdad</td><td><code>if (nombre === null)</code>, <code>if (estado === "error")</code></td><td><code>null</code>, <code>undefined</code> o un literal concreto</td></tr>
+        <tr><td>Veracidad</td><td><code>if (boton)</code></td><td><code>null</code> y <code>undefined</code> (cuidado: también descarta <code>0</code> y <code>""</code>, como viste con truthy y falsy en la <a href="08-decisiones.html#truthy">Estación 8</a>)</td></tr>
+        <tr><td><code>Array.isArray</code></td><td><code>if (Array.isArray(entrada))</code></td><td>Todo lo que no es un array</td></tr>
+        <tr><td><code>in</code></td><td><code>if ("nadar" in animal)</code></td><td>Los objetos que no tienen esa propiedad</td></tr>
+        <tr><td><code>instanceof</code></td><td><code>if (error instanceof Error)</code></td><td>Lo que no fue creado con esa clase (<a href="21-paradigmas.html#clases">Estación 21</a>)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El operador <code>in</code> es de JavaScript: <code>"nadar" in animal</code> vale <code>true</code> si el objeto tiene una propiedad con ese nombre. TypeScript lo usa para distinguir objetos de formas distintas:</p>
+  <pre><code class="language-ts">type Pez = { nombre: string; nadar: () =&gt; void };
+type Pajaro = { nombre: string; volar: () =&gt; void };
+
+function mover(animal: Pez | Pajaro) {
+  console.log(animal.nombre);   // bien: los dos tienen nombre
+  if ("nadar" in animal) {
+    animal.nadar();             // aquí animal es Pez
+  } else {
+    animal.volar();             // aquí animal es Pajaro
+  }
+}</code></pre>
+  <aside class="senal oficio">
+    <p>Las <strong>guardas</strong> que aprendiste en la <a href="08-decisiones.html#guardas">Estación 8</a> (salir pronto de la función con <code>return</code> cuando algo no cuadra) encajan de maravilla con TypeScript: después de <code>if (nombre === null) return 0;</code>, en el resto de la función <code>nombre</code> ya no puede ser <code>null</code>, y el código queda plano y claro.</p>
+  </aside>
+
+  <h3>Uniones discriminadas: objetos con etiqueta</h3>
+  <p>El patrón más potente de esta sección combina todo lo anterior. Imagina figuras geométricas: un círculo tiene radio; un rectángulo, ancho y alto. Les pones a todas una propiedad común con un tipo literal distinto, una especie de etiqueta que dice qué es cada una:</p>
+  <pre><code class="language-ts">type Figura =
+  | { tipo: "circulo"; radio: number }
+  | { tipo: "rectangulo"; ancho: number; alto: number };
+
+function area(f: Figura): number {
+  switch (f.tipo) {
+    case "circulo":
+      return Math.PI * f.radio ** 2;      // aquí f es el círculo: tiene radio
+    case "rectangulo":
+      return f.ancho * f.alto;            // aquí f es el rectángulo
+  }
+}</code></pre>
+  <p>Esto se llama <strong>unión discriminada</strong>, y la propiedad <code>tipo</code> es el <strong>discriminante</strong>: mirando solo esa propiedad, TypeScript sabe de qué miembro de la unión se trata. Dentro de <code>case "circulo"</code>, escribir <code>f.ancho</code> sería un error, porque un círculo no tiene ancho. Es la forma natural de modelar mensajes de un chat (texto, imagen, audio), eventos de un juego (moneda, golpe, subida de nivel) o respuestas de una API (éxito o error).</p>
+  <p>Y ahora, la parte que convence a cualquiera. Añades el triángulo a la unión y te olvidas de actualizar <code>area</code>:</p>
+  <pre><code class="language-ts">type Figura =
+  | { tipo: "circulo"; radio: number }
+  | { tipo: "rectangulo"; ancho: number; alto: number }
+  | { tipo: "triangulo"; base: number; altura: number };   // nueva
+
+function area(f: Figura): number {
+// error TS2366: Function lacks ending return statement and return type does not
+// include 'undefined'.</code></pre>
+  <p>«La función no termina con un <code>return</code> y su tipo de retorno no incluye <code>undefined</code>». Traducido al caso: hay una figura para la que <code>area</code> no devuelve nada. En un programa grande, con la misma unión usada en veinte sitios, TypeScript te lleva de la mano a cada uno de los lugares que tienes que actualizar. Para ver lo que pasa sin esa ayuda, ejecuta la versión JavaScript. <strong>Predice</strong> las tres líneas antes de pulsar «Ejecutar»:</p>
+  <div class="taller" id="taller-figuras" data-titulo="Predice y arregla: el triángulo olvidado" data-exito="Ahora el triángulo tiene su área. En TypeScript, el compilador te habría llevado directamente a este switch.">
+    <textarea class="taller-codigo">// En TypeScript, las figuras serían una unión discriminada:
+// type Figura =
+//   | { tipo: "circulo"; radio: number }
+//   | { tipo: "rectangulo"; ancho: number; alto: number }
+//   | { tipo: "triangulo"; base: number; altura: number };
+
+function area(f) {
+  switch (f.tipo) {
+    case "circulo":
+      return Math.PI * f.radio ** 2;
+    case "rectangulo":
+      return f.ancho * f.alto;
+  }
+}
+
+const figuras = [
+  { tipo: "circulo", radio: 1 },
+  { tipo: "rectangulo", ancho: 4, alto: 2.5 },
+  { tipo: "triangulo", base: 6, altura: 3 },
+];
+for (const f of figuras) {
+  console.log(f.tipo, area(f));
+}</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (!/case\s+["']triangulo["']/.test(codigo)) return "El triángulo sigue sin su caso. Añade un case \"triangulo\" al switch que devuelva base * altura / 2.";
+if (salida[2] !== "triangulo 9") return "La tercera línea debería ser «triangulo 9» y es «" + (salida[2] || "(nada)") + "». El área de un triángulo es base * altura / 2.";
+return true;
+    </script>
+  </div>
+  <p>JavaScript imprime <code>triangulo undefined</code> sin inmutarse: el <code>switch</code> no encontró su caso y la función terminó sin <code>return</code>. Añade el caso que falta (el área de un triángulo es base por altura entre dos) y vuelve a ejecutar.</p>
+
+  <h3>never: asegúrate de cubrir todos los casos</h3>
+  <p>Hay una forma todavía más explícita de pedirle a TypeScript que vigile que no olvidas ningún caso. Se añade un <code>default</code> que guarda la figura en una variable de tipo <code>never</code>, un tipo que no admite ningún valor:</p>
+  <pre><code class="language-ts">function area(f: Figura): number {
+  switch (f.tipo) {
+    case "circulo":
+      return Math.PI * f.radio ** 2;
+    case "rectangulo":
+      return f.ancho * f.alto;
+    default: {
+      const imposible: never = f;
+      throw new Error(`Figura desconocida: ${JSON.stringify(imposible)}`);
+    }
+  }
+}
+// Con el triángulo añadido a Figura y sin su case:
+// error TS2322: Type '{ tipo: "triangulo"; base: number; altura: number; }' is not
+// assignable to type 'never'.</code></pre>
+  <p>Si todos los casos están cubiertos, al llegar al <code>default</code> TypeScript ya descartó todas las figuras y <code>f</code> es de tipo <code>never</code>: la asignación encaja. Si falta alguno, lo que queda (el triángulo) no cabe en <code>never</code>, y el error te dice exactamente cuál falta. El <code>throw</code> protege además en tiempo de ejecución, por si llega un dato inesperado desde fuera. A esto se le llama <strong>comprobación exhaustiva</strong>.</p>
+  <p>Ordena ahora una función que usa una unión discriminada. Piensa qué líneas solo son válidas después de una comprobación. Las dos opciones de la unión pueden ir en cualquier orden:</p>
+  <div class="parsons" data-titulo="Ordena: vista previa de un mensaje" data-lenguaje="ts">
+    <ol>
+      <li>type Mensaje =</li>
+      <li data-sangria="1" data-grupo="a">| { tipo: "texto"; contenido: string }</li>
+      <li data-sangria="1" data-grupo="a">| { tipo: "imagen"; url: string; ancho: number };</li>
+      <li>function vistaPrevia(m: Mensaje): string {</li>
+      <li data-sangria="1">if (m.tipo === "texto") {</li>
+      <li data-sangria="2">return m.contenido.slice(0, 20);</li>
+      <li data-sangria="1">}</li>
+      <li data-sangria="1">return `[Imagen de ${m.ancho} px]`;</li>
+      <li>}</li>
+    </ol>
+  </div>
+</section>
+
+<section id="funciones" data-parada="Funciones y genéricos">
+  <h2>Funciones tipadas y genéricos</h2>
+  <p>En la <a href="10-funciones.html#parametros">Estación 10</a> leíste un aviso: JavaScript nunca comprueba que llames a una función con la cantidad correcta de argumentos ni con el tipo correcto. Con TypeScript, cada función se convierte en un pequeño contrato: qué recibe y qué devuelve.</p>
+
+  <h3>Parámetros y valor de retorno</h3>
+  <pre><code class="language-ts">function sumar(a: number, b: number): number {
+  return a + b;
+}
+
+sumar(1, 2);        // bien
+sumar(1);           // error TS2554: Expected 2 arguments, but got 1.
+sumar(1, 2, 3);     // error TS2554: Expected 2 arguments, but got 3.
+sumar("1", 2);      // error TS2345: Argument of type 'string' is not assignable to
+                    // parameter of type 'number'.</code></pre>
+  <p>Los tipos de los parámetros van dentro de los paréntesis; el tipo de lo que devuelve, después, tras dos puntos. TypeScript comprueba las dos direcciones: que quien llama pase lo que la función pide, y que la función devuelva lo que promete:</p>
+  <pre><code class="language-ts">function edadEnAnios(): number {
+  return "30";      // error TS2322: Type 'string' is not assignable to type 'number'.
+}</code></pre>
+  <p>El tipo de retorno se puede omitir, porque TypeScript lo infiere del <code>return</code>. Escribirlo tiene una ventaja: si por error devuelves otra cosa, el error aparece dentro de la función, donde está el fallo, y no en los diez sitios que la usan.</p>
+
+  <h3>Opcionales, valores por defecto y void</h3>
+  <pre><code class="language-ts">// saludo?: parámetro opcional (puede no pasarse: vale undefined)
+function saludar(nombre: string, saludo?: string): string {
+  return `${saludo ?? "Hola"}, ${nombre}`;
+}
+saludar("Ana");              // "Hola, Ana"
+saludar("Ana", "Buenas");    // "Buenas, Ana"
+
+// Con valor por defecto no hace falta anotar: vida es number
+function crearEnemigo(nombre: string, vida = 100) {
+  return { nombre, vida };
+}
+
+// Parámetro rest: cualquier cantidad de números, que llegan como array
+function promedio(...notas: number[]): number {
+  return notas.reduce((a, b) =&gt; a + b, 0) / notas.length;
+}
+
+// void: la función no devuelve nada útil
+function anunciar(mensaje: string): void {
+  console.log(`&gt;&gt; ${mensaje}`);
+}</code></pre>
+  <aside class="senal ojo">
+    <p>Los parámetros opcionales van siempre al final: <code>function f(a?: string, b: number)</code> es un error, porque no habría forma de pasar <code>b</code> sin pasar <code>a</code>.</p>
+  </aside>
+
+  <h3>Funciones flecha y callbacks</h3>
+  <p>Las funciones flecha se anotan igual. Y cuando pasas una función como argumento (un <em>callback</em>, <a href="10-funciones.html#flechas">Estación 10</a>), normalmente no hace falta anotar nada, porque TypeScript deduce los tipos por el contexto:</p>
+  <pre><code class="language-ts">const doble = (n: number): number =&gt; n * 2;
+
+const nombres = ["Ana", "Leo", "Maya"];
+const largos = nombres.map((nombre) =&gt; nombre.length);
+// nombre es string (porque nombres es string[]) y largos es number[]</code></pre>
+  <p>Para describir una función que recibe otra función, se escribe el tipo de la función con una flecha: <code>(parámetros) =&gt; retorno</code>. Se lee «una función que recibe esto y devuelve aquello»:</p>
+  <pre><code class="language-ts">function repetir(veces: number, accion: (vuelta: number) =&gt; void): void {
+  for (let i = 1; i &lt;= veces; i++) accion(i);
+}
+repetir(3, (v) =&gt; console.log(`Vuelta ${v}`));   // v es number: lo deduce del tipo de accion
+
+type Operacion = (a: number, b: number) =&gt; number;
+const restar: Operacion = (a, b) =&gt; a - b;</code></pre>
+  <p>Una función <code>async</code> (<a href="16-asincronia.html#async-await">Estación 16</a>) siempre devuelve una promesa. Su tipo de retorno se escribe <code>Promise&lt;T&gt;</code>, donde <code>T</code> es lo que obtendrás con <code>await</code>: <code>async function cargarNivel(): Promise&lt;string[]&gt;</code> promete que, al esperar, obtendrás un array de textos.</p>
+
+  <h3>Genéricos: una función, muchos tipos</h3>
+  <p>Quieres una función que devuelva el primer elemento de cualquier lista. ¿Qué tipo le pones al parámetro? Si escribes <code>number[]</code>, solo sirve para números. Si escribes <code>any[]</code> (el comodín que verás en la sección siguiente), sirve para todo, pero TypeScript pierde la pista del tipo y deja de protegerte con el resultado.</p>
+  <p>La solución son los <strong>genéricos</strong>: funciones (o tipos) con un hueco para un tipo que se decide al usarlas. El hueco se declara entre <code>&lt; &gt;</code> después del nombre, y por costumbre se llama <code>T</code> (de <em>type</em>). Se le llama <strong>parámetro de tipo</strong>:</p>
+  <pre><code class="language-ts">function primero&lt;T&gt;(lista: T[]): T | undefined {
+  return lista[0];
+}
+
+const n = primero([10, 20, 30]);     // T es number  → n es number | undefined
+const s = primero(["Ana", "Leo"]);   // T es string  → s es string | undefined
+const v = primero&lt;string&gt;([]);       // T indicado a mano, porque [] no da pistas</code></pre>
+  <p>Se lee: «<code>primero</code> recibe una lista de elementos de cierto tipo <code>T</code> y devuelve un elemento de ese mismo tipo <code>T</code>, o <code>undefined</code>». En cada llamada, TypeScript mira el argumento y deduce qué es <code>T</code>. El genérico conecta la entrada con la salida: lo que entra determina lo que sale.</p>
+  <aside class="senal analogia">
+    <p>Un genérico es como un formulario con un espacio en blanco: «Devuelve el primer ____ de una lista de ____». Cada vez que lo usas, el mismo tipo rellena los dos huecos. Si metes una lista de canciones, te devuelve una canción. Donde la analogía se queda corta: en TypeScript no rellenas el hueco a mano casi nunca; lo deduce el compilador.</p>
+  </aside>
+  <p>A veces necesitas que <code>T</code> cumpla algo. Con <code>extends</code> pones una <strong>restricción</strong>: «<code>T</code> puede ser cualquier tipo, siempre que tenga…»:</p>
+  <pre><code class="language-ts">function masLargo&lt;T extends { length: number }&gt;(a: T, b: T): T {
+  return a.length &gt;= b.length ? a : b;
+}
+masLargo("hola", "adiós");     // bien: los textos tienen length
+masLargo([1, 2], [3]);         // bien: los arrays también
+masLargo(10, 20);
+// error TS2345: Argument of type 'number' is not assignable to parameter of type
+// '{ length: number; }'.
+
+function buscarPorNombre&lt;T extends { nombre: string }&gt;(lista: T[], nombre: string): T | undefined {
+  return lista.find((item) =&gt; item.nombre === nombre);
+}
+const heroes = [{ nombre: "Lyra", vida: 80 }, { nombre: "Tor", vida: 120 }];
+const tor = buscarPorNombre(heroes, "Tor");   // tor conserva su forma: tiene vida
+console.log(tor?.vida);</code></pre>
+  <p>Fíjate en lo que ganas con <code>buscarPorNombre</code>: sirve para héroes, productos o ciudades, cualquier cosa con <code>nombre</code>, y el resultado no pierde el resto de propiedades. El <code>?.</code> es el encadenamiento opcional de la <a href="11-colecciones.html#datos-reales">Estación 11</a>: <code>tor</code> puede ser <code>undefined</code>.</p>
+  <p>Los tipos también pueden ser genéricos. Este patrón aparece en muchos proyectos para devolver un resultado que puede haber salido bien o mal, sin lanzar excepciones:</p>
+  <pre><code class="language-ts">type Resultado&lt;T&gt; =
+  | { ok: true; valor: T }
+  | { ok: false; error: string };
+
+function dividir(a: number, b: number): Resultado&lt;number&gt; {
+  if (b === 0) return { ok: false, error: "No se puede dividir entre 0" };
+  return { ok: true, valor: a / b };
+}
+
+const r = dividir(10, 2);
+if (r.ok) {
+  console.log(r.valor);    // aquí r tiene valor
+} else {
+  console.log(r.error);    // aquí r tiene error
+}</code></pre>
+  <p>Es una unión discriminada: <code>ok</code> es el discriminante, con los tipos literales <code>true</code> y <code>false</code>. La usarás en el proyecto de esta estación.</p>
+  <p>Y una sorpresa: ya llevas un rato usando genéricos. <code>Array&lt;string&gt;</code>, <code>Promise&lt;Usuario&gt;</code>, <code>Partial&lt;Producto&gt;</code> y <code>Record&lt;string, number&gt;</code> son tipos genéricos que trae TypeScript. También <code>Map&lt;string, number&gt;</code> y <code>Set&lt;string&gt;</code>, las estructuras de la <a href="19-estructuras-datos.html#hash">Estación 19</a>:</p>
+  <pre><code class="language-ts">const inventario = new Map&lt;string, number&gt;();   // claves string, valores number
+inventario.set("pocion", 3);
+inventario.set("espada", "una");   // error TS2345: Argument of type 'string' is not
+                                   // assignable to parameter of type 'number'.</code></pre>
+  <p>Los genéricos no existen en JavaScript: allí todas las funciones aceptan cualquier cosa. Escribe la versión JavaScript de <code>ultimo</code>, cuyo tipo en TypeScript sería <code>function ultimo&lt;T&gt;(lista: T[]): T | undefined</code>. Debe devolver el último elemento, o <code>undefined</code> si la lista está vacía:</p>
+  <div class="taller" id="taller-ultimo" data-titulo="Crea: el último de la lista" data-esperado="9&#10;Leo&#10;undefined" data-exito="Funciona con números, textos y listas vacías. En TypeScript, además, el tipo del resultado seguiría al de la lista.">
+    <textarea class="taller-codigo">// En TypeScript: function ultimo<T>(lista: T[]): T | undefined
+function ultimo(lista) {
+  // Devuelve el último elemento, o undefined si la lista está vacía
+}
+
+console.log(ultimo([3, 7, 9]));
+console.log(ultimo(["Ana", "Leo"]));
+console.log(ultimo([]));</textarea>
+  </div>
+  <details class="pista"><summary>Pista</summary><p>El último elemento está en la posición <code>lista.length - 1</code>. Si la lista está vacía, esa posición es <code>-1</code> y leerla da <code>undefined</code>, que es justo lo que quieres. También existe <code>lista.at(-1)</code>.</p></details>
+  <aside class="senal ojo" data-titulo="No todo tiene que ser genérico">
+    <p>Una regla del manual oficial: si el parámetro de tipo aparece una sola vez en la firma, probablemente no lo necesitas. <code>function mostrar&lt;T&gt;(x: T): void</code> no gana nada frente a un tipo normal; el genérico sirve cuando conecta dos cosas (la entrada con la salida, o dos parámetros entre sí).</p>
+  </aside>
+</section>
