@@ -1820,3 +1820,252 @@ ORDER BY ventas DESC, j.titulo;</code></pre>
     </details>
   </article>
 </section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: la base de datos de tu juego</h2>
+  <p>Vas a diseñar y construir la base de datos de un juego con niveles y logros: quién juega, cuántos puntos hizo en cada partida y qué logros ganó. Es el mismo tipo de base que hay detrás del marcador de cualquier juego en línea. Primero la diseñarás en papel, después la construirás aquí con SQL de verdad y, al final, la conectarás con la API de la Estación 29 en tu computadora.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Diseña en papel.</strong> Dibuja el diagrama entidad-relación con cuatro tablas: <code>jugadores</code> (nombre único y país), <code>partidas</code> (de qué jugador, nivel, puntos y fecha), <code>logros</code> (nombre único y descripción) y <code>jugador_logros</code>, la tabla intermedia que dice qué jugador ganó qué logro y cuándo. Marca las claves primarias, las foráneas y la cardinalidad de cada relación: ¿un jugador tiene cuántas partidas?, ¿un logro lo pueden ganar cuántos jugadores?</p></div></li>
+    <li><div><p><strong>Crea las tablas</strong> con sus restricciones: <code>NOT NULL</code> donde el dato sea obligatorio, <code>UNIQUE</code> en los nombres, <code>CHECK (puntos &gt;= 0)</code> y <code>CHECK (nivel &gt;= 1)</code>, claves foráneas con <code>REFERENCES</code> y la clave compuesta <code>PRIMARY KEY (jugador_id, logro_id)</code> en <code>jugador_logros</code>, para que nadie gane el mismo logro dos veces. Deja la primera línea, <code>PRAGMA foreign_keys = ON;</code>.</p></div></li>
+    <li><div><p><strong>Crea un índice</strong> sobre <code>partidas (jugador_id)</code>: es la clave foránea que usarán todos tus <code>JOIN</code>.</p></div></li>
+    <li><div><p><strong>Carga datos de ejemplo dentro de una transacción</strong> (<code>BEGIN</code> … <code>COMMIT</code>): cuatro jugadores, unas ocho partidas, tres logros y algunos logros ganados. Deja a un jugador sin partidas y a otro sin logros, para poder probar los casos con cero. Insertar muchas filas dentro de una sola transacción, además, es mucho más rápido en SQLite.</p></div></li>
+    <li><div><p><strong>Simula una jugada</strong> en otra transacción: un jugador supera el nivel 3 con 820 puntos y gana dos logros. Son tres <code>INSERT</code> que deben aplicarse juntos.</p></div></li>
+    <li><div><p><strong>Escribe tres consultas</strong>: el ranking de los 3 mejores jugadores según su mejor puntuación; cuántos logros tiene cada jugador, incluidos los que tienen cero; y qué jugadores no han jugado nunca.</p></div></li>
+    <li><div><p><strong>Rómpelo a propósito</strong>: intenta insertar una partida de un jugador que no existe, un logro repetido y una puntuación negativa. Cada intento debe terminar en un error de restricción. Después vuelve a comentarlos.</p></div></li>
+  </ol>
+  <div class="taller" data-modo="sql" id="taller-proyecto" data-titulo="Proyecto: la base de datos de tu juego" data-exito="Tu base de datos tiene tablas relacionadas, reglas, un índice, transacciones y consultas. Es un diseño real: puedes llevarlo tal cual a tu computadora.">
+    <textarea class="taller-codigo">PRAGMA foreign_keys = ON;
+
+-- 1. Crea las cuatro tablas: jugadores, partidas, logros y jugador_logros
+
+
+-- 2. Crea un índice sobre partidas (jugador_id)
+
+
+-- 3. Carga los datos de ejemplo dentro de una transacción (BEGIN … COMMIT)
+
+
+-- 4. Un jugador supera el nivel 3 y gana dos logros: todo en otra transacción
+
+
+-- 5. Consultas: ranking, logros por jugador y jugadores sin partidas
+</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (!/PRAGMA\s+foreign_keys\s*=\s*ON/i.test(codigo)) return "Deja la primera línea, PRAGMA foreign_keys = ON;, para que SQLite compruebe las claves foráneas.";
+var tablas = (codigo.match(/CREATE\s+TABLE/gi) || []).length;
+if (tablas < 4) return "Paso 2: crea las cuatro tablas (llevas " + tablas + ").";
+if ((codigo.match(/REFERENCES/gi) || []).length < 3) return "Las relaciones se declaran con claves foráneas: partidas apunta a jugadores, y jugador_logros apunta a jugadores y a logros (REFERENCES).";
+if (!/PRIMARY\s+KEY\s*\(\s*\w+\s*,\s*\w+\s*\)/i.test(codigo)) return "La tabla jugador_logros necesita una clave compuesta: PRIMARY KEY (jugador_id, logro_id).";
+if (!/CHECK\s*\(/i.test(codigo)) return "Añade al menos una restricción CHECK, por ejemplo CHECK (puntos >= 0).";
+if (!/CREATE\s+(UNIQUE\s+)?INDEX/i.test(codigo)) return "Paso 3: crea al menos un índice.";
+if (!/\bBEGIN\b/i.test(codigo) || !/\bCOMMIT\b/i.test(codigo)) return "Pasos 4 y 5: usa transacciones con BEGIN y COMMIT.";
+if (resultados.length < 3) return "Paso 6: escribe al menos tres consultas que devuelvan filas: el ranking, los logros por jugador y los jugadores sin partidas. Ahora hay " + resultados.length + ".";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <pre><code class="language-sql">PRAGMA foreign_keys = ON;
+
+-- 1. Tablas
+CREATE TABLE jugadores (
+  id     INTEGER PRIMARY KEY,
+  nombre TEXT NOT NULL UNIQUE,
+  pais   TEXT
+);
+CREATE TABLE partidas (
+  id         INTEGER PRIMARY KEY,
+  jugador_id INTEGER NOT NULL REFERENCES jugadores(id),
+  nivel      INTEGER NOT NULL CHECK (nivel &gt;= 1),
+  puntos     INTEGER NOT NULL CHECK (puntos &gt;= 0),
+  fecha      TEXT NOT NULL
+);
+CREATE TABLE logros (
+  id          INTEGER PRIMARY KEY,
+  nombre      TEXT NOT NULL UNIQUE,
+  descripcion TEXT NOT NULL
+);
+CREATE TABLE jugador_logros (
+  jugador_id INTEGER NOT NULL REFERENCES jugadores(id),
+  logro_id   INTEGER NOT NULL REFERENCES logros(id),
+  fecha      TEXT NOT NULL,
+  PRIMARY KEY (jugador_id, logro_id)
+);
+
+-- 2. Índice para los JOIN entre partidas y jugadores
+CREATE INDEX idx_partidas_jugador ON partidas (jugador_id);
+
+-- 3. Datos de ejemplo, en una sola transacción
+BEGIN;
+INSERT INTO jugadores (nombre, pais) VALUES
+  ('Ana', 'Colombia'), ('Leo', 'Perú'), ('Sol', 'México'), ('Iker', 'Chile');
+INSERT INTO partidas (jugador_id, nivel, puntos, fecha) VALUES
+  (1, 1, 300, '2026-09-01'), (1, 2, 450, '2026-09-02'),
+  (2, 1, 200, '2026-09-02'), (2, 2, 650, '2026-09-03'),
+  (3, 1, 150, '2026-09-03'), (3, 2, 900, '2026-09-04'),
+  (1, 3, 800, '2026-09-05'), (2, 3, 500, '2026-09-06');
+INSERT INTO logros (nombre, descripcion) VALUES
+  ('Primer paso', 'Termina el nivel 1'),
+  ('Imparable', 'Supera los 800 puntos'),
+  ('Explorador', 'Llega al nivel 3');
+INSERT INTO jugador_logros (jugador_id, logro_id, fecha) VALUES
+  (1, 1, '2026-09-01'), (1, 3, '2026-09-05'),
+  (2, 1, '2026-09-02'), (3, 1, '2026-09-03'), (3, 2, '2026-09-04');
+COMMIT;
+
+-- 4. Leo supera el nivel 3 con 820 puntos y gana dos logros
+BEGIN;
+INSERT INTO partidas (jugador_id, nivel, puntos, fecha) VALUES (2, 3, 820, '2026-09-07');
+INSERT INTO jugador_logros (jugador_id, logro_id, fecha) VALUES (2, 2, '2026-09-07');
+INSERT INTO jugador_logros (jugador_id, logro_id, fecha) VALUES (2, 3, '2026-09-07');
+COMMIT;
+
+-- 5a. Ranking: los 3 mejores según su récord
+SELECT j.nombre, MAX(p.puntos) AS record
+FROM partidas AS p
+JOIN jugadores AS j ON j.id = p.jugador_id
+GROUP BY j.id, j.nombre
+ORDER BY record DESC
+LIMIT 3;
+
+-- 5b. Logros por jugador, incluidos los que no tienen ninguno
+SELECT j.nombre, COUNT(jl.logro_id) AS logros
+FROM jugadores AS j
+LEFT JOIN jugador_logros AS jl ON jl.jugador_id = j.id
+GROUP BY j.id, j.nombre
+ORDER BY logros DESC, j.nombre;
+
+-- 5c. Jugadores que nunca jugaron
+SELECT nombre
+FROM jugadores AS j
+WHERE NOT EXISTS (SELECT 1 FROM partidas AS p WHERE p.jugador_id = j.id);</code></pre>
+    <p>El ranking da Sol (900), Leo (820) y Ana (800); los logros, Leo 3, Ana 2, Sol 2 e Iker 0; e Iker es quien nunca jugó. Para el paso 7, prueba por ejemplo <code>INSERT INTO partidas (jugador_id, nivel, puntos, fecha) VALUES (99, 1, 100, '2026-09-08');</code> y <code>INSERT INTO jugador_logros VALUES (1, 1, '2026-09-08');</code>.</p>
+  </details>
+  <h3>Llévalo a tu computadora</h3>
+  <p>Con la API de la Estación 29 y <code>node:sqlite</code>, el ranking se convierte en una ruta real. Guarda el SQL de las tablas en <code>migraciones/001_crear_tablas.sql</code>, ejecútalo una vez con <code>db.exec</code> y añade una ruta como esta a tu servidor de Express:</p>
+  <pre><code class="language-js">import express from "express";
+import { DatabaseSync } from "node:sqlite";
+
+const db = new DatabaseSync("juego.db");
+const ranking = db.prepare(`
+  SELECT j.nombre, MAX(p.puntos) AS record
+  FROM partidas AS p
+  JOIN jugadores AS j ON j.id = p.jugador_id
+  GROUP BY j.id, j.nombre
+  ORDER BY record DESC
+  LIMIT ?`);
+
+const app = express();
+app.get("/api/ranking", (req, res) =&gt; {
+  const limite = Math.min(Number(req.query.limite) || 10, 100);  // entre 1 y 100
+  res.json(ranking.all(limite));                                   // valor como parámetro
+});
+app.listen(3000);</code></pre>
+  <p>Visita <code>http://localhost:3000/api/ranking?limite=3</code> o pruébalo con <code>curl</code>. Fíjate en que el límite que llega en la URL viaja como parámetro, nunca pegado en el SQL, y en que se acota a un máximo para que nadie pida un millón de filas.</p>
+  <p><strong>Para ir más allá:</strong> añade una ruta <code>POST /api/partidas</code> que guarde una partida validando los datos; usa tablas <code>STRICT</code>; guarda solo el récord de cada jugador con <code>INSERT … ON CONFLICT (jugador_id) DO UPDATE</code> (se llama <em>upsert</em> y lo explica la documentación de SQLite); o pasa el proyecto a PostgreSQL y comprueba cuántas líneas tienes que cambiar.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Cada opción, acertada o no, trae su explicación: leerlas es parte del repaso.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Tu API guarda las visitas en un archivo JSON: lee el número, le suma 1 y lo vuelve a escribir. ¿Qué problema aparece cuando llegan muchas peticiones a la vez?</p>
+      <ol class="opciones">
+        <li>El archivo JSON no puede guardar números grandes.<p class="explica">JSON guarda números sin problema. El fallo no está en el formato.</p></li>
+        <li>El archivo se borra cuando se reinicia el servidor.<p class="explica">Eso le pasa a lo que está en la memoria RAM, no a un archivo en disco.</p></li>
+        <li>Dos peticiones pueden leer el mismo número y una sobrescribe la suma de la otra.<p class="explica">Correcto. Es la actualización perdida, una condición de carrera. Una base de datos la evita haciendo la suma en una sola orden y ordenando las escrituras.</p></li>
+        <li>Nada: Node.js tiene un solo hilo, así que las peticiones no pueden mezclarse.<p class="explica">Un solo hilo no basta: entre la lectura y la escritura hay un <code>await</code>, y ahí otra petición puede avanzar. Además, puede haber varias copias del servidor.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Dos clientes tienen el correo en <code>NULL</code>. ¿Qué devuelve <code>SELECT nombre FROM clientes WHERE email = NULL;</code>?</p>
+      <ol class="opciones">
+        <li>Ninguna fila.<p class="explica">Correcto. Comparar con <code>NULL</code> da «desconocido», nunca verdadero. Hay que usar <code>IS NULL</code>.</p></li>
+        <li>Los dos clientes sin correo.<p class="explica">Es lo que casi todo el mundo espera, y por eso es un error tan común. Eso lo hace <code>WHERE email IS NULL</code>.</p></li>
+        <li>Un error de sintaxis.<p class="explica">La consulta es válida y se ejecuta; simplemente no devuelve nada. Por eso el error pasa desapercibido.</p></li>
+        <li>Todos los clientes.<p class="explica">No: la condición no es verdadera para ninguna fila.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Quieres los géneros que tienen más de dos juegos. ¿Dónde va la condición?</p>
+      <ol class="opciones">
+        <li><code>WHERE COUNT(*) &gt; 2</code><p class="explica"><code>WHERE</code> se ejecuta antes de agrupar, cuando todavía no hay cuentas por grupo. SQLite responde con un error de uso de la función de agregación.</p></li>
+        <li><code>ORDER BY COUNT(*) &gt; 2</code><p class="explica"><code>ORDER BY</code> ordena; no quita filas.</p></li>
+        <li><code>SELECT genero &gt; 2</code><p class="explica">Eso compara el texto del género con un número; no cuenta nada.</p></li>
+        <li><code>GROUP BY genero HAVING COUNT(*) &gt; 2</code><p class="explica">Correcto. <code>HAVING</code> filtra grupos después de agrupar.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Tienes 5 clientes y uno nunca compró. ¿Qué consulta muestra a los 5, con sus compras si las tienen?</p>
+      <ol class="opciones">
+        <li><code>FROM clientes JOIN compras ON compras.cliente_id = clientes.id</code><p class="explica"><code>JOIN</code> (<code>INNER JOIN</code>) solo muestra las parejas completas: el cliente sin compras desaparece.</p></li>
+        <li><code>FROM clientes LEFT JOIN compras ON compras.cliente_id = clientes.id</code><p class="explica">Correcto. <code>LEFT JOIN</code> conserva todas las filas de la tabla de la izquierda y rellena con <code>NULL</code> lo que falta.</p></li>
+        <li><code>FROM compras LEFT JOIN clientes ON clientes.id = compras.cliente_id</code><p class="explica">Aquí la tabla que se conserva entera es <code>compras</code>: el cliente sin compras no tiene ninguna fila de la que partir.</p></li>
+        <li><code>FROM clientes, compras</code><p class="explica">Sin condición, combina cada cliente con cada compra: el producto cartesiano, 5 × 8 filas sin sentido.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Ejecutas <code>BEGIN;</code> y <code>UPDATE monederos SET monedas = monedas - 50 WHERE jugador = 'Ana';</code>, y el servidor se apaga antes de sumarle a Leo y de hacer <code>COMMIT</code>. ¿Qué encuentra la base de datos al arrancar?</p>
+      <ol class="opciones">
+        <li>Ana con 50 monedas menos y Leo sin cambios.<p class="explica">Eso pasaría sin transacción. Con <code>BEGIN</code>, el cambio no se había confirmado.</p></li>
+        <li>La base de datos corrupta, sin posibilidad de arreglo.<p class="explica">Justo para evitar eso existe el diario de la base de datos: nunca queda a medias.</p></li>
+        <li>Todo como antes de <code>BEGIN</code>: Ana conserva sus monedas.<p class="explica">Correcto. La transacción sin confirmar se descarta entera. Es la A de ACID: atomicidad.</p></li>
+        <li>La transferencia completa: la base de datos ejecuta sola la orden que faltaba.<p class="explica">La base de datos no adivina órdenes que nunca recibió. Solo puede deshacer lo que no se confirmó.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Cuál de estas formas de buscar por el nombre que escribe una persona es segura?</p>
+      <ol class="opciones">
+        <li><code>db.prepare("SELECT * FROM clientes WHERE nombre = ?").all(nombre)</code><p class="explica">Correcto. Es una consulta parametrizada: el valor viaja aparte y nunca se interpreta como código SQL.</p></li>
+        <li><code>db.prepare("SELECT * FROM clientes WHERE nombre = '" + nombre + "'").all()</code><p class="explica">Vulnerable a inyección SQL: una comilla en el nombre cambia el significado de la consulta.</p></li>
+        <li><code>db.prepare(`SELECT * FROM clientes WHERE nombre = '${nombre}'`).all()</code><p class="explica">La plantilla literal pega el texto igual que <code>+</code>: igual de vulnerable.</p></li>
+        <li>La segunda opción, pero quitando antes las comillas del nombre con <code>replace</code>.<p class="explica">Escapar a mano es frágil: hay otros caracteres y trucos, y rompe nombres legítimos como O'Higgins. OWASP lo desaconseja: usa parámetros.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">En tu tabla <code>pedidos</code>, cada fila guarda el <code>cliente_id</code> y también el correo del cliente. ¿Qué problema tiene ese diseño?</p>
+      <ol class="opciones">
+        <li>Ninguno: tener el correo a mano ahorra un <code>JOIN</code>.<p class="explica">Ahorra un <code>JOIN</code>, pero a cambio el correo se repite en cada pedido y puede contradecirse. Si se hace, debe ser una decisión medida, no un descuido.</p></li>
+        <li>Rompe la primera forma normal porque el correo tiene arroba.<p class="explica">La 1FN pide un valor por celda; un correo es un solo valor, tenga los caracteres que tenga.</p></li>
+        <li>Hace que las consultas devuelvan filas repetidas.<p class="explica">Las filas no se repiten por eso; lo que se repite es el dato del correo.</p></li>
+        <li>Si el cliente cambia de correo, hay que cambiarlo en todos sus pedidos: el correo depende del cliente, no del pedido.<p class="explica">Correcto. Es una dependencia transitiva, que la tercera forma normal elimina llevando el correo a la tabla <code>clientes</code>.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Cuál es un inconveniente real de crear un índice?</p>
+      <ol class="opciones">
+        <li>Hace más lentas las consultas que lo usan.<p class="explica">Al revés: las que lo usan suelen ir mucho más rápido.</p></li>
+        <li>Ocupa espacio y hace más lentas las escrituras, porque cada cambio debe actualizar también el índice.<p class="explica">Correcto. Por eso se indexa lo que se busca a menudo, no todas las columnas.</p></li>
+        <li>Cambia el orden en que se guardan las filas y rompe los <code>ORDER BY</code>.<p class="explica">Un índice es una estructura aparte; no cambia el resultado de ninguna consulta, solo su velocidad.</p></li>
+        <li>Solo funciona en PostgreSQL.<p class="explica">Todos los motores relacionales tienen índices, SQLite incluido.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Vas a hacer una app móvil de notas que funciona sin conexión. ¿Qué base de datos encaja mejor para guardar las notas en el teléfono?</p>
+      <ol class="opciones">
+        <li>Un servidor PostgreSQL en la nube.<p class="explica">Necesitaría conexión a internet para cada nota. Puede servir para sincronizar, pero no como almacén local.</p></li>
+        <li>MongoDB, porque las notas son texto.<p class="explica">Que los datos sean texto no decide el motor. Además, MongoDB es un servidor, no algo que vaya dentro de la app.</p></li>
+        <li>SQLite.<p class="explica">Correcto. Es una biblioteca embebida: la base es un archivo dentro de la app, sin servidor ni conexión. Android e iOS la incluyen.</p></li>
+        <li>Ninguna: las bases de datos solo existen en servidores.<p class="explica">SQLite demuestra lo contrario: probablemente tu teléfono tiene decenas de bases SQLite ahora mismo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Por qué <code>ORDER BY</code> puede usar un alias que se definió en el <code>SELECT</code> (por ejemplo, <code>ORDER BY record</code>)?</p>
+      <ol class="opciones">
+        <li>Porque <code>ORDER BY</code> se escribe después del <code>SELECT</code>.<p class="explica">El orden de escritura no decide: <code>FROM</code> también se escribe después del <code>SELECT</code> y se ejecuta antes.</p></li>
+        <li>Porque <code>ORDER BY</code> se ejecuta después del <code>SELECT</code>, cuando el alias ya existe.<p class="explica">Correcto. El orden de ejecución es <code>FROM</code>, <code>WHERE</code>, <code>GROUP BY</code>, <code>HAVING</code>, <code>SELECT</code>, <code>ORDER BY</code>, <code>LIMIT</code>.</p></li>
+        <li>Porque los alias se guardan como columnas nuevas en la tabla.<p class="explica">Los alias solo existen en la respuesta de esa consulta; la tabla no cambia.</p></li>
+        <li>No puede: siempre hay que repetir la expresión completa.<p class="explica">Sí puede, en todos los motores. Donde el estándar no lo permite es en el <code>WHERE</code>.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Tu app ya tiene usuarios y necesitas añadir la columna <code>pais</code> a la tabla <code>jugadores</code>. ¿Qué haces?</p>
+      <ol class="opciones">
+        <li>Borrar la base de datos y crearla de nuevo con la columna.<p class="explica">Perderías todos los datos de tus usuarios.</p></li>
+        <li>Editar la migración <code>001</code> que creó la tabla y volver a ejecutarla.<p class="explica">Esa migración ya se aplicó: la herramienta no la repetirá, y tu base y la del resto del equipo quedarían distintas. Nunca se edita una migración aplicada.</p></li>
+        <li>Conectarte al servidor de producción y escribir el <code>ALTER TABLE</code> a mano.<p class="explica">Funcionaría allí, pero nadie más sabría del cambio: las bases de tu equipo y de pruebas quedarían desfasadas.</p></li>
+        <li>Crear una migración nueva, <code>002_agregar_pais.sql</code>, con el <code>ALTER TABLE</code>, guardarla en Git y aplicarla en todos los entornos.<p class="explica">Correcto. Así el cambio queda registrado, en orden, y se aplica igual en todas partes.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
