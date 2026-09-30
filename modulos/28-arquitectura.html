@@ -51,6 +51,7 @@
       <li><a href="#estilos">Monolito o microservicios</a></li>
       <li><a href="#comunicacion">APIs y eventos</a></li>
       <li><a href="#cache">Caché</a></li>
+      <li><a href="#escalar">Escalar</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -981,6 +982,172 @@ HTTP/1.1 304 Not Modified</code></pre>
   <p><code>max-age</code> son los segundos de validez (31 536 000 es un año). La respuesta <code>304 Not Modified</code> significa «tu copia sigue valiendo», sin volver a enviar el archivo. Un <code>ETag</code> es una etiqueta que identifica la versión del contenido.</p>
   <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">no-cache no significa «no guardes»</p><p>Es la confusión más común con estas cabeceras. <code>no-cache</code> permite guardar la respuesta, pero obliga a preguntarle al servidor antes de reutilizarla. La que prohíbe guardar es <code>no-store</code>. Para datos personales (tu perfil, tu carrito) usa <code>private</code> o <code>no-store</code>: una CDN que comparte la página de tu carrito con otra persona es un fallo de seguridad grave, no de rendimiento.</p></div></aside>
   <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Otros problemas que trae una caché</p><p><strong>Estampida</strong>: cuando caduca una entrada muy pedida, miles de peticiones fallan a la vez y todas van a la base de datos en el mismo instante. <strong>Memoria limitada</strong>: la caché no cabe todo, así que descarta entradas; la política más común es LRU (<em>least recently used</em>, «la usada hace más tiempo»). <strong>Arranque en frío</strong>: después de reiniciar, la caché está vacía y todo va lento un rato. Y lo más importante: mide antes. Añadir una caché a algo que ya es rápido solo suma complejidad.</p></div></aside>
+</section>
+
+<section id="escalar" data-parada="Escalar">
+  <h2>Escalar: cuando llegan muchas más personas</h2>
+  <p>Tu juego sale en portada de una tienda de apps y el tráfico se multiplica por veinte en una hora. El servidor, que iba sobrado, empieza a responder en cinco segundos y después deja de responder. Hay dos maneras de darle más capacidad, y conviene conocer las dos.</p>
+
+  <h3>Vertical u horizontal</h3>
+  <ul>
+    <li><strong>Escalado vertical</strong> (<em>scale up</em>): cambiar la máquina por una más potente, con más núcleos y más memoria. No hay que tocar el código. Pero tiene un techo (la máquina más grande que exista), el precio crece más rápido que la potencia y sigue siendo una sola máquina: un punto único de fallo.</li>
+    <li><strong>Escalado horizontal</strong> (<em>scale out</em>): poner <em>más</em> máquinas iguales y repartir el trabajo entre ellas. En teoría no tiene techo, y si una máquina falla, las demás siguen. Pero exige que la aplicación esté preparada, y añade una pieza nueva: alguien que reparta.</li>
+  </ul>
+  <aside class="senal analogia"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Para entenderlo</p><p>Un restaurante con una cocinera que no da abasto puede contratar a una cocinera más rápida (vertical) o abrir más puestos de cocina con varias personas (horizontal). Lo segundo solo funciona si las recetas están escritas y cualquiera puede preparar cualquier plato. Si cada cocinera guarda en la cabeza lo que pidió cada mesa, el cliente que cambia de puesto se queda sin su pedido.</p></div></aside>
+
+  <h3>Servidores sin estado</h3>
+  <p>Esa última frase de la analogía es la clave del escalado horizontal. Si el servidor 1 guarda en su memoria el carrito de Ana, y la siguiente petición de Ana llega al servidor 2, el carrito aparece vacío. Para escalar horizontalmente, los servidores deben ser <strong>sin estado</strong> (<em>stateless</em>): no guardan nada propio entre una petición y la siguiente. El estado vive fuera, en un sitio que todos comparten: la base de datos, una caché compartida como Redis, o el propio cliente (por ejemplo, en una cookie o un token firmado, que verás en la <a href="31-seguridad.html">Estación 31</a>). Así cualquier servidor puede atender cualquier petición.</p>
+
+  <h3>El balanceador de carga</h3>
+  <p>Un <strong>balanceador de carga</strong> (<em>load balancer</em>) es la pieza que recibe todas las peticiones y las reparte entre los servidores. Las formas de repartir más comunes son:</p>
+  <ul>
+    <li><strong>Por turnos</strong> (<em>round robin</em>): el primero, el segundo, el tercero y vuelta a empezar. Simple y justo si todas las peticiones cuestan parecido.</li>
+    <li><strong>Menos conexiones</strong> (<em>least connections</em>): al servidor que ahora mismo atiende menos. Mejor si hay peticiones rápidas y lentas mezcladas.</li>
+    <li><strong>Por hash de la dirección IP</strong>: la misma persona va siempre al mismo servidor. Sirve cuando hay algo de estado que no se pudo sacar del servidor, pero reparte peor.</li>
+  </ul>
+  <p>Además, el balanceador hace <strong>comprobaciones de salud</strong> (<em>health checks</em>): cada pocos segundos pregunta a cada servidor «¿estás bien?» (por ejemplo, pidiendo una ruta como <code>/salud</code>). Si uno no responde, deja de enviarle tráfico hasta que se recupere.</p>
+  <figure class="capsula" data-titulo="Un balanceador reparte por turnos">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 270" role="img" aria-label="Animación: un balanceador reparte peticiones por turnos entre tres servidores; cuando el servidor 2 deja de responder a la comprobación de salud, lo saca del turno y reparte solo entre los servidores 1 y 3.">
+        <rect class="d-caja" x="20" y="100" width="130" height="70" rx="8"/>
+        <text class="d-rotulo" x="85" y="128" text-anchor="middle">Personas</text>
+        <text class="d-peq" x="85" y="150" text-anchor="middle" data-texto="2:llegan P1, P2, P3; 3:llega P4; 4:(comprobación); 5:llegan P5, P6">esperando</text>
+        <path class="d-linea" d="M150 135H196"/>
+        <path class="d-tinta" d="M196 127l12 8-12 8z"/>
+        <rect class="d-caja" x="210" y="100" width="150" height="70" rx="8"/>
+        <text class="d-rotulo" x="285" y="128" text-anchor="middle">Balanceador</text>
+        <text class="d-peq d-tenue" x="285" y="150" text-anchor="middle">reparte por turnos</text>
+        <text class="d-peq" x="285" y="200" text-anchor="middle" data-texto="4:turnos: 1, 3, 1, 3…">turnos: 1, 2, 3, 1, 2, 3…</text>
+        <text class="d-peq d-tenue" x="285" y="220" text-anchor="middle" data-pasos="4-">cada 5 s pregunta: ¿/salud?</text>
+        <path class="d-linea" d="M360 135H420M420 50V220M420 50H488M420 135H488M420 220H488"/>
+        <path class="d-tinta" d="M488 42l12 8-12 8z"/>
+        <path class="d-tinta" d="M488 127l12 8-12 8z"/>
+        <path class="d-tinta" d="M488 212l12 8-12 8z"/>
+        <path class="d-acento-trazo" d="M360 135H420V50H486M420 135H486M420 135V220H486" data-pasos="2"/>
+        <path class="d-acento-trazo" d="M360 135H420V50H486" data-pasos="3"/>
+        <path class="d-acento-trazo" d="M360 135H420V50H486M420 135V220H486" data-pasos="5"/>
+        <g data-pasos="4-">
+          <path class="d-mal-trazo" d="M445 125l20 20M465 125l-20 20"/>
+        </g>
+        <rect class="d-caja" x="500" y="20" width="190" height="60" rx="8"/>
+        <text class="d-rotulo" x="516" y="44">Servidor 1</text>
+        <text class="d-peq" x="516" y="66" data-texto="2:1 petición (P1); 3:2 peticiones (P1, P4); 5:3 peticiones (+P6)">0 peticiones</text>
+        <circle class="d-ok" cx="672" cy="40" r="7"/>
+        <rect class="d-caja" x="500" y="105" width="190" height="60" rx="8"/>
+        <text class="d-rotulo" x="516" y="129">Servidor 2</text>
+        <text class="d-peq" x="516" y="151" data-texto="2:1 petición (P2); 4:no responde: fuera">0 peticiones</text>
+        <circle class="d-ok" cx="672" cy="125" r="7" data-pasos="1-3"/>
+        <circle class="d-mal" cx="672" cy="125" r="7" data-pasos="4-"/>
+        <rect class="d-mal-trazo" x="500" y="105" width="190" height="60" rx="8" data-pasos="4-"/>
+        <rect class="d-caja" x="500" y="190" width="190" height="60" rx="8"/>
+        <text class="d-rotulo" x="516" y="214">Servidor 3</text>
+        <text class="d-peq" x="516" y="236" data-texto="2:1 petición (P3); 5:2 peticiones (+P5)">0 peticiones</text>
+        <circle class="d-ok" cx="672" cy="210" r="7"/>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Tres servidores iguales y sin estado, todos sanos (punto verde). Delante, un balanceador que reparte por turnos. Las personas solo conocen la dirección del balanceador.</li>
+        <li>Llegan tres peticiones. La primera va al servidor 1, la segunda al 2 y la tercera al 3.</li>
+        <li>Llega la cuarta y el turno vuelve a empezar: servidor 1. Como ninguno guarda estado, a nadie le importa a qué servidor le toca.</li>
+        <li data-duracion="7">En la comprobación de salud, el servidor 2 no responde. El balanceador lo marca como fuera de servicio y lo saca del turno. Nadie ve un error: simplemente deja de recibir peticiones.</li>
+        <li>Las siguientes peticiones se reparten entre el 1 y el 3. Cuando el 2 vuelva a responder a <code>/salud</code>, el balanceador lo reincorporará solo.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>El mismo reparto en código. Predice a qué servidor va cada petición después de que S2 se cae:</p>
+  <div class="taller" id="taller-balanceador" data-titulo="Predice: turnos con comprobación de salud">
+    <textarea class="taller-codigo">const servidores = [
+  { nombre: "S1", sano: true, atendidas: 0 },
+  { nombre: "S2", sano: true, atendidas: 0 },
+  { nombre: "S3", sano: true, atendidas: 0 },
+];
+let turno = 0;
+
+// Recorre la lista en círculo buscando el siguiente servidor sano
+function elegir() {
+  for (let intentos = 0; intentos < servidores.length; intentos++) {
+    const candidato = servidores[turno % servidores.length];
+    turno++;
+    if (candidato.sano) return candidato;
+  }
+  return null;   // no hay ninguno sano
+}
+
+function atender(peticion) {
+  const servidor = elegir();
+  if (servidor === null) {
+    console.log(`${peticion}: error 503, no hay servidores disponibles`);
+  } else {
+    servidor.atendidas++;
+    console.log(`${peticion} → ${servidor.nombre}`);
+  }
+}
+
+atender("P1"); atender("P2"); atender("P3"); atender("P4");
+servidores[1].sano = false;   // la comprobación de salud falla en S2
+atender("P5"); atender("P6"); atender("P7");
+console.log(servidores.map((s) => `${s.nombre}: ${s.atendidas}`).join(", "));</textarea>
+  </div>
+  <p>Fíjate en <code>turno % servidores.length</code>: el operador resto de la <a href="07-variables.html#numeros">Estación 7</a> hace que el turno dé la vuelta (0, 1, 2, 0, 1, 2…). <strong>Modifica:</strong> marca también S1 y S3 como no sanos antes de P5 y comprueba que el programa responde con el error 503 en vez de colgarse. El código 503 significa «servicio no disponible», como viste en la <a href="16-asincronia.html#apis">Estación 16</a>.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">El balanceador también puede fallar</p><p>Si todo pasa por un balanceador, ¿no es él un punto único de fallo? Sí, por eso en producción se usan balanceadores gestionados por el proveedor de nube, que ya vienen duplicados, o pares de balanceadores que se vigilan entre sí. Además, los proveedores ofrecen <strong>autoescalado</strong>: añadir servidores cuando sube la carga y quitarlos cuando baja, para no pagar máquinas ociosas. Lo verás en la <a href="35-devops.html">Estación 35</a>.</p></div></aside>
+
+  <h3>La base de datos: réplicas y particiones</h3>
+  <p>Con servidores sin estado, añadir capacidad es fácil. Pero todo el estado acabó en la base de datos, que se convierte en el cuello de botella. Un <strong>cuello de botella</strong> es la pieza más lenta de una cadena, la que limita al resto. Para la base de datos hay dos herramientas principales:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Dos técnicas. Izquierda, réplicas: los servidores escriben en la base de datos primaria y leen de dos réplicas; la primaria copia los cambios a las réplicas con algo de retraso. Derecha, particiones: un enrutador envía cada usuario a una de tres bases de datos según su nombre: de la A a la H, de la I a la P y de la Q a la Z.">
+      <text class="d-rotulo" x="180" y="22" text-anchor="middle">Réplicas de lectura</text>
+      <rect class="d-caja" x="110" y="36" width="140" height="44" rx="8"/>
+      <text class="d-rotulo" x="180" y="64" text-anchor="middle">Servidores</text>
+      <path class="d-linea" d="M130 80V112H70V128"/>
+      <path class="d-tinta" d="M62 128l8 12 8-12z"/>
+      <text class="d-peq" x="80" y="104">escribe</text>
+      <path class="d-linea" d="M230 80V112H290V128M230 112H190V128"/>
+      <path class="d-tinta" d="M182 128l8 12 8-12z"/>
+      <path class="d-tinta" d="M282 128l8 12 8-12z"/>
+      <text class="d-peq" x="238" y="104">lee</text>
+      <path class="d-caja" d="M25 150V206A45 9 0 0 0 115 206V150"/>
+      <ellipse class="d-caja" cx="70" cy="150" rx="45" ry="9"/>
+      <text class="d-rotulo" x="70" y="184" text-anchor="middle">Primaria</text>
+      <path class="d-caja" d="M145 150V206A45 9 0 0 0 235 206V150"/>
+      <ellipse class="d-caja" cx="190" cy="150" rx="45" ry="9"/>
+      <text class="d-rotulo" x="190" y="184" text-anchor="middle">Réplica 1</text>
+      <path class="d-caja" d="M245 150V206A45 9 0 0 0 335 206V150"/>
+      <ellipse class="d-caja" cx="290" cy="150" rx="45" ry="9"/>
+      <text class="d-rotulo" x="290" y="184" text-anchor="middle">Réplica 2</text>
+      <path class="d-punteada" d="M70 216V240H290V218M190 240V218"/>
+      <path class="d-tinta" d="M182 222l8-12 8 12z"/>
+      <path class="d-tinta" d="M282 222l8-12 8 12z"/>
+      <text class="d-peq" x="180" y="262" text-anchor="middle">copia los cambios, con algo de retraso</text>
+      <path class="d-punteada" d="M362 12V292"/>
+      <text class="d-rotulo" x="540" y="22" text-anchor="middle">Particiones</text>
+      <rect class="d-caja" x="450" y="36" width="180" height="44" rx="8"/>
+      <text class="d-rotulo" x="540" y="64" text-anchor="middle">Enruta por clave</text>
+      <path class="d-linea" d="M540 80V104M420 104H660M420 104V128M540 104V128M660 104V128"/>
+      <path class="d-tinta" d="M412 128l8 12 8-12z"/>
+      <path class="d-tinta" d="M532 128l8 12 8-12z"/>
+      <path class="d-tinta" d="M652 128l8 12 8-12z"/>
+      <path class="d-caja" d="M375 150V206A45 9 0 0 0 465 206V150"/>
+      <ellipse class="d-caja" cx="420" cy="150" rx="45" ry="9"/>
+      <text class="d-rotulo" x="420" y="184" text-anchor="middle">A – H</text>
+      <path class="d-caja" d="M495 150V206A45 9 0 0 0 585 206V150"/>
+      <ellipse class="d-caja" cx="540" cy="150" rx="45" ry="9"/>
+      <text class="d-rotulo" x="540" y="184" text-anchor="middle">I – P</text>
+      <path class="d-caja" d="M615 150V206A45 9 0 0 0 705 206V150"/>
+      <ellipse class="d-caja" cx="660" cy="150" rx="45" ry="9"/>
+      <text class="d-rotulo" x="660" y="184" text-anchor="middle">Q – Z</text>
+      <text class="d-peq" x="540" y="248" text-anchor="middle">cada base guarda solo una parte de los usuarios</text>
+      <text class="d-peq d-tenue" x="540" y="268" text-anchor="middle">«Ana» va a A – H; «Sol», a Q – Z</text>
+    </svg>
+    <figcaption>Izquierda: las réplicas multiplican la capacidad de <em>lectura</em>; todas las escrituras siguen yendo a la primaria. Derecha: las particiones reparten los <em>datos</em>, así que multiplican también la capacidad de escritura y de almacenamiento.</figcaption>
+  </figure>
+  <ul>
+    <li><strong>Réplicas de lectura</strong>: una base de datos <strong>primaria</strong> recibe todas las escrituras y envía una copia de cada cambio a una o varias <strong>réplicas</strong>, que atienden lecturas. Como casi todas las apps leen mucho más de lo que escriben (miras cien perfiles por cada vez que editas el tuyo), multiplican la capacidad. Y si la primaria se rompe, una réplica puede ascender a primaria: a eso se le llama <strong>conmutación por error</strong> (<em>failover</em>).</li>
+    <li><strong>Particionado</strong> (en inglés, <em>sharding</em> cuando las partes van en máquinas distintas): dividir los datos entre varias bases de datos según una <strong>clave de partición</strong>, por ejemplo el usuario. Cada base guarda solo una parte, así que se reparten también las escrituras y el espacio. En vez de rangos por letra, lo habitual es calcular un número a partir de la clave (un hash, como en las tablas hash de la <a href="19-estructuras-datos.html#hash">Estación 19</a>) para que el reparto quede equilibrado.</li>
+  </ul>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">«Escribí mi comentario y no aparece»</p><p>Es el error clásico de las réplicas. La copia de la primaria a las réplicas tarda un poco (el <strong>retraso de replicación</strong>, normalmente milisegundos, a veces segundos). Si guardas un comentario en la primaria y la página siguiente lo lee de una réplica que todavía no lo recibió, la persona cree que se perdió. Una solución común: leer de la primaria los datos que la propia persona acaba de escribir, durante unos segundos.</p></div></aside>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">El particionado cuesta caro</p><p>Con particiones, una consulta que necesita datos de varias partes («los 10 mejores jugadores del mundo») tiene que preguntar a todas y combinar. Cambiar el número de particiones obliga a mover datos. Y elegir mal la clave crea particiones calientes: si particionas por país y la mitad de tus usuarios es de México, una base hace la mitad del trabajo. Por eso se deja para el final: primero índices y consultas bien hechas (<a href="30-bases-datos.html">Estación 30</a>), después caché, después réplicas, y solo si todo eso no basta, particiones.</p></div></aside>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">El teorema CAP, en una frase</p><p>Cuando hay varias copias de los datos en máquinas distintas y la red entre ellas se corta, el sistema tiene que elegir: seguir respondiendo aunque quizá con datos viejos (disponibilidad) o negarse a responder hasta que las copias vuelvan a coincidir (consistencia). No se pueden tener las dos durante el corte. Lo formuló Eric Brewer en el año 2000, y es la razón de fondo de la consistencia eventual que viste con los microservicios.</p></div></aside>
 </section>
   </main>
 </div>

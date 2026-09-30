@@ -53,6 +53,7 @@
       <li><a href="#solid">Principios SOLID</a></li>
       <li><a href="#refactorizar">Olores y refactorizar</a></li>
       <li><a href="#patrones">Patrones: comportamiento</a></li>
+      <li><a href="#mas-patrones">Crear, conectar, envolver</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -1661,6 +1662,205 @@ console.log(oro, historial.length);</code></pre>
   </div>
   <p>Para deshacer, cada comando necesita saber revertir lo que hizo. En acciones sencillas es la operación contraria (restar y sumar). En otras, el comando guarda lo que había antes: un comando «mover pieza» recuerda la casilla de origen. Hay una alternativa que ya conoces de la <a href="21-paradigmas.html#funcional">Estación 21</a>: guardar una copia completa e inmutable de cada estado y volver a la anterior. Los comandos gastan menos memoria cuando el estado es grande; las copias son más simples cuando es pequeño.</p>
   <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Reasignar teclas</p><p>En un juego, Command también sirve para separar las teclas de las acciones: en lugar de «si pulsa X, salta», tienes un objeto <code>{ X: comandoSaltar, Z: comandoAtacar }</code>. Cambiar los controles es cambiar ese objeto. Y como la misma lista de comandos puede venir del teclado, de un mando o de la inteligencia artificial, el personaje no necesita saber quién lo controla.</p></div></aside>
+</section>
+
+<section id="mas-patrones" data-parada="Crear, conectar, envolver">
+  <h2>Patrones de diseño (II): crear, conectar y envolver</h2>
+  <p>Los patrones de la sección anterior organizan qué hace cada objeto. Los de esta resuelven otras tres preguntas: cómo se <em>crean</em> los objetos (Factory y Singleton), cómo se <em>esconde</em> lo interno (Module) y cómo se <em>conectan o amplían</em> piezas que ya existen (Adapter y Decorator). Al final verás lo contrario de un patrón: los antipatrones.</p>
+
+  <h3>Factory: un solo lugar sabe cómo se fabrica cada cosa</h3>
+  <p><strong>Problema</strong>: tu juego lee los niveles de un archivo que dice «slime, slime, orco». Si en cada sitio donde aparece un enemigo escribes <code>new Enemigo("Orco", 80, 12)</code>, los números de cada tipo quedan repartidos por todo el código, y quien crea enemigos tiene que saber qué clase usar para cada uno. <strong>Solución</strong>: una <strong>fábrica</strong> (en inglés, <em>factory</em>), una función que recibe una descripción y devuelve el objeto ya construido. Quien la llama no sabe ni le importa cómo se hace.</p>
+  <div class="taller" id="taller-factory" data-titulo="Predice y amplía: una fábrica de enemigos">
+    <textarea class="taller-codigo">class Enemigo {
+  constructor({ nombre, vida, ataque }) {
+    this.nombre = nombre;
+    this.vida = vida;
+    this.ataque = ataque;
+  }
+  describir() {
+    return `${this.nombre} (vida ${this.vida}, ataque ${this.ataque})`;
+  }
+}
+
+// Todo lo que hay que saber de cada tipo, en un solo lugar
+const PLANTILLAS = {
+  slime: { nombre: "Slime", vida: 30, ataque: 4 },
+  orco: { nombre: "Orco", vida: 80, ataque: 12 },
+};
+
+function crearEnemigo(tipo, nivel = 1) {
+  const plantilla = PLANTILLAS[tipo];
+  if (!plantilla) {
+    throw new Error(`No sé crear enemigos de tipo «${tipo}»`);
+  }
+  return new Enemigo({
+    nombre: plantilla.nombre,
+    vida: plantilla.vida * nivel,
+    ataque: plantilla.ataque + nivel,
+  });
+}
+
+// El nivel es solo datos: podría venir de un archivo JSON
+const nivel3 = ["slime", "slime", "orco"];
+for (const tipo of nivel3) {
+  console.log(crearEnemigo(tipo, 3).describir());
+}</textarea>
+  </div>
+  <p><strong>Modifica</strong>: añade un <code>murcielago</code> (vida 15, ataque 6) a las plantillas y ponlo en el nivel. Añadir un tipo de enemigo es añadir datos, no código nuevo. La fábrica también puede decidir qué <em>clase</em> crear: si mañana los jefes son una clase <code>Jefe</code> con más métodos, <code>crearEnemigo("dragon")</code> puede devolver un <code>new Jefe(...)</code> y el resto del juego no se entera. Los libros distinguen variantes (<em>Factory Method</em>, <em>Abstract Factory</em>), pero en JavaScript casi siempre basta con una función como esta.</p>
+
+  <h3>Singleton, y por qué evitarlo casi siempre</h3>
+  <p>El patrón <strong>Singleton</strong> garantiza que de una clase exista <em>una sola instancia</em> y da un punto de acceso global a ella. Se suele usar para la configuración, el registro de mensajes (<em>log</em>) o el gestor de sonido de un juego:</p>
+  <pre><code class="language-js">class Configuracion {
+  static #instancia = null;
+  volumen = 80;
+
+  static obtener() {
+    if (!Configuracion.#instancia) {
+      Configuracion.#instancia = new Configuracion();
+    }
+    return Configuracion.#instancia;
+  }
+}
+
+const a = Configuracion.obtener();
+const b = Configuracion.obtener();
+console.log(a === b);   // true: es el mismo objeto</code></pre>
+  <p>Parece práctico: desde cualquier archivo escribes <code>Configuracion.obtener()</code> y ya está. Ese es justamente el problema. Es una <strong>variable global</strong> con otro nombre, y trae sus mismos males:</p>
+  <ul>
+    <li><strong>Dependencias escondidas.</strong> Mirando cómo se llama a una función no sabes que, por dentro, lee o cambia la configuración. Es lo contrario de la inyección de dependencias de la <a href="#solid">sección SOLID</a>.</li>
+    <li><strong>Pruebas que se contaminan.</strong> Si una prueba cambia el volumen a 0, la siguiente prueba empieza con volumen 0. Los resultados dependen del orden en que se ejecuten.</li>
+    <li><strong>Cualquiera puede cambiarlo desde cualquier sitio.</strong> Cuando algo sale mal, el culpable puede estar en cualquier archivo del proyecto.</li>
+    <li><strong>Suele ser innecesario.</strong> En JavaScript, un módulo se evalúa una sola vez: si un archivo exporta un objeto, todos los que lo importan reciben el mismo objeto. La «instancia única» ya la tienes gratis, sin clase especial.</li>
+  </ul>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuidado</p><p>El problema del Singleton no es que haya un solo objeto: tener una sola configuración es normal. El problema es el <em>acceso global</em>. La alternativa es crear ese único objeto al arrancar el programa y <em>pasárselo</em> a quien lo necesite, como hiciste con el notificador de la tienda. Robert Nystrom dedica un capítulo entero de <em>Game Programming Patterns</em> a explicar por qué casi nunca hace falta, incluso en videojuegos. Es el patrón de la Banda de los Cuatro que más se desaconseja hoy.</p></div></aside>
+
+  <h3>Module: una parte privada y una puerta pública</h3>
+  <p><strong>Problema</strong>: quieres agrupar datos y funciones relacionados, y que desde fuera nadie pueda tocar los datos internos, solo usar lo que tú decidas. <strong>Solución</strong>: el patrón <strong>Module</strong>. Antes de que JavaScript tuviera módulos propios, se escribía con una función que se ejecuta en el mismo momento en que se define. Se llama <strong>IIFE</strong> (<em>Immediately Invoked Function Expression</em>, «expresión de función invocada inmediatamente»): la función se envuelve entre paréntesis y se llama con <code>()</code> al final. Lo que devuelve es la parte pública; lo demás queda encerrado en un <em>closure</em> (<a href="10-funciones.html#closures">Estación 10</a>). Predice las tres líneas:</p>
+  <div class="taller" id="taller-module" data-titulo="Predice: un módulo con parte privada">
+    <textarea class="taller-codigo">const marcador = (function () {
+  let puntos = 0;                 // privado: solo lo ven las funciones de aquí dentro
+  const MAXIMO = 999999;
+
+  function sumar(cantidad) {
+    puntos = Math.min(MAXIMO, puntos + cantidad);
+  }
+  function texto() {
+    return String(puntos).padStart(6, "0");
+  }
+
+  return { sumar, texto };        // la puerta pública
+})();
+
+marcador.sumar(150);
+marcador.sumar(50);
+console.log(marcador.texto());
+console.log(marcador.puntos);
+marcador.puntos = 1000000;        // intento de trampa
+console.log(marcador.texto());</textarea>
+  </div>
+  <p><code>marcador.puntos</code> no existe (<code>undefined</code>): la variable <code>puntos</code> vive dentro de la función, fuera del alcance de nadie. La «trampa» crea una propiedad nueva en el objeto público, pero no toca la variable privada, y el marcador sigue en <code>000200</code>. Hoy casi siempre usarás las formas modernas de conseguir lo mismo: los <strong>módulos de JavaScript</strong>, donde cada archivo es un módulo y solo es público lo que marcas con <code>export</code> (<a href="22-ejecucion.html">Estación 22</a>), y los campos privados <code>#</code> de las clases (<a href="21-paradigmas.html#encapsulamiento">Estación 21</a>). Así se vería el mismo marcador como archivo:</p>
+  <pre><code class="language-js">// marcador.js
+let puntos = 0;                   // no se exporta: es privado del archivo
+const MAXIMO = 999999;
+
+export function sumar(cantidad) {
+  puntos = Math.min(MAXIMO, puntos + cantidad);
+}
+export function texto() {
+  return String(puntos).padStart(6, "0");
+}
+
+// juego.js
+import { sumar, texto } from "./marcador.js";
+sumar(150);</code></pre>
+  <p>Verás IIFE en código antiguo y en tutoriales viejos; ahora sabes qué hacen y por qué existían.</p>
+
+  <h3>Adapter: un traductor entre dos formas</h3>
+  <p><strong>Problema</strong>: tu juego muestra el ranking con objetos <code>{ nombre, puntos }</code>, pero el servicio externo de puntuaciones que contrataste devuelve <code>{ player_name, pts }</code>, con los puntos como texto. No puedes cambiar el servicio, y no quieres llenar tu juego de <code>player_name</code>. <strong>Solución</strong>: un <strong>adaptador</strong>, una pieza pequeña que traduce de la forma ajena a la tuya en un único lugar.</p>
+  <div class="taller" id="taller-adapter" data-titulo="Predice y amplía: un adaptador">
+    <textarea class="taller-codigo">// Tu juego trabaja con objetos { nombre, puntos }
+function mostrarRanking(entradas) {
+  const ordenadas = [...entradas].sort((a, b) => b.puntos - a.puntos);
+  ordenadas.forEach((entrada, posicion) => {
+    console.log(`${posicion + 1}. ${entrada.nombre}: ${entrada.puntos}`);
+  });
+}
+
+// Lo que devuelve el servicio externo (no lo puedes cambiar)
+const respuestaDelServicio = {
+  scores: [
+    { player_name: "kai", pts: "1200" },
+    { player_name: "lyra", pts: "3400" },
+  ],
+};
+
+// El adaptador: traduce su forma a la tuya
+function adaptarRanking(respuesta) {
+  return respuesta.scores.map((registro) => ({
+    nombre: registro.player_name,
+    puntos: Number(registro.pts),
+  }));
+}
+
+mostrarRanking(adaptarRanking(respuestaDelServicio));</textarea>
+  </div>
+  <p>Si el servicio cambia de formato mañana, o lo sustituyes por otro, solo cambia <code>adaptarRanking</code>: <code>mostrarRanking</code> y el resto del juego ni se enteran. <strong>Modifica</strong>: haz que el adaptador ponga la primera letra de cada nombre en mayúscula («Lyra», «Kai»). Los adaptadores aparecen en cuanto tu programa habla con algo que no controlas: una API, una librería, un mando de consola que llama a sus botones de otra forma. Son también la forma habitual de envolver una librería para poder cambiarla por otra algún día.</p>
+  <aside class="senal analogia"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Para entenderlo</p><p>Es el adaptador de enchufes que llevas de viaje: ni tu cargador ni la pared cambian; el adaptador hace que encajen. El límite: un adaptador de enchufes no cambia el voltaje, y uno de código tampoco arregla diferencias de fondo. Si el servicio no guarda un dato que tu juego necesita, ningún adaptador lo inventa.</p></div></aside>
+
+  <h3>Decorator: envolver para añadir</h3>
+  <p><strong>Problema</strong>: tu espada puede recibir mejoras (fuego, filo, hielo) que se combinan en cualquier orden. Con herencia necesitarías una clase por combinación: <code>EspadaDeFuego</code>, <code>EspadaAfiladaDeFuego</code>… <strong>Solución</strong>: un <strong>decorador</strong>, un objeto que envuelve a otro, tiene su <em>misma forma</em> (los mismos métodos) y añade algo antes o después de delegar en él. Como la forma no cambia, los decoradores se pueden apilar. Predice las tres líneas y fíjate en la última:</p>
+  <div class="taller" id="taller-decorator" data-titulo="Predice: decoradores que se apilan">
+    <textarea class="taller-codigo">// Un arma es cualquier objeto con nombre y un método danio()
+const espada = { nombre: "Espada", danio: () => 10 };
+
+// Cada decorador recibe un arma y devuelve otra arma
+function conFuego(arma) {
+  return { nombre: `${arma.nombre} de fuego`, danio: () => arma.danio() + 5 };
+}
+function conFilo(arma) {
+  return { nombre: `${arma.nombre} afilada`, danio: () => arma.danio() * 2 };
+}
+
+console.log(espada.nombre, espada.danio());
+const mejorada = conFilo(conFuego(espada));
+console.log(mejorada.nombre, mejorada.danio());
+const alReves = conFuego(conFilo(espada));
+console.log(alReves.nombre, alReves.danio());</textarea>
+  </div>
+  <p><code>conFilo(conFuego(espada))</code> calcula (10 + 5) × 2 = 30; al revés, 10 × 2 + 5 = 25. El orden de las envolturas importa, como el orden de las capas de ropa. La espada original sigue intacta: los decoradores no la modifican, la envuelven. Es composición (<a href="21-paradigmas.html#composicion">Estación 21</a>) aplicada a añadir comportamiento.</p>
+  <p>Con funciones, la idea es la misma: una función que recibe otra función y devuelve una versión «decorada». Esta añade un mensaje de registro a cualquier función sin tocarla (<code>...argumentos</code> recoge todos los argumentos en un array, sean cuantos sean):</p>
+  <pre><code class="language-js">function conRegistro(funcion) {
+  return (...argumentos) =&gt; {
+    console.log(`Llamando a ${funcion.name} con`, argumentos);
+    return funcion(...argumentos);
+  };
+}
+
+const calcularDanioConRegistro = conRegistro(calcularDanio);
+calcularDanioConRegistro(20, 8);   // Llamando a calcularDanio con [ 20, 8 ]</code></pre>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">No lo confundas con @decorador</p><p>En TypeScript y en frameworks como Angular verás una sintaxis con arroba, <code>@Component(...)</code>, que también se llama «decorador». Está inspirada en la misma idea, pero es una característica del lenguaje, no el patrón. Existe una propuesta para añadirla a JavaScript que en septiembre de 2026 todavía no forma parte del estándar.</p></div></aside>
+
+  <h3>Antipatrones</h3>
+  <p>Un <strong>antipatrón</strong> es lo contrario de un patrón: una respuesta frecuente a un problema que parece buena idea, pero que trae más problemas que soluciones. El término lo propuso Andrew Koenig en 1995. Conocer sus nombres ayuda tanto como conocer los patrones, porque te permite decir «esto se está convirtiendo en un objeto dios» antes de que sea tarde:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Antipatrón</th><th scope="col">En qué consiste</th><th scope="col">Qué hacer</th></tr></thead>
+      <tbody>
+        <tr><td>Objeto dios (<em>God object</em>)</td><td>Una clase o archivo que sabe y hace de todo: <code>Juego.js</code> con 3000 líneas</td><td>Separar responsabilidades (la S de SOLID)</td></tr>
+        <tr><td>Código espagueti</td><td>Flujo enredado, sin estructura: todo llama a todo</td><td>Funciones pequeñas, módulos con límites claros</td></tr>
+        <tr><td>Programar copiando y pegando</td><td>Duplicar bloques en lugar de abstraer</td><td>DRY, con la regla de tres</td></tr>
+        <tr><td>Martillo de oro</td><td>Usar tu herramienta favorita para todo («si solo tienes un martillo, todo parece un clavo»)</td><td>Elegir según el problema</td></tr>
+        <tr><td>Optimización prematura</td><td>Complicar el código para ganar velocidad antes de medir si hace falta</td><td>Primero claro, luego medir, luego optimizar lo que importa</td></tr>
+        <tr><td>Patronitis o sobreingeniería</td><td>Meter fábricas, estrategias y observadores en un programa de cien líneas</td><td>KISS y YAGNI: el patrón llega cuando aparece el dolor</td></tr>
+        <tr><td>Flujo de lava</td><td>Código viejo que nadie entiende ni se atreve a borrar, y que se va endureciendo</td><td>Pruebas de caracterización y borrar lo que no se usa</td></tr>
+        <tr><td>Programación de culto al cargo</td><td>Copiar código o rituales sin entender por qué funcionan</td><td>Entender cada línea antes de adoptarla, también la que sugiere una IA</td></tr>
+        <tr><td>Estado global por todas partes</td><td>Singletons y variables globales que cualquiera cambia</td><td>Pasar las dependencias explícitamente</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Sobre la optimización prematura, la cita completa de Donald Knuth (1974) es más matizada que el eslogan: «deberíamos olvidarnos de las pequeñas eficiencias, digamos, el 97 % del tiempo: la optimización prematura es la raíz de todos los males. Pero no deberíamos dejar pasar nuestras oportunidades en ese crítico 3 %». No dice que el rendimiento no importe; dice que primero hay que saber dónde importa.</p>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>Los patrones son un vocabulario, no una lista de tareas. No empieces un proyecto preguntándote qué patrones vas a usar. Empieza con lo más simple que funcione y, cuando sientas el dolor (un <code>switch</code> que crece, diez funciones que avisan a mano a otras diez), refactoriza <em>hacia</em> el patrón que lo alivia. Joshua Kerievsky escribió un libro entero sobre esta idea: <em>Refactoring to Patterns</em> (2004).</p></div></aside>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Impacto</p><p>El código se escribe una vez, pero lo heredan otras personas: compañeras que llegan al equipo, voluntarios de un proyecto de código abierto, quien mantenga tu app cuando tú ya no estés. Un código claro abre la puerta a que más gente pueda contribuir, incluidas personas que empiezan, como tú ahora. Un código que solo entiende su autor la cierra. Escribir limpio también es una forma de ser amable con el equipo.</p></div></aside>
 </section>
   </main>
 </div>

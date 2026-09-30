@@ -662,7 +662,7 @@
       var acabar = function () { clearTimeout(limite); if (w) { w.terminate(); w = null; } terminarComando(); };
       var excepcion = function (d) {
         imprimir(d.nombre + ": " + d.mensaje + (d.linea ? "  (" + arg + ":" + d.linea + ")" : ""), "error");
-        var ayuda = window.TerminalMotor.explicarError(d.nombre, d.mensaje);
+        var ayuda = window.TerminalMotor.explicarError(d.nombre, d.mensaje, true);
         if (ayuda) imprimir("Pista: " + ayuda, "aviso");
       };
       w.onmessage = function (ev) {

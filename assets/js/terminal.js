@@ -526,7 +526,7 @@
     function informarError(d) {
       var texto = d.nombre + ": " + d.mensaje + (d.linea ? "  (línea " + d.linea + ")" : "");
       linea("error", texto);
-      var ayuda = window.TerminalMotor ? window.TerminalMotor.explicarError(d.nombre, d.mensaje) : "";
+      var ayuda = window.TerminalMotor ? window.TerminalMotor.explicarError(d.nombre, d.mensaje, d.enEjecucion) : "";
       if (ayuda) linea("aviso", "Pista: " + ayuda);
     }
 
@@ -562,7 +562,7 @@
         else if (m.tipo === "error") { hubo = true; linea("error", m.datos); }
         else if (m.tipo === "aviso") { hubo = true; linea("aviso", m.datos); }
         else if (m.tipo === "limpiar") { cuerpoSalida.innerHTML = ""; }
-        else if (m.tipo === "excepcion") { hubo = true; informarError(m.datos); }
+        else if (m.tipo === "excepcion") { hubo = true; m.datos.enEjecucion = true; informarError(m.datos); }
         else if (m.tipo === "veredicto") { mostrarVeredicto(m.datos); if (m.datos === true) marcarEjercicio(caja); }
         else if (m.tipo === "fin") { if (!hubo) cuerpoSalida.appendChild(crear("div", { "class": "vacio", texto: "(El programa terminó sin imprimir nada.)" })); terminar(); }
       };

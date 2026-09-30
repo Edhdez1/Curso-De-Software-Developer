@@ -192,9 +192,12 @@
   }
 
   // Explicaciones en español para los errores más comunes de principiantes.
-  function explicarError(nombre, mensaje) {
+  // enEjecucion: el error saltó con el programa ya en marcha (no es un fallo al compilar el código).
+  function explicarError(nombre, mensaje, enEjecucion) {
     var m = String(mensaje || "");
     var r;
+    if (nombre === "SyntaxError" && /JSON/.test(m)) return "El texto que le pasaste a JSON.parse no es JSON válido. Revisa que claves y textos usen comillas dobles y que no sobren ni falten comas o llaves.";
+    if (nombre === "SyntaxError" && enEjecucion) return "Este SyntaxError saltó con el programa ya en marcha: tu código está bien escrito, pero algo lo lanzó (un throw tuyo, new RegExp, JSON.parse…). Lee el mensaje para saber qué falló.";
     if ((r = m.match(/^(.+?) is not defined$/))) return "No existe nada llamado «" + r[1] + "». Revisa que esté bien escrito (mayúsculas incluidas) y que lo hayas declarado antes de usarlo.";
     if ((r = m.match(/^Cannot access '(.+?)' before initialization$/))) return "Usaste «" + r[1] + "» antes de la línea donde se crea con let/const. Mueve la declaración más arriba.";
     if (/Assignment to constant variable/.test(m)) return "Intentaste cambiar el valor de una constante (const). Si necesitas cambiarla, declárala con let.";
