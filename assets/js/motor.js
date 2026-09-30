@@ -73,8 +73,26 @@
 
     var __errores = [];
     var __sangria = "";
+    // Sustituciones de console.log("%s tiene %d años", nombre, edad), como en Node y en los navegadores.
+    function __sustituir(args) {
+      var fmt = function (a) { return __formato(a, 0, false); };
+      if (typeof args[0] !== "string" || args.length < 2 || args[0].indexOf("%") === -1) return Array.prototype.map.call(args, fmt);
+      var resto = Array.prototype.slice.call(args, 1), i = 0;
+      var texto = args[0].replace(/%([sdifoOjc%])/g, function (t, c) {
+        if (c === "%") return "%";
+        if (i >= resto.length) return t;
+        var v = resto[i++];
+        if (c === "s") return v !== null && typeof v === "object" ? __formato(v, 1, false) : String(v);
+        if (c === "d") return v !== null && typeof v === "object" ? "NaN" : String(Number(v));
+        if (c === "i") return v !== null && typeof v === "object" ? "NaN" : String(parseInt(v, 10));
+        if (c === "f") return String(parseFloat(v));
+        if (c === "c") return "";
+        return fmt(v);
+      });
+      return [texto].concat(resto.slice(i).map(fmt));
+    }
     function __imprimir(tipo, args) {
-      var texto = Array.prototype.map.call(args, function (a) { return __formato(a, 0, false); }).join(" ");
+      var texto = __sustituir(args).join(" ");
       if (__sangria) texto = texto.split("\n").map(function (l) { return __sangria + l; }).join("\n");
       if (tipo === "log") __lineas.push(texto); else __errores.push(texto);
       __enviar(tipo, texto);

@@ -613,9 +613,10 @@
         // localStorage de mentira: el iframe aislado no puede usar el real; los datos se guardan en el taller y duran entre ejecuciones.
         "function almacen(ini,persistir){var d=ini||{};function g(){if(persistir)P.postMessage({terminalTaller:" + JSON.stringify(idTaller) + ",tipo:'almacen',datos:d},'*');}return {getItem:function(k){k=String(k);return Object.prototype.hasOwnProperty.call(d,k)?d[k]:null;},setItem:function(k,v){d[String(k)]=String(v);g();},removeItem:function(k){delete d[String(k)];g();},clear:function(){d={};g();},key:function(i){var ks=Object.keys(d);return i<ks.length?ks[i]:null;},get length(){return Object.keys(d).length;}};}" +
         "try{Object.defineProperty(window,'localStorage',{value:almacen(" + JSON.stringify(almacenTaller).replace(/</g, "\\u003c") + ",true),configurable:true});Object.defineProperty(window,'sessionStorage',{value:almacen({},false),configurable:true});}catch(e){}" +
-        "window.__salida=[];var PY=" + (modo === "python") + ",buf={log:'',error:''};function emitir(k,a){if(PY){if(/error in loaders|handle error|frame obj/.test(a))return;a=a.replace(/File \"[^\"]*principal\"/,'File \"tu_programa.py\"');}if(k==='log'||k==='info')window.__salida.push(a);P.postMessage({terminalTaller:" + idJ + ",tipo:k==='error'?'error':(k==='warn'?'aviso':'log'),datos:a},'*');}" +
+        "window.__salida=[];var PY=" + (modo === "python") + ",buf={log:'',error:''};function emitir(k,a){if(PY){if(/error in loaders|handle error|frame obj/.test(a))return;a=a.replace(/File \"[^\"]*__main__\"/,'File \"tu_programa.py\"');}if(k==='log'||k==='info')window.__salida.push(a);P.postMessage({terminalTaller:" + idJ + ",tipo:k==='error'?'error':(k==='warn'?'aviso':'log'),datos:a},'*');}" +
         "window.__vaciar=function(){['log','error'].forEach(function(k){if(buf[k]){emitir(k,buf[k]);buf[k]='';}});};" +
-        "['log','info','warn','error'].forEach(function(k){var o=console[k];console[k]=function(){var a=[].slice.call(arguments).map(f).join(' ');" +
+        "function sus(a){if(typeof a[0]!=='string'||a.length<2||a[0].indexOf('%')<0)return a.map(f);var r=a.slice(1),i=0;var t=a[0].replace(/%([sdifoOjc%])/g,function(m,c){if(c==='%')return '%';if(i>=r.length)return m;var v=r[i++];if(c==='s')return v!==null&&typeof v==='object'?f(v):String(v);if(c==='d')return v!==null&&typeof v==='object'?'NaN':String(Number(v));if(c==='i')return v!==null&&typeof v==='object'?'NaN':String(parseInt(v,10));if(c==='f')return String(parseFloat(v));if(c==='c')return '';return f(v);});return [t].concat(r.slice(i).map(f));}" +
+        "['log','info','warn','error'].forEach(function(k){var o=console[k];console[k]=function(){var a=sus([].slice.call(arguments)).join(' ');" +
         "if(PY&&(k==='log'||k==='error')){buf[k]+=a;var partes=buf[k].split('\\n');buf[k]=partes.pop();partes.forEach(function(l){emitir(k,l);});}else emitir(k,a);o&&o.apply(console,arguments);};});" +
         "window.addEventListener('error',function(e){P.postMessage({terminalTaller:" + idJ + ",tipo:'excepcion',datos:{nombre:(e.error&&e.error.name)||'Error',mensaje:(e.error&&e.error.message)||e.message,linea:e.lineno||null}},'*');});" +
         // En la vista previa los enlaces no navegan y los formularios no se envían a ningún sitio.
@@ -627,7 +628,7 @@
       var html;
       if (modo === "python") {
         html = cabeza + "<script src='" + CDN + "brython/3.14.3/brython.min.js'><\/script><script src='" + CDN + "brython/3.14.3/brython_stdlib.js'><\/script></head><body>" +
-          "<brython-options indexeddb='false' cache='false'></brython-options><script type='text/python' id='principal'>\n" + sinCierre(partes.python) + "\n<\/script>" +
+          "<brython-options indexeddb='false' cache='false'></brython-options><script type='text/python' id='__main__'>\n" + sinCierre(partes.python) + "\n<\/script>" +
           "<script>window.addEventListener('load',function(){if(!window.__BRYTHON__){console.error('No se pudo cargar el intérprete de Python.');}setTimeout(window.__terminar,300);});<\/script></body></html>";
       } else if (modo === "sql") {
         html = cabeza + "<script src='" + CDN + "sql.js/1.14.2/sql-asm.js'><\/script></head><body><script>" +

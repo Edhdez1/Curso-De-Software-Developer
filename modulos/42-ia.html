@@ -50,6 +50,8 @@
       <li><a href="#empezar">Instalar y empezar</a></li>
       <li><a href="#configurar">CLAUDE.md y permisos</a></li>
       <li><a href="#extender">Skills, plugins y MCP</a></li>
+      <li><a href="#hooks">Hooks y subagentes</a></li>
+      <li><a href="#flujo">Flujo de trabajo</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -448,7 +450,7 @@ return true;
       </g>
       <text class="d-peq" x="28" y="210">Tú, en todos</text>
       <text class="d-peq" x="28" y="228">tus proyectos</text>
-      <rect class="d-caja" x="224" y="14" width="236" height="226" rx="10" data-clases=""/>
+      <rect class="d-caja" x="224" y="14" width="236" height="226" rx="10"/>
       <rect class="d-acento" x="224" y="14" width="236" height="8" rx="4"/>
       <text class="d-rotulo" x="240" y="42">Proyecto compartido</text>
       <text xml:space="preserve" class="d-mono d-peq d-tenue" x="240" y="64">mi-juego/</text>
@@ -624,7 +626,7 @@ Crea el nivel llamado $ARGUMENTS:
   <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cada servidor cuesta contexto</p><p>Los nombres y descripciones de las herramientas de cada servidor conectado se cargan en todas las sesiones, aunque no los uses. Diez servidores «por si acaso» son contexto perdido y más opciones entre las que el modelo puede equivocarse. Conecta lo que usas y quita lo que no.</p></div></aside>
 
   <h3>Plugins y marketplaces: paquetes listos para instalar</h3>
-  <p>Un <strong>plugin</strong> es un paquete que instala de una vez varias piezas: skills, subagentes, hooks y servidores MCP. Un <strong>marketplace</strong> es un catálogo de plugins, normalmente un repositorio de GitHub con un archivo <code>.claude-plugin/marketplace.json</code>. Claude Code añade solo el marketplace oficial de Anthropic, <code>claude-plugins-official</code>, la primera vez que lo abres. Contiene plugins de Anthropic y de otras empresas (por ejemplo, GitHub, Playwright, Supabase, Unity o Epic Games para Unreal).</p>
+  <p>Un <strong>plugin</strong> es un paquete que instala de una vez varias piezas: skills, subagentes, hooks y servidores MCP. Un <strong>marketplace</strong> es un catálogo de plugins, normalmente un repositorio de GitHub con un archivo <code>.claude-plugin/marketplace.json</code>. La primera vez que abres Claude Code, añade por su cuenta el marketplace oficial de Anthropic, <code>claude-plugins-official</code>. Contiene plugins de Anthropic y de otras empresas (por ejemplo, GitHub, Playwright, Supabase, Unity o Epic Games para Unreal).</p>
   <p>Dentro de una sesión, <code>/plugin</code> abre un panel con pestañas: <em>Discover</em> para buscar, <em>Installed</em> para ver lo instalado, <em>Marketplaces</em> para gestionar catálogos. También puedes ir directo:</p>
   <pre><code class="language-text">/plugin install commit-commands@claude-plugins-official</code></pre>
   <p>La parte tras la <code>@</code> es el nombre del marketplace. El panel te enseña qué va a instalar (comandos, agentes, hooks, servidores) y cuánto contexto ocupa, y te pide un alcance: para ti en todos tus proyectos, para todo el equipo en este repositorio, o solo para ti en este repositorio. Las skills de un plugin aparecen con su nombre delante, como <code>/commit-commands:commit</code>. Si el resumen final dice <code>Run /reload-plugins to activate</code>, Claude Code recarga los plugins por ti.</p>
@@ -683,6 +685,382 @@ Crea el nivel llamado $ARGUMENTS:
       </tbody>
     </table>
   </div>
+</section>
+
+<section id="hooks" data-parada="Hooks y subagentes">
+  <h2>Hooks y subagentes</h2>
+  <p>Todo lo anterior son instrucciones: Claude las sigue casi siempre, pero decide él. Hay reglas que no pueden depender de una decisión: formatear cada archivo editado, no tocar jamás el <code>.env</code>, no dar una tarea por terminada con pruebas en rojo. Para eso están los hooks. Y hay trabajos que conviene hacer en otra cabeza, con otro contexto: para eso están los subagentes.</p>
+
+  <h3>Qué es un hook</h3>
+  <p>Un <strong>hook</strong> (en inglés, «gancho») es un comando que Claude Code ejecuta automáticamente en un momento concreto de su funcionamiento. A cada uno de esos momentos se le llama <strong>evento</strong>. La diferencia con <code>CLAUDE.md</code> es la clave de esta sección: el hook no lo decide el modelo, lo ejecuta Claude Code siempre que ocurre el evento. Es determinista. Los eventos que más vas a usar:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Evento</th><th scope="col">Cuándo ocurre</th><th scope="col">Uso típico</th></tr></thead>
+      <tbody>
+        <tr><td><code>SessionStart</code></td><td>Al empezar o reanudar una sesión.</td><td>Añadir contexto: la rama actual, los últimos commits.</td></tr>
+        <tr><td><code>UserPromptSubmit</code></td><td>Cuando envías un mensaje, antes de que Claude lo procese.</td><td>Añadir información o bloquear mensajes con datos sensibles.</td></tr>
+        <tr><td><code>PreToolUse</code></td><td>Antes de ejecutar una herramienta. Puede bloquearla.</td><td>Proteger archivos, prohibir comandos peligrosos.</td></tr>
+        <tr><td><code>PostToolUse</code></td><td>Después de que una herramienta termina bien.</td><td>Formatear o revisar el archivo recién editado.</td></tr>
+        <tr><td><code>Notification</code></td><td>Cuando Claude Code necesita tu atención.</td><td>Aviso en el escritorio si te pide permiso.</td></tr>
+        <tr><td><code>Stop</code></td><td>Cuando Claude termina de responder. Puede obligarlo a seguir.</td><td>Exigir que las pruebas pasen antes de terminar.</td></tr>
+        <tr><td><code>SessionEnd</code></td><td>Al cerrar la sesión.</td><td>Guardar un registro o limpiar archivos temporales.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Los hooks se escriben en la clave <code>hooks</code> de un <code>settings.json</code>. Este formatea con Prettier (el formateador de código más usado en JavaScript) cada archivo que Claude edita o crea:</p>
+  <pre><code class="language-json">{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "jq -r '.tool_input.file_path' | xargs npx prettier --write" }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+  <p>Léelo de fuera hacia dentro. Dentro de <code>hooks</code> va el nombre del evento, <code>PostToolUse</code>. Su valor es una lista de grupos. Cada grupo tiene un <code>matcher</code>, un filtro que dice para qué herramientas se activa, y su propia lista <code>hooks</code> con lo que se ejecuta. <code>"Edit|Write"</code> significa «la herramienta <code>Edit</code> o la herramienta <code>Write</code>»: la barra vertical es «o», como en las expresiones regulares. Los nombres de herramientas distinguen mayúsculas: <code>edit</code> no coincide con nada.</p>
+  <p>¿Cómo sabe el comando qué archivo se editó? Claude Code le pasa un JSON por la <strong>entrada estándar</strong> (en inglés, <em>stdin</em>), el canal por el que un programa recibe datos, igual que cuando encadenas comandos con <code>|</code> en la terminal. Para una edición, ese JSON se parece a esto:</p>
+  <pre><code class="language-json">{
+  "session_id": "abc123",
+  "cwd": "/home/ana/rompebloques",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "Edit",
+  "tool_input": { "file_path": "/home/ana/rompebloques/src/juego.js" }
+}</code></pre>
+  <p>En el ejemplo, <code>jq</code> (un programa para leer JSON en la terminal; hay que instalarlo aparte) saca el campo <code>file_path</code> y se lo pasa a Prettier. El hook responde con su <strong>código de salida</strong>, el número con el que termina todo programa:</p>
+  <ul>
+    <li><strong>0</strong>: todo bien, Claude Code sigue con normalidad.</li>
+    <li><strong>2</strong>: bloquear. Lo que el script escribió en la <strong>salida de errores</strong> (<em>stderr</em>) le llega a Claude como explicación. En <code>PreToolUse</code> cancela la herramienta; en <code>Stop</code> obliga a Claude a seguir trabajando.</li>
+    <li><strong>Cualquier otro</strong>: error del hook, que se muestra pero no bloquea nada.</li>
+  </ul>
+  <p>Mira un hook de protección en acción:</p>
+  <figure class="capsula" data-titulo="Un hook protege tus secretos">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 270" role="img" aria-label="Animación: Claude pide editar el archivo .env. Antes de ejecutarse, Claude Code lanza el hook PreToolUse, que recibe por la entrada estándar un JSON con la ruta del archivo, detecta .env y termina con código 2. La edición se cancela, .env queda intacto y el motivo vuelve a Claude, que cambia de plan y edita .env.example, algo que el hook sí deja pasar.">
+        <rect class="d-caja" x="12" y="90" width="160" height="80" rx="10" data-clases="1:d-acento-trazo; 2:; 5:d-acento-trazo; 6:"/>
+        <text class="d-rotulo" x="28" y="120">Claude</text>
+        <text class="d-peq" x="28" y="146" data-texto="1:quiere editar .env; 5:lee el motivo; 6:cambia de plan">quiere editar .env</text>
+        <path class="d-flecha" d="M172 120 H268"/>
+        <path class="d-tinta" d="M280 120 l-12 -6 v12 z"/>
+        <text class="d-peq d-tenue" x="226" y="110" text-anchor="middle">petición</text>
+        <rect class="d-caja" x="280" y="90" width="170" height="80" rx="10" data-clases="2:d-acento-trazo; 4:d-mal; 6:d-ok"/>
+        <text class="d-rotulo" x="296" y="120" data-clases="4:d-sobre-mal; 6:d-sobre-ok">Hook PreToolUse</text>
+        <text xml:space="preserve" class="d-mono d-peq" x="296" y="146" data-clases="4:d-sobre-mal; 6:d-sobre-ok">proteger.mjs</text>
+        <text class="d-peq" x="365" y="80" text-anchor="middle" data-texto="1:; 2:matcher Edit|Write: coincide; 4:código 2: bloquear; 6:código 0: adelante"></text>
+        <g data-pasos="5">
+          <path class="d-flecha" d="M280 154 H184"/>
+          <path class="d-tinta" d="M172 154 l12 -6 v12 z"/>
+          <text class="d-peq" x="226" y="186" text-anchor="middle">stderr: el motivo</text>
+        </g>
+        <g data-pasos="4-5">
+          <rect class="d-mal" x="462" y="104" width="84" height="30" rx="6"/>
+          <text class="d-sobre-mal d-peq" x="504" y="124" text-anchor="middle">bloqueado</text>
+        </g>
+        <g data-pasos="6">
+          <path class="d-flecha" d="M450 163 H554"/>
+          <path class="d-tinta" d="M566 163 l-12 -6 v12 z"/>
+        </g>
+        <rect class="d-caja-suave" x="556" y="66" width="152" height="124" rx="10"/>
+        <text class="d-peq d-tenue" x="570" y="88">Proyecto</text>
+        <rect class="d-caja" x="566" y="100" width="132" height="34" rx="6"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="580" y="122">.env</text>
+        <text class="d-peq d-tenue" x="690" y="122" text-anchor="end" data-pasos="5-">sin tocar</text>
+        <rect class="d-caja" x="566" y="146" width="132" height="34" rx="6" data-clases="6:d-ok-trazo"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="580" y="168">.env.example</text>
+        <rect class="d-codigo" x="12" y="200" width="696" height="60" rx="8"/>
+        <text xml:space="preserve" class="d-codigo-texto" x="26" y="224" style="font-size:13px" data-texto="1:Claude pide: Edit { file_path: '.env' }; 2:Evento PreToolUse · herramienta Edit · matcher Edit|Write; 3:stdin → {&quot;tool_name&quot;:&quot;Edit&quot;,&quot;tool_input&quot;:{&quot;file_path&quot;:&quot;.env&quot;}}; 4:stderr → Bloqueado: .env coincide con '.env'; 5:Claude Code cancela la edición y le pasa el motivo a Claude; 6:Claude pide: Edit { file_path: '.env.example' } → código 0">Claude pide: Edit { file_path: '.env' }</text>
+        <text xml:space="preserve" class="d-codigo-tenue" x="26" y="248" style="font-size:13px" data-texto="1:Todavía no se ha ejecutado nada.; 2:Coincide: Claude Code ejecuta node proteger.mjs antes de editar.; 3:El script lee ese JSON por la entrada estándar y mira la ruta.; 4:Código de salida 2: la acción no se ejecuta.; 5:.env queda exactamente como estaba.; 6:Crea la plantilla sin valores y te pide que pongas tú la clave real.">Todavía no se ha ejecutado nada.</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Claude decide guardar una clave nueva en <code>.env</code> y pide la herramienta <code>Edit</code>. Es solo una petición: todavía no ha cambiado nada.</li>
+        <li>Antes de ejecutarla, Claude Code busca hooks del evento <code>PreToolUse</code> cuyo <code>matcher</code> coincida con <code>Edit</code>. Encuentra uno y lo lanza.</li>
+        <li>El hook recibe por la entrada estándar un JSON con el nombre de la herramienta y la ruta del archivo.</li>
+        <li>El script ve <code>.env</code> en la ruta, escribe el motivo en la salida de errores y termina con código 2.</li>
+        <li>Claude Code cancela la edición: <code>.env</code> no se toca. El motivo le llega a Claude como respuesta de la herramienta, así que sabe por qué no pudo.</li>
+        <li data-duracion="6">Claude cambia de plan: edita <code>.env.example</code> (la plantilla sin valores) y te pide que pongas tú la clave real. Ese archivo no está protegido, el hook termina con 0 y la edición sigue.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>El script puede estar escrito en cualquier lenguaje. La documentación usa Bash, pero tú ya sabes JavaScript, así que puedes escribirlo para Node.js. Guárdalo en <code>.claude/hooks/proteger.mjs</code> (la extensión <code>.mjs</code> le dice a Node que use módulos ES con <code>import</code>):</p>
+  <pre><code class="language-js">import { readFileSync } from "node:fs";
+const entrada = JSON.parse(readFileSync(0, "utf8"));
+const ruta = String(entrada.tool_input.file_path || "").replaceAll("\\", "/");
+const protegidos = [".env", "package-lock.json", ".git/"];
+for (const patron of protegidos) {
+  if (ruta.includes(patron)) {
+    console.error(`Bloqueado: ${ruta} coincide con '${patron}'`);
+    process.exit(2);
+  }
+}
+process.exit(0);</code></pre>
+  <p>Y regístralo en <code>.claude/settings.json</code>. <code>$CLAUDE_PROJECT_DIR</code> es una variable que Claude Code rellena con la carpeta del proyecto, para que el hook funcione aunque Claude esté trabajando en una subcarpeta:</p>
+  <pre><code class="language-json">{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/proteger.mjs\"" }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+  <p>Sigue el script paso a paso cuando Claude intenta editar <code>/juego/.env</code>:</p>
+  <div class="traza" data-titulo="El hook de protección, línea a línea" data-rotulo-salida="stderr (lo que lee Claude)">
+    <pre><code class="language-js">import { readFileSync } from "node:fs";
+const entrada = JSON.parse(readFileSync(0, "utf8"));
+const ruta = String(entrada.tool_input.file_path || "").replaceAll("\\", "/");
+const protegidos = [".env", "package-lock.json", ".git/"];
+for (const patron of protegidos) {
+  if (ruta.includes(patron)) {
+    console.error(`Bloqueado: ${ruta} coincide con '${patron}'`);
+    process.exit(2);
+  }
+}
+process.exit(0);</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {}, "nota": "Importa readFileSync, la función de Node que lee archivos de forma síncrona."},
+      {"linea": 2, "vars": {"entrada": "{ tool_name: 'Edit', tool_input: { file_path: '/juego/.env' } }"}, "nota": "readFileSync(0) lee el descriptor 0, que es la entrada estándar: el JSON que manda Claude Code. JSON.parse lo convierte en un objeto."},
+      {"linea": 3, "vars": {"entrada": "{ tool_name: 'Edit', tool_input: { file_path: '/juego/.env' } }", "ruta": "\"/juego/.env\""}, "nota": "Saca la ruta del archivo. replaceAll cambia las barras invertidas de Windows por barras normales, para que los patrones funcionen en cualquier sistema."},
+      {"linea": 4, "vars": {"entrada": "{ … }", "ruta": "\"/juego/.env\"", "protegidos": "[ '.env', 'package-lock.json', '.git/' ]"}, "nota": "La lista de trozos de ruta que no se pueden tocar."},
+      {"linea": 5, "vars": {"entrada": "{ … }", "ruta": "\"/juego/.env\"", "protegidos": "[ '.env', 'package-lock.json', '.git/' ]", "patron": "\".env\""}, "nota": "Primera vuelta del bucle: patron vale \".env\"."},
+      {"linea": 6, "vars": {"entrada": "{ … }", "ruta": "\"/juego/.env\"", "protegidos": "[ '.env', 'package-lock.json', '.git/' ]", "patron": "\".env\""}, "nota": "\"/juego/.env\" contiene \".env\": la condición es verdadera y entra en el if."},
+      {"linea": 7, "vars": {"entrada": "{ … }", "ruta": "\"/juego/.env\"", "protegidos": "[ '.env', 'package-lock.json', '.git/' ]", "patron": "\".env\""}, "salida": "Bloqueado: /juego/.env coincide con '.env'", "nota": "console.error escribe en la salida de errores (stderr), no en la salida normal. Claude Code se la pasará a Claude."},
+      {"linea": 8, "vars": {"entrada": "{ … }", "ruta": "\"/juego/.env\"", "protegidos": "[ '.env', 'package-lock.json', '.git/' ]", "patron": "\".env\""}, "nota": "process.exit(2) termina el programa en el acto con código 2. Claude Code lo entiende como «bloquear»: la edición no se ejecuta. La línea 11 nunca llega a ejecutarse."}
+    ]</script>
+  </div>
+  <p>Ahora la versión de taller. Es la misma lógica, escrita como función para poder probarla con muchas rutas sin tocar archivos. <strong>Predice</strong> qué rutas bloquea antes de ejecutar. Hay dos trampas: una ruta que se bloquea sin motivo y otra que parece peligrosa y pasa.</p>
+  <div class="taller" id="taller-hook-rutas" data-titulo="Predice: ¿qué rutas bloquea el hook?">
+    <textarea class="taller-codigo">function decidir(entrada) {
+  const ruta = String(entrada.tool_input.file_path || "").replaceAll("\\", "/");
+  const protegidos = [".env", "package-lock.json", ".git/"];
+  for (const patron of protegidos) {
+    if (ruta.includes(patron)) {
+      return { codigo: 2, mensaje: `Bloqueado: ${ruta} coincide con '${patron}'` };
+    }
+  }
+  return { codigo: 0, mensaje: "" };
+}
+
+const rutas = ["src/juego.js", ".env", "config/.env.production", ".env.example",
+  "C:\\juego\\.env", "package-lock.json", ".github/workflows/pruebas.yml", "README.md"];
+
+for (const ruta of rutas) {
+  const r = decidir({ tool_name: "Edit", tool_input: { file_path: ruta } });
+  console.log(r.codigo === 2 ? "BLOQUEA" : "deja   ", ruta);
+}</textarea>
+  </div>
+  <p><code>.env.example</code> se bloquea porque contiene el texto <code>.env</code>, aunque es justo el archivo que <em>sí</em> debe editarse. Y <code>.github/workflows/pruebas.yml</code> pasa porque <code>.github/</code> no contiene <code>.git/</code> (después de <code>.git</code> viene una <code>h</code>, no una barra). Comparar trozos de texto es rápido de escribir y fácil de engañar: en la práctica arreglarás el primer fallo. Y recuerda que los hooks son código: se prueban como cualquier otro código.</p>
+  <p>Ahora te toca configurar. El validador de abajo lee tu JSON como lo haría Claude Code y te avisa de los errores típicos. Ya tiene el hook de formato. <strong>Añade</strong> al mismo objeto <code>hooks</code> un evento <code>PreToolUse</code> que ejecute <code>node $CLAUDE_PROJECT_DIR/.claude/hooks/proteger.mjs</code> para las herramientas <code>Edit</code> y <code>Write</code>.</p>
+  <div class="taller" id="taller-hook-json" data-titulo="Modifica: añade el hook de protección">
+    <script type="text/plain" class="taller-preparacion">// ─── Validador de la clave "hooks" de settings.json. No hace falta que lo leas. ───
+var __validacionHooks = null;
+var __eventos = ["SessionStart", "Setup", "UserPromptSubmit", "UserPromptExpansion", "PreToolUse", "PermissionRequest", "PermissionDenied", "PostToolUse", "PostToolUseFailure", "PostToolBatch", "Notification", "MessageDisplay", "SubagentStart", "SubagentStop", "TaskCreated", "TaskCompleted", "Stop", "StopFailure", "TeammateIdle", "InstructionsLoaded", "ConfigChange", "CwdChanged", "DirectoryAdded", "FileChanged", "WorktreeCreate", "WorktreeRemove", "PreCompact", "PostCompact", "PreModelSwitch", "PostModelSwitch", "Elicitation", "ElicitationResult", "SessionEnd"];
+var __deHerramienta = ["PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest", "PermissionDenied"];
+var __sinMatcher = ["UserPromptSubmit", "PostToolBatch", "Stop", "TeammateIdle", "TaskCreated", "TaskCompleted", "WorktreeCreate", "WorktreeRemove", "MessageDisplay", "CwdChanged"];
+var __herramientas = ["Bash", "Edit", "Write", "Read", "Glob", "Grep", "WebFetch", "WebSearch", "NotebookEdit", "Agent", "PowerShell", "Skill"];
+function validarSettings(texto) {
+  var errores = [], avisos = [], resumen = [], mapa = {};
+  var obj;
+  try { obj = JSON.parse(texto); }
+  catch (e) {
+    console.log("Error: el JSON no es válido (" + e.message + ").");
+    console.log("Pistas: comillas dobles en claves y textos, una coma entre elementos y ninguna después del último, cada { y [ cerrado.");
+    __validacionHooks = { errores: 1, avisos: 0, mapa: {} };
+    return;
+  }
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) errores.push("el archivo debe ser un objeto { … }.");
+  else if (!obj.hooks) avisos.push("no hay clave \"hooks\".");
+  else if (typeof obj.hooks !== "object" || Array.isArray(obj.hooks)) errores.push("\"hooks\" debe ser un objeto con un evento por clave.");
+  else Object.keys(obj.hooks).forEach(function (ev) {
+    if (__eventos.indexOf(ev) === -1) {
+      var parecido = __eventos.filter(function (x) { return x.toLowerCase() === ev.toLowerCase(); })[0];
+      errores.push(parecido ? "«" + ev + "» no existe: los nombres distinguen mayúsculas. ¿Querías «" + parecido + "»?" : "«" + ev + "» no es un evento de Claude Code.");
+      return;
+    }
+    var grupos = obj.hooks[ev];
+    if (!Array.isArray(grupos)) { errores.push("el valor de " + ev + " debe ser una lista [ … ] de grupos."); return; }
+    mapa[ev] = [];
+    grupos.forEach(function (g, i) {
+      var donde = ev + " (grupo " + (i + 1) + ")";
+      if (!g || typeof g !== "object") { errores.push(donde + ": cada grupo es un objeto { matcher, hooks }."); return; }
+      if (g.command || g.type) errores.push(donde + ": \"type\" y \"command\" van dentro de la lista \"hooks\" del grupo, no directamente en el grupo.");
+      var m = g.matcher;
+      if (m !== undefined && typeof m !== "string") errores.push(donde + ": matcher debe ser un texto.");
+      if (__deHerramienta.indexOf(ev) !== -1) {
+        if (!m) avisos.push(donde + ": sin matcher se ejecuta con todas las herramientas. ¿Es lo que quieres?");
+        else m.split("|").forEach(function (t) {
+          if (/^[a-z]+$/.test(t)) {
+            var bien = __herramientas.filter(function (h) { return h.toLowerCase() === t; })[0];
+            if (bien) errores.push(donde + ": «" + t + "» no coincide con nada; la herramienta se llama «" + bien + "».");
+          }
+        });
+      } else if (m && __sinMatcher.indexOf(ev) !== -1) avisos.push(donde + ": " + ev + " no usa matcher; se ignora.");
+      if (!Array.isArray(g.hooks) || !g.hooks.length) { errores.push(donde + ": falta la lista \"hooks\": [ { \"type\": \"command\", \"command\": \"…\" } ]."); return; }
+      var comandos = [];
+      g.hooks.forEach(function (h) {
+        if (!h || typeof h !== "object") { errores.push(donde + ": cada hook es un objeto { type, command }."); return; }
+        if (h.matcher !== undefined) errores.push(donde + ": \"matcher\" va en el grupo, al lado de \"hooks\", no dentro de cada hook.");
+        if (["command", "http", "prompt", "agent", "mcp_tool"].indexOf(h.type) === -1) errores.push(donde + ": \"type\" debe ser \"command\" (u otro tipo avanzado); encontré " + JSON.stringify(h.type) + ".");
+        else if (h.type === "command" && (typeof h.command !== "string" || !h.command.trim())) errores.push(donde + ": falta el texto de \"command\".");
+        else if (h.type === "command") { comandos.push(h.command); resumen.push(ev + " [" + (m || "todas") + "] → " + h.command); }
+      });
+      mapa[ev].push({ matcher: m || "", comandos: comandos });
+    });
+  });
+  resumen.forEach(function (r) { console.log("Hook: " + r); });
+  avisos.forEach(function (a) { console.log("Aviso: " + a); });
+  errores.forEach(function (e) { console.log("Error: " + e); });
+  console.log("Resultado: " + errores.length + " errores, " + avisos.length + " avisos");
+  __validacionHooks = { errores: errores.length, avisos: avisos.length, mapa: mapa };
+}
+</script>
+    <textarea class="taller-codigo">const settings = `{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "npx prettier --write ." }
+        ]
+      }
+    ]
+  }
+}`;
+
+validarSettings(settings);</textarea>
+    <script type="text/plain" class="taller-verificar">
+var v = __validacionHooks;
+if (!v) return "Deja la última línea: validarSettings(settings);";
+if (v.errores) return "El validador encontró errores. Léelos en la salida y corrígelos.";
+var pre = v.mapa.PreToolUse;
+if (!pre || !pre.length) return "Falta el evento \"PreToolUse\" dentro de \"hooks\", al lado de \"PostToolUse\" (separado por una coma).";
+var ok = pre.some(function (g) {
+  var partes = g.matcher.split("|");
+  return partes.indexOf("Edit") !== -1 && partes.indexOf("Write") !== -1 && g.comandos.some(function (c) { return /proteger\.mjs/.test(c); });
+});
+if (!ok) return "El grupo de PreToolUse necesita \"matcher\": \"Edit|Write\" y un comando que ejecute proteger.mjs.";
+if (!v.mapa.PostToolUse || !v.mapa.PostToolUse.length) return "No borres el hook de formato de PostToolUse: los dos eventos conviven en el mismo objeto hooks.";
+return true;
+    </script>
+  </div>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Los tres errores más comunes con hooks</p><p>Escribir el evento con otra capitalización (<code>postToolUse</code>), poner <code>"matcher"</code> dentro de cada hook en lugar de en el grupo, y olvidar que el valor de cada evento es una lista <code>[ … ]</code> aunque tenga un solo grupo. Si un hook no se ejecuta, abre <code>/hooks</code> dentro de Claude Code: es un menú de solo lectura que lista los hooks que cargó, de qué archivo viene cada uno y qué comando ejecuta.</p></div></aside>
+
+  <h3>Un hook que exige pruebas en verde</h3>
+  <p>El hook de <code>Stop</code> es el que convierte «dale al agente una forma de comprobar su trabajo» en una regla. Cuando Claude va a terminar, el script ejecuta las pruebas; si fallan, termina con código 2 y Claude tiene que seguir trabajando con el error delante:</p>
+  <pre><code class="language-js">// .claude/hooks/pruebas.mjs
+import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+
+const entrada = JSON.parse(readFileSync(0, "utf8"));
+if (entrada.stop_hook_active) process.exit(0); // ya siguió una vez por este hook: déjalo parar
+
+const r = spawnSync("npm test --silent", { encoding: "utf8", shell: true });
+if (r.status !== 0) {
+  console.error("Las pruebas fallan. Arréglalas antes de terminar:\n" + (r.stdout + r.stderr).slice(-1500));
+  process.exit(2);
+}
+process.exit(0);</code></pre>
+  <p>Fíjate en la segunda línea de lógica. Si las pruebas no se pueden arreglar, un hook así haría que Claude trabajara para siempre. Claude Code marca con <code>stop_hook_active: true</code> las veces que ya está continuando por culpa de un hook de <code>Stop</code>, y además corta la cadena si el hook bloquea ocho veces seguidas sin avances. Comprobar ese campo es la forma educada de dejarle parar y que te cuente el problema.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Los hooks se ejecutan sin preguntar</p><p>Un hook es un comando que corre con tus permisos cada vez que ocurre su evento, sin que el modelo lo decida y sin pedirte permiso. Es su virtud y su riesgo: un hook malicioso en el <code>settings.json</code> de un repositorio ajeno, o dentro de un plugin, se ejecutaría solo. Lee los hooks de cualquier proyecto o plugin antes de confiar en él. Si necesitas desactivarlos todos para una sesión, arranca con <code>claude --settings '{"disableAllHooks": true}'</code>.</p></div></aside>
+
+  <h3>Subagentes: otra cabeza, otro contexto</h3>
+  <p>Un <strong>subagente</strong> es otra instancia de Claude que el agente principal lanza para una tarea concreta. Tiene su propia ventana de contexto, sus propias instrucciones y, si quieres, un conjunto limitado de herramientas. Hace su trabajo aparte y devuelve solo un resumen. Sirve para dos cosas:</p>
+  <ul>
+    <li><strong>Proteger el contexto principal.</strong> Si hay que leer cuarenta archivos para encontrar dónde se calcula el daño en tu juego, que los lea un subagente y te devuelva tres líneas, en lugar de llenar tu conversación con todo ese texto.</li>
+    <li><strong>Tener una segunda opinión.</strong> Quien escribió el código no es el mejor juez de su propio trabajo. Un subagente revisor empieza sin las suposiciones de la conversación principal.</li>
+  </ul>
+  <p>Claude Code trae subagentes incluidos, como <strong>Explore</strong> (busca y analiza el código sin poder editarlo) y <strong>Plan</strong> (investiga durante el modo plan), y los usa por su cuenta cuando le conviene. Los tuyos se escriben como archivos Markdown con frontmatter en <code>.claude/agents/</code> (proyecto) o <code>~/.claude/agents/</code> (personal). El cuerpo del archivo son sus instrucciones:</p>
+  <pre><code class="language-yaml">---
+name: revisor
+description: Revisa cambios recientes buscando errores, casos borde sin cubrir y pruebas débiles. Úsalo después de implementar algo y antes de hacer commit.
+tools: Read, Grep, Glob
+model: sonnet
+---
+
+Eres un revisor de código exigente y amable. Te pasan un cambio recién hecho.
+1. Lee el diff y los archivos que toca.
+2. Busca: errores de lógica, casos borde (listas vacías, valores negativos, texto en vez de número),
+   pruebas que no comprueban nada y cambios que no se pidieron.
+3. Devuelve una lista ordenada por gravedad, con archivo y línea. No edites nada.</code></pre>
+  <p>Las claves son <code>name</code> y <code>description</code> (obligatorias: con la descripción Claude decide cuándo delegar), <code>tools</code> (las herramientas que puede usar; aquí solo lectura, así que no puede romper nada) y <code>model</code> (<code>sonnet</code>, <code>opus</code>, <code>haiku</code> o <code>inherit</code> para usar el mismo que la sesión). Para usarlo basta con pedirlo: «usa el subagente revisor con los cambios de esta rama». También puedes pedirle a Claude que te escriba el archivo del subagente: desde la versión 2.1.198, el comando <code>/agents</code> ya no abre un asistente de creación, solo te recuerda esto.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Los subagentes también gastan</p><p>Cada subagente hace sus propias peticiones al modelo, y cuentan para tu límite de uso igual que la conversación principal. Un subagente con un modelo más pequeño (<code>haiku</code>) es más barato para tareas mecánicas; para revisar lógica compleja conviene uno más capaz.</p></div></aside>
+</section>
+
+<section id="flujo" data-parada="Flujo de trabajo">
+  <h2>Un flujo de trabajo con criterio</h2>
+  <p>Un agente escribe código mucho más rápido que tú. Eso cambia dónde está el trabajo: ya no es escribir, es decidir qué pedir, comprobar lo que llega y entenderlo. Si esa parte se hace mal, la velocidad solo sirve para meter errores más deprisa.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">La sensación de velocidad engaña</p><p>En julio de 2025, la organización METR publicó un experimento controlado con 16 personas desarrolladoras con experiencia, trabajando en proyectos de código abierto que conocían bien. Cuando podían usar herramientas de IA de principios de 2025, tardaron un 19 % más. Lo llamativo es que, al terminar, creían haber ido un 20 % más rápido. Es un estudio pequeño, con herramientas que ya cambiaron mucho, y no dice que la IA haga ir más lento en general. Lo que sí enseña, y sigue vigente: la sensación de avanzar no es una medida. Mide con pruebas que pasan y con tareas terminadas de verdad.</p></div></aside>
+
+  <h3>Explorar, planificar, implementar, probar, revisar, commit</h3>
+  <p>La guía oficial de buenas prácticas recomienda separar la investigación de la implementación, para no resolver el problema equivocado. Este es el flujo, con ejemplos de mensajes para añadir un tipo de bloque nuevo a un juego:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Prepara el terreno.</strong> Árbol de Git limpio y una rama para la tarea. Si algo sale mal, borras la rama y no ha pasado nada.</p>
+      <pre class="consola"><code><span class="prompt">$</span> git status
+<span class="prompt">$</span> git switch -c bloques-moviles</code></pre></div></li>
+    <li><div><p><strong>Explora</strong> en modo plan (<kbd>Mayús</kbd> + <kbd>Tab</kbd> hasta ver <code>⏸ plan mode on</code>). Claude lee y responde, pero no puede editar.</p>
+      <pre><code class="language-text">Lee @src/bloques.js y @src/fisica.js y explícame cómo se crea un bloque
+y cómo se detecta una colisión. No cambies nada.</code></pre></div></li>
+    <li><div><p><strong>Planifica.</strong> Pide un plan en pasos pequeños y corrígelo. Con <kbd>Ctrl</kbd> + <kbd>G</kbd> lo abres en tu editor para cambiarlo directamente.</p>
+      <pre><code class="language-text">Quiero bloques que se muevan de izquierda a derecha. ¿Qué archivos
+cambiarías? Propón un plan en pasos pequeños, cada uno con su prueba.</code></pre></div></li>
+    <li><div><p><strong>Implementa un paso.</strong> Aprueba el plan y pide solo el primer paso. Pasos pequeños significan diffs pequeños, y un diff pequeño se puede revisar de verdad.</p>
+      <pre><code class="language-text">Implementa solo el paso 1 con su prueba. Ejecuta npm test y
+enséñame la salida.</code></pre></div></li>
+    <li><div><p><strong>Prueba.</strong> Que pasen las pruebas automáticas (mejor si un hook lo exige) y pruébalo tú: arranca el juego y juega. Las pruebas no ven que un bloque tiembla o que el sonido llega tarde.</p></div></li>
+    <li><div><p><strong>Revisa el diff.</strong> Con <code>git diff</code> o <code>/diff</code>, línea por línea. Pregunta lo que no entiendas. Para cambios grandes, pide una segunda opinión con <code>/code-review</code> o con tu subagente revisor.</p></div></li>
+    <li><div><p><strong>Haz commit.</strong> Un commit pequeño con un mensaje claro, siguiendo lo que aprendiste en la <a href="24-git.html#commits">Estación 24</a>. Claude puede escribirlo por ti, pero tú compruebas qué entra. Y vuelta al paso 4 con el siguiente paso del plan.</p></div></li>
+  </ol>
+  <p>La propia guía avisa de que planificar tiene un costo. Si puedes describir el cambio en una frase («renombra <code>vida</code> a <code>salud</code> en <code>jugador.js</code>»), pídelo directamente. El plan vale la pena cuando no tienes claro el enfoque, cuando el cambio toca varios archivos o cuando no conoces el código.</p>
+  <div class="parsons" data-titulo="Ordena el flujo para añadir una función nueva" data-lenguaje="text">
+    <ol>
+      <li>Comprobar que el árbol de Git está limpio y crear una rama para la tarea</li>
+      <li>En modo plan, pedir que lea los archivos relevantes y explique cómo funcionan</li>
+      <li>Pedir un plan en pasos pequeños y corregirlo antes de aprobarlo</li>
+      <li>Pedir que implemente solo el primer paso, con su prueba</li>
+      <li>Ejecutar las pruebas y probar el juego a mano</li>
+      <li>Revisar el diff línea por línea y preguntar lo que no se entienda</li>
+      <li>Hacer un commit pequeño con un mensaje claro</li>
+    </ol>
+  </div>
+
+  <h3>Pedir bien</h3>
+  <p>Claude puede deducir mucho, pero no te lee la mente. Cuanto más concreta es la petición, menos correcciones necesitas. La guía oficial lo resume en cuatro estrategias: acota la tarea, señala dónde buscar, apunta a un ejemplo que ya exista en tu código y, cuando hay un error, describe el síntoma y cómo sabrás que está arreglado.</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Petición vaga</p>
+      <pre><code class="language-text">arregla el bug del marcador</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Petición con criterio</p>
+      <pre><code class="language-text">Al romper un bloque dorado el marcador suma 105 en vez
+de 15. Mira sumarPuntos en @src/marcador.js. Escribe
+primero una prueba que reproduzca el fallo, después
+arréglalo y ejecuta npm test. No cambies otras pruebas.</code></pre>
+    </div>
+  </div>
+  <p>La segunda petición le da el síntoma exacto, dónde mirar, una forma de comprobar el arreglo (la prueba que falla antes y pasa después) y un límite. Fíjate en el orden: primero la prueba que reproduce el error y después el arreglo. Es el ciclo de TDD que viste en la <a href="26-testing.html#tdd">Estación 26</a>, y con un agente funciona especialmente bien.</p>
+
+  <h3>Revisar lo que escribe la IA</h3>
+  <p>Revisar código generado es una habilidad propia, y es la más importante de esta estación. El código de un agente suele compilar, tener buen aspecto y pasar las pruebas que él mismo escribió. Los fallos están en otra parte. Esta es una lista para recorrer en cada diff:</p>
+  <ul>
+    <li><strong>Alcance.</strong> ¿Tocó archivos que no pediste? ¿«Aprovechó» para reformatear medio proyecto? Un diff enorme para un cambio pequeño es una señal de alarma.</li>
+    <li><strong>Pruebas.</strong> ¿Borró, desactivó o suavizó alguna prueba (un <code>.skip</code>, un valor esperado cambiado)? Si le pides «que pasen las pruebas», un camino corto es cambiar las pruebas.</li>
+    <li><strong>Dependencias nuevas.</strong> ¿Añadió paquetes? ¿Existen de verdad, son conocidos y se mantienen? Lo verás en la sección de seguridad.</li>
+    <li><strong>Valores inventados.</strong> Números mágicos, URLs, nombres de funciones o de opciones que no existen. Compruébalos en la documentación.</li>
+    <li><strong>Casos borde.</strong> Listas vacías, cero, negativos, texto donde se espera un número, la última vida del jugador.</li>
+    <li><strong>Eficiencia.</strong> Un doble bucle que va bien con diez elementos y congela el juego con diez mil (<a href="20-algoritmos.html">Estación 20</a>).</li>
+    <li><strong>Secretos y datos.</strong> Claves escritas en el código, datos personales en registros.</li>
+    <li><strong>Lo que no entiendes.</strong> Si hay una línea que no sabes explicar, pregunta. Si después de preguntar sigues sin entenderla, no la aceptes.</li>
+  </ul>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Pruebas que protegen el error</p><p>En la <a href="26-testing.html#calidad">Estación 26</a> viste la tentación de los asistentes: leer tu código y escribir pruebas que confirman lo que hace <em>ahora</em>, errores incluidos. Si <code>aplicarCupon(3, "BIENVENIDA")</code> devuelve −2, una prueba generada que espera −2 pasa en verde y blinda el fallo. Escribe tú los valores esperados a partir de la regla, no del código, y haz la prueba de la prueba: rompe la función a propósito y comprueba que la prueba se pone roja. Añade a tu <code>CLAUDE.md</code> una regla como «No cambies pruebas existentes para que pasen; si crees que una prueba está mal, dímelo».</p></div></aside>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>En los equipos, el código hecho con IA pasa por la misma revisión que cualquier otro, con las reglas que viste en la <a href="27-proceso.html#revision">Estación 27</a>. Quien abre el pull request responde de cada línea, la haya tecleado o no. Algunas buenas costumbres: diffs pequeños, explicar en la descripción qué hizo la IA y qué comprobaste tú, y no pedir a otra persona que revise algo que tú no has leído.</p></div></aside>
+  <p>Para la revisión tienes ayudas incluidas: <code>/code-review</code> revisa tus cambios (o una rama o un pull request) buscando errores, <code>/security-review</code> analiza los cambios de tu rama buscando vulnerabilidades como inyecciones o datos expuestos (necesita un repositorio remoto <code>origin</code>), y tu subagente revisor aporta ojos nuevos. Ninguna sustituye a tu lectura: te ayudan a no pasar nada por alto.</p>
 </section>
   </main>
 </div>
