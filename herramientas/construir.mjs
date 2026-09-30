@@ -122,7 +122,8 @@ function seccionesDe(html) {
 
 function lenguajesDe(html) {
   const set = new Set();
-  for (const m of html.matchAll(/language-([\w-]+)/g)) set.add(m[1]);
+  // Solo en atributos class (un texto como «typescript-language-server» no es un lenguaje).
+  for (const m of html.matchAll(/class="[^"]*\blanguage-([\w-]+)/g)) set.add(m[1]);
   for (const m of html.matchAll(/data-lenguaje="([\w-]+)"/g)) set.add(m[1]);
   if (/class="taller"/.test(html) || /class="traza"/.test(html)) set.add("js");
   return set;
