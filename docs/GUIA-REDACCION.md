@@ -187,6 +187,12 @@ JavaScript (se ejecuta en un Web Worker, sin DOM):
 - Formato de la consola (igual que Node.js): strings tal cual; arrays `[ 1, 2 ]`; objetos `{ a: 1, b: 'x' }`;
   Map `Map(1) { 'a' => 1 }`. Prefiere verificar valores simples.
 - Opcionales: `data-tiempo="10"` (segundos máximos, por defecto 5), `data-exito="mensaje"`.
+- Probar funciones de la persona con casos ocultos: `data-exponer="aEstrella, vecinos"` en el taller. La verificación
+  recibe un cuarto parámetro, `expuesto`, con esos nombres del código de la persona (funciones, clases o variables de
+  nivel superior): `return expuesto.aEstrella && expuesto.aEstrella(mapa, a, b).length === 7 || "…"`. Si el programa se
+  rompe antes de terminar o el nombre no existe, `expuesto.aEstrella` vale `undefined`: devuelve un mensaje que lo diga
+  («No encuentro la función aEstrella: ¿se llama así y el programa terminó sin errores?»). No hace falta que la persona
+  escriba nada especial.
 - Hay `console.log/info/dir/error/warn/table/group/groupEnd/count/time/timeEnd/assert/trace`, `setTimeout`, promesas y `await` de nivel superior. No hay `document`, `prompt` ni `alert` útiles.
 - `fetch` a otros sitios **no funciona en la versión publicada** del curso (el visor bloquea las peticiones
   externas). En talleres, simula la red con una función que devuelve una promesa (`setTimeout` + datos de ejemplo)
@@ -208,6 +214,11 @@ Página web (HTML/CSS/JS con vista previa):
 </div>
 ```
 
+Cuándo se verifica un taller web: 0,15 s después de cargar la vista previa. Si la página necesita tiempo (una animación,
+un entrenamiento, un temporizador), usa `data-esperar="2"` (segundos) o haz que la verificación devuelva una promesa.
+Además, la propia página puede llamar a `comprobar()` para verificar otra vez, por ejemplo cuando la persona mueve un
+deslizador o cuando termina un entrenamiento: así la verificación ve el estado nuevo. Lo más robusto es verificar
+funciones globales puras (`window.clasifica`, `window.pasoDeEntrenamiento`) y no el estado de una animación en marcha.
 `data-auto` ejecuta al cargar (útil para demos). En la vista previa la validación nativa de formularios funciona (required, pattern…); al enviar un formulario válido o pulsar un enlace externo se muestra un aviso en la consola en vez de navegar; los enlaces `#id` desplazan dentro de la vista previa. `localStorage` y `sessionStorage` funcionan dentro del taller web: los datos de `localStorage` duran entre ejecuciones del mismo taller y «Reiniciar» los borra (no hace falta ningún ayudante propio). Los errores indican la línea contando desde la pestaña JS, y `console.log` de un elemento muestra su etiqueta (`<p id="n">`). El HTML puede cargar librerías con
 `<script src="https://cdnjs.cloudflare.com/ajax/libs/...">` (versiones exactas), por ejemplo React 18.3.1 UMD
 (`react/18.3.1/umd/react.development.js` y `react-dom/18.3.1/umd/react-dom.development.js`) con
@@ -228,13 +239,16 @@ Python (se ejecuta con Brython en el navegador; se verifica con Python real en l
 </div>
 ```
 
-No uses `input()` en talleres (no funciona en todos los visores). La biblioteca estándar (`random`, `math`, `json`,
+No uses `input()` en talleres (no funciona en todos los visores). En Brython, `random` no reproduce las secuencias de
+CPython aunque uses la misma semilla (las pruebas se ejecutan con Python real): no verifiques números aleatorios exactos;
+si necesitas azar reproducible, escribe un generador de pocas líneas en el propio taller. La biblioteca estándar (`random`, `math`, `json`,
 `datetime`…) funciona; paquetes externos (`requests`, `pandas`…) no.
 
 JavaScript con código de preparación oculto: `<script type="text/plain" class="taller-preparacion">…</script>` dentro
 de un taller JS se ejecuta antes que el código de la persona, que puede usar lo que declara (por ejemplo, un
 simulador pequeño de una biblioteca). No se ve en el editor y no cambia los números de línea de los errores. Úsalo
-cuando el mismo código de apoyo se repetiría en varios talleres.
+cuando el mismo código de apoyo se repetiría en varios talleres (también para dar datos, un simulador de API o una
+biblioteca pequeña ya hecha).
 
 SQL (SQLite real en el navegador):
 
@@ -283,7 +297,7 @@ el concepto.
 </div>
 ```
 
-Opcional: `data-exito="mensaje"` cambia el mensaje de acierto. Escribe las líneas **en el orden correcto**: la página las desordena y la persona las ordena. Si varias líneas pueden ir en cualquier orden entre sí, dales el mismo `data-grupo="a"`: la corrección acepta cualquier orden dentro del grupo.
+Opcional: `data-exito="mensaje"` cambia el mensaje de acierto. `data-sangria` admite de 0 a 4 niveles. Escribe las líneas **en el orden correcto**: la página las desordena y la persona las ordena. Si varias líneas pueden ir en cualquier orden entre sí, dales el mismo `data-grupo="a"`: la corrección acepta cualquier orden dentro del grupo.
 
 ### Terminal simulada (comandos y Git sin instalar nada)
 
@@ -322,6 +336,11 @@ El `git` que recibe la misión (o `null` sin repositorio) es `{ raiz, rama, rama
 </div>
 
 <dl class="glosario"><dt>Término</dt><dd>Definición sencilla en una o dos frases.</dd></dl>
+
+El glosario global junta los términos con el mismo nombre (sin contar lo que va entre paréntesis) y muestra la
+definición de la primera estación. Si un término significa otra cosa en tu estación, dale un nombre distinto: por
+ejemplo, «Token de un modelo de lenguaje» (no «Token», que ya es el del analizador léxico de la Estación 22) o
+«Agente de aprendizaje por refuerzo» (no «Agente»).
 
 <ul class="videos">
   <li><a class="video" href="https://www.youtube.com/watch?v=ID11CARACT" data-canal="Nombre exacto del canal"

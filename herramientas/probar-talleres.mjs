@@ -28,9 +28,9 @@ function verificacionEsperada(esperado) {
     "return 'Imprimiste más líneas de las esperadas. Sobra: «' + real[esp.length] + '».';";
 }
 
-export function ejecutar(codigo, verificacion, tiempo = 4000, preparacion = "") {
+export function ejecutar(codigo, verificacion, tiempo = 4000, preparacion = "", exponer = "") {
   return new Promise((resolver) => {
-    const { fuente } = Motor.construirFuente(codigo, verificacion || "", preparacion);
+    const { fuente } = Motor.construirFuente(codigo, verificacion || "", preparacion, exponer);
     const r = { salida: [], errores: [], excepcion: null, veredicto: undefined, fin: false, tiempoAgotado: false };
     const temporizadores = new Set();
     let terminado = false;
@@ -144,6 +144,7 @@ function talleresDe(html) {
       titulo: atributo(attrs, "data-titulo") || "",
       modo: atributo(attrs, "data-modo") || "js",
       tiempo: (parseFloat(atributo(attrs, "data-tiempo")) || 4) * 1000,
+      exponer: atributo(attrs, "data-exponer") || "",
       fuentes, preparacion: prep, verificacion: verif || (esperado !== null ? verificacionEsperada(esperado) : ""),
       solucion: sol ? desescapar(sol[1]) : null,
       ejercicio,
@@ -162,7 +163,7 @@ async function probarArchivo(archivo) {
     if (t.modo === "web") continue;
     const inicial = t.fuentes[0] ? t.fuentes[0].codigo : "";
     probados++;
-    const correr = (codigo, verif) => t.modo === "python" ? ejecutarPython(codigo, verif) : t.modo === "sql" ? ejecutarSQL(codigo, t.preparacion, verif) : ejecutar(codigo, verif, t.tiempo, t.preparacion);
+    const correr = (codigo, verif) => t.modo === "python" ? ejecutarPython(codigo, verif) : t.modo === "sql" ? ejecutarSQL(codigo, t.preparacion, verif) : ejecutar(codigo, verif, t.tiempo, t.preparacion, t.exponer);
     const ri = await correr(inicial, t.verificacion);
     if (ri.tiempoAgotado && !t.arreglar) problemas.push(`${t.id}: el código inicial no termina (¿bucle infinito o setInterval?)`);
     if (t.ejercicio && t.verificacion && ri.veredicto === true) problemas.push(`${t.id}: el código inicial YA pasa la verificación (el ejercicio no exige nada)`);

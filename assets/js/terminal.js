@@ -430,6 +430,8 @@
         "return 'Imprimiste más líneas de las esperadas. Sobra: «' + real[esp.length] + '».';";
     }
     var tiempoMax = (parseFloat(caja.getAttribute("data-tiempo")) || 5) * 1000;
+    // Talleres web: segundos que se espera tras cargar antes de verificar (por defecto, 0,15 s).
+    var esperaWeb = Math.round((parseFloat(caja.getAttribute("data-esperar")) || 0.15) * 1000);
     var clave = caja.id ? "taller:" + location.pathname + "#" + caja.id : null;
 
     var enMarco = modo === "web" || modo === "python" || modo === "sql";
@@ -543,7 +545,7 @@
       if (enMarco) return ejecutarMarco();
       var codigo = editores[0].editor.valor();
       if (!window.TerminalMotor) { linea("error", "No se pudo cargar el motor de ejecución."); return; }
-      var fuente = window.TerminalMotor.construirFuente(codigo, verificacion, preparacion);
+      var fuente = window.TerminalMotor.construirFuente(codigo, verificacion, preparacion, caja.getAttribute("data-exponer"));
       var hubo = false;
       var totalLineas = codigo.split("\n").length;
       bEjecutar.disabled = true;
@@ -622,8 +624,10 @@
         // En la vista previa los enlaces no navegan y los formularios no se envían a ningún sitio.
         "document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a||e.defaultPrevented)return;var h=a.getAttribute('href');if(h.charAt(0)==='#'){e.preventDefault();var d=h.length>1&&document.getElementById(decodeURIComponent(h.slice(1)));if(d)d.scrollIntoView();return;}e.preventDefault();console.info('(Vista previa) Este enlace llevaría a: '+h);});" +
         "window.addEventListener('submit',function(e){if(e.defaultPrevented)return;e.preventDefault();console.info('(Vista previa) El formulario pasó la validación y se enviaría. Aquí no se envía a ningún sitio.');});" +
+        // La verificación puede devolver una promesa; la página puede volver a comprobar llamando a comprobar().
         "window.__terminar=function(extra){window.__vaciar();var r=true;" + (verificacion ? "try{r=(function(salida,codigo,resultados){" + sinCierre(verificacion) + "\n})(window.__salida.slice()," + sinCierre(JSON.stringify(modo === "web" ? partes : (partes[modo] || ""))) + ",window.__resultados||[]);}catch(e){r='La verificación falló: '+e.message;}" : "") +
-        "P.postMessage({terminalTaller:" + idJ + ",tipo:'fin',datos:" + (verificacion ? "(r===undefined?true:r)" : "null") + "},'*');};})();<\/script>";
+        "var enviar=function(v){window.__vaciar();P.postMessage({terminalTaller:" + idJ + ",tipo:'fin',datos:" + (verificacion ? "(v===undefined?true:v)" : "null") + "},'*');};" +
+        "if(r&&typeof r.then==='function')r.then(enviar,function(e){enviar('La verificación falló: '+(e&&e.message||e));});else enviar(r);};window.comprobar=function(){window.__terminar();};})();<\/script>";
       var cabeza = "<!doctype html><html lang='es'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" + puente;
       var html;
       if (modo === "python") {
@@ -645,7 +649,7 @@
         var antesJs = cabeza + "<style>" + partes.css + "</style></head><body>" + partes.html + "<script>";
         desfaseWeb = (antesJs.match(/\n/g) || []).length;
         html = antesJs + sinCierre(partes.js) + "\n<\/script>" +
-          "<script>window.addEventListener('load',function(){setTimeout(window.__terminar,150);});<\/script></body></html>";
+          "<script>window.addEventListener('load',function(){setTimeout(window.__terminar," + esperaWeb + ");});<\/script></body></html>";
       }
       if (modo !== "web") linea("vacio", modo === "python" ? "Ejecutando Python…" : "Ejecutando SQL…");
       iframe.srcdoc = html;

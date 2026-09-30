@@ -197,17 +197,21 @@
 
   // preparacion: código oculto (por ejemplo, una pequeña biblioteca) que se ejecuta antes que el de la persona
   // y cuyas declaraciones puede usar; cuenta en el desfase para que los números de línea sigan siendo los suyos.
-  function construirFuente(codigo, verificacion, preparacion) {
+  // exponer: nombres (funciones, clases, variables) del código de la persona que la verificación
+  // recibe en su cuarto parámetro, «expuesto»; se leen con referencias normales al final del programa.
+  function construirFuente(codigo, verificacion, preparacion, exponer) {
     var cuerpo = preludio.toString();
     cuerpo = cuerpo.slice(cuerpo.indexOf("{") + 1, cuerpo.lastIndexOf("return {"));
     var lineasPreludio = cuerpo.split("\n").length;
     var verif = verificacion && verificacion.trim()
-      ? "function __verificar(){ var __r; try { __r = (function(salida, codigo, errores){\n" + verificacion + "\n})(__lineas.slice(), " + JSON.stringify(codigo) + ", __errores.slice()); } catch (e) { __r = 'La verificación falló: ' + (e && e.message); } __enviar('veredicto', __r === undefined ? true : __r); __enviar('fin'); }"
+      ? "function __verificar(){ var __r; try { __r = (function(salida, codigo, errores, expuesto){\n" + verificacion + "\n})(__lineas.slice(), " + JSON.stringify(codigo) + ", __errores.slice(), __expuesto); } catch (e) { __r = 'La verificación falló: ' + (e && e.message); } __enviar('veredicto', __r === undefined ? true : __r); __enviar('fin'); }"
       : "function __verificar(){ __enviar('fin'); }";
-    var cabecera = "(function(){\n" + cuerpo + "\n" + verif + "\n" + (preparacion ? preparacion + "\n" : "") + "(async function(){\n";
+    var cabecera = "(function(){\n" + cuerpo + "\nvar __expuesto = {};\n" + verif + "\n" + (preparacion ? preparacion + "\n" : "") + "(async function(){\n";
+    var nombres = String(exponer || "").split(/[\s,]+/).filter(function (n) { return /^[A-Za-z_$][\w$]*$/.test(n); });
+    var exposicion = nombres.map(function (n) { return "__expuesto[" + JSON.stringify(n) + "] = typeof " + n + " !== \"undefined\" ? " + n + " : undefined;"; }).join(" ");
     var desfase = cabecera.split("\n").length - 1;
     cabecera = cabecera.replace("__DESFASE__", String(desfase));
-    var fuente = cabecera + codigo + "\n})().then(function(){ __principalTerminado = true; __quizaTerminar(); }, function(e){ __errorEjecucion(e); __principalTerminado = true; __quizaTerminar(); });\n})();\n";
+    var fuente = cabecera + codigo + "\n" + exposicion + "\n})().then(function(){ __principalTerminado = true; __quizaTerminar(); }, function(e){ __errorEjecucion(e); __principalTerminado = true; __quizaTerminar(); });\n})();\n";
     return { fuente: fuente, desfase: desfase, lineasPreludio: lineasPreludio };
   }
 
