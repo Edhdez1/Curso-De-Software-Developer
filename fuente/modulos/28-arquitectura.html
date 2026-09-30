@@ -1147,3 +1147,736 @@ console.log(servidores.map((s) => `${s.nombre}: ${s.atendidas}`).join(", "));</t
     <p>Cuando hay varias copias de los datos en máquinas distintas y la red entre ellas se corta, el sistema tiene que elegir: seguir respondiendo aunque quizá con datos viejos (disponibilidad) o negarse a responder hasta que las copias vuelvan a coincidir (consistencia). No se pueden tener las dos durante el corte. Lo formuló Eric Brewer en el año 2000, y es la razón de fondo de la consistencia eventual que viste con los microservicios.</p>
   </aside>
 </section>
+
+<section id="documentar" data-parada="C4, UML y ADR">
+  <h2>Dibujar y documentar: C4, UML y ADR</h2>
+  <p>Una arquitectura que solo existe en la cabeza de una persona no sirve a un equipo. Hay que poder explicarla en una reunión, enseñársela a quien llega nuevo y recordar dentro de un año por qué se hizo así. Para eso hay dos herramientas: <strong>diagramas</strong> que muestran la estructura y <strong>registros de decisiones</strong> que guardan los porqués.</p>
+  <p>El problema de los diagramas de «cajas y flechas» dibujados sin reglas es que cada persona los lee distinto. ¿Esa caja es un servidor, un módulo o una clase? ¿La flecha es una petición, un evento o «depende de»? Los métodos que siguen existen para evitar esa ambigüedad.</p>
+
+  <h3>El modelo C4: acercar el zoom</h3>
+  <p>El <strong>modelo C4</strong>, creado por Simon Brown, propone dibujar un sistema en cuatro niveles de detalle, como el zoom de un mapa: primero el país, luego la ciudad, luego el barrio y por último la calle. Cada nivel responde a una pregunta y está pensado para un público distinto:</p>
+  <ol>
+    <li><strong>Contexto</strong>: el sistema como una sola caja, las personas que lo usan y los sistemas externos con los que habla. Lo entiende cualquiera, incluso sin saber programar.</li>
+    <li><strong>Contenedores</strong>: las piezas que se despliegan por separado: apps, APIs, bases de datos, colas. En C4, «contenedor» significa cualquier cosa que se ejecuta o guarda datos por su cuenta; no tiene que ver con los contenedores de Docker.</li>
+    <li><strong>Componentes</strong>: las partes principales dentro de un contenedor, por ejemplo los módulos de la API.</li>
+    <li><strong>Código</strong>: clases y funciones. Rara vez se dibuja a mano; si hace falta, se usa UML o se genera desde el código.</li>
+  </ol>
+  <p>Este es el nivel 1 de un juego móvil con ranking global, «Astro Salto»:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 250" role="img" aria-label="Diagrama de contexto C4. Una persona jugadora usa el sistema Astro Salto, juego móvil con ranking global. Astro Salto verifica la identidad con un proveedor de identidad externo y cobra las compras mediante un proveedor de pagos externo.">
+      <rect class="d-caja-suave" x="10" y="90" width="140" height="80" rx="40"/>
+      <text class="d-rotulo" x="80" y="124" text-anchor="middle">Jugadora</text>
+      <text class="d-peq d-tenue" x="80" y="144" text-anchor="middle">[persona]</text>
+      <path class="d-linea" d="M150 130H246"/>
+      <path class="d-tinta" d="M246 122l12 8-12 8z"/>
+      <text class="d-peq" x="204" y="120" text-anchor="middle">juega</text>
+      <text class="d-peq" x="204" y="150" text-anchor="middle">ve el ranking</text>
+      <rect class="d-acento" x="260" y="40" width="170" height="180" rx="10"/>
+      <text class="d-rotulo d-sobre-acento" x="345" y="110" text-anchor="middle">Astro Salto</text>
+      <text class="d-peq d-sobre-acento" x="345" y="132" text-anchor="middle">[sistema de software]</text>
+      <text class="d-peq d-sobre-acento" x="345" y="160" text-anchor="middle">juego móvil con</text>
+      <text class="d-peq d-sobre-acento" x="345" y="178" text-anchor="middle">ranking global</text>
+      <path class="d-linea" d="M430 75H548"/>
+      <path class="d-tinta" d="M548 67l12 8-12 8z"/>
+      <text class="d-peq" x="495" y="66" text-anchor="middle">verifica identidad</text>
+      <path class="d-linea" d="M430 185H548"/>
+      <path class="d-tinta" d="M548 177l12 8-12 8z"/>
+      <text class="d-peq" x="495" y="176" text-anchor="middle">cobra compras</text>
+      <rect class="d-caja" x="560" y="40" width="150" height="70" rx="8"/>
+      <text class="d-rotulo" x="635" y="68" text-anchor="middle">Identidad</text>
+      <text class="d-peq d-tenue" x="635" y="90" text-anchor="middle">[sistema externo]</text>
+      <rect class="d-caja" x="560" y="150" width="150" height="70" rx="8"/>
+      <text class="d-rotulo" x="635" y="178" text-anchor="middle">Pagos</text>
+      <text class="d-peq d-tenue" x="635" y="200" text-anchor="middle">[sistema externo]</text>
+    </svg>
+    <figcaption>Nivel 1, contexto. El sistema que construyes (en color) es una sola caja. Se ven las personas que lo usan y los sistemas externos de los que depende, con flechas que dicen qué se hace, no cómo.</figcaption>
+  </figure>
+  <p>Y este es el nivel 2 del mismo sistema, con el zoom puesto dentro de la caja de color:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 330" role="img" aria-label="Diagrama de contenedores C4 de Astro Salto. La jugadora usa la App del juego, hecha con Godot. La app habla con la API de ranking, hecha con Node.js, por HTTPS con JSON. La API lee y guarda el top 100 en una caché Valkey, guarda las puntuaciones en una base de datos PostgreSQL mediante SQL y verifica los inicios de sesión con el sistema externo de identidad.">
+      <rect class="d-caja-suave" x="10" y="130" width="120" height="70" rx="35"/>
+      <text class="d-rotulo" x="70" y="160" text-anchor="middle">Jugadora</text>
+      <text class="d-peq d-tenue" x="70" y="180" text-anchor="middle">[persona]</text>
+      <path class="d-punteada" d="M150 20H560V320H150Z"/>
+      <text class="d-peq d-tenue" x="162" y="312">Astro Salto [sistema de software]</text>
+      <path class="d-linea" d="M130 165H145V100H158"/>
+      <path class="d-tinta" d="M158 92l12 8-12 8z"/>
+      <rect class="d-caja" x="170" y="50" width="150" height="100" rx="8"/>
+      <text class="d-rotulo" x="245" y="78" text-anchor="middle">App del juego</text>
+      <text class="d-peq d-tenue" x="245" y="98" text-anchor="middle">[Godot, móvil]</text>
+      <text class="d-peq" x="245" y="120" text-anchor="middle">dibuja, controla</text>
+      <text class="d-peq" x="245" y="138" text-anchor="middle">y envía récords</text>
+      <path class="d-linea" d="M320 100H368"/>
+      <path class="d-tinta" d="M368 92l12 8-12 8z"/>
+      <text class="d-peq d-mono" x="350" y="90" text-anchor="middle">HTTPS</text>
+      <text class="d-peq d-mono" x="350" y="122" text-anchor="middle">JSON</text>
+      <rect class="d-caja" x="380" y="50" width="150" height="100" rx="8"/>
+      <text class="d-rotulo" x="455" y="78" text-anchor="middle">API de ranking</text>
+      <text class="d-peq d-tenue" x="455" y="98" text-anchor="middle">[Node.js]</text>
+      <text class="d-peq" x="455" y="120" text-anchor="middle">valida y ordena</text>
+      <text class="d-peq" x="455" y="138" text-anchor="middle">puntuaciones</text>
+      <path class="d-linea" d="M480 150V190"/>
+      <path class="d-tinta" d="M472 190l8 12 8-12z"/>
+      <text class="d-peq d-mono" x="490" y="178">SQL</text>
+      <path class="d-caja" d="M410 206V286A70 10 0 0 0 550 286V206"/>
+      <ellipse class="d-caja" cx="480" cy="206" rx="70" ry="10"/>
+      <text class="d-rotulo" x="480" y="244" text-anchor="middle">Base de datos</text>
+      <text class="d-peq d-tenue" x="480" y="264" text-anchor="middle">[PostgreSQL]</text>
+      <path class="d-linea" d="M410 150V240H332"/>
+      <path class="d-tinta" d="M332 232l-12 8 12 8z"/>
+      <text class="d-peq" x="370" y="262" text-anchor="middle">lee y guarda</text>
+      <rect class="d-caja" x="170" y="200" width="150" height="80" rx="8"/>
+      <text class="d-rotulo" x="245" y="226" text-anchor="middle">Caché</text>
+      <text class="d-peq d-tenue" x="245" y="246" text-anchor="middle">[Valkey]</text>
+      <text class="d-peq" x="245" y="266" text-anchor="middle">top 100 listo</text>
+      <path class="d-linea" d="M530 100H568"/>
+      <path class="d-tinta" d="M568 92l12 8-12 8z"/>
+      <text class="d-peq" x="550" y="84" text-anchor="middle">verifica</text>
+      <rect class="d-caja" x="580" y="60" width="130" height="80" rx="8"/>
+      <text class="d-rotulo" x="645" y="90" text-anchor="middle">Identidad</text>
+      <text class="d-peq d-tenue" x="645" y="110" text-anchor="middle">[sistema externo]</text>
+      <text class="d-peq" x="645" y="128" text-anchor="middle">inicio de sesión</text>
+    </svg>
+    <figcaption>Nivel 2, contenedores. Dentro del límite punteado están las piezas que el equipo despliega. Cada caja dice su nombre, su tecnología entre corchetes y su responsabilidad; cada flecha dice qué se hace y, si importa, cómo (HTTPS, SQL).</figcaption>
+  </figure>
+  <aside class="senal oficio" data-titulo="Diagramas como código">
+    <p>Un diagrama dibujado a mano en una herramienta gráfica se queda viejo en cuanto el sistema cambia, porque actualizarlo da pereza. Muchos equipos escriben los diagramas como texto, dentro del repositorio, junto al código. GitHub dibuja automáticamente los diagramas escritos en <a href="https://mermaid.js.org/">Mermaid</a> dentro de cualquier archivo Markdown. Este bloque genera un diagrama parecido al de contenedores:</p>
+  </aside>
+  <pre><code class="language-text">```mermaid
+flowchart LR
+  jugadora([Jugadora]) --&gt;|usa| app[App del juego]
+  app --&gt;|HTTPS y JSON| api[API de ranking]
+  api --&gt;|SQL| bd[(Base de datos)]
+  api --&gt;|lee y guarda| cache[(Caché)]
+  api --&gt;|verifica| identidad[Identidad]
+```</code></pre>
+  <p>Para C4 existen herramientas específicas, como Structurizr (del propio Simon Brown), que generan los cuatro niveles a partir de un único archivo de texto.</p>
+
+  <h3>UML: clases y secuencia</h3>
+  <p><strong>UML</strong> (<em>Unified Modeling Language</em>, lenguaje unificado de modelado) es un estándar de notación para diagramas de software, mantenido por el consorcio OMG. Su versión vigente, la 2.5.1, define catorce tipos de diagrama, pero en el día a día se usan sobre todo dos: el de clases y el de secuencia. No hace falta dominar toda la notación: con lo que ves aquí puedes leer la mayoría de los diagramas que te vas a encontrar.</p>
+  <h4>Diagrama de clases: qué hay y cómo se relaciona</h4>
+  <p>Cada clase es una caja con tres compartimentos: nombre, atributos (los datos) y métodos. Delante de cada miembro, <code>+</code> significa público y <code>-</code> privado, como los campos <code>#privados</code> de la <a href="21-paradigmas.html#encapsulamiento">Estación 21</a>. Las líneas entre clases dicen cómo se relacionan.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Diagrama de clases UML. Jugador, con nombre público, correo privado y método jugar, se asocia con Partida: un jugador tiene muchas partidas. Partida, con fecha, puntos y método terminar, se asocia con Nivel: muchas partidas en un nivel. Jugador tiene por composición un Inventario, marcado con un rombo relleno. Jefe hereda de Enemigo, marcado con un triángulo hueco.">
+      <rect class="d-caja" x="20" y="20" width="190" height="104" rx="2"/>
+      <rect class="d-caja-suave" x="21" y="21" width="188" height="27"/>
+      <text class="d-rotulo" x="115" y="40" text-anchor="middle">Jugador</text>
+      <path class="d-linea" d="M20 48H210M20 96H210"/>
+      <text class="d-mono d-peq" x="30" y="68">+ nombre: string</text>
+      <text class="d-mono d-peq" x="30" y="88">- correo: string</text>
+      <text class="d-mono d-peq" x="30" y="116">+ jugar(nivel)</text>
+
+      <rect class="d-caja" x="300" y="20" width="180" height="104" rx="2"/>
+      <rect class="d-caja-suave" x="301" y="21" width="178" height="27"/>
+      <text class="d-rotulo" x="390" y="40" text-anchor="middle">Partida</text>
+      <path class="d-linea" d="M300 48H480M300 96H480"/>
+      <text class="d-mono d-peq" x="310" y="68">+ fecha: Date</text>
+      <text class="d-mono d-peq" x="310" y="88">+ puntos: number</text>
+      <text class="d-mono d-peq" x="310" y="116">+ terminar()</text>
+
+      <rect class="d-caja" x="545" y="20" width="165" height="76" rx="2"/>
+      <rect class="d-caja-suave" x="546" y="21" width="163" height="27"/>
+      <text class="d-rotulo" x="627" y="40" text-anchor="middle">Nivel</text>
+      <path class="d-linea" d="M545 48H710"/>
+      <text class="d-mono d-peq" x="555" y="68">+ numero: number</text>
+      <text class="d-mono d-peq" x="555" y="88">+ jefe: Jefe</text>
+
+      <path class="d-linea" d="M210 72H300"/>
+      <text class="d-mono d-peq" x="218" y="64">1</text>
+      <text class="d-mono d-peq" x="288" y="64">*</text>
+      <text class="d-peq d-tenue" x="255" y="90" text-anchor="middle">juega</text>
+      <path class="d-linea" d="M480 72H545"/>
+      <text class="d-mono d-peq" x="488" y="64">*</text>
+      <text class="d-mono d-peq" x="534" y="64">1</text>
+      <text class="d-peq d-tenue" x="512" y="90" text-anchor="middle">en</text>
+
+      <path class="d-tinta" d="M115 124l8 12-8 12-8-12z"/>
+      <path class="d-linea" d="M115 148V190"/>
+      <text class="d-mono d-peq" x="124" y="184">1</text>
+      <rect class="d-caja" x="20" y="190" width="190" height="84" rx="2"/>
+      <rect class="d-caja-suave" x="21" y="191" width="188" height="27"/>
+      <text class="d-rotulo" x="115" y="210" text-anchor="middle">Inventario</text>
+      <path class="d-linea" d="M20 218H210M20 246H210"/>
+      <text class="d-mono d-peq" x="30" y="238">- objetos: Objeto[]</text>
+      <text class="d-mono d-peq" x="30" y="266">+ agregar(objeto)</text>
+
+      <rect class="d-caja" x="300" y="190" width="180" height="84" rx="2"/>
+      <rect class="d-caja-suave" x="301" y="191" width="178" height="27"/>
+      <text class="d-rotulo" x="390" y="210" text-anchor="middle">Enemigo</text>
+      <path class="d-linea" d="M300 218H480M300 246H480"/>
+      <text class="d-mono d-peq" x="310" y="238">+ vida: number</text>
+      <text class="d-mono d-peq" x="310" y="266">+ atacar()</text>
+      <rect class="d-caja" x="560" y="190" width="150" height="84" rx="2"/>
+      <rect class="d-caja-suave" x="561" y="191" width="148" height="27"/>
+      <text class="d-rotulo" x="635" y="210" text-anchor="middle">Jefe</text>
+      <path class="d-linea" d="M560 218H710M560 246H710"/>
+      <text class="d-mono d-peq" x="570" y="238">+ fase: number</text>
+      <text class="d-mono d-peq" x="570" y="266">+ rugir()</text>
+      <path class="d-linea" d="M560 232H497"/>
+      <path class="d-caja" d="M481 232l16-9v18z"/>
+      <path class="d-linea" d="M627 96V190" stroke-opacity="0.5"/>
+      <text class="d-peq d-tenue" x="636" y="150">tiene un</text>
+    </svg>
+    <figcaption>Una línea simple es una <strong>asociación</strong>, con su <strong>multiplicidad</strong> en cada extremo: un jugador juega muchas partidas (<code>*</code> significa «muchos»). El rombo relleno es una <strong>composición</strong>: el inventario es parte del jugador y no existe sin él. El triángulo hueco es <strong>herencia</strong>: Jefe es un Enemigo (<code>class Jefe extends Enemigo</code>).</figcaption>
+  </figure>
+  <h4>Diagrama de secuencia: quién habla con quién, y en qué orden</h4>
+  <p>El diagrama de clases muestra la estructura, quieta. El <strong>diagrama de secuencia</strong> muestra una conversación en el tiempo: cada participante es una columna con una línea vertical (su <strong>línea de vida</strong>), el tiempo corre hacia abajo, y cada flecha es un mensaje. Las flechas llenas son llamadas; las punteadas, respuestas. Así se guarda una puntuación en Astro Salto:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Diagrama de secuencia UML con cuatro participantes: App, API, Base de datos y Caché. 1: la App envía POST /puntuaciones a la API. 2: la API envía INSERT a la base de datos. 3: la base de datos responde ok. 4: la API envía borrar top100 a la caché. 5: la API responde a la App 201 Created, lugar 37.">
+      <rect class="d-caja" x="40" y="16" width="120" height="36" rx="6"/>
+      <text class="d-rotulo" x="100" y="40" text-anchor="middle">App</text>
+      <rect class="d-caja" x="230" y="16" width="120" height="36" rx="6"/>
+      <text class="d-rotulo" x="290" y="40" text-anchor="middle">API</text>
+      <rect class="d-caja" x="410" y="16" width="140" height="36" rx="6"/>
+      <text class="d-rotulo" x="480" y="40" text-anchor="middle">Base de datos</text>
+      <rect class="d-caja" x="590" y="16" width="120" height="36" rx="6"/>
+      <text class="d-rotulo" x="650" y="40" text-anchor="middle">Caché</text>
+      <path class="d-punteada" d="M100 52V290M290 52V290M480 52V290M650 52V290"/>
+      <rect class="d-caja" x="284" y="84" width="12" height="170"/>
+      <rect class="d-caja" x="474" y="124" width="12" height="36"/>
+      <rect class="d-caja" x="644" y="194" width="12" height="20"/>
+
+      <path class="d-linea" d="M100 88H272"/>
+      <path class="d-tinta" d="M272 82l12 6-12 6z"/>
+      <text class="d-mono d-peq" x="186" y="78" text-anchor="middle">1: POST /puntuaciones</text>
+
+      <path class="d-linea" d="M296 128H462"/>
+      <path class="d-tinta" d="M462 122l12 6-12 6z"/>
+      <text class="d-mono d-peq" x="385" y="118" text-anchor="middle">2: INSERT puntuación</text>
+
+      <path class="d-punteada" d="M474 156H298"/>
+      <path class="d-linea" d="M308 150l-10 6 10 6"/>
+      <text class="d-mono d-peq" x="385" y="148" text-anchor="middle">3: ok</text>
+
+      <path class="d-linea" d="M296 198H632"/>
+      <path class="d-tinta" d="M632 192l12 6-12 6z"/>
+      <text class="d-mono d-peq" x="470" y="188" text-anchor="middle">4: borrar "top100"</text>
+
+      <path class="d-punteada" d="M284 250H102"/>
+      <path class="d-linea" d="M112 244l-10 6 10 6"/>
+      <text class="d-mono d-peq" x="192" y="240" text-anchor="middle">5: 201 Created, lugar 37</text>
+    </svg>
+    <figcaption>Se lee de arriba abajo. Los rectángulos estrechos sobre las líneas de vida marcan cuándo cada participante está trabajando. En la vida real, este diagrama se dibuja para explicar un flujo concreto que causa dudas, no para cada función.</figcaption>
+  </figure>
+  <aside class="senal ojo">
+    <p>Los diagramas son para comunicar, no para impresionar. Un diagrama de C4 o UML incompleto pero actualizado vale más que uno perfecto de hace dos años. Ponle título, di qué representan las formas si no es evidente y dibuja solo lo que ayuda a entender la pregunta del momento.</p>
+  </aside>
+
+  <h3>ADR: escribir por qué</h3>
+  <p>Los diagramas dicen <em>qué</em> hay. Dentro de un año, alguien preguntará: «¿por qué usamos una caché aquí? ¿Por qué no microservicios?». Si la respuesta estaba en una conversación que nadie recuerda, el equipo repetirá la discusión, o peor, deshará una buena decisión sin saber por qué se tomó.</p>
+  <p>Un <strong>registro de decisión de arquitectura</strong> o <strong>ADR</strong> (<em>Architecture Decision Record</em>) es un documento corto que guarda una sola decisión importante, con su contexto y sus consecuencias. Michael Nygard propuso el formato en 2011 y hoy es una práctica muy extendida. Cada ADR tiene:</p>
+  <ul>
+    <li><strong>Título</strong>: una frase corta con la decisión, numerada.</li>
+    <li><strong>Estado</strong>: propuesta, aceptada, obsoleta o reemplazada por otra.</li>
+    <li><strong>Contexto</strong>: qué situación y qué fuerzas (técnicas, de negocio, de equipo) llevaron a decidir.</li>
+    <li><strong>Decisión</strong>: qué se decidió, en voz activa: «Usaremos…».</li>
+    <li><strong>Consecuencias</strong>: todo lo que cambia, lo bueno y lo malo.</li>
+  </ul>
+  <pre><code class="language-text"># ADR 0003: Guardar el ranking en una caché compartida
+
+Fecha: 2026-09-30
+Estado: Aceptada
+
+## Contexto
+La tabla de los 100 mejores se consulta unas 2 000 veces por segundo en
+horas punta y cambia pocas veces por minuto. Cada consulta ordena miles de
+filas en la base de datos, y en horas punta el p95 de la API supera los
+300 ms. El equipo ya usa Valkey para otra función.
+
+## Decisión
+Guardaremos el top 100 en Valkey con un tiempo de vida de 30 segundos, y
+borraremos la copia cuando llegue una puntuación que entre en el top.
+
+## Consecuencias
+- A favor: el ranking casi nunca toca la base de datos.
+- A favor: reutilizamos una pieza que ya sabemos operar.
+- En contra: el ranking puede mostrar datos con hasta 30 s de retraso.
+- En contra: si Valkey cae, la API debe leer de la base de datos (más
+  lento, pero funciona).
+
+## Alternativas consideradas
+- Réplica de lectura: no evita ordenar miles de filas en cada consulta.
+- Calcular el ranking en la app: obligaría a enviar todas las puntuaciones.</code></pre>
+  <p>Los ADR se guardan como archivos de texto en el repositorio, por ejemplo en <code>docs/adr/</code>, y se revisan en pull requests como el código (<a href="24-git.html">Estación 24</a>). Una regla importante: un ADR aceptado no se edita para cambiar la decisión. Si la decisión cambia, se escribe uno nuevo que diga «reemplaza al 0003», y el viejo pasa a estado «reemplazada». Así queda la historia completa. En la <a href="27-proceso.html">Estación 27</a> viste dónde encajan en la documentación del equipo.</p>
+  <p>Practícalo en la terminal simulada. Vas a guardar el primer ADR de Astro Salto en su repositorio:</p>
+  <div class="terminal-sim" data-titulo="Tu primer ADR en el repositorio" data-inicio="/home/tu">
+    <div class="terminal-instrucciones">
+      <p>Misión: dentro de <code>astro-salto</code>, crea la carpeta <code>docs</code> y dentro <code>adr</code>. Crea el archivo <code>docs/adr/0001-monolito-modular.md</code> con la línea <code>echo "# ADR 0001: Empezar con un monolito modular" &gt; docs/adr/0001-monolito-modular.md</code> y añádele otra con <code>echo "Estado: Aceptada" &gt;&gt; …</code> (dos signos, para no borrar la primera). Después convierte <code>astro-salto</code> en repositorio con <code>git init</code>, prepara todo con <code>git add .</code> y guárdalo con <code>git commit -m "Añade ADR 0001"</code>. Termina con <code>cat</code> del archivo y <code>git log --oneline</code>.</p>
+    </div>
+    <script type="application/json" class="terminal-sistema">{"astro-salto": {"README.md": "# Astro Salto\nJuego de plataformas con ranking global.\n", "src": {"juego.js": "// bucle de juego"}}}</script>
+    <script type="text/plain" class="terminal-mision">
+var p = sistema["astro-salto"];
+if (!p) return "No encuentro la carpeta astro-salto. Pulsa «Reiniciar».";
+if (!p.docs || typeof p.docs !== "object") return "Entra en astro-salto (cd astro-salto) y crea la carpeta docs con mkdir docs.";
+if (!p.docs.adr || typeof p.docs.adr !== "object") return "Dentro de docs falta la carpeta adr: mkdir docs/adr.";
+var f = p.docs.adr["0001-monolito-modular.md"];
+if (typeof f !== "string") return "Crea el archivo docs/adr/0001-monolito-modular.md con echo \"# ADR 0001: Empezar con un monolito modular\" > docs/adr/0001-monolito-modular.md";
+if (f.indexOf("ADR 0001") === -1) return "El archivo no tiene el título. Escríbelo con echo \"# ADR 0001: Empezar con un monolito modular\" > docs/adr/0001-monolito-modular.md";
+if (f.indexOf("Estado: Aceptada") === -1) return "Falta la línea del estado: echo \"Estado: Aceptada\" >> docs/adr/0001-monolito-modular.md (con dos signos >).";
+if (!git) return "Ahora convierte astro-salto en repositorio: git init (estando dentro de astro-salto).";
+if (git.raiz !== "/home/tu/astro-salto") return "El repositorio se creó en " + git.raiz + " y debía estar en /home/tu/astro-salto. Pulsa «Reiniciar» y haz git init dentro de astro-salto.";
+var guardado = git.commits.some(function (c) { return Object.keys(c.arbol).some(function (k) { return /0001-monolito-modular\.md$/.test(k); }); });
+if (!guardado) return "El ADR todavía no está en ningún commit: git add . y después git commit -m \"Añade ADR 0001\".";
+if (!historial.some(function (c) { return /^cat /.test(c); })) return "Casi: muestra el ADR con cat docs/adr/0001-monolito-modular.md";
+if (!historial.some(function (c) { return /^git log/.test(c); })) return "Último paso: mira el historial con git log --oneline.";
+return true;
+    </script>
+  </div>
+</section>
+
+<section id="videojuegos" data-parada="Arquitectura de juegos">
+  <h2>La arquitectura de un videojuego</h2>
+  <p>Todo lo anterior piensa en aplicaciones que <em>esperan</em>: no hacen nada hasta que llega un clic o una petición. Un videojuego no espera. Aunque no toques nada, los enemigos se mueven, la lluvia cae y el reloj corre. Por eso su arquitectura tiene piezas propias. Aquí verás las tres más importantes a nivel de diseño; en la <a href="34-videojuegos.html">Estación 34</a> las programarás en un juego completo.</p>
+
+  <h3>El bucle de juego</h3>
+  <p>El corazón de todo juego es el <strong>bucle de juego</strong> (<em>game loop</em>), que ya asomó en la <a href="09-bucles.html">Estación 9</a>. Se repite decenas de veces por segundo y en cada vuelta hace tres cosas, siempre en el mismo orden:</p>
+  <ol>
+    <li><strong>Leer la entrada</strong>: qué teclas, botones o toques hay ahora.</li>
+    <li><strong>Actualizar</strong>: avanzar el mundo un poco. Mover personajes, aplicar la gravedad, detectar choques, restar vida.</li>
+    <li><strong>Dibujar</strong>: pintar el estado actual en la pantalla.</li>
+  </ol>
+  <p>A 60 fotogramas por segundo, cada vuelta dispone de 1000 / 60 ≈ 16,7 milisegundos para todo. Si el trabajo de una vuelta tarda más, el juego se ve a tirones. Ese presupuesto de tiempo por fotograma condiciona toda la arquitectura de un juego.</p>
+  <p>Hay una trampa. No todas las pantallas van a la misma velocidad: hay monitores de 60, de 120 y de 144 fotogramas por segundo, y un teléfono cargado va más lento. Si cada vuelta mueve al personaje 5 píxeles, en una pantalla de 144 Hz corre más del doble de rápido que en una de 60. La primera solución es multiplicar por el tiempo transcurrido: «velocidad × segundos que pasaron». Mejora mucho, pero la física (saltos, rebotes, choques) da resultados ligeramente distintos según el tamaño de cada paso, y un paso muy grande puede hacer que un objeto atraviese una pared.</p>
+  <p>La solución más usada, descrita por Glenn Fiedler en su artículo <em>Fix Your Timestep!</em> y por Robert Nystrom en <em>Game Programming Patterns</em>, es separar las dos velocidades: <strong>actualizar con un paso fijo</strong> (siempre, por ejemplo, 20 ms de mundo) y <strong>dibujar tan rápido como pueda la pantalla</strong>. Un acumulador guarda el tiempo real pendiente y lo va convirtiendo en pasos fijos. Síguelo con fotogramas de 30, 5 y 25 ms:</p>
+  <div class="traza" data-titulo="Paso fijo con acumulador">
+    <pre><code class="language-js">const PASO = 20;           // ms de mundo en cada actualización
+let acumulado = 0;
+let actualizaciones = 0;
+for (const transcurrido of [30, 5, 25]) {
+  acumulado += transcurrido;
+  while (acumulado &gt;= PASO) {
+    actualizaciones++;
+    acumulado -= PASO;
+  }
+  console.log(`Dibujo. Actualizaciones: ${actualizaciones}. Sobran ${acumulado} ms`);
+}</code></pre>
+    <script type="application/json">[
+      { "linea": 1, "vars": { "PASO": "20"}, "nota": "El mundo del juego avanzará siempre a saltos de 20 ms: 50 actualizaciones por segundo, pase lo que pase con la pantalla."},
+      { "linea": 2, "vars": { "PASO": "20", "acumulado": "0"}, "nota": "acumulado guarda el tiempo real que todavía no se ha convertido en actualizaciones."},
+      { "linea": 3, "vars": { "PASO": "20", "acumulado": "0", "actualizaciones": "0"}, "nota": "Contador de cuántas veces se ha actualizado el mundo."},
+      { "linea": 4, "vars": { "PASO": "20", "acumulado": "0", "actualizaciones": "0", "transcurrido": "30"}, "nota": "Primer fotograma: desde el anterior pasaron 30 ms (en un juego real lo mide requestAnimationFrame)."},
+      { "linea": 5, "vars": { "PASO": "20", "acumulado": "30", "actualizaciones": "0", "transcurrido": "30"}, "nota": "Se suman los 30 ms al tiempo pendiente."},
+      { "linea": 6, "vars": { "PASO": "20", "acumulado": "30", "actualizaciones": "0", "transcurrido": "30"}, "nota": "¿Hay al menos 20 ms pendientes? 30 >= 20: sí, toca una actualización."},
+      { "linea": 7, "vars": { "PASO": "20", "acumulado": "30", "actualizaciones": "1", "transcurrido": "30"}, "nota": "Aquí iría actualizar(): mover personajes, aplicar física, comprobar choques."},
+      { "linea": 8, "vars": { "PASO": "20", "acumulado": "10", "actualizaciones": "1", "transcurrido": "30"}, "nota": "Se descuentan los 20 ms que acaba de simular."},
+      { "linea": 6, "vars": { "PASO": "20", "acumulado": "10", "actualizaciones": "1", "transcurrido": "30"}, "nota": "10 >= 20: no. Los 10 ms sobrantes no se tiran: esperan al siguiente fotograma."},
+      { "linea": 10, "vars": { "PASO": "20", "acumulado": "10", "actualizaciones": "1", "transcurrido": "30"}, "salida": "Dibujo. Actualizaciones: 1. Sobran 10 ms", "nota": "Aquí iría dibujar(): se pinta el mundo tal como quedó."},
+      { "linea": 4, "vars": { "PASO": "20", "acumulado": "10", "actualizaciones": "1", "transcurrido": "5"}, "nota": "Segundo fotograma, muy rápido: solo pasaron 5 ms."},
+      { "linea": 5, "vars": { "PASO": "20", "acumulado": "15", "actualizaciones": "1", "transcurrido": "5"}, "nota": "Pendientes: 10 + 5 = 15 ms."},
+      { "linea": 6, "vars": { "PASO": "20", "acumulado": "15", "actualizaciones": "1", "transcurrido": "5"}, "nota": "15 >= 20: no. En este fotograma el mundo no avanza."},
+      { "linea": 10, "vars": { "PASO": "20", "acumulado": "15", "actualizaciones": "1", "transcurrido": "5"}, "salida": "Dibujo. Actualizaciones: 1. Sobran 15 ms", "nota": "Se dibuja igual. En una pantalla muy rápida puede haber fotogramas sin actualización; la física no se acelera por eso."},
+      { "linea": 4, "vars": { "PASO": "20", "acumulado": "15", "actualizaciones": "1", "transcurrido": "25"}, "nota": "Tercer fotograma, lento: 25 ms."},
+      { "linea": 5, "vars": { "PASO": "20", "acumulado": "40", "actualizaciones": "1", "transcurrido": "25"}, "nota": "Pendientes: 15 + 25 = 40 ms, suficiente para dos actualizaciones."},
+      { "linea": 6, "vars": { "PASO": "20", "acumulado": "40", "actualizaciones": "1", "transcurrido": "25"}, "nota": "40 >= 20: sí."},
+      { "linea": 7, "vars": { "PASO": "20", "acumulado": "40", "actualizaciones": "2", "transcurrido": "25"}, "nota": "Segunda actualización del mundo."},
+      { "linea": 8, "vars": { "PASO": "20", "acumulado": "20", "actualizaciones": "2", "transcurrido": "25"}, "nota": "Quedan 20 ms."},
+      { "linea": 6, "vars": { "PASO": "20", "acumulado": "20", "actualizaciones": "2", "transcurrido": "25"}, "nota": "20 >= 20: sí, otra vez."},
+      { "linea": 7, "vars": { "PASO": "20", "acumulado": "20", "actualizaciones": "3", "transcurrido": "25"}, "nota": "Tercera actualización. Este fotograma lento se pone al día con dos pasos seguidos."},
+      { "linea": 8, "vars": { "PASO": "20", "acumulado": "0", "actualizaciones": "3", "transcurrido": "25"}, "nota": "No queda tiempo pendiente."},
+      { "linea": 6, "vars": { "PASO": "20", "acumulado": "0", "actualizaciones": "3", "transcurrido": "25"}, "nota": "0 >= 20: no. Sale del while."},
+      { "linea": 10, "vars": { "PASO": "20", "acumulado": "0", "actualizaciones": "3", "transcurrido": "25"}, "salida": "Dibujo. Actualizaciones: 3. Sobran 0 ms", "nota": "En 60 ms de tiempo real hubo 3 actualizaciones de 20 ms: el mundo avanzó exactamente lo que debía, aunque los fotogramas duraron 30, 5 y 25 ms."}
+    ]</script>
+  </div>
+  <p>En un juego de navegador, ese mismo esquema se escribe con <code>requestAnimationFrame</code>, que llama a tu función justo antes de que el navegador pinte el siguiente fotograma y le pasa la hora actual en milisegundos. Ordena las líneas de un bucle de juego completo:</p>
+  <div class="parsons" data-titulo="Ordena el bucle de juego" data-lenguaje="js">
+    <ol>
+      <li>function bucle(ahora) {</li>
+      <li data-sangria="1">acumulado += Math.min(ahora - anterior, 250);</li>
+      <li data-sangria="1">anterior = ahora;</li>
+      <li data-sangria="1">leerEntrada();</li>
+      <li data-sangria="1">while (acumulado &gt;= PASO) {</li>
+      <li data-sangria="2">actualizar(PASO / 1000);</li>
+      <li data-sangria="2">acumulado -= PASO;</li>
+      <li data-sangria="1">}</li>
+      <li data-sangria="1" data-grupo="fin">dibujar();</li>
+      <li data-sangria="1" data-grupo="fin">requestAnimationFrame(bucle);</li>
+      <li>}</li>
+    </ol>
+  </div>
+  <aside class="senal ojo" data-titulo="¿Por qué Math.min(…, 250)?">
+    <p>Si la pestaña pasa un rato en segundo plano, el navegador deja de llamar a tu bucle. Al volver, «el tiempo que pasó» puede ser un minuto, y el <code>while</code> intentaría simular miles de pasos seguidos: el juego se congela intentando ponerse al día. Limitar el tiempo que se suma en cada vuelta (aquí, a 250 ms) evita esa «espiral de la muerte». El juego simplemente se pierde ese rato, que es lo que esperas.</p>
+  </aside>
+
+  <h3>Escenas</h3>
+  <p>Un juego tiene pantallas muy distintas: el menú principal, cada nivel, la pausa, la tienda, la pantalla de fin. Cada una tiene su propia lógica de actualización y de dibujo. Mezclarlas con <code>if (pantalla === "menu") … else if …</code> en un único bucle se vuelve inmanejable enseguida. La solución es organizar el juego en <strong>escenas</strong>: objetos independientes que saben entrar, actualizar, dibujar y salir, y un gestor que decide cuál está activa.</p>
+  <pre><code class="language-js">// Cada escena tiene la misma forma: entrar, actualizar, dibujar, salir
+const menu = {
+  entrar() { /* colocar botones */ },
+  actualizar(dt) { /* ¿pulsó «Jugar»? → cambiarA(nivel1) */ },
+  dibujar() { /* pintar el título y los botones */ },
+  salir() {},
+};
+
+// El gestor guarda las escenas en una PILA: la de arriba es la activa
+const escenas = [];
+function cambiarA(escena) { escenas.length = 0; escenas.push(escena); escena.entrar(); }
+function apilar(escena) { escenas.push(escena); escena.entrar(); }     // la pausa
+function desapilar() { escenas.pop().salir(); }                       // volver al juego
+
+// El bucle solo habla con el gestor
+function actualizar(dt) { escenas[escenas.length - 1].actualizar(dt); }
+function dibujar() { for (const e of escenas) e.dibujar(); }           // la pausa, encima del nivel</code></pre>
+  <p>Fíjate en la <strong>pila</strong> de la <a href="19-estructuras-datos.html#pilas-colas">Estación 19</a>: al pausar, la escena de pausa se <em>apila</em> encima del nivel. Solo la de arriba se actualiza (el nivel queda congelado), pero todas se dibujan, así que ves el nivel quieto detrás del menú de pausa. Al quitar la pausa, el nivel sigue exactamente donde estaba. En la <a href="25-codigo-limpio.html">Estación 25</a> verás que esta idea se relaciona con el patrón Estado.</p>
+  <p>Los motores de juego traen esto resuelto. En Godot, el juego es un árbol de <strong>nodos</strong>, y una escena es un conjunto de nodos que se guarda en un archivo y se puede reutilizar; cambiar de nivel es una línea:</p>
+  <pre><code class="language-gdscript"># Godot 4: al pulsar el botón «Jugar», cargar el primer nivel
+func _on_boton_jugar_pressed():
+    get_tree().change_scene_to_file("res://niveles/nivel_1.tscn")</code></pre>
+
+  <h3>El sistema entidad-componente (ECS)</h3>
+  <p>En la <a href="21-paradigmas.html#composicion">Estación 21</a> viste que la herencia se rompe en los juegos: el dragón marino que vuela <em>y</em> nada no cabe en ningún árbol de clases, y la solución era la composición. El patrón <strong>entidad-componente-sistema</strong> (ECS, <em>Entity Component System</em>) lleva la composición al extremo y separa por completo los datos de la lógica:</p>
+  <ul>
+    <li>Una <strong>entidad</strong> es solo un identificador, un número. No tiene datos ni métodos. La entidad 7 no «es» un murciélago: es la 7.</li>
+    <li>Un <strong>componente</strong> es un paquete de datos puros, sin lógica: <code>Posicion {x, y}</code>, <code>Velocidad {x, y}</code>, <code>Salud {puntos}</code>. Una entidad «es» lo que es por los componentes que tiene.</li>
+    <li>Un <strong>sistema</strong> es una función que recorre todas las entidades que tienen cierta combinación de componentes y les aplica una regla. El sistema de movimiento procesa todas las que tienen <code>Posicion</code> y <code>Velocidad</code>, sean lo que sean.</li>
+  </ul>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 310" role="img" aria-label="Tabla de entidades y componentes. Filas: 1 heroína, 2 murciélago, 3 plataforma, 4 moneda. Columnas: Posición, Velocidad, Gravedad, Salud y Sprite. La heroína tiene todos; el murciélago tiene posición, velocidad, salud y sprite; la plataforma y la moneda solo posición y sprite. Debajo, tres sistemas: movimiento usa Posición y Velocidad; gravedad usa Velocidad y Gravedad; dibujo usa Posición y Sprite.">
+      <text class="d-rotulo" x="20" y="30">Entidad</text>
+      <text class="d-rotulo" x="242" y="30" text-anchor="middle">Posición</text>
+      <text class="d-rotulo" x="346" y="30" text-anchor="middle">Velocidad</text>
+      <text class="d-rotulo" x="450" y="30" text-anchor="middle">Gravedad</text>
+      <text class="d-rotulo" x="554" y="30" text-anchor="middle">Salud</text>
+      <text class="d-rotulo" x="658" y="30" text-anchor="middle">Sprite</text>
+      <path class="d-linea" d="M20 42H710"/>
+      <text class="d-mono" x="20" y="72">1 heroína</text>
+      <text class="d-mono" x="20" y="112">2 murciélago</text>
+      <text class="d-mono" x="20" y="152">3 plataforma</text>
+      <text class="d-mono" x="20" y="192">4 moneda</text>
+      <path class="d-linea" d="M20 88H710M20 128H710M20 168H710M20 208H710" stroke-opacity="0.25"/>
+      <g class="d-peq">
+        <rect class="d-acento" x="196" y="52" width="92" height="28" rx="6"/>
+        <text class="d-sobre-acento d-mono" x="242" y="71" text-anchor="middle">(40, 300)</text>
+        <rect class="d-acento" x="300" y="52" width="92" height="28" rx="6"/>
+        <text class="d-sobre-acento d-mono" x="346" y="71" text-anchor="middle">(2, 0)</text>
+        <rect class="d-acento" x="404" y="52" width="92" height="28" rx="6"/>
+        <text class="d-sobre-acento d-mono" x="450" y="71" text-anchor="middle">activa</text>
+        <rect class="d-acento" x="508" y="52" width="92" height="28" rx="6"/>
+        <text class="d-sobre-acento d-mono" x="554" y="71" text-anchor="middle">3</text>
+        <rect class="d-acento" x="612" y="52" width="92" height="28" rx="6"/>
+        <text class="d-sobre-acento d-mono" x="658" y="71" text-anchor="middle">heroina</text>
+        <rect class="d-acento" x="196" y="92" width="92" height="28" rx="6"/>
+        <text class="d-sobre-acento d-mono" x="242" y="111" text-anchor="middle">(200, 120)</text>
+        <rect class="d-acento" x="300" y="92" width="92" height="28" rx="6"/>
+        <text class="d-sobre-acento d-mono" x="346" y="111" text-anchor="middle">(-1, 0)</text>
+        <rect class="d-acento" x="508" y="92" width="92" height="28" rx="6"/>
+        <text class="d-sobre-acento d-mono" x="554" y="111" text-anchor="middle">1</text>
+        <rect class="d-acento" x="612" y="92" width="92" height="28" rx="6"/>
+        <text class="d-sobre-acento d-mono" x="658" y="111" text-anchor="middle">murcielago</text>
+        <rect class="d-acento" x="196" y="132" width="92" height="28" rx="6"/>
+        <text class="d-sobre-acento d-mono" x="242" y="151" text-anchor="middle">(0, 340)</text>
+        <rect class="d-acento" x="612" y="132" width="92" height="28" rx="6"/>
+        <text class="d-sobre-acento d-mono" x="658" y="151" text-anchor="middle">plataforma</text>
+        <rect class="d-acento" x="196" y="172" width="92" height="28" rx="6"/>
+        <text class="d-sobre-acento d-mono" x="242" y="191" text-anchor="middle">(300, 280)</text>
+        <rect class="d-acento" x="612" y="172" width="92" height="28" rx="6"/>
+        <text class="d-sobre-acento d-mono" x="658" y="191" text-anchor="middle">moneda</text>
+      </g>
+      <rect class="d-caja" x="20" y="230" width="220" height="64" rx="8"/>
+      <text class="d-rotulo" x="130" y="256" text-anchor="middle">Sistema de movimiento</text>
+      <text class="d-peq" x="130" y="278" text-anchor="middle">Posición + Velocidad</text>
+      <rect class="d-caja" x="250" y="230" width="220" height="64" rx="8"/>
+      <text class="d-rotulo" x="360" y="256" text-anchor="middle">Sistema de gravedad</text>
+      <text class="d-peq" x="360" y="278" text-anchor="middle">Velocidad + Gravedad</text>
+      <rect class="d-caja" x="480" y="230" width="230" height="64" rx="8"/>
+      <text class="d-rotulo" x="595" y="256" text-anchor="middle">Sistema de dibujo</text>
+      <text class="d-peq" x="595" y="278" text-anchor="middle">Posición + Sprite</text>
+    </svg>
+    <figcaption>Cada fila es una entidad (solo un número) y cada columna, un tipo de componente. Una entidad tiene los componentes marcados en color. Los sistemas trabajan por columnas: el de movimiento procesa a la heroína y al murciélago; el de dibujo, a las cuatro. Para que la moneda caiga bastaría con darle Velocidad y Gravedad: ninguna clase nueva.</figcaption>
+  </figure>
+  <p>Míralo funcionando. Tres entidades, cuatro tipos de componente y tres sistemas, dentro de un bucle de juego. Para no complicar el ejemplo, este taller usa un paso variable limitado en vez del acumulador:</p>
+  <div class="taller" data-modo="web" id="taller-ecs" data-titulo="Un ECS mínimo en un lienzo" data-alto="22rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas id="lienzo" width="320" height="200"&gt;&lt;/canvas&gt;
+&lt;p id="info"&gt;&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; padding: .5rem; }
+canvas { border: 1px solid #999; background: #f4f1e8; max-width: 100%; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// COMPONENTES: un Map (o un Set) por tipo. La clave es el número de entidad.
+const posicion = new Map();
+const velocidad = new Map();
+const gravedad = new Set();   // marca: entidades a las que afecta la gravedad
+const forma = new Map();
+
+// ENTIDADES: solo números.
+let siguienteId = 1;
+function crearEntidad() { return siguienteId++; }
+
+const heroina = crearEntidad();
+posicion.set(heroina, { x: 20, y: 20 });
+velocidad.set(heroina, { x: 60, y: 0 });
+gravedad.add(heroina);
+forma.set(heroina, { lado: 16, color: "#d1495b" });
+
+const nube = crearEntidad();
+posicion.set(nube, { x: 200, y: 30 });
+velocidad.set(nube, { x: -25, y: 0 });
+forma.set(nube, { lado: 30, color: "#8fb8de" });
+
+const roca = crearEntidad();
+posicion.set(roca, { x: 150, y: 176 });
+forma.set(roca, { lado: 24, color: "#6b705c" });
+
+// SISTEMAS: funciones que recorren las entidades con ciertos componentes.
+function sistemaGravedad(dt) {
+  for (const id of gravedad) {
+    const v = velocidad.get(id);
+    if (v) v.y += 400 * dt;
+  }
+}
+
+function sistemaMovimiento(dt) {
+  for (const [id, v] of velocidad) {
+    const p = posicion.get(id);
+    const lado = forma.get(id).lado;
+    p.x += v.x * dt;
+    p.y += v.y * dt;
+    if (p.y > 200 - lado) { p.y = 200 - lado; v.y = -v.y * 0.8; }  // rebote en el suelo
+    if (p.x < 0 || p.x > 320 - lado) v.x = -v.x;                   // rebote en los lados
+  }
+}
+
+function sistemaDibujo(ctx) {
+  ctx.clearRect(0, 0, 320, 200);
+  for (const [id, f] of forma) {
+    const p = posicion.get(id);
+    ctx.fillStyle = f.color;
+    ctx.fillRect(p.x, p.y, f.lado, f.lado);
+  }
+}
+
+// BUCLE DE JUEGO: llama a los sistemas en orden.
+const ctx = document.querySelector("#lienzo").getContext("2d");
+let anterior = performance.now();
+function bucle(ahora) {
+  const dt = Math.min((ahora - anterior) / 1000, 0.05);   // segundos, con límite
+  anterior = ahora;
+  sistemaGravedad(dt);
+  sistemaMovimiento(dt);
+  sistemaDibujo(ctx);
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);
+document.querySelector("#info").textContent = `Entidades: ${siguienteId - 1}`;</textarea>
+  </div>
+  <p><strong>Modifica</strong>, de uno en uno: (1) haz que la nube caiga añadiendo <code>gravedad.add(nube);</code>. (2) Haz que la roca se mueva dándole una velocidad con <code>velocidad.set(roca, { x: 40, y: -150 });</code>. (3) Crea una cuarta entidad, una moneda amarilla quieta, solo con posición y forma. En ningún caso escribiste una clase nueva ni tocaste un sistema: cambiaste qué componentes tiene cada entidad.</p>
+  <p>ECS tiene una segunda ventaja, de rendimiento. Como los componentes del mismo tipo se guardan juntos, un sistema recorre datos contiguos en memoria, y eso aprovecha la caché del procesador (<a href="02-computadora.html#dentro">Estación 2</a>) mucho mejor que saltar de objeto en objeto. Con miles de entidades, la diferencia es enorme.</p>
+  <aside class="senal nota" data-titulo="ECS en los motores reales">
+    <p>Unity ofrece ECS con su paquete Entities (parte de lo que llama DOTS), el motor Bevy (escrito en Rust) está construido entero sobre ECS, y existen bibliotecas como Flecs para C y C++. Godot, en cambio, decidió no basarse en ECS: su creador, Juan Linietsky, explicó en 2021 que los nodos y escenas son más fáciles de entender y bastan para la mayoría de los juegos, y que ECS compensa sobre todo en casos con miles de objetos actualizándose a la vez, como juegos de estrategia o constructores de ciudades.</p>
+  </aside>
+  <aside class="senal clave">
+    <p>Igual que con los microservicios, ECS no es «mejor»: es un compromiso. Para un juego de plataformas con 30 objetos, clases con composición o los nodos de Godot son más directos. ECS brilla cuando hay muchas entidades y muchas combinaciones de comportamiento.</p>
+  </aside>
+</section>
+
+<section id="diseno" data-parada="Diseñar un sistema">
+  <h2>Diseñar un sistema paso a paso: un acortador de URLs</h2>
+  <p>Ya tienes todas las piezas. Ahora toca juntarlas con método. Vas a seguir el diseño completo de un <strong>acortador de URLs</strong>, un servicio como los que convierten <code>https://tienda.ejemplo.com/ofertas/verano/zapatillas?color=rojo&amp;talla=42</code> en <code>https://cor.to/4c92</code>. Parece un problema pequeño, y por eso es el ejemplo clásico: cabe en una página, pero toca requisitos, estimación, API, datos, caché, escalado y decisiones.</p>
+  <p>El método tiene siempre la misma forma, sea un acortador, un chat o un juego en línea:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Aclarar los requisitos</strong>: qué debe hacer y con qué atributos de calidad.</p></div></li>
+    <li><div><p><strong>Estimar la escala</strong> con cuentas rápidas: cuántas peticiones y cuántos datos.</p></div></li>
+    <li><div><p><strong>Definir la API</strong>: el contrato con los clientes.</p></div></li>
+    <li><div><p><strong>Diseñar los datos</strong>: qué se guarda y cómo se busca.</p></div></li>
+    <li><div><p><strong>Resolver el problema central</strong> del sistema (aquí, cómo generar códigos cortos únicos).</p></div></li>
+    <li><div><p><strong>Dibujar la arquitectura</strong> de alto nivel y recorrer cada flujo.</p></div></li>
+    <li><div><p><strong>Buscar cuellos de botella y fallos</strong>, y ajustar.</p></div></li>
+    <li><div><p><strong>Registrar las decisiones</strong> importantes en ADR.</p></div></li>
+  </ol>
+
+  <h3>1. Requisitos</h3>
+  <p>Funcionales: dada una URL larga, devolver una corta; al visitar la corta, redirigir a la larga; mostrar cuántos clics tuvo cada enlace. Fuera de alcance por ahora: cuentas de usuario, enlaces personalizados, caducidad.</p>
+  <p>Atributos de calidad, en orden de prioridad:</p>
+  <ul>
+    <li><strong>Disponibilidad</strong> de la redirección: si el servicio cae, se rompen enlaces publicados por todo internet. Objetivo: 99,9 % o más.</li>
+    <li><strong>Latencia</strong> de la redirección: es un paso intermedio que nadie quiere notar. Objetivo: p95 por debajo de 100 ms en el servidor.</li>
+    <li><strong>Escala</strong>: muchas más lecturas que escrituras. Un enlace se crea una vez y se abre muchas.</li>
+    <li><strong>Seguridad y abuso</strong>: los acortadores se usan para esconder enlaces de estafas. Hay que poder limitar y bloquear.</li>
+  </ul>
+
+  <h3>2. Estimación rápida</h3>
+  <p>Una <strong>estimación de servilleta</strong> (<em>back-of-the-envelope</em>) es un cálculo aproximado, con números redondos, para saber el orden de magnitud: ¿hablamos de 10 peticiones por segundo o de 10 000? Supón un servicio de éxito: un millón de enlaces nuevos al día, cada uno abierto de media cien veces. Predice los resultados antes de ejecutar:</p>
+  <div class="taller" id="taller-estimacion" data-titulo="Predice: cálculo de servilleta">
+    <textarea class="taller-codigo">const nuevasPorDia = 1000000;         // enlaces creados al día
+const lecturasPorEscritura = 100;      // cada enlace se abre, de media, 100 veces
+const segundosPorDia = 24 * 60 * 60;   // 86 400
+const factorPico = 5;                  // en la hora punta, 5 veces la media
+
+const escriturasPorSegundo = nuevasPorDia / segundosPorDia;
+const lecturasPorSegundo = escriturasPorSegundo * lecturasPorEscritura;
+console.log("Escrituras por segundo (media):", Math.round(escriturasPorSegundo));
+console.log("Lecturas por segundo (media):", Math.round(lecturasPorSegundo));
+console.log("Lecturas por segundo (pico):", Math.round(lecturasPorSegundo * factorPico));
+
+const bytesPorEnlace = 500;            // código, URL larga, fecha, contador
+const anios = 5;
+const totalEnlaces = nuevasPorDia * 365 * anios;
+console.log("Enlaces en 5 años:", totalEnlaces.toLocaleString("es"));
+console.log("Espacio:", Math.round(totalEnlaces * bytesPorEnlace / 1e9), "GB");
+console.log("Códigos posibles de 7 caracteres:", (62 ** 7).toLocaleString("es"));</textarea>
+  </div>
+  <p>Lo que dicen estos números: unas 12 escrituras por segundo es poquísimo; unas 1 200 lecturas por segundo de media y casi 6 000 en el pico ya piden pensar en caché. Casi un terabyte en cinco años cabe en una sola base de datos moderna, así que <em>no</em> hace falta particionar de entrada. Y hay tres billones y medio de códigos posibles de 7 caracteres (letras minúsculas, mayúsculas y cifras: 62 símbolos), frente a menos de dos mil millones de enlaces: sobra espacio.</p>
+  <aside class="senal ojo">
+    <p>Una estimación no es una predicción exacta: si te equivocas por un factor de 2 no pasa nada. Sirve para descartar diseños (particionar aquí sería sobreingeniería) y para detectar qué atributo manda (aquí, las lecturas). Apunta siempre tus suposiciones para poder revisarlas cuando lleguen datos reales.</p>
+  </aside>
+
+  <h3>3. La API</h3>
+  <p>Dos operaciones bastan. Una para crear y otra para usar el enlace:</p>
+  <pre><code class="language-text">POST /api/enlaces
+Content-Type: application/json
+
+{ "url": "https://tienda.ejemplo.com/ofertas/verano/zapatillas?color=rojo" }
+
+→ 201 Created
+{ "codigo": "4c92", "corta": "https://cor.to/4c92" }
+
+
+GET /4c92
+
+→ 302 Found
+Location: https://tienda.ejemplo.com/ofertas/verano/zapatillas?color=rojo</code></pre>
+  <p>La cabecera <code>Location</code> le dice al navegador adónde ir. Y aquí aparece la primera decisión interesante: ¿redirección 301 o 302? Una <strong>301</strong> (<em>Moved Permanently</em>) dice «esto se mudó para siempre»: el navegador la guarda en caché y, la próxima vez, va directo a la URL larga sin pasar por tu servidor. Una <strong>302</strong> (<em>Found</em>) es temporal: cada clic pasa por tu servidor. La 301 ahorra carga; la 302 permite contar todos los clics y cambiar o bloquear el destino después. Como el requisito incluye estadísticas y poder bloquear enlaces de estafa, elegimos 302 y lo apuntamos como decisión.</p>
+
+  <h3>4. Los datos</h3>
+  <p>Una tabla basta: cada fila guarda un código y su URL. El código es la <strong>clave primaria</strong>, el valor que identifica cada fila y por el que la base de datos busca muy rápido, gracias a un índice que crea automáticamente (lo verás con detalle en la <a href="30-bases-datos.html">Estación 30</a>). Ejecuta la consulta que hace el servidor en cada redirección:</p>
+  <div class="taller" data-modo="sql" id="taller-sql-enlaces" data-titulo="La consulta de cada redirección">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE enlaces (
+  codigo TEXT PRIMARY KEY,
+  url TEXT NOT NULL,
+  creado TEXT NOT NULL,
+  clics INTEGER NOT NULL DEFAULT 0
+);
+INSERT INTO enlaces VALUES ('4c92', 'https://tienda.ejemplo.com/ofertas/verano/zapatillas?color=rojo', '2026-09-30', 1520);
+INSERT INTO enlaces VALUES ('Z', 'https://es.wikipedia.org/wiki/Acortador_de_URL', '2026-09-28', 87);
+INSERT INTO enlaces VALUES ('21', 'https://developer.mozilla.org/es/', '2026-09-29', 342);</script>
+    <textarea class="taller-codigo">SELECT url FROM enlaces WHERE codigo = '4c92';</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (!resultados[0]) return "La consulta no devolvió filas. ¿Escribiste bien el código entre comillas simples?";
+var fila = resultados[0].values[0] || [];
+if (resultados[0].values.length !== 1) return "Debería devolver exactamente una fila: la del código que buscas.";
+return String(fila[0]).indexOf("zapatillas") !== -1 || "Esa no es la URL del código 4c92. Revisa el WHERE.";
+    </script>
+  </div>
+  <p>Prueba también <code>SELECT codigo, clics FROM enlaces ORDER BY clics DESC;</code> para ver los enlaces más visitados. ¿Y el contador de clics? Sumar 1 a una fila en cada redirección convierte cada lectura en una escritura, y a 6 000 por segundo eso cargaría la base de datos. Lo resolveremos en el paso 6 con una cola.</p>
+
+  <h3>5. El problema central: generar códigos cortos</h3>
+  <p>El código debe ser corto, único y fácil de copiar. Hay tres enfoques clásicos, y cada uno es un compromiso:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Enfoque</th><th scope="col">Cómo funciona</th><th scope="col">A favor</th><th scope="col">En contra</th></tr></thead>
+      <tbody>
+        <tr><td>Resumen de la URL</td><td>Calcular un hash de la URL (por ejemplo, SHA-256) y quedarse con los primeros 7 caracteres.</td><td>La misma URL da siempre el mismo código.</td><td>Dos URLs distintas pueden coincidir en esos 7 caracteres: hay que detectar la colisión y probar otra cosa.</td></tr>
+        <tr><td>Contador en base 62</td><td>Numerar los enlaces (1, 2, 3…) y escribir el número con 62 símbolos.</td><td>Único por construcción, sin colisiones, códigos muy cortos al principio.</td><td>Códigos predecibles: cualquiera puede recorrer todos los enlaces. El contador es una pieza central que hay que proteger.</td></tr>
+        <tr><td>Aleatorio</td><td>Generar 7 caracteres al azar y comprobar que no existan.</td><td>Impredecible. Sin pieza central.</td><td>Hay que consultar antes de guardar; con la base casi llena, las colisiones aumentan.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Escribir un número en base 62 es lo mismo que escribirlo en base 10 o en binario (<a href="18-matematicas.html#bases">Estación 18</a>), solo que con 62 «cifras»: <code>0-9</code>, <code>a-z</code> y <code>A-Z</code>. Se divide entre 62 una y otra vez, y los restos son las cifras. Predice los tres primeros resultados:</p>
+  <div class="taller" id="taller-base62" data-titulo="Predice: números en base 62">
+    <textarea class="taller-codigo">const ALFABETO = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+function aBase62(numero) {
+  if (numero === 0) return "0";
+  let codigo = "";
+  while (numero > 0) {
+    codigo = ALFABETO[numero % 62] + codigo;   // el resto es la cifra de la derecha
+    numero = Math.floor(numero / 62);          // y seguimos con lo que queda
+  }
+  return codigo;
+}
+
+console.log(aBase62(61));
+console.log(aBase62(62));
+console.log(aBase62(125));
+console.log(aBase62(1000000));
+console.log(aBase62(62 ** 7 - 1));</textarea>
+  </div>
+  <p>61 es la última cifra (<code>Z</code>); 62 ya necesita dos (<code>10</code>, igual que 10 en decimal); 125 son 2 × 62 + 1 (<code>21</code>). El enlace número un millón tiene solo cuatro caracteres (<code>4c92</code>), y con siete caracteres llegas a más de tres billones de enlaces. En la práctica, harás la operación contraria para comprobar códigos.</p>
+  <p><strong>Decisión:</strong> para un servicio que debe poder bloquear estafas y no quiere que se recorran sus enlaces, elegimos códigos <em>aleatorios</em> de 7 caracteres con comprobación de existencia. Con menos de dos mil millones de enlaces sobre tres billones posibles, la probabilidad de chocar en cada intento es menor de 1 entre 1 000.</p>
+
+  <h3>6. La arquitectura</h3>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 320" role="img" aria-label="Arquitectura del acortador. El navegador llega a un balanceador de carga, que reparte entre tres servidores de API sin estado. La API lee los códigos de una caché Valkey; si no están, lee de una réplica de la base de datos. Las escrituras de enlaces nuevos van a la base de datos primaria, que copia a la réplica. En cada redirección, la API publica un evento de clic en una cola, y un servicio de estadísticas lo consume y actualiza los contadores.">
+      <rect class="d-caja" x="10" y="120" width="110" height="60" rx="8"/>
+      <text class="d-rotulo" x="65" y="146" text-anchor="middle">Navegador</text>
+      <text class="d-peq d-tenue" x="65" y="166" text-anchor="middle">GET /4c92</text>
+      <path class="d-linea" d="M120 150H138"/>
+      <path class="d-tinta" d="M138 142l12 8-12 8z"/>
+      <rect class="d-caja" x="150" y="120" width="110" height="60" rx="8"/>
+      <text class="d-rotulo" x="205" y="146" text-anchor="middle">Balanceador</text>
+      <text class="d-peq d-tenue" x="205" y="166" text-anchor="middle">+ límites de uso</text>
+      <path class="d-linea" d="M260 150H278"/>
+      <path class="d-tinta" d="M278 142l12 8-12 8z"/>
+      <rect class="d-caja" x="302" y="112" width="130" height="60" rx="8"/>
+      <rect class="d-caja" x="296" y="106" width="130" height="60" rx="8"/>
+      <rect class="d-caja" x="290" y="100" width="130" height="60" rx="8"/>
+      <text class="d-rotulo" x="355" y="126" text-anchor="middle">API × 3</text>
+      <text class="d-peq d-tenue" x="355" y="146" text-anchor="middle">sin estado</text>
+      <path class="d-linea" d="M420 115H445V50H458"/>
+      <path class="d-tinta" d="M458 42l12 8-12 8z"/>
+      <text class="d-peq" x="452" y="98">1.º lee</text>
+      <rect class="d-caja" x="470" y="20" width="150" height="60" rx="8"/>
+      <text class="d-rotulo" x="545" y="46" text-anchor="middle">Caché</text>
+      <text class="d-peq d-tenue" x="545" y="66" text-anchor="middle">[Valkey] código → URL</text>
+      <path class="d-linea" d="M432 150H453"/>
+      <path class="d-tinta" d="M453 144l12 6-12 6z"/>
+      <text class="d-peq" x="440" y="138">escribe</text>
+      <path class="d-caja" d="M465 118V168A45 9 0 0 0 555 168V118"/>
+      <ellipse class="d-caja" cx="510" cy="118" rx="45" ry="9"/>
+      <text class="d-rotulo" x="510" y="150" text-anchor="middle">Primaria</text>
+      <path class="d-punteada" d="M555 145H593"/>
+      <path class="d-tinta" d="M593 139l12 6-12 6z"/>
+      <path class="d-caja" d="M605 118V168A45 9 0 0 0 695 168V118"/>
+      <ellipse class="d-caja" cx="650" cy="118" rx="45" ry="9"/>
+      <text class="d-rotulo" x="650" y="150" text-anchor="middle">Réplica</text>
+      <path class="d-linea" d="M400 172V214H650V190"/>
+      <path class="d-tinta" d="M642 190l8-12 8 12z"/>
+      <text class="d-peq" x="660" y="210">2.º si no</text>
+      <text class="d-peq" x="660" y="226">estaba</text>
+      <path class="d-linea" d="M330 172V278H458"/>
+      <path class="d-tinta" d="M458 270l12 8-12 8z"/>
+      <text class="d-peq" x="394" y="270" text-anchor="middle">evento «clic»</text>
+      <rect class="d-caja" x="470" y="250" width="100" height="56" rx="8"/>
+      <text class="d-rotulo" x="520" y="276" text-anchor="middle">Cola</text>
+      <text class="d-peq d-tenue" x="520" y="294" text-anchor="middle">de eventos</text>
+      <path class="d-linea" d="M570 278H588"/>
+      <path class="d-tinta" d="M588 270l12 8-12 8z"/>
+      <rect class="d-caja" x="600" y="250" width="110" height="56" rx="8"/>
+      <text class="d-rotulo" x="655" y="276" text-anchor="middle">Estadísticas</text>
+      <text class="d-peq d-tenue" x="655" y="294" text-anchor="middle">suma clics</text>
+    </svg>
+    <figcaption>Arquitectura del acortador. Camino de lectura: balanceador, API, caché y, solo si la caché falla, réplica. Camino de escritura: API y base de datos primaria. Los clics no frenan la redirección: se publican como eventos y un servicio aparte los cuenta.</figcaption>
+  </figure>
+  <p>Recorre los dos flujos principales sobre el diagrama:</p>
+  <ul>
+    <li><strong>Redirigir</strong> (<code>GET /4c92</code>, el 99 % del tráfico): el balanceador elige un servidor de API. La API busca <code>4c92</code> en la caché; los enlaces populares estarán ahí casi siempre. Si no está, lo lee de una réplica y lo guarda en la caché. Responde 302 y publica un evento «clic» en la cola, sin esperar a que se cuente.</li>
+    <li><strong>Crear</strong> (<code>POST /api/enlaces</code>): la API valida la URL, genera un código aleatorio, lo inserta en la primaria (si el código ya existiera, la clave primaria lo rechaza y se prueba otro) y responde 201.</li>
+  </ul>
+  <p>Fíjate en que cada pieza está justificada por un número o un requisito: la caché, por las 6 000 lecturas por segundo; los tres servidores y el balanceador, por la disponibilidad; la cola, para que contar clics no frene las redirecciones; la réplica, para leer sin cargar la primaria y tener una copia si la primaria falla.</p>
+
+  <h3>7. Cuellos de botella y fallos</h3>
+  <p>Ahora hazte la pregunta de quien diseña: «¿qué pasa si…?».</p>
+  <ul>
+    <li><strong>…se cae la caché?</strong> La API sigue funcionando leyendo de la réplica, más despacio. La caché acelera, pero no debe ser imprescindible.</li>
+    <li><strong>…se cae la primaria?</strong> Las redirecciones siguen (leen de la réplica y la caché), pero no se pueden crear enlaces hasta que la réplica ascienda a primaria. Para este servicio es aceptable: redirigir importa más que crear.</li>
+    <li><strong>…se cae el servicio de estadísticas?</strong> Los eventos esperan en la cola y los contadores se ponen al día después. Como vimos, el consumidor debe ser idempotente para no contar clics dos veces.</li>
+    <li><strong>…alguien crea un millón de enlaces de estafa con un programa?</strong> El balanceador aplica <strong>límites de uso</strong> (<em>rate limiting</em>): cada dirección IP solo puede crear unos pocos enlaces por minuto; si se pasa, recibe 429 <em>Too Many Requests</em>. Además, se comprueban las URLs contra listas de sitios peligrosos. Lo verás en la <a href="31-seguridad.html">Estación 31</a>.</li>
+    <li><strong>…un enlace se hace viral y recibe 50 000 clics por segundo?</strong> Ese código vive en la caché, y la caché de la CDN puede ayudar si se acepta perder precisión en las estadísticas de ese enlace. Es otro compromiso a decidir cuando pase, no antes.</li>
+  </ul>
+
+  <h3>8. Las decisiones, por escrito</h3>
+  <p>De este diseño salen al menos tres ADR: «ADR 0001: redirigir con 302 para conservar estadísticas y poder bloquear», «ADR 0002: códigos aleatorios de 7 caracteres en base 62» y «ADR 0003: contar clics de forma asíncrona con una cola». Cada uno con su contexto (los números de la estimación) y sus consecuencias (más carga que con 301, consultas extra al crear, contadores con unos segundos de retraso).</p>
+  <aside class="senal oficio" data-titulo="Entrevistas de diseño de sistemas">
+    <p>Muchas empresas incluyen en sus procesos de selección una entrevista de «diseño de sistemas»: te piden diseñar un acortador, un chat o un feed en 45 minutos en una pizarra. No buscan «la respuesta correcta», sino ver este método: que preguntes por los requisitos antes de dibujar, que estimes, que justifiques cada pieza con un número y que digas qué compromisos aceptas. Es exactamente lo que acabas de hacer.</p>
+  </aside>
+  <p>Para terminar, ordena el método sin mirar arriba:</p>
+  <div class="parsons" data-titulo="Ordena los pasos del diseño" data-lenguaje="text">
+    <ol>
+      <li>Aclarar requisitos funcionales y atributos de calidad</li>
+      <li>Estimar peticiones por segundo y volumen de datos</li>
+      <li>Definir la API: operaciones, datos de entrada y respuestas</li>
+      <li>Diseñar el modelo de datos</li>
+      <li>Resolver el problema central y comparar alternativas</li>
+      <li>Dibujar la arquitectura y recorrer cada flujo</li>
+      <li>Preguntar «¿qué pasa si falla…?» y ajustar</li>
+      <li>Registrar las decisiones en ADR</li>
+    </ol>
+  </div>
+</section>

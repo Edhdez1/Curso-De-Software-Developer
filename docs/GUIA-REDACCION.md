@@ -289,7 +289,8 @@ Opcional: `data-exito="mensaje"` cambia el mensaje de acierto. Escribe las líne
 Instrucciones visibles dentro de la terminal (opcional): `<div class="terminal-instrucciones"><p>…</p></div>` dentro del
 `div.terminal-sim`. La misión recibe también `salida` (líneas que imprimieron los comandos y `node`).
 Comandos: `pwd ls cd mkdir touch cat echo (con > y >>) rm rmdir mv cp clear help history`, `node archivo.js` (ejecuta el archivo con el motor de los talleres; `node -v`), `cp -r`, comodines `*` y `?`, y
-`git init status add commit -m log --oneline branch switch checkout merge diff restore`.
+`git init status (-s) add (respeta .gitignore) commit (-m, -am, --amend) log (--oneline) show branch switch checkout merge (con conflictos y --abort) diff restore config`.
+El `git` que recibe la misión (o `null` sin repositorio) es `{ raiz, rama, ramas: [nombres], commits: [{ id, mensaje, padres, arbol, rama }], preparados: [archivos], conflictos: [archivos], fusionEnCurso, limpio }`.
 
 ### Objetivos, autoevaluación, glosario, videos, recursos
 

@@ -477,7 +477,7 @@ notas al pie opcionales</code></pre>
   <p>Acabas de hacer un commit y ves que el mensaje tiene una falta, o que olvidaste un archivo. Si <strong>todavía no lo compartiste</strong> (no hiciste <code>push</code>, que verás más adelante), puedes rehacerlo:</p>
   <pre class="consola"><code><span class="prompt">$</span> git add sonido-salto.wav          <span class="salida"># el archivo que olvidaste (opcional)</span>
 <span class="prompt">$</span> git commit --amend -m "feat: añade el sonido del salto"</code></pre>
-  <p><code>--amend</code> («enmendar») no edita el commit anterior: crea uno nuevo, con otro hash, que lo reemplaza. Por eso solo debe usarse con commits que nadie más tiene. La terminal de práctica de esta página no tiene <code>--amend</code>: pruébalo en tu computadora.</p>
+  <p><code>--amend</code> («enmendar») no edita el commit anterior: crea uno nuevo, con otro hash, que lo reemplaza. Por eso solo debe usarse con commits que nadie más tiene. La terminal de práctica de esta página también entiende <code>git commit --amend -m "…"</code>: pruébalo y fíjate en que el hash del último commit cambia.</p>
 </section>
 
 <section id="historial" data-parada="Leer el historial">
@@ -549,7 +549,7 @@ Date:   Tue Sep 22 11:40:03 2026 -0500
 <span class="salida">HEAD is now at a3f9c2e feat: añade el salto</span></code></pre>
   <p>Tus archivos pasan a estar como en ese commit. Git llama a esta situación <strong>HEAD separado</strong> (<em>detached HEAD</em>): estás en un commit, pero no en una rama. Con el comando antiguo, <code>git checkout a3f9c2e</code>, Git te lo advierte con un mensaje largo que empieza por <em>You are in 'detached HEAD' state</em>. No es un error: puedes mirar, ejecutar el programa y probar. Para volver al presente:</p>
   <pre class="consola"><code><span class="prompt">$</span> git switch main</code></pre>
-  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuidado</p><p>Si haces commits en HEAD separado, no pertenecen a ninguna rama y es fácil perderlos al volver a <code>main</code>. Si quieres conservarlos, crea una rama ahí mismo antes de irte: <code>git switch -c rescate</code>.</p></div></aside>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cuidado</p><p>Si haces commits en HEAD separado, no pertenecen a ninguna rama y puedes perderlos al volver a <code>main</code>. Si quieres conservarlos, crea una rama ahí mismo antes de irte: <code>git switch -c rescate</code>.</p></div></aside>
 
   <h3>Encontrar el commit culpable: git bisect</h3>
   <p>En la <a href="12-depuracion.html#metodo">Estación 12</a> aprendiste a buscar un error partiendo el problema por la mitad. <code>git bisect</code> aplica esa bisección a la historia. Situación: el juego funcionaba hace 30 commits y hoy el personaje atraviesa el suelo. En vez de revisar 30 commits uno por uno, le das a Git un commit bueno y uno malo:</p>
@@ -563,7 +563,7 @@ Date:   Tue Sep 22 11:40:03 2026 -0500
     refactor: unifica la detección de colisiones</span>
 <span class="prompt">$</span> git bisect reset                <span class="salida"># vuelve a donde estabas</span></code></pre>
   <p>Ahora sabes exactamente qué commit rompió el juego y puedes leer su diff con <code>git show 4d5e6f7</code>. Esto funciona mucho mejor con commits pequeños: si el culpable es un commit de 800 líneas, el sospechoso sigue siendo enorme.</p>
-  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">En la terminal de práctica</p><p>La terminal de práctica de esta página entiende <code>git log</code> y <code>git log --oneline</code>, pero no las demás opciones, ni <code>show</code>, <code>blame</code> o <code>bisect</code>. Pruébalos en tu computadora con cualquier proyecto que tenga unos cuantos commits.</p></div></aside>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">En la terminal de práctica</p><p>La terminal de práctica de esta página entiende <code>git log</code>, <code>git log --oneline</code> y <code>git show</code> (el último commit), pero no las demás opciones, ni <code>blame</code> o <code>bisect</code>. Pruébalos en tu computadora con cualquier proyecto que tenga unos cuantos commits.</p></div></aside>
 </section>
 
 <section id="deshacer" data-parada="Deshacer sin miedo">
@@ -690,7 +690,7 @@ a3f9c2e HEAD@{2}: commit: feat: añade el salto</span>
 <span class="prompt">$</span> git switch arreglo-urgente     <span class="salida"># arreglas, haces commit…</span>
 <span class="prompt">$</span> git switch main
 <span class="prompt">$</span> git stash pop                  <span class="salida"># tus cambios a medias vuelven</span></code></pre>
-  <p><code>git stash list</code> muestra lo que tienes apartado. Úsalo para pausas cortas: un stash olvidado durante semanas es fácil de perder de vista.</p>
+  <p><code>git stash list</code> muestra lo que tienes apartado. Úsalo para pausas cortas: un stash olvidado durante semanas acaba perdido entre otros.</p>
   <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">En la terminal de práctica</p><p>La terminal de práctica tiene <code>git restore</code> y <code>git restore --staged</code>, pero no <code>revert</code>, <code>reset</code>, <code>reflog</code> ni <code>stash</code>. Para practicarlos sin riesgo, crea en tu computadora una carpeta de pruebas con <code>git init</code>, haz tres o cuatro commits de un archivo de texto y deshazlos de todas las formas que acabas de ver.</p></div></aside>
 </section>
 
@@ -1055,7 +1055,7 @@ if (!git.limpio) return "Queda algo sin guardar. Mira git status.";
 return true;
     </script>
   </div>
-  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Diferencias con Git real</p><p>La terminal de práctica simplifica los conflictos: marca el archivo entero aunque solo cambie una línea, y su <code>git status</code> muestra el archivo como <em>modified</em>, sin la sección <em>Unmerged paths</em> ni el aviso <em>both modified</em>. Los pasos para resolverlo son los mismos que en tu computadora.</p></div></aside>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Diferencias con Git real</p><p>La terminal de práctica simplifica los conflictos: marca el archivo entero aunque solo cambie una línea. Por lo demás se comporta como Git: <code>git status</code> muestra la sección <em>Unmerged paths</em>, no te deja hacer commit hasta que marques el archivo con <code>git add</code> y <code>git merge --abort</code> cancela la fusión. Los pasos para resolverlo son los mismos que en tu computadora.</p></div></aside>
   <p>Repasa el orden de los pasos:</p>
   <div class="parsons" data-titulo="Ordena la resolución de un conflicto" data-lenguaje="bash" data-exito="¡Correcto! Fusionar, mirar, editar, marcar como resuelto y confirmar.">
     <ol>
@@ -1291,7 +1291,7 @@ hint: 'git pull' before pushing again.</span></code></pre>
       <circle class="d-acento" cx="500" cy="186" r="13"/><circle class="d-acento" cx="580" cy="186" r="11"/><circle class="d-acento" cx="650" cy="186" r="11"/>
       <circle class="d-l2" cx="180" cy="106" r="11"/><circle class="d-l2" cx="260" cy="106" r="11"/><circle class="d-l2" cx="340" cy="106" r="11"/><circle class="d-l2" cx="420" cy="106" r="11"/>
       <rect class="d-punteada" x="238" y="78" width="206" height="56" rx="12"/>
-      <text class="d-peq d-tenue" x="192" y="146">feat/marcador</text>
+      <text class="d-peq d-tenue" x="146" y="126" text-anchor="end">feat/marcador</text>
       <text class="d-peq" x="120" y="222" text-anchor="middle">1. Crea una rama</text>
       <text class="d-peq" x="190" y="62" text-anchor="middle">2. Commits y push</text>
       <text class="d-peq" x="360" y="62" text-anchor="middle">3. Abre el pull request</text>

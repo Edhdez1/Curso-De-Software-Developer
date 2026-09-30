@@ -52,6 +52,11 @@
       <li><a href="#herramientas">Vitest y node:test</a></li>
       <li><a href="#dobles">Funciones con efectos</a></li>
       <li><a href="#tdd">TDD</a></li>
+      <li><a href="#cobertura">Cobertura</a></li>
+      <li><a href="#piramide">La pirámide de pruebas</a></li>
+      <li><a href="#calidad">Calidad y QA</a></li>
+      <li><a href="#resumen">Resumen</a></li>
+      <li><a href="#practica">Práctica</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -1253,6 +1258,1309 @@ return true;
   <p>TDD brilla cuando sabes qué debe pasar pero no cómo conseguirlo: reglas de un juego, cálculos de precios, validaciones, conversiones. Te obliga a pensar en el comportamiento antes que en la implementación y deja una red de pruebas sin esfuerzo extra. Es menos útil cuando estás explorando: un prototipo que vas a tirar, o una interfaz cuyo aspecto todavía no conoces. Allí muchas personas prueban primero a mano y escriben las pruebas cuando la idea se asienta.</p>
   <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Un debate abierto</p><p>TDD tiene defensores entusiastas y críticos serios. En 2014, David Heinemeier Hansson, creador del framework Ruby on Rails, publicó «TDD ha muerto, larga vida a las pruebas», y el debate con Kent Beck y Martin Fowler se retransmitió en varias conversaciones públicas. Casi todo el mundo coincide en lo esencial: el código necesita pruebas automáticas, y escribirlas pronto cuesta menos que escribirlas tarde. Si las escribes antes o justo después es una decisión de cada equipo. Pruébalo de verdad durante un par de semanas antes de opinar.</p></div></aside>
 </section>
+
+<section id="cobertura" data-parada="Cobertura">
+  <h2>Cobertura de código y sus límites</h2>
+  <p>Tienes veinte pruebas. ¿Son suficientes? ¿Hay partes del código que ninguna prueba ejecuta? La <strong>cobertura de código</strong> (<em>code coverage</em>) responde a la segunda pregunta: mide qué porcentaje del código se ejecutó al menos una vez mientras corrían las pruebas.</p>
+  <p>Se mide de cuatro formas, y Vitest las muestra todas:</p>
+  <ul>
+    <li><strong>Sentencias</strong> (<em>statements</em>): qué porcentaje de las instrucciones se ejecutaron.</li>
+    <li><strong>Ramas</strong> (<em>branches</em>): de cada decisión (<code>if</code>, <code>else</code>, <code>?:</code>, <code>&amp;&amp;</code>…), qué caminos se recorrieron. Un <code>if</code> tiene dos ramas: la condición verdadera y la falsa.</li>
+    <li><strong>Funciones</strong> (<em>functions</em>): qué funciones se llamaron al menos una vez.</li>
+    <li><strong>Líneas</strong> (<em>lines</em>): qué líneas del archivo se ejecutaron.</li>
+  </ul>
+
+  <h3>Medirla con Vitest</h3>
+  <p>Instala el complemento de cobertura (usa la cobertura que calcula el propio motor V8 de Node) y ejecuta con la opción <code>--coverage</code>:</p>
+  <pre class="consola"><code><span class="prompt">$</span> npm install --save-dev @vitest/coverage-v8
+<span class="prompt">$</span> npx vitest run --coverage</code></pre>
+  <p>Este es el resultado real con el <code>precios.js</code> de antes y una sola prueba, la del adulto de 30 años:</p>
+  <pre class="consola"><code><span class="salida"> % Coverage report from v8
+------------|---------|----------|---------|---------|-------------------
+File        | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+------------|---------|----------|---------|---------|-------------------
+All files   |   55.55 |       60 |     100 |   66.66 |
+ precios.js |   55.55 |       60 |     100 |   66.66 | 3,8
+------------|---------|----------|---------|---------|-------------------</span></code></pre>
+  <p>La columna <em>Uncovered Line #s</em> dice qué líneas no se ejecutaron nunca: la 3 (el <code>throw</code> de las edades no válidas) y la 8 (el <code>return 6</code> de los mayores). Vitest también crea un informe en la carpeta <code>coverage</code>: abre <code>coverage/index.html</code> en el navegador y verás tu código con las líneas sin probar resaltadas.</p>
+  <p>Hay un detalle revelador. La línea 5, <code>if (edad &lt;= 3) return 0;</code>, cuenta como cubierta, porque la condición se evaluó. Pero el <code>return 0</code> nunca se ejecutó: con 30 años la condición fue falsa. Por eso las líneas dan un 66 % y las ramas solo un 60 %. <strong>La cobertura de ramas es más exigente y más útil que la de líneas.</strong></p>
+  <p>Cuando la uses de forma habitual, conviene fijar la configuración en un archivo <code>vitest.config.js</code> en la raíz del proyecto:</p>
+  <pre><code class="language-js">// vitest.config.js
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.js"],     // mide también los archivos que ninguna prueba importa
+      thresholds: { branches: 80 }, // falla si la cobertura de ramas baja del 80 %
+    },
+  },
+});</code></pre>
+  <p>La opción <code>include</code> importa: por defecto Vitest solo informa de los archivos que alguna prueba importó, así que un archivo sin ninguna prueba ni siquiera aparecería en la tabla. <code>thresholds</code> fija un mínimo: si la cobertura baja de ahí, la ejecución falla.</p>
+
+  <h3>El engaño del 100 %</h3>
+  <p>Ahora mira esta «prueba»:</p>
+  <pre><code class="language-js">test("llama a precioEntrada con todas las edades", () =&gt; {
+  for (const edad of [2, 8, 30, 70]) precioEntrada(edad);
+  try { precioEntrada(-1); } catch {}
+});</code></pre>
+  <p>No tiene ni un solo <code>expect</code>. No comprueba nada. Y este es su informe de cobertura real:</p>
+  <pre class="consola"><code><span class="salida">Statements   : 100% ( 9/9 )
+Branches     : 100% ( 10/10 )
+Functions    : 100% ( 1/1 )
+Lines        : 100% ( 6/6 )</span></code></pre>
+  <p>Cobertura perfecta, cero comprobaciones. Si mañana <code>precioEntrada</code> devolviera siempre 1000, esta prueba seguiría en verde y la cobertura seguiría en el 100 %. La cobertura mide qué código se <em>ejecutó</em>, no qué código se <em>comprobó</em>.</p>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>La cobertura es buena para encontrar lo que <strong>no</strong> está probado: un 40 % te dice con seguridad que hay mucho código sin probar. Pero un 100 % no te dice que esté bien probado. Úsala como linterna para buscar huecos, no como nota del examen. Cuando una medida se convierte en objetivo, la gente aprende a subir el número sin mejorar lo que el número pretendía medir.</p></div></aside>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>Muchos equipos fijan un mínimo de cobertura en la integración continua para que no baje sin que nadie lo note, y revisan el informe al añadir código nuevo: ¿qué ramas de lo que acabo de escribir no prueba nadie? Lo que casi ningún equipo serio hace es perseguir el 100 % a toda costa: las últimas ramas suelen ser las menos importantes y las más caras de probar.</p></div></aside>
+
+  <h3>Pruebas de mutación: ¿mis pruebas detectan errores?</h3>
+  <p>Si la cobertura no mide la calidad de las pruebas, ¿qué la mide? Una idea ingeniosa: <strong>meter errores a propósito y ver si las pruebas los atrapan</strong>. Una herramienta de <strong>pruebas de mutación</strong> (<em>mutation testing</em>) hace copias de tu código con un cambio pequeño cada una, llamadas <strong>mutantes</strong>: cambia <code>&lt;=</code> por <code>&lt;</code>, un <code>+</code> por un <code>-</code>, un <code>true</code> por <code>false</code>. Después ejecuta tus pruebas contra cada mutante. Si alguna prueba falla, el mutante está «atrapado» (bien). Si todas pasan, el mutante «sobrevive»: tus pruebas no notarían ese error si lo cometieras de verdad. En JavaScript la herramienta más conocida es StrykerJS, que funciona con Vitest.</p>
+  <p>Este taller hace lo mismo a mano. Las cuatro pruebas de <code>misPruebas</code> recorren todas las ramas de <code>precioEntrada</code> (cobertura del 100 %). Ejecuta y mira cuántos mutantes sobreviven:</p>
+  <div class="taller" id="taller-mutantes" data-titulo="Caza de mutantes">
+    <textarea class="taller-codigo">function expect(real) {
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${esperado} y llegó ${real}`);
+    },
+  };
+}
+
+function original(edad) {
+  if (edad <= 3) return 0;
+  if (edad <= 12) return 5;
+  if (edad < 65) return 10;
+  return 6;
+}
+// Mutantes: copias de original con UN cambio pequeño cada una.
+function mutante1(edad) {
+  if (edad < 3) return 0;          // cambio: <= 3 pasó a < 3
+  if (edad <= 12) return 5;
+  if (edad < 65) return 10;
+  return 6;
+}
+function mutante2(edad) {
+  if (edad <= 3) return 0;
+  if (edad <= 12) return 6;        // cambio: 5 pasó a 6
+  if (edad < 65) return 10;
+  return 6;
+}
+function mutante3(edad) {
+  if (edad <= 3) return 0;
+  if (edad <= 12) return 5;
+  if (edad <= 65) return 10;       // cambio: < 65 pasó a <= 65
+  return 6;
+}
+
+// Tus pruebas: reciben la versión que hay que probar.
+function misPruebas(precioEntrada) {
+  expect(precioEntrada(2)).toBe(0);
+  expect(precioEntrada(8)).toBe(5);
+  expect(precioEntrada(30)).toBe(10);
+  expect(precioEntrada(70)).toBe(6);
+}
+
+const versiones = { original, mutante1, mutante2, mutante3 };
+for (const [nombre, version] of Object.entries(versiones)) {
+  let fallo = null;
+  try { misPruebas(version); } catch (error) { fallo = error.message; }
+  if (nombre === "original") {
+    if (fallo) console.error(`original: ¡falla! Revisa tus pruebas (${fallo})`);
+    else console.log("original: pasan todas las pruebas");
+  } else if (fallo) {
+    console.log(`${nombre}: atrapado (${fallo})`);
+  } else {
+    console.error(`${nombre}: SOBREVIVE, tus pruebas no lo notan`);
+  }
+}</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (errores.some(function (l) { return /^original/.test(l); })) return "Alguna de tus pruebas falla con la versión original: esa prueba está mal.";
+var vivos = errores.filter(function (l) { return /SOBREVIVE/.test(l); });
+if (vivos.length) return vivos.length + " mutante(s) sobreviven. ¿Qué valores límite no estás probando? Mira el cambio de cada mutante y añade a misPruebas un expect justo en esa frontera.";
+return true;
+    </script>
+  </div>
+  <p>Dos mutantes sobreviven: el 1 y el 3. Tus pruebas tocan todas las ramas, pero con valores del medio (2, 8, 30, 70). Los mutantes cambiaron las fronteras, y nadie mira las fronteras. Añade a <code>misPruebas</code> los valores límite que aprendiste en <a href="#casos">Qué casos probar</a> (<code>precioEntrada(3)</code> y <code>precioEntrada(65)</code>) y ejecuta otra vez hasta atraparlos a todos.</p>
+</section>
+
+<section id="piramide" data-parada="La pirámide de pruebas">
+  <h2>La pirámide de pruebas: unitarias, integración, extremo a extremo</h2>
+  <p>Todas las pruebas que has escrito hasta ahora comprueban una función aislada. Son rápidas y precisas: cuando fallan, sabes exactamente dónde mirar. Pero un usuario no usa funciones sueltas: pulsa botones en una página que llama a un servidor que consulta una base de datos. Puede que cada pieza funcione sola y que juntas fallen. Por eso hay pruebas de distintos tamaños:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Tipo</th><th scope="col">Qué prueba</th><th scope="col">Ejemplo</th><th scope="col">Velocidad</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Unitaria</strong> (<em>unit test</em>)</td><td>Una pieza pequeña, aislada: una función, una clase. Las dependencias se reemplazan por dobles si hace falta.</td><td><code>precioEntrada(65)</code> devuelve 6.</td><td>Milisegundos</td></tr>
+        <tr><td><strong>De integración</strong> (<em>integration test</em>)</td><td>Varias piezas reales trabajando juntas: dos módulos, tu código con una base de datos de prueba.</td><td>El carrito calcula el total con los precios del catálogo real.</td><td>De milisegundos a segundos</td></tr>
+        <tr><td><strong>De extremo a extremo</strong> (<em>end-to-end</em>, E2E)</td><td>La aplicación completa, como la usa una persona, en un navegador de verdad.</td><td>Abrir la tienda, añadir un juego, pagar y ver el mensaje de gracias.</td><td>Segundos por prueba</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Entre las unitarias y las de extremo a extremo suelen colocarse las <strong>pruebas de componentes o de interfaz</strong>: una pieza de la interfaz (un formulario, un carrito) probada en un navegador simulado. Las verás en esta sección.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Pirámide de pruebas: en la base, muchas pruebas unitarias; en el medio, algunas de integración; en la punta, pocas de extremo a extremo. Hacia arriba las pruebas son más lentas, más caras y más realistas; hacia abajo, más rápidas, más baratas y más aisladas">
+      <path class="d-caja" d="M60 270L120 190H480L540 270Z"/>
+      <path class="d-caja-suave" d="M120 190L180 110H420L480 190Z"/>
+      <path class="d-caja" d="M180 110L240 30H360L420 110Z"/>
+      <path class="d-linea" d="M120 190H480"/>
+      <text class="d-rotulo" x="300" y="68" text-anchor="middle" style="font-size:15px">Extremo a extremo</text>
+      <text class="d-peq d-tenue" x="300" y="92" text-anchor="middle">pocas</text>
+      <text class="d-rotulo" x="300" y="148" text-anchor="middle">Integración</text>
+      <text class="d-peq d-tenue" x="300" y="172" text-anchor="middle">algunas</text>
+      <text class="d-rotulo" x="300" y="228" text-anchor="middle">Unitarias</text>
+      <text class="d-peq d-tenue" x="300" y="252" text-anchor="middle">muchas</text>
+      <path class="d-linea" d="M580 262V46"/>
+      <path class="d-tinta" d="M572 50l8-14 8 14z"/>
+      <path class="d-tinta" d="M572 258l8 14 8-14z"/>
+      <g class="d-peq">
+        <text x="598" y="48">más lentas</text>
+        <text x="598" y="68">más caras</text>
+        <text x="598" y="88">más realistas</text>
+        <text x="598" y="222">más rápidas</text>
+        <text x="598" y="242">más baratas</text>
+        <text x="598" y="262">más aisladas</text>
+      </g>
+    </svg>
+    <figcaption>La pirámide de pruebas. La forma indica la proporción: muchas pruebas pequeñas y rápidas en la base, pocas pruebas grandes y lentas en la punta.</figcaption>
+  </figure>
+  <p>La idea de la pirámide la popularizó Mike Cohn en su libro <em>Succeeding with Agile</em> (2009). Tiene críticos: el programador Kent C. Dodds propuso en 2018 el «trofeo de pruebas», que pone en la base el análisis estático (los tipos de TypeScript de la <a href="23-typescript.html">Estación 23</a> y los linters de la <a href="25-codigo-limpio.html">Estación 25</a>, que detectan errores sin ejecutar el código) y da más peso a las de integración en aplicaciones web, porque son las que más se parecen al uso real sin ser tan lentas como las de extremo a extremo. Las dos formas coinciden en lo importante: la mayoría de tus pruebas deben ser rápidas, y solo unas pocas, las de los recorridos críticos, deben levantar la aplicación entera.</p>
+
+  <h3>Pruebas de integración: cuando las piezas no encajan</h3>
+  <p>En este taller, un catálogo guarda los precios en céntimos (una buena práctica para evitar los problemas de los decimales) y un carrito suma los precios. Cada pieza tiene su prueba unitaria. Ejecuta y mira qué pasa con la tercera prueba, que usa las dos piezas reales juntas:</p>
+  <div class="taller" id="taller-integracion" data-titulo="Cada pieza bien, juntas mal">
+    <textarea class="taller-codigo">let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${esperado} y llegó ${real}`);
+    },
+  };
+}
+
+// Pieza 1: el catálogo guarda los precios en céntimos.
+function crearCatalogo() {
+  const precios = { "aventura-metro": 1200, "puzle-estelar": 850 };
+  return { precioDe: (id) => precios[id] };
+}
+// Pieza 2: el carrito devuelve el total en euros.
+function totalEnEuros(ids, precioDe) {
+  let total = 0;
+  for (const id of ids) total += precioDe(id);
+  return total;
+}
+
+// Pruebas unitarias: cada pieza por separado.
+test("el catálogo sabe el precio de un juego", () => {
+  expect(crearCatalogo().precioDe("puzle-estelar")).toBe(850);
+});
+test("el carrito suma los precios", () => {
+  const precioFalso = () => 10;   // stub: cada juego cuesta... ¿10 qué?
+  expect(totalEnEuros(["a", "b"], precioFalso)).toBe(20);
+});
+// Prueba de integración: las dos piezas reales, juntas.
+test("dos juegos del catálogo cuestan 20.5 euros", () => {
+  const catalogo = crearCatalogo();
+  expect(totalEnEuros(["aventura-metro", "puzle-estelar"], catalogo.precioDe)).toBe(20.5);
+});
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</textarea>
+    <script type="text/plain" class="taller-verificar">
+var fin = salida[salida.length - 1] || "";
+if (fin !== "Resumen: 3 pasan, 0 fallan") return "La prueba de integración falla: el carrito cree que recibe euros y el catálogo le da céntimos. Haz que totalEnEuros divida entre 100 y ajusta el stub de la prueba unitaria para que también hable en céntimos.";
+return true;
+    </script>
+  </div>
+  <p>Las pruebas unitarias pasan y la de integración falla: esperaba 20.5 y llegó 2050. El stub del carrito devolvía 10 y quien lo escribió pensaba en euros; el catálogo real habla en céntimos. Cada pieza cumple <em>su</em> idea del acuerdo, pero las dos ideas no coinciden. Este es el tipo de error que solo encuentra una prueba de integración, y la razón por la que los dobles no bastan. Arréglalo: que <code>totalEnEuros</code> divida la suma entre 100, y que el stub devuelva 1000 céntimos.</p>
+
+  <h3>Pruebas de interfaz con Testing Library</h3>
+  <p>¿Cómo se prueba un botón? La familia de bibliotecas <strong>Testing Library</strong> se basa en un principio que resume muy bien su documentación: «cuanto más se parezcan tus pruebas a la forma en que se usa tu software, más confianza te pueden dar». En la práctica significa buscar los elementos como los encuentra una persona (por su papel y su texto visible: «el botón que dice Añadir al carrito»), no por detalles internos como un <code>id</code> o una clase de CSS que el usuario nunca ve.</p>
+  <p>Este taller hace eso sin bibliotecas. La aplicación y las pruebas están en la pestaña JS. Las pruebas buscan los botones por su texto, los pulsan y comprueban lo que se ve en pantalla:</p>
+  <div class="taller" data-modo="web" id="taller-interfaz" data-titulo="Probar como una persona" data-alto="16rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;h1&gt;Tienda de juegos&lt;/h1&gt;
+&lt;p id="contador"&gt;Productos: 0&lt;/p&gt;
+&lt;button type="button" id="anadir"&gt;Añadir al carrito&lt;/button&gt;
+&lt;button type="button" id="vaciar"&gt;Vaciar&lt;/button&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; padding: 1rem; }
+button { font-size: 1rem; padding: .5rem 1rem; margin-right: .5rem; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// ---- La aplicación ----
+let cantidad = 0;
+const contador = document.querySelector("#contador");
+document.querySelector("#anadir").addEventListener("click", () => {
+  cantidad++;
+  contador.textContent = `Productos: ${cantidad}`;
+});
+document.querySelector("#vaciar").addEventListener("click", () => {
+  cantidad = 0;
+  contador.textContent = "Productos: 0";
+});
+
+// ---- Pruebas: buscar las cosas como lo haría una persona ----
+function botonLlamado(nombre) {
+  const boton = [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === nombre);
+  if (!boton) throw new Error(`no hay ningún botón «${nombre}» en la pantalla`);
+  return boton;
+}
+function seVeElTexto(texto) {
+  return [...document.querySelectorAll("body *")].some((el) => el.textContent.trim() === texto);
+}
+function test(nombre, prueba) {
+  try { prueba(); console.log("PASA  " + nombre); }
+  catch (error) { console.error("FALLA " + nombre + ": " + error.message); }
+}
+
+test("al añadir dos juegos, el contador muestra 2", () => {
+  botonLlamado("Añadir al carrito").click();
+  botonLlamado("Añadir al carrito").click();
+  if (!seVeElTexto("Productos: 2")) throw new Error("no se ve «Productos: 2»");
+});
+test("vaciar deja el contador en 0", () => {
+  botonLlamado("Vaciar").click();
+  if (!seVeElTexto("Productos: 0")) throw new Error("no se ve «Productos: 0»");
+});</textarea>
+    <script type="text/plain" class="taller-verificar">
+var ok = salida.filter(function (l) { return /^PASA/.test(l); }).length;
+return ok >= 2 || "Las dos pruebas deberían pasar. Si cambiaste el texto de un botón, cambia también la prueba: describe lo que ve la persona.";
+    </script>
+  </div>
+  <p>Haz dos experimentos. Primero cambia el <code>id</code> <code>anadir</code> por <code>boton-1</code> en el HTML y en la línea de la aplicación que lo usa: las pruebas siguen pasando, porque no dependen de ese detalle. Después cambia el texto del botón a «Agregar»: la prueba falla. Eso es correcto: la persona ve otro botón. Si el cambio era intencionado, actualizas la prueba; si no, la prueba acaba de atrapar un error.</p>
+  <p>Con las herramientas reales, la misma prueba se escribe con Vitest y Testing Library. Hace falta instalar un navegador simulado, <strong>jsdom</strong>, que imita el DOM dentro de Node:</p>
+  <pre class="consola"><code><span class="prompt">$</span> npm install --save-dev jsdom @testing-library/dom @testing-library/user-event @testing-library/jest-dom</code></pre>
+  <pre><code class="language-js">// @vitest-environment jsdom
+import { test, expect } from "vitest";
+import { screen } from "@testing-library/dom";
+import userEvent from "@testing-library/user-event";
+import "@testing-library/jest-dom/vitest";
+import { montarCarrito } from "./carrito.js";
+
+test("al pulsar «Añadir al carrito» el contador sube", async () =&gt; {
+  // Preparar: montamos la pieza en una página vacía
+  document.body.innerHTML = "";
+  montarCarrito(document.body);
+  const persona = userEvent.setup();
+
+  // Actuar: buscamos el botón por su papel y su nombre, y lo pulsamos dos veces
+  const boton = screen.getByRole("button", { name: "Añadir al carrito" });
+  await persona.click(boton);
+  await persona.click(boton);
+
+  // Comprobar: lo que se ve en pantalla
+  expect(screen.getByText("Productos: 2")).toBeInTheDocument();
+});</code></pre>
+  <ul>
+    <li>El comentario de la primera línea le dice a Vitest que ejecute este archivo con jsdom en lugar de en Node puro.</li>
+    <li><code>screen.getByRole("button", { name: … })</code> busca un elemento por su <strong>papel</strong> (<em>role</em>) de accesibilidad, el mismo que usan los lectores de pantalla (<a href="13-html.html">Estación 13</a>). Es la consulta que Testing Library recomienda en primer lugar. Si no lo encuentra, la prueba falla con un mensaje que lista los papeles que sí hay. Un efecto secundario muy bueno: si tu botón no es accesible, tu prueba no lo encuentra.</li>
+    <li><code>userEvent</code> simula a una persona de verdad: al hacer clic, dispara la secuencia completa de eventos que dispararía un ratón.</li>
+    <li><code>toBeInTheDocument</code> es un comparador extra que añade <code>@testing-library/jest-dom</code>, pensado para el DOM.</li>
+  </ul>
+  <p>Con React se usa <code>@testing-library/react</code>, que añade una función <code>render</code> para montar componentes; las consultas y la filosofía son las mismas. La verás en la <a href="32-react.html">Estación 32</a>.</p>
+
+  <h3>Pruebas de extremo a extremo con Playwright</h3>
+  <p>Una prueba de extremo a extremo abre tu aplicación en un navegador real, sin simulaciones, y la maneja como lo haría una persona. <strong>Playwright</strong>, creado por Microsoft, es la herramienta más usada para esto en 2026. Controla Chromium (la base de Chrome y Edge), Firefox y WebKit (la base de Safari). Se instala en un proyecto con un asistente:</p>
+  <pre class="consola"><code><span class="prompt">$</span> npm init playwright@latest</code></pre>
+  <p>El asistente pregunta si usar TypeScript o JavaScript y en qué carpeta poner las pruebas, crea un archivo <code>playwright.config</code>, una prueba de ejemplo, y descarga los navegadores. Esta prueba compra un juego en la tienda de ejemplo:</p>
+  <pre><code class="language-js">// tests/compra.spec.js
+import { test, expect } from "@playwright/test";
+
+test("una persona compra un juego", async ({ page }) =&gt; {
+  await page.goto("http://localhost:5173/tienda.html");
+
+  await page.getByRole("button", { name: "Añadir al carrito" }).click();
+  await expect(page.getByText("Total: 12 €")).toBeVisible();
+
+  await page.getByRole("button", { name: "Pagar" }).click();
+  await expect(page.getByRole("status")).toHaveText("¡Gracias por tu compra!");
+});</code></pre>
+  <pre class="consola"><code><span class="prompt">$</span> npx playwright test
+<span class="salida">Running 1 test using 1 worker
+
+  ✓  1 tests/compra.spec.js:3:1 › una persona compra un juego (1.4s)
+
+  1 passed (3.5s)</span></code></pre>
+  <p>Reconocerás la forma: <code>test</code>, <code>expect</code>, <code>getByRole</code>, Preparar-Actuar-Comprobar. Lo nuevo es <code>page</code>, una pestaña de navegador que Playwright abre para cada prueba, limpia, como un perfil nuevo. Y un detalle clave: en esa tienda, el mensaje de gracias aparece casi un segundo después de pulsar «Pagar». La prueba no tiene ninguna pausa escrita y aun así pasa, porque las aserciones con <code>await expect(…)</code> <strong>esperan y reintentan</strong> (por defecto, hasta 5 segundos) hasta que se cumple la condición. Playwright también espera a que un botón sea visible y esté habilitado antes de pulsarlo.</p>
+  <p>Comandos que usarás a menudo: <code>npx playwright test --ui</code> abre una ventana para ejecutar las pruebas paso a paso y ver cada momento; <code>npx playwright codegen</code> abre un navegador y va escribiendo la prueba mientras tú haces clic; <code>npx playwright show-report</code> muestra un informe HTML con los fallos, capturas y trazas.</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p>Esperar con pausas fijas: <code>await page.waitForTimeout(2000)</code> «para que dé tiempo». Si el servidor tarda 2,1 segundos, la prueba falla; si tarda 0,1, pierdes casi dos segundos en cada ejecución. Es la receta perfecta para pruebas lentas <em>e</em> inestables. Usa las aserciones que esperan solas, como <code>await expect(locator).toBeVisible()</code>.</p></div></aside>
+  <p>Las pruebas de extremo a extremo son las que más se parecen a la realidad, pero también las más lentas y las más frágiles: dependen del servidor, de la red, de los datos de prueba y del navegador. Por eso se reservan para los <strong>recorridos críticos</strong>: registrarse, iniciar sesión, pagar, guardar la partida. Si esos fallan, el producto no sirve.</p>
+
+  <h3>Otras pruebas que oirás nombrar</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Nombre</th><th scope="col">Qué comprueba</th></tr></thead>
+      <tbody>
+        <tr><td>Prueba de humo (<em>smoke test</em>)</td><td>Un puñado de comprobaciones rápidas de que lo básico funciona (la aplicación arranca, la página principal carga) antes de probar a fondo.</td></tr>
+        <tr><td>Prueba de regresión</td><td>Que lo que ya funcionaba sigue funcionando después de un cambio. Toda tu batería automática es, en la práctica, una batería de regresión.</td></tr>
+        <tr><td>Prueba de aceptación</td><td>Que el producto cumple los criterios acordados con quien lo pidió (<a href="27-proceso.html">Estación 27</a>).</td></tr>
+        <tr><td>Prueba de rendimiento o de carga</td><td>Cuánto tarda y qué pasa con mil personas a la vez (<a href="17-diseno-ux.html">Estación 17</a>).</td></tr>
+        <tr><td>Prueba de seguridad</td><td>Que no se puede entrar donde no se debe (<a href="31-seguridad.html">Estación 31</a>).</td></tr>
+        <tr><td>Prueba de accesibilidad</td><td>Herramientas como axe revisan automáticamente contraste, etiquetas y papeles; se pueden ejecutar dentro de Playwright. Detectan una parte de los problemas, no todos: el resto necesita personas.</td></tr>
+        <tr><td>Prueba de instantánea (<em>snapshot</em>)</td><td>Guarda la salida (por ejemplo, un HTML) la primera vez y avisa si cambia. Útil, pero peligrosa: es fácil aceptar un cambio sin mirarlo.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="calidad" data-parada="Calidad y QA">
+  <h2>Calidad más allá del código: CI, pruebas manuales y QA</h2>
+  <p>Unas pruebas que nadie ejecuta no sirven. Y hay fallos que ninguna prueba automática va a encontrar, porque nadie pensó en escribirla. Esta sección cierra la estación con cómo se organiza la calidad en un equipo real.</p>
+
+  <h3>Integración continua: pruebas en cada cambio</h3>
+  <p>La <strong>integración continua</strong> (<em>continuous integration</em>, CI) es la práctica de integrar los cambios de todo el equipo con frecuencia, y comprobar cada uno automáticamente. Cada vez que alguien sube código a GitHub o abre un pull request (<a href="24-git.html">Estación 24</a>), un servidor descarga el proyecto en una máquina limpia, instala las dependencias y ejecuta todas las pruebas. Si algo falla, el pull request se marca en rojo y el equipo puede configurar el repositorio para que no se pueda fusionar hasta que esté en verde.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 220" role="img" aria-label="Flujo de integración continua: tu cambio sube con git push; un servidor de CI descarga el código, instala dependencias con npm ci y ejecuta npm test en una máquina limpia; si todo pasa, el cambio se puede fusionar; si algo falla, se bloquea y avisa">
+      <rect class="d-caja" x="20" y="80" width="130" height="60" rx="8"/>
+      <text xml:space="preserve" class="d-mono" x="85" y="106" text-anchor="middle" style="font-size:15px">git push</text>
+      <text class="d-peq d-tenue" x="85" y="127" text-anchor="middle">tu cambio</text>
+      <path class="d-linea" d="M150 110H176"/>
+      <path class="d-tinta" d="M174 102l12 8-12 8z"/>
+      <rect class="d-caja-suave" x="190" y="24" width="270" height="172" rx="10"/>
+      <text class="d-rotulo" x="325" y="54" text-anchor="middle">Servidor de CI</text>
+      <g class="d-mono" style="font-size:14px">
+        <text x="212" y="90">1. descarga el código</text>
+        <text x="212" y="118">2. npm ci</text>
+        <text x="212" y="146">3. npm test</text>
+      </g>
+      <text class="d-peq d-tenue" x="212" y="178">en una máquina limpia, siempre igual</text>
+      <path class="d-linea" d="M460 92L494 74"/>
+      <path class="d-tinta" d="M490 66l14 2-7 12z"/>
+      <path class="d-linea" d="M460 128L494 146"/>
+      <path class="d-tinta" d="M497 140l7 12-14 2z"/>
+      <rect class="d-caja d-ok-trazo" x="510" y="36" width="190" height="60" rx="8"/>
+      <text class="d-rotulo" x="605" y="62" text-anchor="middle">Verde</text>
+      <text class="d-peq" x="605" y="83" text-anchor="middle">se puede fusionar</text>
+      <rect class="d-caja d-mal-trazo" x="510" y="124" width="190" height="60" rx="8"/>
+      <text class="d-rotulo" x="605" y="150" text-anchor="middle">Rojo</text>
+      <text class="d-peq" x="605" y="171" text-anchor="middle">no se fusiona y avisa</text>
+    </svg>
+    <figcaption>Integración continua: cada cambio se prueba automáticamente en una máquina limpia antes de unirse al resto del proyecto.</figcaption>
+  </figure>
+  <p>En GitHub esto se configura con <strong>GitHub Actions</strong>, escribiendo un archivo en la carpeta <code>.github/workflows</code> del repositorio. Así de corto puede ser uno que ejecuta tus pruebas:</p>
+  <pre><code class="language-yaml"># .github/workflows/pruebas.yml
+name: Pruebas
+on: [push, pull_request]
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7       # descarga el código
+      - uses: actions/setup-node@v7     # instala Node.js
+        with:
+          node-version: 24
+      - run: npm ci                     # instala las dependencias exactas del package-lock.json
+      - run: npm test                   # ejecuta las pruebas</code></pre>
+  <p>No hace falta cambiar el script <code>test</code>: cuando Vitest detecta que está en un servidor de CI, ejecuta las pruebas una vez en lugar de quedarse vigilando. El formato de estos archivos (YAML), los secretos y el despliegue automático los verás a fondo en la <a href="35-devops.html">Estación 35</a>. Las versiones de las acciones (<code>@v7</code>) cambian con el tiempo: comprueba la actual en la página de cada acción en GitHub.</p>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>La CI es la red de seguridad del equipo, pero no esperes a ella para enterarte de que algo falla: ejecuta las pruebas en tu computadora antes de subir. Algunos equipos lo automatizan con un gancho de Git (<em>hook</em>) que ejecuta las pruebas rápidas antes de cada commit. Y una regla de convivencia casi universal: si rompes la rama principal, arreglarla es tu prioridad número uno, porque bloquea a todos.</p></div></aside>
+
+  <h3>Pruebas manuales y exploratorias</h3>
+  <p>Las pruebas automáticas comprueban lo que alguien pensó que podía fallar. Las personas encuentran lo que nadie pensó. Hay dos formas de probar a mano:</p>
+  <ul>
+    <li><strong>Pruebas manuales con guion</strong>: una persona sigue pasos escritos («abre la tienda, añade dos juegos, aplica el cupón MITAD…») y compara con el resultado esperado. Sirven para lo que todavía no está automatizado o es muy costoso de automatizar, pero son lentas y repetitivas.</li>
+    <li><strong>Pruebas exploratorias</strong> (<em>exploratory testing</em>): diseñar y ejecutar pruebas a la vez, aprendiendo del programa mientras lo usas y dejando que cada descubrimiento guíe el siguiente paso. El término lo acuñó el experto en pruebas Cem Kaner en los años ochenta. No es «usar la aplicación a ver qué pasa»: se trabaja en sesiones con tiempo limitado (por ejemplo, 45 minutos) y una <strong>misión</strong> (<em>charter</em>) concreta, y se toman notas.</li>
+  </ul>
+  <p>Una misión útil tiene la forma «Explorar <em>esta zona</em> con <em>estos recursos</em> para descubrir <em>esta información</em>». Por ejemplo: «Explorar el carrito con cupones y cantidades extremas para descubrir si el total puede quedar mal». Algunas ideas para buscar problemas durante una sesión:</p>
+  <ul>
+    <li>Interrumpe: recarga la página a mitad de una compra, pulsa «Atrás», cierra y vuelve a abrir.</li>
+    <li>Repite deprisa: pulsa «Pagar» cinco veces seguidas. ¿Se cobra cinco veces?</li>
+    <li>Escribe cosas raras: textos enormes, emojis en el nombre, espacios al principio, números negativos.</li>
+    <li>Cambia el contexto: pantalla de móvil, sin conexión, solo con el teclado, con el zoom al 200 %.</li>
+    <li>Juega mal a propósito: en un videojuego, camina contra las paredes, salta en las esquinas, pausa en el peor momento.</li>
+  </ul>
+  <p>En los videojuegos existe además el <strong>playtesting</strong>: ver jugar a otras personas, sin ayudarlas, para descubrir si el juego se entiende y si es divertido. Es validación pura, y ninguna prueba automática puede decirte si tu juego es divertido. Lo harás en la <a href="34-videojuegos.html">Estación 34</a>.</p>
+
+  <h3>Informar de un error</h3>
+  <p>Cuando encuentras un fallo, un buen informe ahorra horas a quien tiene que arreglarlo. Se parece a la forma de pedir ayuda de la <a href="12-depuracion.html#ayuda">Estación 12</a>:</p>
+  <pre><code class="language-text">Título: El cupón BIENVENIDA deja el total en negativo con pedidos de menos de 5 €
+
+Pasos para reproducirlo:
+  1. Añade al carrito solo el juego «Puzle mini» (3 €).
+  2. Escribe el cupón BIENVENIDA y pulsa «Aplicar».
+Resultado esperado: total 0 €.
+Resultado obtenido: total -2 €.
+Frecuencia: siempre.
+Entorno: Chrome 140 en Windows 11; también en Firefox.
+Adjunto: captura de pantalla del carrito.</code></pre>
+  <p>Fíjate en que esos pasos son, casi palabra por palabra, una prueba automática esperando a ser escrita: preparar el carrito, actuar con el cupón, comprobar el total. Y eso es exactamente lo que harás con cada error que encuentres: primero la prueba que falla, después el arreglo.</p>
+
+  <h3>QA: la calidad es trabajo de todo el equipo</h3>
+  <p><strong>QA</strong> viene del inglés <em>quality assurance</em>, «aseguramiento de la calidad»: el conjunto de prácticas que previenen los defectos, no solo las que los encuentran. Probar es una parte de QA; también lo son las revisiones de código, los criterios de aceptación claros, la integración continua y aprender de cada error que llega a producción. En muchas empresas hay personas especialistas en calidad (con títulos como <em>QA engineer</em> o <em>tester</em>) que diseñan la estrategia de pruebas, automatizan pruebas de extremo a extremo y hacen pruebas exploratorias. Pero en los equipos modernos quien escribe el código también escribe sus pruebas unitarias y de integración. La calidad no se «añade al final»: se construye desde la primera línea.</p>
+  <p>Si te interesa especializarte, la certificación más conocida es la de ISTQB (<em>International Software Testing Qualifications Board</em>), cuyo nivel básico resume siete principios. Ya viste varios en esta estación: las pruebas muestran la presencia de defectos, no su ausencia; probarlo todo es imposible; probar pronto ahorra tiempo y dinero; los defectos se agrupan (suelen concentrarse en unas pocas partes del programa); las pruebas se desgastan (repetir siempre las mismas deja de encontrar errores nuevos); probar depende del contexto (no se prueba igual un juego que un marcapasos); y que no haya defectos no basta si el producto no sirve a quien lo usa.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Pruebas escritas por una IA</p><p>Los asistentes de IA (<a href="37-ia.html">Estación 37</a>) escriben pruebas en segundos, y es una gran ayuda. Pero tienen una tentación: leer tu código y escribir pruebas que confirman lo que el código hace <em>ahora</em>, incluidos sus errores. Una prueba que dice que <code>aplicarCupon(3, "BIENVENIDA")</code> debe dar −2 pasa perfectamente y protege el error. Revisa cada valor esperado pensando en la regla, no en el código, y comprueba que cada prueba falla si rompes la función.</p></div></aside>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Una prueba automática ejecuta tu código con datos conocidos y compara el resultado con el esperado. Vigila que lo que funcionaba siga funcionando (evita regresiones) y te da confianza para cambiar el código.</li>
+    <li>Un caso de prueba tiene datos de entrada, una acción y un resultado esperado escrito <em>antes</em> de ejecutar. Las pruebas muestran la presencia de errores, nunca su ausencia.</li>
+    <li>Estructura de una prueba: Preparar, Actuar, Comprobar. Una aserción como <code>expect(real).toBe(esperado)</code> lanza un error si no se cumple; el ejecutor lo atrapa y marca la prueba en rojo.</li>
+    <li><code>toBe</code> para valores simples, <code>toEqual</code> para arrays y objetos, <code>toBeCloseTo</code> para decimales, <code>expect(() =&gt; f()).toThrow()</code> para errores. Toda prueba necesita al menos una aserción.</li>
+    <li>Elige los casos con clases de equivalencia (un representante de cada grupo que se trata igual) y valores límite (justo a cada lado de cada frontera). Los errores viven en los bordes.</li>
+    <li>Vitest (<code>npm install --save-dev vitest</code>, archivos <code>*.test.js</code>, <code>npm test</code>) es el ejecutor de este curso; Node.js trae <code>node:test</code> sin instalar nada.</li>
+    <li>Para probar código con efectos, recibe lo impuro como parámetro y usa dobles: stubs que devuelven respuestas fijas, espías que registran llamadas, fakes que imitan. Sin azar, reloj ni red reales: pruebas repetibles.</li>
+    <li>TDD: rojo (una prueba que falla), verde (el código mínimo), refactorizar (mejorar con las pruebas en verde). Empieza por una lista de casos.</li>
+    <li>La cobertura muestra qué código nunca se ejecutó; un 100 % no significa que esté bien probado. Las pruebas de mutación miden si tus pruebas detectan errores.</li>
+    <li>Pirámide: muchas unitarias, algunas de integración, pocas de extremo a extremo (Playwright). Prueba la interfaz como la usa una persona (Testing Library). La CI ejecuta las pruebas en cada cambio; las personas exploran lo que nadie previó.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Cada ejercicio trae el mini ejecutor de pruebas arriba, entre dos comentarios: no hace falta tocarlo. Resuélvelos en orden. En los que te piden escribir pruebas, haz fallar cada prueba una vez a propósito (cambia el valor esperado) para comprobar que de verdad comprueba algo. Usa las pistas después de intentarlo unos minutos.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-aserciones"><header class="ejercicio-cabeza"><h3>Tus primeras aserciones</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>Las pruebas de <code>calcularDanio</code> ya tienen nombre, pero están vacías: sin aserciones, pasarían siempre. Escribe dentro de cada una un <code>expect(…).toBe(…)</code> que compruebe lo que dice el comentario. El resumen final debe decir <code>Resumen: 3 pasan, 0 fallan</code>.</p>
+    <div class="taller" id="taller-ej-aserciones" data-titulo="Tus primeras aserciones">
+      <textarea class="taller-codigo">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+// Código que se prueba (del proyecto de la Estación 21)
+function calcularDanio(ataque, defensa, tirada) {
+  return Math.max(1, ataque + tirada - defensa);
+}
+
+test("el daño es ataque + tirada - defensa", () =&gt; {
+  // Comprueba que calcularDanio(10, 4, 3) es 9
+});
+test("si la defensa es muy alta, el daño es 1", () =&gt; {
+  // Comprueba que calcularDanio(5, 20, 2) es 1
+});
+test("si la cuenta da exactamente 0, el daño sigue siendo 1", () =&gt; {
+  // Elige tú los números para que ataque + tirada - defensa sea 0
+});
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var n = (codigo.match(/expect\(\s*calcularDanio\(/g) || []).length;
+if (n < 3) return "Cada prueba necesita su aserción: expect(calcularDanio(...)).toBe(...). Llevas " + n + " de 3.";
+if (errores.some(function (l) { return /^FALLA/.test(l); })) return "Alguna prueba falla. Revisa el valor esperado: haz la cuenta a mano.";
+if (salida[salida.length - 1] !== "Resumen: 3 pasan, 0 fallan") return "El resumen debería decir «Resumen: 3 pasan, 0 fallan».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Una aserción tiene la forma <code>expect(valorReal).toBe(valorEsperado);</code>. Para la primera: <code>expect(calcularDanio(10, 4, 3)).toBe(9);</code></p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para la tercera necesitas que <code>ataque + tirada - defensa</code> dé 0: por ejemplo, ataque 5, tirada 2 y defensa 7. El daño esperado es 1, porque <code>Math.max(1, 0)</code> es 1.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+// Código que se prueba (del proyecto de la Estación 21)
+function calcularDanio(ataque, defensa, tirada) {
+  return Math.max(1, ataque + tirada - defensa);
+}
+
+test("el daño es ataque + tirada - defensa", () =&gt; {
+  expect(calcularDanio(10, 4, 3)).toBe(9);
+});
+test("si la defensa es muy alta, el daño es 1", () =&gt; {
+  expect(calcularDanio(5, 20, 2)).toBe(1);
+});
+test("si la cuenta da exactamente 0, el daño sigue siendo 1", () =&gt; {
+  expect(calcularDanio(5, 7, 2)).toBe(1);
+});
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</code></pre>
+      <p>Las dos últimas pruebas comprueban el mismo comportamiento («nunca baja de 1») desde dos lados: un caso claramente por debajo y el caso justo en el límite. Si alguien cambiara <code>Math.max(1, …)</code> por <code>Math.max(0, …)</code>, la tercera prueba lo atraparía.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-arregla-nivel"><header class="ejercicio-cabeza"><h3>Arregla el código, no la prueba</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>Las seis pruebas describen las reglas de los niveles y son correctas. La función <code>nivelDeJugador</code> tiene dos errores. Ejecuta, lee qué pruebas fallan y corrige la función (no las pruebas) hasta ver <code>Resumen: 6 pasan, 0 fallan</code>.</p>
+    <div class="taller" id="taller-ej-arregla-nivel" data-titulo="Arregla el código, no la prueba">
+      <textarea class="taller-codigo">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+function nivelDeJugador(puntos) {
+  if (puntos &lt;= 100) return "bronce";
+  if (puntos &lt; 499) return "plata";
+  return "oro";
+}
+
+// Reglas: de 0 a 99 puntos, bronce; de 100 a 499, plata; desde 500, oro.
+test("0 puntos: bronce", () =&gt; expect(nivelDeJugador(0)).toBe("bronce"));
+test("99 puntos: bronce", () =&gt; expect(nivelDeJugador(99)).toBe("bronce"));
+test("100 puntos: plata", () =&gt; expect(nivelDeJugador(100)).toBe("plata"));
+test("499 puntos: plata", () =&gt; expect(nivelDeJugador(499)).toBe("plata"));
+test("500 puntos: oro", () =&gt; expect(nivelDeJugador(500)).toBe("oro"));
+test("1000 puntos: oro", () =&gt; expect(nivelDeJugador(1000)).toBe("oro"));
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var requeridas = ['nivelDeJugador(0)).toBe("bronce")', 'nivelDeJugador(99)).toBe("bronce")', 'nivelDeJugador(100)).toBe("plata")', 'nivelDeJugador(499)).toBe("plata")', 'nivelDeJugador(500)).toBe("oro")', 'nivelDeJugador(1000)).toBe("oro")'];
+for (var i = 0; i < requeridas.length; i++) {
+  if (codigo.indexOf(requeridas[i]) === -1) return "No cambies las pruebas: describen las reglas del juego. Falta o cambió: " + requeridas[i];
+}
+if (errores.some(function (l) { return /^FALLA/.test(l); })) return "Todavía hay pruebas en rojo. Lee qué puntos fallan y mira la condición de nivelDeJugador que decide esos puntos.";
+if (salida[salida.length - 1] !== "Resumen: 6 pasan, 0 fallan") return "El resumen debería decir «Resumen: 6 pasan, 0 fallan».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Fallan las pruebas de 100 y de 499: justo los bordes. Compara cada condición con la regla escrita en el comentario.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>«De 0 a 99» significa menor que 100: <code>puntos &lt; 100</code>. «De 100 a 499» termina justo antes de 500.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+function nivelDeJugador(puntos) {
+  if (puntos &lt; 100) return "bronce";
+  if (puntos &lt; 500) return "plata";
+  return "oro";
+}
+
+// Reglas: de 0 a 99 puntos, bronce; de 100 a 499, plata; desde 500, oro.
+test("0 puntos: bronce", () =&gt; expect(nivelDeJugador(0)).toBe("bronce"));
+test("99 puntos: bronce", () =&gt; expect(nivelDeJugador(99)).toBe("bronce"));
+test("100 puntos: plata", () =&gt; expect(nivelDeJugador(100)).toBe("plata"));
+test("499 puntos: plata", () =&gt; expect(nivelDeJugador(499)).toBe("plata"));
+test("500 puntos: oro", () =&gt; expect(nivelDeJugador(500)).toBe("oro"));
+test("1000 puntos: oro", () =&gt; expect(nivelDeJugador(1000)).toBe("oro"));
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</code></pre>
+      <p>Los dos errores eran de «uno más o uno menos» en una frontera, el tipo de error que los valores límite existen para atrapar. Observa que las pruebas de 0 y 1000 pasaban con la función rota: si solo hubieras probado valores del medio, no habrías visto nada.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-top3"><header class="ejercicio-cabeza"><h3>Listas con toEqual</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>La función <code>top3</code> devuelve las tres puntuaciones más altas de un juego, de mayor a menor. Escribe al menos tres pruebas con <code>toEqual</code>: una con una lista normal, una con menos de tres puntuaciones y una con la lista vacía. Si te animas, añade una cuarta que compruebe que la lista original no cambia.</p>
+    <div class="taller" id="taller-ej-top3" data-titulo="Listas con toEqual">
+      <textarea class="taller-codigo">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+// Devuelve las 3 puntuaciones más altas, de mayor a menor, sin cambiar la lista original.
+function top3(puntuaciones) {
+  return [...puntuaciones].sort((a, b) =&gt; b - a).slice(0, 3);
+}
+
+// Escribe al menos tres pruebas con toEqual:
+// 1. una lista normal, como [50, 90, 10, 70]
+// 2. una lista con menos de 3 puntuaciones
+// 3. una lista vacía
+
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var n = (codigo.replace(/\/\/[^\n]*/g, "").match(/\.toEqual\(/g) || []).length;
+if (n < 3) return "Escribe al menos tres pruebas que usen toEqual (llevas " + n + ").";
+if (!/top3\(\s*\[\s*\]\s*\)/.test(codigo)) return "Falta el caso borde de la lista vacía: top3([]).";
+if (!/top3\(\s*\[\s*-?\d+\s*(,\s*-?\d+\s*)?\]\s*\)/.test(codigo)) return "Falta una prueba con menos de 3 puntuaciones, por ejemplo top3([20, 80]).";
+if (errores.some(function (l) { return /^FALLA/.test(l); })) return "Alguna prueba falla. ¿El valor esperado está de mayor a menor?";
+var fin = salida[salida.length - 1] || "";
+var m = fin.match(/^Resumen: (\d+) pasan, 0 fallan$/);
+if (!m || Number(m[1]) < 3) return "Deberían pasar al menos 3 pruebas. El resumen dice: «" + fin + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Recuerda por qué no sirve <code>toBe</code>: dos arrays distintos nunca son «el mismo» aunque tengan lo mismo dentro. Usa <code>expect(top3([50, 90, 10, 70])).toEqual([90, 70, 50]);</code></p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para la cuarta prueba: guarda una lista en una constante, llama a <code>top3</code> con ella y después comprueba con <code>toEqual</code> que la constante sigue teniendo el orden original.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+// Devuelve las 3 puntuaciones más altas, de mayor a menor, sin cambiar la lista original.
+function top3(puntuaciones) {
+  return [...puntuaciones].sort((a, b) =&gt; b - a).slice(0, 3);
+}
+
+test("devuelve las 3 más altas de mayor a menor", () =&gt; {
+  expect(top3([50, 90, 10, 70])).toEqual([90, 70, 50]);
+});
+test("con menos de 3 puntuaciones, devuelve las que hay ordenadas", () =&gt; {
+  expect(top3([20, 80])).toEqual([80, 20]);
+});
+test("con la lista vacía, devuelve una lista vacía", () =&gt; {
+  expect(top3([])).toEqual([]);
+});
+test("no cambia la lista original", () =&gt; {
+  const original = [50, 90, 10, 70];
+  top3(original);
+  expect(original).toEqual([50, 90, 10, 70]);
+});
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</code></pre>
+      <p>La cuarta prueba vigila un error muy común: <code>sort</code> ordena el array original en su sitio (<a href="11-colecciones.html">Estación 11</a>). Si alguien quitara la copia <code>[...puntuaciones]</code>, el ranking seguiría siendo correcto, pero la lista de la partida quedaría desordenada. Solo esa prueba lo detectaría.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-errores"><header class="ejercicio-cabeza"><h3>Probar que algo falla</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>La función <code>retirar</code> saca dinero del monedero de un juego y lanza un error cuando la operación no es válida. Ya hay una prueba del camino feliz. Añade tres: retirar exactamente todo el saldo (debe quedar 0), retirar más que el saldo (error) y retirar 0 (error). El mini ejecutor de este ejercicio tiene <code>toThrow()</code>.</p>
+    <div class="taller" id="taller-ej-errores" data-titulo="Probar que algo falla">
+      <textarea class="taller-codigo">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+// Devuelve el saldo que queda después de retirar.
+// Lanza un error si la cantidad no es positiva o si supera el saldo.
+function retirar(saldo, cantidad) {
+  if (cantidad &lt;= 0) throw new RangeError("La cantidad debe ser positiva");
+  if (cantidad &gt; saldo) throw new Error("Saldo insuficiente");
+  return saldo - cantidad;
+}
+
+test("retirar 30 de 100 deja 70", () =&gt; {
+  expect(retirar(100, 30)).toBe(70);
+});
+// Escribe tres pruebas más:
+// - retirar exactamente todo el saldo deja 0
+// - retirar más que el saldo lanza un error
+// - retirar 0 lanza un error
+
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var conFlecha = (codigo.match(/expect\(\s*\(\s*\)\s*=>\s*retirar\(/g) || []).length;
+if (/expect\(\s*retirar\([^)]*\)\s*\)\s*\.toThrow/.test(codigo)) return "Para probar un error, envuelve la llamada en una flecha: expect(() => retirar(50, 51)).toThrow(). Sin la flecha, el error ocurre antes de que expect pueda atraparlo.";
+if (conFlecha < 2) return "Faltan pruebas de errores: usa expect(() => retirar(...)).toThrow() para el caso de «más que el saldo» y para retirar 0.";
+if (!/retirar\(\s*(\d+)\s*,\s*\1\s*\)/.test(codigo)) return "Falta el valor límite: retirar exactamente todo el saldo, por ejemplo retirar(50, 50).";
+if (errores.some(function (l) { return /^FALLA/.test(l); })) return "Alguna prueba falla. Lee el mensaje en rojo.";
+var fin = salida[salida.length - 1] || "";
+var m = fin.match(/^Resumen: (\d+) pasan, 0 fallan$/);
+if (!m || Number(m[1]) < 4) return "Deberían pasar al menos 4 pruebas. El resumen dice: «" + fin + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Recuerda la flecha: <code>expect(() =&gt; retirar(50, 51)).toThrow();</code>. <code>expect</code> recibe una función para ejecutarla dentro de su propio <code>try</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El caso de «exactamente todo el saldo» es el valor límite de la condición <code>cantidad &gt; saldo</code>: con 50 y 50 no debe lanzar error.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+// Devuelve el saldo que queda después de retirar.
+// Lanza un error si la cantidad no es positiva o si supera el saldo.
+function retirar(saldo, cantidad) {
+  if (cantidad &lt;= 0) throw new RangeError("La cantidad debe ser positiva");
+  if (cantidad &gt; saldo) throw new Error("Saldo insuficiente");
+  return saldo - cantidad;
+}
+
+test("retirar 30 de 100 deja 70", () =&gt; {
+  expect(retirar(100, 30)).toBe(70);
+});
+test("retirar todo el saldo deja 0", () =&gt; {
+  expect(retirar(50, 50)).toBe(0);
+});
+test("retirar más que el saldo lanza un error", () =&gt; {
+  expect(() =&gt; retirar(50, 51)).toThrow();
+});
+test("retirar 0 lanza un error", () =&gt; {
+  expect(() =&gt; retirar(50, 0)).toThrow();
+});
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</code></pre>
+      <p>Las pruebas de error suelen olvidarse, y son las que protegen tu programa de estados imposibles: un monedero con saldo negativo. Fíjate en la pareja 50 y 51: la prueba de «todo el saldo» y la de «uno más» rodean la frontera por los dos lados.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-reloj"><header class="ejercicio-cabeza"><h3>Un reloj bajo control</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>En tu juego se puede reclamar una recompensa diaria si pasaron 24 horas o más desde la última vez. La función recibe la hora actual como parámetro, con <code>Date.now()</code> como valor por defecto: eso permite probarla con un reloj fijo. Escribe tres pruebas pasando un «ahora» fijo: 25 horas después (<code>true</code>), 23 horas después (<code>false</code>) y exactamente 24 horas después (<code>true</code>).</p>
+    <div class="taller" id="taller-ej-reloj" data-titulo="Un reloj bajo control">
+      <textarea class="taller-codigo">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+const HORA = 60 * 60 * 1000;   // una hora en milisegundos
+
+// Recompensa diaria: se puede reclamar si pasaron 24 horas o más desde la última vez.
+function puedeReclamarRecompensa(ultimaVez, ahora = Date.now()) {
+  return ahora - ultimaVez &gt;= 24 * HORA;
+}
+
+const ultimaVez = new Date(2026, 9, 1, 20, 0).getTime();   // 1 de octubre de 2026, 20:00
+
+// Escribe tres pruebas pasando un "ahora" fijo como segundo argumento:
+// - 25 horas después: true
+// - 23 horas después: false
+// - exactamente 24 horas después: true
+
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var pruebas = codigo.replace(/function puedeReclamarRecompensa[^\n]*/, "");
+var conAhora = (pruebas.match(/puedeReclamarRecompensa\(\s*[^,()]+,\s*[^)]+\)/g) || []).length;
+if (/Date\.now\(\)/.test(pruebas)) return "No uses Date.now() en las pruebas: el resultado dependería de cuándo las ejecutes. Pasa un «ahora» fijo, calculado a partir de ultimaVez.";
+if (conAhora < 3) return "Cada prueba debe pasar un «ahora» fijo como segundo argumento, por ejemplo: puedeReclamarRecompensa(ultimaVez, ultimaVez + 25 * HORA). Llevas " + conAhora + ".";
+if (!/24\s*\*\s*HORA\s*\)/.test(pruebas)) return "Falta el valor límite: exactamente 24 horas después (ultimaVez + 24 * HORA).";
+if (errores.some(function (l) { return /^FALLA/.test(l); })) return "Alguna prueba falla. Revisa el valor esperado de cada caso.";
+var fin = salida[salida.length - 1] || "";
+var m = fin.match(/^Resumen: (\d+) pasan, 0 fallan$/);
+if (!m || Number(m[1]) < 3) return "Deberían pasar al menos 3 pruebas. El resumen dice: «" + fin + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Las fechas son números de milisegundos. «25 horas después de <code>ultimaVez</code>» es <code>ultimaVez + 25 * HORA</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Una prueba completa: <code>expect(puedeReclamarRecompensa(ultimaVez, ultimaVez + 25 * HORA)).toBe(true);</code></p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+const HORA = 60 * 60 * 1000;   // una hora en milisegundos
+
+// Recompensa diaria: se puede reclamar si pasaron 24 horas o más desde la última vez.
+function puedeReclamarRecompensa(ultimaVez, ahora = Date.now()) {
+  return ahora - ultimaVez &gt;= 24 * HORA;
+}
+
+const ultimaVez = new Date(2026, 9, 1, 20, 0).getTime();   // 1 de octubre de 2026, 20:00
+
+test("25 horas después se puede reclamar", () =&gt; {
+  expect(puedeReclamarRecompensa(ultimaVez, ultimaVez + 25 * HORA)).toBe(true);
+});
+test("23 horas después todavía no", () =&gt; {
+  expect(puedeReclamarRecompensa(ultimaVez, ultimaVez + 23 * HORA)).toBe(false);
+});
+test("exactamente 24 horas después ya se puede", () =&gt; {
+  expect(puedeReclamarRecompensa(ultimaVez, ultimaVez + 24 * HORA)).toBe(true);
+});
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</code></pre>
+      <p>El «ahora» fijo es un stub del reloj: gracias a él, la prueba da el mismo resultado hoy, mañana y en el servidor de integración continua. Si la función leyera <code>Date.now()</code> por dentro sin dejarte cambiarlo, tendrías que usar los temporizadores falsos de Vitest (<code>vi.setSystemTime</code>).</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-espias"><header class="ejercicio-cabeza"><h3>Espías en la caja</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>La función <code>comprarJuego</code> recibe dos dependencias: <code>pagar</code>, que cobra y devuelve <code>true</code> o <code>false</code>, y <code>enviarRecibo</code>. No queremos cobrar ni enviar nada de verdad. Escribe tres pruebas usando dobles hechos a mano: pago aceptado (se cobra una vez 20 y se envía el recibo de 20), pago rechazado (no se envía recibo) y total 0 (no se intenta cobrar).</p>
+    <div class="taller" id="taller-ej-espias" data-titulo="Espías en la caja">
+      <textarea class="taller-codigo">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+// Compra: cobra el total y, si el pago sale bien, envía un recibo.
+function comprarJuego(total, pagar, enviarRecibo) {
+  if (total &lt;= 0) return "carrito vacío";
+  const pagado = pagar(total);
+  if (!pagado) return "pago rechazado";
+  enviarRecibo(total);
+  return "ok";
+}
+
+// Escribe tres pruebas con dobles hechos a mano (stubs que devuelven true o false,
+// y espías que apuntan sus llamadas en una lista):
+// 1. Pago aceptado: se cobra una vez 20 y se envía el recibo de 20.
+// 2. Pago rechazado: devuelve "pago rechazado" y NO se envía recibo.
+// 3. Total 0: devuelve "carrito vacío" y NO se intenta cobrar.
+
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!/=>\s*false/.test(codigo)) return "Falta un stub de pago que devuelva false para probar el pago rechazado, por ejemplo: const pagarMal = () => false;";
+if ((codigo.match(/\.push\(/g) || []).length < 2) return "Crea espías que apunten sus llamadas en una lista con push, para comprobar cuántas veces y con qué cantidad se cobró y se envió el recibo.";
+var pruebas = codigo.replace(/\/\/[^\n]*/g, "").split("return \"ok\"")[1] || "";
+if (!/"pago rechazado"/.test(pruebas)) return "Comprueba en una prueba que el resultado es \"pago rechazado\".";
+if (!/"carrito vacío"/.test(pruebas)) return "Comprueba en una prueba que con total 0 el resultado es \"carrito vacío\".";
+if (errores.some(function (l) { return /^FALLA/.test(l); })) return "Alguna prueba falla. Lee el mensaje en rojo.";
+var fin = salida[salida.length - 1] || "";
+var m = fin.match(/^Resumen: (\d+) pasan, 0 fallan$/);
+if (!m || Number(m[1]) < 3) return "Deberían pasar al menos 3 pruebas. El resumen dice: «" + fin + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Un espía hecho a mano: <code>const recibos = []; const reciboEspia = (cantidad) =&gt; recibos.push(cantidad);</code>. Después de actuar, <code>expect(recibos).toEqual([20]);</code></p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para <code>pagar</code> necesitas un doble que sea stub y espía a la vez: que apunte la cantidad y devuelva <code>true</code>. Con llaves: <code>(cantidad) =&gt; { cobros.push(cantidad); return true; }</code>. Para el rechazo basta un stub: <code>() =&gt; false</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+// Compra: cobra el total y, si el pago sale bien, envía un recibo.
+function comprarJuego(total, pagar, enviarRecibo) {
+  if (total &lt;= 0) return "carrito vacío";
+  const pagado = pagar(total);
+  if (!pagado) return "pago rechazado";
+  enviarRecibo(total);
+  return "ok";
+}
+
+test("pago aceptado: cobra una vez y envía el recibo", () =&gt; {
+  const cobros = [];
+  const recibos = [];
+  const pagarBien = (cantidad) =&gt; { cobros.push(cantidad); return true; };
+  const reciboEspia = (cantidad) =&gt; recibos.push(cantidad);
+
+  const resultado = comprarJuego(20, pagarBien, reciboEspia);
+
+  expect(resultado).toBe("ok");
+  expect(cobros).toEqual([20]);
+  expect(recibos).toEqual([20]);
+});
+test("pago rechazado: no se envía recibo", () =&gt; {
+  const recibos = [];
+  const pagarMal = () =&gt; false;
+  const reciboEspia = (cantidad) =&gt; recibos.push(cantidad);
+
+  expect(comprarJuego(20, pagarMal, reciboEspia)).toBe("pago rechazado");
+  expect(recibos).toEqual([]);
+});
+test("total 0: no se intenta cobrar", () =&gt; {
+  const cobros = [];
+  const pagarEspia = (cantidad) =&gt; { cobros.push(cantidad); return true; };
+
+  expect(comprarJuego(0, pagarEspia, () =&gt; {})).toBe("carrito vacío");
+  expect(cobros.length).toBe(0);
+});
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</code></pre>
+      <p>Estas pruebas comprueban <em>interacciones</em>: qué se llamó, cuántas veces y con qué. En Vitest escribirías <code>const pagar = vi.fn().mockReturnValue(true)</code> y <code>expect(enviarRecibo).not.toHaveBeenCalled()</code>. La idea es la misma: controlar lo que entra y espiar lo que sale.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-tdd-nick"><header class="ejercicio-cabeza"><h3>TDD: el nick del jugador</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>Esta vez las pruebas ya están escritas y en rojo: son la especificación. Tu trabajo es la fase verde. Escribe <code>validarNick(nick)</code> para que pasen las ocho, sin tocar las pruebas. Hazlo al estilo TDD: elige la primera prueba que falla, haz el cambio mínimo, ejecuta, y sigue con la siguiente.</p>
+    <div class="taller" id="taller-ej-tdd-nick" data-titulo="TDD: el nick del jugador">
+      <textarea class="taller-codigo">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+function validarNick(nick) {
+  return true;   // verde falso: escribe aquí la función de verdad
+}
+
+// Reglas: entre 3 y 12 caracteres; solo letras sin acentos, números y _;
+// no puede empezar por un número.
+test("ana es válido", () =&gt; expect(validarNick("ana")).toBe(true));
+test("an es demasiado corto", () =&gt; expect(validarNick("an")).toBe(false));
+test("12 caracteres es válido", () =&gt; expect(validarNick("abcdefghijkl")).toBe(true));
+test("13 caracteres es demasiado largo", () =&gt; expect(validarNick("abcdefghijklm")).toBe(false));
+test("letras, números y _ son válidos", () =&gt; expect(validarNick("lyra_07")).toBe(true));
+test("no puede empezar por un número", () =&gt; expect(validarNick("7lyra")).toBe(false));
+test("no puede tener espacios", () =&gt; expect(validarNick("ana maria")).toBe(false));
+test("el texto vacío no es válido", () =&gt; expect(validarNick("")).toBe(false));
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var requeridas = ['validarNick("ana")).toBe(true)', 'validarNick("an")).toBe(false)', 'validarNick("abcdefghijkl")).toBe(true)', 'validarNick("abcdefghijklm")).toBe(false)', 'validarNick("lyra_07")).toBe(true)', 'validarNick("7lyra")).toBe(false)', 'validarNick("ana maria")).toBe(false)', 'validarNick("")).toBe(false)'];
+for (var i = 0; i < requeridas.length; i++) {
+  if (codigo.indexOf(requeridas[i]) === -1) return "Las pruebas son la especificación: no las cambies. Falta o cambió: " + requeridas[i];
+}
+var rojas = errores.filter(function (l) { return /^FALLA/.test(l); }).length;
+if (rojas) return rojas + " prueba(s) en rojo. Ve de una en una: elige la primera que falla, haz el cambio mínimo para que pase y vuelve a ejecutar.";
+if (salida[salida.length - 1] !== "Resumen: 8 pasan, 0 fallan") return "El resumen debería decir «Resumen: 8 pasan, 0 fallan».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Empieza por la longitud: <code>if (nick.length &lt; 3 || nick.length &gt; 12) return false;</code>. Ejecuta y mira cuántas pruebas quedan en rojo.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para los caracteres, guarda en un texto todos los permitidos y recorre el nick con <code>for (const c of nick)</code> comprobando <code>permitidos.includes(c)</code>. Para el primer carácter, <code>nick[0]</code> no puede estar en <code>"0123456789"</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+function validarNick(nick) {
+  if (nick.length &lt; 3 || nick.length &gt; 12) return false;
+  const letras = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
+  const digitos = "0123456789";
+  if (!letras.includes(nick[0])) return false;
+  for (const c of nick) {
+    if (!letras.includes(c) &amp;&amp; !digitos.includes(c)) return false;
+  }
+  return true;
+}
+
+// Reglas: entre 3 y 12 caracteres; solo letras sin acentos, números y _;
+// no puede empezar por un número.
+test("ana es válido", () =&gt; expect(validarNick("ana")).toBe(true));
+test("an es demasiado corto", () =&gt; expect(validarNick("an")).toBe(false));
+test("12 caracteres es válido", () =&gt; expect(validarNick("abcdefghijkl")).toBe(true));
+test("13 caracteres es demasiado largo", () =&gt; expect(validarNick("abcdefghijklm")).toBe(false));
+test("letras, números y _ son válidos", () =&gt; expect(validarNick("lyra_07")).toBe(true));
+test("no puede empezar por un número", () =&gt; expect(validarNick("7lyra")).toBe(false));
+test("no puede tener espacios", () =&gt; expect(validarNick("ana maria")).toBe(false));
+test("el texto vacío no es válido", () =&gt; expect(validarNick("")).toBe(false));
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);</code></pre>
+      <p>Una alternativa más corta usa una expresión regular: <code>return /^[A-Za-z_][A-Za-z0-9_]{2,11}$/.test(nick);</code> (una letra o guion bajo, y después de 2 a 11 caracteres permitidos). Gracias a las ocho pruebas puedes cambiar de una versión a la otra (refactorizar) y saber en un segundo si las dos se comportan igual.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-mutantes"><header class="ejercicio-cabeza"><h3>Caza todos los mutantes</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>Una tienda cobra el envío por peso: hasta 1 kg, 3 €; hasta 5 kg, 6 €; hasta 20 kg, 12 €. Un peso de 0 o menos, o de más de 20 kg, es un error. Escribe dentro de <code>misPruebas</code> las aserciones necesarias para que tus pruebas pasen con la función original y atrapen a los cinco mutantes. Usa lo que sabes de clases de equivalencia y valores límite.</p>
+    <div class="taller" id="taller-ej-mutantes" data-titulo="Caza todos los mutantes">
+      <textarea class="taller-codigo">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+function tarifaEnvio(pesoKg) {
+  if (pesoKg &lt;= 0) throw new RangeError("El peso debe ser positivo");
+  if (pesoKg &lt;= 1) return 3;
+  if (pesoKg &lt;= 5) return 6;
+  if (pesoKg &lt;= 20) return 12;
+  throw new RangeError("No enviamos paquetes de más de 20 kg");
+}
+
+// Tus pruebas: reciben la versión de tarifaEnvio que hay que probar.
+function misPruebas(tarifaEnvio) {
+  expect(tarifaEnvio(3)).toBe(6);
+}
+
+// ===== Máquina de mutantes (no hace falta tocarla) =====
+// Cada mutante es tarifaEnvio con UN cambio pequeño.
+const mutantes = {
+  "&lt;= 1 pasó a &lt; 1": (p) =&gt; { if (p &lt;= 0) throw new RangeError(); if (p &lt; 1) return 3; if (p &lt;= 5) return 6; if (p &lt;= 20) return 12; throw new RangeError(); },
+  "&lt;= 5 pasó a &lt; 5": (p) =&gt; { if (p &lt;= 0) throw new RangeError(); if (p &lt;= 1) return 3; if (p &lt; 5) return 6; if (p &lt;= 20) return 12; throw new RangeError(); },
+  "&lt;= 20 pasó a &lt; 20": (p) =&gt; { if (p &lt;= 0) throw new RangeError(); if (p &lt;= 1) return 3; if (p &lt;= 5) return 6; if (p &lt; 20) return 12; throw new RangeError(); },
+  "6 pasó a 7": (p) =&gt; { if (p &lt;= 0) throw new RangeError(); if (p &lt;= 1) return 3; if (p &lt;= 5) return 7; if (p &lt;= 20) return 12; throw new RangeError(); },
+  "&lt;= 0 pasó a &lt; 0": (p) =&gt; { if (p &lt; 0) throw new RangeError(); if (p &lt;= 1) return 3; if (p &lt;= 5) return 6; if (p &lt;= 20) return 12; throw new RangeError(); },
+};
+function pasaTodo(version) {
+  try { misPruebas(version); return true; } catch (error) { return false; }
+}
+if (!pasaTodo(tarifaEnvio)) console.error("original: alguna de tus pruebas falla con la función correcta");
+else console.log("original: pasan todas tus pruebas");
+for (const [cambio, mutante] of Object.entries(mutantes)) {
+  if (pasaTodo(mutante)) console.error(`mutante (${cambio}): SOBREVIVE`);
+  else console.log(`mutante (${cambio}): atrapado`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (errores.some(function (l) { return /^original/.test(l); })) return "Alguna de tus pruebas falla con la función correcta: esa prueba está mal. Revisa los valores esperados.";
+var vivos = errores.filter(function (l) { return /SOBREVIVE/.test(l); });
+if (vivos.length) return vivos.length + " mutante(s) sobreviven. Lee el cambio de cada uno: ¿qué valor exacto se comporta distinto con ese cambio? Añade un expect con ese valor.";
+if (salida.filter(function (l) { return /atrapado/.test(l); }).length < 5) return "Deberían aparecer los cinco mutantes atrapados.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Cada mutante cambia una frontera o un valor. Para atrapar «&lt;= 5 pasó a &lt; 5» necesitas un peso con el que la función original y el mutante respondan distinto: justo 5 kg.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>No olvides los errores: <code>expect(() =&gt; tarifaEnvio(0)).toThrow();</code> atrapa al mutante que deja pasar un peso de 0.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// ===== Mini ejecutor de pruebas (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0;
+function test(nombre, prueba) {
+  try { prueba(); pasan++; console.log("PASA  " + nombre); }
+  catch (error) { fallan++; console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  const ver = (v) =&gt; (typeof v === "string" ? `"${v}"` : JSON.stringify(v));
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toEqual(esperado) {
+      if (JSON.stringify(real) !== JSON.stringify(esperado)) throw new Error(`se esperaba ${ver(esperado)} y llegó ${ver(real)}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+// ===== Fin del mini ejecutor =====
+
+function tarifaEnvio(pesoKg) {
+  if (pesoKg &lt;= 0) throw new RangeError("El peso debe ser positivo");
+  if (pesoKg &lt;= 1) return 3;
+  if (pesoKg &lt;= 5) return 6;
+  if (pesoKg &lt;= 20) return 12;
+  throw new RangeError("No enviamos paquetes de más de 20 kg");
+}
+
+// Tus pruebas: reciben la versión de tarifaEnvio que hay que probar.
+function misPruebas(tarifaEnvio) {
+  expect(() =&gt; tarifaEnvio(0)).toThrow();     // límite: el primer peso no válido
+  expect(tarifaEnvio(1)).toBe(3);             // límite superior de la primera franja
+  expect(tarifaEnvio(3)).toBe(6);             // medio de la segunda franja
+  expect(tarifaEnvio(5)).toBe(6);             // límite superior de la segunda franja
+  expect(tarifaEnvio(20)).toBe(12);           // límite superior de la tercera franja
+  expect(() =&gt; tarifaEnvio(21)).toThrow();    // más de 20 kg
+}
+
+// ===== Máquina de mutantes (no hace falta tocarla) =====
+// Cada mutante es tarifaEnvio con UN cambio pequeño.
+const mutantes = {
+  "&lt;= 1 pasó a &lt; 1": (p) =&gt; { if (p &lt;= 0) throw new RangeError(); if (p &lt; 1) return 3; if (p &lt;= 5) return 6; if (p &lt;= 20) return 12; throw new RangeError(); },
+  "&lt;= 5 pasó a &lt; 5": (p) =&gt; { if (p &lt;= 0) throw new RangeError(); if (p &lt;= 1) return 3; if (p &lt; 5) return 6; if (p &lt;= 20) return 12; throw new RangeError(); },
+  "&lt;= 20 pasó a &lt; 20": (p) =&gt; { if (p &lt;= 0) throw new RangeError(); if (p &lt;= 1) return 3; if (p &lt;= 5) return 6; if (p &lt; 20) return 12; throw new RangeError(); },
+  "6 pasó a 7": (p) =&gt; { if (p &lt;= 0) throw new RangeError(); if (p &lt;= 1) return 3; if (p &lt;= 5) return 7; if (p &lt;= 20) return 12; throw new RangeError(); },
+  "&lt;= 0 pasó a &lt; 0": (p) =&gt; { if (p &lt; 0) throw new RangeError(); if (p &lt;= 1) return 3; if (p &lt;= 5) return 6; if (p &lt;= 20) return 12; throw new RangeError(); },
+};
+function pasaTodo(version) {
+  try { misPruebas(version); return true; } catch (error) { return false; }
+}
+if (!pasaTodo(tarifaEnvio)) console.error("original: alguna de tus pruebas falla con la función correcta");
+else console.log("original: pasan todas tus pruebas");
+for (const [cambio, mutante] of Object.entries(mutantes)) {
+  if (pasaTodo(mutante)) console.error(`mutante (${cambio}): SOBREVIVE`);
+  else console.log(`mutante (${cambio}): atrapado`);
+}</code></pre>
+      <p>Seis aserciones bastan, y cada una tiene una razón: los valores límite de cada franja y los dos extremos no válidos. Un solo valor por franja (0.5, 3, 10) cubriría todas las ramas, pero dejaría vivos a tres mutantes. Esa es la diferencia entre ejecutar el código y comprobarlo.</p>
+    </details>
+  </article>
+</section>
   </main>
 </div>
 
@@ -1273,6 +2581,7 @@ return true;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
 <script src="../assets/js/motor.js"></script>
 <script src="../assets/js/terminal.js"></script>
 <script src="../assets/js/practicas.js"></script>

@@ -1184,9 +1184,9 @@ console.log(notificadorFalso.enviados[1]);</textarea>
           <text x="570" y="284" data-pasos="6-">commit: extrae BONO_RICO</text>
         </g>
         <g data-pasos="5">
-          <path class="d-linea" d="M566 238Q490 212 424 236"/>
-          <path class="d-tinta" d="M414 240l13 -1 -6 -11z"/>
-          <text class="d-mono d-peq" x="490" y="226" text-anchor="middle">git restore</text>
+          <path class="d-linea" d="M566 242Q490 226 424 240"/>
+          <path class="d-tinta" d="M413 242L426 245.4L423.5 233.6z"/>
+          <text class="d-mono d-peq" x="490" y="222" text-anchor="middle">git restore</text>
         </g>
       </svg>
     </div>
@@ -1863,4 +1863,937 @@ calcularDanioConRegistro(20, 8);   // Llamando a calcularDanio con [ 20, 8 ]</co
   <aside class="senal nota" data-titulo="Impacto">
     <p>El código se escribe una vez, pero lo heredan otras personas: compañeras que llegan al equipo, voluntarios de un proyecto de código abierto, quien mantenga tu app cuando tú ya no estés. Un código claro abre la puerta a que más gente pueda contribuir, incluidas personas que empiezan, como tú ahora. Un código que solo entiende su autor la cierra. Escribir limpio también es una forma de ser amable con el equipo.</p>
   </aside>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Código limpio es código que otra persona puede leer, entender y cambiar con confianza. El objetivo no es la belleza, sino que cambiarlo sea barato. Los atajos que no se pagan se acumulan como deuda técnica.</li>
+    <li>Los nombres revelan intención: qué es, para qué sirve, cómo se usa. Los números mágicos se convierten en constantes con nombre. Los booleanos se leen como preguntas y las funciones empiezan con un verbo.</li>
+    <li>Cada función hace una cosa, a un solo nivel de detalle, con pocos parámetros (un objeto de opciones si son muchos), sin parámetros bandera y con cláusulas de guarda para los casos especiales.</li>
+    <li>Los comentarios explican el porqué; el qué lo cuentan los nombres. El formato lo decide Prettier y los errores probables los señala ESLint, configurado en <code>eslint.config.mjs</code> y ejecutado con <code>npx eslint .</code>.</li>
+    <li>DRY: cada conocimiento en un solo lugar (a la tercera repetición, abstrae). KISS: la solución que se entiende antes. YAGNI: no construyas lo que nadie ha pedido. Busca alta cohesión y bajo acoplamiento.</li>
+    <li>SOLID: una razón para cambiar por módulo; extender sin modificar; las subclases cumplen las promesas de la madre; interfaces pequeñas; depender de acuerdos, no de detalles (inyección de dependencias).</li>
+    <li>Un olor de código es una pista de un problema. Refactorizar es cambiar la estructura sin cambiar el comportamiento: en pasos pequeños, con pruebas después de cada paso y un commit cuando pasan. Si fallan, vuelve atrás.</li>
+    <li>Strategy intercambia comportamientos; Observer avisa a quien se suscribe; State evita estados imposibles con una tabla de transiciones; Command convierte acciones en objetos que se guardan y se deshacen.</li>
+    <li>Factory centraliza la creación; Module separa lo privado de lo público; Adapter traduce entre formas; Decorator envuelve para añadir. Singleton es estado global disfrazado: mejor crear una instancia y pasarla.</li>
+    <li>Los patrones son vocabulario, no una lista de tareas. Los antipatrones (objeto dios, espagueti, patronitis, optimización prematura) te ayudan a nombrar lo que va mal. Refactoriza hacia un patrón cuando aparezca el dolor.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>En casi todos los ejercicios de esta estación el programa ya funciona: tu trabajo es mejorar cómo está escrito sin cambiar lo que hace. La verificación comprueba las dos cosas, la salida y la regla. Ejecuta después de cada cambio pequeño, como harías con pruebas de verdad. Usa las pistas después de intentarlo unos minutos.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-nombres">
+    <h3>Nombres que hablan</h3>
+    <p>Este programa imprime los nombres de los personajes que siguen vivos, pero parece escrito en clave. Renombra la función, sus variables y las propiedades <code>n</code> y <code>v</code> para que se entienda sin explicaciones. La salida debe seguir siendo <code>Lyra, Kai</code>. Puedes dejar la <code>i</code> del bucle, o cambiar el bucle por un <code>for...of</code>.</p>
+    <div class="taller" id="taller-ej-nombres" data-titulo="Ejercicio 1">
+      <textarea class="taller-codigo">function proc(a) {
+  let r = [];
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].v > 0) r.push(a[i].n);
+  }
+  return r;
+}
+
+const d = [
+  { n: "Lyra", v: 30 },
+  { n: "Bram", v: 0 },
+  { n: "Kai", v: 12 },
+];
+console.log(proc(d).join(", "));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var limpio = codigo.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "").replace(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/g, '""');
+if (salida[0] !== "Lyra, Kai") return "La salida cambió: debería ser «Lyra, Kai» y es «" + (salida[0] || "(nada)") + "».";
+if (/\bproc\b/.test(limpio)) return "La función sigue llamándose proc. Ponle un nombre que diga qué devuelve, por ejemplo nombresDeVivos.";
+if (/\b(a|r|d)\b/.test(limpio)) return "Quedan nombres de una letra (a, r o d). Cámbialos por nombres que digan qué guardan: personajes, vivos…";
+if (/\.(n|v)\b|\b(n|v)\s*:/.test(limpio)) return "Las propiedades n y v siguen ahí. Llámalas nombre y vida (en los datos y donde se usan).";
+var m = limpio.match(/function\s+([\w$]+)/);
+if (!m || m[1].length < 6) return "Dale a la función un nombre descriptivo, de al menos seis letras.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Pregúntate qué es cada cosa. <code>d</code> es una lista de personajes; <code>a</code> es esa misma lista dentro de la función; <code>r</code> son los nombres de los que siguen vivos; <code>v</code> es la vida y <code>n</code>, el nombre.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Cambia las propiedades en los dos sitios: en los objetos (<code>{ nombre: "Lyra", vida: 30 }</code>) y donde se leen (<code>personaje.vida</code>). En VS Code, <kbd>F2</kbd> lo haría por ti.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function nombresDeVivos(personajes) {
+  const vivos = [];
+  for (const personaje of personajes) {
+    if (personaje.vida &gt; 0) vivos.push(personaje.nombre);
+  }
+  return vivos;
+}
+
+const personajes = [
+  { nombre: "Lyra", vida: 30 },
+  { nombre: "Bram", vida: 0 },
+  { nombre: "Kai", vida: 12 },
+];
+console.log(nombresDeVivos(personajes).join(", "));</code></pre>
+      <p>Con lo que viste en la <a href="11-colecciones.html">Estación 11</a> también podrías escribir el cuerpo en una línea: <code>return personajes.filter((p) =&gt; p.vida &gt; 0).map((p) =&gt; p.nombre);</code>. En una función flecha tan corta, un nombre de una letra como <code>p</code> es aceptable: su alcance es de una sola línea.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-guardas">
+    <h3>Aplana la flecha</h3>
+    <p>La función <code>puedeEntrar</code> es código flecha: tres <code>if</code> anidados con sus <code>else</code>. Reescríbela con cláusulas de guarda: ningún <code>else</code> y ningún bloque dentro de otro bloque dentro de la función. Las seis líneas de salida no deben cambiar. Cuidado con el orden de las guardas: las dos últimas pruebas comprueban qué mensaje gana cuando fallan varias condiciones a la vez.</p>
+    <div class="taller" id="taller-ej-guardas" data-titulo="Ejercicio 2">
+      <textarea class="taller-codigo">function puedeEntrar(persona) {
+  if (persona.tieneEntrada) {
+    if (persona.edad >= 18) {
+      if (!persona.expulsada) {
+        return "Adelante";
+      } else {
+        return "No puedes volver a entrar";
+      }
+    } else {
+      return "Solo mayores de edad";
+    }
+  } else {
+    return "Compra una entrada primero";
+  }
+}
+
+// Pruebas (no las cambies)
+console.log(puedeEntrar({ tieneEntrada: true, edad: 25, expulsada: false }));
+console.log(puedeEntrar({ tieneEntrada: true, edad: 25, expulsada: true }));
+console.log(puedeEntrar({ tieneEntrada: true, edad: 15, expulsada: false }));
+console.log(puedeEntrar({ tieneEntrada: false, edad: 30, expulsada: false }));
+console.log(puedeEntrar({ tieneEntrada: false, edad: 15, expulsada: true }));
+console.log(puedeEntrar({ tieneEntrada: true, edad: 15, expulsada: true }));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = ["Adelante", "No puedes volver a entrar", "Solo mayores de edad", "Compra una entrada primero", "Compra una entrada primero", "Solo mayores de edad"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La salida cambió. La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "». Revisa el orden de las guardas.";
+}
+var limpio = codigo.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "").replace(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/g, '""');
+if (/\belse\b/.test(limpio)) return "Todavía hay algún else. Con cláusulas de guarda no hacen falta: cada if termina con return.";
+var prof = 0, max = 0;
+for (var k = 0; k < limpio.length; k++) {
+  if (limpio[k] === "{") { prof++; if (prof > max) max = prof; }
+  if (limpio[k] === "}") prof--;
+}
+if (max > 2) return "Todavía hay un bloque dentro de otro bloque dentro de la función. Saca cada condición a su propio if al nivel de la función.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Empieza por el caso de fuera: si la persona <em>no</em> tiene entrada, sal ya: <code>if (!persona.tieneEntrada) return "Compra una entrada primero";</code></p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Cada guarda es la condición contraria del <code>if</code> original, en el mismo orden: primero la entrada, después la edad, después la expulsión. El caso feliz, <code>return "Adelante";</code>, va al final.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const EDAD_MINIMA = 18;
+
+function puedeEntrar(persona) {
+  if (!persona.tieneEntrada) return "Compra una entrada primero";
+  if (persona.edad &lt; EDAD_MINIMA) return "Solo mayores de edad";
+  if (persona.expulsada) return "No puedes volver a entrar";
+  return "Adelante";
+}
+
+// Pruebas (no las cambies)
+console.log(puedeEntrar({ tieneEntrada: true, edad: 25, expulsada: false }));
+console.log(puedeEntrar({ tieneEntrada: true, edad: 25, expulsada: true }));
+console.log(puedeEntrar({ tieneEntrada: true, edad: 15, expulsada: false }));
+console.log(puedeEntrar({ tieneEntrada: false, edad: 30, expulsada: false }));
+console.log(puedeEntrar({ tieneEntrada: false, edad: 15, expulsada: true }));
+console.log(puedeEntrar({ tieneEntrada: true, edad: 15, expulsada: true }));</code></pre>
+      <p>Si inviertes el orden de dos guardas, alguna de las dos últimas pruebas lo detecta: por eso las pruebas de caracterización deben incluir casos donde se cumplen varias condiciones a la vez.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-opciones">
+    <h3>Adiós a los booleanos misteriosos</h3>
+    <p>¿Qué significan <code>false, true</code> en <code>crearEnemigo("Murciélago", 15, 6, false, true)</code>? Cambia la función para que reciba <strong>un solo parámetro</strong>: un objeto que desestructuras, con <code>esJefe</code> y <code>vuela</code> en <code>false</code> por defecto. Actualiza las tres llamadas para que pasen un objeto y no escriban ningún <code>false</code> (para eso están los valores por defecto). La salida no puede cambiar.</p>
+    <div class="taller" id="taller-ej-opciones" data-titulo="Ejercicio 3">
+      <textarea class="taller-codigo">function crearEnemigo(nombre, vida, ataque, esJefe, vuela) {
+  let descripcion = nombre + " (" + vida + " PV, ataque " + ataque + ")";
+  if (esJefe) descripcion = "JEFE " + descripcion;
+  if (vuela) descripcion += " [vuela]";
+  return descripcion;
+}
+
+console.log(crearEnemigo("Slime", 30, 4, false, false));
+console.log(crearEnemigo("Murciélago", 15, 6, false, true));
+console.log(crearEnemigo("Dragón", 900, 45, true, true));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = ["Slime (30 PV, ataque 4)", "Murciélago (15 PV, ataque 6) [vuela]", "JEFE Dragón (900 PV, ataque 45) [vuela]"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La salida cambió. La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+if (!/function\s+crearEnemigo\s*\(\s*\{[^}]*\}\s*\)/.test(codigo)) return "crearEnemigo debe recibir un único parámetro desestructurado: function crearEnemigo({ nombre, vida, ataque, esJefe = false, vuela = false }).";
+if (!/esJefe\s*=\s*false/.test(codigo) || !/vuela\s*=\s*false/.test(codigo)) return "Dale a esJefe y a vuela el valor por defecto false dentro de las llaves.";
+var llamadas = codigo.match(/crearEnemigo\(([^)]*)\)/g) || [];
+for (var j = 0; j < llamadas.length; j++) {
+  if (/^crearEnemigo\(\s*\{/.test(llamadas[j])) continue;
+  if (/^crearEnemigo\(\s*"/.test(llamadas[j])) return "Alguna llamada todavía pasa los datos sueltos. Pásale un objeto: crearEnemigo({ nombre: \"Slime\", vida: 30, ataque: 4 }).";
+}
+if (/crearEnemigo\(\s*\{[^)]*false/.test(codigo.replace(/function\s+crearEnemigo\s*\([^)]*\)/, ""))) return "Las llamadas no necesitan escribir false: si no pasas esJefe o vuela, toman su valor por defecto.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La firma queda así: <code>function crearEnemigo({ nombre, vida, ataque, esJefe = false, vuela = false })</code>. El cuerpo no necesita cambios: las variables se siguen llamando igual.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La llamada del dragón pasa a ser <code>crearEnemigo({ nombre: "Dragón", vida: 900, ataque: 45, esJefe: true, vuela: true })</code>. En la del slime no hace falta nombrar <code>esJefe</code> ni <code>vuela</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function crearEnemigo({ nombre, vida, ataque, esJefe = false, vuela = false }) {
+  let descripcion = `${nombre} (${vida} PV, ataque ${ataque})`;
+  if (esJefe) descripcion = `JEFE ${descripcion}`;
+  if (vuela) descripcion += " [vuela]";
+  return descripcion;
+}
+
+console.log(crearEnemigo({ nombre: "Slime", vida: 30, ataque: 4 }));
+console.log(crearEnemigo({ nombre: "Murciélago", vida: 15, ataque: 6, vuela: true }));
+console.log(crearEnemigo({ nombre: "Dragón", vida: 900, ataque: 45, esJefe: true, vuela: true }));</code></pre>
+      <p>Las llamadas son un poco más largas, pero cada dato lleva su nombre y el orden ya no importa. Aprovechamos para usar plantillas literales, que se leen mejor que los <code>+</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-cupones">
+    <h3>Cupones sin tocar lo que funciona</h3>
+    <p>La tienda aplica cupones con el principio abierto/cerrado: cada cupón es una estrategia en el objeto <code>CUPONES</code>. Añade dos cupones nuevos <strong>sin modificar la función <code>aplicarCupon</code></strong>:</p>
+    <ul>
+      <li><code>MITAD</code>: el total a la mitad.</li>
+      <li><code>GRANDE</code>: 20 menos, pero solo si el total es de 50 o más; si no, el total no cambia.</li>
+    </ul>
+    <p>La salida esperada es <code>90</code>, <code>95</code>, <code>50</code>, <code>30</code>, <code>60</code> y <code>100</code>, una por línea.</p>
+    <div class="taller" id="taller-ej-cupones" data-titulo="Ejercicio 4">
+      <textarea class="taller-codigo">const CUPONES = {
+  DESCUENTO10: (total) => total * 0.9,
+  MENOS5: (total) => total - 5,
+};
+
+// No modifiques esta función
+function aplicarCupon(total, codigo) {
+  const cupon = CUPONES[codigo];
+  return cupon ? cupon(total) : total;
+}
+
+// Pruebas (no las cambies)
+console.log(aplicarCupon(100, "DESCUENTO10"));
+console.log(aplicarCupon(100, "MENOS5"));
+console.log(aplicarCupon(100, "MITAD"));
+console.log(aplicarCupon(30, "GRANDE"));
+console.log(aplicarCupon(80, "GRANDE"));
+console.log(aplicarCupon(100, "NOEXISTE"));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var i0 = codigo.search(/function\s+aplicarCupon\s*\(/);
+if (i0 === -1) return "No encuentro la función aplicarCupon. Déjala como estaba.";
+var abre = codigo.indexOf("{", i0), prof = 0, fin = -1;
+for (var k = abre; k < codigo.length; k++) {
+  if (codigo[k] === "{") prof++;
+  if (codigo[k] === "}") { prof--; if (prof === 0) { fin = k; break; } }
+}
+var texto = codigo.slice(i0, fin + 1).replace(/\s+/g, " ");
+if (texto !== "function aplicarCupon(total, codigo) { const cupon = CUPONES[codigo]; return cupon ? cupon(total) : total; }") return "Modificaste aplicarCupon. El reto es ampliar el comportamiento añadiendo entradas a CUPONES, sin tocar esa función.";
+var esperado = ["90", "95", "50", "30", "60", "100"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Cada cupón es una propiedad nueva del objeto, con la misma forma que las demás: <code>MITAD: (total) =&gt; total / 2,</code></p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La condición de <code>GRANDE</code> vive dentro de su propia función: <code>(total) =&gt; (total &gt;= 50 ? total - 20 : total)</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const MINIMO_CUPON_GRANDE = 50;
+const REBAJA_CUPON_GRANDE = 20;
+
+const CUPONES = {
+  DESCUENTO10: (total) =&gt; total * 0.9,
+  MENOS5: (total) =&gt; total - 5,
+  MITAD: (total) =&gt; total / 2,
+  GRANDE: (total) =&gt; (total &gt;= MINIMO_CUPON_GRANDE ? total - REBAJA_CUPON_GRANDE : total),
+};
+
+// No modifiques esta función
+function aplicarCupon(total, codigo) {
+  const cupon = CUPONES[codigo];
+  return cupon ? cupon(total) : total;
+}
+
+// Pruebas (no las cambies)
+console.log(aplicarCupon(100, "DESCUENTO10"));
+console.log(aplicarCupon(100, "MENOS5"));
+console.log(aplicarCupon(100, "MITAD"));
+console.log(aplicarCupon(30, "GRANDE"));
+console.log(aplicarCupon(80, "GRANDE"));
+console.log(aplicarCupon(100, "NOEXISTE"));</code></pre>
+      <p>Cada regla de negocio nueva es una línea nueva, y la función que ya funcionaba no se tocó: nada de lo que ya estaba probado pudo romperse.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-logros">
+    <h3>Tu propio emisor de eventos</h3>
+    <p>Completa <code>crearEmisor</code> para que funcione como el patrón Observer, y suscribe dos oyentes a <code>partida</code>: uno que imprima <code>Nivel X alcanzado</code> y otro que imprima <code>¡Logro: Veterana!</code> solo cuando el nivel sea 10 o más. La salida debe ser:</p>
+    <pre class="consola"><code>Nivel 2 alcanzado
+Nivel 10 alcanzado
+¡Logro: Veterana!</code></pre>
+    <div class="taller" id="taller-ej-logros" data-titulo="Ejercicio 5">
+      <textarea class="taller-codigo">function crearEmisor() {
+  const oyentes = [];
+  return {
+    suscribir(oyente) {
+      // 1. Guarda el oyente en la lista
+    },
+    emitir(datos) {
+      // 2. Llama a cada oyente, pasándole los datos
+    },
+  };
+}
+
+const partida = crearEmisor();
+
+// 3. Suscribe aquí los dos oyentes con partida.suscribir(...)
+
+
+// Pruebas (no las cambies)
+partida.emitir({ nivel: 2 });
+partida.emitir({ nivel: 10 });</textarea>
+      <script type="text/plain" class="taller-verificar">
+var suscripciones = (codigo.match(/partida\.suscribir\(/g) || []).length;
+if (suscripciones < 2) return "Suscribe dos oyentes con partida.suscribir(...): uno para el nivel y otro para el logro.";
+var esperado = ["Nivel 2 alcanzado", "Nivel 10 alcanzado", "¡Logro: Veterana!"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+if (salida.length > 3) return "Sobran líneas: el logro solo debe aparecer cuando el nivel es 10 o más.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>suscribir</code> solo tiene que hacer <code>oyentes.push(oyente);</code>. <code>emitir</code> recorre la lista: <code>for (const oyente of oyentes) oyente(datos);</code></p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Un oyente es una función que recibe los datos: <code>partida.suscribir((datos) =&gt; console.log(`Nivel ${datos.nivel} alcanzado`));</code>. El del logro lleva un <code>if</code> dentro.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const NIVEL_VETERANA = 10;
+
+function crearEmisor() {
+  const oyentes = [];
+  return {
+    suscribir(oyente) {
+      oyentes.push(oyente);
+    },
+    emitir(datos) {
+      for (const oyente of oyentes) {
+        oyente(datos);
+      }
+    },
+  };
+}
+
+const partida = crearEmisor();
+
+partida.suscribir((datos) =&gt; console.log(`Nivel ${datos.nivel} alcanzado`));
+partida.suscribir((datos) =&gt; {
+  if (datos.nivel &gt;= NIVEL_VETERANA) console.log("¡Logro: Veterana!");
+});
+
+// Pruebas (no las cambies)
+partida.emitir({ nivel: 2 });
+partida.emitir({ nivel: 10 });</code></pre>
+      <p>La lista <code>oyentes</code> es privada gracias al closure: desde fuera solo se puede suscribir y emitir. Para practicar más, añade un método <code>desuscribir</code> como el de la sección de patrones.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-pedido">
+    <h3>La máquina de estados de un pedido</h3>
+    <p>Un pedido de una tienda pasa por estos estados: <code>pendiente</code> → (pagar) → <code>pagado</code> → (enviar) → <code>enviado</code> → (entregar) → <code>entregado</code>. Mientras está pendiente o pagado se puede <code>cancelar</code> (pasa a <code>cancelado</code>); una vez enviado, ya no. Completa la tabla de transiciones y el método <code>recibir</code>, <strong>sin comparar el estado con <code>===</code></strong>: toda la lógica tiene que salir de la tabla. La salida esperada es:</p>
+    <pre class="consola"><code>enviar: no permitido desde pendiente
+pagar: pagado
+enviar: enviado
+cancelar: no permitido desde enviado
+entregar: entregado
+pagar: pagado
+cancelar: cancelado
+pagar: no permitido desde cancelado</code></pre>
+    <div class="taller" id="taller-ej-pedido" data-titulo="Ejercicio 6">
+      <textarea class="taller-codigo">// 1. Completa la tabla: para cada estado, a qué estado lleva cada evento
+const transiciones = {
+  pendiente: {},
+  pagado: {},
+  enviado: {},
+  entregado: {},
+  cancelado: {},
+};
+
+function crearPedido() {
+  let estado = "pendiente";
+  return {
+    recibir(evento) {
+      // 2. Busca en la tabla el siguiente estado.
+      //    Si existe: cambia el estado y devuélvelo.
+      //    Si no: devuelve "no permitido desde " + estado
+    },
+  };
+}
+
+// Pruebas (no las cambies)
+const pedidoA = crearPedido();
+for (const evento of ["enviar", "pagar", "enviar", "cancelar", "entregar"]) {
+  console.log(`${evento}: ${pedidoA.recibir(evento)}`);
+}
+const pedidoB = crearPedido();
+for (const evento of ["pagar", "cancelar", "pagar"]) {
+  console.log(`${evento}: ${pedidoB.recibir(evento)}`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var limpio = codigo.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+if (/estado\s*[!=]==?|[!=]==?\s*estado\b|===\s*"(pendiente|pagado|enviado|entregado|cancelado)"/.test(limpio)) return "No compares el estado con ===. La máquina debe decidir mirando la tabla: transiciones[estado][evento].";
+if (!/transiciones\s*\[\s*estado\s*\]/.test(limpio)) return "recibir debe buscar en la tabla con transiciones[estado][evento].";
+var esperado = ["enviar: no permitido desde pendiente", "pagar: pagado", "enviar: enviado", "cancelar: no permitido desde enviado", "entregar: entregado", "pagar: pagado", "cancelar: cancelado", "pagar: no permitido desde cancelado"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La fila de <code>pendiente</code> queda así: <code>pendiente: { pagar: "pagado", cancelar: "cancelado" },</code>. Los estados finales (<code>entregado</code> y <code>cancelado</code>) se quedan con un objeto vacío: no aceptan ningún evento.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Dentro de <code>recibir</code>: <code>const siguiente = transiciones[estado][evento];</code>. Si <code>siguiente</code> no existe, devuelve el texto de «no permitido»; si existe, asígnalo a <code>estado</code> y devuélvelo.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const transiciones = {
+  pendiente: { pagar: "pagado", cancelar: "cancelado" },
+  pagado: { enviar: "enviado", cancelar: "cancelado" },
+  enviado: { entregar: "entregado" },
+  entregado: {},
+  cancelado: {},
+};
+
+function crearPedido() {
+  let estado = "pendiente";
+  return {
+    recibir(evento) {
+      const siguiente = transiciones[estado][evento];
+      if (!siguiente) return "no permitido desde " + estado;
+      estado = siguiente;
+      return estado;
+    },
+  };
+}
+
+// Pruebas (no las cambies)
+const pedidoA = crearPedido();
+for (const evento of ["enviar", "pagar", "enviar", "cancelar", "entregar"]) {
+  console.log(`${evento}: ${pedidoA.recibir(evento)}`);
+}
+const pedidoB = crearPedido();
+for (const evento of ["pagar", "cancelar", "pagar"]) {
+  console.log(`${evento}: ${pedidoB.recibir(evento)}`);
+}</code></pre>
+      <p>Toda la política de la tienda está en seis líneas de datos. Si mañana se permite cancelar un pedido enviado (con devolución), se cambia la tabla y nada más.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-deshacer">
+    <h3>Deshacer y rehacer con comandos</h3>
+    <p>Completa el patrón Command para un inventario con deshacer y rehacer. Hay dos pilas: <code>hechos</code> (lo que se puede deshacer) y <code>deshechos</code> (lo que se puede rehacer). Escribe el método <code>deshacer</code> del comando y las funciones <code>deshacer()</code> y <code>rehacer()</code>. Si no hay nada que deshacer o rehacer, no deben fallar. La salida esperada es:</p>
+    <pre class="consola"><code>espada, escudo, poción
+espada
+espada, escudo
+0</code></pre>
+    <div class="taller" id="taller-ej-deshacer" data-titulo="Ejercicio 7">
+      <textarea class="taller-codigo">const inventario = [];
+const hechos = [];      // comandos ejecutados (para deshacer)
+const deshechos = [];   // comandos deshechos (para rehacer)
+
+function crearComandoAgregar(objeto) {
+  return {
+    ejecutar() {
+      inventario.push(objeto);
+    },
+    // 1. Escribe deshacer(): quita el último objeto del inventario
+  };
+}
+
+function ejecutar(comando) {
+  comando.ejecutar();
+  hechos.push(comando);
+  deshechos.length = 0;   // una acción nueva borra lo que se podía rehacer
+}
+
+function deshacer() {
+  // 2. Saca el último comando de hechos, llama a su deshacer()
+  //    y guárdalo en deshechos. Si hechos está vacío, no hagas nada.
+}
+
+function rehacer() {
+  // 3. Lo contrario: saca de deshechos, vuelve a ejecutarlo y guárdalo en hechos.
+}
+
+// Pruebas (no las cambies)
+ejecutar(crearComandoAgregar("espada"));
+ejecutar(crearComandoAgregar("escudo"));
+ejecutar(crearComandoAgregar("poción"));
+console.log(inventario.join(", "));
+deshacer();
+deshacer();
+console.log(inventario.join(", "));
+rehacer();
+console.log(inventario.join(", "));
+deshacer();
+deshacer();
+deshacer();
+console.log(inventario.length);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = ["espada, escudo, poción", "espada", "espada, escudo", "0"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+if (!/deshacer\s*\(\s*\)\s*\{[\s\S]*inventario\.pop\(\)/.test(codigo)) return "El comando necesita su propio método deshacer() que quite el objeto del inventario (inventario.pop()).";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El método del comando es el contrario de <code>ejecutar</code>: <code>deshacer() { inventario.pop(); }</code>. No olvides la coma entre los dos métodos del objeto.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En la función <code>deshacer()</code>: <code>const comando = hechos.pop(); if (!comando) return;</code>. Después, <code>comando.deshacer()</code> y <code>deshechos.push(comando)</code>. <code>rehacer()</code> es simétrica. El tercer <code>deshacer()</code> seguido encuentra la pila vacía: por eso la guarda.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const inventario = [];
+const hechos = [];      // comandos ejecutados (para deshacer)
+const deshechos = [];   // comandos deshechos (para rehacer)
+
+function crearComandoAgregar(objeto) {
+  return {
+    ejecutar() {
+      inventario.push(objeto);
+    },
+    deshacer() {
+      inventario.pop();
+    },
+  };
+}
+
+function ejecutar(comando) {
+  comando.ejecutar();
+  hechos.push(comando);
+  deshechos.length = 0;   // una acción nueva borra lo que se podía rehacer
+}
+
+function deshacer() {
+  const comando = hechos.pop();
+  if (!comando) return;
+  comando.deshacer();
+  deshechos.push(comando);
+}
+
+function rehacer() {
+  const comando = deshechos.pop();
+  if (!comando) return;
+  comando.ejecutar();
+  hechos.push(comando);
+}
+
+// Pruebas (no las cambies)
+ejecutar(crearComandoAgregar("espada"));
+ejecutar(crearComandoAgregar("escudo"));
+ejecutar(crearComandoAgregar("poción"));
+console.log(inventario.join(", "));
+deshacer();
+deshacer();
+console.log(inventario.join(", "));
+rehacer();
+console.log(inventario.join(", "));
+deshacer();
+deshacer();
+deshacer();
+console.log(inventario.length);</code></pre>
+      <p>Añadir otro tipo de acción, como «equipar» o «vender», es crear otro comando con su <code>ejecutar</code> y su <code>deshacer</code>: <code>deshacer()</code> y <code>rehacer()</code> no cambian, porque no saben qué hace cada comando.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-cafe">
+    <h3>Una cafetería con decoradores</h3>
+    <p>Una bebida es cualquier objeto con los métodos <code>descripcion()</code> y <code>precio()</code>. Escribe tres decoradores (funciones que reciben una bebida y devuelven otra con la misma forma), sin usar clases ni herencia:</p>
+    <ul>
+      <li><code>conLeche</code>: añade « con leche» a la descripción y 0.5 al precio.</li>
+      <li><code>conCaramelo</code>: añade « con caramelo» y 0.75.</li>
+      <li><code>doble</code>: añade « (doble)» al final y multiplica el precio por 2.</li>
+    </ul>
+    <p>La bebida original no debe cambiar. La salida esperada es:</p>
+    <pre class="consola"><code>Café con leche: $2.50
+Café con leche con caramelo: $3.25
+Café con caramelo (doble): $5.50
+2</code></pre>
+    <div class="taller" id="taller-ej-cafe" data-titulo="Ejercicio 8">
+      <textarea class="taller-codigo">const cafe = {
+  descripcion: () => "Café",
+  precio: () => 2,
+};
+
+// Escribe aquí conLeche, conCaramelo y doble
+
+
+// Pruebas (no las cambies)
+const pedidos = [conLeche(cafe), conCaramelo(conLeche(cafe)), doble(conCaramelo(cafe))];
+for (const bebida of pedidos) {
+  console.log(`${bebida.descripcion()}: $${bebida.precio().toFixed(2)}`);
+}
+console.log(cafe.precio());</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (/\bclass\b|\bextends\b/.test(codigo)) return "Resuélvelo sin clases: cada decorador es una función que devuelve un objeto nuevo.";
+var esperado = ["Café con leche: $2.50", "Café con leche con caramelo: $3.25", "Café con caramelo (doble): $5.50", "2"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Un decorador devuelve un objeto nuevo que delega en la bebida que envuelve: <code>descripcion: () =&gt; bebida.descripcion() + " con leche"</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Si tu salida da <code>$2.00</code> o el último número no es 2, probablemente estás modificando la bebida recibida (<code>bebida.precio = …</code>) en lugar de devolver un objeto nuevo.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const cafe = {
+  descripcion: () =&gt; "Café",
+  precio: () =&gt; 2,
+};
+
+function conLeche(bebida) {
+  return {
+    descripcion: () =&gt; `${bebida.descripcion()} con leche`,
+    precio: () =&gt; bebida.precio() + 0.5,
+  };
+}
+
+function conCaramelo(bebida) {
+  return {
+    descripcion: () =&gt; `${bebida.descripcion()} con caramelo`,
+    precio: () =&gt; bebida.precio() + 0.75,
+  };
+}
+
+function doble(bebida) {
+  return {
+    descripcion: () =&gt; `${bebida.descripcion()} (doble)`,
+    precio: () =&gt; bebida.precio() * 2,
+  };
+}
+
+// Pruebas (no las cambies)
+const pedidos = [conLeche(cafe), conCaramelo(conLeche(cafe)), doble(conCaramelo(cafe))];
+for (const bebida of pedidos) {
+  console.log(`${bebida.descripcion()}: $${bebida.precio().toFixed(2)}`);
+}
+console.log(cafe.precio());</code></pre>
+      <p>Con tres decoradores puedes crear cualquier combinación sin escribir una sola clase nueva. Con herencia necesitarías <code>CafeConLeche</code>, <code>CafeConLecheYCaramelo</code>, <code>CafeDobleConCaramelo</code>… una por combinación.</p>
+    </details>
+  </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: rescata la mazmorra</h2>
+  <p>Heredaste el código de un pequeño juego de mazmorras. Funciona, pero es el ejemplo perfecto de todo lo que viste en esta estación: nombres de una letra, números mágicos, un <code>switch</code> que crecerá con cada tipo de sala, <code>var</code>, <code>==</code> y una función que lo hace todo. Tu misión es dejarlo limpio <strong>sin cambiar ni una línea de lo que imprime</strong>. Es exactamente lo que harías en tu primer trabajo con un proyecto real.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Caracteriza.</strong> Ejecuta el programa y lee su salida con calma. Esas ocho líneas son tu prueba de caracterización: la verificación del taller las compara una a una, así que puedes ejecutar después de cada paso para saber si algo cambió. En tu computadora, este sería el momento del primer commit.</p></div></li>
+    <li><div><p><strong>Contenta al linter.</strong> <code>var</code> pasa a <code>const</code> o <code>let</code>, y <code>==</code> a <code>===</code>. Ejecuta.</p></div></li>
+    <li><div><p><strong>Renombra.</strong> <code>h</code> es el héroe; <code>n</code>, <code>v</code>, <code>o</code> y <code>l</code> son su nombre, vida, oro y logros. Cambia cada nombre en todos los sitios donde aparece. Ejecuta.</p></div></li>
+    <li><div><p><strong>Dale nombre a los números.</strong> 25, 30, 10, 15 y 50 significan algo: el oro de un cofre, el daño de un monstruo… Conviértelos en constantes. Ejecuta.</p></div></li>
+    <li><div><p><strong>Reemplaza el <code>switch</code> por estrategias.</strong> Crea un objeto con una función por tipo de sala (<code>cofre</code>, <code>monstruo</code>, <code>trampa</code>, <code>vacia</code>). Cada una aplica su efecto al personaje y devuelve el texto que se imprime. Así, una sala nueva será una entrada nueva en el objeto. Ejecuta.</p></div></li>
+    <li><div><p><strong>Divide en funciones pequeñas.</strong> Extrae la comprobación de logros y la exploración de una sala. Haz que <code>jugar</code> reciba el personaje y la lista de salas como parámetros en lugar de leer variables globales. Ninguna función debería pasar de 15 líneas. Ejecuta.</p></div></li>
+    <li><div><p><strong>Opcional: eventos.</strong> En lugar de imprimir desde todas partes, emite los mensajes (patrón Observer) y suscribe un único oyente que haga <code>console.log</code>. Mañana otro oyente podría mostrarlos en la pantalla del juego sin tocar la lógica.</p></div></li>
+  </ol>
+  <p>La verificación comprueba que la salida es idéntica y que el código cumple estas reglas: nada de <code>var</code>, <code>==</code> ni <code>switch</code>; ningún nombre de una letra para el héroe ni sus propiedades; los números 25, 30, 10, 15 y 50 aparecen una sola vez cada uno; al menos cuatro funciones, y ninguna de más de 15 líneas.</p>
+  <div class="taller" id="taller-proyecto" data-titulo="Proyecto: rescata la mazmorra">
+    <textarea class="taller-codigo">var h = { n: "Lyra", v: 100, o: 0, l: [] };
+var salas = ["cofre", "monstruo", "trampa", "cofre", "monstruo", "vacia"];
+
+function jugar() {
+  for (var i = 0; i < salas.length; i++) {
+    switch (salas[i]) {
+      case "cofre":
+        h.o = h.o + 25;
+        console.log("Sala " + (i + 1) + ": cofre. Oro: " + h.o);
+        break;
+      case "monstruo":
+        h.v = h.v - 30;
+        h.o = h.o + 10;
+        console.log("Sala " + (i + 1) + ": monstruo. Vida: " + h.v + ", oro: " + h.o);
+        break;
+      case "trampa":
+        h.v = h.v - 15;
+        console.log("Sala " + (i + 1) + ": trampa. Vida: " + h.v);
+        break;
+      default:
+        console.log("Sala " + (i + 1) + ": vacía");
+    }
+    if (h.o >= 50 && h.l.indexOf("Rico") == -1) {
+      h.l.push("Rico");
+      console.log("¡Logro: Rico!");
+    }
+    if (h.v <= 0) {
+      console.log(h.n + " ha caído");
+      return;
+    }
+  }
+  console.log(h.n + " sale con " + h.v + " de vida y " + h.o + " de oro. Logros: " + h.l.join(", "));
+}
+
+jugar();</textarea>
+    <script type="text/plain" class="taller-verificar">
+var esperado = ["Sala 1: cofre. Oro: 25", "Sala 2: monstruo. Vida: 70, oro: 35", "Sala 3: trampa. Vida: 55", "Sala 4: cofre. Oro: 60", "¡Logro: Rico!", "Sala 5: monstruo. Vida: 25, oro: 70", "Sala 6: vacía", "Lyra sale con 25 de vida y 70 de oro. Logros: Rico"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La salida cambió. La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "». Deshaz el último paso y prueba con uno más pequeño.";
+}
+if (salida.length > esperado.length) return "Sobran líneas en la salida: «" + salida[esperado.length] + "».";
+var limpio = codigo.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "").replace(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/g, '""');
+if (/\bvar\s/.test(limpio)) return "Paso 2: queda algún var. Usa const o let.";
+if (/[^=!<>]==[^=]|!=[^=]/.test(limpio)) return "Paso 2: queda algún == o !=. Usa === y !==.";
+if (/\bh\b/.test(limpio) || /\.(n|v|o|l)\b|\b(n|v|o|l)\s*:/.test(limpio)) return "Paso 3: quedan nombres de una letra (h, n, v, o o l). Renómbralos: heroe, nombre, vida, oro, logros.";
+var numeros = ["25", "30", "10", "15", "50"];
+for (var j = 0; j < numeros.length; j++) {
+  var veces = (limpio.match(new RegExp("(^|[^\\w.])" + numeros[j] + "(?![\\w.])", "g")) || []).length;
+  if (veces > 1) return "Paso 4: el número " + numeros[j] + " aparece " + veces + " veces. Guárdalo en una constante con nombre y usa la constante.";
+}
+if (/\bswitch\b/.test(limpio)) return "Paso 5: queda el switch. Crea un objeto con una función por tipo de sala y búscala con el tipo: efectos[tipo](personaje).";
+var inicios = /\bfunction\b[^{]*\{|=>\s*\{|(^|\n)[ \t]*(?!(?:if|for|while|switch|catch)\b)[A-Za-z_$][\w$]*\s*\([^)\n]*\)\s*\{/g;
+var m, funciones = 0;
+while ((m = inicios.exec(limpio))) {
+  funciones++;
+  var abre = m.index + m[0].length - 1, prof = 0, fin = -1;
+  for (var k = abre; k < limpio.length; k++) {
+    if (limpio[k] === "{") prof++;
+    if (limpio[k] === "}") { prof--; if (prof === 0) { fin = k; break; } }
+  }
+  var lineas = limpio.slice(abre + 1, fin).split("\n").filter(function (l) { return l.trim() !== ""; }).length;
+  if (lineas > 15) {
+    var nombre = (m[0].match(/function\s+([\w$]+)|([\w$]+)\s*\(/) || []);
+    return "Paso 6: la función " + (nombre[1] || nombre[2] || "") + " tiene " + lineas + " líneas. Divídela: ninguna debería pasar de 15.";
+  }
+}
+if (funciones < 4) return "Paso 6: divide el trabajo en al menos cuatro funciones (por ejemplo, una por tipo de sala, comprobarLogros, explorarSala y jugar).";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <pre><code class="language-js">const ORO_POR_COFRE = 25;
+const DANIO_DE_MONSTRUO = 30;
+const ORO_POR_MONSTRUO = 10;
+const DANIO_DE_TRAMPA = 15;
+const ORO_PARA_SER_RICO = 50;
+
+const heroe = { nombre: "Lyra", vida: 100, oro: 0, logros: [] };
+const salas = ["cofre", "monstruo", "trampa", "cofre", "monstruo", "vacia"];
+
+// Observer: quien quiera enterarse de lo que pasa, se suscribe
+const oyentes = [];
+const suscribir = (oyente) =&gt; oyentes.push(oyente);
+const emitir = (mensaje) =&gt; oyentes.forEach((oyente) =&gt; oyente(mensaje));
+
+// Strategy: el efecto de cada tipo de sala
+const efectosDeSala = {
+  cofre(personaje) {
+    personaje.oro += ORO_POR_COFRE;
+    return `cofre. Oro: ${personaje.oro}`;
+  },
+  monstruo(personaje) {
+    personaje.vida -= DANIO_DE_MONSTRUO;
+    personaje.oro += ORO_POR_MONSTRUO;
+    return `monstruo. Vida: ${personaje.vida}, oro: ${personaje.oro}`;
+  },
+  trampa(personaje) {
+    personaje.vida -= DANIO_DE_TRAMPA;
+    return `trampa. Vida: ${personaje.vida}`;
+  },
+  vacia() {
+    return "vacía";
+  },
+};
+
+function comprobarLogros(personaje) {
+  const esRico = personaje.oro &gt;= ORO_PARA_SER_RICO;
+  if (esRico &amp;&amp; !personaje.logros.includes("Rico")) {
+    personaje.logros.push("Rico");
+    emitir("¡Logro: Rico!");
+  }
+}
+
+function explorarSala(personaje, tipo, numero) {
+  const resultado = efectosDeSala[tipo](personaje);
+  emitir(`Sala ${numero}: ${resultado}`);
+  comprobarLogros(personaje);
+}
+
+function resumenFinal(personaje) {
+  const logros = personaje.logros.join(", ");
+  return `${personaje.nombre} sale con ${personaje.vida} de vida y ${personaje.oro} de oro. Logros: ${logros}`;
+}
+
+function jugar(personaje, mazmorra) {
+  for (const [indice, tipo] of mazmorra.entries()) {
+    explorarSala(personaje, tipo, indice + 1);
+    if (personaje.vida &lt;= 0) {
+      emitir(`${personaje.nombre} ha caído`);
+      return;
+    }
+  }
+  emitir(resumenFinal(personaje));
+}
+
+suscribir((mensaje) =&gt; console.log(mensaje));
+jugar(heroe, salas);</code></pre>
+    <p><code>mazmorra.entries()</code> recorre el array dando a la vez la posición y el elemento, que se desestructuran en <code>[indice, tipo]</code>. Fíjate en lo que ganaste. Una sala nueva (una fuente que cura, por ejemplo) es una entrada más en <code>efectosDeSala</code>. Un logro nuevo se añade en <code>comprobarLogros</code>, sin tocar las salas. Y como <code>jugar</code> recibe el personaje y la mazmorra, puedes jugar otra partida con otro héroe sin variables globales de por medio.</p>
+  </details>
+  <p><strong>Para ir más allá:</strong> las pruebas de caracterización solo cubren una partida en la que el héroe sobrevive. Añade una segunda llamada, <code>jugar({ nombre: "Bram", vida: 40, oro: 0, logros: [] }, ["monstruo", "trampa", "cofre"])</code>, y comprueba que imprime «Bram ha caído» después de la trampa. Después lleva el proyecto a tu computadora, ejecuta <code>npx eslint .</code> con la configuración de esta estación y corrige lo que te señale.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Las opciones incorrectas son errores que comete mucha gente, así que lee también las explicaciones de las que no elegiste.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Qué es refactorizar?</p>
+      <ol class="opciones">
+        <li>Reescribir el programa desde cero con mejores ideas.<p class="explica">No. Reescribir tira el conocimiento acumulado y te deja semanas sin nada que funcione. Refactorizar son muchos cambios pequeños sobre código que sigue funcionando.</p></li>
+        <li>Cambiar la estructura interna del código sin cambiar su comportamiento observable.<p class="explica">Correcto. Es la definición de Martin Fowler: el programa hace exactamente lo mismo, pero es más fácil de entender y de cambiar.</p></li>
+        <li>Añadir funciones nuevas mientras se limpia el código.<p class="explica">Eso es llevar los dos sombreros a la vez. Si algo se rompe, no sabrás si fue la limpieza o la función nueva. Se hacen por separado.</p></li>
+        <li>Hacer que el programa sea más rápido.<p class="explica">Eso es optimizar, un objetivo distinto que a veces hace el código más difícil de leer.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Cuál de estos comentarios aporta más información?</p>
+      <ol class="opciones">
+        <li><code>// incrementa el contador</code>, encima de <code>contador++</code>.<p class="explica">Repite lo que el código ya dice. Solo añade algo que mantener.</p></li>
+        <li><code>// función que calcula el total</code>, encima de <code>function calcularTotal()</code>.<p class="explica">El nombre de la función ya lo dice. Es ruido.</p></li>
+        <li><code>// Redondeamos hacia abajo: la pasarela de pago rechaza céntimos de más</code>.<p class="explica">Correcto. Explica un porqué que el código no puede expresar: una decisión y su motivo.</p></li>
+        <li><code>// const total = precio * 2;</code>, código comentado «por si acaso».<p class="explica">El código comentado se queda para siempre y confunde. Git ya guarda todas las versiones anteriores: bórralo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Tu código tiene <code>const MAX_VIDAS = 3;</code> y <code>const MAX_OBJETOS = 3;</code>. Alguien propone unirlos en <code>const TRES = 3;</code> «para cumplir DRY». ¿Qué respondes?</p>
+      <ol class="opciones">
+        <li>Que no: son dos conocimientos distintos que coinciden por casualidad.<p class="explica">Correcto. DRY habla de conocimiento, no de valores iguales. El día que el inventario crezca, no quieres cambiar también las vidas.</p></li>
+        <li>Que sí: DRY prohíbe escribir dos veces el mismo valor.<p class="explica">DRY dice que cada <em>conocimiento</em> debe estar en un solo lugar. Dos reglas distintas pueden tener el mismo valor hoy.</p></li>
+        <li>Que sí, pero con un nombre mejor, como <code>MAXIMO</code>.<p class="explica">El nombre mejora, pero sigue mezclando dos reglas que cambiarán por motivos distintos.</p></li>
+        <li>Que da igual, porque el programa funciona igual.<p class="explica">Hoy sí. El problema llega cuando una de las dos reglas cambie y la otra cambie con ella sin que nadie lo quiera.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">La clase <code>Torreta extends Enemigo</code> lanza un error en <code>mover()</code> porque las torretas no se mueven. ¿Qué principio incumple?</p>
+      <ol class="opciones">
+        <li>Responsabilidad única.<p class="explica">Ese principio trata de cuántas razones tiene un módulo para cambiar, no de si una subclase cumple lo que promete su madre.</p></li>
+        <li>Abierto/cerrado.<p class="explica">Ese trata de ampliar sin modificar. Aquí el problema es que la subclase no puede usarse donde se espera un enemigo.</p></li>
+        <li>Inversión de dependencias.<p class="explica">Ese trata de depender de abstracciones y no de detalles.</p></li>
+        <li>Sustitución de Liskov.<p class="explica">Correcto. Cualquier código que mueve enemigos se rompe si le das una torreta: la subclase no cumple la promesa de la clase madre.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Cada vez que añades un tipo de envío tienes que editar un <code>switch</code> en tres funciones distintas. ¿Qué cambio ayuda más?</p>
+      <ol class="opciones">
+        <li>Poner un comentario en cada <code>switch</code> recordando que hay otros dos.<p class="explica">Documenta el problema, pero no lo resuelve. El próximo cambio seguirá tocando tres sitios.</p></li>
+        <li>Un objeto de estrategias con una función por tipo de envío.<p class="explica">Correcto. Cada tipo vive en un solo lugar y añadir uno nuevo es añadir una entrada, sin tocar lo que ya funciona (principio abierto/cerrado).</p></li>
+        <li>Convertir cada <code>switch</code> en una cadena de <code>if/else</code>.<p class="explica">Es el mismo problema con otra sintaxis: siguen siendo tres lugares que editar.</p></li>
+        <li>Un Singleton que guarde todos los tipos de envío.<p class="explica">Añade estado global y no resuelve la dispersión de la lógica.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">«Cuando la jugadora sube de nivel se actualizan el marcador, el sonido y los logros, y queremos añadir más reacciones sin tocar el código que sube de nivel». ¿Qué patrón encaja?</p>
+      <ol class="opciones">
+        <li>Singleton.<p class="explica">Garantiza una sola instancia, pero no organiza quién reacciona a un suceso.</p></li>
+        <li>Adapter.<p class="explica">Traduce entre dos formas incompatibles. Aquí nada es incompatible.</p></li>
+        <li>Observer.<p class="explica">Correcto. El código del nivel emite un evento y cada parte interesada se suscribe. Una reacción nueva es un suscriptor nuevo.</p></li>
+        <li>Factory.<p class="explica">Sirve para crear objetos, no para avisar de sucesos.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Cuál es el problema principal del patrón Singleton?</p>
+      <ol class="opciones">
+        <li>Es estado global: crea dependencias escondidas y hace que las pruebas se contaminen entre sí.<p class="explica">Correcto. El problema no es tener un solo objeto, sino que cualquiera pueda leerlo y cambiarlo desde cualquier sitio.</p></li>
+        <li>Gasta mucha memoria porque crea muchas instancias.<p class="explica">Es al revés: su objetivo es que exista una sola instancia.</p></li>
+        <li>JavaScript no permite escribirlo.<p class="explica">Sí se puede, por ejemplo con un campo estático privado. Y un módulo ya se evalúa una sola vez.</p></li>
+        <li>Solo funciona en videojuegos.<p class="explica">Se usa (y se abusa) en todo tipo de programas.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Qué herramienta te avisa de que escribiste <code>==</code> donde debía ir <code>===</code>?</p>
+      <ol class="opciones">
+        <li>Prettier.<p class="explica">Prettier solo cambia el aspecto del código (espacios, comillas, saltos de línea), nunca su significado.</p></li>
+        <li>Git.<p class="explica">Git guarda versiones, pero no analiza lo que escribes.</p></li>
+        <li>Node.js, al ejecutar el archivo.<p class="explica"><code>==</code> es válido en JavaScript: Node lo ejecuta sin quejarse, con sus conversiones implícitas.</p></li>
+        <li>ESLint, con la regla <code>eqeqeq</code>.<p class="explica">Correcto. Es un linter: detecta malas prácticas y errores probables sin ejecutar el código.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Estás refactorizando y, después de un paso, dos pruebas fallan. ¿Qué haces?</p>
+      <ol class="opciones">
+        <li>Cambias los valores esperados de las pruebas para que pasen.<p class="explica">Las pruebas describen el comportamiento que debías conservar. Cambiarlas es esconder que lo rompiste.</p></li>
+        <li>Sigues refactorizando y lo arreglas todo al final.<p class="explica">Cuantos más cambios acumules, más difícil será saber cuál rompió qué.</p></li>
+        <li>Vuelves al último commit en verde y das un paso más pequeño.<p class="explica">Correcto. Deshacer cuesta segundos; depurar un cambio grande puede costar horas.</p></li>
+        <li>Borras las pruebas que fallan.<p class="explica">Te quedas sin red de seguridad justo cuando te estaba avisando de algo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Tu personaje tiene <code>estaSaltando</code>, <code>estaAgachado</code> y <code>estaCorriendo</code>, y a veces aparece agachado en el aire. ¿Qué propones?</p>
+      <ol class="opciones">
+        <li>Añadir una cuarta bandera, <code>estaEnElAire</code>.<p class="explica">Cada bandera nueva multiplica las combinaciones posibles, y con ellas los errores.</p></li>
+        <li>Una máquina de estados: un solo estado a la vez y transiciones explícitas.<p class="explica">Correcto. Los estados imposibles dejan de poder ocurrir, porque solo existe un estado actual y solo se cambia siguiendo la tabla.</p></li>
+        <li>Envolver al personaje con un Decorator.<p class="explica">Un decorador añade comportamiento, pero no impide combinaciones de estados inválidas.</p></li>
+        <li>Un comentario que explique qué combinaciones no están permitidas.<p class="explica">El comentario no impide nada: el código seguiría permitiendo el error.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Tu app solo está en español y nadie ha pedido otro idioma. Alguien quiere preparar «por si acaso» un sistema de traducción a doce idiomas. ¿Qué principio lo desaconseja?</p>
+      <ol class="opciones">
+        <li>DRY.<p class="explica">DRY trata de no repetir conocimiento, no de si construir algo que nadie pidió.</p></li>
+        <li>Sustitución de Liskov.<p class="explica">Trata de subclases y promesas de la clase madre.</p></li>
+        <li>La regla del boy scout.<p class="explica">Habla de dejar el código un poco mejor cada vez que lo tocas, no de añadir funciones.</p></li>
+        <li>YAGNI.<p class="explica">Correcto. No construyas capacidades para necesidades que imaginas. Si el código es fácil de cambiar, lo añadirás cuando haga falta, y sabrás mejor cómo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">En el patrón Command, ¿qué hace posible el botón de deshacer?</p>
+      <ol class="opciones">
+        <li>Que cada acción es un objeto que sabe ejecutarse y deshacerse, y los ejecutados se guardan en una pila.<p class="explica">Correcto. Deshacer es sacar el último comando de la pila y pedirle que se deshaga.</p></li>
+        <li>Que las funciones se ejecutan dos veces para comprobar el resultado.<p class="explica">No hay nada de eso en el patrón.</p></li>
+        <li>Que el estado del programa es global.<p class="explica">El estado global no ayuda a deshacer; ayuda a romper cosas.</p></li>
+        <li>Que cada acción imprime en la consola lo que hizo.<p class="explica">Un registro de texto no sabe revertir nada. El comando sí.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Código limpio</dt><dd>Código que otra persona puede leer, entender y cambiar con confianza. El término se popularizó con el libro <em>Clean Code</em> (2008) de Robert C. Martin.</dd>
+    <dt>Deuda técnica</dt><dd>Coste futuro de los atajos tomados al escribir código: cada vez que tocas ese código pagas «intereses» en tiempo y errores, hasta que lo arreglas.</dd>
+    <dt>Refactorizar</dt><dd>Cambiar la estructura interna del código para que sea más fácil de entender y modificar, sin cambiar su comportamiento observable.</dd>
+    <dt>Olor de código</dt><dd>Señal en la superficie del código que suele indicar un problema de diseño más profundo, como una función muy larga o código duplicado. En inglés, <em>code smell</em>.</dd>
+    <dt>Número mágico</dt><dd>Valor escrito tal cual en el código sin un nombre que explique qué significa. Se sustituye por una constante con nombre.</dd>
+    <dt>Cláusula de guarda</dt><dd>Condición al principio de una función que atiende un caso especial y sale con <code>return</code>, para que el caso normal quede al final sin anidar.</dd>
+    <dt>Parámetro bandera</dt><dd>Parámetro booleano que cambia lo que hace una función. Suele indicar que la función hace dos cosas. En inglés, <em>flag argument</em>.</dd>
+    <dt>DRY</dt><dd><em>Don't Repeat Yourself</em>: cada pieza de conocimiento debe tener una representación única en el sistema.</dd>
+    <dt>KISS</dt><dd><em>Keep It Simple, Stupid</em>: entre dos soluciones que funcionan, elige la que se entiende antes.</dd>
+    <dt>YAGNI</dt><dd><em>You Aren't Gonna Need It</em>: no construyas capacidades para necesidades que todavía nadie ha pedido.</dd>
+    <dt>Cohesión</dt><dd>Grado en que las cosas agrupadas en una misma función, clase o archivo tienen que ver entre sí. Se busca que sea alta.</dd>
+    <dt>Acoplamiento</dt><dd>Grado en que una parte del código depende de los detalles internos de otra. Se busca que sea bajo.</dd>
+    <dt>SOLID</dt><dd>Acrónimo de cinco principios de diseño: responsabilidad única, abierto/cerrado, sustitución de Liskov, segregación de interfaces e inversión de dependencias.</dd>
+    <dt>Inyección de dependencias</dt><dd>Técnica que consiste en pasar a un objeto o función lo que necesita (por ejemplo, un notificador) en lugar de que lo cree por dentro.</dd>
+    <dt>Prueba de caracterización</dt><dd>Prueba que registra lo que un código hace hoy, sin juzgar si es correcto, para detectar cualquier cambio de comportamiento al refactorizarlo.</dd>
+    <dt>Patrón de diseño</dt><dd>Solución probada y con nombre a un problema de diseño que aparece una y otra vez, como Observer o Strategy.</dd>
+    <dt>Antipatrón</dt><dd>Respuesta frecuente a un problema que parece buena idea pero trae más problemas que soluciones, como el objeto dios.</dd>
+    <dt>Strategy (Estrategia)</dt><dd>Patrón que encapsula cada variante de un comportamiento en una pieza intercambiable con la misma forma.</dd>
+    <dt>Observer (Observador)</dt><dd>Patrón en el que un emisor mantiene una lista de suscriptores y los avisa cuando ocurre algo, sin saber quiénes son.</dd>
+    <dt>Máquina de estados finita</dt><dd>Modelo con un conjunto fijo de estados, uno activo a la vez, y transiciones que indican a qué estado lleva cada entrada. Es la base del patrón State.</dd>
+    <dt>Command (Comando)</dt><dd>Patrón que convierte una acción en un objeto que sabe ejecutarse (y a menudo deshacerse), para poder guardarla, repetirla o revertirla.</dd>
+    <dt>Factory (Fábrica)</dt><dd>Función u objeto que crea otros objetos a partir de una descripción, escondiendo cómo se construyen y qué clase se usa.</dd>
+    <dt>Singleton</dt><dd>Patrón que garantiza una sola instancia de una clase con acceso global. Hoy se desaconseja casi siempre porque equivale a estado global.</dd>
+    <dt>Adapter (Adaptador)</dt><dd>Pieza que traduce la forma de un objeto o servicio ajeno a la forma que espera tu código.</dd>
+    <dt>Decorator (Decorador)</dt><dd>Objeto o función que envuelve a otro con la misma forma y le añade comportamiento. Los decoradores se pueden apilar.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación. Verás las mismas ideas con otros ejemplos, a veces en otros lenguajes: fíjate en el principio, no en la sintaxis.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=r-wVWMMyKY8" data-canal="CodelyTV - Redescubre la programación" data-idioma="es" data-nivel="profundo" data-por-que="Refactorización aplicada a un ejemplo concreto, paso a paso, con consejos de un equipo que se dedica a enseñar código limpio.">De código a código limpio - Refactoring tips | la función CodelyTV 22</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=2X50sKeBAcQ" data-canal="BettaTech" data-idioma="es" data-nivel="intro" data-por-que="Un repaso de los cinco principios SOLID, uno por uno, para fijar las ideas de la sección SOLID.">Los principios SOLID, ¡explicados!</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=6PdAOfsPh48" data-canal="Carlos Azaustre - AprendiendoDEV" data-idioma="es" data-nivel="profundo" data-por-que="Los principios SOLID aplicados directamente a código JavaScript, el lenguaje de esta estación.">5 Maneras de simplificar tu código JavaScript con SOLID</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=ZDZOb840R4c" data-canal="CodelyTV - Redescubre la programación" data-idioma="es" data-nivel="intro" data-por-que="Qué es un patrón de diseño, para qué sirve y cuándo no conviene usarlo.">¿Qué son los patrones de diseño?</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://refactoring.guru/es/design-patterns">Patrones de diseño (Refactoring.Guru)</a><p>El catálogo más claro en español: cada patrón con su problema, su solución, diagramas y ejemplos de código, también en JavaScript y TypeScript.</p></li>
+    <li><a href="https://refactoring.guru/es/refactoring/smells">Olores de código (Refactoring.Guru)</a><p>Todos los olores de la tabla de esta estación, con la refactorización que corresponde a cada uno.</p></li>
+    <li><a href="https://es.javascript.info/coding-style">Estilo de codificación (javascript.info)</a><p>Pautas de estilo para JavaScript en español, con enlaces a los capítulos de comentarios y de «código ninja», una guía humorística de lo que no hay que hacer.</p></li>
+    <li><a href="https://eslint.org/docs/latest/use/getting-started">Getting Started with ESLint (documentación oficial, en inglés)</a><p>Instalación y configuración actual de ESLint. Desde allí se llega a la página de cada regla, con ejemplos de código correcto e incorrecto.</p></li>
+    <li><a href="https://prettier.io/docs/install">Install (documentación oficial de Prettier, en inglés)</a><p>Cómo instalar Prettier en un proyecto, cómo integrarlo con ESLint y cómo ejecutarlo antes de cada commit.</p></li>
+    <li><a href="https://gameprogrammingpatterns.com/contents.html">Game Programming Patterns (Robert Nystrom, en inglés)</a><p>Libro gratuito en línea sobre patrones aplicados a videojuegos. Los capítulos de Command, Observer, State y Singleton amplían lo que viste aquí.</p></li>
+  </ul>
 </section>

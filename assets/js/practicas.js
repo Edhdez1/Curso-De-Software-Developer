@@ -227,20 +227,37 @@
       var base = (contadorCommit * 2654435761 >>> 0).toString(16);
       return ("0000000" + base).slice(-7);
     }
+    // Patrones de .gitignore (en la raíz del repositorio): *, ?, carpeta/ y /anclado.
+    function ignorado(ruta) {
+      var gi = arbolDe(git.raiz)[".gitignore"];
+      if (!gi) return false;
+      return String(gi).split("\n").some(function (l) {
+        l = l.trim();
+        if (!l || l.charAt(0) === "#" || l.charAt(0) === "!") return false;
+        var carpeta = /\/$/.test(l); l = l.replace(/\/+$/, "");
+        var anclado = l.indexOf("/") !== -1; l = l.replace(/^\//, "");
+        var re = new RegExp("^" + l.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]") + "$");
+        var partes = ruta.split("/");
+        if (anclado) return partes.some(function (p, i) { var pre = partes.slice(0, i + 1).join("/"); return re.test(pre) && (!carpeta || i < partes.length - 1); });
+        return partes.some(function (p, i) { return re.test(p) && (!carpeta || i < partes.length - 1); });
+      });
+    }
     function estadoGit() {
       var trabajo = arbolDe(git.raiz), indice = git.indice, head = arbolHead();
+      var enConflicto = git.fusion ? git.fusion.pendientes : [];
       var preparados = [], sinPreparar = [], nuevos = [];
       var todas = {};
       [trabajo, indice, head].forEach(function (a) { Object.keys(a).forEach(function (k) { todas[k] = 1; }); });
       Object.keys(todas).sort().forEach(function (k) {
         var enH = k in head, enI = k in indice, enT = k in trabajo;
+        if (enConflicto.indexOf(k) !== -1) return;
         if (enI && (!enH || head[k] !== indice[k])) preparados.push({ archivo: k, tipo: enH ? "modified" : "new file" });
         if (!enI && enH) preparados.push({ archivo: k, tipo: "deleted" });
         if (enI && enT && trabajo[k] !== indice[k]) sinPreparar.push({ archivo: k, tipo: "modified" });
         if (enI && !enT) sinPreparar.push({ archivo: k, tipo: "deleted" });
-        if (!enI && !enH && enT) nuevos.push(k);
+        if (!enI && !enH && enT && !ignorado(k)) nuevos.push(k);
       });
-      return { preparados: preparados, sinPreparar: sinPreparar, nuevos: nuevos };
+      return { preparados: preparados, sinPreparar: sinPreparar, nuevos: nuevos, conflictos: enConflicto.slice() };
     }
     function comandoGit(args) {
       var sub = args[0];
@@ -254,58 +271,96 @@
       if (!dentroDelRepo()) return { error: "fatal: not a git repository (or any of the parent directories): .git", ayuda: "Todavía no hay un repositorio aquí. Usa «git init» dentro de la carpeta del proyecto." };
       if (sub === "status") {
         var e = estadoGit(), out = ["On branch " + git.head];
+        if (args.indexOf("-s") !== -1 || args.indexOf("--short") !== -1) {
+          var corta = [], marca = {};
+          e.conflictos.forEach(function (k) { marca[k] = "UU"; });
+          e.preparados.forEach(function (p) { marca[p.archivo] = (p.tipo === "new file" ? "A" : p.tipo === "deleted" ? "D" : "M") + " "; });
+          e.sinPreparar.forEach(function (p) { var m0 = marca[p.archivo] || "  "; marca[p.archivo] = m0.charAt(0) + (p.tipo === "deleted" ? "D" : "M"); });
+          Object.keys(marca).sort().forEach(function (k) { corta.push(marca[k] + " " + k); });
+          e.nuevos.forEach(function (k) { corta.push("?? " + k); });
+          return corta;
+        }
         if (!commitDe(git.head)) out.push("", "No commits yet");
+        if (git.fusion) {
+          if (e.conflictos.length) out.push("You have unmerged paths.", "  (fix conflicts and run \"git commit\")", "  (use \"git merge --abort\" to abort the merge)");
+          else out.push("All conflicts fixed but you are still merging.", "  (use \"git commit\" to conclude merge)");
+        }
         if (e.preparados.length) { out.push("", "Changes to be committed:", "  (use \"git restore --staged <file>...\" to unstage)"); e.preparados.forEach(function (p) { out.push("\t" + (p.tipo + ":").padEnd(12) + p.archivo); }); }
         if (e.sinPreparar.length) { out.push("", "Changes not staged for commit:", "  (use \"git add <file>...\" to update what will be committed)"); e.sinPreparar.forEach(function (p) { out.push("\t" + (p.tipo + ":").padEnd(12) + p.archivo); }); }
+        if (e.conflictos.length) { out.push("", "Unmerged paths:", "  (use \"git add <file>...\" to mark resolution)"); e.conflictos.forEach(function (k) { out.push("\tboth modified:   " + k); }); }
         if (e.nuevos.length) { out.push("", "Untracked files:", "  (use \"git add <file>...\" to include in what will be committed)"); e.nuevos.forEach(function (p) { out.push("\t" + p); }); }
+        if (git.fusion) return out;
         if (!e.preparados.length && !e.sinPreparar.length && !e.nuevos.length) out.push(commitDe(git.head) ? "nothing to commit, working tree clean" : "nothing to commit (create/copy files and use \"git add\" to track)");
         else if (!e.preparados.length) out.push("", e.sinPreparar.length ? "no changes added to commit (use \"git add\" and/or \"git commit -a\")" : "nothing added to commit but untracked files present (use \"git add\" to track)");
         return out;
       }
       if (sub === "add") {
-        var rutas = args.slice(1);
+        var rutas = args.slice(1).filter(function (x) { return x !== "-f"; });
         if (!rutas.length) return { error: "Nothing specified, nothing added.", ayuda: "Indica qué archivo añadir, por ejemplo «git add index.html», o «git add .» para todos." };
         var trabajo = arbolDe(git.raiz);
         for (var i = 0; i < rutas.length; i++) {
           var r = rutas[i], abs = normalizar(r), rel = relativa(abs);
-          if (r === "." || r === "-A" || r === "--all" || abs === git.raiz) {
-            git.indice = copiar(trabajo);
-            continue;
-          }
+          if (r === "." || r === "-A" || r === "--all" || abs === git.raiz) rel = "";
           var nodo = obtener(abs);
-          var coincide = false;
-          Object.keys(trabajo).forEach(function (k) { if (k === rel || k.indexOf(rel + "/") === 0) { git.indice[k] = trabajo[k]; coincide = true; } });
+          var coincide = false, dentro = function (k) { return rel === "" || k === rel || k.indexOf(rel + "/") === 0; };
+          if (rel !== "" && rel in trabajo && !(rel in git.indice) && ignorado(rel) && args.indexOf("-f") === -1)
+            return { error: "The following paths are ignored by one of your .gitignore files:\n" + rel + "\nhint: Use -f if you really want to add them.", ayuda: "Ese archivo está en .gitignore, así que Git no lo guarda (y casi siempre es lo que quieres)." };
+          Object.keys(trabajo).forEach(function (k) { if (dentro(k) && (k in git.indice || !ignorado(k) || k === rel && args.indexOf("-f") !== -1)) { git.indice[k] = trabajo[k]; coincide = true; } });
+          if (git.fusion) git.fusion.pendientes = git.fusion.pendientes.filter(function (k) { return !(dentro(k) && k in trabajo); });
+          if (rel === "") { Object.keys(git.indice).forEach(function (k) { if (!(k in trabajo)) delete git.indice[k]; }); continue; }
           Object.keys(git.indice).forEach(function (k) { if ((k === rel || k.indexOf(rel + "/") === 0) && !(k in trabajo)) { delete git.indice[k]; coincide = true; } });
           if (!nodo && !coincide) return { error: "fatal: pathspec '" + r + "' did not match any files", ayuda: "No existe un archivo llamado «" + r + "». Revisa el nombre con «ls»." };
         }
         return [];
       }
       if (sub === "commit") {
-        var iM = args.indexOf("-m");
+        var iM = args.indexOf("-m"), enmendar = args.indexOf("--amend") !== -1;
         if (args.indexOf("-am") !== -1) { iM = args.indexOf("-am"); Object.keys(arbolHead()).forEach(function (k) { var t = arbolDe(git.raiz); if (k in t) git.indice[k] = t[k]; else delete git.indice[k]; }); }
-        if (iM === -1 || !args[iM + 1]) return { error: "Aborting commit due to empty commit message.", ayuda: "Escribe el mensaje con -m, entre comillas: git commit -m \"Añade la portada\"" };
+        if (git.fusion && git.fusion.pendientes.length) return { error: "error: Committing is not possible because you have unmerged files.\nhint: Fix them up in the work tree, and then use 'git add <file>'\nhint: as appropriate to mark resolution and make a commit.\nfatal: Exiting because of an unresolved conflict.", ayuda: "Primero resuelve el conflicto en " + git.fusion.pendientes.join(", ") + " (borra las marcas <<<<<<<, ======= y >>>>>>>) y después usa git add." };
+        var previo = commitDe(git.head);
+        if (enmendar && !previo) return { error: "fatal: You have nothing to amend." };
+        var mensaje = iM !== -1 && args[iM + 1] ? args[iM + 1] : enmendar ? previo.mensaje : git.fusion ? "Merge branch '" + git.fusion.rama + "'" : "";
+        if (!mensaje) return { error: "Aborting commit due to empty commit message.", ayuda: "Escribe el mensaje con -m, entre comillas: git commit -m \"Añade la portada\"" };
         var e2 = estadoGit();
+        if (enmendar) {
+          var idA = nuevoId();
+          git.commits[idA] = { id: idA, mensaje: mensaje, padres: previo.padres.slice(), arbol: copiar(git.indice), rama: git.head, orden: contadorCommit };
+          git.ramas[git.head] = idA;
+          // El commit reemplazado deja de existir si nada más lo usa (en Git real queda inalcanzable).
+          var usado = Object.keys(git.ramas).some(function (r) { return git.ramas[r] === previo.id; }) || Object.keys(git.commits).some(function (k) { return git.commits[k].padres.indexOf(previo.id) !== -1; });
+          if (!usado) delete git.commits[previo.id];
+          return ["[" + git.head + " " + idA + "] " + mensaje, " (reemplaza al commit " + previo.id + ")"];
+        }
+        if (git.fusion) {
+          var idF = nuevoId();
+          git.commits[idF] = { id: idF, mensaje: mensaje, padres: [git.ramas[git.head], git.fusion.id], arbol: copiar(git.indice), rama: git.head, orden: contadorCommit };
+          git.ramas[git.head] = idF; git.fusion = null;
+          return ["[" + git.head + " " + idF + "] " + mensaje];
+        }
         if (!e2.preparados.length) return [ "On branch " + git.head, e2.nuevos.length || e2.sinPreparar.length ? "no changes added to commit (use \"git add\" and/or \"git commit -a\")" : "nothing to commit, working tree clean" ];
         var id = nuevoId(), padre = git.ramas[git.head];
-        git.commits[id] = { id: id, mensaje: args[iM + 1], padres: padre ? [padre] : [], arbol: copiar(git.indice), rama: git.head };
+        git.commits[id] = { id: id, mensaje: mensaje, padres: padre ? [padre] : [], arbol: copiar(git.indice), rama: git.head, orden: contadorCommit };
         var primero = !padre;
         git.ramas[git.head] = id;
-        return ["[" + git.head + (primero ? " (root-commit)" : "") + " " + id + "] " + args[iM + 1], " " + e2.preparados.length + " file" + (e2.preparados.length === 1 ? "" : "s") + " changed"];
+        return ["[" + git.head + (primero ? " (root-commit)" : "") + " " + id + "] " + mensaje, " " + e2.preparados.length + " file" + (e2.preparados.length === 1 ? "" : "s") + " changed"];
       }
       if (sub === "log") {
         var c = commitDe(git.head);
         if (!c) return { error: "fatal: your current branch '" + git.head + "' does not have any commits yet", ayuda: "Todavía no hay commits. Haz uno con git add y git commit -m." };
-        var out2 = [], vistos = {}, pendientes = [c.id], corto = args.indexOf("--oneline") !== -1;
+        var out2 = [], vistos = {}, pendientes = [c.id], corto = args.indexOf("--oneline") !== -1, lista = [];
         while (pendientes.length) {
-          var idc = pendientes.shift(); if (vistos[idc]) continue; vistos[idc] = 1;
-          var cc = git.commits[idc];
+          var idv = pendientes.shift(); if (vistos[idv]) continue; vistos[idv] = 1;
+          lista.push(git.commits[idv]); pendientes = pendientes.concat(git.commits[idv].padres);
+        }
+        lista.sort(function (x, y) { return (y.orden || 0) - (x.orden || 0); });
+        lista.forEach(function (cc) {
+          var idc = cc.id;
           var etiquetas = Object.keys(git.ramas).filter(function (r) { return git.ramas[r] === idc; });
           var deco = etiquetas.length ? " (" + etiquetas.map(function (r) { return r === git.head ? "HEAD -> " + r : r; }).join(", ") + ")" : "";
           if (corto) out2.push(idc + deco + " " + cc.mensaje);
-          else out2.push("commit " + idc + "0000000000000000000000000000000000".slice(0, 33) + deco, "Author: " + usuario + " <" + usuario + "@ejemplo.com>", "", "    " + cc.mensaje, "");
-          pendientes = pendientes.concat(cc.padres);
-        }
-        return out2;
+          else out2.push("commit " + idc + "0000000000000000000000000000000000".slice(0, 33) + deco, cc.padres.length > 1 ? "Merge: " + cc.padres.join(" ") : null, "Author: " + usuario + " <" + usuario + "@ejemplo.com>", "", "    " + cc.mensaje, "");
+        });
+        return out2.filter(function (l) { return l !== null; });
       }
       if (sub === "branch") {
         if (!args[1]) return Object.keys(git.ramas).sort().map(function (r) { return (r === git.head ? "* " : "  ") + r; });
@@ -341,6 +396,12 @@
         return ["Switched to branch '" + nombre + "'"];
       }
       if (sub === "merge") {
+        if (args[1] === "--abort") {
+          if (!git.fusion) return { error: "fatal: There is no merge to abort (MERGE_HEAD missing)." };
+          escribirArbol(copiar(arbolHead())); git.indice = copiar(arbolHead()); git.fusion = null;
+          return [];
+        }
+        if (git.fusion) return { error: "error: Merging is not possible because you have unmerged files.", ayuda: "Termina la fusión anterior (resuelve, git add y git commit) o cancélala con git merge --abort." };
         var otra = args[1];
         if (!otra || !git.ramas.hasOwnProperty(otra)) return { error: "merge: " + (otra || "") + " - not something we can merge" };
         var a = git.ramas[git.head], b = git.ramas[otra];
@@ -352,7 +413,7 @@
           return ["Updating " + (a || "0000000") + ".." + b, "Fast-forward"];
         }
         if (deA[b]) return ["Already up to date."];
-        var base = null; Object.keys(deA).forEach(function (x) { if (deB[x] && (!base || x > base)) base = x; });
+        var base = null; Object.keys(deA).forEach(function (x) { if (deB[x] && (!base || (git.commits[x].orden || 0) > (git.commits[base].orden || 0))) base = x; });
         var ta = git.commits[a].arbol, tb = git.commits[b].arbol, tbase = base ? git.commits[base].arbol : {};
         var resultado = {}, conflictos = [], claves = {};
         [ta, tb, tbase].forEach(function (t) { Object.keys(t).forEach(function (k) { claves[k] = 1; }); });
@@ -365,11 +426,13 @@
         });
         escribirArbol(resultado);
         if (conflictos.length) {
-          git.indice = copiar(ta);
+          git.indice = copiar(resultado);
+          conflictos.forEach(function (k) { if (k in ta) git.indice[k] = ta[k]; else delete git.indice[k]; });
+          git.fusion = { rama: otra, id: b, pendientes: conflictos.slice() };
           return conflictos.map(function (k) { return "CONFLICT (content): Merge conflict in " + k; }).concat(["Automatic merge failed; fix conflicts and then commit the result."]);
         }
         var idm = nuevoId();
-        git.commits[idm] = { id: idm, mensaje: "Merge branch '" + otra + "'", padres: [a, b], arbol: copiar(resultado), rama: git.head };
+        git.commits[idm] = { id: idm, mensaje: "Merge branch '" + otra + "'", padres: [a, b], arbol: copiar(resultado), rama: git.head, orden: contadorCommit };
         git.ramas[git.head] = idm; git.indice = copiar(resultado);
         return ["Merge made by the 'ort' strategy."];
       }
@@ -395,6 +458,25 @@
         });
         return [];
       }
+      if (sub === "show") {
+        var cs = commitDe(git.head);
+        if (!cs) return { error: "fatal: your current branch '" + git.head + "' does not have any commits yet" };
+        var antes = cs.padres.length ? git.commits[cs.padres[0]].arbol : {}, outS = ["commit " + cs.id + "0000000000000000000000000000000000".slice(0, 33), "Author: " + usuario + " <" + usuario + "@ejemplo.com>", "", "    " + cs.mensaje, ""];
+        Object.keys(Object.assign({}, antes, cs.arbol)).sort().forEach(function (k) {
+          if (antes[k] === cs.arbol[k]) return;
+          outS.push("diff --git a/" + k + " b/" + k, "--- " + (k in antes ? "a/" + k : "/dev/null"), "+++ " + (k in cs.arbol ? "b/" + k : "/dev/null"));
+          String(antes[k] || "").split("\n").forEach(function (l) { if (k in antes && String(cs.arbol[k] || "").split("\n").indexOf(l) === -1) outS.push("-" + l); });
+          String(cs.arbol[k] || "").split("\n").forEach(function (l) { if (k in cs.arbol && String(antes[k] || "").split("\n").indexOf(l) === -1) outS.push("+" + l); });
+        });
+        return outS;
+      }
+      if (sub === "config") {
+        var valores = args.filter(function (x) { return !/^--(global|local|system)$/.test(x); }).slice(1);
+        if (valores.length >= 2) { git.config = git.config || {}; git.config[valores[0]] = valores[1]; return []; }
+        return git.config && git.config[valores[0]] ? [git.config[valores[0]]] : [];
+      }
+      if (["revert", "reset", "stash", "rebase", "cherry-pick", "tag", "fetch", "bisect", "blame", "reflog", "rm", "mv", "switch-branch", "worktree"].indexOf(sub) !== -1)
+        return { error: "«git " + sub + "» existe, pero esta terminal de práctica no lo incluye.", ayuda: "Pruébalo en la terminal de tu computadora, en un repositorio de prueba (la Estación 24 explica cómo instalar Git)." };
       if (sub === "remote" || sub === "push" || sub === "pull" || sub === "clone") return { error: "Esta terminal de práctica no tiene conexión a internet.", ayuda: "«git " + sub + "» se practica con GitHub en tu computadora (lo verás en la estación de Git)." };
       return { error: "git: '" + sub + "' is not a git command. See 'git --help'." };
     }
@@ -624,7 +706,7 @@
       if (!mision) return;
       var sistema = (function convertir(n) { var o = {}; Object.keys(n.hijos).forEach(function (k) { var h = n.hijos[k]; o[k] = h.tipo === "dir" ? convertir(h) : h.contenido; }); return o; })(obtener(inicio) || { hijos: {} });
       var e = git ? estadoGit() : null;
-      var estadoRepo = git ? { raiz: git.raiz, rama: git.head, ramas: Object.keys(git.ramas), commits: Object.keys(git.commits).map(function (id) { return git.commits[id]; }), preparados: e.preparados.map(function (p) { return p.archivo; }), limpio: !e.preparados.length && !e.sinPreparar.length && !e.nuevos.length } : null;
+      var estadoRepo = git ? { raiz: git.raiz, rama: git.head, ramas: Object.keys(git.ramas), commits: Object.keys(git.commits).map(function (id) { return git.commits[id]; }), preparados: e.preparados.map(function (p) { return p.archivo; }), conflictos: e.conflictos, fusionEnCurso: !!git.fusion, limpio: !e.preparados.length && !e.sinPreparar.length && !e.nuevos.length && !e.conflictos.length } : null;
       var datos = { sistema: sistema, historial: historial.slice(), git: estadoRepo, cwd: cwd, salida: lineasSalida.slice(-200), n: ++ultimoPedido };
       try {
         if (!verificador) {
