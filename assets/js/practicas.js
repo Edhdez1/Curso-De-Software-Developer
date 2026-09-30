@@ -706,7 +706,7 @@
       if (!mision) return;
       var sistema = (function convertir(n) { var o = {}; Object.keys(n.hijos).forEach(function (k) { var h = n.hijos[k]; o[k] = h.tipo === "dir" ? convertir(h) : h.contenido; }); return o; })(obtener(inicio) || { hijos: {} });
       var e = git ? estadoGit() : null;
-      var estadoRepo = git ? { raiz: git.raiz, rama: git.head, ramas: Object.keys(git.ramas), commits: Object.keys(git.commits).map(function (id) { return git.commits[id]; }), preparados: e.preparados.map(function (p) { return p.archivo; }), conflictos: e.conflictos, fusionEnCurso: !!git.fusion, limpio: !e.preparados.length && !e.sinPreparar.length && !e.nuevos.length && !e.conflictos.length } : null;
+      var estadoRepo = git ? { raiz: git.raiz, rama: git.head, ramas: Object.keys(git.ramas), punteros: Object.assign({}, git.ramas), commits: Object.keys(git.commits).map(function (id) { return git.commits[id]; }), preparados: e.preparados.map(function (p) { return p.archivo; }), conflictos: e.conflictos, fusionEnCurso: !!git.fusion, limpio: !e.preparados.length && !e.sinPreparar.length && !e.nuevos.length && !e.conflictos.length } : null;
       var datos = { sistema: sistema, historial: historial.slice(), git: estadoRepo, cwd: cwd, salida: lineasSalida.slice(-200), n: ++ultimoPedido };
       try {
         if (!verificador) {
