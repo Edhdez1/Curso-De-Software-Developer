@@ -266,3 +266,222 @@ return true;
     <p>Un modelo no entiende qué es un tramposo. Encuentra patrones estadísticos en los ejemplos que le das, y solo en esos. Si los moderadores se equivocaron, aprende sus errores. Si en los datos no hay jugadores con mando, no sabrá qué hacer con ellos. Y no «aprende solo» mientras se usa: aprende cuando lo entrenas, con los datos que tú eliges. Lo que haga bien o mal depende de esas decisiones, que son tuyas.</p>
   </aside>
 </section>
+
+<section id="datos" data-parada="Datos">
+  <h2>Datos: características, etiquetas y conjuntos</h2>
+  <p>Un modelo es tan bueno como sus datos. Los profesionales del área suelen pasar más tiempo preparando datos que entrenando modelos, y los errores más graves casi nunca están en el algoritmo: están en una columna mal calculada o en un ejemplo que se coló donde no debía. Esta sección es la menos vistosa de la estación y probablemente la más importante.</p>
+
+  <h3>La tabla de ejemplos</h3>
+  <p>Casi todos los algoritmos de esta estación esperan los datos en la misma forma: una tabla en la que cada fila es un ejemplo y cada columna una característica, más una lista aparte con las etiquetas. A la tabla de características se le llama <strong>X</strong> (en mayúscula, porque es una matriz: filas por columnas) y a la lista de etiquetas, <strong>y</strong> (en minúscula, porque es un vector, una sola columna). Es una convención que verás en todos los libros y en scikit-learn.</p>
+  <pre><code class="language-js">// Así llegan los datos: una lista de objetos, cómoda para personas
+const partidas = [
+  { precision: 57, reaccion: 200, tramposo: true },
+  { precision: 38, reaccion: 271, tramposo: false },
+  { precision: 47, reaccion: 247, tramposo: false },
+];
+
+// Así los quiere un algoritmo: números en filas y columnas
+const X = partidas.map((p) =&gt; [p.precision, p.reaccion]);  // [[57, 200], [38, 271], [47, 247]]
+const y = partidas.map((p) =&gt; (p.tramposo ? 1 : 0));       // [1, 0, 0]</code></pre>
+  <p>Las etiquetas de sí o no se guardan como 1 y 0, porque los algoritmos hacen cuentas con ellas. La fila <code>X[0]</code> es un vector de características, el mismo tipo de vector que usaste para posiciones y velocidades en la <a href="18-matematicas.html#vectores">Estación 18</a>, solo que ahora puede tener 2, 10 o 64 números.</p>
+
+  <h3>De los eventos a las características</h3>
+  <p>Un juego no guarda «sesiones por semana». Guarda <strong>telemetría</strong>: un registro de eventos crudos, cada uno con quién, qué y cuándo (inició sesión, murió, compró). Para predecir si alguien va a dejar de jugar necesitas una fila por jugador con números que lo resuman. Transformar datos crudos en características útiles se llama <strong>ingeniería de características</strong> (<em>feature engineering</em>), y la herramienta natural es el <code>GROUP BY</code> que aprendiste en la <a href="30-bases-datos.html#resumir">Estación 30</a>.</p>
+  <p>Vas a necesitar tres trucos de SQLite que la Estación 30 no usó:</p>
+  <ul>
+    <li><strong>Una comparación vale 1 o 0.</strong> En SQLite, <code>tipo = 'sesion'</code> da 1 si es verdad y 0 si no. Por eso <code>SUM(tipo = 'sesion')</code> cuenta las sesiones y <code>MAX(tipo = 'compra')</code> da 1 si hubo al menos una compra.</li>
+    <li><strong><code>AVG</code> ignora los <code>NULL</code>.</strong> Los eventos que no son sesiones tienen <code>minutos</code> vacío, así que <code>AVG(minutos)</code> promedia solo las sesiones.</li>
+    <li><strong>Restar fechas con <code>julianday</code>.</strong> SQLite guarda las fechas como texto (<code>'2026-09-28 19:30'</code>). La función <code>julianday</code> convierte una fecha en un número de días contados desde un punto de partida muy antiguo; lo único que importa es que al restar dos de ellos obtienes los días que hay entre las fechas, con decimales para las horas. <code>julianday('2026-09-30') - julianday('2026-09-28 12:00')</code> da <code>1.5</code>, y <code>CAST(… AS INTEGER)</code> le quita los decimales para quedarse con los días completos. Cada motor de base de datos tiene sus propias funciones de fecha; esta es la de SQLite.</li>
+  </ul>
+  <p>¿Por qué restar a una fecha fija y no a «hoy»? Porque así la consulta da lo mismo si la ejecutas hoy o dentro de un mes. En aprendizaje automático a esa fecha se le llama <strong>fecha de corte</strong>: todo lo que pasó antes sirve para calcular características; lo que pasa después es el futuro que quieres predecir.</p>
+  <div class="taller" data-modo="sql" id="taller-eventos" data-titulo="De eventos a características">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE eventos (jugador TEXT, tipo TEXT, momento TEXT, minutos INTEGER);
+INSERT INTO eventos VALUES
+('ana','sesion','2026-09-22 18:10',45),('ana','sesion','2026-09-25 20:00',30),('ana','compra','2026-09-25 20:15',NULL),
+('ana','sesion','2026-09-28 19:30',60),('ana','muerte','2026-09-28 19:50',NULL),('ana','sesion','2026-09-29 21:00',25),
+('beto','sesion','2026-09-02 17:00',20),('beto','muerte','2026-09-02 17:12',NULL),('beto','sesion','2026-09-05 21:20',15),
+('beto','muerte','2026-09-05 21:30',NULL),('beto','muerte','2026-09-05 21:34',NULL),
+('carla','sesion','2026-09-20 10:00',90),('carla','sesion','2026-09-21 11:00',75),('carla','compra','2026-09-21 11:40',NULL),
+('carla','sesion','2026-09-23 16:30',80),
+('dante','sesion','2026-09-10 22:00',10),('dante','muerte','2026-09-10 22:05',NULL),
+('eva','sesion','2026-09-24 19:00',35),('eva','sesion','2026-09-26 19:10',40),('eva','sesion','2026-09-27 18:45',20),
+('eva','sesion','2026-09-28 19:05',50),('eva','sesion','2026-09-29 19:00',45),
+('felix','sesion','2026-09-15 13:00',60),('felix','compra','2026-09-16 12:10',NULL),('felix','sesion','2026-09-16 12:00',55),
+('felix','muerte','2026-09-16 12:30',NULL),
+('gael','sesion','2026-09-27 08:00',5),('gael','sesion','2026-09-27 14:00',8),('gael','sesion','2026-09-28 08:10',6),
+('hana','sesion','2026-08-30 20:00',30),('hana','compra','2026-08-30 20:20',NULL);</script>
+    <textarea class="taller-codigo">-- 1. Mira los eventos crudos de una jugadora
+SELECT * FROM eventos WHERE jugador = 'ana';
+
+-- 2. Una fila por jugador. Completa las columnas que faltan:
+--    minutos_promedio (redondeado a 1 decimal), dias_desde_ultima
+--    (días completos hasta el 2026-09-30) y compro (1 o 0).
+SELECT jugador,
+       SUM(tipo = 'sesion') AS sesiones
+FROM eventos
+GROUP BY jugador
+ORDER BY jugador;</textarea>
+    <script type="text/plain" class="taller-verificar">
+var r = resultados[resultados.length - 1];
+if (!r) return "La consulta no devolvió filas. ¿Terminaste cada instrucción con punto y coma?";
+var esperadas = ["jugador", "sesiones", "minutos_promedio", "dias_desde_ultima", "compro"];
+if (r.columns.join(",") !== esperadas.join(",")) return "La última consulta debe devolver estas columnas, en este orden y con estos nombres: " + esperadas.join(", ") + ". Ahora devuelve: " + r.columns.join(", ") + ".";
+if (r.values.length !== 8) return "Debería haber una fila por jugador (8) y hay " + r.values.length + ". ¿Está el GROUP BY jugador?";
+var fila = function (n) { for (var i = 0; i < r.values.length; i++) if (r.values[i][0] === n) return r.values[i]; return null; };
+var casos = [["beto", 2, 17.5, 24, 0], ["carla", 3, 81.7, 6, 1], ["gael", 3, 6.3, 1, 0]];
+for (var k = 0; k < casos.length; k++) {
+  var c = casos[k], f = fila(c[0]);
+  if (!f) return "No encuentro la fila de " + c[0] + ".";
+  if (Number(f[1]) !== c[1]) return c[0] + " debería tener " + c[1] + " sesiones y tiene " + f[1] + ".";
+  if (Math.abs(Number(f[2]) - c[2]) > 0.051) return c[0] + " debería tener minutos_promedio " + c[2] + " y tiene " + f[2] + ". ¿Usaste ROUND(AVG(minutos), 1)?";
+  if (Number(f[3]) !== c[3]) return c[0] + " debería tener dias_desde_ultima " + c[3] + " y tiene " + f[3] + ". Resta julianday('2026-09-30') menos julianday(MAX(momento)) y quita los decimales con CAST(… AS INTEGER).";
+  if (Number(f[4]) !== c[4]) return c[0] + " debería tener compro = " + c[4] + " y tiene " + f[4] + ". Prueba con MAX(tipo = 'compra').";
+}
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver la consulta completa</summary>
+    <pre><code class="language-sql">SELECT jugador,
+       SUM(tipo = 'sesion') AS sesiones,
+       ROUND(AVG(minutos), 1) AS minutos_promedio,
+       CAST(julianday('2026-09-30') - julianday(MAX(momento)) AS INTEGER) AS dias_desde_ultima,
+       MAX(tipo = 'compra') AS compro
+FROM eventos
+GROUP BY jugador
+ORDER BY jugador;</code></pre>
+    <p><code>MAX(momento)</code> funciona con fechas en texto porque el formato <code>AAAA-MM-DD HH:MM</code> ordena igual como texto que como fecha: por eso conviene guardar siempre las fechas así. Fíjate en hana: una sola sesión hace 30 días y una compra. ¿La incluirías en un modelo que predice quién abandona la semana que viene?</p>
+  </details>
+  <p>Con ocho jugadores esto parece poca cosa. Con ocho millones de eventos es exactamente lo mismo: una consulta que convierte la historia de cada jugador en una fila de números. Esa fila es lo que verá el modelo. Si una característica importante no está en la tabla, el modelo no puede adivinarla.</p>
+
+  <h3>Tipos de características</h3>
+  <ul>
+    <li><strong>Numéricas</strong>: sesiones, minutos, precisión. Se usan tal cual (casi siempre escaladas, como verás enseguida).</li>
+    <li><strong>Categóricas</strong>: toman un valor de una lista, como el dispositivo (ratón, táctil o mando). Un algoritmo no sabe multiplicar «táctil», así que hay que convertirlas en números.</li>
+    <li><strong>Texto e imágenes</strong>: una reseña o un dibujo. Necesitan técnicas propias, que verás en la <a href="40-redes-neuronales.html#imagenes">Estación 40</a> (imágenes) y la <a href="41-modelos-lenguaje.html#tokens">Estación 41</a> (texto). En el proyecto de esta estación convertirás un trazo dibujado en 64 números a mano.</li>
+  </ul>
+  <p>La tentación con las categóricas es numerarlas: ratón = 0, táctil = 1, mando = 2. Es un error, porque el modelo creerá que el táctil está «entre» el ratón y el mando, y que el mando es «el doble» que el táctil. La solución estándar es la <strong>codificación one-hot</strong> («uno caliente»): una columna por categoría, con un 1 en la que corresponde y 0 en las demás.</p>
+  <pre><code class="language-js">const DISPOSITIVOS = ["raton", "tactil", "mando"];
+const oneHot = (valor) =&gt; DISPOSITIVOS.map((d) =&gt; (d === valor ? 1 : 0));
+
+console.log(oneHot("tactil"));  // [ 0, 1, 0 ]
+console.log(oneHot("mando"));   // [ 0, 0, 1 ]</code></pre>
+  <p>Así, las tres categorías quedan a la misma distancia entre sí y ninguna es «mayor» que otra. El precio es una columna por categoría: con 200 países tendrías 200 columnas, y ahí conviene agrupar los poco frecuentes en «otros».</p>
+
+  <h3>Datos sucios y faltantes</h3>
+  <p>Los datos reales tienen huecos: un evento que no se registró, un campo que el jugador dejó vacío, un <code>"abc"</code> donde iba un número. En el analizador de partidas de la <a href="36-python.html#proyecto">Estación 36</a> descartabas esas filas. En aprendizaje automático tienes tres opciones:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Estrategia</th><th scope="col">Cuándo conviene</th><th scope="col">Riesgo</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Descartar</strong> la fila</td><td>Faltan pocas filas y al azar</td><td>Si faltan siempre en el mismo tipo de jugador, lo borras del modelo</td></tr>
+        <tr><td><strong>Rellenar</strong> (imputar) con la mediana</td><td>Faltan valores sueltos de una columna numérica</td><td>El modelo no sabe que ese valor era inventado</td></tr>
+        <tr><td><strong>Marcar</strong>: rellenar y añadir una columna <code>faltaba_minutos</code> con 1 o 0</td><td>Que falte puede ser información (quien no completa su perfil quizá juega menos)</td><td>Una columna más</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La <strong>mediana</strong> es el valor del medio cuando ordenas los datos: la mitad queda por debajo y la mitad por encima. Se prefiere a la media para rellenar porque no se deja arrastrar por valores extremos: si nueve jugadores juegan 30 minutos y uno se dejó el juego abierto 900, la media sale 117 minutos y la mediana sigue en 30.</p>
+
+  <h3>Media y desviación típica</h3>
+  <p>Para comparar características tan distintas como un porcentaje y unos milisegundos necesitas dos medidas. La <strong>media</strong> es el promedio de toda la vida: sumar y dividir entre cuántos hay. La <strong>desviación típica</strong> (o estándar) dice cuánto se alejan los valores de la media, en las mismas unidades que los datos. Si los tiempos de reacción tienen media 250 ms y desviación 36 ms, la mayoría de los jugadores reacciona entre unos 214 y 286 ms.</p>
+  <p>Se calcula así: a cada valor le restas la media, elevas esa diferencia al cuadrado (para que las negativas no cancelen a las positivas), promedias los cuadrados y sacas la raíz cuadrada para volver a las unidades originales. Es una especie de «distancia promedio a la media». Síguelo con cuatro jugadores:</p>
+  <div class="traza" data-titulo="Media y desviación típica de cuatro tiempos de reacción">
+    <pre><code class="language-js">const xs = [200, 240, 260, 300];
+let suma = 0;
+for (const x of xs) suma += x;
+const media = suma / xs.length;
+let sumaCuadrados = 0;
+for (const x of xs) sumaCuadrados += (x - media) ** 2;
+const desviacion = Math.sqrt(sumaCuadrados / xs.length);
+console.log(media, desviacion.toFixed(2));</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"xs": "[200, 240, 260, 300]"}, "nota": "Cuatro tiempos de reacción en milisegundos."},
+      {"linea": 2, "vars": {"xs": "[200, 240, 260, 300]", "suma": "0"}, "nota": "Empezamos a acumular la suma en cero."},
+      {"linea": 3, "vars": {"xs": "[200, 240, 260, 300]", "suma": "200", "x": "200"}, "nota": "Primera vuelta: suma = 0 + 200."},
+      {"linea": 3, "vars": {"xs": "[200, 240, 260, 300]", "suma": "440", "x": "240"}, "nota": "200 + 240 = 440."},
+      {"linea": 3, "vars": {"xs": "[200, 240, 260, 300]", "suma": "700", "x": "260"}, "nota": "440 + 260 = 700."},
+      {"linea": 3, "vars": {"xs": "[200, 240, 260, 300]", "suma": "1000", "x": "300"}, "nota": "700 + 300 = 1000. El bucle termina."},
+      {"linea": 4, "vars": {"xs": "[200, 240, 260, 300]", "suma": "1000", "media": "250"}, "nota": "La media: 1000 / 4 = 250 ms."},
+      {"linea": 5, "vars": {"xs": "[200, 240, 260, 300]", "media": "250", "sumaCuadrados": "0"}, "nota": "Ahora acumulamos cuánto se aleja cada valor de la media, al cuadrado."},
+      {"linea": 6, "vars": {"xs": "[200, 240, 260, 300]", "media": "250", "sumaCuadrados": "2500", "x": "200"}, "nota": "200 − 250 = −50. Al cuadrado: 2500. El signo desaparece: estar 50 por debajo cuenta igual que 50 por encima."},
+      {"linea": 6, "vars": {"xs": "[200, 240, 260, 300]", "media": "250", "sumaCuadrados": "2600", "x": "240"}, "nota": "240 − 250 = −10, al cuadrado 100."},
+      {"linea": 6, "vars": {"xs": "[200, 240, 260, 300]", "media": "250", "sumaCuadrados": "2700", "x": "260"}, "nota": "260 − 250 = 10, al cuadrado 100."},
+      {"linea": 6, "vars": {"xs": "[200, 240, 260, 300]", "media": "250", "sumaCuadrados": "5200", "x": "300"}, "nota": "300 − 250 = 50, al cuadrado 2500. Total: 5200."},
+      {"linea": 7, "vars": {"xs": "[200, 240, 260, 300]", "media": "250", "sumaCuadrados": "5200", "desviacion": "36.0555…"}, "nota": "Promedio de los cuadrados: 5200 / 4 = 1300. Su raíz cuadrada, unos 36 ms, vuelve a estar en milisegundos."},
+      {"linea": 8, "vars": {"xs": "[200, 240, 260, 300]", "media": "250", "desviacion": "36.0555…"}, "salida": "250 36.06", "nota": "Media 250 ms y desviación típica 36 ms: los valores se alejan de la media unos 36 ms, en promedio."}
+    ]</script>
+  </div>
+
+  <h3>Escalar: poner las características en la misma escala</h3>
+  <p>Imagina tres jugadores. A acierta el 50 % y reacciona en 200 ms; B, el 52 % en 260 ms; C, el 90 % en 205 ms. ¿Quién se parece más a A? Por precisión, claramente B. Pero si mides la distancia con los números tal cual, como en la <a href="18-matematicas.html#vectores">Estación 18</a>:</p>
+  <pre><code class="language-js">Math.hypot(52 - 50, 260 - 200);  // A–B: 60.03
+Math.hypot(90 - 50, 205 - 200);  // A–C: 40.31  ← «más cerca», según los milisegundos</code></pre>
+  <p>Los milisegundos se mueven en cientos y los porcentajes en decenas, así que los milisegundos dominan la cuenta. No porque sean más importantes: solo porque sus números son más grandes. Si midieras la reacción en segundos (0.2 frente a 0.26), pasaría lo contrario. Para que la unidad elegida no decida por ti, se <strong>escalan</strong> las características. Hay dos formas habituales:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Escalado</th><th scope="col">Fórmula</th><th scope="col">Resultado</th><th scope="col">Cuándo</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Min-max</strong></td><td><code>(x - min) / (max - min)</code></td><td>Entre 0 y 1</td><td>Cuando los valores tienen límites naturales (porcentajes, colores de 0 a 255)</td></tr>
+        <tr><td><strong>Z-score</strong> (estandarización)</td><td><code>(x - media) / desviacion</code></td><td>Media 0; casi todos entre −2 y 2</td><td>La opción por defecto. Resiste mejor un valor extremo que el min-max</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Un z-score se lee como «cuántas desviaciones típicas se aleja de la media». Un jugador con reacción 214 ms, si la media es 250 y la desviación 36, tiene z = (214 − 250) / 36 = −1: reacciona una desviación más rápido que el promedio. Con todas las características en esa escala común, ninguna domina por sus unidades.</p>
+  <aside class="senal ojo">
+    <p>No todos los algoritmos necesitan escalar. Los que miden distancias (k vecinos, k-means) y los que aprenden con descenso de gradiente (regresión lineal y logística, redes neuronales) sí. Los árboles de decisión no: solo preguntan «¿es mayor que tal umbral?», y eso da igual en milisegundos que en segundos. Lo verás en cada algoritmo.</p>
+  </aside>
+
+  <h3>Entrenamiento, validación y prueba</h3>
+  <p>Un modelo que acierta el 100 % de los ejemplos con los que aprendió no ha demostrado nada: podría haberlos memorizado. Lo que importa es cómo le va con datos que <em>nunca vio</em>, porque eso es lo que pasará cuando esté en tu juego. Por eso, antes de entrenar, los datos se dividen en tres partes:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 210" role="img" aria-label="Barra de 200 ejemplos dividida en tres partes. Entrenamiento, 70 por ciento, 140 ejemplos: los ejercicios, de aquí se aprenden los parámetros. Validación, 15 por ciento, 30 ejemplos: el simulacro, sirve para elegir hiperparámetros y comparar modelos. Prueba, 15 por ciento, 30 ejemplos: el examen final, se usa una sola vez al terminar. En cada parte, una franja muestra que la clase rara mantiene la misma proporción, alrededor del 10 por ciento, gracias a la estratificación.">
+      <text class="d-rotulo" x="20" y="28">200 ejemplos, barajados con semilla</text>
+      <rect class="d-acento" x="20" y="44" width="476" height="56" rx="6"/>
+      <text class="d-sobre-acento d-rotulo" x="258" y="70" text-anchor="middle">Entrenamiento · 70 % · 140</text>
+      <text class="d-sobre-acento d-peq" x="258" y="90" text-anchor="middle">aprende los parámetros</text>
+      <rect class="d-caja" x="500" y="44" width="98" height="56" rx="6"/>
+      <text class="d-rotulo" x="549" y="70" text-anchor="middle">Validación</text>
+      <text class="d-peq" x="549" y="90" text-anchor="middle">15 % · 30</text>
+      <rect class="d-caja" x="602" y="44" width="98" height="56" rx="6"/>
+      <text class="d-rotulo" x="651" y="70" text-anchor="middle">Prueba</text>
+      <text class="d-peq" x="651" y="90" text-anchor="middle">15 % · 30</text>
+      <rect class="d-l6" x="20" y="104" width="48" height="10" rx="2"/>
+      <rect class="d-l6" x="500" y="104" width="10" height="10" rx="2"/>
+      <rect class="d-l6" x="602" y="104" width="10" height="10" rx="2"/>
+      <text class="d-peq d-tenue" x="76" y="114">clase rara: 10 % en cada parte (estratificado)</text>
+      <text class="d-rotulo" x="258" y="150" text-anchor="middle">los ejercicios</text>
+      <text class="d-peq d-tenue" x="258" y="170" text-anchor="middle">puedes repetirlos todas las veces que quieras</text>
+      <text class="d-rotulo" x="549" y="150" text-anchor="middle">el simulacro</text>
+      <text class="d-peq d-tenue" x="549" y="170" text-anchor="middle">para elegir</text>
+      <text class="d-peq d-tenue" x="549" y="187" text-anchor="middle">hiperparámetros</text>
+      <text class="d-rotulo" x="651" y="150" text-anchor="middle">el examen</text>
+      <text class="d-peq d-tenue" x="651" y="170" text-anchor="middle">una sola vez,</text>
+      <text class="d-peq d-tenue" x="651" y="187" text-anchor="middle">al final</text>
+    </svg>
+    <figcaption>La división clásica de los datos. Los porcentajes varían (80/10/10 o 60/20/20 también son habituales), pero los papeles no.</figcaption>
+  </figure>
+  <ul>
+    <li><strong>Conjunto de entrenamiento</strong>: los ejemplos con los que el algoritmo ajusta sus parámetros. Son los ejercicios de práctica.</li>
+    <li><strong>Conjunto de validación</strong>: ejemplos que el entrenamiento no ve, para comparar modelos y elegir hiperparámetros («¿k = 3 o k = 7?»). Es el simulacro de examen: puedes hacerlo varias veces, pero cada vez que ajustas algo mirándolo, te vas acostumbrando a él.</li>
+    <li><strong>Conjunto de prueba</strong>: el examen final. Se usa <em>una sola vez</em>, cuando ya decidiste todo, para saber cómo le irá al modelo en el mundo real. Si después de ver la nota de prueba cambias algo y vuelves a medir, esa nota ya no vale: la conviertes en otro simulacro.</li>
+  </ul>
+  <p>Antes de dividir hay que <strong>barajar</strong>, porque los datos suelen venir ordenados (por fecha, por jugador, por país) y no quieres que la prueba sean «los jugadores de diciembre». Se baraja con Fisher-Yates y un generador con semilla, como en la <a href="18-matematicas.html#azar">Estación 18</a>, para que la división salga igual cada vez que ejecutes el programa. Y cuando una clase es rara, por ejemplo un 5 % de tramposos, se <strong>estratifica</strong>: se reparte cada clase por separado, para que las tres partes tengan la misma proporción. Sin estratificar, con 30 ejemplos de prueba podrían tocarte cero tramposos, y medirías un detector de tramposos sin ninguno. Lo programarás en el ejercicio <a href="#ej-dividir">Divide sin trampas</a>.</p>
+  <aside class="senal clave" data-titulo="Las estadísticas, solo del entrenamiento">
+    <p>La media y la desviación del escalado, la mediana para rellenar huecos, el mínimo y el máximo: todo se calcula <strong>solo con el conjunto de entrenamiento</strong>, y después se aplica igual a validación y prueba. Si calculas la media con todos los datos, un poco de información de la prueba se cuela en el entrenamiento y la nota final sale mejor de lo que será en la realidad. Es tu primer encuentro con una <strong>fuga de datos</strong>; la sección <a href="#evaluar">Evaluar con honestidad</a> la estudia a fondo.</p>
+  </aside>
+  <pre><code class="language-js">const stats = calcularStats(entrenamiento);            // media y desviación SOLO del entrenamiento
+const entEscalado = entrenamiento.map((f) =&gt; escalar(f, stats));
+const pruEscalado = prueba.map((f) =&gt; escalar(f, stats)); // la prueba usa las mismas stats</code></pre>
+
+  <h3>Recoger datos con respeto</h3>
+  <p>La telemetría de un juego describe a personas: cuándo juegan, cuánto gastan, cuándo se frustran. Las leyes de protección de datos que viste en la <a href="31-seguridad.html#secretos">Estación 31</a> se aplican también aquí. Lo específico del aprendizaje automático:</p>
+  <ul>
+    <li><strong>Minimiza.</strong> Guarda solo lo que necesitas para el modelo que vas a construir. «Por si acaso» no es una razón.</li>
+    <li><strong>Avisa y pide consentimiento</strong> cuando la ley lo exija, con palabras claras: qué recoges y para qué.</li>
+    <li><strong>Seudonimiza</strong>: cambia el nombre o el correo por un identificador interno. Ojo: sigue siendo un dato personal, porque combinando horarios, país y dispositivo a veces se puede <strong>reidentificar</strong> a alguien.</li>
+    <li><strong>Los modelos memorizan.</strong> Un modelo entrenado con datos personales puede revelar algunos de ellos. Si alguien pide que borres sus datos, quizá tengas que reentrenar.</li>
+  </ul>
+  <p>Todos los datos de esta estación son sintéticos: los genera un programa con semilla y no corresponden a nadie real.</p>
+
+  <h3>¿Cuántos datos hacen falta?</h3>
+  <p>No hay un número mágico. Depende de cuántas características uses, de lo complejo que sea el patrón y de cuánto ruido tengan las etiquetas (moderadores que no se ponen de acuerdo, jugadores que abandonan por motivos que no están en los datos). La forma honesta de saberlo es dibujar una <strong>curva de aprendizaje</strong>: entrenas con 50, 100, 200, 400 ejemplos y miras el error de validación. Si sigue bajando, más datos ayudarán. Si se aplanó, necesitas mejores características o un modelo distinto, no más filas.</p>
+</section>

@@ -1,0 +1,482 @@
+<section id="ruta" data-parada="Lo que vas a lograr">
+  <h2>Lo que vas a lograr</h2>
+  <p class="entradilla">En la taberna de tu juego hay una tabernera. Con un árbol de diálogo dice cinco frases fijas y, a la tercera visita, ya aburre. Con un modelo de lenguaje puede responder a cualquier cosa que le escribas… y también inventarse que regala la llave del sótano, gastarte cien dólares en una tarde o obedecer al jugador que le ordena «olvida tus reglas». Esta estación tiene dos mitades. En la primera abres la caja: programas modelos de lenguaje pequeños desde cero para entender qué hace uno grande. En la segunda lo conectas a tus apps y juegos con criterio: la clave a salvo, los costos medidos, la salida validada por tus reglas y las defensas puestas.</p>
+  <ul class="objetivos">
+    <li>Explicar qué hace un modelo de lenguaje: una función que recibe un texto y devuelve la probabilidad de cada posible siguiente token, y que genera repitiendo ese paso.</li>
+    <li>Programar desde cero un modelo de bigramas de palabras y otro de n-gramas de letras, y controlar lo que generan con semilla, temperatura, top-k y top-p.</li>
+    <li>Trocear texto en tokens con BPE y convertir palabras en vectores (embeddings) que se comparan por su significado.</li>
+    <li>Calcular a mano la atención de un transformer y contar cómo se entrena un modelo, qué es la fecha de corte y por qué alucina.</li>
+    <li>Llamar a la API de Claude desde tu servidor, con la clave fuera del navegador, respuestas en streaming, reintentos y el costo de cada turno medido.</li>
+    <li>Pedir salida estructurada, darle herramientas al modelo y escribir a mano el bucle de un agente.</li>
+    <li>Responder con tus propios documentos mediante búsqueda semántica y RAG, y decidir dónde vive el modelo: en la nube, en tu computadora o en el navegador.</li>
+    <li>Diseñar personajes y apps que conversan: ficha, estado del juego como fuente de verdad, reglas deterministas, memoria y latencia.</li>
+    <li>Defender tu app de la inyección de instrucciones, evaluarla con evals y tratar con honestidad la ética y los derechos.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="Antes de empezar">
+    <p>Esta es la última estación de la Línea 8 y usa mucho de lo anterior. Te hará falta: vectores, producto punto, azar con semilla y logaritmos de la <a href="18-matematicas.html">Estación 18</a>; <code>Map</code> de la <a href="19-estructuras-datos.html#hash">Estación 19</a>; <code>fetch</code> y <code>async/await</code> de la <a href="16-asincronia.html">16</a>; un servidor con Express, <code>.env</code> y Zod de la <a href="29-backend.html">29</a>; secretos, XSS y limitación de intentos de la <a href="31-seguridad.html">31</a>; y un poco de Python de la <a href="36-python.html">36</a>. De la Línea 8 se usan las redes neuronales de la <a href="40-redes-neuronales.html">Estación 40</a> (softmax, pérdida, entrenamiento) y el aprendizaje automático de la <a href="39-aprendizaje-automatico.html">39</a> (similitud del coseno y vecinos más cercanos). Los personajes que se mueven y deciden son de la <a href="37-ia-personajes.html">37</a>; aquí aprenderán a hablar.</p>
+  </aside>
+  <aside class="senal oficio" data-titulo="Cómo recorrerla">
+    <p>Es una estación larga (unas 34 horas). Tómala en dos partes. <strong>Parte A, por dentro</strong>: las cuatro primeras secciones, de <a href="#prediccion">Predecir y generar</a> a <a href="#entrenamiento">Cómo aprende</a>. Todo se hace en esta página, sin cuentas ni tarjetas. <strong>Parte B, integrarlo</strong>: de <a href="#api">Conectar Claude</a> a <a href="#seguridad">Seguridad y ética</a>, más el proyecto. En la página usarás un modelo simulado; lo real lo harás en tu computadora, con tu propia clave o con un modelo local gratuito. Son opcionales la búsqueda con embeddings reales, los modelos que corren en el navegador y las notas marcadas «para ir más allá».</p>
+  </aside>
+  <p>Lo que no está aquí, y por qué: generar imágenes, audio o voz con IA (se nombra al final como ampliación); entrenar o ajustar un modelo de lenguaje en la práctica (solo verás el concepto y cuándo conviene); comparar proveedores en detalle; y usar Claude Code para programar, que es la <a href="42-ia.html">Estación 42</a>. Si alguno de esos temas te atrae como profesión, la <a href="44-carrera.html">Estación 44</a> tiene las rutas.</p>
+</section>
+
+<section id="prediccion" data-parada="Predecir y generar">
+  <h2>Predecir y generar: tu primer modelo de lenguaje</h2>
+  <p>Vuelve a la tabernera. En la <a href="37-ia-personajes.html">Estación 37</a> aprendiste a darle comportamiento con máquinas de estados y árboles: sabe ir a la barra, servir y huir del dragón. Para hablar, lo clásico es un <strong>árbol de diálogo</strong>: el jugador elige entre tres frases y ella responde con otra frase escrita por ti. Funciona, es predecible y no cuesta nada. Pero solo dice lo que escribiste. Si el jugador pregunta «¿qué opinas de la reina?» y no escribiste esa rama, no hay respuesta.</p>
+  <p>Un modelo de lenguaje resuelve eso de otra forma: no guarda respuestas, las <em>genera</em>. Para entender cómo, vas a construir uno de verdad, muy pequeño, con lo que ya sabes.</p>
+
+  <h3>Un modelo de lenguaje es una función</h3>
+  <p>Un <strong>modelo de lenguaje</strong> es una función que recibe un texto y devuelve, para cada posible trozo siguiente, la probabilidad de que venga a continuación. Esos trozos se llaman <strong>tokens</strong>: pueden ser palabras, partes de palabra o signos (en la sección <a href="#tokens">Tokens y embeddings</a> verás cómo se cortan). A la lista de «cada token con su probabilidad», que suma 1, se le llama <strong>distribución de probabilidad</strong>.</p>
+  <pre><code class="language-text">siguiente("la tabernera sirve")  →  { sidra: 0.41, vino: 0.22, la: 0.09, … }   (todo suma 1)</code></pre>
+  <p>Eso es todo lo que hace. Un <strong>modelo de lenguaje grande</strong> (en inglés, <em>large language model</em> o <strong>LLM</strong>), como Claude, hace exactamente eso, con una función enorme entrenada con muchísimo texto. Para <em>escribir</em> una respuesta, repite la función: elige un token, lo añade al texto y vuelve a preguntar. A ese bucle se le llama <strong>generación autorregresiva</strong>: «auto» porque cada paso usa lo que el propio modelo acaba de escribir.</p>
+  <figure class="capsula" data-titulo="El bucle autorregresivo">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Animación: un modelo de bigramas recibe la palabra la y muestra las probabilidades de la siguiente palabra. Un número al azar elige montaña, que se añade al contexto. El paso se repite con vive, en, la y taberna hasta que sale el punto final. La frase resultante, la montaña vive en la taberna, es fluida pero falsa.">
+        <text class="d-rotulo" x="12" y="39">Contexto</text>
+        <rect class="d-caja" x="100" y="18" width="40" height="30" rx="6"/>
+        <text class="d-mono" x="120" y="39" text-anchor="middle">la</text>
+        <g data-pasos="2-">
+          <rect class="d-caja" x="146" y="18" width="84" height="30" rx="6" data-clases="2:d-acento; 3:"/>
+          <text class="d-mono" x="188" y="39" text-anchor="middle" data-clases="2:d-sobre-acento; 3:">montaña</text>
+        </g>
+        <g data-pasos="3-">
+          <rect class="d-caja" x="236" y="18" width="56" height="30" rx="6" data-clases="3:d-acento; 4:"/>
+          <text class="d-mono" x="264" y="39" text-anchor="middle" data-clases="3:d-sobre-acento; 4:">vive</text>
+        </g>
+        <g data-pasos="4-">
+          <rect class="d-caja" x="298" y="18" width="40" height="30" rx="6" data-clases="4:d-acento; 5:"/>
+          <text class="d-mono" x="318" y="39" text-anchor="middle" data-clases="4:d-sobre-acento; 5:">en</text>
+        </g>
+        <g data-pasos="5-">
+          <rect class="d-caja" x="344" y="18" width="40" height="30" rx="6" data-clases="5:d-acento; 6:"/>
+          <text class="d-mono" x="364" y="39" text-anchor="middle" data-clases="5:d-sobre-acento; 6:">la</text>
+        </g>
+        <g data-pasos="6-">
+          <rect class="d-caja" x="390" y="18" width="84" height="30" rx="6" data-clases="6:d-acento; 7:"/>
+          <text class="d-mono" x="432" y="39" text-anchor="middle" data-clases="6:d-sobre-acento; 7:">taberna</text>
+        </g>
+        <g data-pasos="7-">
+          <rect class="d-acento" x="480" y="18" width="40" height="30" rx="6"/>
+          <text class="d-mono d-sobre-acento" x="500" y="39" text-anchor="middle">.</text>
+        </g>
+        <text class="d-peq d-tenue" x="12" y="80" data-texto="1:Probabilidad de la siguiente palabra, según la última: «la»; 3:Probabilidad de la siguiente palabra, según la última: «montaña»; 4:Probabilidad de la siguiente palabra, según la última: «vive»; 5:Probabilidad de la siguiente palabra, según la última: «en»; 6:Probabilidad de la siguiente palabra, según la última: «la»; 7:Probabilidad de la siguiente palabra, según la última: «taberna»">Probabilidad de la siguiente palabra, según la última: «la»</text>
+        <g data-pasos="1-2,6" class="d-peq">
+          <text class="d-mono" x="150" y="112" text-anchor="end">tabernera</text><rect class="d-caja-suave" x="160" y="101" width="42" height="13"/><text x="208" y="112">0,11</text>
+          <text class="d-mono" x="150" y="131" text-anchor="end">taberna</text><rect class="d-caja-suave" x="160" y="120" width="63" height="13" data-clases="6:d-acento"/><text x="229" y="131">0,17</text>
+          <text class="d-mono" x="150" y="150" text-anchor="end">reina</text><rect class="d-caja-suave" x="160" y="139" width="84" height="13"/><text x="250" y="150">0,22</text>
+          <text class="d-mono" x="150" y="169" text-anchor="end">montaña</text><rect class="d-caja-suave" x="160" y="158" width="42" height="13" data-clases="2:d-acento; 3:"/><text x="208" y="169">0,11</text>
+          <text class="d-mono" x="150" y="188" text-anchor="end">cueva</text><rect class="d-caja-suave" x="160" y="177" width="42" height="13"/><text x="208" y="188">0,11</text>
+          <text class="d-mono" x="150" y="207" text-anchor="end">herrera</text><rect class="d-caja-suave" x="160" y="196" width="42" height="13"/><text x="208" y="207">0,11</text>
+          <text class="d-mono" x="150" y="226" text-anchor="end">fragua</text><rect class="d-caja-suave" x="160" y="215" width="21" height="13"/><text x="187" y="226">0,06</text>
+          <text class="d-mono" x="150" y="245" text-anchor="end">puerta</text><rect class="d-caja-suave" x="160" y="234" width="21" height="13"/><text x="187" y="245">0,06</text>
+          <text class="d-mono" x="150" y="264" text-anchor="end">plaza</text><rect class="d-caja-suave" x="160" y="253" width="21" height="13"/><text x="187" y="264">0,06</text>
+        </g>
+        <g data-pasos="3" class="d-peq">
+          <text class="d-mono" x="150" y="112" text-anchor="end">vive</text><rect class="d-acento" x="160" y="101" width="190" height="13"/><text x="356" y="112">0,50</text>
+          <text class="d-mono" x="150" y="131" text-anchor="end">. (fin)</text><rect class="d-caja-suave" x="160" y="120" width="190" height="13"/><text x="356" y="131">0,50</text>
+        </g>
+        <g data-pasos="4" class="d-peq">
+          <text class="d-mono" x="150" y="112" text-anchor="end">en</text><rect class="d-acento" x="160" y="101" width="380" height="13"/><text x="546" y="112">1,00</text>
+        </g>
+        <g data-pasos="5" class="d-peq">
+          <text class="d-mono" x="150" y="112" text-anchor="end">la</text><rect class="d-acento" x="160" y="101" width="326" height="13"/><text x="492" y="112">0,86</text>
+          <text class="d-mono" x="150" y="131" text-anchor="end">el</text><rect class="d-caja-suave" x="160" y="120" width="54" height="13"/><text x="220" y="131">0,14</text>
+        </g>
+        <g data-pasos="7" class="d-peq">
+          <text class="d-mono" x="150" y="112" text-anchor="end">. (fin)</text><rect class="d-acento" x="160" y="101" width="380" height="13"/><text x="546" y="112">1,00</text>
+          <text x="160" y="170" style="font-size:15px">Frase terminada: «la montaña vive en la taberna.»</text>
+          <text class="d-tenue" x="160" y="194" style="font-size:15px">Suena a español. Y es falsa: la montaña no vive en ningún sitio.</text>
+        </g>
+        <rect class="d-caja-suave" x="596" y="96" width="112" height="170" rx="8"/>
+        <text class="d-rotulo d-peq" x="652" y="120" text-anchor="middle">azar()</text>
+        <text class="d-mono" x="652" y="146" text-anchor="middle" data-texto="1:—; 2:0,601; 3:0,448; 4:0,852; 5:0,670; 6:0,175; 7:0,527">—</text>
+        <text class="d-rotulo d-peq" x="652" y="190" text-anchor="middle">elegido</text>
+        <text class="d-mono" x="652" y="216" text-anchor="middle" data-texto="1:—; 2:montaña; 3:vive; 4:en; 5:la; 6:taberna; 7:. (fin)">—</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>El modelo recibe el contexto «la» y devuelve una distribución: la probabilidad de cada palabra que puede venir después. Todas juntas suman 1. Es un modelo tan pequeño que solo mira la última palabra.</li>
+        <li data-duracion="6">Para elegir, se tira un número al azar entre 0 y 1: salió 0,601. Se van sumando las probabilidades en orden (0,11, luego 0,28, 0,50, 0,61…) y gana la palabra en la que la suma supera ese número: «montaña». Se añade al contexto.</li>
+        <li>Se repite con el contexto nuevo. Después de «montaña» el modelo solo vio dos cosas: «vive» y el final de la frase. El azar (0,448) elige «vive».</li>
+        <li>Después de «vive» siempre vino «en»: probabilidad 1. Aquí el azar no importa.</li>
+        <li>Después de «en» casi siempre vino «la» (6 de 7 veces). Sale «la».</li>
+        <li>Otra vez «la»: la misma distribución del primer paso. Ahora el azar (0,175) cae en «taberna».</li>
+        <li data-duracion="7">Después de «taberna» siempre vino el punto: la señal de fin. El bucle se detiene. La frase suena bien porque cada par de palabras aparecía en el texto de entrenamiento, pero el conjunto no tiene sentido. Un LLM hace este mismo bucle, con una función muchísimo mejor.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>El modelo de bigramas: contar pares</h3>
+  <p>El modelo de la cápsula es un <strong>modelo de bigramas</strong>. Un <strong>n-grama</strong> es una secuencia de <em>n</em> tokens seguidos; un bigrama es una pareja (n = 2). La idea es contar, en un texto de entrenamiento, cuántas veces aparece cada palabra detrás de cada otra. Si «la» apareció 18 veces con algo detrás y 4 de ellas era «reina», el modelo dirá que después de «la» viene «reina» con probabilidad 4/18.</p>
+  <p>Para contar pares, la estructura natural es un <code>Map</code> de <code>Map</code>s (la tabla hash de la <a href="19-estructuras-datos.html#hash">Estación 19</a>): la primera clave es la palabra actual y su valor es otro <code>Map</code> con «palabra siguiente → cuántas veces». Sigue cómo se llena con dos frases muy cortas:</p>
+  <div class="traza" data-titulo="Contar bigramas con un Map de Maps">
+    <pre><code class="language-js">const frases = ["la reina vive", "la reina teme"];
+const conteo = new Map();
+for (const frase of frases) {
+  const p = frase.split(" ");
+  for (let i = 0; i &lt; p.length - 1; i++) {
+    if (!conteo.has(p[i])) conteo.set(p[i], new Map());
+    const siguientes = conteo.get(p[i]);
+    siguientes.set(p[i + 1], (siguientes.get(p[i + 1]) || 0) + 1);
+  }
+}
+console.log(conteo.get("reina"));</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"frases": "[ 'la reina vive', 'la reina teme' ]"}, "nota": "El texto de entrenamiento: dos frases."},
+      {"linea": 2, "vars": {"frases": "[ 'la reina vive', 'la reina teme' ]", "conteo": "Map(0) {}"}, "nota": "La tabla de conteos empieza vacía."},
+      {"linea": 3, "vars": {"frase": "'la reina vive'", "conteo": "Map(0) {}"}, "nota": "Primera frase."},
+      {"linea": 4, "vars": {"frase": "'la reina vive'", "p": "[ 'la', 'reina', 'vive' ]", "conteo": "Map(0) {}"}, "nota": "split corta la frase en palabras. Tres palabras dan dos pares: (la, reina) y (reina, vive)."},
+      {"linea": 5, "vars": {"p": "[ 'la', 'reina', 'vive' ]", "i": "0", "conteo": "Map(0) {}"}, "nota": "i llega solo hasta p.length - 2: la última palabra no tiene siguiente."},
+      {"linea": 6, "vars": {"p": "[ 'la', 'reina', 'vive' ]", "i": "0", "conteo": "Map(1) { 'la' => Map(0) {} }"}, "nota": "«la» no estaba: se crea su tabla de siguientes, vacía."},
+      {"linea": 7, "vars": {"p": "[ 'la', 'reina', 'vive' ]", "i": "0", "siguientes": "Map(0) {}", "conteo": "Map(1) { 'la' => Map(0) {} }"}, "nota": "siguientes apunta a la tabla de «la» (no es una copia: es la misma)."},
+      {"linea": 8, "vars": {"p": "[ 'la', 'reina', 'vive' ]", "i": "0", "siguientes": "Map(1) { 'reina' => 1 }", "conteo": "Map(1) { 'la' => Map(1) { 'reina' => 1 } }"}, "nota": "siguientes.get('reina') no existe (undefined), así que || 0 da 0; se guarda 0 + 1."},
+      {"linea": 5, "vars": {"p": "[ 'la', 'reina', 'vive' ]", "i": "1", "conteo": "Map(1) { 'la' => Map(1) { 'reina' => 1 } }"}, "nota": "Siguiente par: (reina, vive)."},
+      {"linea": 8, "vars": {"p": "[ 'la', 'reina', 'vive' ]", "i": "1", "siguientes": "Map(1) { 'vive' => 1 }", "conteo": "Map(2) { 'la' => Map(1) { 'reina' => 1 }, 'reina' => Map(1) { 'vive' => 1 } }"}, "nota": "Se creó la tabla de «reina» (línea 6) y se anotó que detrás vino «vive»."},
+      {"linea": 3, "vars": {"frase": "'la reina teme'", "conteo": "Map(2) { 'la' => Map(1) { 'reina' => 1 }, 'reina' => Map(1) { 'vive' => 1 } }"}, "nota": "Segunda frase."},
+      {"linea": 8, "vars": {"p": "[ 'la', 'reina', 'teme' ]", "i": "0", "siguientes": "Map(1) { 'reina' => 2 }", "conteo": "Map(2) { 'la' => Map(1) { 'reina' => 2 }, 'reina' => Map(1) { 'vive' => 1 } }"}, "nota": "«la» ya existía, así que la línea 6 no hace nada. El par (la, reina) sube a 2."},
+      {"linea": 8, "vars": {"p": "[ 'la', 'reina', 'teme' ]", "i": "1", "siguientes": "Map(2) { 'vive' => 1, 'teme' => 1 }", "conteo": "Map(2) { 'la' => Map(1) { 'reina' => 2 }, 'reina' => Map(2) { 'vive' => 1, 'teme' => 1 } }"}, "nota": "Detrás de «reina» ahora hay dos opciones, una vez cada una."},
+      {"linea": 11, "vars": {"conteo": "Map(2) { 'la' => Map(1) { 'reina' => 2 }, 'reina' => Map(2) { 'vive' => 1, 'teme' => 1 } }"}, "salida": "Map(2) { 'vive' => 1, 'teme' => 1 }", "nota": "Dividiendo cada conteo entre el total (2), el modelo dirá: después de «reina», «vive» con 0,5 y «teme» con 0,5."}
+    ]</script>
+  </div>
+  <p>Para pasar de conteos a probabilidades, se divide cada conteo entre el total de su fila. A eso se le llama <strong>normalizar</strong>. Ahora, con un texto de entrenamiento un poco más grande (doce frases del lore de Brumavela, la ciudad de tu juego), <strong>predice</strong> antes de ejecutar: ¿qué palabra es la más probable después de «la»? ¿Y después de «en»?</p>
+  <div class="taller" id="taller-bigramas" data-titulo="Predice: el modelo de bigramas de Brumavela">
+    <textarea class="taller-codigo">const corpus = [
+  "la tabernera sirve sidra en la taberna .",
+  "la reina de brumavela vive en el castillo .",
+  "el dragón de la montaña vive en la cueva .",
+  "la herrera forja espadas en la fragua .",
+  "el guardia vigila la puerta del castillo .",
+  "la tabernera conoce a la reina .",
+  "el dragón guarda oro en la cueva .",
+  "la herrera vende una espada al guardia .",
+  "el mercader vende pan en la plaza .",
+  "la reina de brumavela visita la taberna .",
+  "el guardia bebe sidra en la taberna .",
+  "la reina teme al dragón de la montaña .",
+];
+
+function contarBigramas(frases) {
+  const conteo = new Map();
+  for (const frase of frases) {
+    const p = frase.split(" ");
+    for (let i = 0; i < p.length - 1; i++) {
+      if (!conteo.has(p[i])) conteo.set(p[i], new Map());
+      const siguientes = conteo.get(p[i]);
+      siguientes.set(p[i + 1], (siguientes.get(p[i + 1]) || 0) + 1);
+    }
+  }
+  return conteo;
+}
+
+function aProbabilidades(conteo) {
+  const modelo = new Map();
+  for (const [palabra, siguientes] of conteo) {
+    let total = 0;
+    for (const n of siguientes.values()) total += n;
+    const dist = new Map();
+    for (const [sig, n] of siguientes) dist.set(sig, n / total);
+    modelo.set(palabra, dist);
+  }
+  return modelo;
+}
+
+const modelo = aProbabilidades(contarBigramas(corpus));
+for (const palabra of ["la", "en"]) {
+  console.log(`Después de «${palabra}»:`);
+  for (const [sig, p] of modelo.get(palabra)) {
+    console.log(`  ${sig.padEnd(10)} ${p.toFixed(3)}`);
+  }
+}</textarea>
+  </div>
+  <p>Después de «la» gana «reina» (4 de 18, 0,222) y después de «en» casi siempre viene «la» (6 de 7). El punto «.» funciona como un token más: es la señal de <strong>fin</strong>. Cuando el modelo lo elige, la frase termina. Los modelos reales tienen un token especial de fin de texto con la misma función.</p>
+  <aside class="senal analogia">
+    <p>Es el autocompletado del teclado de tu teléfono: escribes «nos vemos» y te propone «mañana» porque lo has escrito muchas veces. El trie de la <a href="19-estructuras-datos.html#arboles">Estación 19</a> completaba <em>la misma palabra</em> por su prefijo; el bigrama propone <em>la palabra siguiente</em>. La analogía falla en algo importante: el teclado solo mira una o dos palabras atrás, igual que este bigrama, mientras que un LLM mira miles de tokens a la vez y sigue instrucciones. El mecanismo de base (predecir lo siguiente) es el mismo; la calidad, no.</p>
+  </aside>
+
+  <h3>Elegir el siguiente token: voraz o al azar</h3>
+  <p>Con la distribución en la mano, hay que elegir un token. La primera idea es tomar siempre el más probable. Es un <strong>algoritmo voraz</strong> como los de la <a href="20-algoritmos.html#estrategias">Estación 20</a>: decide lo mejor en cada paso sin mirar el conjunto. Aquí se llama <strong>decodificación voraz</strong> (<em>greedy decoding</em>). Predice qué escribe empezando por «la»:</p>
+  <div class="taller" id="taller-voraz" data-titulo="Predice: la trampa del voraz">
+    <script type="text/plain" class="taller-preparacion">
+const corpus = ["la tabernera sirve sidra en la taberna .","la reina de brumavela vive en el castillo .","el dragón de la montaña vive en la cueva .","la herrera forja espadas en la fragua .","el guardia vigila la puerta del castillo .","la tabernera conoce a la reina .","el dragón guarda oro en la cueva .","la herrera vende una espada al guardia .","el mercader vende pan en la plaza .","la reina de brumavela visita la taberna .","el guardia bebe sidra en la taberna .","la reina teme al dragón de la montaña ."];
+const modelo = new Map();
+for (const f of corpus) { const p = f.split(" "); for (let i = 0; i < p.length - 1; i++) { if (!modelo.has(p[i])) modelo.set(p[i], new Map()); const s = modelo.get(p[i]); s.set(p[i + 1], (s.get(p[i + 1]) || 0) + 1); } }
+for (const [w, s] of modelo) { let t = 0; for (const n of s.values()) t += n; for (const [k, n] of s) s.set(k, n / t); }
+    </script>
+    <textarea class="taller-codigo">// «modelo» ya está preparado: es el Map de Maps con probabilidades del taller anterior.
+function voraz(modelo, inicio, maxPalabras) {
+  const frase = [inicio];
+  let actual = inicio;
+  while (frase.length < maxPalabras) {
+    let mejor = null;
+    let pMejor = -1;
+    for (const [sig, p] of modelo.get(actual)) {
+      if (p > pMejor) { mejor = sig; pMejor = p; }
+    }
+    frase.push(mejor);
+    if (mejor === ".") break;
+    actual = mejor;
+  }
+  return frase.join(" ");
+}
+
+console.log(voraz(modelo, "la", 14));
+console.log(voraz(modelo, "el", 14));</textarea>
+  </div>
+  <p>Las dos frases caen en el mismo círculo: «la reina de brumavela vive en la reina de brumavela vive en la…». El voraz siempre toma el mismo camino y, en cuanto vuelve a una palabra ya vista, repite el bucle para siempre (se corta porque pusimos un máximo). Los modelos grandes también tienden a repetirse con la decodificación voraz. Y aunque no se repitiera, daría siempre la misma respuesta a la misma pregunta: una tabernera que dice siempre lo mismo.</p>
+  <p>La alternativa es el <strong>muestreo</strong> (<em>sampling</em>): elegir al azar, pero respetando las probabilidades. Es la tabla de botín ponderada de la <a href="18-matematicas.html#azar">Estación 18</a> (el ejercicio <a href="18-matematicas.html#ej-botin">del botín</a>): una espada legendaria sale el 5 % de las veces y una poción el 60 %. Se tira un número entre 0 y 1 y se recorre la lista sumando probabilidades hasta pasarlo:</p>
+  <div class="traza" data-titulo="Elegir un token con la suma acumulada">
+    <pre><code class="language-js">const probs = new Map([["reina", 0.5], ["taberna", 0.3], ["cueva", 0.2]]);
+const r = 0.62;          // lo que devolvió azar()
+let acumulado = 0;
+for (const [token, p] of probs) {
+  acumulado += p;
+  if (r &lt; acumulado) { console.log(token); break; }
+}</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"probs": "Map(3) { 'reina' => 0.5, 'taberna' => 0.3, 'cueva' => 0.2 }"}, "nota": "Una distribución pequeña: suma 1."},
+      {"linea": 2, "vars": {"probs": "Map(3) {…}", "r": "0.62"}, "nota": "Un número al azar entre 0 y 1. Imagina la recta del 0 al 1 cortada en tramos: reina ocupa de 0 a 0,5; taberna de 0,5 a 0,8; cueva de 0,8 a 1."},
+      {"linea": 3, "vars": {"r": "0.62", "acumulado": "0"}, "nota": "La suma acumulada empieza en 0."},
+      {"linea": 4, "vars": {"r": "0.62", "acumulado": "0", "token": "'reina'", "p": "0.5"}, "nota": "Primer token del Map."},
+      {"linea": 5, "vars": {"r": "0.62", "acumulado": "0.5", "token": "'reina'", "p": "0.5"}, "nota": "El tramo de reina termina en 0,5."},
+      {"linea": 6, "vars": {"r": "0.62", "acumulado": "0.5", "token": "'reina'", "p": "0.5"}, "nota": "¿0,62 &lt; 0,5? No: r cae más allá del tramo de reina. Seguimos."},
+      {"linea": 4, "vars": {"r": "0.62", "acumulado": "0.5", "token": "'taberna'", "p": "0.3"}, "nota": "Segundo token."},
+      {"linea": 5, "vars": {"r": "0.62", "acumulado": "0.8", "token": "'taberna'", "p": "0.3"}, "nota": "El tramo de taberna va de 0,5 a 0,8."},
+      {"linea": 6, "vars": {"r": "0.62", "acumulado": "0.8", "token": "'taberna'", "p": "0.3"}, "salida": "taberna", "nota": "¿0,62 &lt; 0,8? Sí: el azar cayó en el tramo de taberna. Si lo repites muchas veces con r distintos, taberna saldrá el 30 % de las veces."}
+    ]</script>
+  </div>
+  <p>Con el muestreo, la misma pregunta puede dar respuestas distintas. Eso es bueno para un personaje (variedad), pero malo para depurar y para las pruebas. La solución es la de la <a href="18-matematicas.html#azar">Estación 18</a>: un generador pseudoaleatorio con <strong>semilla</strong>. Con la misma semilla, la misma secuencia de «azares» y, por tanto, la misma frase. En la práctica escribirás <code>elegir</code> y el bucle completo con el generador <code>mulberry32</code> (<a href="#ej-semilla">ejercicio «Genera con semilla»</a>).</p>
+  <aside class="senal error">
+    <p>«Si la IA dijo algo, lo volverá a decir». Con muestreo, no. Dos ejecuciones con la misma pregunta pueden responder distinto, y eso incluye equivocarse una vez sí y otra no. Por eso las pruebas de apps con modelos de lenguaje se repiten varias veces y se miden en porcentaje de aciertos (lo verás en <a href="#seguridad">las evals</a>).</p>
+  </aside>
+
+  <h3>Temperatura, top-k y top-p: moldear la distribución</h3>
+  <p>Entre «siempre lo más probable» y «azar puro» hay un control continuo: la <strong>temperatura</strong>. Se eleva cada probabilidad a la potencia 1/T y se vuelve a normalizar para que sume 1. Con T = 1 no cambia nada. Con T pequeña, lo probable se vuelve casi seguro (T → 0 equivale al voraz). Con T grande, todo se iguala y aparecen palabras raras. El nombre viene de la física: a más temperatura, más desorden.</p>
+  <figure class="capsula" data-titulo="La temperatura moldea la distribución">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 280" role="img" aria-label="Animación: cuatro barras con las probabilidades de sidra, agua, vino y leche. Con temperatura 1 son 0,60, 0,25, 0,10 y 0,05. Con temperatura 0,2 sidra sube a 0,99. Con temperatura 2 las barras se igualan. Con temperatura cercana a cero, sidra vale 1, como el voraz. Con top-p 0,9 se corta leche y el resto se renormaliza.">
+        <text class="d-rotulo" x="12" y="32" data-texto="1:Temperatura T = 1: sin cambios; 2:T = 0,2: más fría; 3:T = 2: más caliente; 4:T → 0: siempre el favorito (voraz); 5:Top-p = 0,9: se corta la cola">Temperatura T = 1: sin cambios</text>
+        <text class="d-peq d-tenue" x="12" y="56">Brasa te sirve una jarra de…</text>
+        <text class="d-mono" x="150" y="97" text-anchor="end">sidra</text>
+        <text class="d-mono" x="150" y="137" text-anchor="end">agua</text>
+        <text class="d-mono" x="150" y="177" text-anchor="end">vino</text>
+        <text class="d-mono" x="150" y="217" text-anchor="end">leche</text>
+        <path class="d-linea" d="M158 72 V232"/>
+        <g data-pasos="1">
+          <rect class="d-acento" x="160" y="80" width="264" height="24"/><text x="432" y="97">0,60</text>
+          <rect class="d-acento" x="160" y="120" width="110" height="24"/><text x="278" y="137">0,25</text>
+          <rect class="d-acento" x="160" y="160" width="44" height="24"/><text x="212" y="177">0,10</text>
+          <rect class="d-acento" x="160" y="200" width="22" height="24"/><text x="190" y="217">0,05</text>
+        </g>
+        <g data-pasos="2">
+          <rect class="d-acento" x="160" y="80" width="434" height="24"/><text x="602" y="97">0,99</text>
+          <rect class="d-acento" x="160" y="120" width="5" height="24"/><text x="173" y="137">0,01</text>
+          <rect class="d-acento" x="160" y="160" width="1" height="24"/><text x="169" y="177">0,00</text>
+          <rect class="d-acento" x="160" y="200" width="1" height="24"/><text x="169" y="217">0,00</text>
+        </g>
+        <g data-pasos="3">
+          <rect class="d-acento" x="160" y="80" width="188" height="24"/><text x="356" y="97">0,43</text>
+          <rect class="d-acento" x="160" y="120" width="121" height="24"/><text x="289" y="137">0,28</text>
+          <rect class="d-acento" x="160" y="160" width="77" height="24"/><text x="245" y="177">0,17</text>
+          <rect class="d-acento" x="160" y="200" width="54" height="24"/><text x="222" y="217">0,12</text>
+        </g>
+        <g data-pasos="4">
+          <rect class="d-acento" x="160" y="80" width="440" height="24"/><text x="608" y="97">1,00</text>
+          <text class="d-tenue" x="168" y="137">0</text><text class="d-tenue" x="168" y="177">0</text><text class="d-tenue" x="168" y="217">0</text>
+        </g>
+        <g data-pasos="5">
+          <rect class="d-acento" x="160" y="80" width="278" height="24"/><text x="446" y="97">0,63</text>
+          <rect class="d-acento" x="160" y="120" width="116" height="24"/><text x="284" y="137">0,26</text>
+          <rect class="d-acento" x="160" y="160" width="46" height="24"/><text x="214" y="177">0,11</text>
+          <rect class="d-punteada" x="160" y="200" width="22" height="24"/><text class="d-tenue" x="192" y="217">cortada</text>
+          <path class="d-linea" d="M150 196 H600" stroke-dasharray="4 5"/>
+        </g>
+        <rect class="d-codigo" x="12" y="240" width="696" height="32" rx="6"/>
+        <text class="d-codigo-texto" x="24" y="261" style="font-size:14px" data-texto="1:nueva = p ^ (1/T), y luego dividir entre la suma. Con T = 1, p ^ 1 = p.; 2:1/T = 5: 0,6^5 = 0,078 y 0,25^5 = 0,001. El favorito se lo lleva casi todo.; 3:1/T = 0,5 (raíz cuadrada): 0,77 · 0,50 · 0,32 · 0,22. Las diferencias se achatan.; 4:Cuanto más baja T, más se parece al voraz: misma respuesta siempre.; 5:Ordenadas: 0,60 + 0,25 = 0,85 &lt; 0,9 · + 0,10 = 0,95 ≥ 0,9. Se quedan 3.">nueva = p ^ (1/T), y luego dividir entre la suma. Con T = 1, p ^ 1 = p.</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>La distribución original del modelo para completar «Brasa te sirve una jarra de…». Con temperatura 1 se muestrea tal cual: sidra 6 de cada 10 veces, leche 1 de cada 20.</li>
+        <li>Con T = 0,2 cada probabilidad se eleva a 5. Los números pequeños se hacen diminutos mucho más rápido que los grandes, así que al normalizar la sidra se queda con el 99 %. Respuestas más previsibles.</li>
+        <li>Con T = 2 se saca la raíz cuadrada, que acerca los números entre sí. La leche pasa del 5 % al 12 %: más variedad y más riesgo de rarezas.</li>
+        <li>Si la temperatura baja hacia 0, el favorito acaba con probabilidad 1: es la decodificación voraz del taller anterior, con su monotonía.</li>
+        <li data-duracion="7">Otro control, <strong>top-p</strong>: se ordenan los tokens de más a menos probable y se quedan los primeros hasta que su suma alcanza p (aquí 0,9). La cola de rarezas (leche) se descarta y lo que queda se renormaliza. <strong>Top-k</strong> es parecido, pero se queda con un número fijo de tokens, los k más probables.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Resumiendo los controles de la generación:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Control</th><th scope="col">Qué hace</th><th scope="col">Para qué sirve</th></tr></thead>
+      <tbody>
+        <tr><td>Temperatura</td><td>Afila (T &lt; 1) o aplana (T &gt; 1) la distribución antes de muestrear.</td><td>Menos o más variedad.</td></tr>
+        <tr><td>Top-k</td><td>Solo se muestrea entre los k tokens más probables.</td><td>Evitar rarezas con un corte fijo.</td></tr>
+        <tr><td>Top-p (muestreo por núcleo)</td><td>Solo entre los más probables hasta sumar p.</td><td>Un corte que se adapta: si el modelo está seguro, quedan pocos; si duda, quedan más.</td></tr>
+        <tr><td>Token de fin</td><td>Cuando sale, el bucle termina.</td><td>Que la respuesta acabe sola.</td></tr>
+        <tr><td><code>max_tokens</code></td><td>Tope de tokens generados: el bucle se corta al llegar, aunque la frase quede a medias.</td><td>Controlar costo y tiempo. Si se corta, la API te avisa (lo verás en <a href="#api">Conectar Claude</a>).</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal ojo" data-titulo="En Claude estos controles ya no se tocan">
+    <p>Muchos tutoriales antiguos ponen <code>temperature: 0.7</code> al llamar a la API. En septiembre de 2026, <code>claude-opus-5-5</code> (y todos los Opus desde el 4.7) devuelve un error 400 si envías <code>temperature</code>, <code>top_p</code> o <code>top_k</code>; <code>claude-sonnet-5-5</code> rechaza cualquier valor distinto del predeterminado; solo <code>claude-haiku-4-5</code> los acepta. La variedad y la precisión se controlan con las instrucciones y con otros parámetros que verás más adelante. Aun así, entender la temperatura te sirve para leer la documentación, para los modelos locales (Ollama la admite) y para entender por qué la misma pregunta puede dar respuestas distintas.</p>
+  </aside>
+
+  <h3>N-gramas de letras: nombres para tu mundo</h3>
+  <p>Los mismos n-gramas funcionan con letras en lugar de palabras, y ahí son útiles de verdad en un juego: generan nombres de pueblos, tabernas o personajes que «suenan» a tu mundo. Es la idea de <em>makemore</em>, el proyecto con el que Andrej Karpathy enseña modelos de lenguaje (está en los videos). Con n = 3, el modelo mira las dos letras anteriores para elegir la siguiente. Un punto marca el inicio y el final del nombre: «..brumavela.».</p>
+  <p>Entrenado con 40 topónimos inventados (Brumavela, Rocanegra, Valdeniebla…), esto es lo que genera según el tamaño de n, con la misma semilla:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">n</th><th scope="col">Mira atrás</th><th scope="col">Contextos distintos</th><th scope="col">Nombres generados (semilla 7)</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>nada</td><td>1</td><td>Bríoleealoamnlavalaz, Aiaumalnrsl, Of, Aa</td></tr>
+        <tr><td>2</td><td>1 letra</td><td>24</td><td>Brtobra, Mebrero, Va, Enonieblbrile, Nafuma</td></tr>
+        <tr><td>3</td><td>2 letras</td><td>133</td><td>Brezal, Valuz, Pieblave, Pieverdeafrío, Hontefría</td></tr>
+        <tr><td>4</td><td>3 letras</td><td>232</td><td>Brezales, Torreniebla, Honda, Salinar, Brerosa</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Con n = 1 es sopa de letras con las frecuencias del español. Con n = 3 ya salen nombres creíbles. Con n = 4 empieza a <em>copiar</em>: «Brezales» estaba en la lista de entrenamiento. Es el mismo equilibrio que viste con el sobreajuste en la <a href="39-aprendizaje-automatico.html#evaluar">Estación 39</a>: un modelo que memoriza no inventa. Así se entrena y se genera. Fíjate en que es el bigrama de antes con dos cambios: las «palabras» son letras y el contexto son las <code>n - 1</code> letras anteriores.</p>
+  <pre><code class="language-js">function entrenar(nombres, n) {
+  const conteo = new Map();
+  for (const nombre of nombres) {
+    const t = ".".repeat(n - 1) + nombre.toLowerCase() + ".";   // "..brumavela."
+    for (let i = 0; i + n &lt;= t.length; i++) {
+      const contexto = t.slice(i, i + n - 1);                   // "..", ".b", "br"…
+      const letra = t[i + n - 1];
+      if (!conteo.has(contexto)) conteo.set(contexto, new Map());
+      const m = conteo.get(contexto);
+      m.set(letra, (m.get(letra) || 0) + 1);
+    }
+  }
+  // …y se normaliza cada fila, como en aProbabilidades
+}
+
+function generarNombre(modelo, n, azar) {
+  let contexto = ".".repeat(n - 1);
+  let nombre = "";
+  while (nombre.length &lt; 20) {
+    const letra = elegir(modelo.get(contexto), azar);
+    if (letra === ".") break;                                    // fin del nombre
+    nombre += letra;
+    contexto = n &gt; 1 ? (contexto + letra).slice(-(n - 1)) : "";  // las últimas n - 1 letras
+  }
+  return nombre.charAt(0).toUpperCase() + nombre.slice(1);
+}</code></pre>
+  <p>En el taller ya tienes esas funciones preparadas. El bucle final genera cinco nombres, pero algunos salen demasiado cortos o copiados de la lista. Modifícalo para quedarte solo con los buenos:</p>
+  <div class="taller" id="taller-nombres" data-titulo="Modifica: nombres de pueblos con trigramas">
+    <script type="text/plain" class="taller-preparacion">
+const TOPONIMOS = ["Brumavela","Rocanegra","Valdeniebla","Aguasombra","Piedrahonda","Montefrío","Villaluz","Robledal","Peñalba","Castroverde","Fuentealba","Torrenieve","Salinas","Almenara","Vallescuro","Pinoalto","Lagoseco","Aldeafría","Cumbrerosa","Arenaluna","Sombravilla","Riomanso","Hondonada","Solanar","Brezales","Olmedilla","Robleda","Nieblaroja","Encinar","Cañadaluz","Portalba","Mirasombra","Torrealta","Villaverde","Brumadal","Valdelobos","Peñarroja","Hojaseca","Lunaverde","Aguaclara"];
+function crearAzar(semilla) { return function () { semilla = (semilla + 0x6D2B79F5) | 0; let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function elegir(probs, azar) { const r = azar(); let acum = 0, ultimo = null; for (const [tok, p] of probs) { acum += p; ultimo = tok; if (r < acum) return tok; } return ultimo; }
+function entrenar(nombres, n) { const conteo = new Map(); for (const nombre of nombres) { const t = ".".repeat(n - 1) + nombre.toLowerCase() + "."; for (let i = 0; i + n <= t.length; i++) { const ctx = t.slice(i, i + n - 1), letra = t[i + n - 1]; if (!conteo.has(ctx)) conteo.set(ctx, new Map()); const m = conteo.get(ctx); m.set(letra, (m.get(letra) || 0) + 1); } } const modelo = new Map(); for (const [ctx, m] of conteo) { let total = 0; for (const v of m.values()) total += v; const d = new Map(); for (const [k, v] of m) d.set(k, v / total); modelo.set(ctx, d); } return modelo; }
+function generarNombre(modelo, n, azar) { let ctx = ".".repeat(n - 1), nombre = ""; while (nombre.length < 20) { const letra = elegir(modelo.get(ctx), azar); if (letra === ".") break; nombre += letra; ctx = n > 1 ? (ctx + letra).slice(-(n - 1)) : ""; } return nombre.charAt(0).toUpperCase() + nombre.slice(1); }
+    </script>
+    <textarea class="taller-codigo">// Ya tienes: TOPONIMOS (40 nombres), crearAzar(semilla), elegir(probs, azar),
+// entrenar(nombres, n) y generarNombre(modelo, n, azar).
+const N = 3;
+const modelo = entrenar(TOPONIMOS, N);
+const azar = crearAzar(42);
+console.log("Contextos distintos:", modelo.size);
+
+// Modifica este bucle: quédate solo con nombres de 4 a 12 letras
+// que NO estén en TOPONIMOS ni repetidos, hasta tener 5.
+for (let i = 0; i < 5; i++) {
+  console.log(generarNombre(modelo, N, azar));
+}</textarea>
+    <script type="text/plain" class="taller-verificar">
+const nombres = salida.filter(function (l) { return !/^Contextos/.test(l); });
+if (nombres.length !== 5) return "Deberías imprimir exactamente 5 nombres, uno por línea (además de la línea de contextos). Imprimiste " + nombres.length + ".";
+const vistos = new Set();
+for (const nombre of TOPONIMOS) { const t = ".." + nombre.toLowerCase() + "."; for (let i = 0; i + 3 <= t.length; i++) vistos.add(t.slice(i, i + 3)); }
+for (const nombre of nombres) {
+  if (!/^[A-ZÁÉÍÓÚÑ]/.test(nombre)) return "«" + nombre + "» debería empezar con mayúscula.";
+  if (nombre.length < 4 || nombre.length > 12) return "«" + nombre + "» tiene " + nombre.length + " letras: filtra para quedarte con nombres de 4 a 12.";
+  const t = ".." + nombre.toLowerCase() + ".";
+  for (let i = 0; i + 3 <= t.length; i++) if (!vistos.has(t.slice(i, i + 3))) return "«" + nombre + "» contiene «" + t.slice(i, i + 3) + "», un trío de letras que no aparece en los topónimos: ¿sigue generando el modelo de trigramas?";
+  if (TOPONIMOS.includes(nombre)) return "«" + nombre + "» está copiado de la lista de entrenamiento. Descártalo.";
+}
+if (new Set(nombres).size !== 5) return "Hay nombres repetidos: descarta los que ya tengas.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">const N = 3;
+const modelo = entrenar(TOPONIMOS, N);
+const azar = crearAzar(42);
+console.log("Contextos distintos:", modelo.size);
+
+const nombres = [];
+let intentos = 0;
+while (nombres.length &lt; 5 &amp;&amp; intentos &lt; 200) {
+  intentos++;
+  const nombre = generarNombre(modelo, N, azar);
+  if (nombre.length &lt; 4 || nombre.length &gt; 12) continue;   // demasiado corto o largo
+  if (TOPONIMOS.includes(nombre)) continue;                  // copiado
+  if (nombres.includes(nombre)) continue;                    // repetido
+  nombres.push(nombre);
+}
+for (const nombre of nombres) console.log(nombre);</code></pre>
+    <p>Con la semilla 42 salen Cañada, Torta, Mira, Altorta y Villa en 10 intentos. El límite de 200 intentos evita un bucle infinito si pides algo imposible (por ejemplo, 5 nombres de 30 letras). Es el patrón de siempre con contenido procedural: generar, filtrar con reglas y quedarte con lo que pasa. Cambia <code>N</code> a 2 y a 4 y mira cómo cambian la cantidad de contextos y la calidad.</p>
+  </details>
+
+  <h3>Lo mismo en Python</h3>
+  <p>Contar pares es igual de natural con un diccionario de Python (<a href="36-python.html#colecciones">Estación 36</a>). Este programa no usa azar, así que da la misma salida aquí y en tu computadora. Predice las tres primeras líneas antes de ejecutar:</p>
+  <div class="taller" data-modo="python" id="taller-bigramas-python" data-titulo="Predice: bigramas con diccionarios">
+    <textarea class="taller-codigo">corpus = [
+    "la tabernera sirve sidra en la taberna .",
+    "la reina de brumavela vive en el castillo .",
+    "el dragón de la montaña vive en la cueva .",
+    "la herrera forja espadas en la fragua .",
+    "el guardia vigila la puerta del castillo .",
+    "la tabernera conoce a la reina .",
+    "el dragón guarda oro en la cueva .",
+    "la herrera vende una espada al guardia .",
+    "el mercader vende pan en la plaza .",
+    "la reina de brumavela visita la taberna .",
+    "el guardia bebe sidra en la taberna .",
+    "la reina teme al dragón de la montaña .",
+]
+
+conteo = {}
+for frase in corpus:
+    palabras = frase.split()
+    for i in range(len(palabras) - 1):
+        a, b = palabras[i], palabras[i + 1]
+        if a not in conteo:
+            conteo[a] = {}
+        conteo[a][b] = conteo[a].get(b, 0) + 1
+
+despues = conteo["la"]
+total = sum(despues.values())
+# de más a menos veces; si empatan, en orden alfabético
+orden = sorted(despues.items(), key=lambda par: (-par[1], par[0]))
+for palabra, n in orden[:3]:
+    print(f"{palabra}: {n}/{total} = {n / total:.3f}")
+print(len(conteo), "palabras tienen al menos un siguiente")</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (salida[0] !== "reina: 4/18 = 0.222") return "La primera línea debería ser «reina: 4/18 = 0.222». ¿Cambiaste el programa?";
+return true;
+    </script>
+  </div>
+  <p>Sale «reina: 4/18», «taberna: 3/18» y, empatadas a 2, gana «cueva» por orden alfabético: el <code>key</code> ordena primero por el conteo negado (de mayor a menor) y después por la palabra. Fijar el desempate así hace que el resultado no dependa del orden en que se insertaron las claves.</p>
+
+  <h3>Los límites de los n-gramas</h3>
+  <p>Si los n-gramas funcionan, ¿por qué no hacer uno enorme con todo internet? Por cuatro razones, y entenderlas es entender qué resolvieron los LLM:</p>
+  <ul>
+    <li><strong>La tabla explota.</strong> Con V palabras distintas hay V² bigramas posibles y V³ trigramas: crece como una potencia (<a href="18-matematicas.html#crecimiento">Estación 18</a>). Nuestro corpus tiene 38 tokens distintos: 1 444 pares posibles. Con un vocabulario real de 50 000 palabras, 2 500 millones de pares y 125 billones de tríos.</li>
+    <li><strong>Casi todo está sin ver.</strong> En nuestras 12 frases aparecen 61 pares distintos: el 4,2 % de los posibles. Cualquier par que no apareció tiene probabilidad 0: el modelo considera imposible «la herrera bebe sidra» aunque sea perfectamente normal. A esto se le llama <strong>dispersión</strong> de los datos. Se alivia con trucos como el suavizado (lo usarás en <a href="#entrenamiento">Cómo aprende</a>), pero no se resuelve.</li>
+    <li><strong>No generaliza.</strong> Para el modelo, «espada» y «sable» son tan distintas como «espada» y «queso». Lo que aprende de una palabra no ayuda con otra parecida. Los embeddings de la próxima sección atacan justo esto.</li>
+    <li><strong>Contexto corto.</strong> El bigrama solo ve la última palabra. En «la reina de la montaña…» ya olvidó que hablaba de la reina. Para mirar lejos hace falta la atención del <a href="#transformer">transformer</a>.</li>
+  </ul>
+  <aside class="senal clave" data-titulo="Fluidez no es verdad">
+    <p>El bigrama escribe con total naturalidad «la reina de la montaña vive en la cueva»: cada pareja de palabras está en el texto de entrenamiento. Pero en ese mismo texto la reina vive en el castillo, y quien vive en la cueva es el dragón. El modelo no guarda hechos: guarda qué suele venir detrás de qué. Un LLM es muchísimo mejor, pero conserva el origen del problema: genera lo que <em>suena</em> probable. Por eso alucina, y por eso en tu juego la verdad (quién vive dónde, qué objetos hay) la guarda tu código, no el modelo.</p>
+  </aside>
+
+  <h3>Dónde encaja esto en la Línea 8</h3>
+  <p>Un LLM moderno no cuenta pares: es una <strong>red neuronal</strong> como las de la <a href="40-redes-neuronales.html">Estación 40</a>, con miles de millones de parámetros, que aprende a predecir el siguiente token. Aprende con <strong>aprendizaje autosupervisado</strong> (<a href="39-aprendizaje-automatico.html#aprender">Estación 39</a>): el propio texto trae las respuestas, porque la «etiqueta» de cada posición es la palabra que de verdad venía después. Nadie tiene que anotar nada. Las tres secciones siguientes abren esa red: cómo convierte el texto en números, cómo mira lejos y cómo se entrena.</p>
+  <aside class="senal oficio" data-titulo="Cuándo NO usar un modelo de lenguaje">
+    <p>Que un modelo pueda hablar no significa que deba decidirlo todo. Moverse por el mapa es A* (<a href="37-ia-personajes.html#caminos">37</a>); decidir si huye o ataca, un árbol de comportamiento o una función de utilidad (<a href="37-ia-personajes.html#arboles">37</a>); jugar bien al ajedrez, minimax (<a href="38-ia-busqueda.html#minimax">38</a>); calcular el daño de un golpe, una fórmula. Esas técnicas son exactas, gratis, instantáneas y se pueden probar. El modelo de lenguaje aporta lo que ellas no tienen: entender y producir lenguaje libre. En un buen diseño, el modelo habla y tu código decide.</p>
+  </aside>
+</section>
