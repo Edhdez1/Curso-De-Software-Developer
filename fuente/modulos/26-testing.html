@@ -23,7 +23,7 @@
   <p>Nadie rompió la función a propósito. El problema es que nadie volvió a comprobar todo lo que ya funcionaba. Cuando algo que funcionaba deja de funcionar por un cambio posterior, se llama <strong>regresión</strong> (en inglés, <em>regression</em>): el programa «retrocede». Es uno de los fallos más comunes del software, y el más frustrante, porque ya lo habías resuelto.</p>
 
   <h3>Qué es una prueba automática</h3>
-  <p>Una <strong>prueba automática</strong> (en inglés, <em>automated test</em>, o simplemente <em>test</em>) es un programa pequeño que ejecuta una parte de otro programa con datos conocidos y comprueba que el resultado es el esperado. Si lo es, la prueba <strong>pasa</strong>. Si no, <strong>falla</strong> y te dice qué esperaba y qué obtuvo.</p>
+  <p>Una <strong>prueba automática</strong> (en inglés, <em>automated test</em>, o solo <em>test</em>) es un programa pequeño que ejecuta una parte de otro programa con datos conocidos y comprueba que el resultado es el esperado. Si lo es, la prueba <strong>pasa</strong>. Si no, <strong>falla</strong> y te dice qué esperaba y qué obtuvo.</p>
   <p>Cada situación concreta que quieres comprobar es un <strong>caso de prueba</strong> (<em>test case</em>). Un caso de prueba tiene tres partes:</p>
   <ul>
     <li><strong>Las condiciones y los datos de entrada</strong>: un pedido de 3 euros con el cupón <code>BIENVENIDA</code>.</li>
@@ -176,7 +176,7 @@ return true;
     prueba();
     console.log("PASA  " + nombre);
   } catch (error) {
-    console.error("FALLA " + nombre + ": " + error.message);
+    console.error("FALLA " + nombre);
   }
 }
 function doble(n) {
@@ -184,7 +184,9 @@ function doble(n) {
 }
 test("el doble de 4 es 8", () =&gt; {
   const real = doble(4);
-  if (real !== 8) throw new Error("salió " + real);
+  if (real !== 8) {
+    throw new Error("salió " + real);
+  }
 });</code></pre>
     <script type="application/json">[
       {"linea": 1, "vars": {"test": "función"}, "nota": "Se define test. Todavía no se ejecuta nada de su interior."},
@@ -193,9 +195,10 @@ test("el doble de 4 es 8", () =&gt; {
       {"linea": 2, "vars": {"test": "función", "doble": "función", "nombre": "\"el doble de 4 es 8\"", "prueba": "función flecha"}, "nota": "Dentro de test, la ejecución entra en el bloque try."},
       {"linea": 3, "vars": {"test": "función", "doble": "función", "nombre": "\"el doble de 4 es 8\"", "prueba": "función flecha"}, "nota": "prueba() ejecuta la función flecha. Saltamos a la línea 13."},
       {"linea": 13, "vars": {"test": "función", "doble": "función", "nombre": "\"el doble de 4 es 8\"", "prueba": "función flecha", "real": "12"}, "nota": "Actuar: doble(4) devuelve 12 (4 × 3), y se guarda en real."},
-      {"linea": 14, "vars": {"test": "función", "doble": "función", "nombre": "\"el doble de 4 es 8\"", "prueba": "función flecha", "real": "12"}, "nota": "Comprobar: 12 !== 8 es verdadero, así que se lanza un error con el mensaje «salió 12». La flecha se interrumpe en el acto."},
-      {"linea": 5, "vars": {"test": "función", "doble": "función", "nombre": "\"el doble de 4 es 8\"", "prueba": "función flecha", "error": "Error: salió 12"}, "nota": "El error sube hasta el try de test. La línea 4 (PASA) nunca se ejecuta: la ejecución salta directamente al catch, que recibe el error."},
-      {"linea": 6, "vars": {"test": "función", "doble": "función", "nombre": "\"el doble de 4 es 8\"", "prueba": "función flecha", "error": "Error: salió 12"}, "salida": "FALLA el doble de 4 es 8: salió 12", "nota": "Se imprime el fallo con el nombre de la prueba y el mensaje. El programa no se detiene: si hubiera más pruebas debajo, se ejecutarían igual."}
+      {"linea": 14, "vars": {"test": "función", "doble": "función", "nombre": "\"el doble de 4 es 8\"", "prueba": "función flecha", "real": "12"}, "nota": "Comprobar: ¿12 !== 8? Sí, son distintos, así que se entra en el if."},
+      {"linea": 15, "vars": {"test": "función", "doble": "función", "nombre": "\"el doble de 4 es 8\"", "prueba": "función flecha", "real": "12"}, "nota": "Se lanza un error con el mensaje «salió 12». La flecha se interrumpe en el acto: el resto no se ejecuta."},
+      {"linea": 5, "vars": {"test": "función", "doble": "función", "nombre": "\"el doble de 4 es 8\"", "prueba": "función flecha", "error": "Error: salió 12"}, "nota": "El error sube hasta el try de test. La línea 4 (PASA) nunca se ejecuta: la ejecución salta directamente al catch, que recibe el error. Su mensaje, «salió 12», está en error.message."},
+      {"linea": 6, "vars": {"test": "función", "doble": "función", "nombre": "\"el doble de 4 es 8\"", "prueba": "función flecha", "error": "Error: salió 12"}, "salida": "FALLA el doble de 4 es 8", "nota": "Se imprime el fallo con el nombre de la prueba. El programa no se detiene: si hubiera más pruebas debajo, se ejecutarían igual. En el ejecutor completo, más abajo, también se imprime error.message."}
     ]</script>
   </div>
   <p>La segunda pieza es <code>expect(real)</code>, que evita escribir el <code>if</code> y el <code>throw</code> en cada prueba. Recibe el valor real y devuelve un objeto con métodos para comparar, llamados <strong>comparadores</strong> (<em>matchers</em>). <code>toBe(esperado)</code> lanza un error si el real no es el esperado. Por eso la línea se lee como una frase en inglés: <em>expect total to be 20</em>, «espero que el total sea 20».</p>
@@ -820,6 +823,7 @@ atacar(7, () =&gt; 20);    // en una prueba: un dado que siempre saca 20</code><
           <text class="d-rotulo" x="105" y="212" text-anchor="middle" data-texto="3:PASA">depende</text>
         </g>
         <g data-pasos="5">
+          <path class="d-punteada" d="M615 160V186"/>
           <rect class="d-caja d-punteada" x="530" y="186" width="170" height="70" rx="8"/>
           <text class="d-rotulo" x="615" y="212" text-anchor="middle">Espía</text>
           <text class="d-mono d-peq" x="615" y="240" text-anchor="middle">llamadas: 1</text>
@@ -1060,8 +1064,8 @@ test("un jugador que no existe da un error", async () =&gt; {
         <path class="d-tinta" d="M186 50l10 12-15 2z"/>
         <path class="d-linea" d="M224 128C220 160 204 180 180 196"/>
         <path class="d-tinta" d="M188 200l-14 2 6-13z"/>
-        <path class="d-linea" d="M124 200C98 186 84 160 82 130"/>
-        <path class="d-tinta" d="M74 134l8-13 8 13z"/>
+        <path class="d-linea" d="M124 200C98 186 84 170 82 146"/>
+        <path class="d-tinta" d="M74 148l8-14 8 14z"/>
         <circle class="d-caja" cx="80" cy="90" r="42" data-clases="2:d-mal-trazo; 3:; 4:d-mal-trazo; 5:"/>
         <text class="d-rotulo" x="80" y="88" text-anchor="middle">Rojo</text>
         <text class="d-peq d-tenue" x="80" y="106" text-anchor="middle">falla</text>
@@ -1374,6 +1378,7 @@ return true;
     <svg viewBox="0 0 720 300" role="img" aria-label="Pirámide de pruebas: en la base, muchas pruebas unitarias; en el medio, algunas de integración; en la punta, pocas de extremo a extremo. Hacia arriba las pruebas son más lentas, más caras y más realistas; hacia abajo, más rápidas, más baratas y más aisladas">
       <path class="d-caja" d="M60 270L120 190H480L540 270Z"/>
       <path class="d-caja-suave" d="M120 190L180 110H420L480 190Z"/>
+      <path class="d-linea" d="M120 190L180 110H420L480 190Z"/>
       <path class="d-caja" d="M180 110L240 30H360L420 110Z"/>
       <path class="d-linea" d="M120 190H480"/>
       <text class="d-rotulo" x="300" y="68" text-anchor="middle" style="font-size:15px">Extremo a extremo</text>
@@ -1570,7 +1575,7 @@ test("una persona compra un juego", async ({ page }) =&gt; {
         <tr><td>Prueba de rendimiento o de carga</td><td>Cuánto tarda y qué pasa con mil personas a la vez (<a href="17-diseno-ux.html">Estación 17</a>).</td></tr>
         <tr><td>Prueba de seguridad</td><td>Que no se puede entrar donde no se debe (<a href="31-seguridad.html">Estación 31</a>).</td></tr>
         <tr><td>Prueba de accesibilidad</td><td>Herramientas como axe revisan automáticamente contraste, etiquetas y papeles; se pueden ejecutar dentro de Playwright. Detectan una parte de los problemas, no todos: el resto necesita personas.</td></tr>
-        <tr><td>Prueba de instantánea (<em>snapshot</em>)</td><td>Guarda la salida (por ejemplo, un HTML) la primera vez y avisa si cambia. Útil, pero peligrosa: es fácil aceptar un cambio sin mirarlo.</td></tr>
+        <tr><td>Prueba de instantánea (<em>snapshot</em>)</td><td>Guarda la salida (por ejemplo, un HTML) la primera vez y avisa si cambia. Útil, pero peligrosa: cuesta poco aceptar un cambio sin mirarlo.</td></tr>
       </tbody>
     </table>
   </div>
@@ -2547,4 +2552,451 @@ for (const [cambio, mutante] of Object.entries(mutantes)) {
       <p>Seis aserciones bastan, y cada una tiene una razón: los valores límite de cada franja y los dos extremos no válidos. Un solo valor por franja (0.5, 3, 10) cubriría todas las ramas, pero dejaría vivos a tres mutantes. Esa es la diferencia entre ejecutar el código y comprobarlo.</p>
     </details>
   </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: la batería de pruebas de la tienda</h2>
+  <p>La tienda de tu juego tiene una calculadora de totales con envío, cupones y fechas de caducidad. Funciona, pero nadie se atreve a tocarla porque no tiene pruebas. Vas a escribirle una batería completa. Al final, el taller pondrá a prueba tus pruebas: ejecutará la misma batería contra seis calculadoras con un error escondido cada una, y te dirá cuántos atrapas.</p>
+  <p>Estas son las reglas de la tienda:</p>
+  <ol>
+    <li>El subtotal es la suma de precio por cantidad de cada línea del carrito. La cantidad debe ser un entero de 1 o más; si no, es un error.</li>
+    <li>Un carrito vacío cuesta 0.</li>
+    <li>El envío cuesta 4 € si el subtotal es menor de 30 €; desde 30 €, es gratis.</li>
+    <li>Cupón <code>BIENVENIDA</code>: 5 € menos sobre los productos. Los productos nunca bajan de 0 (el envío se cobra aparte).</li>
+    <li>Cupón <code>ENVIOGRATIS</code>: el envío no se cobra.</li>
+    <li>Cupón <code>VERANO</code>: 10 € menos, válido hasta el 21 de septiembre de 2026 incluido. Después es un error.</li>
+    <li>Cualquier otro cupón es un error.</li>
+  </ol>
+  <p>La función se usa así: <code>calcularTotal(carrito, cupon, hoy)</code>, donde <code>carrito</code> es un array de objetos <code>{ nombre, precio, cantidad }</code>, <code>cupon</code> es opcional y <code>hoy</code> es la fecha, con la fecha actual como valor por defecto.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Lista los casos antes de escribir código.</strong> Para cada regla, apunta sus clases de equivalencia y sus fronteras: ¿qué pasa con un subtotal de 29 y de 30? ¿Y con BIENVENIDA en un pedido de 3 €? ¿Y el 21 de septiembre a las 22:00?</p></div></li>
+    <li><div><p><strong>Organiza con <code>describe</code>.</strong> Un grupo por tema: subtotal y envío, cupones, fechas, errores. El taller ya tiene la primera prueba como ejemplo.</p></div></li>
+    <li><div><p><strong>Escribe las pruebas del camino feliz y de las fronteras.</strong> Crea los productos de ejemplo una vez, al principio de <code>ejecutarSuite</code>, para no repetirlos. Para variar la cantidad sin tocar el original usa la copia con spread (<a href="11-colecciones.html#desestructurar">Estación 11</a>): <code>{ ...puzle, cantidad: 2 }</code>.</p></div></li>
+    <li><div><p><strong>Controla el tiempo.</strong> Pasa fechas fijas como tercer argumento para el cupón VERANO: una dentro de plazo, el último día y el día siguiente. Nunca dependas de la fecha real.</p></div></li>
+    <li><div><p><strong>Prueba los errores</strong> con <code>expect(() =&gt; …).toThrow()</code>: cupón desconocido, cantidades imposibles, VERANO caducado.</p></div></li>
+    <li><div><p><strong>Ejecuta y mira las dos líneas finales.</strong> El resumen debe decir 0 fallan (con la calculadora correcta, todo verde) y tus pruebas deben atrapar los 6 errores escondidos. Si alguno se escapa, vuelve al paso 1: te falta una frontera.</p></div></li>
+  </ol>
+  <div class="taller" id="taller-proyecto" data-titulo="Proyecto: pruebas de la tienda" data-tiempo="8">
+    <textarea class="taller-codigo">// ===== Mini ejecutor de pruebas con describe (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0, silencio = false;
+function describe(nombre, grupo) {
+  if (!silencio) console.group(nombre);
+  grupo();
+  if (!silencio) console.groupEnd();
+}
+function test(nombre, prueba) {
+  try { prueba(); pasan++; if (!silencio) console.log("PASA  " + nombre); }
+  catch (error) { fallan++; if (!silencio) console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${esperado} y llegó ${real}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+
+// ===== Código que se prueba: la calculadora de la tienda =====
+const REGLAS = {
+  envioGratisDesde: 30,   // desde este subtotal, el envío es gratis
+  costoEnvio: 4,
+  descuentoBienvenida: 5,
+  descuentoVerano: 10,
+  finVerano: new Date(2026, 8, 21, 23, 59, 59),   // VERANO vale hasta el 21 de septiembre incluido
+  totalMinimo: 0,         // el total de los productos nunca baja de aquí
+};
+function crearCalculadora(reglas) {
+  return function calcularTotal(carrito, cupon = null, hoy = new Date()) {
+    let subtotal = 0;
+    for (const linea of carrito) {
+      if (!Number.isInteger(linea.cantidad) || linea.cantidad &lt; 1) {
+        throw new RangeError(`Cantidad no válida: ${linea.nombre}`);
+      }
+      subtotal += linea.precio * linea.cantidad;
+    }
+    if (carrito.length === 0) return 0;
+    let envio = subtotal &gt;= reglas.envioGratisDesde ? 0 : reglas.costoEnvio;
+    let descuento = 0;
+    if (cupon === "BIENVENIDA") descuento = reglas.descuentoBienvenida;
+    else if (cupon === "ENVIOGRATIS") envio = 0;
+    else if (cupon === "VERANO") {
+      if (hoy &gt; reglas.finVerano) throw new Error("El cupón VERANO ha caducado");
+      descuento = reglas.descuentoVerano;
+    } else if (cupon !== null) {
+      throw new Error(`Cupón desconocido: ${cupon}`);
+    }
+    return Math.max(reglas.totalMinimo, subtotal - descuento) + envio;
+  };
+}
+const calcularTotal = crearCalculadora(REGLAS);
+
+// ===== Tus pruebas: reciben la calculadora que hay que probar =====
+function ejecutarSuite(calcularTotal) {
+  describe("Subtotal y envío", () =&gt; {
+    test("un juego de 12 € paga 4 € de envío: 16", () =&gt; {
+      const carrito = [{ nombre: "Puzle", precio: 12, cantidad: 1 }];
+      expect(calcularTotal(carrito)).toBe(16);
+    });
+    // Sigue aquí: cantidades, carrito vacío, el límite de 30 €…
+  });
+
+  // Añade más grupos con describe: "Cupones", "El cupón VERANO y las fechas", "Errores"…
+}
+
+// ===== Comprobación final (no hace falta tocarla) =====
+ejecutarSuite(calcularTotal);
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);
+
+// Seis calculadoras con un error escondido cada una, como haría una herramienta de mutación.
+const variantes = [
+  { envioGratisDesde: 31 }, { costoEnvio: 5 }, { descuentoBienvenida: 4 },
+  { descuentoVerano: 9 }, { finVerano: new Date(2026, 8, 20, 23, 59, 59) }, { totalMinimo: -Infinity },
+];
+silencio = true;
+let atrapados = 0;
+for (const cambio of variantes) {
+  fallan = 0;
+  ejecutarSuite(crearCalculadora({ ...REGLAS, ...cambio }));
+  if (fallan &gt; 0) atrapados++;
+}
+silencio = false;
+console.log(`Tus pruebas atrapan ${atrapados} de ${variantes.length} errores escondidos`);</textarea>
+    <script type="text/plain" class="taller-verificar">
+var resumen = (salida.filter(function (l) { return /Resumen:/.test(l); })[0] || "").trim();
+var m = resumen.match(/^Resumen: (\d+) pasan, (\d+) fallan$/);
+if (!m) return "No se encontró el resumen. ¿Borraste la comprobación final?";
+if (Number(m[2]) > 0) return "Hay pruebas en rojo con la calculadora correcta: esas pruebas esperan algo distinto de lo que dicen las reglas. Revisa la cuenta de cada una.";
+var suite = codigo.split("function ejecutarSuite")[1] || "";
+if (Number(m[1]) < 10) return "Llevas " + m[1] + " pruebas. Escribe al menos 10: cubre cada regla, cada frontera y cada error.";
+if ((suite.match(/\bdescribe\(\s*["'`]/g) || []).length < 3) return "Agrupa tus pruebas en al menos 3 bloques describe (por ejemplo: envío, cupones, errores).";
+if ((suite.match(/expect\(\s*\(\s*\)\s*=>/g) || []).length < 2) return "Prueba también los errores con expect(() => calcularTotal(...)).toThrow(): al menos dos.";
+if (!/new Date\(\s*2026/.test(suite)) return "El cupón VERANO depende de la fecha: pasa una fecha fija como tercer argumento, por ejemplo new Date(2026, 8, 21).";
+var at = salida.filter(function (l) { return /errores escondidos/.test(l); })[0] || "";
+var a = at.match(/atrapan (\d+) de (\d+)/);
+if (!a) return "No se encontró la línea de errores escondidos. ¿Borraste la comprobación final?";
+if (a[1] !== a[2]) return at + ". Piensa en las fronteras que no has probado: ¿un subtotal de exactamente 30? ¿el último día de VERANO? ¿BIENVENIDA con un pedido de menos de 5 €? ¿el valor exacto de cada descuento?";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <pre><code class="language-js">// ===== Mini ejecutor de pruebas con describe (no hace falta tocarlo) =====
+let pasan = 0, fallan = 0, silencio = false;
+function describe(nombre, grupo) {
+  if (!silencio) console.group(nombre);
+  grupo();
+  if (!silencio) console.groupEnd();
+}
+function test(nombre, prueba) {
+  try { prueba(); pasan++; if (!silencio) console.log("PASA  " + nombre); }
+  catch (error) { fallan++; if (!silencio) console.error("FALLA " + nombre + ": " + error.message); }
+}
+function expect(real) {
+  return {
+    toBe(esperado) {
+      if (!Object.is(real, esperado)) throw new Error(`se esperaba ${esperado} y llegó ${real}`);
+    },
+    toThrow() {
+      try { real(); } catch (error) { return; }
+      throw new Error("se esperaba un error y no se lanzó ninguno");
+    },
+  };
+}
+
+// ===== Código que se prueba: la calculadora de la tienda =====
+const REGLAS = {
+  envioGratisDesde: 30,   // desde este subtotal, el envío es gratis
+  costoEnvio: 4,
+  descuentoBienvenida: 5,
+  descuentoVerano: 10,
+  finVerano: new Date(2026, 8, 21, 23, 59, 59),   // VERANO vale hasta el 21 de septiembre incluido
+  totalMinimo: 0,         // el total de los productos nunca baja de aquí
+};
+function crearCalculadora(reglas) {
+  return function calcularTotal(carrito, cupon = null, hoy = new Date()) {
+    let subtotal = 0;
+    for (const linea of carrito) {
+      if (!Number.isInteger(linea.cantidad) || linea.cantidad &lt; 1) {
+        throw new RangeError(`Cantidad no válida: ${linea.nombre}`);
+      }
+      subtotal += linea.precio * linea.cantidad;
+    }
+    if (carrito.length === 0) return 0;
+    let envio = subtotal &gt;= reglas.envioGratisDesde ? 0 : reglas.costoEnvio;
+    let descuento = 0;
+    if (cupon === "BIENVENIDA") descuento = reglas.descuentoBienvenida;
+    else if (cupon === "ENVIOGRATIS") envio = 0;
+    else if (cupon === "VERANO") {
+      if (hoy &gt; reglas.finVerano) throw new Error("El cupón VERANO ha caducado");
+      descuento = reglas.descuentoVerano;
+    } else if (cupon !== null) {
+      throw new Error(`Cupón desconocido: ${cupon}`);
+    }
+    return Math.max(reglas.totalMinimo, subtotal - descuento) + envio;
+  };
+}
+const calcularTotal = crearCalculadora(REGLAS);
+
+// ===== Tus pruebas: reciben la calculadora que hay que probar =====
+function ejecutarSuite(calcularTotal) {
+  const puzle = { nombre: "Puzle", precio: 12, cantidad: 1 };
+  const aventura = { nombre: "Aventura", precio: 18, cantidad: 1 };
+  const mini = { nombre: "Mini", precio: 3, cantidad: 1 };
+
+  describe("Subtotal y envío", () =&gt; {
+    test("un juego de 12 € paga 4 € de envío: 16", () =&gt; {
+      expect(calcularTotal([puzle])).toBe(16);
+    });
+    test("la cantidad multiplica el precio: 2 puzles son 24 + 4", () =&gt; {
+      expect(calcularTotal([{ ...puzle, cantidad: 2 }])).toBe(28);
+    });
+    test("con un subtotal de exactamente 30 €, el envío es gratis", () =&gt; {
+      expect(calcularTotal([puzle, aventura])).toBe(30);
+    });
+    test("con 29 € todavía se paga envío", () =&gt; {
+      expect(calcularTotal([{ nombre: "Caja", precio: 29, cantidad: 1 }])).toBe(33);
+    });
+    test("el carrito vacío cuesta 0", () =&gt; {
+      expect(calcularTotal([])).toBe(0);
+    });
+  });
+
+  describe("Cupones", () =&gt; {
+    test("BIENVENIDA descuenta 5 €", () =&gt; {
+      expect(calcularTotal([puzle], "BIENVENIDA")).toBe(11);
+    });
+    test("BIENVENIDA nunca deja los productos en negativo", () =&gt; {
+      expect(calcularTotal([mini], "BIENVENIDA")).toBe(4);
+    });
+    test("ENVIOGRATIS quita el envío", () =&gt; {
+      expect(calcularTotal([puzle], "ENVIOGRATIS")).toBe(12);
+    });
+  });
+
+  describe("El cupón VERANO y las fechas", () =&gt; {
+    test("VERANO descuenta 10 € dentro de plazo", () =&gt; {
+      expect(calcularTotal([puzle, aventura], "VERANO", new Date(2026, 7, 15))).toBe(20);
+    });
+    test("VERANO todavía vale el último día, 21 de septiembre", () =&gt; {
+      expect(calcularTotal([puzle, aventura], "VERANO", new Date(2026, 8, 21, 22, 0))).toBe(20);
+    });
+    test("VERANO ya no vale el 22 de septiembre", () =&gt; {
+      expect(() =&gt; calcularTotal([puzle], "VERANO", new Date(2026, 8, 22, 0, 0, 1))).toThrow();
+    });
+  });
+
+  describe("Errores", () =&gt; {
+    test("un cupón desconocido es un error", () =&gt; {
+      expect(() =&gt; calcularTotal([puzle], "GRATIS")).toThrow();
+    });
+    test("una cantidad 0 es un error", () =&gt; {
+      expect(() =&gt; calcularTotal([{ ...puzle, cantidad: 0 }])).toThrow();
+    });
+    test("una cantidad con decimales es un error", () =&gt; {
+      expect(() =&gt; calcularTotal([{ ...puzle, cantidad: 1.5 }])).toThrow();
+    });
+  });
+}
+
+// ===== Comprobación final (no hace falta tocarla) =====
+ejecutarSuite(calcularTotal);
+console.log(`Resumen: ${pasan} pasan, ${fallan} fallan`);
+
+// Seis calculadoras con un error escondido cada una, como haría una herramienta de mutación.
+const variantes = [
+  { envioGratisDesde: 31 }, { costoEnvio: 5 }, { descuentoBienvenida: 4 },
+  { descuentoVerano: 9 }, { finVerano: new Date(2026, 8, 20, 23, 59, 59) }, { totalMinimo: -Infinity },
+];
+silencio = true;
+let atrapados = 0;
+for (const cambio of variantes) {
+  fallan = 0;
+  ejecutarSuite(crearCalculadora({ ...REGLAS, ...cambio }));
+  if (fallan &gt; 0) atrapados++;
+}
+silencio = false;
+console.log(`Tus pruebas atrapan ${atrapados} de ${variantes.length} errores escondidos`);</code></pre>
+    <p>Catorce pruebas en cuatro grupos. Las que atrapan los errores escondidos son las de las fronteras: el subtotal de exactamente 30, BIENVENIDA con un pedido de 3 €, el último día de VERANO y los valores exactos de cada descuento y del envío.</p>
+  </details>
+  <h3>Llévalo a tu computadora</h3>
+  <p>Cuando lo tengas en verde en el taller, conviértelo en un proyecto real, con las herramientas de verdad:</p>
+  <ol class="pasos">
+    <li><div><p>Crea el proyecto <code>tienda</code> con Vitest como en <a href="#herramientas">Vitest y node:test</a>. Pon la calculadora en <code>src/calculadora.js</code> exportando <code>calcularTotal</code> (sin la parte de <code>crearCalculadora</code> ni las variantes: eso era solo para el taller).</p></div></li>
+    <li><div><p>Copia tus pruebas a <code>src/calculadora.test.js</code>, importando <code>describe</code>, <code>test</code> y <code>expect</code> desde <code>vitest</code>. Cambia <code>toThrow()</code> por versiones más precisas, como <code>toThrow("Cupón desconocido")</code>, y convierte los grupos repetitivos en <code>test.each</code>.</p></div></li>
+    <li><div><p>Mide la cobertura con <code>npx vitest run --coverage</code> y revisa si queda alguna rama sin probar.</p></div></li>
+    <li><div><p>Sube el proyecto a GitHub y añade el archivo <code>.github/workflows/pruebas.yml</code> de <a href="#calidad">Calidad y QA</a>. Abre la pestaña <em>Actions</em> del repositorio y mira tus pruebas ejecutarse solas.</p></div></li>
+  </ol>
+  <p><strong>Para ir más allá:</strong> añade una regla nueva con TDD (por ejemplo, un cupón <code>DOSPORUNO</code> que regala el más barato de dos juegos iguales): primero la prueba en rojo, después el código. Crea una página sencilla para la tienda y escríbele una prueba de extremo a extremo con Playwright que añada un juego y compruebe el total. O pásale a tu batería una herramienta de mutación de verdad, StrykerJS, y compara su informe con lo que viste en el taller.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Si fallas alguna, lee la explicación: equivocarse aquí es la forma más barata de aprender.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Qué es una regresión?</p>
+      <ol class="opciones">
+        <li>Un error de sintaxis que impide ejecutar el programa.<p class="explica">Eso es un error de sintaxis. Una regresión puede ser cualquier tipo de fallo; lo que la define es que antes funcionaba.</p></li>
+        <li>Algo que funcionaba y deja de funcionar por un cambio posterior.<p class="explica">Correcto. Las pruebas automáticas vigilan justo eso: cada vez que cambias algo, comprueban que lo anterior sigue bien.</p></li>
+        <li>Una prueba que se ejecuta de atrás hacia delante.<p class="explica">No existe tal cosa. «Regresión» viene de «retroceder»: el programa vuelve a fallar en algo que ya estaba resuelto.</p></li>
+        <li>Una prueba que tarda demasiado.<p class="explica">Una prueba lenta es un problema, pero no se llama así.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Una función cobra 0 € hasta los 3 años, 5 € de 4 a 12, 10 € de 13 a 64 y 6 € desde los 65. ¿Qué edades aprovechan mejor el análisis de valores límite?</p>
+      <ol class="opciones">
+        <li>10, 30, 50 y 70.<p class="explica">Son representantes del medio: no tocan ninguna frontera, así que un <code>&lt;</code> en lugar de <code>&lt;=</code> pasaría desapercibido.</p></li>
+        <li>1, 2 y 3.<p class="explica">Solo rodean una de las tres fronteras, y por un solo lado.</p></li>
+        <li>0, 50 y 100.<p class="explica">Tres valores al azar que no están junto a ninguna frontera.</p></li>
+        <li>3, 4, 12, 13, 64 y 65.<p class="explica">Correcto: un valor a cada lado de cada frontera. Ahí es donde se esconden los errores de «uno más o uno menos».</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Qué pasa con <code>expect([1, 2]).toBe([1, 2])</code>?</p>
+      <ol class="opciones">
+        <li>Falla: son dos arrays distintos en memoria, aunque tengan lo mismo dentro.<p class="explica">Correcto. <code>toBe</code> compara si es el mismo objeto. Para comparar contenido se usa <code>toEqual</code>.</p></li>
+        <li>Pasa, porque los dos arrays tienen los mismos elementos.<p class="explica">Eso haría <code>toEqual</code>. <code>toBe</code> funciona como <code>===</code> (con <code>Object.is</code>).</p></li>
+        <li>Da un error de sintaxis.<p class="explica">La sintaxis es correcta; el problema es qué compara.</p></li>
+        <li>Falla porque <code>toBe</code> solo sirve para textos.<p class="explica"><code>toBe</code> sirve para números, textos y booleanos. Con arrays y objetos compara la referencia.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Quieres comprobar que <code>retirar(50, 100)</code> lanza un error. ¿Qué pasa si escribes <code>expect(retirar(50, 100)).toThrow()</code>?</p>
+      <ol class="opciones">
+        <li>Funciona igual que con la flecha.<p class="explica">No. Sin la flecha, <code>retirar</code> se ejecuta antes de llegar a <code>expect</code>.</p></li>
+        <li>Falla porque <code>toThrow</code> necesita el texto del mensaje.<p class="explica">El mensaje es opcional. El problema es otro.</p></li>
+        <li>El error se lanza antes de que <code>expect</code> pueda atraparlo, y la prueba se rompe.<p class="explica">Correcto. Hay que escribir <code>expect(() =&gt; retirar(50, 100)).toThrow()</code> para que <code>toThrow</code> ejecute la función dentro de su propio <code>try</code>.</p></li>
+        <li>No hace nada: la prueba pasa sin comprobar.<p class="explica">Justo al revés: la prueba explota con el error de <code>retirar</code>.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Tu proyecto tiene un 100 % de cobertura. ¿Qué puedes afirmar con seguridad?</p>
+      <ol class="opciones">
+        <li>Que no tiene errores.<p class="explica">No. Viste una prueba sin ninguna aserción que daba un 100 % de cobertura.</p></li>
+        <li>Que todas las líneas y ramas se ejecutaron al menos una vez durante las pruebas.<p class="explica">Correcto. Eso es todo lo que mide: ejecución, no comprobación.</p></li>
+        <li>Que las pruebas comprueban todos los resultados.<p class="explica">La cobertura no sabe si hay <code>expect</code> ni si los valores esperados son correctos.</p></li>
+        <li>Que ya no necesitas pruebas de integración.<p class="explica">La cobertura de pruebas unitarias no dice nada de si las piezas encajan entre sí.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Una función de tu juego usa <code>Math.random()</code> para decidir si un golpe es crítico. ¿Cómo la pruebas de forma fiable?</p>
+      <ol class="opciones">
+        <li>Ejecutando la prueba cien veces seguidas.<p class="explica">Seguiría dependiendo del azar, y tardaría más. Un día fallaría sin motivo.</p></li>
+        <li>Aceptando que la prueba falle de vez en cuando.<p class="explica">Eso es una prueba inestable: el equipo acaba ignorando el rojo, también cuando es de verdad.</p></li>
+        <li>Borrando la prueba: el azar no se puede probar.<p class="explica">Sí se puede, controlando el azar.</p></li>
+        <li>Haciendo que reciba el dado como parámetro y pasándole un stub que devuelve un valor fijo.<p class="explica">Correcto. Es inyección de dependencias: en el juego usa el dado real y en la prueba, uno trucado.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">En TDD, ¿qué se hace al empezar cada ciclo?</p>
+      <ol class="opciones">
+        <li>Escribir todo el código de la función.<p class="explica">En TDD el código va después de la prueba, y en pasos pequeños.</p></li>
+        <li>Refactorizar.<p class="explica">Refactorizar es el último paso del ciclo, con todo en verde.</p></li>
+        <li>Escribir una prueba pequeña y comprobar que falla.<p class="explica">Correcto. Ver el rojo confirma que la prueba de verdad comprueba algo que todavía no existe.</p></li>
+        <li>Medir la cobertura.<p class="explica">La cobertura no forma parte del ciclo de TDD (aunque con TDD suele salir alta).</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Qué diferencia a un espía de un stub?</p>
+      <ol class="opciones">
+        <li>El espía registra cómo lo llamaron: cuántas veces y con qué argumentos.<p class="explica">Correcto. Un stub solo devuelve respuestas preparadas; el espía, además, deja comprobar la interacción. En Vitest, <code>vi.fn()</code> hace las dos cosas.</p></li>
+        <li>El espía es más rápido.<p class="explica">La velocidad no tiene nada que ver.</p></li>
+        <li>El stub solo existe en Vitest.<p class="explica">Los stubs son una idea general: un <code>() =&gt; 20</code> escrito a mano es un stub.</p></li>
+        <li>Ninguna: son dos nombres de lo mismo.<p class="explica">En el día a día se mezclan, pero la idea es distinta: devolver respuestas frente a registrar llamadas.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Según la pirámide de pruebas, ¿de qué tipo deberías tener más?</p>
+      <ol class="opciones">
+        <li>De extremo a extremo, porque son las más realistas.<p class="explica">Son valiosas pero lentas y frágiles: se reservan para los recorridos críticos.</p></li>
+        <li>Manuales.<p class="explica">Las pruebas manuales no están en la pirámide de pruebas automáticas, y repetirlas en cada cambio no escala.</p></li>
+        <li>De integración, siempre.<p class="explica">El «trofeo» les da mucho peso en aplicaciones web, pero la pirámide clásica pone más en la base.</p></li>
+        <li>Unitarias.<p class="explica">Correcto: rápidas, baratas y precisas, forman la base. Encima, algunas de integración y pocas de extremo a extremo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Una prueba falla en la integración continua. Tu compañero propone cambiar el valor esperado para que pase. ¿Qué haces?</p>
+      <ol class="opciones">
+        <li>Aceptas: lo importante es que todo esté en verde.<p class="explica">Así se apaga la alarma sin mirar si hay fuego. Puedes estar protegiendo un error.</p></li>
+        <li>Primero averiguas quién tiene razón, el código o la prueba, comparando con la regla que debe cumplirse.<p class="explica">Correcto. A veces el error está en la prueba y a veces en el código; la regla del negocio decide.</p></li>
+        <li>Borras la prueba.<p class="explica">Perderías la protección que daba, sin saber si detectaba un error real.</p></li>
+        <li>La marcas con <code>.skip</code> para que no moleste.<p class="explica">Es borrarla con otro nombre: nadie vuelve a mirarla.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Con Testing Library, ¿cómo conviene buscar el botón «Pagar» en una prueba de interfaz?</p>
+      <ol class="opciones">
+        <li>Por su clase de CSS, <code>.boton-azul</code>.<p class="explica">Una clase de CSS es un detalle interno: si alguien cambia el diseño, la prueba se rompe sin que haya ningún error.</p></li>
+        <li>Por su <code>id</code>.<p class="explica">Funciona, pero depende de un detalle que la persona usuaria no ve. Testing Library lo deja casi como último recurso.</p></li>
+        <li>Por su papel y su texto visible: <code>getByRole("button", { name: "Pagar" })</code>.<p class="explica">Correcto. Así la prueba busca lo mismo que una persona, y de paso comprueba que el botón es accesible.</p></li>
+        <li>Por su posición: el tercer botón de la página.<p class="explica">Cualquier botón nuevo desordenaría la prueba.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Una prueba de Playwright falla a veces porque un mensaje tarda en aparecer. ¿Cuál es la mejor solución?</p>
+      <ol class="opciones">
+        <li>Añadir <code>await page.waitForTimeout(5000)</code> antes de comprobar.<p class="explica">Las pausas fijas hacen la prueba lenta siempre e inestable cuando el mensaje tarda un poco más.</p></li>
+        <li>Usar <code>await expect(locator).toHaveText(…)</code>, que espera y reintenta hasta que se cumple.<p class="explica">Correcto. Las aserciones de Playwright esperan solas (por defecto, hasta 5 segundos).</p></li>
+        <li>Repetir la prueba hasta que pase.<p class="explica">Eso esconde el problema: sigue siendo una prueba inestable.</p></li>
+        <li>Quitar la comprobación del mensaje.<p class="explica">Entonces la prueba dejaría de comprobar lo que importa.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Prueba automática</dt><dd>Programa pequeño que ejecuta parte de otro programa con datos conocidos y comprueba que el resultado es el esperado. En inglés, <em>automated test</em>.</dd>
+    <dt>Caso de prueba</dt><dd>Situación concreta que se comprueba: datos de entrada, acción y resultado esperado.</dd>
+    <dt>Regresión</dt><dd>Fallo en algo que funcionaba y dejó de hacerlo por un cambio posterior. Una prueba de regresión vigila que no vuelva a pasar.</dd>
+    <dt>Aserción</dt><dd>Afirmación que debe ser verdadera en un punto del programa; si no lo es, lanza un error y la prueba falla. Por ejemplo, <code>expect(total).toBe(20)</code>.</dd>
+    <dt>Ejecutor de pruebas</dt><dd>Programa que encuentra las pruebas, las ejecuta, atrapa las que fallan y muestra un resumen: Vitest, Jest, <code>node:test</code>. En inglés, <em>test runner</em>.</dd>
+    <dt>Comparador</dt><dd>Método que compara el valor real con el esperado dentro de una aserción: <code>toBe</code>, <code>toEqual</code>, <code>toThrow</code>… En inglés, <em>matcher</em>.</dd>
+    <dt>Preparar, Actuar, Comprobar</dt><dd>Estructura habitual de una prueba: preparar los datos, ejecutar una acción y comprobar el resultado. En inglés, <em>Arrange-Act-Assert</em> (AAA).</dd>
+    <dt>Caso borde</dt><dd>Caso en el límite de lo que una función debe aceptar: cero, la lista vacía, el valor exacto de una condición. En inglés, <em>edge case</em>.</dd>
+    <dt>Clase de equivalencia</dt><dd>Grupo de entradas que el programa trata de la misma manera; basta con probar un representante de cada una.</dd>
+    <dt>Análisis de valores límite</dt><dd>Técnica que prueba los valores situados justo a cada lado de cada frontera entre clases de equivalencia.</dd>
+    <dt>Doble de prueba</dt><dd>Algo que ocupa el lugar de una dependencia real durante una prueba: stub, espía, mock, fake o dummy. En inglés, <em>test double</em>.</dd>
+    <dt>Stub</dt><dd>Doble de prueba que devuelve respuestas fijas preparadas para la prueba, como un dado que siempre saca 20.</dd>
+    <dt>Espía</dt><dd>Doble de prueba que registra cómo lo llamaron: cuántas veces y con qué argumentos. En inglés, <em>spy</em>.</dd>
+    <dt>Mock</dt><dd>Doble de prueba programado con lo que debe recibir, que hace fallar la prueba si no se usa así. Coloquialmente, cualquier doble.</dd>
+    <dt>Inyección de dependencias</dt><dd>Entregarle a una función o un objeto, desde fuera, las cosas que necesita (un dado, un reloj, un servicio de correo), en lugar de que las busque por su cuenta. Facilita reemplazarlas en las pruebas.</dd>
+    <dt>Prueba inestable</dt><dd>Prueba que a veces pasa y a veces falla sin que el código cambie, por depender del azar, del tiempo o de la red. En inglés, <em>flaky test</em>.</dd>
+    <dt>TDD</dt><dd>Desarrollo guiado por pruebas (<em>Test-Driven Development</em>): escribir primero una prueba que falla, después el código mínimo para que pase, y refactorizar.</dd>
+    <dt>Cobertura de código</dt><dd>Porcentaje del código (sentencias, ramas, funciones o líneas) que se ejecutó durante las pruebas. No mide si se comprobó.</dd>
+    <dt>Prueba de mutación</dt><dd>Técnica que introduce pequeños errores a propósito (mutantes) y comprueba si las pruebas los detectan. Mide la calidad de las pruebas.</dd>
+    <dt>Prueba unitaria</dt><dd>Prueba de una pieza pequeña y aislada, como una función. En inglés, <em>unit test</em>.</dd>
+    <dt>Prueba de integración</dt><dd>Prueba de varias piezas reales trabajando juntas, como dos módulos o el código con una base de datos.</dd>
+    <dt>Prueba de extremo a extremo</dt><dd>Prueba de la aplicación completa, como la usa una persona, en un navegador real. En inglés, <em>end-to-end</em> (E2E).</dd>
+    <dt>Integración continua</dt><dd>Práctica de integrar los cambios con frecuencia y ejecutar las pruebas automáticamente en un servidor con cada uno. En inglés, <em>continuous integration</em> (CI).</dd>
+    <dt>Prueba exploratoria</dt><dd>Prueba manual en la que se diseñan y ejecutan pruebas a la vez, aprendiendo del programa mientras se usa, con una misión y un tiempo limitado.</dd>
+    <dt>QA</dt><dd>Aseguramiento de la calidad (<em>quality assurance</em>): el conjunto de prácticas que previenen y detectan defectos, del que las pruebas son una parte.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación. Algunos usan Jest en lugar de Vitest: la forma de escribir las pruebas (<code>test</code>, <code>expect</code>, <code>toBe</code>) es prácticamente la misma.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=9b8zcDVWM9M" data-canal="Testing Para Todos" data-idioma="es" data-nivel="intro" data-duracion="7 min" data-por-que="Qué es probar software y para qué sirve, con ejemplos, antes de escribir una sola línea de código.">Qué es el TESTING de SOFTWARE (explicado con EJEMPLOS) | Introducción al Testing de Software</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=_DzBez4qMi0" data-canal="midudev" data-idioma="es" data-nivel="intro" data-duracion="26 min" data-por-que="Primeras pruebas unitarias en JavaScript paso a paso, con test, expect y describe.">Introducción al Testing desde Cero con JEST (Bootcamp FullStack Gratuito)</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=_t9l2TwGioc" data-canal="midulive" data-idioma="es" data-nivel="curso" data-duracion="1 h 59 min" data-por-que="Una sesión larga de TDD en vivo con Vitest: ves el ciclo rojo, verde, refactorizar muchas veces seguidas.">Curso de Test Driven Development desde Cero con JavaScript, React y Vitest</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=QE15jNA8zF0" data-canal="Garaje de ideas | Tech" data-idioma="es" data-nivel="profundo" data-duracion="18 min" data-por-que="Instalar Playwright y escribir las primeras pruebas de extremo a extremo en un navegador real.">Cómo hacer Testing automatizado usando Playwright</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://es.javascript.info/testing-mocha">Test automatizados con Mocha (javascript.info)</a><p>En español: por qué probar y cómo desarrollar una función guiada por pruebas, con ejercicios. Usa Mocha, otro ejecutor, con las mismas ideas.</p></li>
+    <li><a href="https://vitest.dev/guide/">Guía de Vitest (vitest.dev, en inglés)</a><p>La documentación oficial y siempre actualizada: instalación, comparadores, dobles de prueba, cobertura y configuración.</p></li>
+    <li><a href="https://nodejs.org/docs/latest-v24.x/api/test.html">Test runner de Node.js 24 (nodejs.org, en inglés)</a><p>Referencia de <code>node:test</code>: describe, it, mock.fn, instantáneas y cobertura.</p></li>
+    <li><a href="https://testing-library.com/docs/guiding-principles">Principios de Testing Library (testing-library.com, en inglés)</a><p>La filosofía de probar la interfaz como la usa una persona, y la prioridad de las consultas.</p></li>
+    <li><a href="https://playwright.dev/docs/intro">Primeros pasos con Playwright (playwright.dev, en inglés)</a><p>Instalación, primera prueba, modo UI, generador de código e informes.</p></li>
+    <li><a href="https://martinfowler.com/articles/practical-test-pyramid.html">The Practical Test Pyramid (martinfowler.com, en inglés)</a><p>Un artículo largo y muy completo sobre qué pruebas escribir en cada nivel de la pirámide y cómo equilibrarlas.</p></li>
+  </ul>
 </section>

@@ -664,28 +664,41 @@ message Posicion {
     <pre><code class="language-js">const suscriptores = {};
 
 function suscribir(tipo, manejador) {
-  if (!suscriptores[tipo]) suscriptores[tipo] = [];
+  if (!suscriptores[tipo]) {
+    suscriptores[tipo] = [];
+  }
   suscriptores[tipo].push(manejador);
 }
 
 function publicar(tipo, datos) {
   const lista = suscriptores[tipo] || [];
-  for (const manejador of lista) manejador(datos);
+  for (const manejador of lista) {
+    manejador(datos);
+  }
 }
 
-suscribir("PedidoCreado", (p) =&gt; console.log(`Email para ${p.cliente}`));
-suscribir("PedidoCreado", (p) =&gt; console.log(`Inventario: -1 ${p.producto}`));
-publicar("PedidoCreado", { cliente: "Ana", producto: "espada" });
+function email(p) {
+  console.log("Email a", p.cliente);
+}
+function stock(p) {
+  console.log("Stock -1:", p.producto);
+}
+
+suscribir("PedidoCreado", email);
+suscribir("PedidoCreado", stock);
+const pedido = { cliente: "Ana", producto: "espada" };
+publicar("PedidoCreado", pedido);
 publicar("PagoRechazado", { cliente: "Leo" });</code></pre>
     <script type="application/json">[
       {"linea": 1, "vars": {"suscriptores": "{}"}, "nota": "Un objeto vacío. Guardará, para cada tipo de evento, la lista de funciones que quieren enterarse."},
-      {"linea": 13, "vars": {"suscriptores": "{ PedidoCreado: [email] }"}, "nota": "Las líneas 3 a 11 solo definen funciones. Aquí se llama a suscribir: como no había lista para «PedidoCreado», la línea 4 la crea vacía y la línea 5 añade la función del correo."},
-      {"linea": 14, "vars": {"suscriptores": "{ PedidoCreado: [email, inventario] }"}, "nota": "Otra pieza se suscribe al mismo evento. La lista ya existía, así que solo se añade al final."},
-      {"linea": 9, "vars": {"suscriptores": "{ PedidoCreado: [email, inventario] }", "tipo": "\"PedidoCreado\"", "lista": "[email, inventario]"}, "nota": "La línea 15 publica un PedidoCreado. Dentro de publicar, se busca la lista de suscriptores de ese tipo."},
-      {"linea": 10, "vars": {"suscriptores": "{ PedidoCreado: [email, inventario] }", "tipo": "\"PedidoCreado\"", "lista": "[email, inventario]"}, "salida": "Email para Ana", "nota": "Primera vuelta del bucle: se llama a la función del correo con los datos del pedido."},
-      {"linea": 10, "vars": {"suscriptores": "{ PedidoCreado: [email, inventario] }", "tipo": "\"PedidoCreado\"", "lista": "[email, inventario]"}, "salida": "Inventario: -1 espada", "nota": "Segunda vuelta: la función del inventario recibe los mismos datos. Publicar no sabía cuántas funciones había ni qué hacían."},
-      {"linea": 9, "vars": {"suscriptores": "{ PedidoCreado: [email, inventario] }", "tipo": "\"PagoRechazado\"", "lista": "[]"}, "nota": "La línea 16 publica un evento al que nadie se suscribió. suscriptores[tipo] es undefined, así que || deja una lista vacía."},
-      {"linea": 10, "vars": {"suscriptores": "{ PedidoCreado: [email, inventario] }", "tipo": "\"PagoRechazado\"", "lista": "[]"}, "nota": "El bucle no da ninguna vuelta y no pasa nada. No es un error: quien publica no necesita que alguien escuche."}
+      {"linea": 24, "vars": {"suscriptores": "{ PedidoCreado: [email] }"}, "nota": "Las líneas 3 a 22 solo definen funciones. Aquí se llama a suscribir: como no había lista para «PedidoCreado», las líneas 4 a 6 la crean vacía y la línea 7 añade la función email."},
+      {"linea": 25, "vars": {"suscriptores": "{ PedidoCreado: [email, stock] }"}, "nota": "Otra pieza se suscribe al mismo evento. La lista ya existía, así que solo se añade al final."},
+      {"linea": 26, "vars": {"suscriptores": "{ PedidoCreado: [email, stock] }", "pedido": "{ cliente: \"Ana\", producto: \"espada\" }"}, "nota": "Los datos del evento: quién compró y qué."},
+      {"linea": 11, "vars": {"suscriptores": "{ PedidoCreado: [email, stock] }", "pedido": "{ cliente: \"Ana\", producto: \"espada\" }", "tipo": "\"PedidoCreado\"", "lista": "[email, stock]"}, "nota": "La línea 27 publica un PedidoCreado. Dentro de publicar, se busca la lista de suscriptores de ese tipo."},
+      {"linea": 13, "vars": {"suscriptores": "{ PedidoCreado: [email, stock] }", "pedido": "{ cliente: \"Ana\", producto: \"espada\" }", "tipo": "\"PedidoCreado\"", "lista": "[email, stock]"}, "salida": "Email a Ana", "nota": "Primera vuelta del bucle: manejador es la función email, que recibe los datos del pedido e imprime (línea 18)."},
+      {"linea": 13, "vars": {"suscriptores": "{ PedidoCreado: [email, stock] }", "pedido": "{ cliente: \"Ana\", producto: \"espada\" }", "tipo": "\"PedidoCreado\"", "lista": "[email, stock]"}, "salida": "Stock -1: espada", "nota": "Segunda vuelta: la función stock recibe los mismos datos. publicar no sabía cuántas funciones había ni qué hacían."},
+      {"linea": 11, "vars": {"suscriptores": "{ PedidoCreado: [email, stock] }", "pedido": "{ cliente: \"Ana\", producto: \"espada\" }", "tipo": "\"PagoRechazado\"", "lista": "[]"}, "nota": "La línea 28 publica un evento al que nadie se suscribió. suscriptores[tipo] es undefined, así que || deja una lista vacía."},
+      {"linea": 12, "vars": {"suscriptores": "{ PedidoCreado: [email, stock] }", "pedido": "{ cliente: \"Ana\", producto: \"espada\" }", "tipo": "\"PagoRechazado\"", "lista": "[]"}, "nota": "El bucle no da ninguna vuelta y no pasa nada. No es un error: quien publica no necesita que alguien escuche."}
     ]</script>
   </div>
   <p>Para sumar puntos de fidelidad bastaría con una línea nueva, <code>suscribir("PedidoCreado", …)</code>, sin tocar ni <code>publicar</code> ni el resto. En la <a href="25-codigo-limpio.html">Estación 25</a> verás que dentro de un programa esta idea se llama patrón Observador; en arquitectura, las piezas que publican y las que escuchan son servicios distintos, y entre ellos hay una cola.</p>
@@ -811,7 +824,7 @@ procesarCola();</textarea>
   <h3>Los niveles de caché</h3>
   <p>Entre la persona y la base de datos puede haber cachés en varios puntos. Cuanto más cerca de la persona, más rápida es la respuesta, pero hay más copias repartidas que pueden quedar desactualizadas.</p>
   <figure class="diagrama">
-    <svg viewBox="0 0 720 250" role="img" aria-label="Cinco niveles de caché en fila, de la persona a los datos: navegador, CDN, servidor de la aplicación, caché compartida como Redis o Valkey, y base de datos. Arriba, una flecha indica que hacia la izquierda la respuesta es más rápida y hay más copias, y hacia la derecha está la fuente de la verdad.">
+    <svg viewBox="0 0 720 220" role="img" aria-label="Cinco niveles de caché en fila, de la persona a los datos: navegador, CDN, servidor de la aplicación, caché compartida como Redis o Valkey, y base de datos. Arriba, una flecha indica que hacia la izquierda la respuesta es más rápida y hay más copias, y hacia la derecha está la fuente de la verdad.">
       <path class="d-linea" d="M28 36H692"/>
       <path class="d-tinta" d="M28 28l-12 8 12 8z"/>
       <path class="d-tinta" d="M692 28l12 8-12 8z"/>
@@ -850,7 +863,6 @@ procesarCola();</textarea>
       <text class="d-peq" x="498" y="186" text-anchor="middle">una copia común</text>
       <text class="d-peq" x="498" y="204" text-anchor="middle">en red interna</text>
       <text class="d-peq" x="640" y="186" text-anchor="middle">el dato «real»</text>
-      <text class="d-peq d-tenue" x="360" y="240" text-anchor="middle">Una petición avanza hacia la derecha solo si el nivel anterior no tenía el dato.</text>
     </svg>
     <figcaption>Una petición recorre los niveles de izquierda a derecha y se detiene en el primero que tiene el dato. Una <strong>CDN</strong> (red de distribución de contenidos) es un conjunto de servidores repartidos por el mundo que guardan copias de tus archivos cerca de las personas; ejemplos: Cloudflare, Fastly, Akamai o Amazon CloudFront.</figcaption>
   </figure>
@@ -875,7 +887,7 @@ procesarCola();</textarea>
         <path class="d-tinta" d="M518 52l12 8-12 8z"/>
         <path class="d-linea" d="M450 145H490V210H518" stroke-opacity="0.4"/>
         <path class="d-tinta" d="M518 202l12 8-12 8z"/>
-        <path class="d-acento-trazo" d="M450 115H490V60H516" data-pasos="2,4"/>
+        <path class="d-acento-trazo" d="M450 115H490V60H516" data-pasos="2,4,5"/>
         <path class="d-acento-trazo" d="M450 145H490V210H516" data-pasos="3,5"/>
         <path class="d-acento-trazo" d="M490 145V60H516" data-pasos="3"/>
         <rect class="d-caja" x="530" y="20" width="170" height="80" rx="8"/>
@@ -1222,20 +1234,19 @@ console.log(servidores.map((s) => `${s.nombre}: ${s.atendidas}`).join(", "));</t
       <ellipse class="d-caja" cx="480" cy="206" rx="70" ry="10"/>
       <text class="d-rotulo" x="480" y="244" text-anchor="middle">Base de datos</text>
       <text class="d-peq d-tenue" x="480" y="264" text-anchor="middle">[PostgreSQL]</text>
-      <path class="d-linea" d="M410 150V240H332"/>
+      <path class="d-linea" d="M395 150V240H332"/>
       <path class="d-tinta" d="M332 232l-12 8 12 8z"/>
-      <text class="d-peq" x="370" y="262" text-anchor="middle">lee y guarda</text>
+      <text class="d-peq" x="363" y="262" text-anchor="middle">lee y guarda</text>
       <rect class="d-caja" x="170" y="200" width="150" height="80" rx="8"/>
       <text class="d-rotulo" x="245" y="226" text-anchor="middle">Caché</text>
       <text class="d-peq d-tenue" x="245" y="246" text-anchor="middle">[Valkey]</text>
       <text class="d-peq" x="245" y="266" text-anchor="middle">top 100 listo</text>
       <path class="d-linea" d="M530 100H568"/>
       <path class="d-tinta" d="M568 92l12 8-12 8z"/>
-      <text class="d-peq" x="550" y="84" text-anchor="middle">verifica</text>
       <rect class="d-caja" x="580" y="60" width="130" height="80" rx="8"/>
       <text class="d-rotulo" x="645" y="90" text-anchor="middle">Identidad</text>
       <text class="d-peq d-tenue" x="645" y="110" text-anchor="middle">[sistema externo]</text>
-      <text class="d-peq" x="645" y="128" text-anchor="middle">inicio de sesión</text>
+      <text class="d-peq" x="645" y="128" text-anchor="middle">verifica sesiones</text>
     </svg>
     <figcaption>Nivel 2, contenedores. Dentro del límite punteado están las piezas que el equipo despliega. Cada caja dice su nombre, su tecnología entre corchetes y su responsabilidad; cada flecha dice qué se hace y, si importa, cómo (HTTPS, SQL).</figcaption>
   </figure>
@@ -1257,7 +1268,7 @@ flowchart LR
   <h4>Diagrama de clases: qué hay y cómo se relaciona</h4>
   <p>Cada clase es una caja con tres compartimentos: nombre, atributos (los datos) y métodos. Delante de cada miembro, <code>+</code> significa público y <code>-</code> privado, como los campos <code>#privados</code> de la <a href="21-paradigmas.html#encapsulamiento">Estación 21</a>. Las líneas entre clases dicen cómo se relacionan.</p>
   <figure class="diagrama">
-    <svg viewBox="0 0 720 300" role="img" aria-label="Diagrama de clases UML. Jugador, con nombre público, correo privado y método jugar, se asocia con Partida: un jugador tiene muchas partidas. Partida, con fecha, puntos y método terminar, se asocia con Nivel: muchas partidas en un nivel. Jugador tiene por composición un Inventario, marcado con un rombo relleno. Jefe hereda de Enemigo, marcado con un triángulo hueco.">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Diagrama de clases UML. Jugador, con nombre público, correo privado y método jugar, se asocia con Partida: un jugador tiene muchas partidas. Partida, con fecha, puntos y método terminar, se asocia con Nivel: muchas partidas en un nivel. Jugador tiene por composición un Inventario, marcado con un rombo relleno. Jefe hereda de Enemigo, marcado con un triángulo hueco. Cada Nivel tiene un Jefe.">
       <rect class="d-caja" x="20" y="20" width="190" height="104" rx="2"/>
       <rect class="d-caja-suave" x="21" y="21" width="188" height="27"/>
       <text class="d-rotulo" x="115" y="40" text-anchor="middle">Jugador</text>
@@ -1322,7 +1333,7 @@ flowchart LR
   <h4>Diagrama de secuencia: quién habla con quién, y en qué orden</h4>
   <p>El diagrama de clases muestra la estructura, quieta. El <strong>diagrama de secuencia</strong> muestra una conversación en el tiempo: cada participante es una columna con una línea vertical (su <strong>línea de vida</strong>), el tiempo corre hacia abajo, y cada flecha es un mensaje. Las flechas llenas son llamadas; las punteadas, respuestas. Así se guarda una puntuación en Astro Salto:</p>
   <figure class="diagrama">
-    <svg viewBox="0 0 720 300" role="img" aria-label="Diagrama de secuencia UML con cuatro participantes: App, API, Base de datos y Caché. 1: la App envía POST /puntuaciones a la API. 2: la API envía INSERT a la base de datos. 3: la base de datos responde ok. 4: la API envía borrar top100 a la caché. 5: la API responde a la App 201 Created, lugar 37.">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Diagrama de secuencia UML con cuatro participantes: App, API, Base de datos y Caché. 1: la App envía POST /puntuaciones a la API. 2: la API envía INSERT a la base de datos. 3: la base de datos responde ok. 4: la API envía borrar top100 a la caché. 5: la API responde a la App con 201 y el lugar 37.">
       <rect class="d-caja" x="40" y="16" width="120" height="36" rx="6"/>
       <text class="d-rotulo" x="100" y="40" text-anchor="middle">App</text>
       <rect class="d-caja" x="230" y="16" width="120" height="36" rx="6"/>
@@ -1338,7 +1349,7 @@ flowchart LR
 
       <path class="d-linea" d="M100 88H272"/>
       <path class="d-tinta" d="M272 82l12 6-12 6z"/>
-      <text class="d-mono d-peq" x="186" y="78" text-anchor="middle">1: POST /puntuaciones</text>
+      <text class="d-mono d-peq" x="192" y="78" text-anchor="middle">1: POST /puntuaciones</text>
 
       <path class="d-linea" d="M296 128H462"/>
       <path class="d-tinta" d="M462 122l12 6-12 6z"/>
@@ -1350,11 +1361,11 @@ flowchart LR
 
       <path class="d-linea" d="M296 198H632"/>
       <path class="d-tinta" d="M632 192l12 6-12 6z"/>
-      <text class="d-mono d-peq" x="470" y="188" text-anchor="middle">4: borrar "top100"</text>
+      <text class="d-mono d-peq" x="562" y="188" text-anchor="middle">4: borrar "top100"</text>
 
       <path class="d-punteada" d="M284 250H102"/>
       <path class="d-linea" d="M112 244l-10 6 10 6"/>
-      <text class="d-mono d-peq" x="192" y="240" text-anchor="middle">5: 201 Created, lugar 37</text>
+      <text class="d-mono d-peq" x="192" y="240" text-anchor="middle">5: 201, lugar 37</text>
     </svg>
     <figcaption>Se lee de arriba abajo. Los rectángulos estrechos sobre las líneas de vida marcan cuándo cada participante está trabajando. En la vida real, este diagrama se dibuja para explicar un flujo concreto que causa dudas, no para cada función.</figcaption>
   </figure>
@@ -1439,7 +1450,7 @@ return true;
   <p>Hay una trampa. No todas las pantallas van a la misma velocidad: hay monitores de 60, de 120 y de 144 fotogramas por segundo, y un teléfono cargado va más lento. Si cada vuelta mueve al personaje 5 píxeles, en una pantalla de 144 Hz corre más del doble de rápido que en una de 60. La primera solución es multiplicar por el tiempo transcurrido: «velocidad × segundos que pasaron». Mejora mucho, pero la física (saltos, rebotes, choques) da resultados ligeramente distintos según el tamaño de cada paso, y un paso muy grande puede hacer que un objeto atraviese una pared.</p>
   <p>La solución más usada, descrita por Glenn Fiedler en su artículo <em>Fix Your Timestep!</em> y por Robert Nystrom en <em>Game Programming Patterns</em>, es separar las dos velocidades: <strong>actualizar con un paso fijo</strong> (siempre, por ejemplo, 20 ms de mundo) y <strong>dibujar tan rápido como pueda la pantalla</strong>. Un acumulador guarda el tiempo real pendiente y lo va convirtiendo en pasos fijos. Síguelo con fotogramas de 30, 5 y 25 ms:</p>
   <div class="traza" data-titulo="Paso fijo con acumulador">
-    <pre><code class="language-js">const PASO = 20;           // ms de mundo en cada actualización
+    <pre><code class="language-js">const PASO = 20;
 let acumulado = 0;
 let actualizaciones = 0;
 for (const transcurrido of [30, 5, 25]) {
@@ -1448,7 +1459,7 @@ for (const transcurrido of [30, 5, 25]) {
     actualizaciones++;
     acumulado -= PASO;
   }
-  console.log(`Dibujo. Actualizaciones: ${actualizaciones}. Sobran ${acumulado} ms`);
+  console.log("dibujo", actualizaciones, acumulado);
 }</code></pre>
     <script type="application/json">[
       { "linea": 1, "vars": { "PASO": "20"}, "nota": "El mundo del juego avanzará siempre a saltos de 20 ms: 50 actualizaciones por segundo, pase lo que pase con la pantalla."},
@@ -1460,11 +1471,11 @@ for (const transcurrido of [30, 5, 25]) {
       { "linea": 7, "vars": { "PASO": "20", "acumulado": "30", "actualizaciones": "1", "transcurrido": "30"}, "nota": "Aquí iría actualizar(): mover personajes, aplicar física, comprobar choques."},
       { "linea": 8, "vars": { "PASO": "20", "acumulado": "10", "actualizaciones": "1", "transcurrido": "30"}, "nota": "Se descuentan los 20 ms que acaba de simular."},
       { "linea": 6, "vars": { "PASO": "20", "acumulado": "10", "actualizaciones": "1", "transcurrido": "30"}, "nota": "10 >= 20: no. Los 10 ms sobrantes no se tiran: esperan al siguiente fotograma."},
-      { "linea": 10, "vars": { "PASO": "20", "acumulado": "10", "actualizaciones": "1", "transcurrido": "30"}, "salida": "Dibujo. Actualizaciones: 1. Sobran 10 ms", "nota": "Aquí iría dibujar(): se pinta el mundo tal como quedó."},
+      { "linea": 10, "vars": { "PASO": "20", "acumulado": "10", "actualizaciones": "1", "transcurrido": "30"}, "salida": "dibujo 1 10", "nota": "Aquí iría dibujar(): se pinta el mundo tal como quedó. El programa imprime cuántas actualizaciones lleva y cuántos ms sobran."},
       { "linea": 4, "vars": { "PASO": "20", "acumulado": "10", "actualizaciones": "1", "transcurrido": "5"}, "nota": "Segundo fotograma, muy rápido: solo pasaron 5 ms."},
       { "linea": 5, "vars": { "PASO": "20", "acumulado": "15", "actualizaciones": "1", "transcurrido": "5"}, "nota": "Pendientes: 10 + 5 = 15 ms."},
       { "linea": 6, "vars": { "PASO": "20", "acumulado": "15", "actualizaciones": "1", "transcurrido": "5"}, "nota": "15 >= 20: no. En este fotograma el mundo no avanza."},
-      { "linea": 10, "vars": { "PASO": "20", "acumulado": "15", "actualizaciones": "1", "transcurrido": "5"}, "salida": "Dibujo. Actualizaciones: 1. Sobran 15 ms", "nota": "Se dibuja igual. En una pantalla muy rápida puede haber fotogramas sin actualización; la física no se acelera por eso."},
+      { "linea": 10, "vars": { "PASO": "20", "acumulado": "15", "actualizaciones": "1", "transcurrido": "5"}, "salida": "dibujo 1 15", "nota": "Se dibuja igual. En una pantalla muy rápida puede haber fotogramas sin actualización; la física no se acelera por eso."},
       { "linea": 4, "vars": { "PASO": "20", "acumulado": "15", "actualizaciones": "1", "transcurrido": "25"}, "nota": "Tercer fotograma, lento: 25 ms."},
       { "linea": 5, "vars": { "PASO": "20", "acumulado": "40", "actualizaciones": "1", "transcurrido": "25"}, "nota": "Pendientes: 15 + 25 = 40 ms, suficiente para dos actualizaciones."},
       { "linea": 6, "vars": { "PASO": "20", "acumulado": "40", "actualizaciones": "1", "transcurrido": "25"}, "nota": "40 >= 20: sí."},
@@ -1474,7 +1485,7 @@ for (const transcurrido of [30, 5, 25]) {
       { "linea": 7, "vars": { "PASO": "20", "acumulado": "20", "actualizaciones": "3", "transcurrido": "25"}, "nota": "Tercera actualización. Este fotograma lento se pone al día con dos pasos seguidos."},
       { "linea": 8, "vars": { "PASO": "20", "acumulado": "0", "actualizaciones": "3", "transcurrido": "25"}, "nota": "No queda tiempo pendiente."},
       { "linea": 6, "vars": { "PASO": "20", "acumulado": "0", "actualizaciones": "3", "transcurrido": "25"}, "nota": "0 >= 20: no. Sale del while."},
-      { "linea": 10, "vars": { "PASO": "20", "acumulado": "0", "actualizaciones": "3", "transcurrido": "25"}, "salida": "Dibujo. Actualizaciones: 3. Sobran 0 ms", "nota": "En 60 ms de tiempo real hubo 3 actualizaciones de 20 ms: el mundo avanzó exactamente lo que debía, aunque los fotogramas duraron 30, 5 y 25 ms."}
+      { "linea": 10, "vars": { "PASO": "20", "acumulado": "0", "actualizaciones": "3", "transcurrido": "25"}, "salida": "dibujo 3 0", "nota": "En 60 ms de tiempo real hubo 3 actualizaciones de 20 ms: el mundo avanzó exactamente lo que debía, aunque los fotogramas duraron 30, 5 y 25 ms."}
     ]</script>
   </div>
   <p>En un juego de navegador, ese mismo esquema se escribe con <code>requestAnimationFrame</code>, que llama a tu función justo antes de que el navegador pinte el siguiente fotograma y le pasa la hora actual en milisegundos. Ordena las líneas de un bucle de juego completo:</p>
@@ -1788,36 +1799,36 @@ console.log(aBase62(125));
 console.log(aBase62(1000000));
 console.log(aBase62(62 ** 7 - 1));</textarea>
   </div>
-  <p>61 es la última cifra (<code>Z</code>); 62 ya necesita dos (<code>10</code>, igual que 10 en decimal); 125 son 2 × 62 + 1 (<code>21</code>). El enlace número un millón tiene solo cuatro caracteres (<code>4c92</code>), y con siete caracteres llegas a más de tres billones de enlaces. En la práctica, harás la operación contraria para comprobar códigos.</p>
+  <p>61 es la última cifra (<code>Z</code>); 62 ya necesita dos (<code>10</code>, igual que 10 en decimal); 125 son 2 × 62 + 1 (<code>21</code>). El enlace número un millón tiene solo cuatro caracteres (<code>4c92</code>), y con siete caracteres llegas a más de tres billones de enlaces. En la práctica programarás la operación contraria: de código a número.</p>
   <p><strong>Decisión:</strong> para un servicio que debe poder bloquear estafas y no quiere que se recorran sus enlaces, elegimos códigos <em>aleatorios</em> de 7 caracteres con comprobación de existencia. Con menos de dos mil millones de enlaces sobre tres billones posibles, la probabilidad de chocar en cada intento es menor de 1 entre 1 000.</p>
 
   <h3>6. La arquitectura</h3>
   <figure class="diagrama">
     <svg viewBox="0 0 720 320" role="img" aria-label="Arquitectura del acortador. El navegador llega a un balanceador de carga, que reparte entre tres servidores de API sin estado. La API lee los códigos de una caché Valkey; si no están, lee de una réplica de la base de datos. Las escrituras de enlaces nuevos van a la base de datos primaria, que copia a la réplica. En cada redirección, la API publica un evento de clic en una cola, y un servicio de estadísticas lo consume y actualiza los contadores.">
-      <rect class="d-caja" x="10" y="120" width="110" height="60" rx="8"/>
-      <text class="d-rotulo" x="65" y="146" text-anchor="middle">Navegador</text>
-      <text class="d-peq d-tenue" x="65" y="166" text-anchor="middle">GET /4c92</text>
-      <path class="d-linea" d="M120 150H138"/>
-      <path class="d-tinta" d="M138 142l12 8-12 8z"/>
-      <rect class="d-caja" x="150" y="120" width="110" height="60" rx="8"/>
-      <text class="d-rotulo" x="205" y="146" text-anchor="middle">Balanceador</text>
-      <text class="d-peq d-tenue" x="205" y="166" text-anchor="middle">+ límites de uso</text>
-      <path class="d-linea" d="M260 150H278"/>
-      <path class="d-tinta" d="M278 142l12 8-12 8z"/>
-      <rect class="d-caja" x="302" y="112" width="130" height="60" rx="8"/>
-      <rect class="d-caja" x="296" y="106" width="130" height="60" rx="8"/>
-      <rect class="d-caja" x="290" y="100" width="130" height="60" rx="8"/>
-      <text class="d-rotulo" x="355" y="126" text-anchor="middle">API × 3</text>
-      <text class="d-peq d-tenue" x="355" y="146" text-anchor="middle">sin estado</text>
-      <path class="d-linea" d="M420 115H445V50H458"/>
+      <rect class="d-caja" x="10" y="120" width="100" height="60" rx="8"/>
+      <text class="d-rotulo" x="60" y="146" text-anchor="middle">Navegador</text>
+      <text class="d-peq d-tenue" x="60" y="166" text-anchor="middle">GET /4c92</text>
+      <path class="d-linea" d="M110 150H123"/>
+      <path class="d-tinta" d="M123 142l12 8-12 8z"/>
+      <rect class="d-caja" x="135" y="120" width="110" height="60" rx="8"/>
+      <text class="d-rotulo" x="190" y="146" text-anchor="middle">Balanceador</text>
+      <text class="d-peq d-tenue" x="190" y="166" text-anchor="middle">+ límites de uso</text>
+      <path class="d-linea" d="M245 150H258"/>
+      <path class="d-tinta" d="M258 142l12 8-12 8z"/>
+      <rect class="d-caja" x="282" y="112" width="120" height="60" rx="8"/>
+      <rect class="d-caja" x="276" y="106" width="120" height="60" rx="8"/>
+      <rect class="d-caja" x="270" y="100" width="120" height="60" rx="8"/>
+      <text class="d-rotulo" x="330" y="126" text-anchor="middle">API × 3</text>
+      <text class="d-peq d-tenue" x="330" y="146" text-anchor="middle">sin estado</text>
+      <path class="d-linea" d="M402 115H430V50H458"/>
       <path class="d-tinta" d="M458 42l12 8-12 8z"/>
-      <text class="d-peq" x="452" y="98">1.º lee</text>
+      <text class="d-peq" x="436" y="98">1.º lee</text>
       <rect class="d-caja" x="470" y="20" width="150" height="60" rx="8"/>
       <text class="d-rotulo" x="545" y="46" text-anchor="middle">Caché</text>
       <text class="d-peq d-tenue" x="545" y="66" text-anchor="middle">[Valkey] código → URL</text>
-      <path class="d-linea" d="M432 150H453"/>
+      <path class="d-linea" d="M402 150H453"/>
       <path class="d-tinta" d="M453 144l12 6-12 6z"/>
-      <text class="d-peq" x="440" y="138">escribe</text>
+      <text class="d-peq" x="428" y="140" text-anchor="middle">escribe</text>
       <path class="d-caja" d="M465 118V168A45 9 0 0 0 555 168V118"/>
       <ellipse class="d-caja" cx="510" cy="118" rx="45" ry="9"/>
       <text class="d-rotulo" x="510" y="150" text-anchor="middle">Primaria</text>
@@ -1826,11 +1837,11 @@ console.log(aBase62(62 ** 7 - 1));</textarea>
       <path class="d-caja" d="M605 118V168A45 9 0 0 0 695 168V118"/>
       <ellipse class="d-caja" cx="650" cy="118" rx="45" ry="9"/>
       <text class="d-rotulo" x="650" y="150" text-anchor="middle">Réplica</text>
-      <path class="d-linea" d="M400 172V214H650V190"/>
+      <path class="d-linea" d="M380 172V214H650V190"/>
       <path class="d-tinta" d="M642 190l8-12 8 12z"/>
       <text class="d-peq" x="660" y="210">2.º si no</text>
       <text class="d-peq" x="660" y="226">estaba</text>
-      <path class="d-linea" d="M330 172V278H458"/>
+      <path class="d-linea" d="M320 172V278H458"/>
       <path class="d-tinta" d="M458 270l12 8-12 8z"/>
       <text class="d-peq" x="394" y="270" text-anchor="middle">evento «clic»</text>
       <rect class="d-caja" x="470" y="250" width="100" height="56" rx="8"/>

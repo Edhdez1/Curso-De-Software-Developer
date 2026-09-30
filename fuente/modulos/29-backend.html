@@ -1298,3 +1298,248 @@ Content-Type: application/json
     <p>Pon la tabla de rutas en el <code>README.md</code> del proyecto, con un ejemplo de petición y de respuesta para cada una. En la industria se usa además el estándar <strong>OpenAPI</strong> (antes llamado Swagger): un archivo que describe todas las rutas, sus parámetros y sus respuestas, y del que se generan páginas de documentación interactivas y hasta el código del cliente. Un archivo <code>.http</code> o una colección de Bruno en el repositorio también sirven como documentación que se puede ejecutar.</p>
   </aside>
 </section>
+
+<section id="middleware" data-parada="Middleware y errores">
+  <h2>Middleware, errores y registros</h2>
+  <p>Hay tareas que se repiten en todas las peticiones: anotar cuál llegó y cuánto tardó, convertir el cuerpo JSON, rechazar a quien no tiene permiso, cerrar la API por mantenimiento. Escribirlas dentro de cada ruta sería copiar lo mismo veinte veces, y el día que olvides una, tendrás un agujero.</p>
+  <p>Un <strong>middleware</strong> (literalmente, «software del medio») es una función que Express ejecuta en cada petición, en el orden en que la registraste, antes de llegar a las rutas o en lugar de ellas. Recibe tres cosas: <code>req</code>, <code>res</code> y <code>next</code>, una función que significa «ya terminé, que pase el siguiente». Un middleware puede hacer tres cosas:</p>
+  <ul>
+    <li>Leer o modificar <code>req</code> y <code>res</code>. Por ejemplo, <code>express.json()</code> rellena <code>req.body</code>.</li>
+    <li>Responder él mismo y cortar la cadena. Por ejemplo, un 503 si la API está en mantenimiento.</li>
+    <li>Llamar a <code>next()</code> para pasar la petición al siguiente middleware o ruta.</li>
+  </ul>
+  <pre><code class="language-js">function miMiddleware(req, res, next) {
+  // … hacer algo con la petición …
+  next(); // o bien responder con res.status(…).json(…), pero no las dos cosas
+}
+
+app.use(miMiddleware); // se ejecuta en TODAS las peticiones, en este punto de la fila</code></pre>
+  <aside class="senal analogia">
+    <p>Piensa en los controles de un aeropuerto: primero revisan tu documento, luego pasa tu equipaje por el escáner y al final llegas a la puerta de embarque. Cada control puede dejarte pasar (<code>next()</code>) o detenerte ahí mismo (responder). Y el orden importa: no te revisan el equipaje después de embarcar. El límite de la analogía: en Express, un middleware también puede actuar cuando la respuesta ya va de vuelta, como verás en el paso 5.</p>
+  </aside>
+  <figure class="capsula" data-titulo="La cadena de middleware">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Animación: una petición POST /api/tareas pasa por el middleware registro, luego por express.json, que rellena req.body, y llega a la ruta, que responde 201; al terminar, registro escribe en la consola POST /api/tareas 201 en 3.1 ms. En otra petición con JSON roto, express.json llama a next con un error y Express salta la ruta hasta el manejador de errores, que responde 400">
+        <path class="d-flecha" d="M170 125 H188"/>
+        <path class="d-tinta" d="M184 119 l10 6 -10 6z"/>
+        <path class="d-flecha" d="M356 125 H374"/>
+        <path class="d-tinta" d="M370 119 l10 6 -10 6z"/>
+        <path class="d-punteada" d="M542 125 H568"/>
+        <rect class="d-caja" x="10" y="90" width="160" height="70" rx="8" data-clases="2:d-acento-trazo; 3:; 5:d-acento-trazo; 6:"/>
+        <text class="d-mono" x="90" y="120" text-anchor="middle" style="font-size:15px">registro</text>
+        <text class="d-peq d-tenue" x="90" y="143" text-anchor="middle">middleware 1</text>
+        <rect class="d-caja" x="196" y="90" width="160" height="70" rx="8" data-clases="3:d-acento-trazo; 4:; 6:d-mal-trazo"/>
+        <text class="d-mono" x="276" y="120" text-anchor="middle" style="font-size:15px">express.json()</text>
+        <text class="d-peq d-tenue" x="276" y="143" text-anchor="middle">middleware 2</text>
+        <rect class="d-caja" x="382" y="90" width="160" height="70" rx="8" data-clases="4:d-acento-trazo; 6:"/>
+        <text class="d-mono" x="462" y="120" text-anchor="middle" style="font-size:15px">POST /api/tareas</text>
+        <text class="d-peq d-tenue" x="462" y="143" text-anchor="middle">ruta</text>
+        <rect class="d-caja" x="568" y="90" width="142" height="70" rx="8" data-clases="6:d-acento-trazo"/>
+        <text class="d-mono" x="639" y="120" text-anchor="middle" style="font-size:15px">manejarErrores</text>
+        <text class="d-peq d-tenue" x="639" y="143" text-anchor="middle">4 parámetros</text>
+        <g data-pasos="1-3" data-mover="3:translate(186px,0px)">
+          <rect class="d-acento" x="10" y="28" width="160" height="36" rx="18"/>
+          <text class="d-sobre-acento d-mono" x="90" y="51" text-anchor="middle" style="font-size:13px" data-texto="1:POST /api/tareas; 3:req.body listo">POST /api/tareas</text>
+        </g>
+        <g data-pasos="4-5">
+          <rect class="d-ok" x="382" y="28" width="160" height="36" rx="18"/>
+          <text class="d-mono" x="462" y="51" text-anchor="middle" style="font-size:13px">201 · tarea creada</text>
+        </g>
+        <g data-pasos="5">
+          <path class="d-punteada" d="M462 162 C462 200, 90 200, 90 164"/>
+          <path class="d-tinta" d="M84 176 l6 -12 6 12z"/>
+          <text class="d-peq" x="276" y="216" text-anchor="middle">al terminar la respuesta, registro escribe en la consola</text>
+        </g>
+        <g data-pasos="6">
+          <rect class="d-mal" x="196" y="28" width="160" height="36" rx="18"/>
+          <text class="d-mono" x="276" y="51" text-anchor="middle" style="font-size:13px">{"titulo": }</text>
+          <rect class="d-mal" x="568" y="28" width="142" height="36" rx="18"/>
+          <text class="d-mono" x="639" y="51" text-anchor="middle" style="font-size:13px">400 · JSON roto</text>
+          <path class="d-flecha" d="M276 162 C276 205, 639 205, 639 166"/>
+          <path class="d-tinta" d="M633 176 l6 -12 6 12z"/>
+          <text class="d-peq" x="457" y="222" text-anchor="middle">next(error): se salta la ruta</text>
+        </g>
+        <rect class="d-codigo" x="10" y="232" width="700" height="52" rx="8"/>
+        <text class="d-codigo-tenue" x="24" y="252" style="font-size:13px">Consola del servidor</text>
+        <text class="d-codigo-texto" x="24" y="274" style="font-size:15px" data-pasos="5-" data-texto="5:POST /api/tareas → 201 (3.1 ms); 6:POST /api/tareas → 400 (1.2 ms)">POST /api/tareas → 201 (3.1 ms)</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li data-duracion="6">En tu código escribiste, en este orden: <code>app.use(registro)</code>, <code>app.use(express.json())</code>, <code>app.post("/api/tareas", …)</code> y <code>app.use(manejarErrores)</code>. Express los pone en fila, en ese mismo orden. Llega una petición POST con una tarea en JSON.</li>
+        <li>El primer middleware, <code>registro</code>, anota la hora de llegada, deja preparado un aviso para cuando la respuesta termine y llama a <code>next()</code>: que pase el siguiente.</li>
+        <li><code>express.json()</code> lee el cuerpo, que llegó como texto, lo convierte en objeto y lo guarda en <code>req.body</code>. Luego llama a <code>next()</code>.</li>
+        <li data-duracion="6">La ruta coincide. Su manejador crea la tarea y responde 201. No llama a <code>next()</code>: la cadena termina aquí, y el manejador de errores no se ejecuta.</li>
+        <li>Cuando la respuesta sale, se dispara el aviso que <code>registro</code> dejó preparado: escribe en la consola el método, la ruta, el código y cuánto tardó.</li>
+        <li data-duracion="7">Otra petición llega con el JSON roto. <code>express.json()</code> no puede convertirlo y llama a <code>next(error)</code>. Express salta todas las rutas normales y va directo al middleware de cuatro parámetros, el manejador de errores, que responde 400.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Este es el middleware <code>registro</code> de la cápsula, tal como lo usarás en el proyecto. <code>res.on("finish", función)</code> deja preparada una función que Node ejecutará cuando la respuesta termine de enviarse; así el registro puede anotar el código final y el tiempo total. <code>performance.now()</code> mide el tiempo en milisegundos, como en la <a href="20-algoritmos.html">Estación 20</a>.</p>
+  <pre><code class="language-js">// src/middleware/registro.js
+export function registro(req, res, next) {
+  const inicio = performance.now();
+  res.on("finish", () =&gt; {
+    const ms = (performance.now() - inicio).toFixed(1);
+    console.log(`${req.method} ${req.originalUrl} → ${res.statusCode} (${ms} ms)`);
+  });
+  next();
+}</code></pre>
+  <aside class="senal ojo" data-titulo="El orden es el del código">
+    <p><code>app.use(registro)</code> tiene que ir <strong>antes</strong> de las rutas: un middleware que declaras después de una ruta que ya respondió no llega a ejecutarse para esa petición. Y un middleware que no responde ni llama a <code>next()</code> deja la petición colgada: el cliente espera hasta rendirse, sin ningún error en la consola que te dé una pista.</p>
+  </aside>
+  <p>En este taller hay dos middleware propios, dos rutas, un 404 a medida y un manejador de errores. <strong>Predice</strong> qué imprime cada petición, incluidas las líneas del registro. Después prueba tres cambios, de uno en uno: pon <code>enMantenimiento</code> en <code>true</code>; quita el <code>next();</code> del registro; y mueve el bloque del 404 al principio, justo después de <code>const app</code>.</p>
+  <div class="taller" id="taller-middleware" data-titulo="Predice: la cadena de middleware" data-tiempo="6">
+    <textarea class="taller-codigo">const app = express();
+let enMantenimiento = false; // prueba con true
+
+// Middleware 1: registra cada petición
+app.use((req, res, next) => {
+  console.log("  [registro] " + req.method + " " + req.originalUrl);
+  next();
+});
+
+// Middleware 2: si estamos en mantenimiento, corta aquí
+app.use((req, res, next) => {
+  if (enMantenimiento) {
+    return res.status(503).json({ error: "Volvemos en 10 minutos" });
+  }
+  next();
+});
+
+app.use(express.json());
+
+app.get("/api/salud", (req, res) => {
+  res.json({ estado: "ok" });
+});
+
+app.get("/api/explota", (req, res) => {
+  throw new Error("Algo se rompió");
+});
+
+// Casi al final: lo que no coincidió con ninguna ruta
+app.use((req, res) => {
+  res.status(404).json({ error: "No existe " + req.method + " " + req.originalUrl });
+});
+
+// Al final de todo: el manejador de errores (4 parámetros)
+app.use((err, req, res, next) => {
+  console.log("  [error] " + err.message);
+  if (err.type === "entity.parse.failed") {
+    return res.status(400).json({ error: "El cuerpo no es JSON válido" });
+  }
+  res.status(500).json({ error: "Error interno del servidor" });
+});
+
+app.probar("GET", "/api/salud");
+app.probar("GET", "/api/nada");
+app.probar("GET", "/api/explota");
+app.probar("POST", "/api/salud", '{"roto": }');
+
+// ─── Simulador de Express: imita express() dentro de esta página. No hace falta que lo leas. ───
+function express() {
+  express.json = () => function json(req, res, next) {
+    if (req.crudo !== undefined) {
+      try { req.body = JSON.parse(req.crudo); } catch (e) { e.status = 400; e.type = "entity.parse.failed"; throw e; }
+    }
+    next();
+  };
+  const capas = [];
+  const app = { listen: (puerto, listo) => listo && listo() };
+  for (const m of ["get", "post", "put", "patch", "delete"]) {
+    app[m] = (ruta, f) => capas.push({ metodo: m.toUpperCase(), ruta, f });
+  }
+  app.use = (a, b) => capas.push(b ? { ruta: a, f: b } : { ruta: "", f: a });
+  app.probar = (metodo, url, cuerpo) => {
+    const u = new URL(url, "http://localhost");
+    const req = { method: metodo, path: u.pathname, originalUrl: url, params: {},
+      query: Object.fromEntries(u.searchParams),
+      crudo: cuerpo === undefined ? undefined : typeof cuerpo === "string" ? cuerpo : JSON.stringify(cuerpo) };
+    const res = { statusCode: 200, cuerpo: "", enviada: false, extra: "",
+      status(n) { this.statusCode = n; return this; },
+      location(l) { this.extra = " (Location: " + l + ")"; return this; },
+      json(d) { return this.send(JSON.stringify(d)); },
+      send(d) { this.cuerpo = typeof d === "object" ? JSON.stringify(d) : String(d); this.enviada = true; return this; },
+      sendStatus(n) { return this.status(n).send(""); },
+      end() { this.enviada = true; return this; } };
+    let i = 0;
+    const siguiente = (err) => {
+      while (i < capas.length) {
+        const c = capas[i++];
+        if (c.f.length === 4 ? !err : err) continue;
+        const params = coincide(c, req.method, req.path);
+        if (!params) continue;
+        req.params = params;
+        try { if (err) c.f(err, req, res, siguiente); else c.f(req, res, siguiente); } catch (e) { siguiente(e); }
+        return;
+      }
+      if (err) res.status(err.status || 500).send(err.name + ": " + err.message);
+      else res.status(404).send("Cannot " + metodo + " " + u.pathname);
+    };
+    siguiente();
+    console.log(metodo + " " + url + " → " + (res.enviada ? res.statusCode + res.extra + (res.cuerpo ? " " + res.cuerpo : "") : "(sin respuesta: el cliente se queda esperando)"));
+  };
+  function coincide(capa, metodo, ruta) {
+    if (capa.metodo && capa.metodo !== metodo) return null;
+    const a = capa.ruta.split("/").filter(Boolean), b = ruta.split("/").filter(Boolean);
+    if (capa.metodo ? a.length !== b.length : a.length > b.length) return null;
+    const params = {};
+    for (let k = 0; k < a.length; k++) {
+      if (a[k][0] === ":") params[a[k].slice(1)] = decodeURIComponent(b[k]);
+      else if (a[k] !== b[k]) return null;
+    }
+    return params;
+  }
+  return app;
+}</textarea>
+  </div>
+  <p>Con los valores iniciales verás cada petición precedida de su línea de registro. <code>/api/nada</code> no coincide con ninguna ruta y cae en tu 404, que ahora responde JSON en vez de la página HTML de Express. <code>/api/explota</code> lanza un error: Express lo captura y lo entrega al manejador de errores, que lo anota y responde 500 sin contar detalles. El POST con JSON roto nunca llega a ninguna ruta: <code>express.json()</code> falla y el error salta directo al final. Con <code>enMantenimiento = true</code>, todo responde 503 después de registrarse. Sin <code>next()</code> en el registro, nadie responde nunca. Y con el 404 al principio, todas las peticiones reciben 404, porque ese middleware responde sin mirar la ruta.</p>
+
+  <h3>Manejar los errores en un solo lugar</h3>
+  <p>Un <strong>manejador de errores</strong> es un middleware con <strong>cuatro</strong> parámetros: <code>(err, req, res, next)</code>. Express lo reconoce por ese cuarto parámetro y solo lo llama cuando algo falla: cuando una ruta lanza un error con <code>throw</code>, cuando una función <code>async</code> rechaza su promesa, o cuando alguien llama a <code>next(error)</code>. Se declara al final de todo, después de las rutas y del 404. Así queda el del proyecto:</p>
+  <pre><code class="language-js">// src/middleware/errores.js
+export function rutaNoEncontrada(req, res) {
+  res.status(404).json({ error: `No existe ${req.method} ${req.originalUrl}` });
+}
+
+export function manejarErrores(err, req, res, next) {
+  const estado = err.status ?? 500;
+  if (estado &gt;= 500) console.error(err);        // el detalle completo, solo en tu terminal
+  res.status(estado).json({
+    error: estado &gt;= 500 ? "Error interno del servidor" : err.message,
+  });
+}</code></pre>
+  <p>Con esto, tus rutas pueden lanzar errores sin preocuparse de cómo se responden. En Express 5 funciona también dentro de funciones <code>async</code>, que es lo que usarás cuando tus datos vivan en una base de datos (<a href="30-bases-datos.html">Estación 30</a>). Crear un error con un código de estado es añadirle una propiedad:</p>
+  <pre><code class="language-js">app.get("/api/tareas/:id", async (req, res) =&gt; {
+  const tarea = await buscarTarea(Number(req.params.id)); // imagina que consulta una base de datos
+  if (!tarea) {
+    const error = new Error("No existe esa tarea");
+    error.status = 404;
+    throw error;               // Express 5 lo lleva a manejarErrores
+  }
+  res.json(tarea);
+});</code></pre>
+  <p>Si prefieres algo más ordenado, crea una clase de error propia con <code>class ErrorHttp extends Error</code>, como aprendiste con la herencia en la <a href="21-paradigmas.html#herencia">Estación 21</a>, y dale un <code>status</code> en el constructor.</p>
+  <aside class="senal ojo" data-titulo="No le cuentes tus secretos al cliente">
+    <p>Si no escribes tu propio manejador, Express usa uno de serie. Mientras la variable de entorno <code>NODE_ENV</code> no valga <code>"production"</code>, responde con una página que incluye la traza completa del error: <code>&lt;pre&gt;Error: Algo se rompió&lt;br&gt; at file:///home/tu/api-tareas/src/servidor.js:48:9 …</code>. Eso revela rutas de tu computadora, nombres de archivos y librerías: pistas valiosas para un atacante. Tu manejador debe responder un mensaje genérico en los 5xx y guardar el detalle en el registro del servidor, con <code>console.error</code>. En los 4xx, en cambio, el mensaje sí debe explicar qué corregir.</p>
+  </aside>
+
+  <h3>Registros: qué anotar y qué no</h3>
+  <p>Los <strong>registros</strong> (en inglés, <em>logs</em>) son las líneas que tu servidor escribe mientras trabaja. Cuando algo falle en producción, a las tres de la madrugada y en una computadora que no es la tuya, serán lo único que tengas para entender qué pasó.</p>
+  <ul>
+    <li><strong>Anota</strong> cada petición (método, ruta, código, duración), los errores con su traza completa y los eventos importantes: el servidor arrancó, se conectó a la base de datos, se creó una cuenta.</li>
+    <li><strong>Nunca anotes</strong> contraseñas, claves, tokens de sesión ni datos personales como correos o direcciones completas. Los registros se leen, se copian y se guardan durante meses, y los ve más gente que tu base de datos.</li>
+    <li><code>console.log</code> escribe en la salida estándar y <code>console.error</code> en la salida de errores. Las plataformas de publicación las recogen por separado, así que usa cada una para lo suyo.</li>
+  </ul>
+  <p>Para empezar, tu middleware <code>registro</code> es suficiente. En proyectos reales se usan librerías. <strong>morgan</strong>, del propio equipo de Express, escribe una línea por petición con <code>app.use(morgan("dev"))</code>, algo como <code>GET /api/tareas 200 2.765 ms - 47</code> (el último número son los bytes de la respuesta). <strong>pino</strong> escribe cada registro como una línea de JSON, con nivel (<code>info</code>, <code>warn</code>, <code>error</code>) y hora, para que otras herramientas puedan buscar y filtrar. Qué pasa con esos registros cuando la API está publicada lo verás en la <a href="35-devops.html">Estación 35</a>.</p>
+
+  <h3>CORS, en pocas palabras</h3>
+  <p>Cuando el frontend de tu juego corra en <code>http://localhost:5173</code> (el puerto típico de Vite, que usarás en la <a href="32-react.html">Estación 32</a>) y le haga <code>fetch</code> a tu API en <code>http://localhost:3000</code>, el navegador puede bloquear la respuesta con un error de <strong>CORS</strong> (<em>Cross-Origin Resource Sharing</em>). Otro puerto cuenta como otro «origen», y por seguridad el navegador solo deja que una página lea respuestas de otro origen si el servidor lo autoriza con la cabecera <code>Access-Control-Allow-Origin</code>. El paquete <code>cors</code> la añade:</p>
+  <pre><code class="language-js">import cors from "cors";   // npm install cors
+
+app.use(cors({ origin: "http://localhost:5173" })); // solo tu frontend, no cualquiera</code></pre>
+  <p>Dos cosas que ahorran horas de confusión: CORS lo aplica el navegador, así que curl, Bruno y otros servidores no lo sufren (por eso con curl todo funciona y desde tu página no). Y abrir la API a todos los orígenes sin pensar tiene consecuencias de seguridad. Por qué existe CORS y cómo configurarlo bien está en la <a href="31-seguridad.html">Estación 31</a>.</p>
+  <aside class="senal oficio" data-titulo="Otros middleware que verás a menudo">
+    <p><code>express.static("public")</code> sirve los archivos de una carpeta (el HTML, el CSS, el JavaScript y las imágenes de tu juego) desde el mismo servidor que la API. Como todo sale del mismo origen, no hay problema de CORS. <code>express.urlencoded()</code> lee los formularios HTML clásicos. <code>helmet</code> añade cabeceras de seguridad y <code>express-rate-limit</code> limita cuántas peticiones puede hacer cada cliente; los dos aparecen en la Estación 31.</p>
+  </aside>
+</section>
