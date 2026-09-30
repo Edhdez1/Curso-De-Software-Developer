@@ -519,7 +519,7 @@ console.log(inventario.stock);</textarea>
       <tbody>
         <tr><th scope="row">Empezar y desplegar</th><td>Lo más sencillo</td><td>Sencillo</td><td>Requiere mucha infraestructura</td></tr>
         <tr><th scope="row">Llamadas entre partes</th><td>Funciones en memoria: nanosegundos</td><td>Funciones en memoria</td><td>Peticiones por la red: milisegundos, y pueden fallar</td></tr>
-        <tr><th scope="row">Datos y transacciones</th><td>Una base de datos: fácil mantener todo coherente</td><td>Una base, con partes asignadas a cada módulo</td><td>Cada servicio con sus datos: la coherencia entre servicios es difícil</td></tr>
+        <tr><th scope="row">Datos y transacciones</th><td>Una base de datos: mantener todo coherente es sencillo</td><td>Una base, con partes asignadas a cada módulo</td><td>Cada servicio con sus datos: la coherencia entre servicios es difícil</td></tr>
         <tr><th scope="row">Escalar</th><td>Todo junto</td><td>Todo junto</td><td>Cada servicio por separado</td></tr>
         <tr><th scope="row">Un fallo grave</th><td>Puede tumbar todo</td><td>Puede tumbar todo</td><td>Puede quedar aislado… o propagarse en cadena</td></tr>
         <tr><th scope="row">Equipos</th><td>Bien hasta unas pocas decenas de personas</td><td>Equipos por módulo, un solo despliegue</td><td>Cada equipo despliega su servicio a su ritmo</td></tr>
@@ -953,7 +953,7 @@ console.log("Consultas a la base de datos:", consultasBD);</textarea>
   <p>Son 4 consultas: la primera de cada jugador, la de Leo después de invalidar su copia y la de Ana en el segundo 75, porque su copia caducó en el 60. <strong>Modifica:</strong> pon <code>//</code> delante de <code>cache.delete(id);</code> y vuelve a ejecutar. Ahora se imprime <code>Leo</code> en vez de <code>Leo_Pro</code>: la caché sirve un dato viejo hasta que caduque. Acabas de fabricar el error más típico de las cachés.</p>
 
   <h3>Invalidar: la parte difícil</h3>
-  <p>Hay una frase famosa en informática, atribuida a Phil Karlton: «Solo hay dos cosas difíciles en ciencias de la computación: invalidar la caché y ponerle nombre a las cosas». Guardar copias es fácil; saber cuándo tirarlas, no. Las estrategias principales son:</p>
+  <p>Hay una frase famosa en informática, atribuida a Phil Karlton: «Solo hay dos cosas difíciles en ciencias de la computación: invalidar la caché y ponerle nombre a las cosas». Guardar copias cuesta poco; saber cuándo tirarlas es lo difícil. Las estrategias principales son:</p>
   <ul>
     <li><strong>Expiración por tiempo (TTL)</strong>: la copia vale un rato y después se descarta. Simple y robusta. Aceptas datos algo viejos durante ese rato: para una tabla de récords, 30 segundos de retraso no molestan a nadie.</li>
     <li><strong>Invalidación al escribir</strong>: quien cambia el dato borra la copia, como en el taller. Datos frescos, pero cada punto del código que escribe debe acordarse de hacerlo.</li>
@@ -1052,7 +1052,7 @@ HTTP/1.1 304 Not Modified</code></pre>
         <li>Tres servidores iguales y sin estado, todos sanos (punto verde). Delante, un balanceador que reparte por turnos. Las personas solo conocen la dirección del balanceador.</li>
         <li>Llegan tres peticiones. La primera va al servidor 1, la segunda al 2 y la tercera al 3.</li>
         <li>Llega la cuarta y el turno vuelve a empezar: servidor 1. Como ninguno guarda estado, a nadie le importa a qué servidor le toca.</li>
-        <li data-duracion="7">En la comprobación de salud, el servidor 2 no responde. El balanceador lo marca como fuera de servicio y lo saca del turno. Nadie ve un error: simplemente deja de recibir peticiones.</li>
+        <li data-duracion="7">En la comprobación de salud, el servidor 2 no responde. El balanceador lo marca como fuera de servicio y lo saca del turno. Nadie ve un error: ese servidor deja de recibir peticiones.</li>
         <li>Las siguientes peticiones se reparten entre el 1 y el 3. Cuando el 2 vuelva a responder a <code>/salud</code>, el balanceador lo reincorporará solo.</li>
       </ol>
     </figcaption>
@@ -1097,7 +1097,7 @@ console.log(servidores.map((s) => `${s.nombre}: ${s.atendidas}`).join(", "));</t
   </aside>
 
   <h3>La base de datos: réplicas y particiones</h3>
-  <p>Con servidores sin estado, añadir capacidad es fácil. Pero todo el estado acabó en la base de datos, que se convierte en el cuello de botella. Un <strong>cuello de botella</strong> es la pieza más lenta de una cadena, la que limita al resto. Para la base de datos hay dos herramientas principales:</p>
+  <p>Con servidores sin estado, añadir capacidad consiste en sumar máquinas. Pero todo el estado acabó en la base de datos, que se convierte en el cuello de botella. Un <strong>cuello de botella</strong> es la pieza más lenta de una cadena, la que limita al resto. Para la base de datos hay dos herramientas principales:</p>
   <figure class="diagrama">
     <svg viewBox="0 0 720 300" role="img" aria-label="Dos técnicas. Izquierda, réplicas: los servidores escriben en la base de datos primaria y leen de dos réplicas; la primaria copia los cambios a las réplicas con algo de retraso. Derecha, particiones: un enrutador envía cada usuario a una de tres bases de datos según su nombre: de la A a la H, de la I a la P y de la Q a la Z.">
       <text class="d-rotulo" x="180" y="22" text-anchor="middle">Réplicas de lectura</text>
@@ -1505,7 +1505,7 @@ for (const transcurrido of [30, 5, 25]) {
     </ol>
   </div>
   <aside class="senal ojo" data-titulo="¿Por qué Math.min(…, 250)?">
-    <p>Si la pestaña pasa un rato en segundo plano, el navegador deja de llamar a tu bucle. Al volver, «el tiempo que pasó» puede ser un minuto, y el <code>while</code> intentaría simular miles de pasos seguidos: el juego se congela intentando ponerse al día. Limitar el tiempo que se suma en cada vuelta (aquí, a 250 ms) evita esa «espiral de la muerte». El juego simplemente se pierde ese rato, que es lo que esperas.</p>
+    <p>Si la pestaña pasa un rato en segundo plano, el navegador deja de llamar a tu bucle. Al volver, «el tiempo que pasó» puede ser un minuto, y el <code>while</code> intentaría simular miles de pasos seguidos: el juego se congela intentando ponerse al día. Limitar el tiempo que se suma en cada vuelta (aquí, a 250 ms) evita esa «espiral de la muerte». El juego se salta ese rato, que es lo que esperas.</p>
   </aside>
 
   <h3>Escenas</h3>
@@ -1670,7 +1670,7 @@ document.querySelector("#info").textContent = `Entidades: ${siguienteId - 1}`;</
   <p><strong>Modifica</strong>, de uno en uno: (1) haz que la nube caiga añadiendo <code>gravedad.add(nube);</code>. (2) Haz que la roca se mueva dándole una velocidad con <code>velocidad.set(roca, { x: 40, y: -150 });</code>. (3) Crea una cuarta entidad, una moneda amarilla quieta, solo con posición y forma. En ningún caso escribiste una clase nueva ni tocaste un sistema: cambiaste qué componentes tiene cada entidad.</p>
   <p>ECS tiene una segunda ventaja, de rendimiento. Como los componentes del mismo tipo se guardan juntos, un sistema recorre datos contiguos en memoria, y eso aprovecha la caché del procesador (<a href="02-computadora.html#dentro">Estación 2</a>) mucho mejor que saltar de objeto en objeto. Con miles de entidades, la diferencia es enorme.</p>
   <aside class="senal nota" data-titulo="ECS en los motores reales">
-    <p>Unity ofrece ECS con su paquete Entities (parte de lo que llama DOTS), el motor Bevy (escrito en Rust) está construido entero sobre ECS, y existen bibliotecas como Flecs para C y C++. Godot, en cambio, decidió no basarse en ECS: su creador, Juan Linietsky, explicó en 2021 que los nodos y escenas son más fáciles de entender y bastan para la mayoría de los juegos, y que ECS compensa sobre todo en casos con miles de objetos actualizándose a la vez, como juegos de estrategia o constructores de ciudades.</p>
+    <p>Unity ofrece ECS con su paquete Entities (parte de lo que llama DOTS), el motor Bevy (escrito en Rust) está construido entero sobre ECS, y existen bibliotecas como Flecs para C y C++. Godot, en cambio, decidió no basarse en ECS: su creador, Juan Linietsky, explicó en 2021 que los nodos y escenas se entienden mejor y bastan para la mayoría de los juegos, y que ECS compensa sobre todo en casos con miles de objetos actualizándose a la vez, como juegos de estrategia o constructores de ciudades.</p>
   </aside>
   <aside class="senal clave">
     <p>Igual que con los microservicios, ECS no es «mejor»: es un compromiso. Para un juego de plataformas con 30 objetos, clases con composición o los nodos de Godot son más directos. ECS brilla cuando hay muchas entidades y muchas combinaciones de comportamiento.</p>
@@ -1768,7 +1768,7 @@ return String(fila[0]).indexOf("zapatillas") !== -1 || "Esa no es la URL del có
   <p>Prueba también <code>SELECT codigo, clics FROM enlaces ORDER BY clics DESC;</code> para ver los enlaces más visitados. ¿Y el contador de clics? Sumar 1 a una fila en cada redirección convierte cada lectura en una escritura, y a 6 000 por segundo eso cargaría la base de datos. Lo resolveremos en el paso 6 con una cola.</p>
 
   <h3>5. El problema central: generar códigos cortos</h3>
-  <p>El código debe ser corto, único y fácil de copiar. Hay tres enfoques clásicos, y cada uno es un compromiso:</p>
+  <p>El código debe ser corto, único y cómodo de copiar. Hay tres enfoques clásicos, y cada uno es un compromiso:</p>
   <div class="tabla">
     <table>
       <thead><tr><th scope="col">Enfoque</th><th scope="col">Cómo funciona</th><th scope="col">A favor</th><th scope="col">En contra</th></tr></thead>
@@ -2429,4 +2429,303 @@ console.log(adr);</code></pre>
       <p>Elegir Server-Sent Events también sería defendible: lo importante es que el ADR explique por qué, con números, y que diga honestamente lo que se pierde.</p>
     </details>
   </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: diseña el chat de un juego multijugador</h2>
+  <p>Viste un diseño resuelto, el acortador de URLs. Ahora te toca a ti con un sistema distinto: el chat de las partidas de Astro Salto. En cada partida juegan hasta 10 personas, que deben poder escribirse mensajes en tiempo real. Cuando el juego tenga éxito habrá unas 20 000 personas conectadas a la vez. Tu entregable es un documento de diseño, escrito como un objeto de JavaScript para que el taller pueda revisar que no falta nada.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Requisitos.</strong> Escribe al menos 3 requisitos funcionales (qué se puede hacer) y al menos 3 atributos de calidad, cada uno con un número medible (latencia, disponibilidad, personas conectadas…).</p></div></li>
+    <li><div><p><strong>Estimación.</strong> Calcula personas conectadas y mensajes por segundo. Supón, por ejemplo, que cada persona escribe un mensaje cada 10 segundos. Si quieres, añade cuánto ocupa el historial al mes.</p></div></li>
+    <li><div><p><strong>Contenedores.</strong> Describe al menos 4 piezas desplegables, cada una con nombre, tecnología y responsabilidad. Pregúntate: ¿cómo llega un mensaje de un teléfono a los otros nueve sin que pregunten? ¿Dónde se guarda el historial? ¿Quién filtra los insultos?</p></div></li>
+    <li><div><p><strong>El problema escondido.</strong> Con 20 000 conexiones necesitarás varios servidores de chat. Si Ana está conectada al servidor 1 y Leo al servidor 2, ¿cómo le llega a Leo el mensaje de Ana? Pista: repasa la sección de eventos.</p></div></li>
+    <li><div><p><strong>Decisiones.</strong> Registra al menos 2 decisiones con título, contexto, decisión («Usaremos…») y consecuencias con «A favor» y «En contra».</p></div></li>
+    <li><div><p><strong>Diagrama.</strong> Fuera del taller, dibuja el diagrama de contenedores en papel o en Mermaid, y pruébalo pegándolo en un archivo <code>.md</code> de un repositorio de GitHub.</p></div></li>
+  </ol>
+  <div class="taller" id="taller-proyecto" data-titulo="Proyecto: documento de diseño del chat">
+    <textarea class="taller-codigo">const diseno = {
+  sistema: "Chat de partidas de Astro Salto",
+  requisitos: {
+    funcionales: [
+      // "Enviar un mensaje de texto a la sala de la partida",
+    ],
+    calidad: [
+      // "El 95 % de los mensajes llega a los demás en menos de 500 ms",
+    ],
+  },
+  estimacion: {
+    usuariosConectados: 0,
+    mensajesPorSegundo: 0,
+    // añade lo que necesites
+  },
+  contenedores: [
+    // { nombre: "App del juego", tecnologia: "Godot", responsabilidad: "…" },
+  ],
+  decisiones: [
+    // { titulo: "…", contexto: "…", decision: "Usaremos…", consecuencias: "A favor: … En contra: …" },
+  ],
+};
+
+// Informe (no hace falta tocarlo)
+console.log(`== ${diseno.sistema} ==`);
+console.log(`Requisitos: ${diseno.requisitos.funcionales.length} funcionales, ${diseno.requisitos.calidad.length} de calidad`);
+console.log(`Estimación: ${diseno.estimacion.usuariosConectados} conectados, ${diseno.estimacion.mensajesPorSegundo} mensajes/s`);
+for (const c of diseno.contenedores) console.log(`[${c.tecnologia}] ${c.nombre}: ${c.responsabilidad}`);
+for (const d of diseno.decisiones) console.log(`ADR: ${d.titulo}`);
+// Última línea: el diseño en JSON, para que el taller pueda revisarlo
+console.log(JSON.stringify(diseno));</textarea>
+    <script type="text/plain" class="taller-verificar">
+var d;
+try { d = JSON.parse(salida[salida.length - 1]); } catch (e) { return "No borres la última línea del programa: imprime el diseño en JSON para revisarlo."; }
+var r = d.requisitos || {};
+if (!r.funcionales || r.funcionales.length < 3) return "Paso 1: escribe al menos 3 requisitos funcionales.";
+if (!r.calidad || r.calidad.length < 3) return "Paso 1: escribe al menos 3 atributos de calidad.";
+var sinNumero = r.calidad.filter(function (q) { return !/\d/.test(q); });
+if (sinNumero.length) return "Cada atributo de calidad necesita un número medible. Revisa: «" + sinNumero[0] + "».";
+var e = d.estimacion || {};
+if (!(e.usuariosConectados > 0) || !(e.mensajesPorSegundo > 0)) return "Paso 2: completa la estimación con usuarios conectados y mensajes por segundo (números mayores que 0).";
+var c = d.contenedores || [];
+if (c.length < 4) return "Paso 3: describe al menos 4 contenedores.";
+var incompleto = c.filter(function (x) { return !x.nombre || !x.tecnologia || !x.responsabilidad; });
+if (incompleto.length) return "Cada contenedor necesita nombre, tecnologia y responsabilidad.";
+var texto = JSON.stringify(d).toLowerCase();
+if (texto.indexOf("websocket") === -1) return "Un chat necesita que el servidor avise sin que le pregunten. ¿Qué tecnología de la sección de APIs sirve para eso?";
+if (!/pub\/sub|publicar-suscribir|publica|suscri/.test(texto)) return "Paso 4: ¿cómo llega el mensaje de Ana (servidor 1) a Leo (servidor 2)? Añade una pieza de publicar-suscribir entre servidores.";
+var dec = d.decisiones || [];
+if (dec.length < 2) return "Paso 5: registra al menos 2 decisiones.";
+var mal = dec.filter(function (x) { return !x.titulo || !x.contexto || !/usaremos|vamos a/i.test(x.decision || "") || !/a favor/i.test(x.consecuencias || "") || !/en contra/i.test(x.consecuencias || ""); });
+if (mal.length) return "Cada decisión necesita título, contexto, una decisión en voz activa («Usaremos…») y consecuencias con «A favor» y «En contra». Revisa: «" + (mal[0].titulo || "(sin título)") + "».";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <pre><code class="language-js">const diseno = {
+  sistema: "Chat de partidas de Astro Salto",
+  requisitos: {
+    funcionales: [
+      "Enviar un mensaje de texto a la sala de la partida",
+      "Recibir al instante los mensajes de las demás personas de la sala",
+      "Ver los últimos 50 mensajes al entrar en una sala",
+      "Reportar un mensaje ofensivo",
+    ],
+    calidad: [
+      "El 95 % de los mensajes llega a los demás en menos de 500 ms",
+      "Disponibilidad del 99,9 % en horario de juego",
+      "Soportar 20 000 personas conectadas a la vez",
+      "Un mensaje con palabras prohibidas se oculta en menos de 2 s",
+    ],
+  },
+  estimacion: {
+    usuariosConectados: 20000,
+    mensajesPorSegundo: 2000,   // un mensaje cada 10 s por persona
+    salasActivas: 2000,         // salas de 10 personas
+    historialGBPorMes: 518,     // 2 000/s × 86 400 s × 30 días × 100 bytes
+  },
+  contenedores: [
+    { nombre: "App del juego", tecnologia: "Godot",
+      responsabilidad: "Muestra el chat y mantiene un WebSocket con el servidor de chat" },
+    { nombre: "Balanceador", tecnologia: "Gestionado por la nube",
+      responsabilidad: "Reparte las conexiones nuevas entre los servidores de chat" },
+    { nombre: "Servidores de chat (varios)", tecnologia: "Node.js con WebSockets",
+      responsabilidad: "Mantienen las conexiones y reenvían los mensajes de cada sala" },
+    { nombre: "Canal publicar-suscribir", tecnologia: "Valkey pub/sub",
+      responsabilidad: "Reenvía cada mensaje a todos los servidores con personas de esa sala" },
+    { nombre: "Base de datos de mensajes", tecnologia: "PostgreSQL",
+      responsabilidad: "Guarda el historial de 30 días" },
+    { nombre: "Moderación", tecnologia: "Cola RabbitMQ y un consumidor en Node.js",
+      responsabilidad: "Revisa los mensajes y oculta los que tienen palabras prohibidas" },
+  ],
+  decisiones: [
+    {
+      titulo: "ADR 0001: WebSockets para los mensajes en tiempo real",
+      contexto: "Los mensajes deben llegar en menos de 500 ms a hasta 10 personas. Con sondeo cada segundo, 20 000 personas harían 20 000 peticiones por segundo, casi todas vacías.",
+      decision: "Usaremos WebSockets entre la app y los servidores de chat.",
+      consecuencias: "A favor: los mensajes llegan en cuanto se envían y desaparece el sondeo. En contra: cada servidor mantiene miles de conexiones abiertas y la app debe reconectarse sola.",
+    },
+    {
+      titulo: "ADR 0002: Publicar-suscribir entre servidores de chat",
+      contexto: "Con varios servidores, dos personas de la misma sala pueden estar conectadas a servidores distintos. Un servidor solo puede enviar mensajes por sus propias conexiones.",
+      decision: "Usaremos el pub/sub de Valkey: cada servidor publica los mensajes de una sala y todos los servidores con personas en esa sala se suscriben y los reenvían.",
+      consecuencias: "A favor: podemos añadir servidores de chat sin cambiar nada más. En contra: una pieza más que operar; si Valkey cae, los mensajes entre servidores se cortan hasta que vuelva.",
+    },
+    {
+      titulo: "ADR 0003: Moderar de forma asíncrona",
+      contexto: "Revisar cada mensaje puede tardar cientos de milisegundos y no debe retrasar la entrega, que tiene un objetivo de 500 ms.",
+      decision: "Usaremos una cola: el mensaje se entrega enseguida y un consumidor lo revisa en paralelo y lo oculta si hace falta.",
+      consecuencias: "A favor: la moderación no frena el chat. En contra: un mensaje ofensivo puede verse durante uno o dos segundos.",
+    },
+  ],
+};
+
+// Informe (no hace falta tocarlo)
+console.log(`== ${diseno.sistema} ==`);
+console.log(`Requisitos: ${diseno.requisitos.funcionales.length} funcionales, ${diseno.requisitos.calidad.length} de calidad`);
+console.log(`Estimación: ${diseno.estimacion.usuariosConectados} conectados, ${diseno.estimacion.mensajesPorSegundo} mensajes/s`);
+for (const c of diseno.contenedores) console.log(`[${c.tecnologia}] ${c.nombre}: ${c.responsabilidad}`);
+for (const d of diseno.decisiones) console.log(`ADR: ${d.titulo}`);
+// Última línea: el diseño en JSON, para que el taller pueda revisarlo
+console.log(JSON.stringify(diseno));</code></pre>
+    <p>La idea clave de esta solución es el paso 4. Los WebSockets hacen que los servidores dejen de ser «sin estado»: cada uno guarda conexiones abiertas. Por eso no basta con añadir servidores detrás de un balanceador; hace falta un canal de publicar-suscribir para que un mensaje llegue a las personas conectadas a otros servidores. Es la misma pieza que viste en la sección de eventos, usada para un problema nuevo.</p>
+  </details>
+  <p><strong>Para ir más allá:</strong> añade mensajes privados entre dos personas, cuenta cómo cambia la estimación si cada persona escribe el doble, o escribe un ADR sobre qué pasa con los mensajes cuando alguien pierde la conexión unos segundos (¿se guardan en una cola para esa persona? ¿se piden al historial al reconectar?).</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Si fallas alguna, lee la explicación de cada opción: equivocarse aquí es la forma más barata de aprender.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Qué hace que una decisión sea «de arquitectura» y no un detalle de código?</p>
+      <ol class="opciones">
+        <li>Que la tome la persona con más experiencia del equipo.<p class="explica">Quién decide no la convierte en arquitectura. Una persona experta también decide nombres de variables.</p></li>
+        <li>Que use una tecnología moderna, como microservicios o GraphQL.<p class="explica">Una decisión con tecnología antigua puede ser de arquitectura, y usar algo moderno no la convierte en una.</p></li>
+        <li>Que sea costosa de cambiar más adelante y afecte a la estructura del sistema.<p class="explica">Correcto. Como dice Booch, lo «significativo» se mide por el costo del cambio: la base de datos, cómo se comunican las piezas, un monolito o varios servicios.</p></li>
+        <li>Que aparezca en un diagrama.<p class="explica">Los diagramas comunican decisiones, pero un detalle sin importancia también se puede dibujar.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Una API tiene un promedio de 190 ms, un p50 de 80 ms y un p95 de 2 000 ms. ¿Qué significa?</p>
+      <ol class="opciones">
+        <li>La mayoría de las peticiones es rápida, pero 1 de cada 20 tarda 2 segundos o más.<p class="explica">Correcto. El p95 dice que el 5 % más lento espera al menos 2 s. El promedio esconde ese grupo, que suele ser el que abandona.</p></li>
+        <li>Todas las peticiones tardan unos 190 ms.<p class="explica">El promedio mezcla rápidas y lentas: no describe a casi ninguna petición concreta.</p></li>
+        <li>El 95 % de las peticiones tarda 2 segundos.<p class="explica">Al revés: el 95 % tarda <em>menos</em> de 2 s; el 5 % restante tarda eso o más.</p></li>
+        <li>Hay un error de cálculo: el p95 no puede ser mayor que el promedio.<p class="explica">Sí puede. Con unas pocas peticiones muy lentas, el p95 suele ser mucho mayor que el promedio.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Tu sistema necesita tres piezas a la vez, cada una con un 99,9 % de disponibilidad. ¿Cuál es aproximadamente la del sistema?</p>
+      <ol class="opciones">
+        <li>99,9 %, la misma que cada pieza.<p class="explica">Si falla cualquiera, falla todo: las probabilidades de fallo se acumulan.</p></li>
+        <li>99,99 %, porque hay tres piezas que se respaldan.<p class="explica">Eso pasaría con copias en <em>paralelo</em>, donde basta con que funcione una. Aquí se necesitan las tres.</p></li>
+        <li>97 %, restando un 1 % por pieza.<p class="explica">Cada pieza falla un 0,1 % del tiempo, no un 1 %.</p></li>
+        <li>99,7 %, multiplicando las tres disponibilidades.<p class="explica">Correcto: 0,999 × 0,999 × 0,999 ≈ 0,997. Cada pieza en cadena resta disponibilidad.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Un equipo de tres personas empieza una app nueva cuyos requisitos cambian cada semana. ¿Qué estilo le conviene más?</p>
+      <ol class="opciones">
+        <li>Microservicios desde el primer día, para no tener que cambiarlo después.<p class="explica">Es el error más común. Con requisitos inestables, las fronteras entre servicios saldrán mal y moverlas entre servicios es carísimo.</p></li>
+        <li>Un monolito modular, con fronteras claras entre módulos.<p class="explica">Correcto. Se despliega de una vez, es barato de cambiar y, si algún módulo lo necesita de verdad más adelante, se puede sacar a un servicio.</p></li>
+        <li>Un microservicio por pantalla de la app.<p class="explica">Dividir por pantallas crea servicios que necesitan los mismos datos y deben desplegarse juntos: un monolito distribuido.</p></li>
+        <li>Da igual: todos los estilos cuestan lo mismo al principio.<p class="explica">No: los microservicios exigen desde el principio infraestructura, observabilidad y gestión de fallos de red.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Un consumidor de una cola cobra a clientes. La cola garantiza entrega «al menos una vez». ¿Qué debe hacer el consumidor?</p>
+      <ol class="opciones">
+        <li>Nada especial: «al menos una vez» significa que cada mensaje llega exactamente una vez.<p class="explica">«Al menos una vez» significa que nunca se pierde, pero puede repetirse.</p></li>
+        <li>Procesar los mensajes lo más rápido posible para que no se repitan.<p class="explica">La repetición no depende de la velocidad: ocurre, por ejemplo, cuando se pierde la confirmación por la red.</p></li>
+        <li>Ser idempotente: recordar los ids ya procesados y no cobrar dos veces el mismo.<p class="explica">Correcto. Procesar dos veces el mismo mensaje debe tener el mismo efecto que procesarlo una.</p></li>
+        <li>Borrar la cola cada vez que procesa un mensaje.<p class="explica">Perderías todos los mensajes pendientes de otros clientes.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Con el patrón «caché a un lado», ¿qué haces cuando alguien cambia un dato?</p>
+      <ol class="opciones">
+        <li>Escribo el cambio en la base de datos y después borro la copia de la caché.<p class="explica">Correcto. La próxima lectura será un fallo de caché y traerá el dato nuevo. En ese orden se evita volver a guardar el valor viejo.</p></li>
+        <li>Escribo solo en la caché; la base de datos se actualizará sola.<p class="explica">En caché a un lado, la caché no escribe en la base de datos. Si la caché se reinicia, perderías el cambio.</p></li>
+        <li>No hago nada: la caché siempre refleja la base de datos.<p class="explica">La caché es una copia: si nadie la invalida, sirve el dato viejo hasta que caduque.</p></li>
+        <li>Vacío la caché entera por si acaso.<p class="explica">Funcionaría, pero provoca miles de fallos a la vez y puede tumbar la base de datos (una estampida).</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Qué significa la cabecera HTTP <code>Cache-Control: no-cache</code>?</p>
+      <ol class="opciones">
+        <li>Que la respuesta no se puede guardar en ninguna caché.<p class="explica">Eso es <code>no-store</code>. Es la confusión más común.</p></li>
+        <li>Que la respuesta se guarda un año.<p class="explica">Eso sería <code>max-age=31536000</code>.</p></li>
+        <li>Que solo la puede guardar la CDN, no el navegador.<p class="explica"><code>no-cache</code> se aplica igual a todas las cachés, la del navegador y las compartidas. Para distinguirlas existen otras directivas, como <code>private</code>.</p></li>
+        <li>Que se puede guardar, pero hay que preguntar al servidor antes de reutilizarla.<p class="explica">Correcto. El navegador revalida (por ejemplo, con <code>If-None-Match</code>) y el servidor responde 304 si no cambió.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Pones tres servidores detrás de un balanceador por turnos, y el carrito de compras aparece y desaparece. ¿Cuál es la causa más probable?</p>
+      <ol class="opciones">
+        <li>El balanceador es demasiado lento.<p class="explica">Un balanceador lento haría todo más lento, pero no borraría datos.</p></li>
+        <li>Cada servidor guarda el carrito en su propia memoria: los servidores no son sin estado.<p class="explica">Correcto. Cada petición cae en un servidor distinto, y cada uno tiene su propia versión del carrito. El estado debe vivir en un sitio compartido.</p></li>
+        <li>Hacen falta más servidores.<p class="explica">Con más servidores el problema empeora: habría más copias distintas del carrito.</p></li>
+        <li>La base de datos no tiene réplicas.<p class="explica">Las réplicas multiplican las lecturas; no explican que el carrito dependa del servidor que te toca.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Una persona publica un comentario, recarga la página y el comentario no aparece; segundos después, sí. El sistema usa réplicas de lectura. ¿Qué pasó?</p>
+      <ol class="opciones">
+        <li>El comentario se perdió y luego se recuperó de una copia de seguridad.<p class="explica">Las copias de seguridad no se restauran solas en segundos.</p></li>
+        <li>La primaria rechazó el comentario la primera vez.<p class="explica">Si lo hubiera rechazado, no aparecería después.</p></li>
+        <li>La recarga leyó de una réplica que todavía no había recibido el cambio: retraso de replicación.<p class="explica">Correcto. Una solución habitual es leer de la primaria lo que la propia persona acaba de escribir.</p></li>
+        <li>El navegador no tiene conexión.<p class="explica">Sin conexión no se cargaría la página, ni con comentario ni sin él.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">En un sistema entidad-componente (ECS), ¿qué es una entidad?</p>
+      <ol class="opciones">
+        <li>Solo un identificador; lo que «es» depende de los componentes que tiene.<p class="explica">Correcto. Los datos están en los componentes y la lógica en los sistemas.</p></li>
+        <li>Una clase con sus propios métodos de movimiento y dibujo.<p class="explica">Eso es el enfoque clásico orientado a objetos. En ECS la lógica vive en los sistemas.</p></li>
+        <li>Una función que recorre los componentes.<p class="explica">Eso es un sistema.</p></li>
+        <li>Un paquete de datos como posición o velocidad.<p class="explica">Eso es un componente.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">En el modelo C4, ¿qué es un «contenedor»?</p>
+      <ol class="opciones">
+        <li>Un contenedor de Docker, obligatoriamente.<p class="explica">Es la confusión típica. En C4 la palabra es anterior y más general; algo desplegado en Docker puede ser un contenedor C4, pero no hace falta.</p></li>
+        <li>Una clase de JavaScript.<p class="explica">Las clases aparecen en el nivel 4, código.</p></li>
+        <li>El sistema completo visto desde fuera.<p class="explica">Eso es el nivel 1, contexto.</p></li>
+        <li>Una pieza que se ejecuta o guarda datos por separado: una app, una API, una base de datos.<p class="explica">Correcto. Es el nivel 2: las piezas desplegables del sistema.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Arquitectura de software</dt><dd>Estructura de alto nivel de un sistema: sus piezas principales, qué hace cada una, cómo se comunican y por qué se decidió así.</dd>
+    <dt>Atributo de calidad</dt><dd>Propiedad que dice cómo de bien hace su trabajo un sistema: rendimiento, escalabilidad, disponibilidad, seguridad, mantenibilidad o costo. También se llama requisito no funcional.</dd>
+    <dt>Compromiso (trade-off)</dt><dd>Situación en la que mejorar un atributo empeora otro, por ejemplo más velocidad a cambio de datos menos frescos.</dd>
+    <dt>Latencia</dt><dd>Tiempo que tarda en llegar una respuesta. Se suele describir con percentiles, como el p95.</dd>
+    <dt>Disponibilidad</dt><dd>Porcentaje del tiempo en que un sistema funciona, expresado en «nueves»: 99,9 % son unas 8,8 horas caído al año.</dd>
+    <dt>Punto único de fallo</dt><dd>Pieza de la que depende todo el sistema: si falla, falla todo. Se evita con redundancia.</dd>
+    <dt>Arquitectura en capas</dt><dd>Organización del código en capas horizontales (presentación, negocio, datos) en la que cada capa solo usa la de abajo.</dd>
+    <dt>MVC</dt><dd>Modelo-vista-controlador: patrón que separa los datos y reglas (modelo), lo que se ve (vista) y la traducción de acciones en órdenes (controlador).</dd>
+    <dt>Monolito</dt><dd>Aplicación que contiene todas sus funciones y se despliega de una sola vez.</dd>
+    <dt>Monolito modular</dt><dd>Monolito dividido por dentro en módulos con fronteras estrictas: cada uno expone una interfaz pequeña y esconde sus datos.</dd>
+    <dt>Microservicios</dt><dd>Estilo en el que el sistema se reparte en muchos servicios pequeños que se despliegan por separado, tienen sus propios datos y se comunican por la red.</dd>
+    <dt>Consistencia eventual</dt><dd>Garantía de que varias copias de un dato terminarán coincidiendo, aunque durante un rato puedan ser distintas.</dd>
+    <dt>Publicar-suscribir (pub/sub)</dt><dd>Forma de comunicación en la que una pieza anuncia eventos sin saber quién los recibe, y las interesadas se suscriben a los tipos que les importan.</dd>
+    <dt>Cola de mensajes</dt><dd>Servicio intermediario que guarda mensajes en orden hasta que un consumidor los procesa. Desacopla en el tiempo y absorbe picos.</dd>
+    <dt>Idempotencia</dt><dd>Propiedad de una operación que, repetida varias veces, tiene el mismo efecto que hecha una sola vez.</dd>
+    <dt>WebSocket</dt><dd>Conexión que queda abierta entre cliente y servidor y permite enviar mensajes en los dos sentidos en cualquier momento. Útil para chats y juegos.</dd>
+    <dt>GraphQL</dt><dd>Lenguaje de consultas para APIs en el que el cliente pide exactamente los campos que necesita, normalmente a una sola dirección.</dd>
+    <dt>Caché</dt><dd>Copia temporal y rápida de datos caros de obtener. Cada copia tiene un tiempo de vida (TTL) y debe invalidarse, es decir, borrarse, cuando el dato original cambia.</dd>
+    <dt>Escalado horizontal</dt><dd>Aumentar la capacidad añadiendo más máquinas iguales, en vez de cambiar una por otra más potente (escalado vertical).</dd>
+    <dt>Balanceador de carga</dt><dd>Pieza que recibe las peticiones y las reparte entre varios servidores, dejando fuera a los que no pasan las comprobaciones de salud.</dd>
+    <dt>Réplica de lectura</dt><dd>Copia de una base de datos que recibe los cambios de la primaria y atiende consultas de lectura.</dd>
+    <dt>Particionado (sharding)</dt><dd>División de los datos entre varias bases de datos según una clave, para repartir escrituras y espacio.</dd>
+    <dt>Modelo C4</dt><dd>Forma de dibujar un sistema en cuatro niveles de detalle: contexto, contenedores, componentes y código.</dd>
+    <dt>ADR</dt><dd>Registro de decisión de arquitectura: documento corto con el contexto, la decisión y las consecuencias de una decisión importante.</dd>
+    <dt>ECS (entidad-componente-sistema)</dt><dd>Patrón de videojuegos en el que las entidades son identificadores, los componentes son datos y los sistemas son funciones que procesan entidades con ciertos componentes.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación: te servirán para repasar y para escuchar las mismas ideas explicadas por otras personas, con otros ejemplos.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=q3YQy1lJutw" data-canal="BettaTech" data-idioma="es" data-nivel="intro" data-duracion="18 min" data-por-que="Un repaso rápido de los estilos y patrones de arquitectura más citados, útil para ubicar los nombres que vas a oír.">Cada Patrón de Arquitectura Explicado en 18 Minutos</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=n3jfGDwyHyw" data-canal="Pelado Nerd" data-idioma="es" data-nivel="profundo" data-duracion="15 min" data-por-que="Monolitos frente a microservicios a partir del caso de Prime Video, con los costos reales de cada opción.">El desafío de la escalabilidad: Monolitos vs. Microservicios (PRIME VIDEO VUELVE A MONOLITOS)</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=cy_3qSA0a4s" data-canal="Manuel Zapata" data-idioma="es" data-nivel="intro" data-duracion="14 min" data-por-que="Cómo se dibujan los niveles del modelo C4 con un ejemplo completo.">Modelo C4: Diagramando una arquitectura de software</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=Ektiyr5L704" data-canal="NetMentor" data-idioma="es" data-nivel="profundo" data-duracion="27 min" data-por-que="El mismo ejemplo resuelto de la estación, el acortador de URLs, contado paso a paso por otra persona.">Diseño de sistemas: Acortador de URLs</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://learn.microsoft.com/es-es/azure/architecture/guide/architecture-styles/">Estilos de arquitectura (Microsoft Learn)</a><p>Capas, web-cola-trabajo, microservicios y eventos, con ventajas, desafíos y cuándo elegir cada uno. En español.</p></li>
+    <li><a href="https://developer.mozilla.org/es/docs/Web/HTTP/Guides/Caching">Caché HTTP (MDN)</a><p>Todas las cabeceras de caché explicadas: <code>max-age</code>, <code>no-cache</code>, <code>no-store</code>, <code>ETag</code> y cómo versionar archivos.</p></li>
+    <li><a href="https://c4model.com/">The C4 model (Simon Brown)</a><p>La referencia oficial del modelo C4, con ejemplos de cada nivel y notación recomendada. En inglés.</p></li>
+    <li><a href="https://adr.github.io/">Architectural Decision Records (adr.github.io)</a><p>Plantillas de ADR, herramientas y ejemplos reales de equipos. En inglés.</p></li>
+    <li><a href="https://martinfowler.com/bliki/MonolithFirst.html">MonolithFirst (Martin Fowler)</a><p>El artículo breve que explica por qué conviene empezar con un monolito. En inglés.</p></li>
+    <li><a href="https://gameprogrammingpatterns.com/game-loop.html">Game Loop (Game Programming Patterns, Robert Nystrom)</a><p>El capítulo gratuito sobre el bucle de juego y el paso fijo; el libro completo tiene también capítulos sobre componentes y estado. En inglés.</p></li>
+  </ul>
 </section>

@@ -446,3 +446,453 @@ SELECT nombre, COALESCE(email, 'sin correo') AS contacto FROM clientes;</textare
     <p>Decide columna por columna si un dato puede faltar. Si no puede, márcala <code>NOT NULL</code> desde el principio: cada columna que admite <code>NULL</code> es una pregunta más que tendrás que responder en cada consulta y en cada línea de código que lea ese dato.</p>
   </aside>
 </section>
+
+<section id="cambiar" data-parada="Cambiar y transacciones">
+  <h2>Cambiar datos con cuidado</h2>
+  <p>Ya sabes crear filas y leerlas. Cambiarlas y borrarlas es igual de fácil, y justo por eso es peligroso: una sola línea puede modificar un millón de filas, y la base de datos no pregunta «¿estás seguro?». En esta sección aprenderás las dos instrucciones y las redes de seguridad que usan los equipos profesionales.</p>
+
+  <h3>UPDATE: cambiar filas</h3>
+  <p><code>UPDATE</code> cambia los valores de las filas que cumplen el <code>WHERE</code>. En <code>SET</code> escribes qué columnas cambian y su valor nuevo, que puede calcularse a partir del actual:</p>
+  <pre><code class="language-sql">-- Cambiar dos columnas de un juego concreto
+UPDATE juegos
+SET precio = 18, genero = 'aventura'
+WHERE id = 1;
+
+-- Rebajar un 10 % todos los juegos de rol
+UPDATE juegos
+SET precio = precio * 0.9
+WHERE genero = 'rpg';</code></pre>
+
+  <h3>DELETE: borrar filas</h3>
+  <p><code>DELETE FROM</code> borra las filas que cumplen el <code>WHERE</code>. No hay papelera de reciclaje: lo borrado desaparece.</p>
+  <pre><code class="language-sql">DELETE FROM juegos WHERE id = 8;</code></pre>
+  <aside class="senal error">
+    <p>Olvidar el <code>WHERE</code>. <code>UPDATE juegos SET precio = 0;</code> pone gratis <em>todos</em> los juegos, y <code>DELETE FROM clientes;</code> borra a <em>todos</em> los clientes. No es un error de sintaxis, así que la base de datos lo ejecuta sin rechistar. Es uno de los accidentes más famosos del oficio: casi toda persona que trabaja con bases de datos tiene una historia sobre él.</p>
+  </aside>
+  <aside class="senal oficio" data-titulo="Primero SELECT, después UPDATE">
+    <p>Antes de un <code>UPDATE</code> o un <code>DELETE</code> importante, escribe la misma consulta como <code>SELECT</code> con el mismo <code>WHERE</code>. Mira qué filas salen y cuántas son. Solo cuando coincidan con lo que esperas, cambia la primera línea. Además, muchas apps no borran de verdad: añaden una columna <code>borrado_en</code> con la fecha, y las consultas filtran <code>WHERE borrado_en IS NULL</code>. Esto se llama <strong>borrado lógico</strong> (en inglés, <em>soft delete</em>) y permite deshacer errores y conservar el historial.</p>
+  </aside>
+  <p>SQLite (desde la versión 3.35) y PostgreSQL permiten añadir <code>RETURNING</code> al final de un <code>INSERT</code>, <code>UPDATE</code> o <code>DELETE</code> para que te devuelva las filas afectadas, ya cambiadas. MySQL no lo tiene. Es muy útil desde una API: insertas un juego y en la misma orden recibes el <code>id</code> que le tocó.</p>
+  <p>En este taller vas a practicar el método completo. <code>COUNT(*)</code> cuenta filas; lo verás a fondo en la sección <a href="#resumir">Agrupar y resumir</a>.</p>
+  <div class="taller" data-modo="sql" id="taller-update" data-titulo="Rebajas con red de seguridad">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE juegos (id INTEGER PRIMARY KEY, titulo TEXT NOT NULL, genero TEXT, precio REAL NOT NULL, anio INTEGER);
+INSERT INTO juegos VALUES (1, 'Bosque Eterno', 'aventura', 20, 2021), (2, 'Cohete Loco', 'carreras', 10, 2019), (3, 'Mazmorra 64', 'rpg', 25, 2023), (4, 'Granja Pixel', 'simulación', 15, 2016), (5, 'Neón Runner', 'plataformas', 12.5, 2022), (6, 'Reino de Hielo', 'rpg', 30, 2024), (7, 'Puzle Cuántico', 'puzle', 5, 2020), (8, 'Tanques de Papel', 'estrategia', 8, 2018);</script>
+    <textarea class="taller-codigo">-- 1. Mira primero qué filas vas a tocar
+SELECT titulo, precio FROM juegos WHERE genero = 'rpg';
+
+-- 2. Cámbialas y pide que te devuelva lo que cambió
+UPDATE juegos SET precio = precio * 0.9
+WHERE genero = 'rpg'
+RETURNING titulo, precio;
+
+-- 3. Borra un juego y comprueba cuántos quedan
+DELETE FROM juegos WHERE titulo = 'Tanques de Papel';
+SELECT COUNT(*) AS quedan FROM juegos;</textarea>
+  </div>
+  <p>Ahora <strong>provoca el accidente</strong> a propósito, aquí donde no hace daño: en el paso 2, borra la línea <code>WHERE genero = 'rpg'</code> y ejecuta. <code>RETURNING</code> te enseña las ocho filas rebajadas. En una tienda real, acabas de bajar el precio de todo el catálogo.</p>
+
+  <h3>Transacciones: todo o nada</h3>
+  <p>Algunos cambios solo tienen sentido juntos. En un juego, Ana le pasa 50 monedas a Leo: hay que restarle 50 a ella y sumárselas a él. Si el servidor se cae entre las dos órdenes, las monedas desaparecen. Una <strong>transacción</strong> es un grupo de operaciones que la base de datos trata como una sola: o se aplican todas, o ninguna.</p>
+  <ul>
+    <li><code>BEGIN</code> empieza la transacción.</li>
+    <li><code>COMMIT</code> («confirmar») aplica todos los cambios a la vez, de forma definitiva.</li>
+    <li><code>ROLLBACK</code> («volver atrás») los descarta todos, como si nunca hubieran ocurrido.</li>
+  </ul>
+
+  <figure class="capsula" data-titulo="Una transferencia interrumpida">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: Ana tiene 100 monedas y Leo 20. Sin transacción, se resta 50 a Ana, el servidor se apaga y el total queda en 70. Con transacción, el cambio queda en un borrador; si el servidor se apaga, el borrador se descarta y el total sigue en 120; si todo va bien, COMMIT aplica los dos cambios a la vez: Ana 50 y Leo 70.">
+        <text class="d-rotulo" x="10" y="24" data-texto="4:Con transacción">Sin transacción</text>
+        <rect class="d-codigo" x="10" y="34" width="340" height="176" rx="8"/>
+        <rect class="d-resalte" x="16" y="50" width="328" height="28" rx="4" data-pasos="2-" data-mover="2:translate(0px,34px); 4:translate(0px,0px); 5:translate(0px,34px); 7:translate(0px,102px)"/>
+        <text class="d-codigo-texto" x="28" y="70" style="font-size:15px" data-pasos="4-">BEGIN;</text>
+        <text class="d-codigo-texto" x="28" y="104" style="font-size:15px">UPDATE … monedas - 50</text>
+        <text class="d-codigo-tenue" x="250" y="104" style="font-size:15px">-- Ana</text>
+        <text class="d-codigo-texto" x="28" y="138" style="font-size:15px">UPDATE … monedas + 50</text>
+        <text class="d-codigo-tenue" x="250" y="138" style="font-size:15px">-- Leo</text>
+        <text class="d-codigo-texto" x="28" y="172" style="font-size:15px" data-pasos="4-">COMMIT;</text>
+        <g data-pasos="3,6">
+          <rect class="d-mal-trazo" x="10" y="232" width="340" height="44" rx="8"/>
+          <text class="d-rotulo d-mal" x="180" y="260" text-anchor="middle">Apagón: el servidor se cae aquí</text>
+        </g>
+        <text class="d-rotulo" x="400" y="24">Tabla monederos</text>
+        <rect class="d-caja" x="400" y="34" width="300" height="100" rx="8"/>
+        <path class="d-linea" d="M400 84H700" stroke-opacity="0.35"/>
+        <text x="420" y="66">Ana</text>
+        <text class="d-mono" x="680" y="66" text-anchor="end" data-texto="2:50; 4:100; 7:50">100</text>
+        <text x="420" y="116">Leo</text>
+        <text class="d-mono" x="680" y="116" text-anchor="end" data-texto="7:70">20</text>
+        <text class="d-rotulo" x="400" y="164" data-texto="3:Total: 70 monedas; 4:Total: 120 monedas" data-clases="3:d-mal; 4:d-tinta; 6:d-ok">Total: 120 monedas</text>
+        <g data-pasos="4-7">
+          <rect class="d-punteada" x="400" y="190" width="300" height="86" rx="8"/>
+          <text class="d-rotulo d-peq" x="416" y="214">Borrador de la transacción</text>
+          <text class="d-mono d-peq" x="416" y="250" data-texto="5:Ana: 100 → 50; 6:(descartado al arrancar); 7:aplicado con COMMIT" data-clases="6:d-ok; 7:d-ok">(vacío)</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Ana quiere pasarle 50 monedas a Leo. Hacen falta dos cambios: restar a Ana y sumar a Leo. Entre los dos tienen 120 monedas; después de la transferencia debe seguir habiendo 120.</li>
+        <li>Sin transacción, cada orden se guarda en cuanto se ejecuta. La primera resta 50 a Ana: ahora tiene 50.</li>
+        <li data-duracion="6">Justo entonces se apaga el servidor. La segunda orden nunca llega y Leo sigue con 20. El total es 70: cincuenta monedas se esfumaron.</li>
+        <li>Empecemos de nuevo, ahora con <code>BEGIN</code>. La base de datos abre una transacción: desde aquí, los cambios se apuntan en un borrador que nadie más ve.</li>
+        <li>La primera orden resta 50 a Ana, pero solo en el borrador. La tabla que ven los demás sigue diciendo 100.</li>
+        <li data-duracion="7">Otra vez se apaga el servidor. Al arrancar, la base de datos encuentra una transacción sin confirmar y la descarta entera. Ana y Leo siguen como al principio: el total es 120.</li>
+        <li data-duracion="7">Si nada falla, llega la segunda orden y después <code>COMMIT</code>: los dos cambios se aplican a la vez. Ana tiene 50, Leo 70 y el total sigue en 120. Nadie pudo ver nunca un estado intermedio.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>El «borrador» es una forma de imaginarlo. Por dentro, cada motor lo hace a su manera, con el diario o el registro de escritura anticipada que viste al principio de la estación, pero el efecto es el de la animación. Pruébalo. <strong>Predice</strong> qué mostrarán las dos consultas <code>SELECT</code>:</p>
+  <div class="taller" data-modo="sql" id="taller-transaccion" data-titulo="Arrepiéntete con ROLLBACK">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE monederos (jugador TEXT PRIMARY KEY, monedas INTEGER NOT NULL CHECK (monedas >= 0));
+INSERT INTO monederos VALUES ('Ana', 100), ('Leo', 20);</script>
+    <textarea class="taller-codigo">BEGIN;
+UPDATE monederos SET monedas = monedas - 50 WHERE jugador = 'Ana';
+UPDATE monederos SET monedas = monedas + 50 WHERE jugador = 'Leo';
+SELECT jugador, monedas FROM monederos;   -- dentro de la transacción
+
+ROLLBACK;                                  -- nos arrepentimos
+SELECT jugador, monedas FROM monederos;   -- ¿qué quedó?</textarea>
+  </div>
+  <p>Dentro de la transacción ves los cambios, porque son tuyos. Después de <code>ROLLBACK</code>, todo vuelve a como estaba. <strong>Modifica</strong>: cambia <code>ROLLBACK</code> por <code>COMMIT</code> y comprueba que ahora los cambios se quedan. Después cambia los dos <code>50</code> por <code>150</code>: Ana no tiene tanto, y la restricción <code>CHECK (monedas &gt;= 0)</code> detiene la operación con un error.</p>
+  <aside class="senal ojo" data-titulo="Si algo falla dentro, tú decides">
+    <p>Cuando una orden falla dentro de una transacción, la base de datos rechaza esa orden, pero la transacción sigue abierta esperando tu decisión. En SQLite podrías seguir y confirmar el resto; PostgreSQL ya no acepta nada más que <code>ROLLBACK</code>. La regla segura, en cualquier motor, es que tu programa haga <code>ROLLBACK</code> en cuanto algo falle. Verás cómo se escribe en código en la sección <a href="#codigo">Desde tu código</a>.</p>
+  </aside>
+  <p>Cuando no escribes <code>BEGIN</code>, cada instrucción suelta funciona como una transacción de una sola orden: se confirma sola al terminar. Por eso un <code>UPDATE</code> que cambia mil filas nunca se queda a medias: o cambian las mil, o ninguna.</p>
+
+  <h3>ACID: las cuatro garantías</h3>
+  <p>Las transacciones de las bases de datos relacionales cumplen cuatro propiedades que se conocen por sus iniciales en inglés, <strong>ACID</strong>:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Letra</th><th scope="col">Propiedad</th><th scope="col">Qué garantiza</th><th scope="col">En la transferencia</th></tr></thead>
+      <tbody>
+        <tr><td>A</td><td><strong>Atomicidad</strong></td><td>Todo o nada: la transacción no se divide</td><td>Nunca se resta a Ana sin sumar a Leo</td></tr>
+        <tr><td>C</td><td><strong>Consistencia</strong></td><td>Se pasa de un estado válido a otro válido: todas las restricciones se cumplen al terminar</td><td>El <code>CHECK</code> impide saldos negativos</td></tr>
+        <tr><td>I</td><td><strong>Aislamiento</strong> (<em>isolation</em>)</td><td>Las transacciones simultáneas no ven los cambios a medias de las demás</td><td>Nadie ve a Ana con 50 y a Leo con 20</td></tr>
+        <tr><td>D</td><td><strong>Durabilidad</strong></td><td>Lo confirmado sobrevive a un apagón</td><td>Tras <code>COMMIT</code>, el cambio ya está en el disco</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El aislamiento tiene grados. Aislar por completo cada transacción es lo más seguro pero obliga a esperar más, así que los motores ofrecen varios <strong>niveles de aislamiento</strong> y cada uno elige uno por defecto: PostgreSQL usa <em>read committed</em> (cada orden ve lo que ya estaba confirmado cuando empezó) y SQLite deja escribir a una sola transacción a la vez. Para empezar, los valores por defecto son razonables; cuando trabajes con dinero o inventarios, lee la documentación de tu motor sobre este tema.</p>
+  <aside class="senal ojo" data-titulo="La actualización perdida puede volver">
+    <p>Una base de datos no te protege si tu programa lee un valor, lo calcula en JavaScript y escribe el resultado: <code>const n = leerVisitas(); guardarVisitas(n + 1);</code> tiene el mismo problema que el archivo del principio, porque entre la lectura y la escritura otra petición puede colarse. Haz la cuenta dentro de la propia orden (<code>SET visitas = visitas + 1</code>), como en el primer taller de la estación.</p>
+  </aside>
+</section>
+
+<section id="relaciones" data-parada="Relaciones y JOIN">
+  <h2>Relacionar tablas: claves foráneas y JOIN</h2>
+  <p>La tienda necesita guardar las compras: quién compró qué juego, cuándo y por cuánto. La primera idea es una tabla con todo junto: el nombre y el correo del cliente, el título del juego, la fecha. Pero si Ana compra diez juegos, su nombre y su correo se repiten diez veces. Si cambia de correo, hay que cambiarlo en diez filas, y si se te olvida una, la base de datos tendrá dos correos distintos para la misma persona.</p>
+  <p>La solución relacional es guardar cada cosa una sola vez, en su tabla, y conectar las tablas con números. Cada compra no guarda el nombre de la clienta: guarda su <code>id</code>. Una <strong>clave foránea</strong> (en inglés, <em>foreign key</em>) es una columna cuyo valor debe existir como clave primaria en otra tabla. Se declara con <code>REFERENCES</code>:</p>
+  <pre><code class="language-sql">CREATE TABLE compras (
+  id            INTEGER PRIMARY KEY,
+  cliente_id    INTEGER NOT NULL REFERENCES clientes(id),
+  juego_id      INTEGER NOT NULL REFERENCES juegos(id),
+  fecha         TEXT NOT NULL,
+  precio_pagado REAL NOT NULL
+);</code></pre>
+  <p>Con esa declaración, la base de datos rechaza una compra de un cliente que no existe y, si alguien intenta borrar a un cliente que tiene compras, también se niega. Así nunca quedan filas <strong>huérfanas</strong>: compras que apuntan a nadie.</p>
+  <aside class="senal ojo" data-titulo="¿No es repetir el precio?">
+    <p><code>precio_pagado</code> parece una copia de <code>juegos.precio</code>, pero no lo es: es otro dato. El precio del catálogo cambia con las rebajas; lo que pagó Ana el 1 de septiembre no debe cambiar nunca. Antes de eliminar una columna «repetida», pregúntate si guarda lo mismo o un hecho distinto.</p>
+  </aside>
+
+  <h3>Tipos de relaciones</h3>
+  <p>La <strong>cardinalidad</strong> de una relación dice cuántas filas de una tabla pueden conectarse con cuántas de la otra. Hay tres casos:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Relación</th><th scope="col">Se lee</th><th scope="col">Ejemplo</th><th scope="col">Cómo se guarda</th></tr></thead>
+      <tbody>
+        <tr><td>Uno a uno (1:1)</td><td>Cada A tiene como mucho un B</td><td>Una cuenta y su perfil</td><td>Clave foránea con <code>UNIQUE</code>, o todo en la misma tabla</td></tr>
+        <tr><td>Uno a muchos (1:N)</td><td>Cada A tiene muchos B; cada B es de un solo A</td><td>Un cliente y sus compras</td><td>Clave foránea en el lado «muchos»: <code>compras.cliente_id</code></td></tr>
+        <tr><td>Muchos a muchos (N:M)</td><td>Cada A tiene muchos B y cada B, muchos A</td><td>Clientes y juegos; jugadores y logros</td><td>Una <strong>tabla intermedia</strong> con dos claves foráneas</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La tabla <code>compras</code> es justamente la tabla intermedia entre clientes y juegos: un cliente compra muchos juegos y un juego lo compran muchos clientes. A veces la tabla intermedia no tiene datos propios, solo las dos claves. Entonces su clave primaria suele ser la pareja de columnas, una <strong>clave compuesta</strong>:</p>
+  <pre><code class="language-sql">CREATE TABLE jugador_logros (
+  jugador_id INTEGER NOT NULL REFERENCES jugadores(id),
+  logro_id   INTEGER NOT NULL REFERENCES logros(id),
+  fecha      TEXT NOT NULL,
+  PRIMARY KEY (jugador_id, logro_id)   -- el mismo logro no se gana dos veces
+);</code></pre>
+
+  <h3>Las claves foráneas en SQLite</h3>
+  <p>Aquí SQLite vuelve a sorprender: por compatibilidad con programas antiguos, <strong>no comprueba las claves foráneas si no se lo pides</strong>. Hay que activarlas en cada conexión con <code>PRAGMA foreign_keys = ON;</code>. Un <code>PRAGMA</code> es una orden especial de SQLite para cambiar su configuración. El módulo <code>node:sqlite</code> de Node.js y la librería <code>better-sqlite3</code> las activan por defecto; la terminal de SQLite y otras librerías no. PostgreSQL y MySQL las comprueban siempre.</p>
+  <div class="taller" data-modo="sql" id="taller-foranea" data-titulo="Provoca un error: la clave foránea">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, ciudad TEXT, email TEXT UNIQUE);
+INSERT INTO clientes VALUES (1, 'Ana', 'Bogotá', 'ana@correo.com'), (2, 'Luis', 'Lima', 'luis@correo.com'), (3, 'Sofía', 'Ciudad de México', NULL), (4, 'Marta', 'Bogotá', 'marta@correo.com'), (5, 'Iván', 'Santiago', NULL);
+CREATE TABLE juegos (id INTEGER PRIMARY KEY, titulo TEXT NOT NULL, genero TEXT, precio REAL NOT NULL, anio INTEGER);
+INSERT INTO juegos VALUES (1, 'Bosque Eterno', 'aventura', 20, 2021), (2, 'Cohete Loco', 'carreras', 10, 2019), (3, 'Mazmorra 64', 'rpg', 25, 2023), (4, 'Granja Pixel', 'simulación', 15, 2016), (5, 'Neón Runner', 'plataformas', 12.5, 2022), (6, 'Reino de Hielo', 'rpg', 30, 2024), (7, 'Puzle Cuántico', 'puzle', 5, 2020), (8, 'Tanques de Papel', 'estrategia', 8, 2018);
+CREATE TABLE compras (id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES clientes(id), juego_id INTEGER NOT NULL REFERENCES juegos(id), fecha TEXT NOT NULL, precio_pagado REAL NOT NULL);
+INSERT INTO compras VALUES (1, 1, 1, '2026-09-01', 20), (2, 1, 3, '2026-09-03', 25), (3, 2, 2, '2026-09-04', 10), (4, 3, 1, '2026-09-05', 20), (5, 3, 5, '2026-09-10', 12.5), (6, 4, 6, '2026-09-12', 30), (7, 1, 7, '2026-09-15', 5), (8, 2, 3, '2026-09-20', 25);</script>
+    <textarea class="taller-codigo">PRAGMA foreign_keys = ON;   -- en SQLite, actívalas en cada conexión
+
+-- Una compra válida: el cliente 2 y el juego 4 existen
+INSERT INTO compras (cliente_id, juego_id, fecha, precio_pagado)
+VALUES (2, 4, '2026-09-25', 15);
+
+-- Quita los guiones de UNA línea y ejecuta:
+-- INSERT INTO compras (cliente_id, juego_id, fecha, precio_pagado) VALUES (99, 1, '2026-09-26', 20);
+-- DELETE FROM clientes WHERE id = 1;
+
+SELECT * FROM compras WHERE fecha >= '2026-09-20';</textarea>
+  </div>
+  <p>Las dos líneas comentadas terminan en <code>FOREIGN KEY constraint failed</code>: no existe el cliente 99, y Ana (id 1) tiene compras, así que no se puede borrar. Ahora el experimento importante: pon dos guiones delante de <code>PRAGMA</code> y repite con la primera línea. SQLite acepta la compra del cliente 99 sin quejarse. Acabas de crear un huérfano.</p>
+  <p>¿Y si de verdad quieres borrar un cliente con compras? Al declarar la clave foránea puedes decidir qué pasa con <code>ON DELETE</code>: con <code>RESTRICT</code> (o sin nada), el borrado se rechaza; con <code>CASCADE</code>, se borran también sus compras; con <code>SET NULL</code>, las compras se quedan con <code>cliente_id</code> vacío. Piensa bien antes de usar <code>CASCADE</code>: borrar a una clienta se llevaría por delante el historial de ventas de la tienda.</p>
+
+  <h3>JOIN: combinar tablas en una consulta</h3>
+  <p>Guardar cada cosa en su tabla es ordenado, pero para mostrar «Ana compró Bosque Eterno» necesitas juntar datos de dos o tres tablas. Eso hace <code>JOIN</code> («unir»). Mira cómo funciona con una versión reducida de los datos:</p>
+
+  <figure class="capsula" data-titulo="Cómo se unen dos tablas">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 324" role="img" aria-label="Animación: la tabla clientes tiene a Ana (1), Luis (2) e Iván (5). La tabla compras tiene tres compras: cliente 1 Bosque Eterno, cliente 2 Cohete Loco y cliente 1 Mazmorra 64. Cada compra se conecta con el cliente de su mismo id. INNER JOIN produce tres filas y deja fuera a Iván, que no tiene compras. LEFT JOIN lo conserva con NULL en el juego, y filtrando por juego IS NULL queda solo Iván.">
+        <text class="d-rotulo" x="20" y="26">clientes</text>
+        <rect class="d-caja" x="20" y="36" width="200" height="104" rx="6"/>
+        <rect class="d-caja-suave" x="22" y="38" width="196" height="23"/>
+        <path class="d-linea" d="M20 62H220M20 88H220M20 114H220M62 36V140" stroke-opacity="0.35"/>
+        <g class="d-peq">
+          <text class="d-rotulo" x="41" y="54" text-anchor="middle">id</text>
+          <text class="d-rotulo" x="74" y="54">nombre</text>
+          <text class="d-mono" x="41" y="80" text-anchor="middle">1</text>
+          <text x="74" y="80">Ana</text>
+          <text class="d-mono" x="41" y="106" text-anchor="middle">2</text>
+          <text x="74" y="106">Luis</text>
+          <text class="d-mono" x="41" y="132" text-anchor="middle">5</text>
+          <text x="74" y="132">Iván</text>
+        </g>
+        <rect class="d-mal-trazo" x="20" y="114" width="200" height="26" data-pasos="4"/>
+        <rect class="d-ok-trazo" x="20" y="114" width="200" height="26" data-pasos="5-"/>
+        <text class="d-peq" x="20" y="160" data-pasos="4-" data-texto="4:Iván no tiene compras: queda fuera; 5:LEFT JOIN conserva a Iván" data-clases="4:d-mal; 5:d-ok">Iván no tiene compras: queda fuera</text>
+        <text class="d-rotulo" x="480" y="26">compras</text>
+        <rect class="d-caja" x="480" y="36" width="220" height="104" rx="6"/>
+        <rect class="d-caja-suave" x="482" y="38" width="216" height="23"/>
+        <path class="d-linea" d="M480 62H700M480 88H700M480 114H700M560 36V140" stroke-opacity="0.35"/>
+        <g class="d-peq">
+          <text class="d-rotulo" x="520" y="54" text-anchor="middle">cliente_id</text>
+          <text class="d-rotulo" x="570" y="54">juego</text>
+          <text class="d-mono" x="520" y="80" text-anchor="middle">1</text>
+          <text x="570" y="80">Bosque Eterno</text>
+          <text class="d-mono" x="520" y="106" text-anchor="middle">2</text>
+          <text x="570" y="106">Cohete Loco</text>
+          <text class="d-mono" x="520" y="132" text-anchor="middle">1</text>
+          <text x="570" y="132">Mazmorra 64</text>
+        </g>
+        <g data-pasos="2-">
+          <path class="d-acento-trazo" d="M220 75H480"/>
+          <path class="d-acento-trazo" d="M220 101H480"/>
+          <path class="d-acento-trazo" d="M220 75C330 75 370 127 480 127"/>
+          <circle class="d-acento" cx="220" cy="75" r="4"/>
+          <circle class="d-acento" cx="220" cy="101" r="4"/>
+          <circle class="d-acento" cx="480" cy="75" r="4"/>
+          <circle class="d-acento" cx="480" cy="101" r="4"/>
+          <circle class="d-acento" cx="480" cy="127" r="4"/>
+        </g>
+        <text class="d-rotulo" x="360" y="178" text-anchor="middle" data-texto="2:ON compras.cliente_id = clientes.id; 3:Resultado de INNER JOIN; 5:Resultado de LEFT JOIN; 6:LEFT JOIN … WHERE juego IS NULL">¿Quién compró qué?</text>
+        <g data-pasos="3-">
+          <rect class="d-caja" x="180" y="186" width="360" height="26" rx="4"/>
+          <path class="d-linea" d="M320 186V212" stroke-opacity="0.35"/>
+          <text class="d-rotulo d-peq" x="192" y="204">nombre</text>
+          <text class="d-rotulo d-peq" x="332" y="204">juego</text>
+        </g>
+        <g class="d-peq" data-pasos="3-5">
+          <text x="192" y="232">Ana</text><text x="332" y="232">Bosque Eterno</text>
+          <text x="192" y="256">Luis</text><text x="332" y="256">Cohete Loco</text>
+          <text x="192" y="280">Ana</text><text x="332" y="280">Mazmorra 64</text>
+        </g>
+        <g class="d-peq" data-pasos="5-" data-mover="6:translate(0px,-72px)">
+          <text class="d-ok" x="192" y="304">Iván</text><text class="d-mono d-tenue" x="332" y="304">NULL</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>La tabla <code>compras</code> no guarda nombres, solo el <code>cliente_id</code>. Para saber quién compró qué, hay que combinarla con <code>clientes</code>.</li>
+        <li>La condición <code>ON compras.cliente_id = clientes.id</code> dice cómo emparejar: cada compra se une con el cliente que tiene su mismo número. Ana tiene dos compras, así que se conecta dos veces.</li>
+        <li><code>INNER JOIN</code> produce una fila por cada pareja encontrada. Ana aparece dos veces, una por compra. El resultado es una tabla nueva que solo existe en la respuesta.</li>
+        <li>Iván no tiene compras: ninguna línea llega a él. <code>INNER JOIN</code> solo muestra parejas completas, así que Iván no aparece.</li>
+        <li><code>LEFT JOIN</code> conserva <em>todas</em> las filas de la tabla de la izquierda, la que va después de <code>FROM</code>. Si no hay pareja, rellena las columnas de la otra tabla con <code>NULL</code>.</li>
+        <li data-duracion="6">Truco muy usado: con <code>LEFT JOIN</code> y <code>WHERE juego IS NULL</code> te quedas solo con los que no tienen pareja. Así se responde «¿qué clientes no han comprado nunca?».</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <p>Escrito en SQL, el <code>JOIN</code> de la animación es así. <code>JOIN</code> a secas significa <code>INNER JOIN</code>:</p>
+  <pre><code class="language-sql">SELECT clientes.nombre, compras.fecha
+FROM compras
+JOIN clientes ON clientes.id = compras.cliente_id;</code></pre>
+  <p>Como hay columnas con el mismo nombre en varias tablas (las dos tienen <code>id</code>), se escribe <code>tabla.columna</code> para no dejar dudas. Para no repetir nombres largos se usan alias de tabla: <code>FROM compras AS co JOIN clientes AS c ON c.id = co.cliente_id</code>, y después <code>c.nombre</code>. La palabra <code>AS</code> es opcional.</p>
+  <p>Puedes encadenar varios <code>JOIN</code>. Esta consulta junta las tres tablas de la tienda. <strong>Predice</strong> cuántas filas tendrá el resultado y quién aparecerá más veces:</p>
+  <div class="taller" data-modo="sql" id="taller-join" data-titulo="Predice: ¿quién compró qué?">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, ciudad TEXT, email TEXT UNIQUE);
+INSERT INTO clientes VALUES (1, 'Ana', 'Bogotá', 'ana@correo.com'), (2, 'Luis', 'Lima', 'luis@correo.com'), (3, 'Sofía', 'Ciudad de México', NULL), (4, 'Marta', 'Bogotá', 'marta@correo.com'), (5, 'Iván', 'Santiago', NULL);
+CREATE TABLE juegos (id INTEGER PRIMARY KEY, titulo TEXT NOT NULL, genero TEXT, precio REAL NOT NULL, anio INTEGER);
+INSERT INTO juegos VALUES (1, 'Bosque Eterno', 'aventura', 20, 2021), (2, 'Cohete Loco', 'carreras', 10, 2019), (3, 'Mazmorra 64', 'rpg', 25, 2023), (4, 'Granja Pixel', 'simulación', 15, 2016), (5, 'Neón Runner', 'plataformas', 12.5, 2022), (6, 'Reino de Hielo', 'rpg', 30, 2024), (7, 'Puzle Cuántico', 'puzle', 5, 2020), (8, 'Tanques de Papel', 'estrategia', 8, 2018);
+CREATE TABLE compras (id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES clientes(id), juego_id INTEGER NOT NULL REFERENCES juegos(id), fecha TEXT NOT NULL, precio_pagado REAL NOT NULL);
+INSERT INTO compras VALUES (1, 1, 1, '2026-09-01', 20), (2, 1, 3, '2026-09-03', 25), (3, 2, 2, '2026-09-04', 10), (4, 3, 1, '2026-09-05', 20), (5, 3, 5, '2026-09-10', 12.5), (6, 4, 6, '2026-09-12', 30), (7, 1, 7, '2026-09-15', 5), (8, 2, 3, '2026-09-20', 25);</script>
+    <textarea class="taller-codigo">SELECT c.nombre, j.titulo, co.fecha, co.precio_pagado
+FROM compras AS co
+JOIN clientes AS c ON c.id = co.cliente_id
+JOIN juegos   AS j ON j.id = co.juego_id
+ORDER BY co.fecha;</textarea>
+  </div>
+  <p>Ocho filas, una por compra. Ana aparece tres veces porque hizo tres compras. <strong>Modifica</strong>: añade <code>WHERE c.ciudad = 'Bogotá'</code> antes del <code>ORDER BY</code> para ver solo las compras de clientes de Bogotá. Después prueba a quitar la línea del segundo <code>JOIN</code>: el error <code>no such column: j.titulo</code> te dice que la tabla <code>j</code> ya no está en la consulta.</p>
+  <p>Ahora el <code>LEFT JOIN</code>. La primera consulta muestra a todos los clientes con sus compras; la segunda usa el truco del final de la animación:</p>
+  <div class="taller" data-modo="sql" id="taller-left-join" data-titulo="LEFT JOIN: los que no tienen pareja">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, ciudad TEXT, email TEXT UNIQUE);
+INSERT INTO clientes VALUES (1, 'Ana', 'Bogotá', 'ana@correo.com'), (2, 'Luis', 'Lima', 'luis@correo.com'), (3, 'Sofía', 'Ciudad de México', NULL), (4, 'Marta', 'Bogotá', 'marta@correo.com'), (5, 'Iván', 'Santiago', NULL);
+CREATE TABLE compras (id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES clientes(id), juego_id INTEGER NOT NULL, fecha TEXT NOT NULL, precio_pagado REAL NOT NULL);
+INSERT INTO compras VALUES (1, 1, 1, '2026-09-01', 20), (2, 1, 3, '2026-09-03', 25), (3, 2, 2, '2026-09-04', 10), (4, 3, 1, '2026-09-05', 20), (5, 3, 5, '2026-09-10', 12.5), (6, 4, 6, '2026-09-12', 30), (7, 1, 7, '2026-09-15', 5), (8, 2, 3, '2026-09-20', 25);</script>
+    <textarea class="taller-codigo">-- 1. Todos los clientes, tengan compras o no
+SELECT c.nombre, co.fecha
+FROM clientes AS c
+LEFT JOIN compras AS co ON co.cliente_id = c.id
+ORDER BY c.nombre;
+
+-- 2. Solo los que nunca compraron
+SELECT c.nombre
+FROM clientes AS c
+LEFT JOIN compras AS co ON co.cliente_id = c.id
+WHERE co.id IS NULL;</textarea>
+  </div>
+  <p>En la primera consulta, Iván aparece con <code>NULL</code> en la fecha. <strong>Modifica</strong>: cambia <code>LEFT JOIN</code> por <code>JOIN</code> en la primera consulta y comprueba que Iván desaparece. En la tabla de la izquierda (la de <code>FROM</code>) va lo que quieres conservar entero.</p>
+  <aside class="senal nota" data-titulo="Otros JOIN">
+    <p>Existen también <code>RIGHT JOIN</code>, que conserva todas las filas de la tabla de la derecha, y <code>FULL OUTER JOIN</code>, que conserva las de ambas. SQLite los admite desde la versión 3.39 (2022). Se usan poco: un <code>RIGHT JOIN</code> siempre puede escribirse como un <code>LEFT JOIN</code> con las tablas al revés, y la mayoría de los equipos prefiere leer siempre de izquierda a derecha.</p>
+  </aside>
+  <aside class="senal error">
+    <p>Olvidar la condición <code>ON</code>. En SQL antiguo verás <code>FROM clientes, compras WHERE clientes.id = compras.cliente_id</code>, que funciona. Pero si se te olvida el <code>WHERE</code>, la base de datos combina cada cliente con cada compra: 5 clientes × 8 compras = 40 filas sin sentido. Se llama <strong>producto cartesiano</strong>, y con tablas grandes puede generar miles de millones de filas y bloquear el servidor. Si un <code>JOIN</code> devuelve muchas más filas de las que esperabas, revisa el <code>ON</code>.</p>
+  </aside>
+</section>
+
+<section id="resumir" data-parada="Agrupar y resumir">
+  <h2>Agrupar y resumir</h2>
+  <p>Hasta ahora cada consulta devolvía filas de la tabla. Pero muchas preguntas piden un resumen: ¿cuánto vendimos este mes?, ¿cuál es el juego más caro?, ¿cuántas compras hizo cada cliente? En JavaScript lo harías con <code>reduce</code> y un objeto acumulador (<a href="11-colecciones.html#transformar">Estación 11</a>). En SQL lo hace la base de datos, con una línea.</p>
+
+  <h3>Funciones de agregación</h3>
+  <p>Una <strong>función de agregación</strong> recibe muchas filas y devuelve un solo valor:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Función</th><th scope="col">Devuelve</th></tr></thead>
+      <tbody>
+        <tr><td><code>COUNT(*)</code></td><td>Cuántas filas hay</td></tr>
+        <tr><td><code>COUNT(columna)</code></td><td>Cuántas filas tienen un valor que no es <code>NULL</code> en esa columna</td></tr>
+        <tr><td><code>COUNT(DISTINCT columna)</code></td><td>Cuántos valores distintos hay</td></tr>
+        <tr><td><code>SUM(columna)</code></td><td>La suma</td></tr>
+        <tr><td><code>AVG(columna)</code></td><td>La media (el promedio)</td></tr>
+        <tr><td><code>MIN(columna)</code>, <code>MAX(columna)</code></td><td>El menor y el mayor</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Todas ignoran los <code>NULL</code>, salvo <code>COUNT(*)</code>, que cuenta filas enteras. <strong>Predice</strong> los resultados con la tabla de juegos que ya conoces (precios: 20, 10, 25, 15, 12.5, 30, 5 y 8):</p>
+  <div class="taller" data-modo="sql" id="taller-agregados" data-titulo="Predice: el catálogo en una fila">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE juegos (id INTEGER PRIMARY KEY, titulo TEXT NOT NULL, genero TEXT, precio REAL NOT NULL, anio INTEGER);
+INSERT INTO juegos VALUES (1, 'Bosque Eterno', 'aventura', 20, 2021), (2, 'Cohete Loco', 'carreras', 10, 2019), (3, 'Mazmorra 64', 'rpg', 25, 2023), (4, 'Granja Pixel', 'simulación', 15, 2016), (5, 'Neón Runner', 'plataformas', 12.5, 2022), (6, 'Reino de Hielo', 'rpg', 30, 2024), (7, 'Puzle Cuántico', 'puzle', 5, 2020), (8, 'Tanques de Papel', 'estrategia', 8, 2018);</script>
+    <textarea class="taller-codigo">SELECT COUNT(*)               AS juegos,
+       COUNT(DISTINCT genero) AS generos,
+       MIN(precio)            AS mas_barato,
+       MAX(precio)            AS mas_caro,
+       SUM(precio)            AS todo_el_catalogo,
+       ROUND(AVG(precio), 2)  AS precio_medio
+FROM juegos;</textarea>
+  </div>
+  <p>Ocho juegos, siete géneros (rpg está dos veces), y una media de 15.69 una vez redondeada con <code>ROUND(valor, decimales)</code>. Sin más cláusulas, toda la tabla forma un solo grupo y el resultado es una sola fila.</p>
+
+  <h3>GROUP BY: un resumen por grupo</h3>
+  <p><code>GROUP BY</code> reparte las filas en grupos que comparten un valor y calcula las funciones de agregación <em>para cada grupo</em>. El resultado tiene una fila por grupo.</p>
+  <aside class="senal analogia">
+    <p>Imagina que vacías una bolsa de monedas sobre la mesa y haces montones: uno de monedas de 1, otro de 5, otro de 10. Eso es <code>GROUP BY valor</code>. Después cuentas cada montón: eso es <code>COUNT(*)</code>. La analogía cojea en un detalle: en la mesa ves las monedas sueltas dentro de cada montón; en SQL, después de agrupar, solo puedes pedir datos del montón entero (su valor común, cuántas hay, cuánto suman).</p>
+  </aside>
+  <pre><code class="language-sql">SELECT genero, COUNT(*) AS juegos, AVG(precio) AS precio_medio
+FROM juegos
+GROUP BY genero;
+-- aventura | 1 | 20
+-- carreras | 1 | 10
+-- …
+-- rpg      | 2 | 27.5    ← los dos rpg juntos en un grupo</code></pre>
+  <p>Esa última idea es la regla de oro de <code>GROUP BY</code>: en el <code>SELECT</code> solo pueden aparecer las columnas por las que agrupas y funciones de agregación. Pedir <code>titulo</code> en la consulta anterior no tiene sentido: el grupo «rpg» tiene dos títulos, ¿cuál mostrarías?</p>
+  <aside class="senal ojo" data-titulo="SQLite lo deja pasar; PostgreSQL no">
+    <p>Si escribes una columna suelta que no está en el <code>GROUP BY</code>, SQLite no da error: te devuelve el valor de una fila cualquiera del grupo. PostgreSQL, en cambio, responde <code>column "juegos.titulo" must appear in the GROUP BY clause or be used in an aggregate function</code>. Que SQLite lo acepte no significa que esté bien: sigue la regla de oro y tus consultas funcionarán en cualquier motor.</p>
+  </aside>
+
+  <h3>HAVING: filtrar grupos</h3>
+  <p><code>WHERE</code> filtra filas <em>antes</em> de agrupar. Para filtrar <em>después</em>, según el resultado de cada grupo, se usa <code>HAVING</code>. Por ejemplo, «los géneros con más de un juego» es <code>GROUP BY genero HAVING COUNT(*) &gt; 1</code>: no puedes ponerlo en el <code>WHERE</code>, porque cuando se ejecuta el <code>WHERE</code> todavía no existen los grupos ni sus cuentas.</p>
+  <p>Eso nos lleva a una idea que resuelve muchas dudas: una consulta no se ejecuta en el orden en que se escribe. Síguela paso a paso sobre una tabla de 10 partidas de un juego:</p>
+  <div class="traza" data-titulo="El orden en que se ejecuta una consulta" data-rotulo-memoria="Estado de la consulta" data-rotulo-salida="Resultado" data-inicio="La tabla partidas tiene 10 filas: Ana jugó los niveles 1, 2 y 3 (300, 450 y 800 puntos); Leo, también los tres (200, 650 y 500); Sol, los niveles 2 y 1 (900 y 150); Iker, los niveles 2 y 1 (400 y 100). Pulsa «Siguiente».">
+    <pre><code class="language-sql">SELECT jugador, COUNT(*) AS partidas, MAX(puntos) AS record
+FROM partidas
+WHERE nivel &gt;= 2
+GROUP BY jugador
+HAVING COUNT(*) &gt;= 2
+ORDER BY record DESC;</code></pre>
+    <script type="application/json">[
+      {"linea": 2, "vars": {"filas": "10 partidas"}, "nota": "La base de datos empieza por FROM, no por SELECT: primero necesita saber de qué tabla leer. Toma las 10 partidas."},
+      {"linea": 3, "vars": {"filas": "6 (niveles 2 y 3)"}, "nota": "WHERE filtra fila por fila, antes de agrupar. Se descartan las 4 partidas del nivel 1."},
+      {"linea": 4, "vars": {"filas": "6 (niveles 2 y 3)", "grupos": "Ana: 450, 800 · Leo: 650, 500 · Sol: 900 · Iker: 400"}, "nota": "GROUP BY reparte las 6 filas en montones, uno por jugador. Desde aquí se trabaja con grupos, no con filas sueltas."},
+      {"linea": 5, "vars": {"filas": "6 (niveles 2 y 3)", "grupos": "Ana: 450, 800 · Leo: 650, 500"}, "nota": "HAVING filtra grupos: solo pasan los que tienen 2 partidas o más. Sol queda fuera aunque tiene la puntuación más alta (900), porque en esos niveles solo jugó una partida."},
+      {"linea": 1, "vars": {"filas": "6 (niveles 2 y 3)", "grupos": "Ana: 450, 800 · Leo: 650, 500", "resultado": "Ana | 2 | 800 · Leo | 2 | 650"}, "nota": "Ahora sí, SELECT: para cada grupo calcula COUNT(*) y MAX(puntos) y les pone los alias partidas y record."},
+      {"linea": 6, "vars": {"filas": "6 (niveles 2 y 3)", "grupos": "Ana: 450, 800 · Leo: 650, 500", "resultado": "Ana | 2 | 800 · Leo | 2 | 650"}, "salida": "jugador | partidas | record\nAna     | 2        | 800\nLeo     | 2        | 650", "nota": "ORDER BY se ejecuta casi al final. Por eso puede usar el alias record: cuando se ordena, SELECT ya lo creó. WHERE, que va antes que SELECT, no puede usar alias en el SQL estándar."}
+    ]</script>
+  </div>
+  <p>El orden completo es: <code>FROM</code> (con sus <code>JOIN</code>) → <code>WHERE</code> → <code>GROUP BY</code> → <code>HAVING</code> → <code>SELECT</code> → <code>ORDER BY</code> → <code>LIMIT</code>. Comprueba el resultado de la traza y después <strong>modifica</strong> la consulta: quita la línea del <code>WHERE</code> (¿cuántas partidas tiene ahora cada jugador?) y cambia el <code>HAVING</code> a <code>&gt;= 1</code> para que Sol aparezca.</p>
+  <div class="taller" data-modo="sql" id="taller-group-by" data-titulo="Ejecuta y modifica la consulta de la traza">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE partidas (id INTEGER PRIMARY KEY, jugador TEXT NOT NULL, nivel INTEGER NOT NULL, puntos INTEGER NOT NULL);
+INSERT INTO partidas (jugador, nivel, puntos) VALUES ('Ana', 1, 300), ('Ana', 2, 450), ('Ana', 3, 800), ('Leo', 1, 200), ('Leo', 2, 650), ('Leo', 3, 500), ('Sol', 2, 900), ('Sol', 1, 150), ('Iker', 2, 400), ('Iker', 1, 100);</script>
+    <textarea class="taller-codigo">SELECT jugador, COUNT(*) AS partidas, MAX(puntos) AS record
+FROM partidas
+WHERE nivel >= 2
+GROUP BY jugador
+HAVING COUNT(*) >= 2
+ORDER BY record DESC;</textarea>
+  </div>
+  <p>Las cláusulas se <em>escriben</em> siempre en el mismo orden, aunque se ejecuten en otro. Ponlas en el orden correcto:</p>
+  <div class="parsons" data-titulo="Ordena las cláusulas de la consulta" data-lenguaje="sql" data-exito="Ese es el orden de escritura. Recuerda que el de ejecución empieza por FROM.">
+    <ol>
+      <li>SELECT c.nombre, COUNT(*) AS compras</li>
+      <li>FROM clientes AS c</li>
+      <li>JOIN compras AS co ON co.cliente_id = c.id</li>
+      <li>WHERE co.fecha &gt;= '2026-09-01'</li>
+      <li>GROUP BY c.nombre</li>
+      <li>HAVING COUNT(*) &gt;= 2</li>
+      <li>ORDER BY compras DESC</li>
+      <li>LIMIT 3;</li>
+    </ol>
+  </div>
+
+  <h3>Subconsultas: una pregunta dentro de otra</h3>
+  <p>A veces, para responder una pregunta primero necesitas la respuesta de otra. «¿Qué juegos cuestan más que la media?» exige calcular antes la media. Una <strong>subconsulta</strong> es un <code>SELECT</code> entre paréntesis dentro de otra consulta. Se usa de tres formas principales:</p>
+  <ul>
+    <li><strong>Como un valor</strong>: <code>WHERE precio &gt; (SELECT AVG(precio) FROM juegos)</code>. La subconsulta devuelve un solo número.</li>
+    <li><strong>Como una lista</strong>: <code>WHERE id IN (SELECT juego_id FROM compras)</code> se queda con los juegos que aparecen en alguna compra.</li>
+    <li><strong>Como una comprobación</strong>: <code>WHERE EXISTS (SELECT 1 FROM …)</code> es verdadero si la subconsulta devuelve al menos una fila. Suele mirar la fila de fuera, y entonces se llama <strong>subconsulta correlacionada</strong>.</li>
+  </ul>
+  <p>Cuando una consulta se complica, <code>WITH</code> permite darle nombre a una subconsulta y usarla después como si fuera una tabla. Se llama <strong>expresión de tabla común</strong> (en inglés, <em>common table expression</em>, CTE) y hace que la consulta se lea de arriba abajo, como una receta.</p>
+  <div class="taller" data-modo="sql" id="taller-subconsultas" data-titulo="Tres subconsultas">
+    <script type="text/plain" class="taller-preparacion">CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, ciudad TEXT, email TEXT UNIQUE);
+INSERT INTO clientes VALUES (1, 'Ana', 'Bogotá', 'ana@correo.com'), (2, 'Luis', 'Lima', 'luis@correo.com'), (3, 'Sofía', 'Ciudad de México', NULL), (4, 'Marta', 'Bogotá', 'marta@correo.com'), (5, 'Iván', 'Santiago', NULL);
+CREATE TABLE juegos (id INTEGER PRIMARY KEY, titulo TEXT NOT NULL, genero TEXT, precio REAL NOT NULL, anio INTEGER);
+INSERT INTO juegos VALUES (1, 'Bosque Eterno', 'aventura', 20, 2021), (2, 'Cohete Loco', 'carreras', 10, 2019), (3, 'Mazmorra 64', 'rpg', 25, 2023), (4, 'Granja Pixel', 'simulación', 15, 2016), (5, 'Neón Runner', 'plataformas', 12.5, 2022), (6, 'Reino de Hielo', 'rpg', 30, 2024), (7, 'Puzle Cuántico', 'puzle', 5, 2020), (8, 'Tanques de Papel', 'estrategia', 8, 2018);
+CREATE TABLE compras (id INTEGER PRIMARY KEY, cliente_id INTEGER NOT NULL REFERENCES clientes(id), juego_id INTEGER NOT NULL REFERENCES juegos(id), fecha TEXT NOT NULL, precio_pagado REAL NOT NULL);
+INSERT INTO compras VALUES (1, 1, 1, '2026-09-01', 20), (2, 1, 3, '2026-09-03', 25), (3, 2, 2, '2026-09-04', 10), (4, 3, 1, '2026-09-05', 20), (5, 3, 5, '2026-09-10', 12.5), (6, 4, 6, '2026-09-12', 30), (7, 1, 7, '2026-09-15', 5), (8, 2, 3, '2026-09-20', 25);</script>
+    <textarea class="taller-codigo">-- 1. Como un valor: juegos más caros que la media
+SELECT titulo, precio FROM juegos
+WHERE precio > (SELECT AVG(precio) FROM juegos)
+ORDER BY precio DESC;
+
+-- 2. Como una comprobación: clientes que nunca compraron
+SELECT nombre FROM clientes AS c
+WHERE NOT EXISTS (SELECT 1 FROM compras AS co WHERE co.cliente_id = c.id);
+
+-- 3. Con WITH: primero cuentas las ventas, después las usas
+WITH ventas AS (
+  SELECT juego_id, COUNT(*) AS veces
+  FROM compras
+  GROUP BY juego_id
+)
+SELECT j.titulo, v.veces
+FROM ventas AS v
+JOIN juegos AS j ON j.id = v.juego_id
+ORDER BY v.veces DESC, j.titulo;</textarea>
+  </div>
+  <p>La consulta 2 da la misma respuesta que el truco del <code>LEFT JOIN</code>: Iván. En SQL suele haber varias formas de llegar al mismo resultado. Elige la que mejor se lea; si una va lenta, la herramienta del final de la próxima sección te dirá por qué. <strong>Modifica</strong> la consulta 1 para que muestre los juegos que cuestan <em>menos</em> que la media.</p>
+  <aside class="senal error">
+    <p>Usar <code>NOT IN</code> con una subconsulta que puede devolver <code>NULL</code>. Si la lista contiene un solo <code>NULL</code>, <code>x NOT IN (lista)</code> nunca es verdadero, por el mismo motivo que <code>= NULL</code>: «¿es x distinto de un valor desconocido?» no se sabe. La consulta devuelve cero filas sin avisar. Para «los que no tienen…», usa <code>NOT EXISTS</code> o el <code>LEFT JOIN … IS NULL</code>, que no tienen esa trampa.</p>
+  </aside>
+</section>

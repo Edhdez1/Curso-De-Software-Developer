@@ -55,6 +55,9 @@
       <li><a href="#middleware">Middleware y errores</a></li>
       <li><a href="#validar">Validar datos</a></li>
       <li><a href="#config">Configuración y carpetas</a></li>
+      <li><a href="#resumen">Resumen</a></li>
+      <li><a href="#practica">Práctica</a></li>
+      <li><a href="#proyecto">Proyecto</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -1819,6 +1822,1199 @@ return true;
     </ol>
   </div>
   <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">¿Y si quiero escribirla en TypeScript?</p><p>Todo lo de esta estación funciona igual en TypeScript. Parte del proyecto y del <code>tsconfig.json</code> de la <a href="23-typescript.html#instalar">Estación 23</a> y haz cuatro cambios. Instala los tipos de Node y de Express como dependencias de desarrollo: <code>npm install -D typescript @types/node @types/express</code> (Zod ya trae los suyos). En <code>tsconfig.json</code>, cambia <code>"types": []</code> por <code>"types": ["node"]</code>, para que TypeScript conozca <code>process</code> y los módulos de Node, y añade <code>"rewriteRelativeImportExtensions": true</code>. Nombra tus archivos <code>.ts</code> e impórtalos con su extensión real: <code>import { app } from "./app.ts"</code>. Para desarrollar, <code>node --watch --env-file=.env src/servidor.ts</code> ejecuta el código directamente gracias al borrado de tipos de Node 24, y en otra terminal <code>npx tsc --noEmit --watch</code> revisa los tipos. Para publicar, <code>npx tsc</code> escribe la versión JavaScript en <code>dist/</code> (cambiando esas extensiones a <code>.js</code>) y el script <code>start</code> pasa a ser <code>node dist/servidor.js</code>.</p></div></aside>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>El <strong>backend</strong> corre en un servidor que controlas tú: guarda los datos compartidos, aplica las reglas y guarda los secretos. Nunca confíes en lo que envía el cliente.</li>
+    <li><strong>Node.js</strong> ejecuta JavaScript fuera del navegador (sin DOM, con <code>process</code>, archivos y red). Con un solo hilo y el bucle de eventos atiende muchas peticiones, siempre que no lo bloquees con cálculos largos. Usa la LTS más reciente.</li>
+    <li><strong>npm</strong> instala paquetes. <code>package.json</code> es la ficha del proyecto (dependencias, scripts, <code>"type": "module"</code>); <code>package-lock.json</code> fija las versiones exactas. Los dos van a Git; <code>node_modules</code>, no.</li>
+    <li><strong>Semver</strong>: MAYOR.MENOR.PARCHE. <code>^5.2.1</code> acepta cualquier 5.x desde la 5.2.1; <code>~5.2.1</code>, solo arreglos. <code>npm ci</code> instala exactamente lo del lock.</li>
+    <li>Un servidor es, en el fondo, una función: petición → respuesta. <code>node:http</code> lo muestra al desnudo; <strong>Express 5</strong> añade rutas, <code>req.params</code>, <code>req.query</code>, <code>req.body</code> (con <code>express.json()</code>) y <code>res.status().json()</code>. Los parámetros siempre llegan como texto.</li>
+    <li>Una <strong>API REST</strong> usa sustantivos en las URL y métodos como verbos, con códigos precisos: 200, 201 con <code>Location</code>, 204, 400, 404, 409 y, solo cuando falla tu código, 500. Las listas vacías son 200 con <code>[]</code>.</li>
+    <li>El <strong>middleware</strong> <code>(req, res, next)</code> se ejecuta en el orden del código. El 404 va casi al final y el <strong>manejador de errores</strong>, con cuatro parámetros, al final de todo. En Express 5 también captura los errores de las rutas <code>async</code>. Nunca envíes trazas al cliente.</li>
+    <li><strong>Valida</strong> todo lo que llega, mejor con un esquema de <strong>Zod</strong>: <code>safeParse</code>, 400 con <code>z.flattenError</code> y, después, usa <code>resultado.data</code>.</li>
+    <li>La configuración va en <strong>variables de entorno</strong> (<code>process.env</code>), en desarrollo desde un <code>.env</code> con <code>node --env-file=.env</code>. <code>.env</code> nunca va a Git; <code>.env.example</code>, sí.</li>
+    <li>Separa <code>app.js</code> (configura) de <code>servidor.js</code> (escucha), agrupa rutas con <code>Router</code>, y prueba con <code>curl</code>, un cliente gráfico o un archivo <code>.http</code>.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Estos ejercicios usan el modelo de los talleres: tu servidor es una función <code>manejar(peticion)</code> que recibe <code>{ metodo, ruta, cuerpo }</code> y devuelve <code>{ estado, cuerpo }</code>. Al final de cada uno hay unas líneas de prueba con <code>probar</code>, que hacen de curl: no las cambies. Intenta cada ejercicio unos minutos antes de abrir las pistas.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-salud"><header class="ejercicio-cabeza"><h3>Tu primera ruta: /api/salud</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>Casi todas las APIs tienen una ruta que solo responde «estoy vivo», para que las plataformas comprueben que el servidor funciona. Completa <code>manejar</code> para que <code>GET /api/salud</code> responda 200 con <code>{ "estado": "ok" }</code> y cualquier otra petición responda 404 con <code>{ "error": "No encontrado" }</code>. La salida debe ser:</p>
+    <pre class="consola"><code>GET /api/salud → 200 {"estado":"ok"}
+POST /api/salud → 404 {"error":"No encontrado"}
+GET /api/nada → 404 {"error":"No encontrado"}</code></pre>
+    <div class="taller" id="taller-ej-salud" data-titulo="Ejercicio 1">
+      <textarea class="taller-codigo">function manejar(peticion) {
+  // 1. Si peticion.metodo es "GET" y peticion.ruta es "/api/salud",
+  //    devuelve { estado: 200, cuerpo: { estado: "ok" } }
+  // 2. En cualquier otro caso, devuelve { estado: 404, cuerpo: { error: "No encontrado" } }
+  return { estado: 501, cuerpo: { error: "Sin programar" } };
+}
+
+// ── Pruebas: no cambies estas líneas ──
+probar("GET", "/api/salud");
+probar("POST", "/api/salud");
+probar("GET", "/api/nada");
+
+function probar(metodo, ruta, cuerpo) {
+  const r = manejar({ metodo, ruta, cuerpo });
+  const texto = r.cuerpo === undefined ? "" : " " + JSON.stringify(r.cuerpo);
+  console.log(`${metodo} ${ruta} → ${r.estado}${texto}`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (/console\.log\([^)]*estado.*ok/.test(codigo)) return "No imprimas el resultado a mano: haz que manejar lo devuelva.";
+var esp = ['GET /api/salud → 200 {"estado":"ok"}', 'POST /api/salud → 404 {"error":"No encontrado"}', 'GET /api/nada → 404 {"error":"No encontrado"}'];
+if (salida.length < 3) return "Deberían imprimirse tres líneas. ¿Borraste alguna llamada a probar?";
+for (var i = 0; i < 3; i++) if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + salida[i] + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Necesitas un <code>if</code> que compruebe dos cosas a la vez con <code>&amp;&amp;</code>: el método y la ruta. Dentro, un <code>return</code> con el objeto de la respuesta.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El último <code>return</code> de la función, el que se ejecuta si ningún <code>if</code> coincidió, es el del 404. Cambia el 501 de ejemplo por lo que pide el enunciado.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function manejar(peticion) {
+  if (peticion.metodo === "GET" &amp;&amp; peticion.ruta === "/api/salud") {
+    return { estado: 200, cuerpo: { estado: "ok" } };
+  }
+  return { estado: 404, cuerpo: { error: "No encontrado" } };
+}
+
+// ── Pruebas: no cambies estas líneas ──
+probar("GET", "/api/salud");
+probar("POST", "/api/salud");
+probar("GET", "/api/nada");
+
+function probar(metodo, ruta, cuerpo) {
+  const r = manejar({ metodo, ruta, cuerpo });
+  const texto = r.cuerpo === undefined ? "" : " " + JSON.stringify(r.cuerpo);
+  console.log(`${metodo} ${ruta} → ${r.estado}${texto}`);
+}</code></pre>
+      <p>En Express sería <code>app.get("/api/salud", (req, res) =&gt; res.json({ estado: "ok" }))</code>, y el 404 lo pondría Express solo. Un servidor más estricto respondería 405 al POST, porque la ruta existe pero no admite ese método.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-codigos"><header class="ejercicio-cabeza"><h3>Arregla los códigos de estado</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>Este manejador funciona, pero cuatro de sus respuestas usan un código de estado equivocado, y una de ellas además envía un cuerpo que sobra. Ejecútalo, compara con la salida correcta y corrige solo lo necesario:</p>
+    <pre class="consola"><code>GET /api/tareas/1 → 200 {"id":1,"titulo":"Comprar pan"}
+GET /api/tareas/7 → 404 {"error":"No existe esa tarea"}
+POST /api/tareas → 400 {"error":"Falta el título"}
+POST /api/tareas → 201 {"id":2,"titulo":"Leer"}
+DELETE /api/tareas/1 → 204</code></pre>
+    <div class="taller" id="taller-ej-codigos" data-titulo="Ejercicio 2" data-esperado="GET /api/tareas/1 → 200 {&quot;id&quot;:1,&quot;titulo&quot;:&quot;Comprar pan&quot;}&#10;GET /api/tareas/7 → 404 {&quot;error&quot;:&quot;No existe esa tarea&quot;}&#10;POST /api/tareas → 400 {&quot;error&quot;:&quot;Falta el título&quot;}&#10;POST /api/tareas → 201 {&quot;id&quot;:2,&quot;titulo&quot;:&quot;Leer&quot;}&#10;DELETE /api/tareas/1 → 204">
+      <textarea class="taller-codigo">const tareas = [{ id: 1, titulo: "Comprar pan" }];
+
+function manejar(peticion) {
+  const { metodo, ruta, cuerpo } = peticion;
+
+  if (metodo === "GET" && ruta === "/api/tareas/1") {
+    return { estado: 200, cuerpo: tareas[0] };
+  }
+  if (metodo === "GET") {
+    return { estado: 200, cuerpo: { error: "No existe esa tarea" } };
+  }
+  if (metodo === "POST" && ruta === "/api/tareas") {
+    if (!cuerpo || !cuerpo.titulo) {
+      return { estado: 500, cuerpo: { error: "Falta el título" } };
+    }
+    const nueva = { id: tareas.length + 1, titulo: cuerpo.titulo };
+    tareas.push(nueva);
+    return { estado: 200, cuerpo: nueva };
+  }
+  if (metodo === "DELETE" && ruta === "/api/tareas/1") {
+    tareas.splice(0, 1);
+    return { estado: 200, cuerpo: { mensaje: "Tarea borrada" } };
+  }
+  return { estado: 404, cuerpo: { error: "No encontrado" } };
+}
+
+// ── Pruebas: no cambies estas líneas ──
+probar("GET", "/api/tareas/1");
+probar("GET", "/api/tareas/7");
+probar("POST", "/api/tareas", {});
+probar("POST", "/api/tareas", { titulo: "Leer" });
+probar("DELETE", "/api/tareas/1");
+
+function probar(metodo, ruta, cuerpo) {
+  const r = manejar({ metodo, ruta, cuerpo });
+  const texto = r.cuerpo === undefined ? "" : " " + JSON.stringify(r.cuerpo);
+  console.log(`${metodo} ${ruta} → ${r.estado}${texto}`);
+}</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Pregúntate en cada <code>return</code>: ¿es culpa del cliente (4xx), del servidor (5xx) o salió bien (2xx)? Un título que falta es culpa de quien envió la petición.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Crear algo se responde con 201. Borrar, con 204, que significa «sin contenido»: devuelve <code>{ estado: 204 }</code>, sin la propiedad <code>cuerpo</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const tareas = [{ id: 1, titulo: "Comprar pan" }];
+
+function manejar(peticion) {
+  const { metodo, ruta, cuerpo } = peticion;
+
+  if (metodo === "GET" &amp;&amp; ruta === "/api/tareas/1") {
+    return { estado: 200, cuerpo: tareas[0] };
+  }
+  if (metodo === "GET") {
+    return { estado: 404, cuerpo: { error: "No existe esa tarea" } };
+  }
+  if (metodo === "POST" &amp;&amp; ruta === "/api/tareas") {
+    if (!cuerpo || !cuerpo.titulo) {
+      return { estado: 400, cuerpo: { error: "Falta el título" } };
+    }
+    const nueva = { id: tareas.length + 1, titulo: cuerpo.titulo };
+    tareas.push(nueva);
+    return { estado: 201, cuerpo: nueva };
+  }
+  if (metodo === "DELETE" &amp;&amp; ruta === "/api/tareas/1") {
+    tareas.splice(0, 1);
+    return { estado: 204 };
+  }
+  return { estado: 404, cuerpo: { error: "No encontrado" } };
+}
+
+// ── Pruebas: no cambies estas líneas ──
+probar("GET", "/api/tareas/1");
+probar("GET", "/api/tareas/7");
+probar("POST", "/api/tareas", {});
+probar("POST", "/api/tareas", { titulo: "Leer" });
+probar("DELETE", "/api/tareas/1");
+
+function probar(metodo, ruta, cuerpo) {
+  const r = manejar({ metodo, ruta, cuerpo });
+  const texto = r.cuerpo === undefined ? "" : " " + JSON.stringify(r.cuerpo);
+  console.log(`${metodo} ${ruta} → ${r.estado}${texto}`);
+}</code></pre>
+      <p>El primer error era el más peligroso: un 200 con un mensaje de error dentro engaña al cliente, que cree que todo salió bien (con <code>fetch</code>, <code>response.ok</code> sería <code>true</code>). Fíjate también en que <code>tareas.length + 1</code> para el id falla en cuanto borras algo: dos tareas podrían acabar con el mismo id. Por eso en los talleres se usa un contador aparte, <code>siguienteId</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-params"><header class="ejercicio-cabeza"><h3>Una tarea por su id</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Sin Express, sacar el id de <code>/api/tareas/2</code> es trabajo tuyo. <code>ruta.split("/")</code> convierte <code>"/api/tareas/2"</code> en <code>["", "api", "tareas", "2"]</code>. Completa <code>GET /api/tareas/:id</code>: si el id no es un número entero, responde 400; si no existe, 404; si existe, 200 con la tarea. Una ruta con partes de más, como <code>/api/tareas/1/extra</code>, no debe coincidir.</p>
+    <pre class="consola"><code>GET /api/tareas → 200 [{"id":1,"titulo":"Comprar pan","hecha":false},{"id":2,"titulo":"Estudiar Express","hecha":true}]
+GET /api/tareas/2 → 200 {"id":2,"titulo":"Estudiar Express","hecha":true}
+GET /api/tareas/9 → 404 {"error":"No existe la tarea 9"}
+GET /api/tareas/abc → 400 {"error":"El id debe ser un número entero"}
+GET /api/tareas/1/extra → 404 {"error":"Ruta desconocida"}</code></pre>
+    <div class="taller" id="taller-ej-params" data-titulo="Ejercicio 3">
+      <textarea class="taller-codigo">const tareas = [
+  { id: 1, titulo: "Comprar pan", hecha: false },
+  { id: 2, titulo: "Estudiar Express", hecha: true },
+];
+
+function manejar(peticion) {
+  const partes = peticion.ruta.split("/"); // "/api/tareas/2" → ["", "api", "tareas", "2"]
+  if (peticion.metodo === "GET" && peticion.ruta === "/api/tareas") {
+    return { estado: 200, cuerpo: tareas };
+  }
+  // Completa aquí GET /api/tareas/:id
+
+  return { estado: 404, cuerpo: { error: "Ruta desconocida" } };
+}
+
+// ── Pruebas: no cambies estas líneas ──
+probar("GET", "/api/tareas");
+probar("GET", "/api/tareas/2");
+probar("GET", "/api/tareas/9");
+probar("GET", "/api/tareas/abc");
+probar("GET", "/api/tareas/1/extra");
+
+function probar(metodo, ruta, cuerpo) {
+  const r = manejar({ metodo, ruta, cuerpo });
+  const texto = r.cuerpo === undefined ? "" : " " + JSON.stringify(r.cuerpo);
+  console.log(`${metodo} ${ruta} → ${r.estado}${texto}`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ['GET /api/tareas → 200 [{"id":1,"titulo":"Comprar pan","hecha":false},{"id":2,"titulo":"Estudiar Express","hecha":true}]',
+  'GET /api/tareas/2 → 200 {"id":2,"titulo":"Estudiar Express","hecha":true}',
+  'GET /api/tareas/9 → 404 {"error":"No existe la tarea 9"}',
+  'GET /api/tareas/abc → 400 {"error":"El id debe ser un número entero"}',
+  'GET /api/tareas/1/extra → 404 {"error":"Ruta desconocida"}'];
+if (salida.length < 5) return "Deberían imprimirse cinco líneas. ¿Borraste alguna llamada a probar?";
+if (salida[1].indexOf("→ 404") !== -1 && salida[2].indexOf("→ 404") !== -1) return "La tarea 2 existe y sigue dando 404. ¿Comparas el id como texto? \"2\" === 2 es false: convierte con Number().";
+if (salida[3].indexOf("→ 404") !== -1) return "Para /api/tareas/abc, Number(\"abc\") es NaN: compruébalo con Number.isInteger antes de buscar y responde 400.";
+if (salida[4] !== esp[4]) return "/api/tareas/1/extra tiene una parte de más y no debe coincidir: comprueba también cuántas partes tiene la ruta.";
+for (var i = 0; i < 5; i++) if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + salida[i] + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La ruta que buscas tiene exactamente cuatro partes, y las partes 1 y 2 son <code>"api"</code> y <code>"tareas"</code>. El id es <code>partes[3]</code>, que es texto.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>const id = Number(partes[3]);</code> Después, <code>Number.isInteger(id)</code> te dice si sirve. Para buscar, <code>tareas.find((t) =&gt; t.id === id)</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const tareas = [
+  { id: 1, titulo: "Comprar pan", hecha: false },
+  { id: 2, titulo: "Estudiar Express", hecha: true },
+];
+
+function manejar(peticion) {
+  const partes = peticion.ruta.split("/"); // "/api/tareas/2" → ["", "api", "tareas", "2"]
+  if (peticion.metodo === "GET" &amp;&amp; peticion.ruta === "/api/tareas") {
+    return { estado: 200, cuerpo: tareas };
+  }
+  if (peticion.metodo === "GET" &amp;&amp; partes.length === 4 &amp;&amp; partes[1] === "api" &amp;&amp; partes[2] === "tareas") {
+    const id = Number(partes[3]);
+    if (!Number.isInteger(id)) {
+      return { estado: 400, cuerpo: { error: "El id debe ser un número entero" } };
+    }
+    const tarea = tareas.find((t) =&gt; t.id === id);
+    if (!tarea) {
+      return { estado: 404, cuerpo: { error: "No existe la tarea " + partes[3] } };
+    }
+    return { estado: 200, cuerpo: tarea };
+  }
+  return { estado: 404, cuerpo: { error: "Ruta desconocida" } };
+}
+
+// ── Pruebas: no cambies estas líneas ──
+probar("GET", "/api/tareas");
+probar("GET", "/api/tareas/2");
+probar("GET", "/api/tareas/9");
+probar("GET", "/api/tareas/abc");
+probar("GET", "/api/tareas/1/extra");
+
+function probar(metodo, ruta, cuerpo) {
+  const r = manejar({ metodo, ruta, cuerpo });
+  const texto = r.cuerpo === undefined ? "" : " " + JSON.stringify(r.cuerpo);
+  console.log(`${metodo} ${ruta} → ${r.estado}${texto}`);
+}</code></pre>
+      <p>Esto es lo que hace Express por ti con <code>"/api/tareas/:id"</code>: comprobar que la forma de la ruta coincide y dejarte el trozo variable en <code>req.params.id</code>. La conversión y la comprobación del número siguen siendo trabajo tuyo, o de Zod.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-consulta"><header class="ejercicio-cabeza"><h3>El top de puntuaciones</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Completa <code>GET /api/puntuaciones</code> para que respete la consulta: <code>juego</code> filtra por juego si viene; <code>limite</code> dice cuántas devolver (10 si no viene) y tiene que ser un entero entre 1 y 100, o se responde 400 con <code>{ "error": "limite debe ser un entero entre 1 y 100" }</code>. La lista va siempre de mayor a menor puntuación. <code>new URL(ruta, "http://localhost")</code> separa la consulta por ti, como en la Estación 3.</p>
+    <pre class="consola"><code>GET /api/puntuaciones?limite=2 → 200 [{"jugador":"Ana","juego":"tetris","puntos":9800},{"jugador":"Sofía","juego":"snake","puntos":777}]
+GET /api/puntuaciones?juego=snake → 200 [{"jugador":"Sofía","juego":"snake","puntos":777},{"jugador":"Leo","juego":"snake","puntos":510},{"jugador":"Ana","juego":"snake","puntos":420}]
+GET /api/puntuaciones?juego=pong → 200 []
+GET /api/puntuaciones?limite=0 → 400 {"error":"limite debe ser un entero entre 1 y 100"}
+GET /api/puntuaciones?juego=snake&amp;limite=1 → 200 [{"jugador":"Sofía","juego":"snake","puntos":777}]</code></pre>
+    <div class="taller" id="taller-ej-consulta" data-titulo="Ejercicio 4">
+      <textarea class="taller-codigo">const puntuaciones = [
+  { jugador: "Ana", juego: "snake", puntos: 420 },
+  { jugador: "Leo", juego: "snake", puntos: 510 },
+  { jugador: "Ana", juego: "tetris", puntos: 9800 },
+  { jugador: "Sofía", juego: "snake", puntos: 777 },
+];
+
+function manejar(peticion) {
+  const url = new URL(peticion.ruta, "http://localhost");
+  if (peticion.metodo !== "GET" || url.pathname !== "/api/puntuaciones") {
+    return { estado: 404, cuerpo: { error: "No encontrado" } };
+  }
+  const juego = url.searchParams.get("juego");        // null si no viene
+  const limiteTexto = url.searchParams.get("limite"); // null si no viene
+  // 1. Calcula limite (10 si no viene) y compruébalo: entero entre 1 y 100, o 400.
+  // 2. Si viene juego, quédate solo con ese juego.
+  // 3. Ordena de mayor a menor y devuelve las primeras «limite».
+  return { estado: 200, cuerpo: puntuaciones };
+}
+
+// ── Pruebas: no cambies estas líneas ──
+probar("GET", "/api/puntuaciones?limite=2");
+probar("GET", "/api/puntuaciones?juego=snake");
+probar("GET", "/api/puntuaciones?juego=pong");
+probar("GET", "/api/puntuaciones?limite=0");
+probar("GET", "/api/puntuaciones?juego=snake&limite=1");
+
+function probar(metodo, ruta, cuerpo) {
+  const r = manejar({ metodo, ruta, cuerpo });
+  const texto = r.cuerpo === undefined ? "" : " " + JSON.stringify(r.cuerpo);
+  console.log(`${metodo} ${ruta} → ${r.estado}${texto}`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ['GET /api/puntuaciones?limite=2 → 200 [{"jugador":"Ana","juego":"tetris","puntos":9800},{"jugador":"Sofía","juego":"snake","puntos":777}]',
+  'GET /api/puntuaciones?juego=snake → 200 [{"jugador":"Sofía","juego":"snake","puntos":777},{"jugador":"Leo","juego":"snake","puntos":510},{"jugador":"Ana","juego":"snake","puntos":420}]',
+  'GET /api/puntuaciones?juego=pong → 200 []',
+  'GET /api/puntuaciones?limite=0 → 400 {"error":"limite debe ser un entero entre 1 y 100"}',
+  'GET /api/puntuaciones?juego=snake&limite=1 → 200 [{"jugador":"Sofía","juego":"snake","puntos":777}]'];
+if (salida.length < 5) return "Deberían imprimirse cinco líneas. ¿Borraste alguna llamada a probar?";
+if (salida[2] !== esp[2]) return "Con ?juego=pong no hay resultados: la respuesta es 200 con una lista vacía []. Una lista vacía no es un 404.";
+if (salida[3] !== esp[3]) return "Con ?limite=0 debes responder 400 con el mensaje del enunciado.";
+for (var i = 0; i < 5; i++) if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + salida[i] + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>const limite = limiteTexto === null ? 10 : Number(limiteTexto);</code> Luego comprueba <code>Number.isInteger(limite)</code> y el rango con <code>&lt;</code> y <code>&gt;</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Encadena <code>filter</code>, <code>toSorted((a, b) =&gt; b.puntos - a.puntos)</code> y <code>slice(0, limite)</code> (<a href="11-colecciones.html#transformar">Estación 11</a>). Usa <code>toSorted</code> y no <code>sort</code>: <code>sort</code> desordenaría el array original, y el resto de peticiones lo verían cambiado.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const puntuaciones = [
+  { jugador: "Ana", juego: "snake", puntos: 420 },
+  { jugador: "Leo", juego: "snake", puntos: 510 },
+  { jugador: "Ana", juego: "tetris", puntos: 9800 },
+  { jugador: "Sofía", juego: "snake", puntos: 777 },
+];
+
+function manejar(peticion) {
+  const url = new URL(peticion.ruta, "http://localhost");
+  if (peticion.metodo !== "GET" || url.pathname !== "/api/puntuaciones") {
+    return { estado: 404, cuerpo: { error: "No encontrado" } };
+  }
+  const juego = url.searchParams.get("juego");        // null si no viene
+  const limiteTexto = url.searchParams.get("limite"); // null si no viene
+  const limite = limiteTexto === null ? 10 : Number(limiteTexto);
+  if (!Number.isInteger(limite) || limite &lt; 1 || limite &gt; 100) {
+    return { estado: 400, cuerpo: { error: "limite debe ser un entero entre 1 y 100" } };
+  }
+  const lista = puntuaciones
+    .filter((p) =&gt; juego === null || p.juego === juego)
+    .toSorted((a, b) =&gt; b.puntos - a.puntos)
+    .slice(0, limite);
+  return { estado: 200, cuerpo: lista };
+}
+
+// ── Pruebas: no cambies estas líneas ──
+probar("GET", "/api/puntuaciones?limite=2");
+probar("GET", "/api/puntuaciones?juego=snake");
+probar("GET", "/api/puntuaciones?juego=pong");
+probar("GET", "/api/puntuaciones?limite=0");
+probar("GET", "/api/puntuaciones?juego=snake&amp;limite=1");
+
+function probar(metodo, ruta, cuerpo) {
+  const r = manejar({ metodo, ruta, cuerpo });
+  const texto = r.cuerpo === undefined ? "" : " " + JSON.stringify(r.cuerpo);
+  console.log(`${metodo} ${ruta} → ${r.estado}${texto}`);
+}</code></pre>
+      <p>En Express, <code>url.searchParams.get("juego")</code> sería <code>req.query.juego</code> (que vale <code>undefined</code>, no <code>null</code>, cuando falta), y la comprobación del límite la haría Zod con <code>z.coerce.number().int().min(1).max(100).default(10)</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-validar"><header class="ejercicio-cabeza"><h3>Valida antes de guardar</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>La ruta <code>POST /api/puntuaciones</code> ya está escrita, pero <code>validarPuntuacion</code> está vacía y deja pasar cualquier cosa. Complétala con tres reglas, en este orden: <code>jugador</code> es un texto de 1 a 20 caracteres después de quitar los espacios (si no, <code>"jugador: de 1 a 20 caracteres"</code>); <code>juego</code> es un texto no vacío (si no, <code>"juego: obligatorio"</code>); <code>puntos</code> es un entero de 0 o más (si no, <code>"puntos: entero de 0 o más"</code>). Al principio, la última prueba rompe el programa con un <code>TypeError</code>: es justo lo que evita validar.</p>
+    <pre class="consola"><code>POST /api/puntuaciones → 201 {"id":1,"jugador":"Ana","juego":"snake","puntos":420}
+POST /api/puntuaciones → 400 {"error":"Datos no válidos","detalles":["jugador: de 1 a 20 caracteres"]}
+POST /api/puntuaciones → 400 {"error":"Datos no válidos","detalles":["juego: obligatorio","puntos: entero de 0 o más"]}
+POST /api/puntuaciones → 400 {"error":"Datos no válidos","detalles":["jugador: de 1 a 20 caracteres","puntos: entero de 0 o más"]}
+POST /api/puntuaciones → 201 {"id":2,"jugador":"Sofía","juego":"tetris","puntos":9800}
+POST /api/puntuaciones → 400 {"error":"Datos no válidos","detalles":["jugador: de 1 a 20 caracteres","juego: obligatorio","puntos: entero de 0 o más"]}</code></pre>
+    <div class="taller" id="taller-ej-validar" data-titulo="Ejercicio 5">
+      <textarea class="taller-codigo">const puntuaciones = [];
+let siguienteId = 1;
+
+function validarPuntuacion(datos) {
+  const errores = [];
+  // Completa las tres reglas, en orden: jugador, juego, puntos
+
+  return errores;
+}
+
+function manejar(peticion) {
+  if (peticion.metodo === "POST" && peticion.ruta === "/api/puntuaciones") {
+    const datos = peticion.cuerpo ?? {};
+    const errores = validarPuntuacion(datos);
+    if (errores.length > 0) {
+      return { estado: 400, cuerpo: { error: "Datos no válidos", detalles: errores } };
+    }
+    const nueva = { id: siguienteId++, jugador: datos.jugador.trim(), juego: datos.juego, puntos: datos.puntos };
+    puntuaciones.push(nueva);
+    return { estado: 201, cuerpo: nueva };
+  }
+  return { estado: 404, cuerpo: { error: "No encontrado" } };
+}
+
+// ── Pruebas: no cambies estas líneas ──
+probar("POST", "/api/puntuaciones", { jugador: " Ana ", juego: "snake", puntos: 420 });
+probar("POST", "/api/puntuaciones", { jugador: "", juego: "snake", puntos: 10 });
+probar("POST", "/api/puntuaciones", { jugador: "Leo", juego: "", puntos: "510" });
+probar("POST", "/api/puntuaciones", { jugador: "Un nombre larguísimo de verdad", juego: "snake", puntos: -1 });
+probar("POST", "/api/puntuaciones", { jugador: "Sofía", juego: "tetris", puntos: 9800, esAdmin: true });
+probar("POST", "/api/puntuaciones");
+
+function probar(metodo, ruta, cuerpo) {
+  const r = manejar({ metodo, ruta, cuerpo });
+  const texto = r.cuerpo === undefined ? "" : " " + JSON.stringify(r.cuerpo);
+  console.log(`${metodo} ${ruta} → ${r.estado}${texto}`);
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ['POST /api/puntuaciones → 201 {"id":1,"jugador":"Ana","juego":"snake","puntos":420}',
+  'POST /api/puntuaciones → 400 {"error":"Datos no válidos","detalles":["jugador: de 1 a 20 caracteres"]}',
+  'POST /api/puntuaciones → 400 {"error":"Datos no válidos","detalles":["juego: obligatorio","puntos: entero de 0 o más"]}',
+  'POST /api/puntuaciones → 400 {"error":"Datos no válidos","detalles":["jugador: de 1 a 20 caracteres","puntos: entero de 0 o más"]}',
+  'POST /api/puntuaciones → 201 {"id":2,"jugador":"Sofía","juego":"tetris","puntos":9800}',
+  'POST /api/puntuaciones → 400 {"error":"Datos no válidos","detalles":["jugador: de 1 a 20 caracteres","juego: obligatorio","puntos: entero de 0 o más"]}'];
+if (salida.length < 6) return "Se imprimieron " + salida.length + " líneas de 6. Si el programa se rompe en la última prueba, es porque la validación deja pasar un cuerpo vacío.";
+if (salida[2].indexOf("puntos") === -1) return "\"510\" es un texto, no un número: Number.isInteger(\"510\") es false. Revisa la regla de puntos.";
+for (var i = 0; i < 6; i++) if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + salida[i] + "».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Para <code>jugador</code>, primero comprueba <code>typeof datos.jugador !== "string"</code>; solo si es texto puedes usar <code>.trim()</code>. Con <code>||</code> la segunda parte no se evalúa si la primera ya es verdadera.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La regla de puntos es la misma de la traza de la sección Validar: <code>!Number.isInteger(datos.puntos) || datos.puntos &lt; 0</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const puntuaciones = [];
+let siguienteId = 1;
+
+function validarPuntuacion(datos) {
+  const errores = [];
+  if (typeof datos.jugador !== "string" || datos.jugador.trim() === "" || datos.jugador.trim().length &gt; 20) {
+    errores.push("jugador: de 1 a 20 caracteres");
+  }
+  if (typeof datos.juego !== "string" || datos.juego.trim() === "") {
+    errores.push("juego: obligatorio");
+  }
+  if (!Number.isInteger(datos.puntos) || datos.puntos &lt; 0) {
+    errores.push("puntos: entero de 0 o más");
+  }
+  return errores;
+}
+
+function manejar(peticion) {
+  if (peticion.metodo === "POST" &amp;&amp; peticion.ruta === "/api/puntuaciones") {
+    const datos = peticion.cuerpo ?? {};
+    const errores = validarPuntuacion(datos);
+    if (errores.length &gt; 0) {
+      return { estado: 400, cuerpo: { error: "Datos no válidos", detalles: errores } };
+    }
+    const nueva = { id: siguienteId++, jugador: datos.jugador.trim(), juego: datos.juego, puntos: datos.puntos };
+    puntuaciones.push(nueva);
+    return { estado: 201, cuerpo: nueva };
+  }
+  return { estado: 404, cuerpo: { error: "No encontrado" } };
+}
+
+// ── Pruebas: no cambies estas líneas ──
+probar("POST", "/api/puntuaciones", { jugador: " Ana ", juego: "snake", puntos: 420 });
+probar("POST", "/api/puntuaciones", { jugador: "", juego: "snake", puntos: 10 });
+probar("POST", "/api/puntuaciones", { jugador: "Leo", juego: "", puntos: "510" });
+probar("POST", "/api/puntuaciones", { jugador: "Un nombre larguísimo de verdad", juego: "snake", puntos: -1 });
+probar("POST", "/api/puntuaciones", { jugador: "Sofía", juego: "tetris", puntos: 9800, esAdmin: true });
+probar("POST", "/api/puntuaciones");
+
+function probar(metodo, ruta, cuerpo) {
+  const r = manejar({ metodo, ruta, cuerpo });
+  const texto = r.cuerpo === undefined ? "" : " " + JSON.stringify(r.cuerpo);
+  console.log(`${metodo} ${ruta} → ${r.estado}${texto}`);
+}</code></pre>
+      <p>Mira la quinta prueba: <code>esAdmin</code> no llegó a guardarse porque la ruta construye <code>nueva</code> campo a campo, en vez de copiar todo el cuerpo. Con Zod, el mismo efecto lo da <code>z.object</code>, que descarta los campos que no están en el esquema.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-cadena"><header class="ejercicio-cabeza"><h3>Construye tu propia cadena de middleware</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>¿Cómo sabe Express a quién llamar cuando haces <code>next()</code>? Escríbelo tú. Completa <code>ejecutar(cadena, req)</code>: debe llamar a la primera función de la lista con <code>(req, res, next)</code>, y cada vez que una función llame a <code>next()</code>, debe ejecutarse la siguiente. Si una función no llama a <code>next()</code>, la cadena se detiene. La salida esperada es:</p>
+    <pre class="consola"><code>registro → clave → ruta | 200 {"datos":"ranking secreto"}
+registro → clave | 401 {"error":"Falta la clave"}
+registro | null null</code></pre>
+    <div class="taller" id="taller-ej-cadena" data-titulo="Ejercicio 6" data-esperado="registro → clave → ruta | 200 {&quot;datos&quot;:&quot;ranking secreto&quot;}&#10;registro → clave | 401 {&quot;error&quot;:&quot;Falta la clave&quot;}&#10;registro | null null">
+      <textarea class="taller-codigo">// Tres middleware con la misma forma que en Express: (req, res, next)
+function registro(req, res, next) {
+  res.log.push("registro");
+  next();
+}
+function exigirClave(req, res, next) {
+  res.log.push("clave");
+  if (req.clave !== "secreta") {
+    res.estado = 401;
+    res.cuerpo = { error: "Falta la clave" };
+    return; // responde y NO llama a next: la cadena se corta
+  }
+  next();
+}
+function responder(req, res, next) {
+  res.log.push("ruta");
+  res.estado = 200;
+  res.cuerpo = { datos: "ranking secreto" };
+}
+
+// Completa: ejecuta la cadena en orden y devuelve res
+function ejecutar(cadena, req) {
+  const res = { estado: null, cuerpo: null, log: [] };
+  // Tu código aquí
+  return res;
+}
+
+// ── Pruebas: no cambies estas líneas ──
+const cadena = [registro, exigirClave, responder];
+const a = ejecutar(cadena, { clave: "secreta" });
+console.log(a.log.join(" → "), "|", a.estado, JSON.stringify(a.cuerpo));
+const b = ejecutar(cadena, { clave: "otra" });
+console.log(b.log.join(" → "), "|", b.estado, JSON.stringify(b.cuerpo));
+const c = ejecutar([registro], {});
+console.log(c.log.join(" → "), "|", c.estado, JSON.stringify(c.cuerpo));</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Necesitas recordar por dónde vas: una variable <code>i</code> que empieza en 0. <code>next</code> es una función que toma <code>cadena[i]</code>, suma 1 a <code>i</code> y, si esa función existe, la llama.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Declara <code>next</code> dentro de <code>ejecutar</code>, para que vea <code>i</code>, <code>req</code> y <code>res</code> (es un closure, <a href="10-funciones.html#closures">Estación 10</a>). Al llamar a la siguiente función, pásale el propio <code>next</code> como tercer argumento. Para arrancar, llama a <code>next()</code> una vez.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">// Tres middleware con la misma forma que en Express: (req, res, next)
+function registro(req, res, next) {
+  res.log.push("registro");
+  next();
+}
+function exigirClave(req, res, next) {
+  res.log.push("clave");
+  if (req.clave !== "secreta") {
+    res.estado = 401;
+    res.cuerpo = { error: "Falta la clave" };
+    return; // responde y NO llama a next: la cadena se corta
+  }
+  next();
+}
+function responder(req, res, next) {
+  res.log.push("ruta");
+  res.estado = 200;
+  res.cuerpo = { datos: "ranking secreto" };
+}
+
+function ejecutar(cadena, req) {
+  const res = { estado: null, cuerpo: null, log: [] };
+  let i = 0;
+  function next() {
+    const siguiente = cadena[i];
+    i++;
+    if (siguiente) siguiente(req, res, next);
+  }
+  next();
+  return res;
+}
+
+// ── Pruebas: no cambies estas líneas ──
+const cadena = [registro, exigirClave, responder];
+const a = ejecutar(cadena, { clave: "secreta" });
+console.log(a.log.join(" → "), "|", a.estado, JSON.stringify(a.cuerpo));
+const b = ejecutar(cadena, { clave: "otra" });
+console.log(b.log.join(" → "), "|", b.estado, JSON.stringify(b.cuerpo));
+const c = ejecutar([registro], {});
+console.log(c.log.join(" → "), "|", c.estado, JSON.stringify(c.cuerpo));</code></pre>
+      <p>Esta es, en esencia, la idea que usa Express. El tercer caso muestra el problema de una cadena sin respuesta: nadie puso <code>estado</code>, y en un servidor real el cliente se quedaría esperando. Por eso Express añade al final su propio 404. El Express de verdad, además, salta a los manejadores de errores cuando llamas a <code>next(error)</code>; puedes intentar añadirlo: si <code>next</code> recibe un argumento, busca la siguiente función con <code>length === 4</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-semver"><header class="ejercicio-cabeza"><h3>¿Qué versión instalará npm?</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>Completa <code>aceptaCaret(rango, version)</code>, que responde si un rango con <code>^</code> acepta una versión. Reglas: la versión tiene que ser igual o posterior a la del rango; y además, si el MAYOR del rango es mayor que 0, la versión debe tener el mismo MAYOR; si el MAYOR es 0, debe tener el mismo MAYOR y el mismo MENOR. Compara los números como números, no como texto. Salida esperada:</p>
+    <pre class="consola"><code>^5.2.1 5.2.1 → sí
+^5.2.1 5.9.0 → sí
+^5.2.1 5.2.0 → no
+^5.2.1 6.0.0 → no
+^0.4.2 0.4.9 → sí
+^0.4.2 0.5.0 → no
+^1.0.0 1.10.3 → sí</code></pre>
+    <div class="taller" id="taller-ej-semver" data-titulo="Ejercicio 7" data-esperado="^5.2.1 5.2.1 → sí&#10;^5.2.1 5.9.0 → sí&#10;^5.2.1 5.2.0 → no&#10;^5.2.1 6.0.0 → no&#10;^0.4.2 0.4.9 → sí&#10;^0.4.2 0.5.0 → no&#10;^1.0.0 1.10.3 → sí">
+      <textarea class="taller-codigo">function aceptaCaret(rango, version) {
+  const [ma, me, pa] = rango.slice(1).split(".").map(Number);   // "^5.2.1" → 5, 2, 1
+  const [vMa, vMe, vPa] = version.split(".").map(Number);       // "5.9.0"  → 5, 9, 0
+  // Tu código aquí
+  return false;
+}
+
+// ── Pruebas: no cambies estas líneas ──
+const pruebas = [
+  ["^5.2.1", "5.2.1"], ["^5.2.1", "5.9.0"], ["^5.2.1", "5.2.0"], ["^5.2.1", "6.0.0"],
+  ["^0.4.2", "0.4.9"], ["^0.4.2", "0.5.0"], ["^1.0.0", "1.10.3"],
+];
+for (const [rango, version] of pruebas) {
+  console.log(`${rango} ${version} → ${aceptaCaret(rango, version) ? "sí" : "no"}`);
+}</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Divide el problema en dos preguntas. Primera: ¿la versión es igual o posterior? Compara el mayor; si empatan, el menor; si también empatan, el parche. Segunda: ¿sigue dentro del mismo «mayor»?</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para la primera pregunta, un operador ternario encadenado queda compacto: <code>vMa !== ma ? vMa &gt; ma : vMe !== me ? vMe &gt; me : vPa &gt;= pa</code>. Si da <code>false</code>, devuelve <code>false</code> y ya no hace falta mirar más.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function aceptaCaret(rango, version) {
+  const [ma, me, pa] = rango.slice(1).split(".").map(Number);   // "^5.2.1" → 5, 2, 1
+  const [vMa, vMe, vPa] = version.split(".").map(Number);       // "5.9.0"  → 5, 9, 0
+  const igualOPosterior = vMa !== ma ? vMa &gt; ma : vMe !== me ? vMe &gt; me : vPa &gt;= pa;
+  if (!igualOPosterior) return false;
+  if (ma &gt; 0) return vMa === ma;
+  return vMa === 0 &amp;&amp; vMe === me;
+}
+
+// ── Pruebas: no cambies estas líneas ──
+const pruebas = [
+  ["^5.2.1", "5.2.1"], ["^5.2.1", "5.9.0"], ["^5.2.1", "5.2.0"], ["^5.2.1", "6.0.0"],
+  ["^0.4.2", "0.4.9"], ["^0.4.2", "0.5.0"], ["^1.0.0", "1.10.3"],
+];
+for (const [rango, version] of pruebas) {
+  console.log(`${rango} ${version} → ${aceptaCaret(rango, version) ? "sí" : "no"}`);
+}</code></pre>
+      <p>La última prueba es la trampa: como texto, <code>"1.10.3"</code> va antes que <code>"1.9.0"</code>, porque el carácter 1 va antes que el 9. Por eso se convierte con <code>map(Number)</code>. El semver real tiene más casos: <code>^0.0.3</code> solo acepta la 0.0.3, y existen versiones preliminares como <code>5.0.0-beta.3</code>. npm usa para todo esto el paquete <code>semver</code>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-patch"><header class="ejercicio-cabeza"><h3>PATCH y DELETE con todas sus reglas</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>Completa las rutas <code>PATCH /api/tareas/:id</code> y <code>DELETE /api/tareas/:id</code>. PATCH: 404 si la tarea no existe; 400 <code>{"error":"Nada que cambiar"}</code> si el cuerpo no trae ni <code>titulo</code> ni <code>hecha</code>; 400 <code>{"error":"Datos no válidos"}</code> si <code>titulo</code> no es un texto con contenido o <code>hecha</code> no es booleano; si todo está bien, cambia solo esos campos (ignora los demás) y responde 200 con la tarea. DELETE: 204 sin cuerpo, o 404 si no existe. Los 404 dicen <code>"No existe la tarea N"</code>.</p>
+    <pre class="consola"><code>PATCH /api/tareas/2 → 200 {"id":2,"titulo":"Estudiar Express","hecha":false}
+PATCH /api/tareas/1 → 200 {"id":1,"titulo":"Comprar pan integral","hecha":false}
+PATCH /api/tareas/1 → 400 {"error":"Datos no válidos"}
+PATCH /api/tareas/1 → 400 {"error":"Nada que cambiar"}
+PATCH /api/tareas/9 → 404 {"error":"No existe la tarea 9"}
+DELETE /api/tareas/1 → 204
+DELETE /api/tareas/1 → 404 {"error":"No existe la tarea 1"}
+GET /api/tareas → 200 [{"id":2,"titulo":"Estudiar Express","hecha":false}]</code></pre>
+    <div class="taller" id="taller-ej-patch" data-titulo="Ejercicio 8" data-esperado="PATCH /api/tareas/2 → 200 {&quot;id&quot;:2,&quot;titulo&quot;:&quot;Estudiar Express&quot;,&quot;hecha&quot;:false}&#10;PATCH /api/tareas/1 → 200 {&quot;id&quot;:1,&quot;titulo&quot;:&quot;Comprar pan integral&quot;,&quot;hecha&quot;:false}&#10;PATCH /api/tareas/1 → 400 {&quot;error&quot;:&quot;Datos no válidos&quot;}&#10;PATCH /api/tareas/1 → 400 {&quot;error&quot;:&quot;Nada que cambiar&quot;}&#10;PATCH /api/tareas/9 → 404 {&quot;error&quot;:&quot;No existe la tarea 9&quot;}&#10;DELETE /api/tareas/1 → 204&#10;DELETE /api/tareas/1 → 404 {&quot;error&quot;:&quot;No existe la tarea 1&quot;}&#10;GET /api/tareas → 200 [{&quot;id&quot;:2,&quot;titulo&quot;:&quot;Estudiar Express&quot;,&quot;hecha&quot;:false}]">
+      <textarea class="taller-codigo">const tareas = [
+  { id: 1, titulo: "Comprar pan", hecha: false },
+  { id: 2, titulo: "Estudiar Express", hecha: true },
+];
+
+function manejar(peticion) {
+  const { metodo, ruta, cuerpo } = peticion;
+  if (metodo === "GET" && ruta === "/api/tareas") {
+    return { estado: 200, cuerpo: tareas };
+  }
+  const partes = ruta.split("/");
+  if (partes.length === 4 && partes[1] === "api" && partes[2] === "tareas") {
+    const i = tareas.findIndex((t) => t.id === Number(partes[3]));
+    // Completa aquí PATCH y DELETE
+
+  }
+  return { estado: 404, cuerpo: { error: "Ruta desconocida" } };
+}
+
+// ── Pruebas: no cambies estas líneas ──
+probar("PATCH", "/api/tareas/2", { hecha: false });
+probar("PATCH", "/api/tareas/1", { titulo: "Comprar pan integral", color: "rojo" });
+probar("PATCH", "/api/tareas/1", { hecha: "sí" });
+probar("PATCH", "/api/tareas/1", {});
+probar("PATCH", "/api/tareas/9", { hecha: true });
+probar("DELETE", "/api/tareas/1");
+probar("DELETE", "/api/tareas/1");
+probar("GET", "/api/tareas");
+
+function probar(metodo, ruta, cuerpo) {
+  const r = manejar({ metodo, ruta, cuerpo });
+  const texto = r.cuerpo === undefined ? "" : " " + JSON.stringify(r.cuerpo);
+  console.log(`${metodo} ${ruta} → ${r.estado}${texto}`);
+}</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Ordena las comprobaciones del PATCH como en el enunciado: primero si existe (<code>i === -1</code>), después si trae algo, después si lo que trae es válido. Solo al final modificas <code>tareas[i]</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Un campo es inválido solo si viene y está mal: <code>datos.hecha !== undefined &amp;&amp; typeof datos.hecha !== "boolean"</code>. Para el título, además de ser texto, <code>trim()</code> no debe dejarlo vacío.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const tareas = [
+  { id: 1, titulo: "Comprar pan", hecha: false },
+  { id: 2, titulo: "Estudiar Express", hecha: true },
+];
+
+function manejar(peticion) {
+  const { metodo, ruta, cuerpo } = peticion;
+  if (metodo === "GET" &amp;&amp; ruta === "/api/tareas") {
+    return { estado: 200, cuerpo: tareas };
+  }
+  const partes = ruta.split("/");
+  if (partes.length === 4 &amp;&amp; partes[1] === "api" &amp;&amp; partes[2] === "tareas") {
+    const i = tareas.findIndex((t) =&gt; t.id === Number(partes[3]));
+    const noExiste = { estado: 404, cuerpo: { error: "No existe la tarea " + partes[3] } };
+    if (metodo === "PATCH") {
+      if (i === -1) return noExiste;
+      const datos = cuerpo ?? {};
+      if (datos.titulo === undefined &amp;&amp; datos.hecha === undefined) {
+        return { estado: 400, cuerpo: { error: "Nada que cambiar" } };
+      }
+      const tituloMal = datos.titulo !== undefined &amp;&amp; (typeof datos.titulo !== "string" || datos.titulo.trim() === "");
+      const hechaMal = datos.hecha !== undefined &amp;&amp; typeof datos.hecha !== "boolean";
+      if (tituloMal || hechaMal) {
+        return { estado: 400, cuerpo: { error: "Datos no válidos" } };
+      }
+      if (datos.titulo !== undefined) tareas[i].titulo = datos.titulo.trim();
+      if (datos.hecha !== undefined) tareas[i].hecha = datos.hecha;
+      return { estado: 200, cuerpo: tareas[i] };
+    }
+    if (metodo === "DELETE") {
+      if (i === -1) return noExiste;
+      tareas.splice(i, 1);
+      return { estado: 204 };
+    }
+  }
+  return { estado: 404, cuerpo: { error: "Ruta desconocida" } };
+}
+
+// ── Pruebas: no cambies estas líneas ──
+probar("PATCH", "/api/tareas/2", { hecha: false });
+probar("PATCH", "/api/tareas/1", { titulo: "Comprar pan integral", color: "rojo" });
+probar("PATCH", "/api/tareas/1", { hecha: "sí" });
+probar("PATCH", "/api/tareas/1", {});
+probar("PATCH", "/api/tareas/9", { hecha: true });
+probar("DELETE", "/api/tareas/1");
+probar("DELETE", "/api/tareas/1");
+probar("GET", "/api/tareas");
+
+function probar(metodo, ruta, cuerpo) {
+  const r = manejar({ metodo, ruta, cuerpo });
+  const texto = r.cuerpo === undefined ? "" : " " + JSON.stringify(r.cuerpo);
+  console.log(`${metodo} ${ruta} → ${r.estado}${texto}`);
+}</code></pre>
+      <p>Valida todo antes de cambiar nada: si modificaras <code>titulo</code> y después descubrieras que <code>hecha</code> no es válido, dejarías la tarea a medio cambiar. Con Zod, este PATCH sería un esquema con los dos campos opcionales, <code>z.object({ titulo: z.string().trim().min(1).optional(), hecha: z.boolean().optional() })</code>, más la comprobación de que llegó al menos uno.</p>
+    </details>
+  </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: la API de puntuaciones de tu juego</h2>
+  <p>Vuelve al problema del principio: tu juego de Snake necesita un ranking que compartan todas las personas que juegan. Vas a construir su backend completo, una API que guarda puntuaciones, las devuelve ordenadas, rechaza las trampas más obvias y se deja probar desde cualquier cliente. Lo harás en dos partes: primero la lógica, en el simulador de esta página; después el proyecto real, en tu computadora.</p>
+
+  <h3>El contrato de la API</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Método y ruta</th><th scope="col">Qué hace</th><th scope="col">Respuestas</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET /api/salud</code></td><td>Comprueba que el servidor está vivo</td><td>200 <code>{"estado":"ok"}</code></td></tr>
+        <tr><td><code>GET /api/puntuaciones</code></td><td>Ranking de mayor a menor. Acepta <code>?juego=snake</code> y <code>?limite=5</code> (10 por defecto, máximo 100)</td><td>200 con un array; 400 si la consulta no es válida</td></tr>
+        <tr><td><code>GET /api/puntuaciones/:id</code></td><td>Una puntuación</td><td>200, o 404</td></tr>
+        <tr><td><code>POST /api/puntuaciones</code></td><td>Guarda <code>{ jugador, juego, puntos }</code></td><td>201 con <code>Location</code>; 400 con detalles si los datos o el JSON no son válidos</td></tr>
+        <tr><td><code>DELETE /api/puntuaciones/:id</code></td><td>Borra una puntuación</td><td>204, o 404</td></tr>
+        <tr><td>Cualquier otra</td><td>—</td><td>404 en JSON</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Primera parte: la lógica, en el simulador</h3>
+  <p>Escribe las rutas con la sintaxis de Express, igual que en los talleres de las secciones anteriores. Como Zod no se puede cargar en esta página, valida a mano, como en el ejercicio 5. Las once pruebas del final comprueban el contrato completo.</p>
+  <ol class="pasos">
+    <li><div><p>Escribe <code>GET /api/puntuaciones</code>: calcula <code>limite</code> desde <code>req.query.limite</code> (10 si no viene; 400 si no es un entero entre 1 y 100), filtra por <code>req.query.juego</code> si viene, ordena con <code>toSorted</code> de mayor a menor y corta con <code>slice</code>.</p></div></li>
+    <li><div><p>Escribe <code>GET /api/puntuaciones/:id</code> y <code>DELETE /api/puntuaciones/:id</code>. Recuerda convertir <code>req.params.id</code> con <code>Number()</code>.</p></div></li>
+    <li><div><p>Escribe una función <code>validarPuntuacion</code> y úsala en <code>POST /api/puntuaciones</code>. Construye la puntuación nueva campo a campo, con <code>siguienteId++</code>, y responde 201 con <code>res.location(…)</code>.</p></div></li>
+    <li><div><p>Añade al final un middleware de 404 que responda JSON y un manejador de errores de cuatro parámetros que responda 400 cuando <code>err.type === "entity.parse.failed"</code> y 500 en cualquier otro caso.</p></div></li>
+  </ol>
+  <div class="taller" id="taller-proyecto" data-titulo="Proyecto: API de puntuaciones (simulada)" data-tiempo="8">
+    <textarea class="taller-codigo">const app = express();
+app.use(express.json());
+
+const puntuaciones = [
+  { id: 1, jugador: "Ana", juego: "snake", puntos: 420 },
+  { id: 2, jugador: "Leo", juego: "snake", puntos: 510 },
+  { id: 3, jugador: "Ana", juego: "tetris", puntos: 9800 },
+];
+let siguienteId = 4;
+
+app.get("/api/salud", (req, res) => {
+  res.json({ estado: "ok" });
+});
+
+// 1. GET /api/puntuaciones?juego=…&limite=…
+// 2. GET /api/puntuaciones/:id  y  DELETE /api/puntuaciones/:id
+// 3. validarPuntuacion y POST /api/puntuaciones
+// 4. Un 404 en JSON y el manejador de errores, al final
+
+
+// ── Pruebas: no cambies estas líneas ──
+app.probar("GET", "/api/puntuaciones?juego=snake");
+app.probar("GET", "/api/puntuaciones?limite=1");
+app.probar("GET", "/api/puntuaciones/3");
+app.probar("GET", "/api/puntuaciones/99");
+app.probar("POST", "/api/puntuaciones", { jugador: "Sofía", juego: "snake", puntos: 777 });
+app.probar("POST", "/api/puntuaciones", { jugador: "", juego: "snake", puntos: -5 });
+app.probar("POST", "/api/puntuaciones", '{"jugador": ');
+app.probar("GET", "/api/puntuaciones?juego=snake&limite=2");
+app.probar("DELETE", "/api/puntuaciones/1");
+app.probar("DELETE", "/api/puntuaciones/1");
+app.probar("GET", "/api/nada");
+
+// ─── Simulador de Express: imita express() dentro de esta página. No hace falta que lo leas. ───
+function express() {
+  express.json = () => function json(req, res, next) {
+    if (req.crudo !== undefined) {
+      try { req.body = JSON.parse(req.crudo); } catch (e) { e.status = 400; e.type = "entity.parse.failed"; throw e; }
+    }
+    next();
+  };
+  const capas = [];
+  const app = { listen: (puerto, listo) => listo && listo() };
+  for (const m of ["get", "post", "put", "patch", "delete"]) {
+    app[m] = (ruta, f) => capas.push({ metodo: m.toUpperCase(), ruta, f });
+  }
+  app.use = (a, b) => capas.push(b ? { ruta: a, f: b } : { ruta: "", f: a });
+  app.probar = (metodo, url, cuerpo) => {
+    const u = new URL(url, "http://localhost");
+    const req = { method: metodo, path: u.pathname, originalUrl: url, params: {},
+      query: Object.fromEntries(u.searchParams),
+      crudo: cuerpo === undefined ? undefined : typeof cuerpo === "string" ? cuerpo : JSON.stringify(cuerpo) };
+    const res = { statusCode: 200, cuerpo: "", enviada: false, extra: "",
+      status(n) { this.statusCode = n; return this; },
+      location(l) { this.extra = " (Location: " + l + ")"; return this; },
+      json(d) { return this.send(JSON.stringify(d)); },
+      send(d) { this.cuerpo = typeof d === "object" ? JSON.stringify(d) : String(d); this.enviada = true; return this; },
+      sendStatus(n) { return this.status(n).send(""); },
+      end() { this.enviada = true; return this; } };
+    let i = 0;
+    const siguiente = (err) => {
+      while (i < capas.length) {
+        const c = capas[i++];
+        if (c.f.length === 4 ? !err : err) continue;
+        const params = coincide(c, req.method, req.path);
+        if (!params) continue;
+        req.params = params;
+        try { if (err) c.f(err, req, res, siguiente); else c.f(req, res, siguiente); } catch (e) { siguiente(e); }
+        return;
+      }
+      if (err) res.status(err.status || 500).send(err.name + ": " + err.message);
+      else res.status(404).send("Cannot " + metodo + " " + u.pathname);
+    };
+    siguiente();
+    console.log(metodo + " " + url + " → " + (res.enviada ? res.statusCode + res.extra + (res.cuerpo ? " " + res.cuerpo : "") : "(sin respuesta: el cliente se queda esperando)"));
+  };
+  function coincide(capa, metodo, ruta) {
+    if (capa.metodo && capa.metodo !== metodo) return null;
+    const a = capa.ruta.split("/").filter(Boolean), b = ruta.split("/").filter(Boolean);
+    if (capa.metodo ? a.length !== b.length : a.length > b.length) return null;
+    const params = {};
+    for (let k = 0; k < a.length; k++) {
+      if (a[k][0] === ":") params[a[k].slice(1)] = decodeURIComponent(b[k]);
+      else if (a[k] !== b[k]) return null;
+    }
+    return params;
+  }
+  return app;
+}</textarea>
+    <script type="text/plain" class="taller-verificar">
+function linea(i) { return salida[i] || ""; }
+if (salida.length < 11) return "Deberían imprimirse 11 líneas, una por prueba. ¿Borraste alguna llamada a app.probar?";
+if (linea(0) !== 'GET /api/puntuaciones?juego=snake → 200 [{"id":2,"jugador":"Leo","juego":"snake","puntos":510},{"id":1,"jugador":"Ana","juego":"snake","puntos":420}]') return "Prueba 1: GET /api/puntuaciones?juego=snake debería devolver 200 con las puntuaciones de snake, de mayor a menor.";
+if (linea(1) !== 'GET /api/puntuaciones?limite=1 → 200 [{"id":3,"jugador":"Ana","juego":"tetris","puntos":9800}]') return "Prueba 2: con ?limite=1 debería devolver solo la puntuación más alta de todas.";
+if (linea(2) !== 'GET /api/puntuaciones/3 → 200 {"id":3,"jugador":"Ana","juego":"tetris","puntos":9800}') return "Prueba 3: GET /api/puntuaciones/3 debería devolver 200 con esa puntuación. ¿Convertiste req.params.id con Number()?";
+if (linea(3).indexOf("GET /api/puntuaciones/99 → 404 {") !== 0) return "Prueba 4: una puntuación que no existe debe responder 404 con un JSON de error.";
+if (linea(4) !== 'POST /api/puntuaciones → 201 (Location: /api/puntuaciones/4) {"id":4,"jugador":"Sofía","juego":"snake","puntos":777}') return "Prueba 5: crear debería responder 201, con la cabecera Location y la puntuación nueva con id 4. Respondió: «" + linea(4) + "».";
+if (linea(5).indexOf("POST /api/puntuaciones → 400 {") !== 0) return "Prueba 6: un nombre vacío y unos puntos negativos deben responder 400 con un JSON de error.";
+if (linea(6).indexOf("POST /api/puntuaciones → 400 {") !== 0) return "Prueba 7: un JSON roto debe responder 400 con un JSON de error. Hace falta un manejador de errores de 4 parámetros que mire err.type.";
+if (linea(7) !== 'GET /api/puntuaciones?juego=snake&limite=2 → 200 [{"id":4,"jugador":"Sofía","juego":"snake","puntos":777},{"id":2,"jugador":"Leo","juego":"snake","puntos":510}]') return "Prueba 8: ahora Sofía (777) debería encabezar el ranking de snake, seguida de Leo.";
+if (linea(8) !== "DELETE /api/puntuaciones/1 → 204") return "Prueba 9: borrar debería responder 204, sin cuerpo.";
+if (linea(9).indexOf("DELETE /api/puntuaciones/1 → 404 {") !== 0) return "Prueba 10: borrar otra vez la misma puntuación debe responder 404 con un JSON de error.";
+if (linea(10).indexOf("GET /api/nada → 404 {") !== 0) return "Prueba 11: una ruta desconocida debe responder 404 con JSON, no con el texto de Express. Añade tu propio middleware de 404 antes del manejador de errores.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de la parte simulada</summary>
+    <pre><code class="language-js">const app = express();
+app.use(express.json());
+
+const puntuaciones = [
+  { id: 1, jugador: "Ana", juego: "snake", puntos: 420 },
+  { id: 2, jugador: "Leo", juego: "snake", puntos: 510 },
+  { id: 3, jugador: "Ana", juego: "tetris", puntos: 9800 },
+];
+let siguienteId = 4;
+
+function validarPuntuacion(datos) {
+  const errores = [];
+  if (typeof datos.jugador !== "string" || datos.jugador.trim() === "" || datos.jugador.trim().length &gt; 20) {
+    errores.push("jugador: de 1 a 20 caracteres");
+  }
+  if (typeof datos.juego !== "string" || datos.juego.trim() === "") {
+    errores.push("juego: obligatorio");
+  }
+  if (!Number.isInteger(datos.puntos) || datos.puntos &lt; 0) {
+    errores.push("puntos: entero de 0 o más");
+  }
+  return errores;
+}
+
+app.get("/api/salud", (req, res) =&gt; {
+  res.json({ estado: "ok" });
+});
+
+app.get("/api/puntuaciones", (req, res) =&gt; {
+  const limite = req.query.limite === undefined ? 10 : Number(req.query.limite);
+  if (!Number.isInteger(limite) || limite &lt; 1 || limite &gt; 100) {
+    return res.status(400).json({ error: "limite debe ser un entero entre 1 y 100" });
+  }
+  const lista = puntuaciones
+    .filter((p) =&gt; req.query.juego === undefined || p.juego === req.query.juego)
+    .toSorted((a, b) =&gt; b.puntos - a.puntos)
+    .slice(0, limite);
+  res.json(lista);
+});
+
+app.get("/api/puntuaciones/:id", (req, res) =&gt; {
+  const p = puntuaciones.find((p) =&gt; p.id === Number(req.params.id));
+  if (!p) return res.status(404).json({ error: "No existe esa puntuación" });
+  res.json(p);
+});
+
+app.post("/api/puntuaciones", (req, res) =&gt; {
+  const datos = req.body ?? {};
+  const errores = validarPuntuacion(datos);
+  if (errores.length &gt; 0) {
+    return res.status(400).json({ error: "Datos no válidos", detalles: errores });
+  }
+  const nueva = { id: siguienteId++, jugador: datos.jugador.trim(), juego: datos.juego.trim(), puntos: datos.puntos };
+  puntuaciones.push(nueva);
+  res.status(201).location("/api/puntuaciones/" + nueva.id).json(nueva);
+});
+
+app.delete("/api/puntuaciones/:id", (req, res) =&gt; {
+  const i = puntuaciones.findIndex((p) =&gt; p.id === Number(req.params.id));
+  if (i === -1) return res.status(404).json({ error: "No existe esa puntuación" });
+  puntuaciones.splice(i, 1);
+  res.status(204).end();
+});
+
+app.use((req, res) =&gt; {
+  res.status(404).json({ error: "No existe " + req.method + " " + req.originalUrl });
+});
+
+app.use((err, req, res, next) =&gt; {
+  if (err.type === "entity.parse.failed") {
+    return res.status(400).json({ error: "El cuerpo no es JSON válido" });
+  }
+  console.error(err);
+  res.status(500).json({ error: "Error interno del servidor" });
+});
+
+// ── Pruebas: no cambies estas líneas ──
+app.probar("GET", "/api/puntuaciones?juego=snake");
+app.probar("GET", "/api/puntuaciones?limite=1");
+app.probar("GET", "/api/puntuaciones/3");
+app.probar("GET", "/api/puntuaciones/99");
+app.probar("POST", "/api/puntuaciones", { jugador: "Sofía", juego: "snake", puntos: 777 });
+app.probar("POST", "/api/puntuaciones", { jugador: "", juego: "snake", puntos: -5 });
+app.probar("POST", "/api/puntuaciones", '{"jugador": ');
+app.probar("GET", "/api/puntuaciones?juego=snake&amp;limite=2");
+app.probar("DELETE", "/api/puntuaciones/1");
+app.probar("DELETE", "/api/puntuaciones/1");
+app.probar("GET", "/api/nada");
+
+// ─── Simulador de Express: imita express() dentro de esta página. No hace falta que lo leas. ───
+function express() {
+  express.json = () =&gt; function json(req, res, next) {
+    if (req.crudo !== undefined) {
+      try { req.body = JSON.parse(req.crudo); } catch (e) { e.status = 400; e.type = "entity.parse.failed"; throw e; }
+    }
+    next();
+  };
+  const capas = [];
+  const app = { listen: (puerto, listo) =&gt; listo &amp;&amp; listo() };
+  for (const m of ["get", "post", "put", "patch", "delete"]) {
+    app[m] = (ruta, f) =&gt; capas.push({ metodo: m.toUpperCase(), ruta, f });
+  }
+  app.use = (a, b) =&gt; capas.push(b ? { ruta: a, f: b } : { ruta: "", f: a });
+  app.probar = (metodo, url, cuerpo) =&gt; {
+    const u = new URL(url, "http://localhost");
+    const req = { method: metodo, path: u.pathname, originalUrl: url, params: {},
+      query: Object.fromEntries(u.searchParams),
+      crudo: cuerpo === undefined ? undefined : typeof cuerpo === "string" ? cuerpo : JSON.stringify(cuerpo) };
+    const res = { statusCode: 200, cuerpo: "", enviada: false, extra: "",
+      status(n) { this.statusCode = n; return this; },
+      location(l) { this.extra = " (Location: " + l + ")"; return this; },
+      json(d) { return this.send(JSON.stringify(d)); },
+      send(d) { this.cuerpo = typeof d === "object" ? JSON.stringify(d) : String(d); this.enviada = true; return this; },
+      sendStatus(n) { return this.status(n).send(""); },
+      end() { this.enviada = true; return this; } };
+    let i = 0;
+    const siguiente = (err) =&gt; {
+      while (i &lt; capas.length) {
+        const c = capas[i++];
+        if (c.f.length === 4 ? !err : err) continue;
+        const params = coincide(c, req.method, req.path);
+        if (!params) continue;
+        req.params = params;
+        try { if (err) c.f(err, req, res, siguiente); else c.f(req, res, siguiente); } catch (e) { siguiente(e); }
+        return;
+      }
+      if (err) res.status(err.status || 500).send(err.name + ": " + err.message);
+      else res.status(404).send("Cannot " + metodo + " " + u.pathname);
+    };
+    siguiente();
+    console.log(metodo + " " + url + " → " + (res.enviada ? res.statusCode + res.extra + (res.cuerpo ? " " + res.cuerpo : "") : "(sin respuesta: el cliente se queda esperando)"));
+  };
+  function coincide(capa, metodo, ruta) {
+    if (capa.metodo &amp;&amp; capa.metodo !== metodo) return null;
+    const a = capa.ruta.split("/").filter(Boolean), b = ruta.split("/").filter(Boolean);
+    if (capa.metodo ? a.length !== b.length : a.length &gt; b.length) return null;
+    const params = {};
+    for (let k = 0; k &lt; a.length; k++) {
+      if (a[k][0] === ":") params[a[k].slice(1)] = decodeURIComponent(b[k]);
+      else if (a[k] !== b[k]) return null;
+    }
+    return params;
+  }
+  return app;
+}</code></pre>
+  </details>
+
+  <h3>Segunda parte: el proyecto real, en tu computadora</h3>
+  <p>Ahora lo mismo, de verdad. Necesitas Node.js 24 o posterior, tu editor y dos terminales abiertas: una para el servidor y otra para probarlo.</p>
+  <ol class="pasos">
+    <li><div><p>Crea el proyecto e instala las dos dependencias:</p>
+      <pre class="consola"><code><span class="prompt">$</span> mkdir api-puntuaciones
+<span class="prompt">$</span> cd api-puntuaciones
+<span class="prompt">$</span> npm init -y
+<span class="prompt">$</span> npm pkg set type=module
+<span class="prompt">$</span> npm install express zod</code></pre></div></li>
+    <li><div><p>Añade los scripts. Puedes editar <code>package.json</code> a mano o usar <code>npm pkg set</code>:</p>
+      <pre class="consola"><code><span class="prompt">$</span> npm pkg set scripts.dev="node --watch --env-file=.env src/servidor.js"
+<span class="prompt">$</span> npm pkg set scripts.start="node src/servidor.js"</code></pre></div></li>
+    <li><div><p>Crea la estructura, la configuración y el <code>.gitignore</code>, como en la misión de la terminal. Después, guarda un primer punto con Git (<a href="24-git.html">Estación 24</a>): <code>git init</code>, <code>git add .</code> y <code>git commit -m "Estructura inicial de la API"</code>. Comprueba con <code>git status</code> que ni <code>.env</code> ni <code>node_modules</code> aparecen.</p></div></li>
+    <li><div><p>Escribe los dos middleware, <code>src/middleware/registro.js</code> y <code>src/middleware/errores.js</code>. Son los de la sección <a href="#middleware">Middleware</a>; los tienes completos en la solución de referencia.</p></div></li>
+    <li><div><p>Escribe <code>src/rutas/puntuaciones.js</code>: copia las rutas de tu parte simulada dentro de un <code>Router</code>, quitando <code>/api/puntuaciones</code> del principio de cada ruta, y cambia la validación a mano por los esquemas de Zod de la sección <a href="#validar">Validar</a>. La consulta también se valida con Zod.</p></div></li>
+    <li><div><p>Escribe <code>src/app.js</code> en el orden del ejercicio de ordenar líneas y <code>src/servidor.js</code> con el puerto de <code>process.env.PORT</code>. Arranca:</p>
+      <pre class="consola"><code><span class="prompt">$</span> npm run dev
+<span class="salida">
+&gt; api-puntuaciones@1.0.0 dev
+&gt; node --watch --env-file=.env src/servidor.js
+
+API de puntuaciones en http://localhost:3000</span></code></pre></div></li>
+    <li><div><p>En la otra terminal, prueba el contrato entero. Estas son respuestas reales de la solución de referencia:</p>
+      <pre class="consola"><code><span class="prompt">$</span> curl "http://localhost:3000/api/puntuaciones?juego=snake"
+<span class="salida">[{"id":2,"jugador":"Leo","juego":"snake","puntos":510},{"id":1,"jugador":"Ana","juego":"snake","puntos":420}]</span>
+<span class="prompt">$</span> curl -i --json '{"jugador": "Sofía", "juego": "snake", "puntos": 777}' http://localhost:3000/api/puntuaciones
+<span class="salida">HTTP/1.1 201 Created
+X-Powered-By: Express
+Location: /api/puntuaciones/4
+Content-Type: application/json; charset=utf-8
+Content-Length: 56
+ETag: W/"38-yFKK37pdiyl5QpYAUQifzIyVr+c"
+Date: Wed, 30 Sep 2026 09:17:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":4,"jugador":"Sofía","juego":"snake","puntos":777}</span>
+<span class="prompt">$</span> curl --json '{"jugador": "", "juego": "snake", "puntos": 12.5}' http://localhost:3000/api/puntuaciones
+<span class="salida">{"error":"Datos no válidos","detalles":{"formErrors":[],"fieldErrors":{"jugador":["Escribe un nombre"],"puntos":["Los puntos deben ser un número entero"]}}}</span>
+<span class="prompt">$</span> curl --json '{"jugador": }' http://localhost:3000/api/puntuaciones
+<span class="salida">{"error":"El cuerpo no es JSON válido"}</span>
+<span class="prompt">$</span> curl "http://localhost:3000/api/puntuaciones?limite=500"
+<span class="salida">{"error":"Consulta no válida","detalles":{"formErrors":[],"fieldErrors":{"limite":["Demasiado grande: se esperaba que número fuera &lt;=100"]}}}</span>
+<span class="prompt">$</span> curl -i -X DELETE http://localhost:3000/api/puntuaciones/1
+<span class="salida">HTTP/1.1 204 No Content</span>
+<span class="prompt">$</span> curl "http://localhost:3000/api/puntuaciones?juego=snake&amp;limite=2"
+<span class="salida">[{"id":4,"jugador":"Sofía","juego":"snake","puntos":777},{"id":2,"jugador":"Leo","juego":"snake","puntos":510}]</span></code></pre>
+      <p>Pon comillas alrededor de las direcciones que llevan <code>?</code> o <code>&amp;</code>. Sin ellas, la terminal interpreta el <code>&amp;</code> como una orden propia y corta la dirección, y zsh, la terminal de macOS, trata el <code>?</code> como un comodín y protesta con <code>no matches found</code>. Mientras tanto, la terminal del servidor irá mostrando el registro de cada petición:</p>
+      <pre class="consola"><code><span class="salida">GET /api/puntuaciones?juego=snake → 200 (7.1 ms)
+POST /api/puntuaciones → 201 (13.8 ms)
+POST /api/puntuaciones → 400 (2.7 ms)
+POST /api/puntuaciones → 400 (4.3 ms)
+GET /api/puntuaciones?limite=500 → 400 (1.6 ms)
+DELETE /api/puntuaciones/1 → 204 (1.6 ms)
+GET /api/puntuaciones?juego=snake&amp;limite=2 → 200 (1.2 ms)</span></code></pre></div></li>
+    <li><div><p>Guarda las peticiones en un archivo <code>peticiones.http</code> (o en una colección de Bruno) dentro del proyecto, escribe en el <code>README.md</code> la tabla del contrato y haz commit. Así cualquiera que clone el repositorio puede arrancar la API con <code>npm install</code> y <code>npm run dev</code>, y probarla en un minuto.</p></div></li>
+  </ol>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Tus datos viven en la memoria</p><p>Las puntuaciones están en un array dentro del programa. Cada vez que el servidor se reinicia (y con <code>--watch</code> se reinicia cada vez que guardas un archivo), vuelven a ser las tres del principio. Para que duren hace falta una base de datos, y eso es justo lo que harás en la <a href="30-bases-datos.html">Estación 30</a>: las rutas quedarán casi iguales y solo cambiará de dónde salen los datos.</p></div></aside>
+  <details class="solucion"><summary>Ver el proyecto real completo (solución de referencia)</summary>
+    <p><code>package.json</code>:</p>
+    <pre><code class="language-json">{
+  "name": "api-puntuaciones",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file=.env src/servidor.js",
+    "start": "node src/servidor.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "zod": "^4.6.5"
+  }
+}</code></pre>
+    <p><code>.env.example</code> (y tu <code>.env</code>, con los mismos nombres):</p>
+    <pre><code class="language-text"># Copia este archivo como .env y pon tus valores
+PORT=3000</code></pre>
+    <p><code>.gitignore</code>:</p>
+    <pre><code class="language-text">node_modules/
+.env</code></pre>
+    <p><code>src/servidor.js</code>:</p>
+    <pre><code class="language-js">import { app } from "./app.js";
+
+const puerto = Number(process.env.PORT) || 3000;
+
+app.listen(puerto, (error) =&gt; {
+  if (error) throw error;
+  console.log(`API de puntuaciones en http://localhost:${puerto}`);
+});</code></pre>
+    <p><code>src/app.js</code>:</p>
+    <pre><code class="language-js">import express from "express";
+import { registro } from "./middleware/registro.js";
+import { rutaNoEncontrada, manejarErrores } from "./middleware/errores.js";
+import { rutasPuntuaciones } from "./rutas/puntuaciones.js";
+
+export const app = express();
+
+app.use(registro);
+app.use(express.json());
+
+app.get("/api/salud", (req, res) =&gt; {
+  res.json({ estado: "ok" });
+});
+app.use("/api/puntuaciones", rutasPuntuaciones);
+
+app.use(rutaNoEncontrada);
+app.use(manejarErrores);</code></pre>
+    <p><code>src/middleware/registro.js</code>:</p>
+    <pre><code class="language-js">export function registro(req, res, next) {
+  const inicio = performance.now();
+  res.on("finish", () =&gt; {
+    const ms = (performance.now() - inicio).toFixed(1);
+    console.log(`${req.method} ${req.originalUrl} → ${res.statusCode} (${ms} ms)`);
+  });
+  next();
+}</code></pre>
+    <p><code>src/middleware/errores.js</code>:</p>
+    <pre><code class="language-js">export function rutaNoEncontrada(req, res) {
+  res.status(404).json({ error: `No existe ${req.method} ${req.originalUrl}` });
+}
+
+export function manejarErrores(err, req, res, next) {
+  if (err.type === "entity.parse.failed") {
+    return res.status(400).json({ error: "El cuerpo no es JSON válido" });
+  }
+  const estado = err.status ?? 500;
+  if (estado &gt;= 500) console.error(err);
+  res.status(estado).json({
+    error: estado &gt;= 500 ? "Error interno del servidor" : err.message,
+  });
+}</code></pre>
+    <p><code>src/rutas/puntuaciones.js</code>:</p>
+    <pre><code class="language-js">import { Router } from "express";
+import * as z from "zod";
+
+z.config(z.locales.es());
+
+const EsquemaPuntuacion = z.object({
+  jugador: z.string().trim().min(1, "Escribe un nombre").max(20, "Máximo 20 caracteres"),
+  juego: z.string().trim().min(1, "Indica el juego"),
+  puntos: z.number({ error: "Los puntos deben ser un número" })
+    .int("Los puntos deben ser un número entero")
+    .nonnegative("Los puntos no pueden ser negativos"),
+});
+
+const EsquemaConsulta = z.object({
+  juego: z.string().optional(),
+  limite: z.coerce.number().int().min(1).max(100).default(10),
+});
+
+// Datos en memoria: se pierden al reiniciar (en la Estación 30 irán a una base de datos)
+const puntuaciones = [
+  { id: 1, jugador: "Ana", juego: "snake", puntos: 420 },
+  { id: 2, jugador: "Leo", juego: "snake", puntos: 510 },
+  { id: 3, jugador: "Ana", juego: "tetris", puntos: 9800 },
+];
+let siguienteId = 4;
+
+export const rutasPuntuaciones = Router();
+
+rutasPuntuaciones.get("/", (req, res) =&gt; {
+  const consulta = EsquemaConsulta.safeParse(req.query);
+  if (!consulta.success) {
+    return res.status(400).json({ error: "Consulta no válida", detalles: z.flattenError(consulta.error) });
+  }
+  const { juego, limite } = consulta.data;
+  const lista = puntuaciones
+    .filter((p) =&gt; juego === undefined || p.juego === juego)
+    .toSorted((a, b) =&gt; b.puntos - a.puntos)
+    .slice(0, limite);
+  res.json(lista);
+});
+
+rutasPuntuaciones.get("/:id", (req, res) =&gt; {
+  const p = puntuaciones.find((p) =&gt; p.id === Number(req.params.id));
+  if (!p) return res.status(404).json({ error: "No existe esa puntuación" });
+  res.json(p);
+});
+
+rutasPuntuaciones.post("/", (req, res) =&gt; {
+  const resultado = EsquemaPuntuacion.safeParse(req.body);
+  if (!resultado.success) {
+    return res.status(400).json({ error: "Datos no válidos", detalles: z.flattenError(resultado.error) });
+  }
+  const nueva = { id: siguienteId++, ...resultado.data };
+  puntuaciones.push(nueva);
+  res.status(201).location(`/api/puntuaciones/${nueva.id}`).json(nueva);
+});
+
+rutasPuntuaciones.delete("/:id", (req, res) =&gt; {
+  const i = puntuaciones.findIndex((p) =&gt; p.id === Number(req.params.id));
+  if (i === -1) return res.status(404).json({ error: "No existe esa puntuación" });
+  puntuaciones.splice(i, 1);
+  res.status(204).end();
+});</code></pre>
+    <p>Fíjate en cuánto se parece <code>rutas/puntuaciones.js</code> a tu versión simulada: cambian la validación, que ahora hace Zod, y que las rutas cuelgan de un <code>Router</code>. Todo lo demás, desde <code>req.params</code> hasta <code>res.status(201).location(…)</code>, es idéntico.</p>
+  </details>
+  <p><strong>Para ir más allá:</strong> añade <code>PATCH /api/puntuaciones/:id</code> con un esquema de Zod de campos opcionales; conecta el frontend del juego con <code>fetch</code> (<a href="16-asincronia.html#fetch">Estación 16</a>), sirviéndolo con <code>express.static</code> o configurando <code>cors</code>; guarda las puntuaciones en un archivo JSON con <code>node:fs/promises</code> para que sobrevivan a los reinicios, sabiendo que en la Estación 30 lo cambiarás por una base de datos; o añade una ruta <code>GET /api/juegos</code> que devuelva la lista de juegos distintos con su mejor puntuación.</p>
 </section>
   </main>
 </div>
