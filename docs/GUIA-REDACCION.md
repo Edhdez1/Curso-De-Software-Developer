@@ -192,7 +192,10 @@ JavaScript (se ejecuta en un Web Worker, sin DOM):
   nivel superior): `return expuesto.aEstrella && expuesto.aEstrella(mapa, a, b).length === 7 || "…"`. Si el programa se
   rompe antes de terminar o el nombre no existe, `expuesto.aEstrella` vale `undefined`: devuelve un mensaje que lo diga
   («No encuentro la función aEstrella: ¿se llama así y el programa terminó sin errores?»). No hace falta que la persona
-  escriba nada especial.
+  escriba nada especial. Cuidado si expones un **contador** para medir cuánto hizo el código (nodos visitados,
+  iteraciones…): una variable primitiva (`let contador = 0`) se expone como una foto fija del momento en que el programa
+  terminó, no como una referencia viva, así que leerla «antes» y «después» siempre da la misma foto. Expón un objeto
+  mutable (`let contador = { n: 0 }`, y súmale con `contador.n++`) para que la verificación pueda comparar dos lecturas.
 - La verificación de un taller JS (no web) es **síncrona**: no soporta que devuelva una Promise. Si necesitas probar una
   función `async` de la persona (por ejemplo, con reintentos o una demora simulada), no esperes su resultado desde la
   verificación; haz que el propio código del taller (que sí corre dentro de un IIFE `async` con `await` de nivel
@@ -283,6 +286,10 @@ SQL (SQLite real en el navegador):
   </details>
 </article>
 ```
+
+La solución debe ser un programa **completo y autónomo** (incluida la preparación oculta, si la necesita: esa se
+antepone sola). «Solo cambió esta función, el resto sigue igual» no vale: `probar-talleres.mjs` ejecuta exactamente lo
+que hay dentro de `<code>`, así que un fragmento rompe la prueba.
 
 `data-nivel`: `guiado`, `semi` o `reto`. La primera `details.solucion` después de un taller es su solución y
 **debe pasar la verificación** (lo comprueba `node herramientas/probar-talleres.mjs`). El código inicial no debe

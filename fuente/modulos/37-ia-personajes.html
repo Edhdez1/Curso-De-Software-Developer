@@ -5415,7 +5415,7 @@ return true;
   <details class="pista"><summary>Pista: fuerzaOveja (paso 2)</summary><p>Acumula separación, alineación y cohesión solo con los vecinos dentro de <code>RADIO_VECINDAD</code> (como en la sección de <a href="#movimiento">steering</a>), y súmales una fuerza que empuje a la oveja lejos de cada amenaza dentro de <code>RADIO_MIEDO</code>, más fuerte cuanto más cerca.</p></details>
   <details class="pista"><summary>Pista: percibirLobo y elegirObjetivo (pasos 3 y 4)</summary><p>Convierte las posiciones en píxeles a casillas dividiendo entre <code>T</code> y redondeando hacia abajo antes de llamar a <code>hayLineaDeVision</code>. Para «oye el ladrido», comprueba si la casilla del lobo está en el <code>Set</code> de algún ladrido cuyo <code>hasta</code> todavía no haya pasado (<code>reloj</code>). Para la utilidad, normaliza cada consideración entre 0 y 1 antes de combinarla.</p></details>
   <details class="pista"><summary>Pista: construirArbolLobo (paso 5)</summary><p>La condición de «atacar» es la única con efectos secundarios: solo devuelve EXITO si el lobo ya estaba atacando (para no soltar la ficha a medio ataque) o si pide una ficha nueva y la consigue, y en ese caso debe fijar <code>lobo.objetivo = lobo.objetivoCandidato</code>.</p></details>
-  <details class="pista"><summary>Pista: moverLoboHaciaObjetivo (paso 6)</summary><p>Guarda en el lobo cuándo calculaste el último camino (<code>lobo.ultimoPlan</code>) y hacia qué casilla (<code>lobo.destinoPlan</code>). Antes de llamar a <code>aEstrella</code> otra vez, comprueba esas dos condiciones; si no hace falta replanificar, sigue avanzando por <code>lobo.camino</code> con <code>moverLibre</code>.</p></details>
+  <details class="pista"><summary>Pista: moverLoboHaciaObjetivo (paso 6)</summary><p>Guarda en el lobo cuándo calculaste el último camino (<code>lobo.ultimoPlan</code>) y hacia qué casilla (<code>lobo.destinoPlan</code>). Antes de llamar a <code>aEstrella</code> otra vez, comprueba esas dos condiciones; si no hace falta replanificar, sigue avanzando por <code>lobo.camino</code> con <code>moverLibre</code>. Un detalle que se nota jugando: en la <em>última</em> casilla del camino, apunta al <code>destino</code> exacto (en píxeles), no al centro de esa casilla; si no, un lobo que ya comparte casilla con su presa se queda parado en el centro sin cerrar los últimos píxeles que le faltan para atraparla.</p></details>
   <details class="solucion"><summary>Ver una solución de referencia</summary>
     <p>El HTML y el CSS no cambian. Esto reemplaza las cinco funciones marcadas «completa aquí» (el resto del JavaScript sigue igual):</p>
     <pre><code class="language-js">function fuerzaOveja(oveja, rebano, amenazas) {
@@ -5512,9 +5512,14 @@ function moverLoboHaciaObjetivo(lobo, destino, mapa) {
     lobo.destinoPlan = destTile;
   }
   if (lobo.camino.length === 0) { moverLibre(lobo, destino.x, destino.y, mapa, 85); return; }
+  const esUltimo = lobo.indiceCamino &gt;= lobo.camino.length - 1;
   const casilla = lobo.camino[lobo.indiceCamino];
-  const px = (casilla.x + 0.5) * T, py = (casilla.y + 0.5) * T;
-  if (dist(lobo, { x: px, y: py }) &lt; T * 0.4 &amp;&amp; lobo.indiceCamino &lt; lobo.camino.length - 1) lobo.indiceCamino++;
+  // En la última casilla del camino, apunta al destino exacto, no al centro de la
+  // casilla: si no, un lobo que ya comparte casilla con su objetivo se queda
+  // parado en el centro sin cerrar los últimos píxeles que le faltan.
+  const px = esUltimo ? destino.x : (casilla.x + 0.5) * T;
+  const py = esUltimo ? destino.y : (casilla.y + 0.5) * T;
+  if (!esUltimo &amp;&amp; dist(lobo, { x: px, y: py }) &lt; T * 0.4) lobo.indiceCamino++;
   moverLibre(lobo, px, py, mapa, 85);
 }</code></pre>
     <p>Con estas cinco funciones, las ovejas se agrupan y huyen de verdad, los lobos solo ven lo que alcanzan a ver, eligen a la oveja aislada más conveniente, lo hacen con un árbol reactivo que se interrumpe en cuanto ladras cerca, y persiguen por el bosque con A*, recalculando el camino solo cuando hace falta.</p>
