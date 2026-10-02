@@ -50,6 +50,7 @@
       <li><a href="#capas">Capas</a></li>
       <li><a href="#retropropagacion">Retropropagación</a></li>
       <li><a href="#entrenar">Entrenar</a></li>
+      <li><a href="#pytorch">PyTorch</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -1128,7 +1129,7 @@ requestAnimationFrame(animar);</textarea>
 if (typeof window.exactitudValidacion !== "function") return "No encuentro la función exactitudValidacion. ¿La borraste?";
 var a = window.exactitudValidacion();
 if (a >= 0.9) return true;
-return "Exactitud en validación: " + Math.round(a * 100) + " %. Necesitas al menos un 90 %. Con 2 neuronas ocultas la red solo puede combinar 2 rectas: ¿cuántas hacen falta para encerrar el círculo?";
+return "Exactitud en validación: " + Math.round(a * 100) + " %. Necesitas al menos un 90 %. Cada neurona oculta aporta una recta: ¿cuántas hacen falta para encerrar el círculo? (Con la espiral, espera a que avancen las épocas.)";
     </script>
   </div>
   <p>Con 3 neuronas ocultas y tanh, la red pasa del 81 % al 99 %: tres rectas bastan para encerrar el círculo en un triángulo de bordes suaves. Con sigmoide, la misma red necesita muchas más épocas. Y la espiral con una sola capa oculta cuesta de verdad: con 8 o más neuronas llega a más del 90 % hacia la época 3000, y en el <a href="https://playground.tensorflow.org/">TensorFlow Playground</a> puedes comprobar que con una segunda capa oculta le resulta mucho más fácil.</p>
@@ -1667,6 +1668,315 @@ function convolucionar(img, kernel) {
   </ul>
   <p>Hay otras familias de redes que solo nombramos aquí: las <strong>recurrentes</strong> (RNN y LSTM), que procesaban secuencias paso a paso; las <strong>GAN</strong>, dos redes que compiten para generar imágenes; y los modelos de <strong>difusión</strong>, que generan imágenes quitando ruido poco a poco. El Transformer de 2017, la arquitectura de los modelos de lenguaje, es el tema de la <a href="41-modelos-lenguaje.html#transformer">Estación 41</a>.</p>
 </section>
+
+<section id="pytorch" data-parada="PyTorch">
+  <h2>De tu mini biblioteca a PyTorch, y de PyTorch a tu juego</h2>
+  <p>Tu clase <code>Valor</code> hace, número a número, lo mismo que las bibliotecas profesionales. <strong>PyTorch</strong> es la más usada para investigar y entrenar redes: hace la autodiferenciación con tensores enteros en lugar de números sueltos, trae capas, pérdidas y optimizadores ya escritos y probados, y aprovecha la GPU si la tienes. Se usa desde Python, así que aquí se juntan esta estación y la <a href="36-python.html">36</a>. En la <a href="36-python.html#estrategia">Estación 36</a> se anunció que esta estación trabajaría con PyTorch: aquí está.</p>
+
+  <h3>Instalarlo</h3>
+  <p>Crea una carpeta de proyecto con su entorno virtual, como aprendiste en la <a href="36-python.html#ecosistema">Estación 36</a>. Para aprender basta la versión solo CPU, que pesa bastante menos que la de GPU y funciona en cualquier computadora. Se descarga de un índice propio de PyTorch:</p>
+  <pre class="consola"><code><span class="prompt">$</span> mkdir digitos
+<span class="prompt">$</span> cd digitos
+<span class="prompt">$</span> python -m venv .venv
+<span class="prompt">$</span> source .venv/bin/activate             <span class="salida"># en Windows: .venv\Scripts\Activate.ps1</span>
+<span class="prompt">(.venv) $</span> python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu</code></pre>
+  <p>Con uv es <code>uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu</code> dentro del entorno. Comprueba la versión y si hay aceleración disponible:</p>
+  <pre class="consola"><code><span class="prompt">(.venv) $</span> python -c "import torch; print(torch.__version__, torch.cuda.is_available(), torch.backends.mps.is_available())"
+<span class="salida">2.14.0+cpu False False</span></code></pre>
+  <p>El primer <code>False</code> dice que no hay una GPU de NVIDIA usable (CUDA); el segundo, que no hay aceleración de Apple (MPS). Para todo lo de esta estación, la CPU basta. Si más adelante quieres usar tu GPU, la página oficial «Get Started» genera el comando exacto para tu sistema.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Versiones de Python</p><p>PyTorch 2.14 (2 de septiembre de 2026) tiene paquetes para Python 3.10 a 3.14. Pero torchvision 0.29, que trae los datos de MNIST, declara que no funciona con Python 3.14.1 exactamente: si <code>python --version</code> dice 3.14.1, actualiza a un 3.14 posterior o crea el entorno con otra versión (<code>uv python install 3.13</code>). Si pip dice que no encuentra una versión compatible, casi siempre es esto.</p></div></aside>
+
+  <h3>Lo mismo que ya sabes, con otros nombres</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Tu biblioteca</th><th scope="col">PyTorch</th></tr></thead>
+      <tbody>
+        <tr><td><code>new Valor(1)</code></td><td><code>torch.tensor(1.0, requires_grad=True)</code>: un tensor que apunta sus operaciones</td></tr>
+        <tr><td><code>L.retro()</code></td><td><code>L.backward()</code></td></tr>
+        <tr><td><code>a.grad</code></td><td><code>a.grad</code></td></tr>
+        <tr><td><code>p.grad = 0</code> para cada parámetro</td><td><code>optimizador.zero_grad()</code></td></tr>
+        <tr><td><code>p.dato -= tasa * p.grad</code></td><td><code>optimizador.step()</code></td></tr>
+        <tr><td>Tu clase <code>Red</code> con capas</td><td><code>nn.Sequential(nn.Linear(...), nn.ReLU(), ...)</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Compruébalo con la misma expresión de la sección de retropropagación:</p>
+  <pre><code class="language-python">import torch
+
+a = torch.tensor(1.0, requires_grad=True)
+b = torch.tensor(-0.5, requires_grad=True)
+L = torch.tanh(a * b + a)     # la misma expresión de la sección de retropropagación
+L.backward()
+print(L.item())
+print(a.grad, b.grad)</code></pre>
+  <pre class="consola"><code><span class="prompt">(.venv) $</span> python autograd.py
+<span class="salida">0.46211716532707214
+tensor(0.3932) tensor(0.7864)</span></code></pre>
+  <p>Los mismos 0.393 y 0.786 que calculaste a mano. Por dentro, <code>autograd</code> construye el mismo grafo de cómputo y lo recorre al revés.</p>
+
+  <h3>Las piezas de un entrenamiento en PyTorch</h3>
+  <ul>
+    <li><code>nn.Sequential</code> apila capas; <code>nn.Linear(784, 128)</code> es una capa densa de 784 entradas y 128 neuronas; <code>nn.ReLU()</code>, la activación.</li>
+    <li><code>nn.CrossEntropyLoss()</code> es la entropía cruzada. Ojo: aplica softmax por dentro, así que recibe los <strong>logits</strong>, no probabilidades.</li>
+    <li><code>torch.optim.SGD</code> o <code>torch.optim.Adam</code> hacen la actualización de todos los parámetros.</li>
+    <li><code>DataLoader</code> reparte los datos en lotes y los baraja en cada época.</li>
+    <li><code>modelo.train()</code> y <code>modelo.eval()</code> cambian el modo: algunas capas, como el dropout, se comportan distinto al entrenar y al usar la red. <code>with torch.no_grad():</code> desactiva el apunte del grafo cuando solo quieres predecir, y ahorra memoria y tiempo.</li>
+  </ul>
+  <div class="parsons" data-titulo="Ordena el bucle de PyTorch" data-lenguaje="python" data-exito="¡Eso es! zero_grad, adelante, pérdida, backward y step: el mismo bucle de cinco pasos de tu biblioteca.">
+    <ol>
+      <li>for epoca in range(5):</li>
+      <li data-sangria="1">for x, y in cargador:</li>
+      <li data-sangria="2">optimizador.zero_grad()</li>
+      <li data-sangria="2">salida = modelo(x)</li>
+      <li data-sangria="2">perdida = criterio(salida, y)</li>
+      <li data-sangria="2">perdida.backward()</li>
+      <li data-sangria="2">optimizador.step()</li>
+    </ol>
+  </div>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p><strong>Aplicar softmax antes de <code>CrossEntropyLoss</code>.</strong> El modelo termina en <code>nn.Softmax()</code> y la pérdida vuelve a aplicar softmax por dentro: la red entrena peor y nadie avisa. La última capa devuelve logits; softmax solo se aplica fuera, cuando quieres mostrar probabilidades.</p></div></aside>
+
+  <h3>Tu primer reconocedor de dígitos</h3>
+  <p><strong>MNIST</strong> es el conjunto de datos clásico: 70 000 dígitos escritos a mano, en imágenes grises de 28 × 28. Este guion de unas 45 líneas lo descarga (unos 12 MB, solo la primera vez), separa 5 000 imágenes para validación, entrena una MLP 784-128-10 durante 5 épocas y mide el acierto en las 10 000 de prueba al final:</p>
+  <pre><code class="language-python">import torch
+from torch import nn
+from torch.utils.data import DataLoader, random_split
+from torchvision import datasets
+from torchvision.transforms import v2
+
+torch.manual_seed(0)
+transformar = v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)])   # píxeles de 0 a 1
+todo = datasets.MNIST("datos", train=True, download=True, transform=transformar)
+prueba = datasets.MNIST("datos", train=False, download=True, transform=transformar)
+entreno, validacion = random_split(todo, [55_000, 5_000])
+cargador = DataLoader(entreno, batch_size=64, shuffle=True)
+
+def exactitud(modelo, datos):
+    modelo.eval()
+    aciertos = 0
+    with torch.no_grad():
+        for x, y in DataLoader(datos, batch_size=1000):
+            aciertos += (modelo(x).argmax(dim=1) == y).sum().item()
+    return aciertos / len(datos)
+
+modelo = nn.Sequential(
+    nn.Flatten(),                    # 1×28×28 → 784 números
+    nn.Linear(784, 128), nn.ReLU(),
+    nn.Linear(128, 10),              # 10 logits: uno por dígito
+)
+print("parámetros:", sum(p.numel() for p in modelo.parameters()))
+criterio = nn.CrossEntropyLoss()
+optimizador = torch.optim.Adam(modelo.parameters(), lr=1e-3)
+
+for epoca in range(1, 6):
+    modelo.train()
+    suma = 0.0
+    for x, y in cargador:
+        optimizador.zero_grad()              # 1. gradientes a cero
+        perdida = criterio(modelo(x), y)     # 2. adelante y pérdida
+        perdida.backward()                   # 3. retropropagación
+        optimizador.step()                   # 4. actualizar pesos
+        suma += perdida.item()
+    print(f"época {epoca}: pérdida {suma / len(cargador):.3f}  validación {exactitud(modelo, validacion):.1%}")
+
+print(f"exactitud en prueba: {exactitud(modelo, prueba):.1%}")
+torch.save(modelo.state_dict(), "digitos.pt")
+print("guardado en digitos.pt")</code></pre>
+  <pre class="consola"><code><span class="prompt">(.venv) $</span> python digitos.py
+<span class="salida">parámetros: 101770
+época 1: pérdida 0.350  validación 94.4%
+época 2: pérdida 0.161  validación 95.7%
+época 3: pérdida 0.114  validación 95.8%
+época 4: pérdida 0.086  validación 96.6%
+época 5: pérdida 0.068  validación 97.3%
+exactitud en prueba: 97.3%
+guardado en digitos.pt</span></code></pre>
+  <p>Tardó menos de un minuto en una CPU de 4 núcleos. Tus números serán parecidos, no idénticos: cambian con el procesador, el sistema y la versión. Ahora cambia el modelo por una CNN pequeña, con dos capas de filtros de 3 × 3:</p>
+  <pre><code class="language-python">modelo = nn.Sequential(
+    nn.Conv2d(1, 16, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),   # 16 mapas de 14×14
+    nn.Conv2d(16, 32, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),  # 32 mapas de 7×7
+    nn.Flatten(),
+    nn.Linear(32 * 7 * 7, 10),
+)</code></pre>
+  <pre class="consola"><code><span class="prompt">(.venv) $</span> python digitos.py
+<span class="salida">parámetros: 20490
+época 1: pérdida 0.253  validación 97.0%
+época 2: pérdida 0.074  validación 97.7%
+época 3: pérdida 0.054  validación 98.3%
+época 4: pérdida 0.044  validación 98.6%
+época 5: pérdida 0.036  validación 98.7%
+exactitud en prueba: 98.8%
+guardado en digitos.pt</span></code></pre>
+  <p>Menos parámetros y mejor resultado, en unos dos minutos. Fíjate en la disciplina: la validación se mira en cada época para decidir, y la prueba se usa una sola vez, al final.</p>
+
+  <h3>Guardar pesos con seguridad</h3>
+  <p><code>modelo.state_dict()</code> es un diccionario con todos los tensores de pesos, y <code>torch.save</code> lo escribe en un archivo <code>.pt</code>. Para cargarlo, creas el mismo modelo y le pasas los pesos con <code>modelo.load_state_dict(torch.load("digitos.pt"))</code>.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Un archivo de pesos puede ser un programa</p><p>El formato <code>.pt</code> usa por debajo <em>pickle</em>, el sistema de Python para guardar objetos, que puede ejecutar código al cargar. Desde PyTorch 2.6, <code>torch.load</code> usa <code>weights_only=True</code> por defecto y solo acepta tensores y tipos básicos: no lo desactives con archivos que no hayas creado tú. Nunca cargues un <code>.pt</code> o un <em>pickle</em> de un desconocido. Para compartir pesos existe <strong>safetensors</strong>, un formato que solo guarda números y no puede ejecutar nada. Trata los modelos descargados como cualquier otra dependencia: son parte de tu cadena de suministro (<a href="31-seguridad.html#secretos">Estación 31</a>).</p></div></aside>
+
+  <h3>Exportar a ONNX y llevarlo a tu juego</h3>
+  <p><strong>ONNX</strong> (<em>Open Neural Network Exchange</em>) es un formato de archivo estándar para redes ya entrenadas: el grafo de operaciones y sus pesos. Lo entienden los navegadores (con ONNX Runtime Web), Unity y muchos otros entornos. Desde PyTorch 2.9, <code>torch.onnx.export</code> usa un exportador nuevo que necesita dos paquetes más: instala <code>onnx</code> y <code>onnxscript</code>, o verás «No module named 'onnxscript'».</p>
+  <pre><code class="language-python">import torch
+from torch import nn
+
+modelo = nn.Sequential(      # la misma CNN de antes
+    nn.Conv2d(1, 16, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
+    nn.Conv2d(16, 32, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
+    nn.Flatten(),
+    nn.Linear(32 * 7 * 7, 10),
+)
+modelo.load_state_dict(torch.load("digitos.pt"))   # weights_only=True por defecto
+modelo.eval()
+ejemplo = torch.zeros(1, 1, 28, 28)                 # forma de la entrada: 1 imagen gris de 28×28
+torch.onnx.export(modelo, (ejemplo,), "digitos.onnx",
+                  input_names=["imagen"], output_names=["logits"],
+                  dynamo=True, external_data=False)   # un solo archivo</code></pre>
+  <pre class="consola"><code><span class="prompt">(.venv) $</span> python -m pip install onnx onnxscript onnxruntime
+<span class="prompt">(.venv) $</span> python exportar.py
+<span class="salida">[torch.onnx] Obtain model graph for `Sequential([...]` with `torch.export.export(..., strict=False)`...
+[torch.onnx] Run decompositions...
+[torch.onnx] Translate the graph into ONNX...
+[torch.onnx] Optimize the ONNX graph...</span>
+<span class="prompt">(.venv) $</span> python probar_onnx.py
+<span class="salida">entrada: imagen [1, 1, 28, 28]
+predicción: 7 | etiqueta real: 7</span></code></pre>
+  <p>(La salida real marca además cada fase como terminada.) Sin <code>external_data=False</code>, la versión actual guarda los pesos en un segundo archivo, <code>digitos.onnx.data</code>, que tendrías que servir junto al otro. El archivo resultante pesa 93 KB. <code>probar_onnx.py</code> abre el <code>.onnx</code> con ONNX Runtime para Python (necesita Python 3.11 o posterior) y clasifica la primera imagen de prueba: comprobarlo antes de llevarlo a otro sitio te ahorra depurar en el lugar equivocado.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 300" role="img" aria-label="El camino de PyTorch a tu juego: entrenar en PyTorch, guardar el state_dict, y exportar de dos formas. A ONNX, que se ejecuta en el navegador con ONNX Runtime Web o en Unity con Sentis, para redes de cualquier tamaño. O a un JSON de pesos, que usas con tu propia propagación en Godot, JavaScript o C#, para redes pequeñas y sin dependencias.">
+      <rect class="d-caja" x="10" y="120" width="150" height="60" rx="8"/>
+      <text class="d-rotulo" x="85" y="146" text-anchor="middle">Entrenar</text>
+      <text class="d-peq d-tenue" x="85" y="166" text-anchor="middle">PyTorch, en Python</text>
+      <rect class="d-caja" x="200" y="120" width="150" height="60" rx="8"/>
+      <text class="d-rotulo" x="275" y="146" text-anchor="middle">Guardar</text>
+      <text class="d-peq d-tenue" x="275" y="166" text-anchor="middle">state_dict: .pt</text>
+      <rect class="d-caja" x="400" y="40" width="150" height="60" rx="8"/>
+      <text class="d-rotulo" x="475" y="66" text-anchor="middle">Exportar</text>
+      <text class="d-peq d-tenue" x="475" y="86" text-anchor="middle">digitos.onnx</text>
+      <rect class="d-caja" x="400" y="200" width="150" height="60" rx="8"/>
+      <text class="d-rotulo" x="475" y="226" text-anchor="middle">Exportar</text>
+      <text class="d-peq d-tenue" x="475" y="246" text-anchor="middle">pesos.json</text>
+      <rect class="d-caja-suave" x="590" y="10" width="125" height="50" rx="8"/>
+      <text class="d-rotulo" x="652" y="31" text-anchor="middle">Navegador</text>
+      <text class="d-peq d-tenue" x="652" y="51" text-anchor="middle">ONNX Runtime Web</text>
+      <rect class="d-caja-suave" x="590" y="78" width="125" height="50" rx="8"/>
+      <text class="d-rotulo" x="652" y="99" text-anchor="middle">Unity</text>
+      <text class="d-peq d-tenue" x="652" y="119" text-anchor="middle">Sentis</text>
+      <rect class="d-caja-suave" x="590" y="200" width="125" height="60" rx="8"/>
+      <text class="d-rotulo" x="652" y="226" text-anchor="middle">Godot, JS, C#</text>
+      <text class="d-peq d-tenue" x="652" y="246" text-anchor="middle">tu propagación</text>
+      <path class="d-linea" d="M160 150L188 150"/>
+      <path class="d-tinta" d="M200 150L188 143L188 157z"/>
+      <path class="d-linea" d="M350 140L393 85"/>
+      <path class="d-tinta" d="M400 75L387 80L398 89z"/>
+      <path class="d-linea" d="M350 160L393 215"/>
+      <path class="d-tinta" d="M400 225L398 211L387 220z"/>
+      <path class="d-linea" d="M550 62L579 46"/>
+      <path class="d-tinta" d="M590 40L576 40L583 52z"/>
+      <path class="d-linea" d="M550 78L579 94"/>
+      <path class="d-tinta" d="M590 100L583 88L576 100z"/>
+      <path class="d-linea" d="M550 230L578 230"/>
+      <path class="d-tinta" d="M590 230L578 223L578 237z"/>
+      <text class="d-peq d-tenue" x="475" y="140" text-anchor="middle">redes de cualquier tamaño</text>
+      <text class="d-peq d-tenue" x="475" y="290" text-anchor="middle">redes pequeñas, sin dependencias</text>
+    </svg>
+    <figcaption>Dos caminos para llevar una red entrenada a tu app o a tu juego.</figcaption>
+  </figure>
+  <p><strong>En el navegador.</strong> ONNX Runtime Web 1.30 ejecuta el <code>.onnx</code> con WebAssembly o WebGPU. Solo hace inferencia (usar la red, no entrenarla). Esta página con un lienzo para dibujar reconoce el dígito; sírvela desde tu computadora con <code>python -m http.server</code> o <code>npx serve</code> (<a href="05-herramientas.html">Estación 05</a>), porque abierta con doble clic el navegador no deja cargar el modelo:</p>
+  <pre><code class="language-html">&lt;canvas id="lienzo" width="280" height="280" style="border:1px solid; touch-action:none"&gt;&lt;/canvas&gt;
+&lt;p id="respuesta"&gt;Dibuja un dígito grande y centrado&lt;/p&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.30.0/ort.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  ort.env.wasm.numThreads = 1;   // sin aislamiento de origen cruzado, un solo hilo
+  const lienzo = document.querySelector("#lienzo"), ctx = lienzo.getContext("2d");
+  const sesion = ort.InferenceSession.create("digitos.onnx");   // una promesa
+
+  async function reconocer() {
+    const peque = document.createElement("canvas");
+    peque.width = peque.height = 28;
+    const c = peque.getContext("2d");
+    c.drawImage(lienzo, 0, 0, 28, 28);                        // de 280×280 a 28×28
+    const { data } = c.getImageData(0, 0, 28, 28);            // RGBA: 4 números por píxel
+    const entrada = new Float32Array(784);
+    for (let i = 0; i &lt; 784; i++) entrada[i] = data[i * 4 + 3] / 255;   // tinta = opacidad
+    const tensor = new ort.Tensor("float32", entrada, [1, 1, 28, 28]);
+    const { logits } = await (await sesion).run({ imagen: tensor });
+    const digito = logits.data.indexOf(Math.max(...logits.data));
+    document.querySelector("#respuesta").textContent = `Creo que es un ${digito}`;
+  }
+
+  let dibujando = false;
+  lienzo.addEventListener("pointerdown", () =&gt; { dibujando = true; ctx.beginPath(); });
+  lienzo.addEventListener("pointerup", () =&gt; { dibujando = false; reconocer(); });
+  lienzo.addEventListener("pointermove", (e) =&gt; {
+    if (!dibujando) return;
+    ctx.lineWidth = 18; ctx.lineCap = "round";
+    ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke();
+  });
+&lt;/script&gt;</code></pre>
+  <p>MNIST tiene los dígitos blancos sobre negro, gruesos y centrados; por eso el código toma la opacidad del trazo como «tinta». Si dibujas un 3 diminuto en una esquina, la red falla: nunca vio nada parecido. Es la misma lección del husky y el lobo.</p>
+  <p><strong>Pesos en JSON y tu propia propagación.</strong> Para redes pequeñas, como el cerebro de 37 pesos del proyecto, no necesitas ninguna biblioteca: exportas los pesos a JSON y programas la propagación hacia delante que ya sabes escribir, en JavaScript, en GDScript o en C#. Cero dependencias y control total.</p>
+  <pre><code class="language-python">import json
+pesos = {nombre: tensor.tolist() for nombre, tensor in modelo.state_dict().items()}
+with open("pesos.json", "w") as f:
+    json.dump(pesos, f)</code></pre>
+  <pre><code class="language-gdscript"># Godot 4: la propagación de una red de capas densas con tanh
+var capas = []   # cada capa: { "pesos": [[...], ...], "sesgos": [...] }, leídas de pesos.json
+
+func adelante(x: Array) -&gt; Array:
+	for capa in capas:
+		var salida = []
+		for j in capa.pesos.size():
+			var z = capa.sesgos[j]
+			for i in x.size():
+				z += capa.pesos[j][i] * x[i]
+			salida.append(tanh(z))
+		x = salida
+	return x</code></pre>
+  <p><strong>En los motores.</strong> Unity carga archivos ONNX con su paquete <strong>Sentis</strong> y los ejecuta dentro del juego, en la CPU o en la GPU. Godot no trae un motor de redes: para redes pequeñas usa pesos en JSON con GDScript, como el código de arriba; para cargar ONNX existe el plugin Godot RL Agents, que lo hace en la versión .NET del editor.</p>
+  <p><strong>Si quieres quedarte en JavaScript.</strong> El panorama, con honestidad: TensorFlow.js 4.22 fue durante años la opción para entrenar en el navegador, pero no publica versiones nuevas desde octubre de 2024. Google presentó en julio de 2026 LiteRT.js, que solo ejecuta modelos ya entrenados. ml5.js 1.4 es una capa amigable sobre TensorFlow.js, muy usada en cursos creativos. brain.js sigue en fase beta desde hace años. Para entrenar de verdad, Python y PyTorch; para usar la red en la web, ONNX Runtime Web o tu propia propagación. Y si una app entrena algo en el navegador, hazlo dentro de un Web Worker (<a href="22-ejecucion.html#workers">Estación 22</a>) para que la página no se congele.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Herramienta</th><th scope="col">Versión (septiembre de 2026)</th><th scope="col">Para qué</th></tr></thead>
+      <tbody>
+        <tr><td>PyTorch / torchvision</td><td>2.14.0 / 0.29.0</td><td>Entrenar redes en Python; datos de imágenes como MNIST.</td></tr>
+        <tr><td>onnx y onnxscript</td><td>onnx 1.23.1</td><td>Exportar desde PyTorch a ONNX.</td></tr>
+        <tr><td>ONNX Runtime (Python y web)</td><td>1.30.0</td><td>Ejecutar un <code>.onnx</code>; la versión de Python pide 3.11 o posterior.</td></tr>
+        <tr><td>Gymnasium</td><td>1.3.0</td><td>Entornos estándar de aprendizaje por refuerzo.</td></tr>
+        <tr><td>Stable-Baselines3</td><td>2.9.0</td><td>Algoritmos de refuerzo listos (DQN, PPO…).</td></tr>
+        <tr><td>neat-python</td><td>2.0.0</td><td>Neuroevolución con NEAT.</td></tr>
+        <tr><td>Unity ML-Agents</td><td>Release 23 (paquete 4.0, Unity 6)</td><td>Refuerzo dentro de Unity. Su entrenador, mlagents 1.1.0, exige Python 3.10.12, numpy anterior a 1.24 y un torch de hacia 2.2: necesita un entorno virtual propio.</td></tr>
+        <tr><td>Unity Sentis</td><td>2.6</td><td>Ejecutar ONNX dentro de Unity.</td></tr>
+        <tr><td>Godot RL Agents</td><td>godot-rl 0.8.2 (Godot 4)</td><td>Refuerzo en Godot. Fija gymnasium 1.0 o anterior y Stable-Baselines3 2.4 o anterior: también en su propio entorno.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>Las herramientas de refuerzo para motores fijan versiones antiguas que chocan con PyTorch 2.14. No lo mezcles todo en un entorno: crea un entorno virtual por herramienta (<code>uv python install 3.10</code> para ML-Agents) y anota en el README de cada proyecto qué versión de Python usa. Te ahorrará horas de errores de instalación.</p></div></aside>
+
+  <h3>Modelos preentrenados en tus apps</h3>
+  <p>No todo hay que entrenarlo. Para visión y voz existen modelos ya entrenados por otros, con millones de ejemplos, que puedes usar directamente en el navegador. Esta parte es opcional y va como proyecto en tu computadora: los modelos se descargan (de varios a decenas de megabytes) y la cámara o el micrófono no funcionan dentro de los talleres del curso.</p>
+  <ul>
+    <li><strong>Transformers.js</strong> (4.3, licencia Apache 2.0) ejecuta en el navegador miles de modelos del catálogo de Hugging Face con una sola función, <code>pipeline</code>. Sirve para clasificar imágenes o para pasar voz a texto con Whisper. Usa ONNX Runtime por debajo. Sus usos con texto (resumir, buscar, conversar) se ven en la <a href="41-modelos-lenguaje.html">Estación 41</a>.</li>
+    <li><strong>MediaPipe Tasks</strong> de Google (paquete <code>@mediapipe/tasks-vision</code> 1.0.1, Apache 2.0) detecta manos, poses del cuerpo o caras en el video de la cámara, en tiempo real. Para una mano devuelve 21 puntos (las puntas y las articulaciones de los dedos): con ellos puedes lanzar hechizos con gestos o controlar un juego sin tocar la pantalla.</li>
+  </ul>
+  <pre><code class="language-js">// Dentro de un &lt;script type="module"&gt;
+import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0";
+
+const clasificar = await pipeline("image-classification", "Xenova/vit-base-patch16-224");
+console.log(await clasificar("gato.jpg"));          // [{ label: "tabby, tabby cat", score: 0.9… }, …]
+
+const transcribir = await pipeline("automatic-speech-recognition", "onnx-community/whisper-tiny");
+console.log(await transcribir("nota-de-voz.wav"));  // { text: "…" }</code></pre>
+  <pre><code class="language-js">import { FilesetResolver, HandLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1";
+
+const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm");
+const manos = await HandLandmarker.createFromOptions(vision, {
+  baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task" },
+  runningMode: "VIDEO",
+  numHands: 1,
+});
+// En cada fotograma del &lt;video&gt; de la cámara:
+const resultado = manos.detectForVideo(video, performance.now());
+// resultado.landmarks[0] → 21 puntos { x, y, z } de la primera mano</code></pre>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Impacto</p><p>Antes de meter un modelo preentrenado en tu app, revisa tres cosas. <strong>La licencia</strong>: la biblioteca puede ser libre y el modelo tener otra licencia distinta; léela en su ficha (la <em>model card</em>), que también cuenta con qué datos se entrenó y en qué falla. <strong>El tamaño</strong>: cada visitante descarga el modelo; decenas de megas en un móvil con datos es mucho. <strong>La privacidad</strong>: la gran ventaja de ejecutarlo en el navegador es que las imágenes y la voz no salen del dispositivo. Dilo en tu app, pide permiso para la cámara solo cuando haga falta y no guardes lo que no necesitas.</p></div></aside>
+</section>
   </main>
 </div>
 
@@ -1686,6 +1996,8 @@ function convolucionar(img, kernel) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-gdscript.min.js"></script>
 <script src="../assets/js/motor.js"></script>
 <script src="../assets/js/terminal.js"></script>
 <script src="../assets/js/practicas.js"></script>
