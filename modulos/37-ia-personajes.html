@@ -56,6 +56,7 @@
       <li><a href="#procedural">Generación procedural</a></li>
       <li><a href="#director">Dificultad y motores</a></li>
       <li><a href="#resumen">Resumen</a></li>
+      <li><a href="#practica">Practica</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -3904,6 +3905,402 @@ public class Perseguidor : MonoBehaviour {
     <li>La <strong>dificultad dinámica</strong> y trucos como las fichas de ataque hacen trampa a favor de la diversión, con límites, y lo mejor cuando pueden ser transparentes.</li>
   </ul>
 </section>
+
+<section id="practica" data-parada="Practica">
+  <h2>Practica</h2>
+  <p>Diez ejercicios, de guiados a retos, que recorren toda la estación. Los cuatro primeros ya los mencionaron las secciones de contenido; los demás son nuevos.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-parpadeo"><header class="ejercicio-cabeza"><h3>Arregla el parpadeo</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>El guardia de abajo cambia entre <code>"perseguir"</code> y <code>"patrullar"</code> con un solo umbral (distancia ≤ 5), igual que el ejemplo de la sección de <a href="#estados">estados</a>. Un simulador oculto le hace recorrer 60 ticks con una distancia que, al principio, oscila justo alrededor de 5. Completa <code>siguienteEstado(estado, distancia, tiempo)</code> con dos arreglos: <strong>histéresis</strong> (detecta a 5 o menos, pierde a más de 8) y un <strong>tiempo mínimo de 3 ticks</strong> en cada estado antes de permitir otro cambio. Tu código debe terminar llamando a <code>simular(siguienteEstado)</code>, que imprime cada cambio y un resumen al final.</p>
+    <div class="taller" id="taller-ej-parpadeo" data-titulo="Ejercicio 1">
+      <script type="text/plain" class="taller-preparacion">
+function generarDistancias() {
+  const base = [];
+  for (let i = 0; i < 20; i++) base.push(5 + (i % 2 === 0 ? -0.5 : 0.5) + Math.sin(i) * 1.5);
+  for (let i = 0; i < 15; i++) base.push(5 + i * 1.5);
+  for (let i = 0; i < 5; i++) base.push(25 - i * 4);
+  for (let i = 0; i < 20; i++) base.push(4 + Math.sin(i * 0.5) * 1.2);
+  return base.slice(0, 60);
+}
+const __DISTANCIAS = generarDistancias();
+function simular(siguienteEstado) {
+  let estado = "patrullar", tiempo = 0, cambios = 0;
+  for (let tick = 0; tick < 60; tick++) {
+    const distancia = __DISTANCIAS[tick];
+    const nuevo = siguienteEstado(estado, distancia, tiempo);
+    tiempo += 1;
+    if (nuevo !== estado) {
+      cambios++;
+      console.log(`t=${tick} ${estado} -> ${nuevo} (distancia ${distancia.toFixed(1)})`);
+      estado = nuevo;
+      tiempo = 0;
+    }
+  }
+  console.log(`Cambios de estado en 60 ticks: ${cambios}`);
+  console.log(`Estado final: ${estado}`);
+}
+      </script>
+      <textarea class="taller-codigo">// estado: "perseguir" o "patrullar". tiempo: ticks que lleva en ese estado.
+function siguienteEstado(estado, distancia, tiempo) {
+  return distancia &lt;= 5 ? "perseguir" : "patrullar";
+}
+
+simular(siguienteEstado);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var m = /Cambios de estado en 60 ticks: (\d+)/.exec(salida.join("\n"));
+if (!m) return "No veo la línea «Cambios de estado en 60 ticks: N»: no borres esa parte de simular, y llama a simular(siguienteEstado) al final.";
+var cambios = Number(m[1]);
+if (cambios > 4) return "Todavía hay demasiados cambios de estado en 60 ticks (" + cambios + "): añade histéresis y un tiempo mínimo de 3 ticks en cada estado.";
+var primera = salida.find(function (l) { return /^t=\d+ /.test(l); });
+if (primera) {
+  var t = Number(/^t=(\d+)/.exec(primera)[1]);
+  if (t < 3) return "El primer cambio ocurre en el tick " + t + ": con un tiempo mínimo de 3 ticks, no debería poder cambiar antes del tick 3.";
+}
+var huboHisteresis = salida.some(function (l) {
+  var mm = /perseguir -> patrullar \(distancia (\d+(\.\d+)?)\)/.exec(l);
+  return mm && Number(mm[1]) > 7;
+});
+if (!huboHisteresis) return "No veo ningún cambio de perseguir a patrullar con una distancia mayor que 7: pierde de vista más lejos (más de 8) de lo que detecta (5 o menos).";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La histéresis necesita saber en qué estado está <em>ahora</em> para decidir qué umbral usar: si ya persigue, compara con 8; si no, con 5.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El tiempo mínimo va primero: <code>if (tiempo &lt; 3) return estado;</code> antes de mirar la distancia. Así nunca cambia antes de esos 3 ticks, pase lo que pase.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function siguienteEstado(estado, distancia, tiempo) {
+  if (tiempo &lt; 3) return estado;
+  if (estado === "perseguir") return distancia &gt; 8 ? "patrullar" : "perseguir";
+  return distancia &lt;= 5 ? "perseguir" : "patrullar";
+}
+
+simular(siguienteEstado);</code></pre>
+      <p>Con esto, en los 60 ticks del guion solo hay 3 cambios de estado, muy lejos de los más de una decena que daba la versión de un solo umbral.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-selector"><header class="ejercicio-cabeza"><h3>El selector que falta</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>La preparación trae ya hechas las clases <code>Nodo</code>, <code>Condicion</code>, <code>Accion</code> y <code>Secuencia</code> del intérprete de árboles de la sección de <a href="#arboles">árboles</a>. Falta <code>Selector</code>: recorre a sus hijos en orden y se detiene en el primero que <strong>no</strong> es FALLO (prioridad reactiva: empieza siempre desde el primero). Si todos fallan, devuelve FALLO.</p>
+    <div class="taller" id="taller-ej-selector" data-titulo="Ejercicio 2" data-exponer="Selector">
+      <script type="text/plain" class="taller-preparacion">
+class Nodo {
+  constructor(tipo, nombre) { this.tipo = tipo; this.nombre = nombre; this.ultimo = null; }
+  tick(p) { return (this.ultimo = this.evaluar(p)); }
+}
+class Condicion extends Nodo {
+  constructor(nombre, prueba) { super("condicion", nombre); this.prueba = prueba; }
+  evaluar(p) { return this.prueba(p) ? "EXITO" : "FALLO"; }
+}
+class Accion extends Nodo {
+  constructor(nombre, ejecutar) { super("accion", nombre); this.ejecutar = ejecutar; }
+  evaluar(p) { return this.ejecutar(p); }
+}
+class Secuencia extends Nodo {
+  constructor(nombre, hijos) { super("secuencia", nombre); this.hijos = hijos; }
+  evaluar(p) { for (const h of this.hijos) { const r = h.tick(p); if (r !== "EXITO") return r; } return "EXITO"; }
+}
+function __construirArbol(SelectorClase) {
+  return new SelectorClase("raiz", [
+    new Condicion("puerta abierta", function (p) { return p.puerta === "abierta"; }),
+    new Secuencia("abrir con llave", [
+      new Condicion("tiene llave", function (p) { return p.llave; }),
+      new Accion("abrir", function () { return "EXITO"; }),
+    ]),
+    new Accion("esperar", function () { return "EN_CURSO"; }),
+  ]);
+}
+      </script>
+      <textarea class="taller-codigo">// Como un O lógico: se detiene en el primer hijo que NO es FALLO.
+class Selector extends Nodo {
+  constructor(nombre, hijos) {
+    super("selector", nombre);
+    this.hijos = hijos;
+  }
+  evaluar(p) {
+    // completa aquí
+  }
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var Sel = expuesto.Selector;
+if (typeof Sel !== "function") return "No encuentro la clase Selector.";
+var arbol = __construirArbol(Sel);
+if (arbol.tipo !== "selector") return "El nodo raíz debería tener tipo \"selector\" (hereda de Nodo con super(\"selector\", nombre)).";
+var guiones = [
+  { puerta: "cerrada", llave: false }, { puerta: "cerrada", llave: false },
+  { puerta: "cerrada", llave: true }, { puerta: "abierta", llave: true },
+  { puerta: "abierta", llave: false }, { puerta: "cerrada", llave: false },
+  { puerta: "cerrada", llave: true }, { puerta: "abierta", llave: false },
+  { puerta: "cerrada", llave: false }, { puerta: "cerrada", llave: true },
+];
+var esperado = ["EN_CURSO", "EN_CURSO", "EXITO", "EXITO", "EXITO", "EN_CURSO", "EXITO", "EXITO", "EN_CURSO", "EXITO"];
+var resultados = guiones.map(function (p) { return arbol.tick(p); });
+for (var i = 0; i < esperado.length; i++) {
+  if (resultados[i] !== esperado[i]) return "En el tick " + (i + 1) + " (puerta " + guiones[i].puerta + ", llave " + guiones[i].llave + ") se esperaba " + esperado[i] + " y dio " + resultados[i] + ".";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Recorre <code>this.hijos</code> con un <code>for</code>, llama a <code>hijo.tick(p)</code> en cada uno y guarda el resultado en una variable.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Si ese resultado no es <code>"FALLO"</code>, devuélvelo ahí mismo (puede ser EXITO o EN_CURSO). Si terminas el bucle sin salir, devuelve <code>"FALLO"</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">class Selector extends Nodo {
+  constructor(nombre, hijos) {
+    super("selector", nombre);
+    this.hijos = hijos;
+  }
+  evaluar(p) {
+    for (const hijo of this.hijos) {
+      const r = hijo.tick(p);
+      if (r !== "FALLO") return r;
+    }
+    return "FALLO";
+  }
+}</code></pre>
+      <p>Es la imagen en espejo de <code>Secuencia</code>: donde esa para en el primer no-EXITO, el selector para en el primer no-FALLO.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-paso-automata"><header class="ejercicio-cabeza"><h3>Un paso del autómata</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>Escribe <code>pasoAutomata(mapa)</code>, que recibe un mapa (array de strings) y devuelve el siguiente según la <strong>regla 4-5</strong>: una casilla se vuelve muro (<code>"#"</code>) si tiene <strong>5 o más</strong> muros entre sus 8 vecinas, contando lo que está fuera del mapa como muro; si no, se vuelve suelo (<code>"."</code>).</p>
+    <div class="taller" id="taller-ej-automata" data-titulo="Ejercicio 3" data-exponer="pasoAutomata">
+      <script type="text/plain" class="taller-preparacion">
+const __MAPA = [
+  "##########",
+  "#..#..#..#",
+  "#.#....#.#",
+  "#....#...#",
+  "#..#.#.#.#",
+  "##########",
+];
+      </script>
+      <textarea class="taller-codigo">function contarMurosAlrededor(mapa, x, y) {
+  let cuenta = 0;
+  for (let dy = -1; dy &lt;= 1; dy++) {
+    for (let dx = -1; dx &lt;= 1; dx++) {
+      if (dx === 0 &amp;&amp; dy === 0) continue;
+      const nx = x + dx, ny = y + dy;
+      const fuera = ny &lt; 0 || ny &gt;= mapa.length || nx &lt; 0 || nx &gt;= mapa[0].length;
+      if (fuera || mapa[ny][nx] === "#") cuenta++;
+    }
+  }
+  return cuenta;
+}
+
+function pasoAutomata(mapa) {
+  // completa aquí: para cada casilla, aplica la regla 4-5
+}
+
+console.log(pasoAutomata(__MAPA).join("\n"));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var f = expuesto.pasoAutomata;
+if (typeof f !== "function") return "No encuentro la función pasoAutomata: ¿se llama así y el programa terminó sin errores?";
+var ESPERADO1 = ["##########", "###....###", "#........#", "#.......##", "##..#.#.##", "##########"];
+var p1 = f(__MAPA);
+if (!p1 || p1.join("\n") !== ESPERADO1.join("\n")) return "Tras 1 pasada, el mapa debería quedar:\n" + ESPERADO1.join("\n") + "\ny en cambio da:\n" + (p1 ? p1.join("\n") : "(nada)");
+var p3 = f(f(p1));
+var ESPERADO3 = ["##########", "###....###", "#........#", "##......##", "##....#.##", "##########"];
+if (p3.join("\n") !== ESPERADO3.join("\n")) return "Tras 3 pasadas en total, el mapa debería quedar:\n" + ESPERADO3.join("\n") + "\ny en cambio da:\n" + p3.join("\n");
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Recorre cada fila y cada columna con dos bucles, y construye la fila nueva como un string, casilla a casilla (igual que la referencia del BFS de la 20 construía filas).</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para cada <code>(x, y)</code>: <code>contarMurosAlrededor(mapa, x, y) &gt;= 5 ? "#" : "."</code>. No reutilices el mapa que estás construyendo para contar: usa siempre el <code>mapa</code> original que llegó como parámetro.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function contarMurosAlrededor(mapa, x, y) {
+  let cuenta = 0;
+  for (let dy = -1; dy &lt;= 1; dy++) {
+    for (let dx = -1; dx &lt;= 1; dx++) {
+      if (dx === 0 &amp;&amp; dy === 0) continue;
+      const nx = x + dx, ny = y + dy;
+      const fuera = ny &lt; 0 || ny &gt;= mapa.length || nx &lt; 0 || nx &gt;= mapa[0].length;
+      if (fuera || mapa[ny][nx] === "#") cuenta++;
+    }
+  }
+  return cuenta;
+}
+
+function pasoAutomata(mapa) {
+  const filas = [];
+  for (let y = 0; y &lt; mapa.length; y++) {
+    let fila = "";
+    for (let x = 0; x &lt; mapa[0].length; x++) {
+      fila += contarMurosAlrededor(mapa, x, y) &gt;= 5 ? "#" : ".";
+    }
+    filas.push(fila);
+  }
+  return filas;
+}
+
+console.log(pasoAutomata(__MAPA).join("\n"));</code></pre>
+      <p>El punto importante: la fila nueva se construye aparte y solo se usa el <code>mapa</code> original para contar vecinos. Si escribieras directamente sobre el mismo mapa, una casilla que cambia afectaría el conteo de las siguientes, y el resultado dependería del orden en que recorrieras la cuadrícula.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-me-ves"><header class="ejercicio-cabeza"><h3>¿Me ves?</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Escribe dos funciones. <code>hayLineaDeVision(mapa, a, b)</code> recorre las casillas entre <code>a</code> y <code>b</code> (sin contar <code>a</code>) y devuelve <code>false</code> en cuanto encuentra un muro antes de llegar a <code>b</code>. <code>puedeVer(guardia, jugador, mapa)</code> combina los tres filtros de la sección de <a href="#percepcion">percepción</a>, de barato a caro: distancia (<code>guardia.alcance</code>), cono (<code>guardia.mirada</code> y <code>guardia.medioAngulo</code>, en radianes) y, solo si hace falta, la línea de visión.</p>
+    <div class="taller" id="taller-ej-me-ves" data-titulo="Ejercicio 4" data-exponer="hayLineaDeVision, puedeVer">
+      <script type="text/plain" class="taller-preparacion">
+const __MAPA = [
+  "##########",
+  "#........#",
+  "#..##....#",
+  "#..##....#",
+  "#........#",
+  "#....##..#",
+  "#....##..#",
+  "##########",
+];
+      </script>
+      <textarea class="taller-codigo">// Casillas que atraviesa el segmento a-b, muestreando cada cuarto de casilla.
+function casillas(a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const pasos = Math.max(Math.abs(dx), Math.abs(dy)) * 4;
+  const out = [];
+  let ux = -1, uy = -1;
+  for (let i = 1; i &lt;= pasos; i++) {
+    const t = i / pasos;
+    const x = Math.round(a.x + dx * t), y = Math.round(a.y + dy * t);
+    if (x !== ux || y !== uy) { out.push({ x, y }); ux = x; uy = y; }
+  }
+  return out;
+}
+
+function hayLineaDeVision(mapa, a, b) {
+  // completa aquí: recorre casillas(a, b); si alguna (menos la última, que es b) es muro, false.
+}
+
+function puedeVer(guardia, jugador, mapa) {
+  // completa aquí: 1) distancia al cuadrado contra guardia.alcance; 2) cono con el
+  // producto punto (18#vectores): coseno &gt;= Math.cos(guardia.medioAngulo); 3) línea de visión.
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var ver = expuesto.hayLineaDeVision, puedeVer = expuesto.puedeVer;
+if (typeof ver !== "function") return "No encuentro la función hayLineaDeVision.";
+if (typeof puedeVer !== "function") return "No encuentro la función puedeVer.";
+var casos = [
+  { n: "a través del bloque de muros", g: { x: 2, y: 2, mirada: 0, medioAngulo: Math.PI, alcance: 10 }, j: { x: 7, y: 2 }, esperado: false },
+  { n: "pasillo despejado", g: { x: 1, y: 1, mirada: 0, medioAngulo: Math.PI, alcance: 10 }, j: { x: 8, y: 1 }, esperado: true },
+  { n: "fuera del cono, por detrás", g: { x: 5, y: 4, mirada: 0, medioAngulo: Math.PI / 4, alcance: 10 }, j: { x: 1, y: 4 }, esperado: false },
+  { n: "dentro del cono pero demasiado lejos", g: { x: 1, y: 1, mirada: 0, medioAngulo: Math.PI, alcance: 3 }, j: { x: 8, y: 1 }, esperado: false },
+  { n: "detrás del segundo bloque de muros", g: { x: 2, y: 6, mirada: 0, medioAngulo: Math.PI, alcance: 10 }, j: { x: 8, y: 6 }, esperado: false },
+  { n: "fila despejada más abajo", g: { x: 1, y: 4, mirada: 0, medioAngulo: Math.PI, alcance: 10 }, j: { x: 8, y: 4 }, esperado: true },
+  { n: "justo dentro del borde del ángulo", g: { x: 1, y: 4, mirada: -0.3, medioAngulo: 0.35, alcance: 10 }, j: { x: 8, y: 4 }, esperado: true },
+  { n: "en su propia casilla", g: { x: 4, y: 4, mirada: 0, medioAngulo: Math.PI / 6, alcance: 10 }, j: { x: 4, y: 4 }, esperado: true },
+];
+for (var i = 0; i < casos.length; i++) {
+  var c = casos[i];
+  var r = puedeVer(c.g, c.j, __MAPA);
+  if (r !== c.esperado) return "Caso \"" + c.n + "\": se esperaba " + c.esperado + " y dio " + r + ".";
+}
+if (ver(__MAPA, { x: 1, y: 1 }, { x: 1, y: 1 }) !== true) return "hayLineaDeVision entre una casilla y ella misma debería dar true (no hay nada en medio).";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>hayLineaDeVision</code>: en <code>casillas(a, b)</code>, salta la última (es <code>b</code>, el destino, no hace falta que esté libre). Para las demás, si <code>mapa[p.y][p.x] === "#"</code>, devuelve <code>false</code> ahí mismo.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>puedeVer</code>, calcula primero <code>dx, dy</code> y sal pronto si <code>dx*dx + dy*dy &gt; guardia.alcance ** 2</code>. Para el cono, normaliza <code>(dx, dy)</code> (divide entre la distancia) y compara su producto punto con <code>(cos(guardia.mirada), sin(guardia.mirada))</code> contra <code>Math.cos(guardia.medioAngulo)</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function casillas(a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const pasos = Math.max(Math.abs(dx), Math.abs(dy)) * 4;
+  const out = [];
+  let ux = -1, uy = -1;
+  for (let i = 1; i &lt;= pasos; i++) {
+    const t = i / pasos;
+    const x = Math.round(a.x + dx * t), y = Math.round(a.y + dy * t);
+    if (x !== ux || y !== uy) { out.push({ x, y }); ux = x; uy = y; }
+  }
+  return out;
+}
+
+function hayLineaDeVision(mapa, a, b) {
+  const lista = casillas(a, b);
+  for (let i = 0; i &lt; lista.length; i++) {
+    const p = lista[i];
+    if (p.x === b.x &amp;&amp; p.y === b.y) continue;
+    if (mapa[p.y][p.x] === "#") return false;
+  }
+  return true;
+}
+
+function puedeVer(guardia, jugador, mapa) {
+  const dx = jugador.x - guardia.x, dy = jugador.y - guardia.y;
+  if (dx * dx + dy * dy &gt; guardia.alcance * guardia.alcance) return false;
+  const d = Math.hypot(dx, dy);
+  if (d === 0) return true;
+  const parecido = (Math.cos(guardia.mirada) * dx + Math.sin(guardia.mirada) * dy) / d;
+  if (parecido &lt; Math.cos(guardia.medioAngulo)) return false;
+  return hayLineaDeVision(mapa, guardia, jugador);
+}</code></pre>
+      <p>El orden importa por rendimiento: la distancia al cuadrado no usa raíz cuadrada, el cono es un producto punto (barato), y la línea de visión, que recorre varias casillas, se deja para el final, cuando ya sabes que vale la pena calcularla.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-persecucion"><header class="ejercicio-cabeza"><h3>Persecución con predicción</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Completa <code>perseguir(cazador, presa)</code>: predice dónde estará la presa dentro de un tiempo <code>T = distancia / cazador.velocidadMaxima</code> (con un tope de 2, para no apuntar absurdamente lejos si están muy separados), y usa <code>seek</code> (ya dado) hacia esa posición futura.</p>
+    <div class="taller" id="taller-ej-persecucion" data-titulo="Ejercicio 5" data-exponer="perseguir">
+      <textarea class="taller-codigo">function limitar(v, max) {
+  const m = Math.hypot(v.x, v.y);
+  if (m === 0 || m &lt;= max) return v;
+  return { x: v.x / m * max, y: v.y / m * max };
+}
+function normalizar(v) {
+  const m = Math.hypot(v.x, v.y);
+  return m === 0 ? { x: 0, y: 0 } : { x: v.x / m, y: v.y / m };
+}
+// seek ya está hecho: fuerza hacia un punto, limitada a la fuerza máxima.
+function seek(cazador, objetivo) {
+  const dir = normalizar({ x: objetivo.x - cazador.x, y: objetivo.y - cazador.y });
+  const deseada = { x: dir.x * cazador.velocidadMaxima, y: dir.y * cazador.velocidadMaxima };
+  return limitar({ x: deseada.x - cazador.vx, y: deseada.y - cazador.vy }, cazador.fuerzaMaxima);
+}
+
+// cazador y presa traen { x, y, vx, vy } y cazador además { velocidadMaxima, fuerzaMaxima }.
+function perseguir(cazador, presa) {
+  // completa aquí
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var f = expuesto.perseguir;
+if (typeof f !== "function") return "No encuentro la función perseguir.";
+function cerca(v, x, y) { return Math.abs(v.x - x) < 0.01 && Math.abs(v.y - y) < 0.01; }
+var r1 = f({ x: 0, y: 0, vx: 1, vy: 0, velocidadMaxima: 5, fuerzaMaxima: 3 }, { x: 10, y: 0, vx: 0, vy: 0 });
+if (!cerca(r1, 3, 0)) return "Caso 1 (presa quieta): con la presa quieta, perseguir debería coincidir con seek hacia su posición, (3.00, 0.00); dio (" + r1.x.toFixed(2) + ", " + r1.y.toFixed(2) + ").";
+var r2 = f({ x: 0, y: 0, vx: 0, vy: 0, velocidadMaxima: 5, fuerzaMaxima: 20 }, { x: 10, y: 0, vx: 3, vy: 0 });
+if (!cerca(r2, 5, 0)) return "Caso 2 (presa que huye en línea recta): se esperaba (5.00, 0.00); dio (" + r2.x.toFixed(2) + ", " + r2.y.toFixed(2) + ").";
+var r3 = f({ x: 0, y: 0, vx: 0, vy: 0, velocidadMaxima: 5, fuerzaMaxima: 20 }, { x: 10, y: 0, vx: 0, vy: 4 });
+if (!cerca(r3, 3.90, 3.12)) return "Caso 3 (presa que cruza perpendicular): se esperaba (3.90, 3.12) — hay que apuntar por delante de ella, no a donde está ahora; dio (" + r3.x.toFixed(2) + ", " + r3.y.toFixed(2) + ").";
+var r4 = f({ x: 5, y: 5, vx: 0, vy: 0, velocidadMaxima: 5, fuerzaMaxima: 3 }, { x: 5, y: 5, vx: 1, vy: 1 });
+if (Number.isNaN(r4.x) || Number.isNaN(r4.y)) return "Caso 4 (distancia cero): no debería dar NaN. Revisa qué pasa en seek cuando el objetivo coincide con el cazador.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Primero calcula la distancia entre cazador y presa con <code>Math.hypot</code>, y con ella <code>T</code> (sin olvidar el tope de 2).</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La posición futura es <code>{ x: presa.x + presa.vx * T, y: presa.y + presa.vy * T }</code>. Con eso, la función entera es casi una línea: <code>return seek(cazador, futura);</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function limitar(v, max) {
+  const m = Math.hypot(v.x, v.y);
+  if (m === 0 || m &lt;= max) return v;
+  return { x: v.x / m * max, y: v.y / m * max };
+}
+function normalizar(v) {
+  const m = Math.hypot(v.x, v.y);
+  return m === 0 ? { x: 0, y: 0 } : { x: v.x / m, y: v.y / m };
+}
+function seek(cazador, objetivo) {
+  const dir = normalizar({ x: objetivo.x - cazador.x, y: objetivo.y - cazador.y });
+  const deseada = { x: dir.x * cazador.velocidadMaxima, y: dir.y * cazador.velocidadMaxima };
+  return limitar({ x: deseada.x - cazador.vx, y: deseada.y - cazador.vy }, cazador.fuerzaMaxima);
+}
+
+function perseguir(cazador, presa) {
+  const dx = presa.x - cazador.x, dy = presa.y - cazador.y;
+  const distancia = Math.hypot(dx, dy);
+  let T = distancia / cazador.velocidadMaxima;
+  if (T &gt; 2) T = 2;
+  const futura = { x: presa.x + presa.vx * T, y: presa.y + presa.vy * T };
+  return seek(cazador, futura);
+}</code></pre>
+      <p>Con la presa quieta, <code>T</code> no importa (su velocidad es 0, así que la posición futura es la misma que la actual): por eso coincide exactamente con <code>seek</code>. El caso que distingue de verdad a <code>perseguir</code> de <code>seek</code> es el de la presa que cruza: apunta claramente por delante de ella, no a su posición actual.</p>
+    </details>
+  </article>
   </main>
 </div>
 
