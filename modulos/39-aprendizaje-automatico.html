@@ -53,6 +53,7 @@
       <li><a href="#arboles">Árboles de decisión</a></li>
       <li><a href="#agrupar">Agrupar</a></li>
       <li><a href="#evaluar">Evaluar con honestidad</a></li>
+      <li><a href="#herramientas">Herramientas reales</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -2054,6 +2055,402 @@ console.log(`Faltan ${necesarios - entrenamiento.tactil} trazos táctiles`);</co
   </ul>
   <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Impacto: ¿para qué predices?</p><p>Predecir que un jugador va a abandonar se puede usar para ayudarle (un nivel menos frustrante, un recordatorio amable, una pista) o para exprimirle (una oferta de pago justo cuando está más frustrado, una notificación insistente a las tres de la mañana). Lo segundo se llama <strong>patrón oscuro</strong> y es especialmente dañino con menores y con personas que tienen problemas con el juego o con las compras. Antes de construir un modelo, escribe en una frase para qué se va a usar y pregúntate si se lo explicarías a tus jugadores en voz alta. La guía <a href="https://pair.withgoogle.com/guidebook/">People + AI Guidebook</a> de Google tiene ejercicios concretos para pensar en esto con tu equipo.</p></div></aside>
 </section>
+
+<section id="herramientas" data-parada="Herramientas reales">
+  <h2>Las herramientas reales: NumPy, pandas y scikit-learn</h2>
+  <p>Todo lo que programaste hasta aquí funciona, pero no lo usarías en un proyecto serio. Las librerías de Python para datos hacen lo mismo con tres ventajas enormes: están escritas en código nativo (C, C++, Cython) y operan sobre miles de números a la vez sin bucles de Python; llevan años de pruebas con casos raros que tú no imaginarías (columnas vacías, clases que no aparecen, números gigantes); y todo el mundo las conoce, así que tu equipo puede leer tu código. Tus versiones mínimas sirvieron para entender qué hay dentro. Ahora vas a usar las de verdad, en tu computadora.</p>
+
+  <h3>Un proyecto con uv y Jupyter</h3>
+  <p>Ya sabes crear proyectos de Python con uv desde la <a href="36-python.html#ecosistema">Estación 36</a>. Para aprendizaje automático, crea uno nuevo, añade las librerías y un <strong>núcleo de Jupyter</strong> (<em>kernel</em>), el programa que ejecuta el código de un cuaderno con las librerías de tu proyecto:</p>
+  <pre class="consola"><code><span class="prompt">$</span> uv init --python 3.14 --no-package ml-juego
+<span class="prompt">$</span> cd ml-juego
+<span class="prompt">$</span> uv add numpy pandas scikit-learn matplotlib
+<span class="prompt">$</span> uv add --dev ipykernel
+<span class="prompt">$</span> uv run python -c "import sklearn, pandas, numpy; print(sklearn.__version__, pandas.__version__, numpy.__version__)"
+<span class="salida">1.9.1 3.0.6 2.5.3</span>
+<span class="prompt">$</span> uv run --with jupyter jupyter lab</code></pre>
+  <p>La última línea abre JupyterLab en tu navegador sin instalar Jupyter dentro del proyecto: <code>--with</code> lo trae solo para esa ejecución, como recomienda la documentación de uv. Las versiones son las de septiembre de 2026: NumPy 2.5.3, pandas 3.0.6 y scikit-learn 1.9.1. Se fija <code>--python 3.14</code> porque Python 3.15 sale el 1 de octubre de 2026 y las librerías científicas tardan unas semanas en publicar sus paquetes para cada versión nueva; si pruebas con la 3.15 y algo no se instala, esa es la razón.</p>
+  <p>Otras formas de trabajar, en una línea cada una:</p>
+  <ul>
+    <li><strong>venv y pip</strong>, como en la Estación 36: <code>python -m venv .venv</code> y <code>python -m pip install numpy pandas scikit-learn matplotlib ipykernel</code>.</li>
+    <li><strong>VS Code</strong> abre archivos <code>.ipynb</code> directamente; elige como núcleo el Python de <code>.venv</code> de tu proyecto.</li>
+    <li><strong>Google Colab</strong> ejecuta cuadernos en la nube, gratis con una cuenta de Google y sin instalar nada. Las versiones las decide Google: compruébalas con <code>sklearn.__version__</code>.</li>
+    <li><strong>marimo</strong> es un cuaderno reactivo que se guarda como un <code>.py</code> normal (se lleva bien con Git) y recalcula solo las celdas que dependen de lo que cambiaste.</li>
+  </ul>
+
+  <h3>El cuaderno y su estado oculto</h3>
+  <p>Un <strong>cuaderno</strong> (<em>notebook</em>) mezcla celdas de código, sus resultados y texto. Es ideal para explorar datos: cargas una vez un archivo grande y pruebas cosas sin volver a leerlo. Pero tiene una trampa: las variables viven en el núcleo, no en la página. Si ejecutas la celda 5, luego cambias la 2 y ejecutas la 7, el resultado depende de un orden que la página no muestra. Borras una celda que definía una variable y todo sigue funcionando… hasta que alguien abre el cuaderno de cero.</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">«En mi cuaderno funcionaba»</p><p>Es el error más típico con Jupyter: celdas ejecutadas en desorden, o una variable que ya no está definida en ninguna celda pero sigue en memoria. Antes de dar por bueno un resultado o de compartir un cuaderno, usa <strong>Reiniciar el núcleo y ejecutar todo</strong> (en JupyterLab, menú <em>Kernel</em> → <em>Restart Kernel and Run All Cells…</em>). Si falla, el cuaderno tenía un problema. El número entre corchetes a la izquierda de cada celda (<code>[7]</code>) indica en qué orden se ejecutaron: si no van de arriba abajo, desconfía.</p></div></aside>
+
+  <h3>Los datos: sintéticos y reproducibles</h3>
+  <p>Para practicar vas a usar 600 jugadores inventados por un programa con semilla. Guarda este archivo en tu proyecto como <code>generar_datos.py</code>, crea la carpeta <code>datos/crudos</code> y ejecútalo con <code>uv run generar_datos.py</code>. Con la misma semilla y las mismas versiones obtendrás exactamente los números de esta sección.</p>
+  <pre><code class="language-python"># generar_datos.py: 600 jugadores sintéticos (no son personas reales)
+import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(39)                       # semilla: mismos datos siempre
+n = 600
+sesiones = rng.gamma(2.0, 2.0, n).round(1)            # sesiones por semana
+minutos = rng.normal(35, 12, n).clip(5, 120).round(1) # minutos por sesión
+dias = rng.exponential(6, n).round().astype(int)      # días desde la última sesión
+compro = (rng.random(n) &lt; 0.25).astype(int)           # 1 si compró algo
+dispositivo = rng.choice(["raton", "tactil", "mando"], n, p=[0.45, 0.40, 0.15])
+
+# La «verdad» oculta que el modelo tendrá que descubrir:
+z = -0.5 - 0.6 * sesiones - 0.04 * (minutos - 35) + 0.35 * dias - 1.2 * compro
+abandono = (rng.random(n) &lt; 1 / (1 + np.exp(-z))).astype(int)
+
+minutos[rng.random(n) &lt; 0.03] = np.nan                # un 3 % de huecos
+
+jugadores = pd.DataFrame({
+    "jugador": [f"j{i:03d}" for i in range(1, n + 1)],
+    "sesiones_semana": sesiones,
+    "minutos_promedio": minutos,
+    "dias_desde_ultima": dias,
+    "compro": compro,
+    "dispositivo": dispositivo,
+    "abandono": abandono,
+})
+jugadores.to_csv("datos/crudos/jugadores.csv", index=False)
+print(jugadores.shape, "abandono medio:", round(jugadores["abandono"].mean(), 3))</code></pre>
+  <pre class="consola"><code><span class="prompt">$</span> uv run generar_datos.py
+<span class="salida">(600, 7) abandono medio: 0.322</span></code></pre>
+  <p>Fíjate en la línea de <code>z</code>: es una regresión logística escrita a mano. Los datos esconden un patrón conocido más ruido, así que podrás comprobar si los modelos lo encuentran.</p>
+
+  <h3>NumPy: arrays que operan de golpe</h3>
+  <p>El tipo central de NumPy es el <strong>array</strong>: una tabla de números del mismo tipo, con una forma (<code>shape</code>) fija. Las operaciones se aplican a todos los elementos a la vez, sin bucles: a eso se le llama <strong>vectorizar</strong>.</p>
+  <pre><code class="language-python">import numpy as np
+import pandas as pd
+
+jugadores = pd.read_csv("datos/crudos/jugadores.csv")
+X = jugadores[["sesiones_semana", "dias_desde_ultima"]].to_numpy()
+print(type(X), X.shape, X.dtype)
+print(X[:3])                           # las tres primeras filas
+print(X.mean(axis=0).round(2))         # media de cada COLUMNA
+print(X.std(axis=0).round(2))          # desviación típica de cada columna
+Z = (X - X.mean(axis=0)) / X.std(axis=0)   # z-score de toda la tabla en una línea
+print(Z[:3].round(2))
+w = np.array([-0.8, 1.1])
+print((Z[:3] @ w).round(2))            # producto punto de cada fila con w</code></pre>
+  <pre class="consola"><code><span class="salida">&lt;class 'numpy.ndarray'&gt; (600, 2) float64
+[[3.4 3. ]
+ [3.8 3. ]
+ [1.1 6. ]]
+[4.1  6.04]
+[2.74 6.83]
+[[-0.26 -0.44]
+ [-0.11 -0.44]
+ [-1.09 -0.01]]
+[-0.28 -0.4   0.87]</span></code></pre>
+  <ul>
+    <li><code>axis=0</code> significa «recorriendo las filas», es decir, un resultado por columna. <code>axis=1</code> daría uno por fila.</li>
+    <li>En <code>X - X.mean(axis=0)</code> se resta una fila de 2 números a una tabla de 600 × 2. NumPy «estira» la fila para que encaje con cada fila de la tabla. Se llama <strong>broadcasting</strong> (difusión) y es lo que evita los bucles.</li>
+    <li><code>@</code> es la multiplicación de matrices: cada fila de <code>Z</code> por el vector <code>w</code>, un producto punto por fila. Es la predicción de un modelo lineal para todos los jugadores a la vez.</li>
+  </ul>
+
+  <h3>pandas 3: tablas con nombre</h3>
+  <p>pandas envuelve los arrays en un <strong>DataFrame</strong>: una tabla con nombres de columna, tipos por columna y muchas herramientas para explorar. Estas son las primeras que se usan siempre (en un cuaderno no hace falta <code>print</code>: la última expresión de la celda se muestra como una tabla):</p>
+  <pre><code class="language-python">pd.set_option("display.max_columns", None)   # mostrar todas las columnas
+jugadores = pd.read_csv("datos/crudos/jugadores.csv")
+jugadores.head()                     # las 5 primeras filas
+jugadores.dtypes                     # tipo de cada columna
+jugadores.describe().round(2)        # resumen estadístico de las numéricas
+jugadores.isna().sum()               # huecos por columna
+jugadores["dispositivo"].value_counts()</code></pre>
+  <pre class="consola"><code><span class="salida">  jugador  sesiones_semana  minutos_promedio  dias_desde_ultima  compro dispositivo  abandono
+0    j001              3.4              34.5                  3       1       raton         0
+1    j002              3.8              27.1                  3       1       raton         0
+2    j003              1.1              42.7                  6       0       raton         1
+3    j004              4.6              48.1                  0       0       raton         0
+4    j005              2.0               NaN                  4       1       raton         0
+
+jugador                  str
+sesiones_semana      float64
+minutos_promedio     float64
+dias_desde_ultima      int64
+compro                 int64
+dispositivo              str
+abandono               int64
+dtype: object
+
+       sesiones_semana  minutos_promedio  dias_desde_ultima  compro  abandono
+count           600.00            584.00             600.00  600.00    600.00
+mean              4.10             35.87               6.04    0.25      0.32
+std               2.75             11.63               6.84    0.43      0.47
+min               0.20              5.00               0.00    0.00      0.00
+25%               2.10             28.08               2.00    0.00      0.00
+50%               3.50             36.30               4.00    0.00      0.00
+75%               5.50             43.65               8.00    0.00      1.00
+max              17.20             68.20              49.00    1.00      1.00
+
+jugador               0
+sesiones_semana       0
+minutos_promedio     16
+dias_desde_ultima     0
+compro                0
+dispositivo           0
+abandono              0
+dtype: int64
+
+dispositivo
+raton     268
+tactil    235
+mando      97
+Name: count, dtype: int64</span></code></pre>
+  <p>De un vistazo: 16 huecos en <code>minutos_promedio</code> (por eso su <code>count</code> es 584), un 32 % de abandono (la media de una columna de 0 y 1 es la proporción de unos), y una sesión máxima de 17.2 por semana que habría que mirar por si es un error. La columna <code>dispositivo</code> es de tipo <code>str</code>: desde pandas 3.0 los textos tienen su propio tipo, en lugar del genérico <code>object</code> de versiones anteriores.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">¿Por qué 2.75 y no 2.74?</p><p><code>describe()</code> dice que la desviación de <code>sesiones_semana</code> es 2.75, y NumPy dijo 2.74. No es un error: pandas divide por n − 1 por defecto (la «desviación muestral», un pequeño ajuste para cuando los datos son una muestra), mientras que NumPy y <code>StandardScaler</code> dividen por n, como hiciste tú en la traza. Con 600 filas la diferencia es mínima; con 5, no.</p></div></aside>
+  <p><code>groupby</code> es el pariente del <code>GROUP BY</code> de la <a href="30-bases-datos.html#resumir">Estación 30</a>: agrupa por una columna y resume otra.</p>
+  <pre><code class="language-python">jugadores.groupby("dispositivo")["abandono"].mean().round(3)</code></pre>
+  <pre class="consola"><code><span class="salida">dispositivo
+mando     0.351
+raton     0.328
+tactil    0.302
+Name: abandono, dtype: float64</span></code></pre>
+  <p>Para cambiar valores de un DataFrame, usa siempre <code>.loc[filas, columna]</code>. pandas 3.0 trabaja en modo <strong>Copy-on-Write</strong> («copiar al escribir»): cada selección se comporta como una copia, así que encadenar una selección y una asignación modifica una copia temporal y el original queda igual. pandas te avisa:</p>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Asignación encadenada: no cambia nada</p>
+      <pre><code class="language-python">jugadores[jugadores["compro"] == 1]["tipo"] = "cliente"
+# ChainedAssignmentError: A value is being set on a copy
+# of a DataFrame or Series through chained assignment.</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Con .loc, en un solo paso</p>
+      <pre><code class="language-python">jugadores.loc[jugadores["compro"] == 1, "tipo"] = "cliente"
+jugadores["tipo"].value_counts(dropna=False)
+# NaN        451
+# cliente    149</code></pre>
+    </div>
+  </div>
+
+  <h3>scikit-learn: la misma forma para todos los modelos</h3>
+  <p>La gran idea de scikit-learn es que todos los modelos se usan igual. Una vez aprendes el patrón, cambiar de kNN a un árbol es cambiar una línea:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Método</th><th scope="col">Qué hace</th><th scope="col">Tu versión</th></tr></thead>
+      <tbody>
+        <tr><td><code>modelo.fit(X, y)</code></td><td>Entrena con las características y las etiquetas</td><td><code>entrenar()</code>, <code>aprenderRegla()</code></td></tr>
+        <tr><td><code>modelo.predict(X)</code></td><td>Predice una etiqueta por fila</td><td><code>predecir()</code>, <code>decidir()</code></td></tr>
+        <tr><td><code>modelo.predict_proba(X)</code></td><td>Probabilidad de cada clase</td><td>la sigmoide</td></tr>
+        <tr><td><code>modelo.score(X, y)</code></td><td>Exactitud (en clasificación) o R² (en regresión)</td><td><code>exactitud()</code></td></tr>
+        <tr><td><code>escalador.transform(X)</code></td><td>Aplica un preprocesado ya ajustado con <code>fit</code></td><td><code>escalar(fila, stats)</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Con eso, el flujo sin fugas de la sección anterior cabe en unas líneas. <code>make_pipeline</code> encadena pasos en una <strong>tubería</strong> (<em>Pipeline</em>): al llamar a <code>fit</code>, cada paso aprende sus estadísticas solo con los datos que recibe, y al predecir las aplica tal cual. Es la protección automática contra las fugas del preprocesado.</p>
+  <pre><code class="language-python">from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.pipeline import make_pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.dummy import DummyClassifier
+
+caracteristicas = ["sesiones_semana", "minutos_promedio", "dias_desde_ultima", "compro"]
+X = jugadores[caracteristicas]
+y = jugadores["abandono"]
+X_ent, X_pru, y_ent, y_pru = train_test_split(
+    X, y, test_size=0.2, stratify=y, random_state=39)
+print(X_ent.shape, X_pru.shape)
+print(y_ent.mean().round(3), y_pru.mean().round(3))
+
+base = DummyClassifier(strategy="most_frequent").fit(X_ent, y_ent)
+print("línea base:", base.score(X_pru, y_pru))
+
+modelo = make_pipeline(SimpleImputer(strategy="median"), StandardScaler(), LogisticRegression())
+modelo.fit(X_ent, y_ent)
+print(modelo.score(X_ent, y_ent), modelo.score(X_pru, y_pru))</code></pre>
+  <pre class="consola"><code><span class="salida">(480, 4) (120, 4)
+0.321 0.325
+línea base: 0.675
+0.8583333333333333 0.7916666666666666</span></code></pre>
+  <p>Lee los números en orden. <code>stratify=y</code> mantuvo la proporción de abandonos (32 %) en las dos partes. La línea base, «nadie abandona», acierta el 67.5 %. La regresión logística acierta el 85.8 % en entrenamiento y el 79.2 % en prueba: supera a la línea base, y la diferencia entre ambas cifras es moderada. Con 120 ejemplos de prueba, cada acierto vale casi un punto porcentual, así que una sola división es ruidosa. Para elegir hiperparámetros se usa la validación cruzada, solo con el entrenamiento:</p>
+  <pre><code class="language-python">notas = cross_val_score(modelo, X_ent, y_ent, cv=5)
+print(notas.round(3), notas.mean().round(3))</code></pre>
+  <pre class="consola"><code><span class="salida">[0.833 0.833 0.875 0.854 0.844] 0.848</span></code></pre>
+  <p>Cinco notas entre 0.83 y 0.88: esa variación te dice cuánto fiarte de una sola cifra. <code>cross_val_score</code> reentrena la tubería entera en cada pliegue, así que el imputador y el escalador tampoco ven la parte de validación.</p>
+
+  <h3>El informe de clasificación</h3>
+  <pre><code class="language-python">from sklearn.metrics import classification_report, confusion_matrix
+
+pred = modelo.predict(X_pru)
+print(confusion_matrix(y_pru, pred))
+print(classification_report(y_pru, pred, target_names=["se queda", "abandona"]))</code></pre>
+  <pre class="consola"><code><span class="salida">[[74  7]
+ [18 21]]
+              precision    recall  f1-score   support
+
+    se queda       0.80      0.91      0.86        81
+    abandona       0.75      0.54      0.63        39
+
+    accuracy                           0.79       120
+   macro avg       0.78      0.73      0.74       120
+weighted avg       0.79      0.79      0.78       120</span></code></pre>
+  <p>Ojo con el orden de scikit-learn: la matriz pone en las filas la clase real y en las columnas la predicha, empezando por la clase 0. Aquí 21 abandonos detectados (VP), 18 escapados (FN), 7 falsas alarmas (FP) y 74 aciertos de «se queda». El informe muestra la precisión, la exhaustividad (<em>recall</em>) y F1 de cada clase, y <code>support</code> es cuántos ejemplos reales hay de cada una. Lo importante: el modelo solo encuentra el 54 % de los que abandonan. Si tu objetivo es mandarles un mensaje amable, conviene bajar el umbral. Con <code>predict_proba</code> puedes probar umbrales tú misma:</p>
+  <pre><code class="language-python">from sklearn.metrics import precision_score, recall_score
+
+p = modelo.predict_proba(X_pru)[:, 1]          # probabilidad de «abandona»
+for umbral in [0.3, 0.5, 0.7]:
+    pred = (p &gt;= umbral).astype(int)
+    print(umbral, round(precision_score(y_pru, pred), 2), round(recall_score(y_pru, pred), 2))</code></pre>
+  <pre class="consola"><code><span class="salida">0.3 0.62 0.67
+0.5 0.75 0.54
+0.7 0.9 0.49</span></code></pre>
+  <p>Es el tira y afloja de la sección anterior, con números reales. Para dibujar la matriz como una imagen con colores, <code>ConfusionMatrixDisplay.from_estimator(modelo, X_pru, y_pru)</code> de <code>sklearn.metrics</code> hace el gráfico con Matplotlib.</p>
+
+  <h3>Qué aprendió: los pesos</h3>
+  <p>El último paso de la tubería es la regresión logística; se accede con <code>modelo[-1]</code>. Como las características están estandarizadas, los pesos se pueden comparar entre sí:</p>
+  <pre><code class="language-python">for nombre, peso in zip(caracteristicas, modelo[-1].coef_[0]):
+    print(f"{nombre:&gt;18} {peso:+.2f}")
+print(f"{'intercepto':&gt;18} {modelo[-1].intercept_[0]:+.2f}")</code></pre>
+  <pre class="consola"><code><span class="salida">   sesiones_semana -1.75
+  minutos_promedio -0.46
+ dias_desde_ultima +2.28
+            compro -0.49
+        intercepto -1.22</span></code></pre>
+  <p>Los signos coinciden con la «verdad» escondida en <code>generar_datos.py</code>: más sesiones, más minutos y haber comprado reducen el riesgo; más días sin jugar lo aumentan, y es lo que más pesa. El modelo lo descubrió solo a partir de 480 ejemplos con ruido.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">LogisticRegression en scikit-learn 1.9: usa C, no penalty</p><p>Muchos tutoriales escriben <code>LogisticRegression(penalty="l2")</code>. Desde la versión 1.8 el parámetro <code>penalty</code> está obsoleto y en la 1.10 desaparecerá; en la 1.9 aparece como <code>penalty='deprecated'</code> y, si lo usas, avisa: <em>FutureWarning: 'penalty' was deprecated in version 1.8 and will be removed in 1.10</em>. La regularización se controla con <code>C</code> (y con <code>l1_ratio</code> para el tipo). Con validación cruzada: <code>C=0.01</code> da 0.762, <code>C=0.1</code> da 0.854 y <code>C=1</code> (el valor por defecto) 0.848. Demasiada regularización (C muy pequeño) produce subajuste.</p></div></aside>
+
+  <h3>Otros modelos, la misma forma</h3>
+  <p>Cambiar de modelo es cambiar el último paso. Un árbol de profundidad 2, impreso con <code>export_text</code>:</p>
+  <pre><code class="language-python">from sklearn.tree import DecisionTreeClassifier, export_text
+
+arbol = make_pipeline(SimpleImputer(strategy="median"),
+                      DecisionTreeClassifier(max_depth=2, random_state=39))
+arbol.fit(X_ent, y_ent)
+print(export_text(arbol[-1], feature_names=caracteristicas))
+print(arbol.score(X_pru, y_pru))</code></pre>
+  <pre class="consola"><code><span class="salida">|--- dias_desde_ultima &lt;= 6.50
+|   |--- sesiones_semana &lt;= 3.35
+|   |   |--- class: 0
+|   |--- sesiones_semana &gt;  3.35
+|   |   |--- class: 0
+|--- dias_desde_ultima &gt;  6.50
+|   |--- sesiones_semana &lt;= 5.40
+|   |   |--- class: 1
+|   |--- sesiones_semana &gt;  5.40
+|   |   |--- class: 0
+
+0.7916666666666666</span></code></pre>
+  <p>Se lee sin saber programar: «si hace más de 6.5 días que no juega y juega menos de 5.4 sesiones por semana, abandonará». Fíjate en que la rama de la izquierda da «0» en las dos hojas: el corte en 3.35 redujo la impureza de Gini aunque no cambie la respuesta mayoritaria. El árbol no necesita escalador (solo compara con umbrales), pero sí el imputador, porque este <code>DecisionTreeClassifier</code> recibe los huecos ya rellenos. Ahora el sobreajuste, medido: la misma tubería con distintas profundidades máximas. Cada línea muestra la profundidad, la exactitud en entrenamiento y la exactitud en prueba:</p>
+  <pre><code class="language-python">for profundidad in [1, 2, 3, 5, 8, None]:
+    a = make_pipeline(SimpleImputer(strategy="median"),
+                      DecisionTreeClassifier(max_depth=profundidad, random_state=39))
+    a.fit(X_ent, y_ent)
+    print(profundidad, round(a.score(X_ent, y_ent), 3), round(a.score(X_pru, y_pru), 3))</code></pre>
+  <pre class="consola"><code><span class="salida">1 0.794 0.783
+2 0.829 0.792
+3 0.835 0.742
+5 0.883 0.792
+8 0.948 0.767
+None 0.998 0.775</span></code></pre>
+  <p>Sin límite (<code>None</code>), el árbol acierta el 99.8 % del entrenamiento: memorizó casi cada jugador. En prueba no mejora al árbol de profundidad 2. Es la curva en U de la sección anterior en números reales (con ruido, porque 120 ejemplos de prueba son pocos).</p>
+  <p>El gradient boosting, el caballo de batalla con datos en tablas, también se usa igual. <code>HistGradientBoostingClassifier</code> acepta huecos sin imputador:</p>
+  <pre><code class="language-python">from sklearn.ensemble import HistGradientBoostingClassifier
+
+hgb = HistGradientBoostingClassifier(random_state=39).fit(X_ent, y_ent)
+print(hgb.score(X_ent, y_ent), hgb.score(X_pru, y_pru))
+print(cross_val_score(hgb, X_ent, y_ent, cv=5).mean().round(3))</code></pre>
+  <pre class="consola"><code><span class="salida">0.9875 0.7583333333333333
+0.84</span></code></pre>
+  <p>Una lección honesta: con 480 jugadores y un patrón que es, literalmente, una regresión logística, el modelo sofisticado sobreajusta (98.8 % en entrenamiento) y no supera a la logística. Con cientos de miles de filas y relaciones complicadas entre características, suele ganar. Por eso se compara siempre con validación cruzada en vez de elegir por fama.</p>
+  <p>Y para agrupar, <code>KMeans</code> con varios comienzos y semilla fija, dentro de una tubería que escala primero. El bucle final calcula la inercia para el método del codo:</p>
+  <pre><code class="language-python">from sklearn.cluster import KMeans
+
+comportamiento = jugadores[["sesiones_semana", "dias_desde_ultima"]]
+km = make_pipeline(StandardScaler(), KMeans(n_clusters=3, n_init=10, random_state=39))
+grupos = km.fit_predict(comportamiento)
+print(np.bincount(grupos))                 # jugadores por grupo
+resumen = jugadores.assign(grupo=grupos).groupby("grupo")
+print(resumen[["sesiones_semana", "dias_desde_ultima", "abandono"]].mean().round(2))
+
+for k in range(1, 7):
+    m = make_pipeline(StandardScaler(), KMeans(n_clusters=k, n_init=10, random_state=39))
+    m.fit(comportamiento)
+    print(k, round(m[-1].inertia_, 1))</code></pre>
+  <pre class="consola"><code><span class="salida">[401 147  52]
+       sesiones_semana  dias_desde_ultima  abandono
+grupo
+0                 2.78               4.02      0.32
+1                 7.93               5.52      0.12
+2                 3.51              23.06      0.94
+1 1200.0
+2 790.2
+3 459.8
+4 362.4
+5 283.3
+6 241.0</span></code></pre>
+  <p>Una persona leería: el grupo 1 son jugadores intensos (casi 8 sesiones por semana y solo un 12 % de abandono), el grupo 2 son jugadores que ya se fueron (23 días sin jugar y un 94 % de abandono) y el grupo 0, la mayoría, está en medio. La inercia cae mucho hasta k = 3 (de 1200 a 460) y después baja más despacio: el codo sugiere 3 grupos. Fíjate en que la columna <code>abandono</code> no se usó para agrupar: sirve después para interpretar.</p>
+
+  <h3>Conjuntos de datos para practicar y gráficos</h3>
+  <p>scikit-learn trae conjuntos pequeños que no necesitan internet: <code>load_iris</code> (150 flores de tres especies, el clásico de los libros) y <code>load_digits</code>, 1797 dígitos escritos a mano en imágenes de 8 × 8 píxeles. Este último es el puente perfecto al proyecto: cada dibujo es un vector de 64 números, y k vecinos lo reconoce muy bien.</p>
+  <pre><code class="language-python">from sklearn.datasets import load_digits
+from sklearn.neighbors import KNeighborsClassifier
+
+X, y = load_digits(return_X_y=True)
+print(X.shape, y[:10])
+print(X[0].reshape(8, 8).astype(int))     # el primer dígito, como imagen de 8 × 8
+knn = make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=3))
+print(cross_val_score(knn, X, y, cv=5).mean().round(3))</code></pre>
+  <pre class="consola"><code><span class="salida">(1797, 64) [0 1 2 3 4 5 6 7 8 9]
+[[ 0  0  5 13  9  1  0  0]
+ [ 0  0 13 15 10 15  5  0]
+ [ 0  3 15  2  0 11  8  0]
+ [ 0  4 12  0  0  8  8  0]
+ [ 0  5  8  0  0  9  8  0]
+ [ 0  4 11  0  1 12  7  0]
+ [ 0  2 14  5 10 12  0  0]
+ [ 0  0  6 13 10  0  0  0]]
+0.945</span></code></pre>
+  <p>¿Ves el cero dibujado con números? Cada valor es la intensidad de un píxel, de 0 a 16. Otra alternativa moderna a iris son los <strong>pingüinos de Palmer</strong> (paquete <code>palmerpenguins</code>, con licencia libre CC0): medidas de 344 pingüinos de tres especies, con huecos reales para practicar la limpieza.</p>
+  <p>Para ver los datos, Matplotlib (3.11 en septiembre de 2026) dibuja una dispersión o una curva de pérdida en pocas líneas:</p>
+  <pre><code class="language-python">import matplotlib.pyplot as plt
+
+colores = jugadores["abandono"].map({0: "tab:blue", 1: "tab:orange"})
+plt.scatter(jugadores["sesiones_semana"], jugadores["dias_desde_ultima"], c=colores, s=12)
+plt.xlabel("sesiones por semana")
+plt.ylabel("días desde la última sesión")
+plt.title("Naranja: abandonó")
+plt.show()        # en un script, plt.savefig("dispersion.png")</code></pre>
+
+  <h3>Guardar un modelo, y cargarlo con cuidado</h3>
+  <p>Entrenar lleva tiempo; lo normal es guardar el modelo entrenado en un archivo y cargarlo donde se use. La forma más común en Python es <code>joblib.dump(modelo, "modelos/abandono.joblib")</code> y <code>joblib.load(...)</code>, que usa por dentro el formato <code>pickle</code>.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Cargar un pickle es ejecutar código</p><p>La documentación de scikit-learn lo advierte: cargar un archivo <code>pickle</code> o <code>joblib</code> puede ejecutar código arbitrario. Un «modelo» descargado de un sitio desconocido puede borrar tus archivos o robar tus claves al hacer <code>load</code>. Carga solo modelos que hayas creado tú o que vengan de una fuente de confianza, y con las mismas versiones de las librerías. Alternativas más seguras: <strong>skops</strong>, que guarda el modelo en un formato que se inspecciona antes de cargar, y <strong>ONNX</strong>, que no contiene código ejecutable. Y para un modelo lineal, lo más simple de todo: guardar sus números en JSON, como harás en la próxima sección.</p></div></aside>
+
+  <h3>Un proyecto ordenado</h3>
+  <p>Un proyecto de aprendizaje automático acumula datos crudos, datos procesados, cuadernos y modelos. Si todo va a la misma carpeta y todo va a Git, en una semana tienes un repositorio de 2 GB con datos personales dentro. La estructura habitual separa cada cosa y deja fuera de Git lo que no es código:</p>
+  <div class="terminal-sim" data-titulo="Misión: un proyecto de ML ordenado" data-inicio="/home/tu">
+    <div class="terminal-instrucciones">
+      <ol>
+        <li>Entra en el proyecto con <code>cd ml-juego</code> y mira qué hay con <code>ls</code>.</li>
+        <li>Crea las carpetas: <code>mkdir -p datos/crudos datos/procesados cuadernos modelos</code>.</li>
+        <li>Mueve cada archivo a su sitio: <code>mv jugadores.csv datos/crudos</code>, <code>mv exploracion.ipynb cuadernos</code> y <code>mv abandono.joblib modelos</code>.</li>
+        <li>Crea el <code>.gitignore</code> con tres líneas: <code>echo ".venv/" &gt; .gitignore</code>, <code>echo "datos/crudos/" &gt;&gt; .gitignore</code> y <code>echo "modelos/*.joblib" &gt;&gt; .gitignore</code>.</li>
+        <li>Crea el repositorio y el primer commit: <code>git init</code>, <code>git add .</code>, <code>git status</code> para revisar, y <code>git commit -m "feat: estructura del proyecto de abandono"</code>.</li>
+      </ol>
+    </div>
+    <script type="application/json" class="terminal-sistema">{"ml-juego": {"pyproject.toml": "[project]\nname = \"ml-juego\"\nversion = \"0.1.0\"\nrequires-python = \">=3.14\"\ndependencies = [\"numpy>=2.5.3\", \"pandas>=3.0.6\", \"scikit-learn>=1.9.1\", \"matplotlib>=3.11.2\"]\n", "uv.lock": "# archivo generado por uv\n", "generar_datos.py": "# genera datos/crudos/jugadores.csv\nimport numpy as np\n", "entrenar.py": "import joblib\nimport pandas as pd\n# entrena y guarda modelos/abandono.joblib\n", "jugadores.csv": "jugador,sesiones_semana,minutos_promedio,dias_desde_ultima,compro,dispositivo,abandono\nj001,3.4,34.5,3,1,raton,0\n", "exploracion.ipynb": "{\"cells\": []}\n", "abandono.joblib": "(modelo binario)", ".venv": {"pyvenv.cfg": "version = 3.14.7\n"}}}</script>
+    <script type="text/plain" class="terminal-mision">
+var p = sistema["ml-juego"];
+if (!p) return "No encuentro la carpeta ml-juego. Pulsa «Reiniciar» si la borraste.";
+if (!p.datos || !p.datos.crudos || !p.datos.procesados || !p.cuadernos || !p.modelos) return "Paso 2: crea datos/crudos, datos/procesados, cuadernos y modelos dentro de ml-juego (mkdir -p crea también las carpetas intermedias).";
+if (!("jugadores.csv" in p.datos.crudos)) return "Paso 3: mueve jugadores.csv a datos/crudos.";
+if (!("exploracion.ipynb" in p.cuadernos)) return "Paso 3: mueve exploracion.ipynb a cuadernos.";
+if (!("abandono.joblib" in p.modelos)) return "Paso 3: mueve abandono.joblib a modelos.";
+var gi = p[".gitignore"];
+if (typeof gi !== "string") return "Paso 4: crea el archivo .gitignore dentro de ml-juego.";
+if (gi.indexOf(".venv") === -1 || gi.indexOf("datos/crudos") === -1 || gi.indexOf("modelos/*.joblib") === -1) return "El .gitignore debe tener tres líneas: .venv/, datos/crudos/ y modelos/*.joblib. Usa >> para añadir sin borrar lo anterior; compruébalo con cat .gitignore.";
+if (!git) return "Paso 5: crea el repositorio dentro de ml-juego con git init.";
+if (git.raiz !== "/home/tu/ml-juego") return "El repositorio debía estar en /home/tu/ml-juego. Pulsa «Reiniciar» y haz cd ml-juego antes de git init.";
+if (!git.commits.length) return "Paso 5: prepara con git add . y guarda con git commit -m \"feat: estructura del proyecto de abandono\".";
+var sucio = git.commits.some(function (c) { return Object.keys(c.arbol).some(function (k) { return k.indexOf("datos/crudos/") === 0 || /\.joblib$/.test(k) || k.indexOf(".venv/") === 0; }); });
+if (sucio) return "Un commit incluye datos crudos, un .joblib o el entorno .venv. Pulsa «Reiniciar» y crea el .gitignore ANTES de git add.";
+var bueno = git.commits.some(function (c) { return ["pyproject.toml", "uv.lock", "generar_datos.py", "entrenar.py", ".gitignore", "cuadernos/exploracion.ipynb"].every(function (k) { return k in c.arbol; }); });
+if (!bueno) return "El commit debe incluir el código, pyproject.toml, uv.lock, .gitignore y el cuaderno. Usa git add . antes de git commit.";
+return true;
+    </script>
+  </div>
+  <p>Los datos crudos quedan fuera de Git porque pesan, porque pueden contener datos personales y porque se pueden regenerar (aquí, con <code>generar_datos.py</code>; en un juego real, con la consulta de telemetría). El modelo <code>.joblib</code> también: se regenera con <code>entrenar.py</code>. En equipos grandes, los datos y los modelos se versionan con herramientas específicas (como DVC) o se guardan en un almacenamiento aparte con su versión apuntada. La carpeta <code>datos/procesados</code>, vacía, no aparece en el commit: Git no guarda carpetas vacías.</p>
+</section>
   </main>
 </div>
 
@@ -2074,6 +2471,7 @@ console.log(`Faltan ${necesarios - entrenamiento.tactil} trazos táctiles`);</co
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
 <script src="../assets/js/motor.js"></script>
 <script src="../assets/js/terminal.js"></script>
 <script src="../assets/js/practicas.js"></script>

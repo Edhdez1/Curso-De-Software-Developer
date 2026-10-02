@@ -2134,7 +2134,8 @@ print((Z[:3] @ w).round(2))            # producto punto de cada fila con w</code
 
   <h3>pandas 3: tablas con nombre</h3>
   <p>pandas envuelve los arrays en un <strong>DataFrame</strong>: una tabla con nombres de columna, tipos por columna y muchas herramientas para explorar. Estas son las primeras que se usan siempre (en un cuaderno no hace falta <code>print</code>: la última expresión de la celda se muestra como una tabla):</p>
-  <pre><code class="language-python">jugadores = pd.read_csv("datos/crudos/jugadores.csv")
+  <pre><code class="language-python">pd.set_option("display.max_columns", None)   # mostrar todas las columnas
+jugadores = pd.read_csv("datos/crudos/jugadores.csv")
 jugadores.head()                     # las 5 primeras filas
 jugadores.dtypes                     # tipo de cada columna
 jugadores.describe().round(2)        # resumen estadístico de las numéricas
@@ -2144,8 +2145,8 @@ jugadores["dispositivo"].value_counts()</code></pre>
 0    j001              3.4              34.5                  3       1       raton         0
 1    j002              3.8              27.1                  3       1       raton         0
 2    j003              1.1              42.7                  6       0       raton         1
-3    j004              4.6              48.1                  …       0       raton         0
-4    j005              2.0               NaN                  …       1       raton         0
+3    j004              4.6              48.1                  0       0       raton         0
+4    j005              2.0               NaN                  4       1       raton         0
 
 jugador                  str
 sesiones_semana      float64
@@ -2318,14 +2319,18 @@ print(arbol.score(X_pru, y_pru))</code></pre>
 |   |   |--- class: 0
 
 0.7916666666666666</span></code></pre>
-  <p>Se lee sin saber programar: «si hace más de 6.5 días que no juega y juega menos de 5.4 sesiones por semana, abandonará». Fíjate en que la rama de la izquierda da «0» en las dos hojas: el corte en 3.35 redujo la impureza de Gini aunque no cambie la respuesta mayoritaria. El árbol no necesita escalador (solo compara con umbrales), pero sí el imputador, porque este <code>DecisionTreeClassifier</code> recibe los huecos ya rellenos. Ahora el sobreajuste, medido: la misma tubería con distintas profundidades máximas (exactitud en entrenamiento y en prueba):</p>
-  <pre class="consola"><code><span class="salida">max_depth   entrenamiento   prueba
-1           0.794           0.783
-2           0.829           0.792
-3           0.835           0.742
-5           0.883           0.792
-8           0.948           0.767
-None        0.998           0.775</span></code></pre>
+  <p>Se lee sin saber programar: «si hace más de 6.5 días que no juega y juega menos de 5.4 sesiones por semana, abandonará». Fíjate en que la rama de la izquierda da «0» en las dos hojas: el corte en 3.35 redujo la impureza de Gini aunque no cambie la respuesta mayoritaria. El árbol no necesita escalador (solo compara con umbrales), pero sí el imputador, porque este <code>DecisionTreeClassifier</code> recibe los huecos ya rellenos. Ahora el sobreajuste, medido: la misma tubería con distintas profundidades máximas. Cada línea muestra la profundidad, la exactitud en entrenamiento y la exactitud en prueba:</p>
+  <pre><code class="language-python">for profundidad in [1, 2, 3, 5, 8, None]:
+    a = make_pipeline(SimpleImputer(strategy="median"),
+                      DecisionTreeClassifier(max_depth=profundidad, random_state=39))
+    a.fit(X_ent, y_ent)
+    print(profundidad, round(a.score(X_ent, y_ent), 3), round(a.score(X_pru, y_pru), 3))</code></pre>
+  <pre class="consola"><code><span class="salida">1 0.794 0.783
+2 0.829 0.792
+3 0.835 0.742
+5 0.883 0.792
+8 0.948 0.767
+None 0.998 0.775</span></code></pre>
   <p>Sin límite (<code>None</code>), el árbol acierta el 99.8 % del entrenamiento: memorizó casi cada jugador. En prueba no mejora al árbol de profundidad 2. Es la curva en U de la sección anterior en números reales (con ruido, porque 120 ejemplos de prueba son pocos).</p>
   <p>El gradient boosting, el caballo de batalla con datos en tablas, también se usa igual. <code>HistGradientBoostingClassifier</code> acepta huecos sin imputador:</p>
   <pre><code class="language-python">from sklearn.ensemble import HistGradientBoostingClassifier
@@ -2434,5 +2439,224 @@ if (!bueno) return "El commit debe incluir el código, pyproject.toml, uv.lock, 
 return true;
     </script>
   </div>
-  <p>Los datos crudos quedan fuera de Git porque pesan, porque pueden contener datos personales y porque se pueden regenerar (aquí, con <code>generar_datos.py</code>; en un juego real, con la consulta de telemetría). El modelo <code>.joblib</code> también: se regenera con <code>entrenar.py</code>. En equipos grandes, los datos y los modelos se versionan con herramientas específicas (como DVC) o se guardan en un almacenamiento aparte con su versión apuntada. La <code>carpeta datos/procesados</code> vacía no aparece en el commit: Git no guarda carpetas vacías.</p>
+  <p>Los datos crudos quedan fuera de Git porque pesan, porque pueden contener datos personales y porque se pueden regenerar (aquí, con <code>generar_datos.py</code>; en un juego real, con la consulta de telemetría). El modelo <code>.joblib</code> también: se regenera con <code>entrenar.py</code>. En equipos grandes, los datos y los modelos se versionan con herramientas específicas (como DVC) o se guardan en un almacenamiento aparte con su versión apuntada. La carpeta <code>datos/procesados</code>, vacía, no aparece en el commit: Git no guarda carpetas vacías.</p>
+</section>
+
+<section id="juegos-apps" data-parada="Del cuaderno al juego">
+  <h2>Del cuaderno al juego: aprendizaje automático en apps y juegos</h2>
+  <p>Un modelo que vive en un cuaderno no ayuda a ningún jugador. Esta última sección responde dos preguntas prácticas: qué técnica conviene para cada problema típico de un juego o una app, y cómo llevar el modelo entrenado hasta el código que se ejecuta en el dispositivo del jugador o en tu servidor.</p>
+
+  <h3>Qué técnica para qué problema</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Problema</th><th scope="col">Técnica razonable</th><th scope="col">Dónde se ejecuta y cuidados</th></tr></thead>
+      <tbody>
+        <tr><td>Predecir quién va a abandonar</td><td>Regresión logística o árboles (boosting) sobre características de sesiones</td><td>Servidor, por lotes (una vez al día). Úsalo para ayudar, no para presionar</td></tr>
+        <tr><td>Recomendar juegos, niveles u objetos</td><td>Vecinos o similitud del coseno sobre etiquetas; filtrado colaborativo como siguiente paso</td><td>Cliente o servidor. Vigila el bucle de popularidad</td></tr>
+        <tr><td>Detectar trampas y bots</td><td>Clasificación más detección de anomalías</td><td>Siempre en el servidor, con revisión humana antes de sancionar</td></tr>
+        <tr><td>Dificultad adaptativa</td><td>Regresión logística que predice frustración; el director diseñado decide</td><td>Cliente. Límites y suavizado en la lógica diseñada (<a href="37-ia-personajes.html#director">Estación 37</a>)</td></tr>
+        <tr><td>Reconocer gestos dibujados</td><td>Vecino más cercano sobre trazos normalizados (el reconocedor $1)</td><td>Cliente: rápido y privado. Es el proyecto de esta estación</td></tr>
+        <tr><td>Personajes que imitan al jugador</td><td>Árbol de decisión o kNN sobre decisiones grabadas</td><td>Cliente. Combínalo con un árbol de comportamiento</td></tr>
+        <tr><td>Analizar pruebas de juego (<em>playtests</em>)</td><td>k-means sobre posiciones de muerte, estadísticas por grupo</td><td>En tu computadora, con pandas; no llega al jugador</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Sobre la dificultad adaptativa, un reparto de papeles claro: el modelo solo <em>predice</em> («este jugador tiene un 80 % de probabilidad de estar frustrado») y el <strong>director de IA</strong> de la <a href="37-ia-personajes.html#director">Estación 37</a>, con sus límites, pasos máximos e histéresis, <em>decide</em> cuánto ajustar. Si el modelo se equivoca, el director evita que el juego dé bandazos. Conectarás las dos piezas en el ejercicio <a href="#ej-frustracion">Predecir la frustración</a>, en el que también verás la curva de dificultad de la <a href="34-videojuegos.html#diseno">Estación 34</a> desde otro ángulo.</p>
+
+  <h3>Recomendar por similitud: el coseno</h3>
+  <p>Para recomendar un juego parecido a otro, describe cada juego con un vector de etiquetas: 1 si tiene la etiqueta, 0 si no (acción, puzle, cooperativo, historia…). ¿Cómo mides si dos vectores se parecen? La distancia euclídea tiene un problema aquí: un juego con muchas etiquetas queda «lejos» de todos solo por tener más unos. Lo que importa es si apuntan en la misma dirección, no cuánto miden. Eso lo mide la <strong>similitud del coseno</strong>: el producto punto de los dos vectores dividido por el producto de sus longitudes.</p>
+  <pre><code class="language-js">const punto = (a, b) =&gt; a.reduce((s, ai, i) =&gt; s + ai * b[i], 0);
+const longitud = (a) =&gt; Math.sqrt(punto(a, a));
+const coseno = (a, b) =&gt; punto(a, b) / (longitud(a) * longitud(b));
+
+//            acción puzle coop historia
+const juegoA = [1,     0,    1,   1];
+const juegoB = [1,     0,    1,   0];
+const juegoC = [0,     1,    0,   0];
+console.log(coseno(juegoA, juegoB).toFixed(3));   // 0.816: comparten dos de sus etiquetas
+console.log(coseno(juegoA, juegoC).toFixed(3));   // 0.000: no tienen nada en común</code></pre>
+  <p>Vale 1 si los vectores apuntan en la misma dirección, 0 si no comparten nada (son perpendiculares, como viste con el producto punto en la <a href="18-matematicas.html#vectores">Estación 18</a>) y −1 si son opuestos, cosa que con etiquetas de 0 y 1 no puede pasar. Recomendar es calcular el coseno con todos los juegos y quedarte con los más altos, que es el kNN de antes con otra medida de parecido. Lo programarás en el ejercicio <a href="#ej-recomendador">Recomendador por similitud</a>. Dos pasos más allá: el <strong>filtrado colaborativo</strong> no usa etiquetas, sino lo que jugó cada persona («a quienes les gustó A también les gustó B»), y en la <a href="41-modelos-lenguaje.html">Estación 41</a> verás vectores que no escribe nadie: se aprenden del texto. El coseno sirve igual para ellos.</p>
+
+  <h3>Tres formas de llevar el modelo</h3>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 290" role="img" aria-label="Tres caminos desde el cuaderno de Python hasta el juego. Uno: exportar los parámetros a JSON y predecir con unas líneas de JavaScript en el cliente. Dos: convertir el modelo a ONNX con skl2onnx y ejecutarlo en el cliente con onnxruntime-web o Unity Sentis. Tres: dejar el modelo en un servidor detrás de una API y que el juego le pregunte por la red.">
+      <rect class="d-acento" x="20" y="110" width="150" height="70" rx="10"/>
+      <text class="d-sobre-acento d-rotulo" x="95" y="140" text-anchor="middle">Cuaderno</text>
+      <text class="d-sobre-acento d-peq" x="95" y="160" text-anchor="middle">scikit-learn</text>
+      <path class="d-linea" d="M170 130 L240 55 M170 145 H240 M170 160 L240 235"/>
+      <path class="d-tinta" d="M236 45 l12 6 -9 9z"/>
+      <path class="d-tinta" d="M240 137 l12 8 -12 8z"/>
+      <path class="d-tinta" d="M239 227 l9 9 -12 5z"/>
+      <rect class="d-caja" x="252" y="22" width="190" height="64" rx="8"/>
+      <text class="d-rotulo" x="347" y="48" text-anchor="middle">1 · JSON</text>
+      <text class="d-peq" x="347" y="70" text-anchor="middle">medias, escalas y pesos</text>
+      <rect class="d-caja" x="252" y="113" width="190" height="64" rx="8"/>
+      <text class="d-rotulo" x="347" y="139" text-anchor="middle">2 · ONNX</text>
+      <text class="d-peq" x="347" y="161" text-anchor="middle">archivo .onnx (skl2onnx)</text>
+      <rect class="d-caja" x="252" y="204" width="190" height="64" rx="8"/>
+      <text class="d-rotulo" x="347" y="230" text-anchor="middle">3 · Servidor</text>
+      <text class="d-peq" x="347" y="252" text-anchor="middle">API que carga el modelo</text>
+      <path class="d-linea" d="M442 54 H508 M442 145 H508 M442 236 H508"/>
+      <path class="d-tinta" d="M508 46 l12 8 -12 8z"/>
+      <path class="d-tinta" d="M508 137 l12 8 -12 8z"/>
+      <path class="d-tinta" d="M508 228 l12 8 -12 8z"/>
+      <rect class="d-caja-suave" x="522" y="22" width="178" height="64" rx="8"/>
+      <text x="611" y="48" text-anchor="middle">JavaScript propio</text>
+      <text class="d-peq d-tenue" x="611" y="70" text-anchor="middle">en el juego (cliente)</text>
+      <rect class="d-caja-suave" x="522" y="113" width="178" height="64" rx="8"/>
+      <text x="611" y="139" text-anchor="middle">onnxruntime-web, Sentis</text>
+      <text class="d-peq d-tenue" x="611" y="161" text-anchor="middle">en el juego (cliente)</text>
+      <rect class="d-caja-suave" x="522" y="204" width="178" height="64" rx="8"/>
+      <text x="611" y="230" text-anchor="middle">fetch a tu API</text>
+      <text class="d-peq d-tenue" x="611" y="252" text-anchor="middle">el modelo no sale del servidor</text>
+    </svg>
+    <figcaption>Tres caminos para que un modelo entrenado en Python llegue a tu juego o app.</figcaption>
+  </figure>
+  <p><strong>1. Parámetros en JSON.</strong> Un modelo lineal no es más que unos pocos números: las medianas del imputador, las medias y escalas del estandarizador, los pesos y el intercepto. Los guardas en JSON desde Python y los usas con diez líneas de JavaScript. Es el camino más ligero y el que vas a verificar ahora mismo:</p>
+  <pre><code class="language-python">import json
+
+imputador, escalador, logistica = modelo        # los tres pasos de la tubería
+exportado = {
+    "version": "abandono-2026-09-30",
+    "caracteristicas": caracteristicas,
+    "mediana": imputador.statistics_.tolist(),
+    "media": escalador.mean_.tolist(),
+    "escala": escalador.scale_.tolist(),
+    "coef": logistica.coef_[0].tolist(),
+    "intercepto": float(logistica.intercept_[0]),
+}
+with open("modelos/abandono.json", "w") as f:
+    json.dump(exportado, f, indent=2)</code></pre>
+  <p>El archivo resultante trae, por ejemplo, <code>"media": [4.2241…, 35.5577…, 6.1041…, 0.2458…]</code> y <code>"coef": [-1.7494…, -0.4558…, 2.2827…, -0.4854…]</code>. En el taller lo tienes ya cargado como <code>modelo</code>, con los números completos. Escribe <code>predecir(jugador)</code> para que haga lo mismo que la tubería de Python: rellenar un hueco (<code>null</code>) con la mediana, estandarizar cada característica con su media y su escala, hacer el producto punto con los pesos, sumar el intercepto y pasar por la sigmoide.</p>
+  <div class="taller" id="taller-json" data-titulo="Del JSON al juego" data-exponer="predecir" data-exito="Tus probabilidades coinciden con las de scikit-learn hasta la sexta cifra decimal.">
+    <script type="text/plain" class="taller-preparacion">
+const modelo = {
+  "version": "abandono-2026-09-30",
+  "caracteristicas": ["sesiones_semana", "minutos_promedio", "dias_desde_ultima", "compro"],
+  "mediana": [3.6, 36.150000000000006, 4.0, 0.0],
+  "media": [4.224166666666667, 35.557708333333345, 6.104166666666667, 0.24583333333333332],
+  "escala": [2.8422920866011565, 11.678873061998058, 6.599683020586839, 0.4305801964275128],
+  "coef": [-1.7494728412483116, -0.4558727198623994, 2.282718484096654, -0.485404904601104],
+  "intercepto": -1.2202698902976241
+};
+const __casos = [
+  [{ sesiones_semana: 1.0, minutos_promedio: 20.0, dias_desde_ultima: 12, compro: 0 }, 0.9755872708407443],
+  [{ sesiones_semana: 6.5, minutos_promedio: 45.0, dias_desde_ultima: 1, compro: 1 }, 0.003664885266304347],
+  [{ sesiones_semana: 3.0, minutos_promedio: null, dias_desde_ultima: 7, compro: 0 }, 0.5242538408478883],
+  [{ sesiones_semana: 4.2, minutos_promedio: 33.5, dias_desde_ultima: 4, compro: 0 }, 0.171400310851522],
+  [{ sesiones_semana: 0.5, minutos_promedio: 60.0, dias_desde_ultima: 25, compro: 1 }, 0.9969920555359184]
+];
+    </script>
+    <textarea class="taller-codigo">// modelo: el JSON exportado de Pipeline(SimpleImputer, StandardScaler, LogisticRegression)
+console.log(modelo.caracteristicas);
+
+function predecir(jugador) {
+  let z = modelo.intercepto;
+  modelo.caracteristicas.forEach((nombre, i) => {
+    // 1. Toma jugador[nombre]; si es null, usa modelo.mediana[i].
+    // 2. Estandariza: (valor - modelo.media[i]) / modelo.escala[i].
+    // 3. Suma a z ese valor por modelo.coef[i].
+  });
+  return z; // FALTA: la sigmoide
+}
+
+const ana = { sesiones_semana: 1.0, minutos_promedio: 20.0, dias_desde_ultima: 12, compro: 0 };
+console.log("P(abandona) de Ana:", predecir(ana).toFixed(6));   // Python dice 0.975587</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (typeof expuesto.predecir !== "function") return "No encuentro la función predecir. ¿Sigue llamándose así y el programa terminó sin errores?";
+for (var i = 0; i < __casos.length; i++) {
+  var p = expuesto.predecir(Object.assign({}, __casos[i][0]));
+  if (typeof p !== "number" || !isFinite(p)) return "predecir devolvió " + p + " para " + JSON.stringify(__casos[i][0]) + ". Debe devolver un número entre 0 y 1.";
+  if (Math.abs(p - __casos[i][1]) > 1e-6) {
+    if (__casos[i][0].minutos_promedio === null) return "Con minutos_promedio = null deberías obtener " + __casos[i][1].toFixed(6) + " y obtienes " + p.toFixed(6) + ". ¿Rellenas el hueco con modelo.mediana[i]? Ojo: usa ?? y no ||, o un 0 legítimo también se cambiaría.";
+    return "Para " + JSON.stringify(__casos[i][0]) + " scikit-learn da " + __casos[i][1].toFixed(6) + " y tu función " + p.toFixed(6) + ". Revisa el orden: mediana, estandarizar, pesos, intercepto y sigmoide.";
+  }
+}
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">console.log(modelo.caracteristicas);
+
+function predecir(jugador) {
+  let z = modelo.intercepto;
+  modelo.caracteristicas.forEach((nombre, i) =&gt; {
+    const valor = jugador[nombre] ?? modelo.mediana[i];
+    const estandar = (valor - modelo.media[i]) / modelo.escala[i];
+    z += estandar * modelo.coef[i];
+  });
+  return 1 / (1 + Math.exp(-z));
+}
+
+const ana = { sesiones_semana: 1.0, minutos_promedio: 20.0, dias_desde_ultima: 12, compro: 0 };
+console.log("P(abandona) de Ana:", predecir(ana).toFixed(6));</code></pre>
+    <p>El operador <code>??</code> («si es null o undefined, usa lo de la derecha») es importante: con <code>||</code>, un jugador con <code>compro: 0</code> vería su 0 sustituido por la mediana. Coincidir con Python hasta la sexta cifra no es casualidad: haces exactamente las mismas cuentas con los mismos números. Por eso vale la pena escribir esta comprobación como prueba automática, con las probabilidades que calculó Python, cada vez que exportes un modelo nuevo.</p>
+  </details>
+  <p><strong>2. ONNX.</strong> Para modelos que no son un puñado de números (un bosque de 300 árboles, una red neuronal), se usa un formato estándar: <strong>ONNX</strong> (<em>Open Neural Network Exchange</em>) describe el modelo como un grafo de operaciones que cualquier motor compatible puede ejecutar. El paquete <code>skl2onnx</code> (1.20 en septiembre de 2026) convierte tuberías de scikit-learn; en el navegador las ejecuta <code>onnxruntime-web</code> (1.30), con WebAssembly o WebGPU, y en Unity, el paquete <strong>Sentis</strong>. Con clasificadores conviene la opción <code>zipmap=False</code>, para que las probabilidades salgan como una tabla de números y no como una lista de diccionarios, más incómoda en JavaScript. Es código para tu computadora; en los talleres de esta página no funciona, porque el motor descarga sus archivos <code>.wasm</code> y el modelo desde la red:</p>
+  <pre><code class="language-python"># En Python: convertir la tubería (uv add skl2onnx)
+import numpy as np
+from skl2onnx import to_onnx
+
+X32 = X_ent.to_numpy(dtype=np.float32)
+onx = to_onnx(modelo, X32[:1], options={"zipmap": False})
+with open("modelos/abandono.onnx", "wb") as f:
+    f.write(onx.SerializeToString())
+print([i.name for i in onx.graph.input], [o.name for o in onx.graph.output])
+# ['X'] ['label', 'probabilities']</code></pre>
+  <pre><code class="language-js">// En el navegador, en un proyecto con Vite (npm install onnxruntime-web)
+import * as ort from "onnxruntime-web";
+
+const sesion = await ort.InferenceSession.create("/modelos/abandono.onnx");
+const x = new ort.Tensor("float32", Float32Array.from([1.0, 20.0, 12, 0]), [1, 4]);
+const { probabilities } = await sesion.run({ X: x });
+console.log(probabilities.data[1]);   // probabilidad de «abandona»</code></pre>
+  <p><strong>3. Un servidor.</strong> El modelo se queda en tu servidor, cargado por una API como las de la <a href="29-backend.html#express">Estación 29</a> (en Python, con FastAPI o Flask, que viste nombrados en la 36), y el juego le pregunta con <code>fetch</code>. Valida lo que llega, como en la <a href="29-backend.html#validar">Estación 29</a>: un modelo que recibe <code>"sesiones": "hola"</code> o <code>-9999</code> devolverá algo sin avisar.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Criterio</th><th scope="col">JSON en el cliente</th><th scope="col">ONNX en el cliente</th><th scope="col">API en el servidor</th></tr></thead>
+      <tbody>
+        <tr><td>Latencia</td><td>Microsegundos</td><td>Milisegundos</td><td>La de la red: decenas o cientos de ms</td></tr>
+        <tr><td>Privacidad</td><td>Los datos no salen del dispositivo</td><td>Igual</td><td>Los datos viajan a tu servidor</td></tr>
+        <tr><td>Coste</td><td>Nada</td><td>Nada, pero descargas un motor de varios MB</td><td>Pagas cada predicción</td></tr>
+        <tr><td>Sin conexión</td><td>Funciona</td><td>Funciona</td><td>No funciona</td></tr>
+        <tr><td>Actualizar el modelo</td><td>Publicar un JSON nuevo</td><td>Publicar un .onnx nuevo</td><td>Al instante, sin tocar el juego</td></tr>
+        <tr><td>Trampas</td><td colspan="2">El jugador puede leer el modelo y engañarlo</td><td>El modelo queda fuera de su alcance</td></tr>
+        <tr><td>Sirve para</td><td>Modelos lineales, árboles pequeños, kNN pequeño</td><td>Cualquier modelo mediano</td><td>Modelos grandes, antitrampas, lo que cambia a menudo</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal ojo" data-titulo="Todo lo que está en el cliente se puede leer">
+    <p>Si pones el detector de trampas en el juego, un tramposo puede abrir las herramientas del navegador, leer tus pesos y ajustar su programa para quedarse justo por debajo del umbral. O modificar el código para que <code>predecir</code> devuelva siempre 0. Es la regla de la <a href="31-seguridad.html#validar">Estación 31</a>: no confíes en el cliente. Lo que protege el juego (antitrampas, recompensas, precios) va en el servidor. En el cliente, solo lo que mejora la experiencia si funciona y no rompe nada si alguien lo manipula: un reconocedor de gestos, un compañero que imita al jugador, una recomendación.</p>
+  </aside>
+  <p>Si un modelo tarda en predecir (un kNN con miles de ejemplos, un ONNX mediano), no lo llames dentro del bucle de juego en el hilo principal: cada fotograma tiene unos 16 ms. Pásalo a un <strong>Web Worker</strong>, como en la <a href="22-ejecucion.html#workers">Estación 22</a>, y usa la respuesta cuando llegue. Y predice solo cuando cambie algo, no 60 veces por segundo.</p>
+
+  <h3>El ciclo de vida: un modelo nunca está terminado</h3>
+  <p>Publicar el modelo es el principio. Los jugadores cambian: llega una actualización, una temporada nueva, un público de otro país. Los datos con los que se usa el modelo empiezan a parecerse cada vez menos a los de entrenamiento. A eso se le llama <strong>deriva de datos</strong> (<em>data drift</em>), y viste un ejemplo en el primer taller, con los tramposos de la temporada 2. El ciclo profesional es:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Registra las predicciones</strong> con la versión del modelo y, cuando llegue, lo que pasó de verdad (¿abandonó?, ¿era tramposo?).</p></div></li>
+    <li><div><p><strong>Vigila</strong> dos cosas: si las características de entrada se desplazan (la media de sesiones cae a la mitad) y si las métricas empeoran con los datos nuevos.</p></div></li>
+    <li><div><p><strong>Reentrena</strong> con datos recientes, con el mismo flujo sin fugas, y compara el modelo nuevo con el viejo sobre la misma prueba.</p></div></li>
+    <li><div><p><strong>Versiona</strong> el modelo, el código y la referencia a los datos con los que se entrenó (el campo <code>"version"</code> del JSON sirve para eso).</p></div></li>
+    <li><div><p><strong>Prueba</strong> antes de publicar, con las técnicas de la <a href="26-testing.html">Estación 26</a>: que la salida tenga la forma esperada, que con la misma semilla dé lo mismo, que supere a la línea base y que el JavaScript dé las mismas probabilidades que Python.</p></div></li>
+  </ol>
+
+  <h3>El navegador, con honestidad sobre cada herramienta</h3>
+  <ul>
+    <li><strong>ml5.js</strong> (1.4 en agosto de 2026) es una librería amable para principiantes, pensada para artistas y estudiantes, con modelos ya entrenados para la cámara, las manos o el cuerpo. Se carga desde unpkg o jsDelivr, no desde cdnjs, y sus modelos se descargan de internet, así que no funciona en los talleres. La verás en la <a href="40-redes-neuronales.html#pytorch">Estación 40</a>.</li>
+    <li><strong>TensorFlow.js</strong> fue durante años la referencia, pero su última versión es la 4.22.0, de octubre de 2024. Funciona, y verás mucho código escrito con ella, pero no conviene empezar hoy un proyecto nuevo sobre ella.</li>
+    <li><strong>LiteRT.js</strong> es el motor de Google para ejecutar modelos en el navegador con WebAssembly y WebGPU, presentado oficialmente en julio de 2026 como sucesor de TensorFlow.js para la inferencia. Lo verás en la Estación 40.</li>
+  </ul>
+  <p>Para lo que has hecho en esta estación (modelos lineales, árboles y vecinos) no necesitas ninguna: tu propio JavaScript con los parámetros en JSON es más pequeño, más rápido y lo entiendes entero.</p>
+
+  <h3>Antes de empezar: ¿necesito aprendizaje automático aquí?</h3>
+  <ol class="pasos">
+    <li><div><p>¿Puedo escribir la regla con unos pocos <code>if</code> y no va a cambiar? Entonces escríbela.</p></div></li>
+    <li><div><p>¿Tengo datos con la respuesta correcta (o puedo conseguirlos) y suficientes para apartar una prueba?</p></div></li>
+    <li><div><p>¿Sé qué voy a medir y cuál es la línea base que hay que superar?</p></div></li>
+    <li><div><p>¿Qué cuesta cada tipo de error? ¿Una persona revisará las decisiones graves?</p></div></li>
+    <li><div><p>¿Funciona igual de bien para todos los grupos de jugadores?</p></div></li>
+    <li><div><p>¿Dónde se ejecutará, y qué pasa si alguien lo lee o lo manipula?</p></div></li>
+    <li><div><p>¿Quién lo vigilará y lo reentrenará cuando los jugadores cambien?</p></div></li>
+  </ol>
+  <p>Si respondes con seguridad a las siete, adelante. Si no, empieza por la regla sencilla y por recoger datos.</p>
 </section>

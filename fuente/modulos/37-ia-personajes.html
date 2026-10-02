@@ -1325,3 +1325,1445 @@ return true;
     <p>Tres errores típicos. <strong>Sumar la fuerza sin limitarla</strong>: el personaje gira en seco y vuelves al robot. <strong>Olvidar <code>dt</code></strong>: el movimiento va más rápido en pantallas de 144 Hz que en las de 60 (lo viste en la <a href="34-videojuegos.html#bucle">Estación 34</a>). Y <strong>normalizar el vector cero</strong>: si el personaje ya está sobre el objetivo, <code>restar</code> da <code>(0, 0)</code>, su longitud es 0 y dividir entre 0 da <code>NaN</code> (<a href="18-matematicas.html#vectores">Estación 18</a>). Un solo <code>NaN</code> en la posición se contagia a todo y el personaje desaparece de la pantalla. Por eso <code>normalizar</code> comprueba la longitud antes de dividir.</p>
   </aside>
 </section>
+
+<section id="percepcion" data-parada="Percepción">
+  <h2>Sentidos: ver, oír y recordar</h2>
+  <p>Hasta ahora, el guardia sabía la distancia exacta a la jugadora en cada tick, estuviera donde estuviera. Eso es hacer trampa, aunque nadie lo vea en el código: leer <code>jugador.x</code> directamente da <strong>enemigos omniscientes</strong>, que te persiguen a través de las paredes y saben dónde estás aunque te hayas escondido. Quien juega lo nota enseguida, y lo siente injusto.</p>
+  <p>Un <strong>sistema de percepción</strong> es la capa que decide qué sabe el agente. El cerebro nunca lee el mundo directamente; solo lee lo que sus sentidos le dejan saber. Si el guardia no te ve ni te oye, para su cerebro no existes, aunque estés a dos casillas.</p>
+
+  <h3>Ver: tres filtros, de barato a caro</h3>
+  <p>Comprobar si el guardia te ve es la pregunta más frecuente de un juego de sigilo, y puede hacerse cientos de veces por segundo. Por eso se hace con filtros ordenados de más barato a más caro. En cuanto uno dice «no», se deja de calcular:</p>
+  <ol>
+    <li><strong>Distancia</strong>: ¿estás dentro de su alcance? Se compara la distancia <em>al cuadrado</em> (<code>dx * dx + dy * dy &gt; alcance * alcance</code>), así no hace falta la raíz cuadrada de <code>Math.hypot</code>, que es más lenta. Si 100 al cuadrado es 10 000, cualquier distancia al cuadrado mayor que 10 000 está fuera.</li>
+    <li><strong>Cono de visión</strong>: ¿estás delante? Es el producto punto de la <a href="18-matematicas.html#vectores">Estación 18</a> entre la dirección en que mira y la dirección hacia ti, las dos normalizadas. El umbral es el <strong>coseno de la mitad</strong> del ángulo del cono: un cono de 120° en total son 60° a cada lado, y cos(60°) = 0,5.</li>
+    <li><strong>Línea de visión</strong> (en inglés, <em>line of sight</em>): ¿hay un muro en medio? Es lo más caro, así que va al final. En un mapa de casillas se recorren las casillas que atraviesa el segmento que os une. Los motores lo hacen con un <strong>raycast</strong> («lanzar un rayo») contra la geometría de la física.</li>
+  </ol>
+  <figure class="capsula" data-titulo="Un rayo que recorre casillas">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 280" role="img" aria-label="Animación: una rejilla de 10 por 7 casillas con muros oscuros. Un segmento une al guardia G, abajo a la izquierda, con la jugadora J, arriba a la derecha. Las casillas que atraviesa se marcan una a una, cruzando fronteras verticales y horizontales, hasta llegar a una casilla muro que se marca en rojo: está tapado. Después, un segundo caso en el que el rayo pasa justo por la esquina entre dos casillas y una de ellas es muro.">
+        <rect class="d-caja-suave" x="21" y="25" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="55" y="25" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="89" y="25" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="123" y="25" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="157" y="25" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="191" y="25" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="225" y="25" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="259" y="25" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="293" y="25" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="327" y="25" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="21" y="59" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="55" y="59" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="89" y="59" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="123" y="59" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="157" y="59" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="191" y="59" width="32" height="32" rx="3"/>
+        <rect class="d-solido" x="225" y="59" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="259" y="59" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="293" y="59" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="327" y="59" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="21" y="93" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="55" y="93" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="89" y="93" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="123" y="93" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="157" y="93" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="191" y="93" width="32" height="32" rx="3" data-clases="1:d-caja-suave; 3:d-acento; 5:d-caja-suave"/>
+        <rect class="d-solido" x="225" y="93" width="32" height="32" rx="3" data-clases="1:d-solido; 4:d-mal; 5:d-solido"/>
+        <rect class="d-caja-suave" x="259" y="93" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="293" y="93" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="327" y="93" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="21" y="127" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="55" y="127" width="32" height="32" rx="3"/>
+        <rect class="d-solido" x="89" y="127" width="32" height="32" rx="3" data-clases="1:d-solido; 5:d-mal"/>
+        <rect class="d-caja-suave" x="123" y="127" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="157" y="127" width="32" height="32" rx="3" data-clases="1:d-caja-suave; 3:d-acento; 5:d-caja-suave"/>
+        <rect class="d-caja-suave" x="191" y="127" width="32" height="32" rx="3" data-clases="1:d-caja-suave; 3:d-acento; 5:d-caja-suave"/>
+        <rect class="d-caja-suave" x="225" y="127" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="259" y="127" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="293" y="127" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="327" y="127" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="21" y="161" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="55" y="161" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="89" y="161" width="32" height="32" rx="3" data-clases="1:d-caja-suave; 2:d-acento; 5:d-ok"/>
+        <rect class="d-caja-suave" x="123" y="161" width="32" height="32" rx="3" data-clases="1:d-caja-suave; 2:d-acento; 5:d-caja-suave"/>
+        <rect class="d-caja-suave" x="157" y="161" width="32" height="32" rx="3" data-clases="1:d-caja-suave; 2:d-acento; 5:d-caja-suave"/>
+        <rect class="d-caja-suave" x="191" y="161" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="225" y="161" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="259" y="161" width="32" height="32" rx="3"/>
+        <rect class="d-solido" x="293" y="161" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="327" y="161" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="21" y="195" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="55" y="195" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="89" y="195" width="32" height="32" rx="3" data-clases="1:d-caja-suave; 2:d-acento; 5:d-caja-suave"/>
+        <rect class="d-caja-suave" x="123" y="195" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="157" y="195" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="191" y="195" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="225" y="195" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="259" y="195" width="32" height="32" rx="3"/>
+        <rect class="d-solido" x="293" y="195" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="327" y="195" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="21" y="229" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="55" y="229" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="89" y="229" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="123" y="229" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="157" y="229" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="191" y="229" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="225" y="229" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="259" y="229" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="293" y="229" width="32" height="32" rx="3"/>
+        <rect class="d-caja-suave" x="327" y="229" width="32" height="32" rx="3"/>
+        <path class="d-linea" d="M71 211L309 75" data-pasos="1-4"/>
+        <path class="d-linea" d="M71 211L173 109" data-pasos="5"/>
+        <circle class="d-acento" cx="71" cy="211" r="12"/><text class="d-rotulo d-sobre-acento" x="71" y="217" text-anchor="middle">G</text>
+        <g data-pasos="1-4"><circle class="d-aviso" cx="309" cy="75" r="12"/><text class="d-rotulo d-sobre-aviso" x="309" y="81" text-anchor="middle">J</text></g>
+        <g data-pasos="5"><circle class="d-aviso" cx="173" cy="109" r="12"/><text class="d-rotulo d-sobre-aviso" x="173" y="115" text-anchor="middle">J</text><circle class="d-tinta" cx="122" cy="160" r="5"/></g>
+        <g data-pasos="1"><text class="d-titulo" x="390" y="50">Línea de visión</text><text class="d-peq" x="390" y="82">¿Hay un muro entre el guardia (G)</text><text class="d-peq" x="390" y="102">y la jugadora (J)? En vez de medir</text><text class="d-peq" x="390" y="122">el rayo con precisión, se recorren</text><text class="d-peq" x="390" y="142">las casillas que atraviesa.</text></g>
+        <g data-pasos="2"><text class="d-titulo" x="390" y="50">Casilla a casilla</text><text class="d-peq" x="390" y="82">Si el rayo cruza una línea vertical</text><text class="d-peq" x="390" y="102">de la rejilla, pasa a la casilla de</text><text class="d-peq" x="390" y="122">al lado; si cruza una horizontal,</text><text class="d-peq" x="390" y="142">a la de arriba. Una frontera cada vez.</text></g>
+        <g data-pasos="3"><text class="d-titulo" x="390" y="50">Sigue avanzando</text><text class="d-peq" x="390" y="82">Cada casilla nueva se comprueba:</text><text class="d-peq" x="390" y="102">¿es muro? Si no, se continúa.</text><text class="d-peq" x="390" y="122">Son pocas comprobaciones: tantas</text><text class="d-peq" x="390" y="142">como fronteras cruza el rayo.</text></g>
+        <g data-pasos="4"><text class="d-titulo" x="390" y="50">Tapado</text><text class="d-peq" x="390" y="82">La siguiente casilla es un muro:</text><text class="d-peq" x="390" y="102">el recorrido se detiene y la</text><text class="d-peq" x="390" y="122">respuesta es «no te ve». Las</text><text class="d-peq" x="390" y="142">casillas de detrás ni se miran.</text></g>
+        <g data-pasos="5"><text class="d-titulo" x="390" y="50">Rozando una esquina</text><text class="d-peq" x="390" y="82">Aquí el rayo pasa justo por una</text><text class="d-peq" x="390" y="102">esquina (el punto). Hay que decidir:</text><text class="d-peq" x="390" y="122">¿tapa si una de las dos casillas</text><text class="d-peq" x="390" y="142">que se tocan es muro? Aquí, sí.</text></g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>El guardia (G) y la jugadora (J), unidos por un segmento. La pregunta: ¿alguna casilla de las que atraviesa es un muro?</li>
+        <li>El recorrido avanza de frontera en frontera. Si la próxima línea de la rejilla que cruza el segmento es vertical, pasa a la casilla de al lado; si es horizontal, a la de arriba. Así nunca se salta una casilla.</li>
+        <li>Cada casilla nueva se comprueba. Mientras no sea muro, se sigue.</li>
+        <li>La siguiente es un muro: se para y la respuesta es «no te ve». Es el mismo recorrido que describe Amit Patel en Red Blob Games para dibujar líneas en rejillas.</li>
+        <li data-duracion="7">Un caso incómodo: el segmento pasa exactamente por la esquina entre casillas (el punto negro). Hay que elegir una regla. Aquí, la esquina tapa si cualquiera de las dos casillas que se tocan es muro, la misma regla que usarás para no cortar esquinas con A*. Lo importante es elegir una y aplicarla siempre igual.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Programarás la línea de visión y la combinación de los tres filtros en el ejercicio <a href="#ej-me-ves">¿Me ves?</a>.</p>
+
+  <h3>Detectar poco a poco: el medidor de sospecha</h3>
+  <p>En la vida real no pasas de «invisible» a «descubierta» en un instante. Los juegos de sigilo, como las sagas <em>Metal Gear</em> o <em>Hitman</em>, usan un <strong>medidor de sospecha</strong>: un número entre 0 y 1 que sube mientras el guardia te ve, más rápido si estás cerca, iluminada o de pie, y baja poco a poco cuando te pierde. Con 0,3 aparece un «?» y el guardia se gira a mirar; con 1, un «!» y la persecución. Ese margen le da a la jugadora tiempo para reaccionar, y es una forma de legibilidad: ves venir el peligro.</p>
+  <p>Relacionado con esto, un guardia justo tiene <strong>tiempo de reacción</strong>. Una persona tarda entre 0,2 y 0,3 segundos en reaccionar a algo que ve; un enemigo que dispara en el mismo fotograma en que te ve parece una máquina. Muchos juegos añaden un retraso deliberado antes de la primera reacción.</p>
+
+  <h3>Oír: el sonido rodea las paredes</h3>
+  <p>El oído se modela con <strong>eventos de ruido</strong>: cuando pasa algo ruidoso (correr, romper un jarrón, disparar), el juego crea un evento con una posición y un radio, más grande cuanto más ruido. Correr hace más ruido que caminar agachada. Los guardias que estén dentro del radio lo oyen y van a investigar.</p>
+  <p>Con un círculo simple, el ruido atraviesa las paredes: el guardia de la habitación de al lado te oiría a través de medio metro de roca. Mejor es medir la distancia <em>por casillas libres</em>, como camina el sonido por los pasillos. Eso es un BFS de la <a href="20-algoritmos.html#caminos">Estación 20</a>, cortado al llegar al radio:</p>
+  <pre><code class="language-js">// ¿Llega el ruido hasta el guardia rodeando los muros?
+function oye(mapa, ruido, guardia) {
+  const dist = new Map([[clave(ruido.pos), 0]]);
+  const cola = [ruido.pos];
+  while (cola.length &gt; 0) {
+    const p = cola.shift();
+    if (p.x === guardia.x &amp;&amp; p.y === guardia.y) return true;
+    if (dist.get(clave(p)) === ruido.radio) continue;   // el sonido no llega más lejos
+    for (const v of vecinos(mapa, p)) {
+      if (!dist.has(clave(v))) { dist.set(clave(v), dist.get(clave(p)) + 1); cola.push(v); }
+    }
+  }
+  return false;
+}</code></pre>
+  <p>En <em>Mark of the Ninja</em> (2012), el ruido se dibuja en pantalla como un círculo que se expande: quien juega ve exactamente hasta dónde llegó. Es el ejemplo perfecto de percepción legible.</p>
+
+  <h3>Recordar y compartir</h3>
+  <p>Cuando el guardia te pierde de vista, no debería olvidarte al instante ni saber dónde estás. Necesita <strong>memoria</strong>: la última posición conocida, cuándo te vio y una <strong>confianza</strong> que decae con el tiempo. Cuando la confianza baja de un umbral, te olvida y vuelve a patrullar. El estado «buscar» de la sección anterior iba justo a esa última posición conocida.</p>
+  <pre><code class="language-js">function recordar(memoria, posicionVista, dt) {
+  if (posicionVista) {                     // te ve ahora: memoria fresca
+    memoria.ultimaPosicion = posicionVista;
+    memoria.confianza = 1;
+  } else {
+    memoria.confianza -= 0.25 * dt;         // se va borrando
+    if (memoria.confianza &lt; 0.2) memoria.ultimaPosicion = null;   // te olvida
+  }
+}</code></pre>
+  <p>Y los guardias pueden <strong>compartir</strong> lo que saben: cuando uno te ve, emite un aviso y los demás actualizan su memoria. Puede hacerse con el patrón Observer de la <a href="25-codigo-limpio.html#patrones">Estación 25</a> (un evento «jugadora vista» al que se suscriben) o con una pizarra común del grupo. Ojo con el equilibrio: si todos los guardias saben al instante lo que sabe uno, vuelves a tener un enemigo omnisciente, solo que repartido.</p>
+
+  <p>Todo junto, en miniatura. Muévete con las flechas o WASD (o toca el lienzo para caminar hasta ese punto) y llega a la casilla verde de salida sin que el medidor llegue arriba. Con <kbd>Mayús</kbd> o el botón «Correr» vas el doble de rápido, pero se dibuja el círculo de tu ruido. <strong>Predice</strong>: ¿qué es más peligroso, pasar lejos por delante del guardia o correr cerca por detrás de él?</p>
+  <div class="taller" data-modo="web" id="taller-sigilo" data-titulo="Predice y modifica: sigilo en miniatura" data-alto="27rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas width="480" height="300" tabindex="0"&gt;&lt;/canvas&gt;
+&lt;p&gt;&lt;button id="correr"&gt;Correr: no&lt;/button&gt; Flechas o WASD para moverte, Mayús para correr. En el móvil, toca donde quieras ir.&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; font-size: 14px; }
+canvas { display: block; width: 100%; max-width: 480px; border-radius: 8px; touch-action: none; outline: none; }
+p { margin: 6px 0 0; }
+button { font: inherit; padding: 4px 10px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const lienzo = document.querySelector("canvas");
+const ctx = lienzo.getContext("2d");
+const T = 30;
+const MAPA = [
+  "################",
+  "#......#.......#",
+  "#......#..##...#",
+  "#..##.....##.S.#",
+  "#..##..........#",
+  "#..............#",
+  "#....###...##..#",
+  "#....#.....##..#",
+  "#.J..#.........#",
+  "################",
+];
+// ===== Parámetros para modificar =====
+const ALCANCE = 170;          // px que ve el guardia
+const MEDIO_ANGULO = 40;      // grados a cada lado de su mirada
+const SUBIDA_MIN = 0.3;       // sospecha por segundo al verte en el límite del alcance
+const SUBIDA_EXTRA = 1.5;     // sospecha extra por segundo si estás pegada
+const BAJADA = 0.25;          // lo que baja por segundo si no te ve
+const RADIO_RUIDO = 110;      // px que se oyen tus pasos al correr
+
+const inicio = { x: 2 * T + 15, y: 8 * T + 15 };
+const jugadora = { x: inicio.x, y: inicio.y };
+const guardia = { x: 8 * T + 15, y: 5 * T + 15, mirada: Math.PI, sospecha: 0 };
+let reloj = 0, corriendo = false, destino = null, mensaje = "", tiempoMensaje = 0, ruido = 0;
+const teclas = new Set();
+
+const esMuro = (x, y) =&gt; MAPA[Math.floor(y / T)]?.[Math.floor(x / T)] === "#";
+
+// ===== La sospecha: función pura =====
+// distancia: a cuántos px te ve, o null si no te ve
+function sospechaSiguiente(s, distancia, dt) {
+  if (distancia === null) return Math.max(0, s - BAJADA * dt);
+  const cercania = 1 - distancia / ALCANCE;          // 1 pegada, 0 en el límite
+  return Math.min(1, s + dt * (SUBIDA_MIN + SUBIDA_EXTRA * cercania));
+}
+
+// ===== Percepción: de barato a caro =====
+function distanciaSiTeVe() {
+  const dx = jugadora.x - guardia.x, dy = jugadora.y - guardia.y;
+  if (dx * dx + dy * dy &gt; ALCANCE * ALCANCE) return null;             // 1. distancia al cuadrado
+  const d = Math.hypot(dx, dy);
+  const parecido = (Math.cos(guardia.mirada) * dx + Math.sin(guardia.mirada) * dy) / d;
+  if (parecido &lt; Math.cos(MEDIO_ANGULO * Math.PI / 180)) return null;  // 2. cono (producto punto)
+  for (let t = 0; t &lt; d; t += 4) {                                     // 3. rayo por muestras
+    if (esMuro(guardia.x + dx * t / d, guardia.y + dy * t / d)) return null;
+  }
+  return d;
+}
+
+function mover(dt) {
+  let vx = 0, vy = 0;
+  if (teclas.has("ArrowLeft") || teclas.has("a")) vx -= 1;
+  if (teclas.has("ArrowRight") || teclas.has("d")) vx += 1;
+  if (teclas.has("ArrowUp") || teclas.has("w")) vy -= 1;
+  if (teclas.has("ArrowDown") || teclas.has("s")) vy += 1;
+  if (destino &amp;&amp; vx === 0 &amp;&amp; vy === 0) {
+    const dx = destino.x - jugadora.x, dy = destino.y - jugadora.y;
+    if (Math.hypot(dx, dy) &gt; 3) { vx = dx; vy = dy; } else destino = null;
+  }
+  const l = Math.hypot(vx, vy);
+  if (l === 0) return false;
+  const v = (corriendo ? 140 : 70) * dt / l;
+  const nx = jugadora.x + vx * v, ny = jugadora.y + vy * v;
+  const libre = (x, y) =&gt; !esMuro(x - 7, y - 7) &amp;&amp; !esMuro(x + 7, y - 7) &amp;&amp; !esMuro(x - 7, y + 7) &amp;&amp; !esMuro(x + 7, y + 7);
+  if (libre(nx, jugadora.y)) jugadora.x = nx;
+  if (libre(jugadora.x, ny)) jugadora.y = ny;
+  return true;
+}
+
+function actualizar(dt) {
+  reloj += dt;
+  const seMueve = mover(dt);
+  ruido = seMueve &amp;&amp; corriendo ? RADIO_RUIDO : 0;
+  const d = distanciaSiTeVe();
+  guardia.sospecha = sospechaSiguiente(guardia.sospecha, d, dt);
+  if (ruido &amp;&amp; Math.hypot(jugadora.x - guardia.x, jugadora.y - guardia.y) &lt; ruido) {
+    guardia.sospecha = Math.min(1, guardia.sospecha + 0.6 * dt);       // te oye
+    guardia.mirada = Math.atan2(jugadora.y - guardia.y, jugadora.x - guardia.x);
+  } else if (d !== null &amp;&amp; guardia.sospecha &gt; 0.3) {
+    guardia.mirada = Math.atan2(jugadora.y - guardia.y, jugadora.x - guardia.x); // te sigue con la vista
+  } else if (guardia.sospecha &lt; 0.3) {
+    guardia.mirada = Math.PI + Math.sin(reloj * 0.7) * 1.2;             // vigila de lado a lado
+  }
+  if (guardia.sospecha &gt;= 1) { avisar("¡Te vio! Vuelves al inicio."); reiniciar(); }
+  if (MAPA[Math.floor(jugadora.y / T)][Math.floor(jugadora.x / T)] === "S") { avisar("¡Llegaste a la salida sin que te viera!"); reiniciar(); }
+  tiempoMensaje = Math.max(0, tiempoMensaje - dt);
+}
+function avisar(t) { mensaje = t; tiempoMensaje = 2.5; }
+function reiniciar() { jugadora.x = inicio.x; jugadora.y = inicio.y; guardia.sospecha = 0; destino = null; }
+
+function dibujar() {
+  for (let f = 0; f &lt; MAPA.length; f++) for (let c = 0; c &lt; MAPA[0].length; c++) {
+    ctx.fillStyle = MAPA[f][c] === "#" ? "#0f1420" : MAPA[f][c] === "S" ? "#2e6b4a" : "#1d2433";
+    ctx.fillRect(c * T, f * T, T, T);
+  }
+  const m = MEDIO_ANGULO * Math.PI / 180;
+  ctx.fillStyle = "rgba(255, 204, 77, 0.18)";
+  ctx.beginPath(); ctx.moveTo(guardia.x, guardia.y);
+  ctx.arc(guardia.x, guardia.y, ALCANCE, guardia.mirada - m, guardia.mirada + m); ctx.fill();
+  if (ruido) {
+    ctx.strokeStyle = "#9fd3ff"; ctx.setLineDash([4, 5]);
+    ctx.beginPath(); ctx.arc(jugadora.x, jugadora.y, ruido, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  }
+  const d = distanciaSiTeVe();
+  if (d !== null) {
+    ctx.strokeStyle = "#ff6b6b"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(guardia.x, guardia.y); ctx.lineTo(jugadora.x, jugadora.y); ctx.stroke(); ctx.lineWidth = 1;
+  }
+  ctx.fillStyle = "#ff6b6b"; ctx.beginPath(); ctx.arc(guardia.x, guardia.y, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#3a4560"; ctx.fillRect(guardia.x - 20, guardia.y - 24, 40, 6);
+  ctx.fillStyle = guardia.sospecha &gt;= 0.99 ? "#ff6b6b" : "#ffcc4d";
+  ctx.fillRect(guardia.x - 20, guardia.y - 24, 40 * guardia.sospecha, 6);
+  ctx.fillStyle = "#ffffff"; ctx.font = "bold 18px system-ui"; ctx.textAlign = "center";
+  if (guardia.sospecha &gt; 0.3) ctx.fillText(guardia.sospecha &gt; 0.8 ? "!" : "?", guardia.x, guardia.y - 30);
+  ctx.fillStyle = "#6fcf97"; ctx.beginPath(); ctx.arc(jugadora.x, jugadora.y, 8, 0, Math.PI * 2); ctx.fill();
+  if (tiempoMensaje &gt; 0) {
+    ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(0, 130, lienzo.width, 40);
+    ctx.fillStyle = "#ffffff"; ctx.font = "bold 16px system-ui"; ctx.fillText(mensaje, lienzo.width / 2, 156);
+  }
+}
+
+addEventListener("keydown", (e) =&gt; { teclas.add(e.key.length === 1 ? e.key.toLowerCase() : e.key); if (e.key === "Shift") corriendo = true; if (e.key.startsWith("Arrow")) e.preventDefault(); });
+addEventListener("keyup", (e) =&gt; { teclas.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key); if (e.key === "Shift") corriendo = false; });
+function apuntar(e) {
+  const caja = lienzo.getBoundingClientRect();
+  destino = { x: (e.clientX - caja.left) * lienzo.width / caja.width, y: (e.clientY - caja.top) * lienzo.height / caja.height };
+}
+lienzo.addEventListener("pointerdown", (e) =&gt; { apuntar(e); lienzo.focus(); });
+lienzo.addEventListener("pointermove", (e) =&gt; { if (e.buttons) apuntar(e); });
+const boton = document.querySelector("#correr");
+boton.addEventListener("click", () =&gt; { corriendo = !corriendo; boton.textContent = corriendo ? "Correr: sí" : "Correr: no"; });
+
+let anterior = null;
+function bucle(ahora) {
+  if (anterior === null) anterior = ahora;
+  const dt = Math.min((ahora - anterior) / 1000, 1 / 30);
+  anterior = ahora;
+  actualizar(dt);
+  dibujar();
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);
+</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (typeof sospechaSiguiente !== "function") return "No encuentro la función sospechaSiguiente.";
+var cerca = sospechaSiguiente(0.2, 20, 0.1), lejos = sospechaSiguiente(0.2, 150, 0.1);
+if (!(cerca > 0.2 && lejos > 0.2)) return "Si el guardia te ve, la sospecha debería subir (con 0,2 de partida dio " + cerca.toFixed(3) + " de cerca y " + lejos.toFixed(3) + " de lejos).";
+if (!(cerca > lejos)) return "La sospecha debería subir más rápido de cerca que de lejos.";
+var baja = sospechaSiguiente(0.5, null, 0.1);
+if (!(baja < 0.5 && baja >= 0)) return "Si no te ve (distancia null), la sospecha debería bajar sin pasar de 0.";
+if (sospechaSiguiente(0.95, 5, 1) > 1 || sospechaSiguiente(0.01, null, 5) < 0) return "La sospecha debe quedarse siempre entre 0 y 1.";
+return true;
+    </script>
+  </div>
+  <p>Pasar por delante, aunque sea lejos, llena el medidor poco a poco; correr cerca por la espalda te delata por el oído aunque el cono no te vea. <strong>Modifica</strong> los parámetros de arriba: un cono más ancho (<code>MEDIO_ANGULO = 70</code>), más alcance, una sospecha que sube el doble de rápido. Con cada cambio el juego es más difícil, pero fíjate en cuál se siente <em>injusto</em>. Este lienzo comprueba la línea de visión con muestras cada 4 píxeles: es sencillo y aproximado, y puede colarse por una esquina fina. El recorrido exacto por casillas de la cápsula es el del ejercicio.</p>
+  <aside class="senal error">
+    <p>Dos confusiones típicas con el cono. Usar el producto punto con vectores <strong>sin normalizar</strong>: el resultado ya no es un coseno entre −1 y 1, sino que crece con la distancia, y el guardia «ve» mejor a lo lejos. Y confundir el <strong>ángulo total del cono con su mitad</strong>: un campo de visión de 90° significa 45° a cada lado, así que el umbral es cos(45°) ≈ 0,71, no cos(90°) = 0.</p>
+  </aside>
+</section>
+
+<section id="caminos" data-parada="A* a fondo">
+  <h2>Encontrar caminos: A* a fondo</h2>
+  <p>El guardia ya ve, oye y recuerda. Pero si te persigue en línea recta y hay una columna en medio, se queda pegado a ella empujando. Para rodear obstáculos necesita calcular un <strong>camino</strong>: la lista de casillas por las que pasar para llegar de donde está a donde quiere ir.</p>
+  <p>En la <a href="20-algoritmos.html#caminos">Estación 20</a> viste las bases. Repaso en tres líneas: <strong>BFS</strong> explora por ondas con una cola y da el camino más corto si todos los pasos cuestan lo mismo; <strong>Dijkstra</strong> usa una cola de prioridad para atender primero lo más barato, y funciona con costes distintos; <strong>A*</strong> es Dijkstra con una brújula, una heurística que estima cuánto falta. Allí A* se quedó en idea. Aquí lo vas a programar entero, con todo lo que necesita un juego.</p>
+
+  <h3>Las piezas de A*</h3>
+  <p>Para cada casilla, A* maneja tres números:</p>
+  <ul>
+    <li><strong>g</strong>: el coste real del mejor camino encontrado <em>hasta ahora</em> desde el inicio hasta esa casilla.</li>
+    <li><strong>h</strong>: la <strong>heurística</strong>, una estimación rápida de lo que falta hasta la meta, sin mirar muros.</li>
+    <li><strong>f = g + h</strong>: la estimación del coste total de un camino que pase por esa casilla. A* siempre explora primero la casilla con menor f.</li>
+  </ul>
+  <p>Y cuatro estructuras. La <strong>lista abierta</strong> (en inglés, <em>open list</em>) es la frontera: casillas descubiertas que falta explorar, ordenadas por f. Los <strong>cerrados</strong> son las casillas ya exploradas, cuyo mejor coste ya es definitivo. <strong>vieneDe</strong> guarda, para cada casilla, desde cuál se llegó a ella por el mejor camino. Y <strong>g</strong> guarda los costes. Al llegar a la meta, el camino se <strong>reconstruye</strong> hacia atrás siguiendo <code>vieneDe</code>, como migas de pan.</p>
+  <p>La lista abierta necesita sacar una y otra vez el elemento con menor f. Para eso sirve el montículo de la <a href="19-estructuras-datos.html#monticulos">Estación 19</a>, que saca el mínimo en O(log n). Aquí lo envolvemos en una clase de tres métodos para que el código de A* se lea mejor, usando las mismas funciones <code>insertar</code> y <code>extraer</code> de aquella estación:</p>
+  <pre><code class="language-js">class ColaPrioridad {
+  constructor() { this.m = []; }                                  // un montículo (Estación 19)
+  meter(dato, prioridad) { insertar(this.m, { prioridad, dato }); }
+  sacar() { return extraer(this.m).dato; }                        // el de menor prioridad
+  get vacia() { return this.m.length === 0; }                     // se lee como cola.vacia
+}</code></pre>
+  <p>Mira a los dos algoritmos trabajar sobre el mismo mapa, con un muro entre la salida (S) y la meta (M):</p>
+  <figure class="capsula" data-titulo="Dijkstra frente a A*">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Animación: dos cuadrículas de 10 por 7 con un muro vertical entre la salida S y la meta M. A la izquierda Dijkstra, a la derecha A* con distancia Manhattan. Las casillas cerradas, las de la frontera y al final el camino se colorean. Dijkstra crece en círculo en todas las direcciones y explora 62 casillas; A* se estira hacia la meta y explora 30.">
+        <rect class="d-caja-suave" x="21" y="41" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-acento"/>
+        <rect class="d-caja-suave" x="51" y="41" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="81" y="41" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-acento"/>
+        <rect class="d-caja-suave" x="111" y="41" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso; 5:d-acento"/>
+        <rect class="d-caja-suave" x="141" y="41" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="171" y="41" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="201" y="41" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="231" y="41" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="261" y="41" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="291" y="41" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="21" y="71" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="51" y="71" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="81" y="71" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="111" y="71" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="141" y="71" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso; 5:d-acento"/>
+        <rect class="d-solido" x="171" y="71" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="201" y="71" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="231" y="71" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="261" y="71" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="291" y="71" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="21" y="101" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="51" y="101" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-acento"/>
+        <rect class="d-caja-suave" x="81" y="101" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="111" y="101" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="141" y="101" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-solido" x="171" y="101" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="201" y="101" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="231" y="101" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="261" y="101" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="291" y="101" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-aviso"/>
+        <rect class="d-caja-suave" x="21" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-acento"/>
+        <rect class="d-caja-suave" x="51" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-acento; 5:d-ok"/>
+        <rect class="d-caja-suave" x="81" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-acento; 5:d-ok"/>
+        <rect class="d-caja-suave" x="111" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-acento; 5:d-ok"/>
+        <rect class="d-caja-suave" x="141" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento; 5:d-ok"/>
+        <rect class="d-solido" x="171" y="131" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="201" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="231" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="261" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-ok"/>
+        <rect class="d-caja-suave" x="291" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-aviso"/>
+        <rect class="d-caja-suave" x="21" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="51" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-acento"/>
+        <rect class="d-caja-suave" x="81" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="111" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="141" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento; 5:d-ok"/>
+        <rect class="d-solido" x="171" y="161" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="201" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="231" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="261" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-ok"/>
+        <rect class="d-caja-suave" x="291" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="21" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="51" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="81" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-acento"/>
+        <rect class="d-caja-suave" x="111" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="141" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-acento; 5:d-ok"/>
+        <rect class="d-solido" x="171" y="191" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="201" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="231" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="261" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-ok"/>
+        <rect class="d-caja-suave" x="291" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <rect class="d-caja-suave" x="21" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-acento"/>
+        <rect class="d-caja-suave" x="51" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="81" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="111" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso; 5:d-acento"/>
+        <rect class="d-caja-suave" x="141" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso; 5:d-ok"/>
+        <rect class="d-caja-suave" x="171" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-ok"/>
+        <rect class="d-caja-suave" x="201" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-ok"/>
+        <rect class="d-caja-suave" x="231" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-ok"/>
+        <rect class="d-caja-suave" x="261" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-ok"/>
+        <rect class="d-caja-suave" x="291" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 5:d-acento"/>
+        <text class="d-rotulo" x="65" y="150" text-anchor="middle">S</text>
+        <text class="d-rotulo" x="275" y="150" text-anchor="middle">M</text>
+        <rect class="d-caja-suave" x="381" y="41" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="411" y="41" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso"/>
+        <rect class="d-caja-suave" x="441" y="41" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso"/>
+        <rect class="d-caja-suave" x="471" y="41" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso"/>
+        <rect class="d-caja-suave" x="501" y="41" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso"/>
+        <rect class="d-caja-suave" x="531" y="41" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="561" y="41" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="591" y="41" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="621" y="41" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="651" y="41" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="381" y="71" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso"/>
+        <rect class="d-caja-suave" x="411" y="71" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="441" y="71" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="471" y="71" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="501" y="71" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-solido" x="531" y="71" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="561" y="71" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="591" y="71" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="621" y="71" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="651" y="71" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="381" y="101" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="411" y="101" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="441" y="101" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="471" y="101" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="501" y="101" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-acento"/>
+        <rect class="d-solido" x="531" y="101" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="561" y="101" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="591" y="101" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="621" y="101" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="651" y="101" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="381" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="411" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-acento; 4:d-ok"/>
+        <rect class="d-caja-suave" x="441" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-acento; 4:d-ok"/>
+        <rect class="d-caja-suave" x="471" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-acento; 4:d-ok"/>
+        <rect class="d-caja-suave" x="501" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-acento; 4:d-ok"/>
+        <rect class="d-solido" x="531" y="131" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="561" y="131" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="591" y="131" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="621" y="131" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-ok"/>
+        <rect class="d-caja-suave" x="651" y="131" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="381" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="411" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="441" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="471" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento"/>
+        <rect class="d-caja-suave" x="501" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-acento; 4:d-ok"/>
+        <rect class="d-solido" x="531" y="161" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="561" y="161" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="591" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso"/>
+        <rect class="d-caja-suave" x="621" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-ok"/>
+        <rect class="d-caja-suave" x="651" y="161" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso"/>
+        <rect class="d-caja-suave" x="381" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso"/>
+        <rect class="d-caja-suave" x="411" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="441" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-acento"/>
+        <rect class="d-caja-suave" x="471" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-acento"/>
+        <rect class="d-caja-suave" x="501" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 2:d-aviso; 3:d-acento; 4:d-ok"/>
+        <rect class="d-solido" x="531" y="191" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="561" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso"/>
+        <rect class="d-caja-suave" x="591" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso"/>
+        <rect class="d-caja-suave" x="621" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-ok"/>
+        <rect class="d-caja-suave" x="651" y="191" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso"/>
+        <rect class="d-caja-suave" x="381" y="221" width="28" height="28" rx="2"/>
+        <rect class="d-caja-suave" x="411" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso"/>
+        <rect class="d-caja-suave" x="441" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso"/>
+        <rect class="d-caja-suave" x="471" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso"/>
+        <rect class="d-caja-suave" x="501" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 3:d-aviso; 4:d-ok"/>
+        <rect class="d-caja-suave" x="531" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-ok"/>
+        <rect class="d-caja-suave" x="561" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-ok"/>
+        <rect class="d-caja-suave" x="591" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-ok"/>
+        <rect class="d-caja-suave" x="621" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-ok"/>
+        <rect class="d-caja-suave" x="651" y="221" width="28" height="28" rx="2" data-clases="1:d-caja-suave; 4:d-aviso"/>
+        <text class="d-rotulo" x="425" y="150" text-anchor="middle">S</text>
+        <text class="d-rotulo" x="635" y="150" text-anchor="middle">M</text>
+        <text class="d-mono d-peq d-sobre-aviso" x="485" y="179" text-anchor="middle" data-pasos="2">9</text>
+        <text class="d-mono d-peq d-sobre-aviso" x="485" y="119" text-anchor="middle" data-pasos="2">9</text>
+        <text class="d-mono d-peq d-sobre-aviso" x="455" y="179" text-anchor="middle" data-pasos="2">9</text>
+        <text class="d-mono d-peq d-sobre-aviso" x="395" y="149" text-anchor="middle" data-pasos="2">9</text>
+        <text class="d-mono d-peq d-sobre-aviso" x="425" y="179" text-anchor="middle" data-pasos="2">9</text>
+        <text class="d-mono d-peq d-sobre-aviso" x="455" y="119" text-anchor="middle" data-pasos="2">9</text>
+        <text class="d-mono d-peq d-sobre-aviso" x="425" y="119" text-anchor="middle" data-pasos="2">9</text>
+        <text class="d-mono d-peq d-sobre-aviso" x="515" y="209" text-anchor="middle" data-pasos="2">11</text>
+        <text class="d-mono d-peq d-sobre-aviso" x="515" y="89" text-anchor="middle" data-pasos="2">11</text>
+        <text class="d-titulo" x="20" y="28">Dijkstra (h = 0)</text><text class="d-titulo" x="380" y="28">A* (Manhattan)</text>
+        <text class="d-rotulo" x="20" y="278" data-pasos="6">Exploradas: 62</text><text class="d-rotulo" x="380" y="278" data-pasos="6">Exploradas: 30</text>
+        <g class="d-peq" data-pasos="1-5"><rect class="d-acento" x="20" y="262" width="14" height="14"/><text x="40" y="274">cerrada</text><rect class="d-aviso" x="110" y="262" width="14" height="14"/><text x="130" y="274">abierta (frontera)</text><rect class="d-ok" x="270" y="262" width="14" height="14"/><text x="290" y="274">camino</text></g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>El mismo mapa dos veces. A la izquierda, Dijkstra (A* con h = 0); a la derecha, A* con la distancia Manhattan. Hay que rodear el muro.</li>
+        <li data-duracion="7">Tras 6 casillas exploradas. Dijkstra crece como una mancha redonda, igual en todas las direcciones. A* ya se inclina hacia la meta. En la frontera de A* ves el valor f de cada casilla: las de 9 van antes que las de 11.</li>
+        <li>Tras 16. Dijkstra explora también hacia atrás, lejos de la meta, porque no sabe dónde está. A* explora a lo largo del muro, buscando por dónde rodearlo.</li>
+        <li>A* llega a la meta tras 30 casillas y reconstruye el camino. Dijkstra, con las mismas 30, todavía no ha salido del lado izquierdo.</li>
+        <li>Dijkstra llega por fin, con un camino igual de largo. Los dos garantizan el camino más corto; la diferencia es el trabajo.</li>
+        <li>El recuento final: 62 casillas exploradas contra 30. En mapas grandes y abiertos, la diferencia es mucho mayor.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>La idea que hace funcionar A* es «a igual coste, explora primero lo que parece llevar a la meta». Sigue ahora el bucle en un grafo pequeño de 5 nodos, donde cada arista tiene su coste. Fíjate en el momento en que se <strong>mejora</strong> la g de un nodo que ya se había descubierto: por un camino más largo en pasos se llega más barato.</p>
+  <div class="traza" data-titulo="Las vueltas del bucle de A*">
+    <pre><code class="language-js">const grafo = { A: { B: 1, C: 4 }, B: { C: 2, D: 5 }, C: { D: 1 }, D: { E: 3 }, E: {} };
+const h = { A: 5, B: 4, C: 3, D: 2, E: 0 };      // estimación hasta E
+const g = { A: 0 }, vieneDe = {}, cerrados = new Set();
+let abierta = [["A", 5]];                        // [nodo, f], ordenada por f
+while (abierta.length &gt; 0) {
+  const [actual] = abierta.shift();              // el de menor f
+  if (cerrados.has(actual)) continue;            // copia vieja
+  if (actual === "E") break;                     // ¡la meta!
+  cerrados.add(actual);
+  for (const [vecino, coste] of Object.entries(grafo[actual])) {
+    const nuevaG = g[actual] + coste;
+    if (g[vecino] === undefined || nuevaG &lt; g[vecino]) {
+      g[vecino] = nuevaG; vieneDe[vecino] = actual;
+      abierta.push([vecino, nuevaG + h[vecino]]); abierta.sort((a, b) =&gt; a[1] - b[1]);
+    }
+  }
+}
+console.log("Coste:", g.E, "vieneDe:", vieneDe);</code></pre>
+    <script type="application/json">[
+{
+"linea": 4,
+"vars": {
+"abierta": "[A:5]",
+"g": "{ A: 0 }",
+"vieneDe": "{}",
+"cerrados": "{}"
+},
+"nota": "Empieza con A en la abierta. Su f es g + h = 0 + 5 = 5. La abierta se muestra como nodo:f, ordenada por f."
+},
+{
+"linea": 6,
+"vars": {
+"abierta": "[]",
+"g": "{ A: 0 }",
+"vieneDe": "{}",
+"cerrados": "{}",
+"actual": "\"A\""
+},
+"nota": "Se saca el nodo con menor f: A (f = 5)."
+},
+{
+"linea": 9,
+"vars": {
+"abierta": "[]",
+"g": "{ A: 0 }",
+"vieneDe": "{}",
+"cerrados": "{ A }",
+"actual": "\"A\""
+},
+"nota": "A pasa a cerrados: ya sabemos su mejor coste, g = 0."
+},
+{
+"linea": 10,
+"vars": {
+"abierta": "[]",
+"g": "{ A: 0 }",
+"vieneDe": "{}",
+"cerrados": "{ A }",
+"actual": "\"A\"",
+"vecino": "\"B\""
+},
+"nota": "Vecino B, a coste 1."
+},
+{
+"linea": 11,
+"vars": {
+"abierta": "[]",
+"g": "{ A: 0 }",
+"vieneDe": "{}",
+"cerrados": "{ A }",
+"actual": "\"A\"",
+"vecino": "\"B\"",
+"nuevaG": "1"
+},
+"nota": "nuevaG = g[A] + 1 = 1."
+},
+{
+"linea": 13,
+"vars": {
+"abierta": "[]",
+"g": "{ A: 0, B: 1 }",
+"vieneDe": "{ B: \"A\" }",
+"cerrados": "{ A }",
+"actual": "\"A\"",
+"vecino": "\"B\"",
+"nuevaG": "1"
+},
+"nota": "B no tenía g: se anota g = 1 y que se llega desde A."
+},
+{
+"linea": 14,
+"vars": {
+"abierta": "[B:5]",
+"g": "{ A: 0, B: 1 }",
+"vieneDe": "{ B: \"A\" }",
+"cerrados": "{ A }",
+"actual": "\"A\"",
+"vecino": "\"B\"",
+"nuevaG": "1"
+},
+"nota": "Entra en la abierta con f = 1 + 4 = 5."
+},
+{
+"linea": 10,
+"vars": {
+"abierta": "[B:5]",
+"g": "{ A: 0, B: 1 }",
+"vieneDe": "{ B: \"A\" }",
+"cerrados": "{ A }",
+"actual": "\"A\"",
+"vecino": "\"C\""
+},
+"nota": "Vecino C, a coste 4."
+},
+{
+"linea": 11,
+"vars": {
+"abierta": "[B:5]",
+"g": "{ A: 0, B: 1 }",
+"vieneDe": "{ B: \"A\" }",
+"cerrados": "{ A }",
+"actual": "\"A\"",
+"vecino": "\"C\"",
+"nuevaG": "4"
+},
+"nota": "nuevaG = g[A] + 4 = 4."
+},
+{
+"linea": 13,
+"vars": {
+"abierta": "[B:5]",
+"g": "{ A: 0, B: 1, C: 4 }",
+"vieneDe": "{ B: \"A\", C: \"A\" }",
+"cerrados": "{ A }",
+"actual": "\"A\"",
+"vecino": "\"C\"",
+"nuevaG": "4"
+},
+"nota": "C no tenía g: se anota g = 4 y que se llega desde A."
+},
+{
+"linea": 14,
+"vars": {
+"abierta": "[B:5, C:7]",
+"g": "{ A: 0, B: 1, C: 4 }",
+"vieneDe": "{ B: \"A\", C: \"A\" }",
+"cerrados": "{ A }",
+"actual": "\"A\"",
+"vecino": "\"C\"",
+"nuevaG": "4"
+},
+"nota": "Entra en la abierta con f = 4 + 3 = 7."
+},
+{
+"linea": 6,
+"vars": {
+"abierta": "[C:7]",
+"g": "{ A: 0, B: 1, C: 4 }",
+"vieneDe": "{ B: \"A\", C: \"A\" }",
+"cerrados": "{ A }",
+"actual": "\"B\""
+},
+"nota": "Se saca el nodo con menor f: B (f = 5)."
+},
+{
+"linea": 9,
+"vars": {
+"abierta": "[C:7]",
+"g": "{ A: 0, B: 1, C: 4 }",
+"vieneDe": "{ B: \"A\", C: \"A\" }",
+"cerrados": "{ A, B }",
+"actual": "\"B\""
+},
+"nota": "B pasa a cerrados: ya sabemos su mejor coste, g = 1."
+},
+{
+"linea": 10,
+"vars": {
+"abierta": "[C:7]",
+"g": "{ A: 0, B: 1, C: 4 }",
+"vieneDe": "{ B: \"A\", C: \"A\" }",
+"cerrados": "{ A, B }",
+"actual": "\"B\"",
+"vecino": "\"C\""
+},
+"nota": "Vecino C, a coste 2."
+},
+{
+"linea": 11,
+"vars": {
+"abierta": "[C:7]",
+"g": "{ A: 0, B: 1, C: 4 }",
+"vieneDe": "{ B: \"A\", C: \"A\" }",
+"cerrados": "{ A, B }",
+"actual": "\"B\"",
+"vecino": "\"C\"",
+"nuevaG": "3"
+},
+"nota": "nuevaG = g[B] + 2 = 3."
+},
+{
+"linea": 13,
+"vars": {
+"abierta": "[C:7]",
+"g": "{ A: 0, B: 1, C: 3 }",
+"vieneDe": "{ B: \"A\", C: \"B\" }",
+"cerrados": "{ A, B }",
+"actual": "\"B\"",
+"vecino": "\"C\"",
+"nuevaG": "3"
+},
+"nota": "¡Mejora! C ya tenía g = 4, pero por B cuesta 3. Se actualizan g y vieneDe."
+},
+{
+"linea": 14,
+"vars": {
+"abierta": "[C:6, C:7]",
+"g": "{ A: 0, B: 1, C: 3 }",
+"vieneDe": "{ B: \"A\", C: \"B\" }",
+"cerrados": "{ A, B }",
+"actual": "\"B\"",
+"vecino": "\"C\"",
+"nuevaG": "3"
+},
+"nota": "Entra en la abierta con f = 3 + 3 = 6. La copia vieja de C sigue dentro, con peor f."
+},
+{
+"linea": 10,
+"vars": {
+"abierta": "[C:6, C:7]",
+"g": "{ A: 0, B: 1, C: 3 }",
+"vieneDe": "{ B: \"A\", C: \"B\" }",
+"cerrados": "{ A, B }",
+"actual": "\"B\"",
+"vecino": "\"D\""
+},
+"nota": "Vecino D, a coste 5."
+},
+{
+"linea": 11,
+"vars": {
+"abierta": "[C:6, C:7]",
+"g": "{ A: 0, B: 1, C: 3 }",
+"vieneDe": "{ B: \"A\", C: \"B\" }",
+"cerrados": "{ A, B }",
+"actual": "\"B\"",
+"vecino": "\"D\"",
+"nuevaG": "6"
+},
+"nota": "nuevaG = g[B] + 5 = 6."
+},
+{
+"linea": 13,
+"vars": {
+"abierta": "[C:6, C:7]",
+"g": "{ A: 0, B: 1, C: 3, D: 6 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"B\" }",
+"cerrados": "{ A, B }",
+"actual": "\"B\"",
+"vecino": "\"D\"",
+"nuevaG": "6"
+},
+"nota": "D no tenía g: se anota g = 6 y que se llega desde B."
+},
+{
+"linea": 14,
+"vars": {
+"abierta": "[C:6, C:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 6 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"B\" }",
+"cerrados": "{ A, B }",
+"actual": "\"B\"",
+"vecino": "\"D\"",
+"nuevaG": "6"
+},
+"nota": "Entra en la abierta con f = 6 + 2 = 8."
+},
+{
+"linea": 6,
+"vars": {
+"abierta": "[C:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 6 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"B\" }",
+"cerrados": "{ A, B }",
+"actual": "\"C\""
+},
+"nota": "Se saca el nodo con menor f: C (f = 6)."
+},
+{
+"linea": 9,
+"vars": {
+"abierta": "[C:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 6 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"B\" }",
+"cerrados": "{ A, B, C }",
+"actual": "\"C\""
+},
+"nota": "C pasa a cerrados: ya sabemos su mejor coste, g = 3."
+},
+{
+"linea": 10,
+"vars": {
+"abierta": "[C:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 6 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"B\" }",
+"cerrados": "{ A, B, C }",
+"actual": "\"C\"",
+"vecino": "\"D\""
+},
+"nota": "Vecino D, a coste 1."
+},
+{
+"linea": 11,
+"vars": {
+"abierta": "[C:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 6 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"B\" }",
+"cerrados": "{ A, B, C }",
+"actual": "\"C\"",
+"vecino": "\"D\"",
+"nuevaG": "4"
+},
+"nota": "nuevaG = g[C] + 1 = 4."
+},
+{
+"linea": 13,
+"vars": {
+"abierta": "[C:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 4 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"C\" }",
+"cerrados": "{ A, B, C }",
+"actual": "\"C\"",
+"vecino": "\"D\"",
+"nuevaG": "4"
+},
+"nota": "¡Mejora! D ya tenía g = 6, pero por C cuesta 4. Se actualizan g y vieneDe."
+},
+{
+"linea": 14,
+"vars": {
+"abierta": "[D:6, C:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 4 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"C\" }",
+"cerrados": "{ A, B, C }",
+"actual": "\"C\"",
+"vecino": "\"D\"",
+"nuevaG": "4"
+},
+"nota": "Entra en la abierta con f = 4 + 2 = 6. La copia vieja de D sigue dentro, con peor f."
+},
+{
+"linea": 6,
+"vars": {
+"abierta": "[C:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 4 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"C\" }",
+"cerrados": "{ A, B, C }",
+"actual": "\"D\""
+},
+"nota": "Se saca el nodo con menor f: D (f = 6)."
+},
+{
+"linea": 9,
+"vars": {
+"abierta": "[C:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 4 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"C\" }",
+"cerrados": "{ A, B, C, D }",
+"actual": "\"D\""
+},
+"nota": "D pasa a cerrados: ya sabemos su mejor coste, g = 4."
+},
+{
+"linea": 10,
+"vars": {
+"abierta": "[C:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 4 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"C\" }",
+"cerrados": "{ A, B, C, D }",
+"actual": "\"D\"",
+"vecino": "\"E\""
+},
+"nota": "Vecino E, a coste 3."
+},
+{
+"linea": 11,
+"vars": {
+"abierta": "[C:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 4 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"C\" }",
+"cerrados": "{ A, B, C, D }",
+"actual": "\"D\"",
+"vecino": "\"E\"",
+"nuevaG": "7"
+},
+"nota": "nuevaG = g[D] + 3 = 7."
+},
+{
+"linea": 13,
+"vars": {
+"abierta": "[C:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 4, E: 7 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"C\", E: \"D\" }",
+"cerrados": "{ A, B, C, D }",
+"actual": "\"D\"",
+"vecino": "\"E\"",
+"nuevaG": "7"
+},
+"nota": "E no tenía g: se anota g = 7 y que se llega desde D."
+},
+{
+"linea": 14,
+"vars": {
+"abierta": "[C:7, E:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 4, E: 7 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"C\", E: \"D\" }",
+"cerrados": "{ A, B, C, D }",
+"actual": "\"D\"",
+"vecino": "\"E\"",
+"nuevaG": "7"
+},
+"nota": "Entra en la abierta con f = 7 + 0 = 7."
+},
+{
+"linea": 6,
+"vars": {
+"abierta": "[E:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 4, E: 7 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"C\", E: \"D\" }",
+"cerrados": "{ A, B, C, D }",
+"actual": "\"C\""
+},
+"nota": "Sale C con f = 7: es la copia vieja que metimos antes de mejorar su g."
+},
+{
+"linea": 7,
+"vars": {
+"abierta": "[E:7, D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 4, E: 7 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"C\", E: \"D\" }",
+"cerrados": "{ A, B, C, D }",
+"actual": "\"C\""
+},
+"nota": "C ya está en cerrados: se ignora y se sigue. Así se evita cambiar prioridades dentro del montículo."
+},
+{
+"linea": 6,
+"vars": {
+"abierta": "[D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 4, E: 7 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"C\", E: \"D\" }",
+"cerrados": "{ A, B, C, D }",
+"actual": "\"E\""
+},
+"nota": "Se saca el nodo con menor f: E (f = 7)."
+},
+{
+"linea": 8,
+"vars": {
+"abierta": "[D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 4, E: 7 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"C\", E: \"D\" }",
+"cerrados": "{ A, B, C, D }",
+"actual": "\"E\""
+},
+"nota": "Es la meta: se termina. Cuando la meta sale de la abierta, su g ya es la mejor posible."
+},
+{
+"linea": 18,
+"vars": {
+"abierta": "[D:8]",
+"g": "{ A: 0, B: 1, C: 3, D: 4, E: 7 }",
+"vieneDe": "{ B: \"A\", C: \"B\", D: \"C\", E: \"D\" }",
+"cerrados": "{ A, B, C, D }",
+"actual": "\"E\""
+},
+"nota": "Camino más barato: A → B → C → D → E, coste 7. Se reconstruye siguiendo vieneDe desde E hacia atrás.",
+"salida": "Coste: 7 vieneDe: { B: 'A', C: 'B', D: 'C', E: 'D' }"
+}
+]</script>
+  </div>
+  <p>Dos detalles de esa traza aparecen en cualquier A* de verdad. Cuando la g de un nodo mejora, en vez de buscarlo dentro de la abierta para cambiarle la prioridad (caro con un montículo), se mete <em>otra vez</em> con la f nueva; la copia vieja saldrá más tarde y se ignora porque ya está en cerrados. Y los <strong>desempates</strong>: cuando varias casillas tienen la misma f, conviene preferir la de menor h (la que parece más cerca de la meta). No cambia la longitud del camino, pero ahorra mucha exploración en mapas abiertos.</p>
+  <p>Ahora en una cuadrícula. La <code>ColaPrioridad</code> está ya preparada (oculta). El programa lanza A* tres veces sobre el mismo mapa con tres heurísticas: <code>h = 0</code> (que es Dijkstra), Manhattan y Manhattan multiplicada por 2. <strong>Predice</strong> antes de ejecutar: ¿cuál explora menos casillas? ¿Darán las tres el mismo coste?</p>
+  <div class="taller" id="taller-aestrella" data-titulo="Predice y modifica: A* por dentro">
+    <script type="text/plain" class="taller-preparacion">
+// ===== Preparación común (oculta en los talleres) =====
+// Montículo de la Estación 19
+function __padre(i) { return Math.floor((i - 1) / 2); }
+function insertar(monticulo, elemento) {
+  monticulo.push(elemento);
+  let i = monticulo.length - 1;
+  while (i > 0 && monticulo[i].prioridad < monticulo[__padre(i)].prioridad) {
+    [monticulo[i], monticulo[__padre(i)]] = [monticulo[__padre(i)], monticulo[i]];
+    i = __padre(i);
+  }
+}
+function extraer(monticulo) {
+  if (monticulo.length === 0) return undefined;
+  const primero = monticulo[0];
+  const ultimo = monticulo.pop();
+  if (monticulo.length > 0) {
+    monticulo[0] = ultimo;
+    let i = 0;
+    while (true) {
+      const izq = 2 * i + 1, der = 2 * i + 2;
+      let menor = i;
+      if (izq < monticulo.length && monticulo[izq].prioridad < monticulo[menor].prioridad) menor = izq;
+      if (der < monticulo.length && monticulo[der].prioridad < monticulo[menor].prioridad) menor = der;
+      if (menor === i) break;
+      [monticulo[i], monticulo[menor]] = [monticulo[menor], monticulo[i]];
+      i = menor;
+    }
+  }
+  return primero;
+}
+class ColaPrioridad {
+  constructor() { this.m = []; }
+  meter(dato, prioridad) { insertar(this.m, { prioridad, dato }); }
+  sacar() { return extraer(this.m).dato; }
+  get vacia() { return this.m.length === 0; }
+}
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function buscar(mapa, letra) {
+  for (let y = 0; y < mapa.length; y++) {
+    const x = mapa[y].indexOf(letra);
+    if (x !== -1) return { x, y };
+  }
+  return null;
+}
+function dibujarCamino(mapa, camino, marca = "*") {
+  const filas = mapa.map((f) => f.split(""));
+  for (const p of camino) if (filas[p.y][p.x] === "." || filas[p.y][p.x] === "~") filas[p.y][p.x] = marca;
+  return filas.map((f) => f.join(""));
+}
+    </script>
+    <textarea class="taller-codigo">const MAPA = [
+  "....................",
+  "....................",
+  "..........#.........",
+  "..........#.........",
+  "..S.......#......M..",
+  ".......####.........",
+  "....................",
+  "....................",
+  "....................",
+];
+
+// Las cuatro vecinas de una casilla que no son muro
+function vecinos(mapa, p) {
+  const lista = [];
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const x = p.x + dx, y = p.y + dy;
+    if (y &gt;= 0 &amp;&amp; y &lt; mapa.length &amp;&amp; x &gt;= 0 &amp;&amp; x &lt; mapa[0].length &amp;&amp; mapa[y][x] !== "#") lista.push({ x, y });
+  }
+  return lista;
+}
+
+function aEstrella(mapa, inicio, meta, h) {
+  const ancho = mapa[0].length;
+  const clave = (p) =&gt; p.y * ancho + p.x;          // un número único por casilla
+  const abierta = new ColaPrioridad();              // la frontera, ordenada por f
+  const g = new Map([[clave(inicio), 0]]);          // coste real desde el inicio
+  const vieneDe = new Map();                        // de dónde llegué a cada casilla
+  const cerrados = new Set();                       // casillas ya exploradas
+  abierta.meter(inicio, h(inicio, meta));
+  while (!abierta.vacia) {
+    const actual = abierta.sacar();                 // la de menor f = g + h
+    const k = clave(actual);
+    if (cerrados.has(k)) continue;                  // copia vieja: ya la exploré
+    if (k === clave(meta)) {
+      const camino = [actual];
+      let paso = actual;
+      while (vieneDe.has(clave(paso))) { paso = vieneDe.get(clave(paso)); camino.unshift(paso); }
+      return { camino, coste: g.get(k), explorados: cerrados.size };
+    }
+    cerrados.add(k);
+    for (const v of vecinos(mapa, actual)) {
+      const nuevaG = g.get(k) + 1;                  // cada paso cuesta 1
+      const kv = clave(v);
+      if (!g.has(kv) || nuevaG &lt; g.get(kv)) {       // primera vez, o mejor camino
+        g.set(kv, nuevaG);
+        vieneDe.set(kv, actual);
+        abierta.meter(v, nuevaG + h(v, meta));
+      }
+    }
+  }
+  return null;                                      // la meta es inalcanzable
+}
+
+const cero = () =&gt; 0;                                            // Dijkstra
+const manhattan = (a, b) =&gt; Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+const manhattanX2 = (a, b) =&gt; 2 * manhattan(a, b);               // A* ponderado
+
+const inicio = buscar(MAPA, "S"), meta = buscar(MAPA, "M");
+for (const [nombre, h] of [["h = 0 (Dijkstra)", cero], ["Manhattan", manhattan], ["Manhattan × 2", manhattanX2]]) {
+  const r = aEstrella(MAPA, inicio, meta, h);
+  console.log(`${nombre}: coste ${r.coste}, casillas exploradas ${r.explorados}`);
+}
+const r = aEstrella(MAPA, inicio, meta, manhattan);
+console.log(dibujarCamino(MAPA, r.camino).join("\n"));
+
+// Modifica 1: ¿qué pasa si pones un muro que tapa del todo el paso?
+// Modifica 2: desempate. Cambia la prioridad de abierta.meter por
+// (nuevaG + h(v, meta)) * 1000 + h(v, meta) y compara las casillas exploradas.</textarea>
+  </div>
+  <p>Dijkstra explora 152 casillas, A* con Manhattan 59 y la versión «por 2» solo 31, pero su camino cuesta 21 en vez de 19: rodea el muro por arriba porque se lanzó hacia la meta demasiado pronto. Eso es el <strong>A* ponderado</strong> (<em>weighted A*</em>): multiplicar la heurística por un número mayor que 1 lo hace más rápido y más «impaciente», a cambio de perder la garantía del camino más corto. En juegos se usa a menudo, porque un camino un poco peor que nadie nota vale más que un fotograma perdido. Si hiciste la segunda modificación, habrás visto bajar las exploradas de Manhattan de 59 a 38 solo con el desempate.</p>
+  <p>Antes de seguir, ordena el bucle principal. Es la parte que más conviene tener clara:</p>
+  <div class="parsons" data-titulo="Ordena el bucle de A*" data-lenguaje="text">
+    <ol>
+      <li>mientras la abierta no esté vacía:</li>
+      <li data-sangria="1">actual = sacar de la abierta la casilla de menor f</li>
+      <li data-sangria="1">si actual ya está en cerrados: pasar a la siguiente vuelta</li>
+      <li data-sangria="1">si actual es la meta: reconstruir el camino con vieneDe y terminar</li>
+      <li data-sangria="1">meter actual en cerrados</li>
+      <li data-sangria="1">para cada vecino de actual:</li>
+      <li data-sangria="2">gTentativa = g[actual] + coste(actual, vecino)</li>
+      <li data-sangria="2">si vecino no tiene g o gTentativa &lt; g[vecino]:</li>
+      <li data-sangria="3" data-grupo="a">g[vecino] = gTentativa</li>
+      <li data-sangria="3" data-grupo="a">vieneDe[vecino] = actual</li>
+      <li data-sangria="3" data-grupo="a">meter vecino en la abierta con f = gTentativa + h(vecino)</li>
+      <li>devolver «no hay camino»</li>
+    </ol>
+  </div>
+
+  <h3>Ocho direcciones, costes y heurísticas</h3>
+  <p>Con cuatro direcciones, los personajes se mueven en escalera. Con ocho pueden ir en diagonal, pero una diagonal es más larga que un paso recto: mide √2 ≈ 1,414 veces más. Para no arrastrar decimales inexactos (<a href="18-matematicas.html#decimales">Estación 18</a>), los juegos usan <strong>costes enteros</strong>: 10 por paso recto y 14 por diagonal. Y hay una regla de sentido común: <strong>no cortar esquinas</strong>. Un paso en diagonal solo se permite si las dos casillas rectas que lo rodean están libres; si no, el personaje atravesaría la esquina de un muro.</p>
+  <p>La heurística debe corresponder a cómo se mueve el personaje:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Heurística</th><th scope="col">Fórmula (dx, dy = diferencias absolutas)</th><th scope="col">Úsala con</th></tr></thead>
+      <tbody>
+        <tr><td>Manhattan</td><td><code>10 * (dx + dy)</code></td><td>4 direcciones</td></tr>
+        <tr><td>Octil</td><td><code>10 * (dx + dy) - 6 * Math.min(dx, dy)</code></td><td>8 direcciones con costes 10 y 14</td></tr>
+        <tr><td>Euclídea</td><td><code>10 * Math.hypot(dx, dy)</code></td><td>Movimiento libre en cualquier ángulo</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La octil sale de pensar cómo iría el personaje sin muros: <code>min(dx, dy)</code> pasos en diagonal y el resto en recto. Cada diagonal ahorra 6 respecto a dos pasos rectos (14 en vez de 20). Una heurística es <strong>admisible</strong> si nunca sobreestima lo que falta de verdad. Con una heurística admisible, A* garantiza el camino más corto. Aquí basta con la intuición: la octil es exactamente lo que costaría en un mapa vacío, y los muros solo pueden hacerlo más caro. La demostración, y la idea de heurística consistente, están en la <a href="38-ia-busqueda.html#heuristica">Estación 38</a>.</p>
+  <aside class="senal error">
+    <p>Usar Manhattan con ocho direcciones. De (0, 0) a (3, 3) hay tres diagonales: coste real 42. Manhattan dice 10 × (3 + 3) = 60. Sobreestima, así que deja de ser admisible: A* se vuelve impaciente como el ponderado y puede devolver caminos que no son los más cortos. Con 8 direcciones, octil.</p>
+  </aside>
+  <p>Los <strong>costes de terreno</strong> se añaden multiplicando el coste de entrar en una casilla: pisar pantano cuesta el triple, un camino empedrado la mitad. A* rodeará el pantano si el rodeo sale más barato. Con la misma técnica se expresan <strong>preferencias de diseño</strong>: un guardia sigiloso puede tratar las zonas iluminadas como caras, o un aldeano evitar las casillas cercanas a los monstruos, sin prohibirlas del todo. Lo programarás todo junto en el ejercicio <a href="#ej-pantanos">Pantanos y diagonales</a>.</p>
+
+  <h3>Del camino al movimiento</h3>
+  <p>A* devuelve una lista de casillas, pero el guardia no debería moverse como una pieza de ajedrez. Tres ideas convierten la lista en movimiento natural:</p>
+  <ul>
+    <li><strong>Seguir el camino</strong>: el personaje usa <code>buscar</code> (de la sección anterior) hacia el siguiente punto, pasa al siguiente cuando está cerca, y usa <code>llegar</code> en el último para frenar.</li>
+    <li><strong>Suavizar tirando de la cuerda</strong> (<em>string pulling</em>): desde el punto actual, se busca el punto más lejano del camino que se ve en línea recta (con la misma línea de visión de la <a href="#percepcion">percepción</a>) y se eliminan los intermedios. La escalera de casillas se convierte en unos pocos tramos rectos, como una cuerda tensa.</li>
+    <li><strong>Replanificar</strong>: si la jugadora se mueve, el camino envejece. Se vuelve a calcular cuando el objetivo se ha desplazado bastante (más de 2 casillas), cada cierto tiempo (cada 0,5 s, no en cada fotograma) o cuando el mapa cambia (se cierra una puerta).</li>
+  </ul>
+  <aside class="senal ojo" data-titulo="El error que congela móviles">
+    <p>Lanzar un A* por enemigo en cada fotograma. Con 30 enemigos a 60 fotogramas por segundo son 1800 búsquedas por segundo, y el juego va a tirones. Las soluciones: replanificar solo cada medio segundo o cuando haga falta; repartir las búsquedas entre fotogramas (este fotograma calculan los enemigos 1 a 5, el siguiente del 6 al 10); guardar en caché caminos que se repiten; y en mapas enormes, mover A* a un Web Worker (<a href="22-ejecucion.html#workers">Estación 22</a>) para que el bucle de juego no espere. Y cuando muchos van al mismo sitio, algo mejor todavía.</p>
+  </aside>
+
+  <h3>Hordas: un mapa para todos</h3>
+  <p>Si cien zombis persiguen a la misma jugadora, lanzar cien A* es un desperdicio: todos buscan caminos hacia el mismo punto. Es más eficiente hacerlo al revés: <strong>un solo BFS desde la jugadora</strong> calcula la distancia de <em>todas</em> las casillas hasta ella. Ese resultado se llama <strong>mapa de distancias</strong>, y cada zombi solo tiene que moverse a la vecina con el número más bajo, «cuesta abajo», como el agua. Brian Walker, autor del roguelike <em>Brogue</em>, popularizó el nombre «mapas de Dijkstra» y mostró cuántas cosas se pueden hacer con ellos (huir es ir cuesta arriba). Si en cada casilla se guarda directamente la dirección hacia la vecina más baja, se llama <strong>campo de flujo</strong> (<em>flow field</em>), y es lo que usan muchos juegos de defensa de torres y de estrategia para mover ejércitos.</p>
+  <p>En este taller, tres zombis (<code>Z</code>) persiguen a la jugadora (<code>J</code>). El programa imprime el mapa de distancias del primer tick y compara el trabajo de los dos métodos durante 5 ticks. <strong>Predice</strong>: con solo tres zombis, ¿qué sale más barato, un BFS completo por tick o un A* por zombi?</p>
+  <div class="taller" id="taller-horda" data-titulo="Predice y modifica: la horda y el mapa de distancias">
+    <script type="text/plain" class="taller-preparacion">
+// ===== Preparación común (oculta en los talleres) =====
+// Montículo de la Estación 19
+function __padre(i) { return Math.floor((i - 1) / 2); }
+function insertar(monticulo, elemento) {
+  monticulo.push(elemento);
+  let i = monticulo.length - 1;
+  while (i > 0 && monticulo[i].prioridad < monticulo[__padre(i)].prioridad) {
+    [monticulo[i], monticulo[__padre(i)]] = [monticulo[__padre(i)], monticulo[i]];
+    i = __padre(i);
+  }
+}
+function extraer(monticulo) {
+  if (monticulo.length === 0) return undefined;
+  const primero = monticulo[0];
+  const ultimo = monticulo.pop();
+  if (monticulo.length > 0) {
+    monticulo[0] = ultimo;
+    let i = 0;
+    while (true) {
+      const izq = 2 * i + 1, der = 2 * i + 2;
+      let menor = i;
+      if (izq < monticulo.length && monticulo[izq].prioridad < monticulo[menor].prioridad) menor = izq;
+      if (der < monticulo.length && monticulo[der].prioridad < monticulo[menor].prioridad) menor = der;
+      if (menor === i) break;
+      [monticulo[i], monticulo[menor]] = [monticulo[menor], monticulo[i]];
+      i = menor;
+    }
+  }
+  return primero;
+}
+class ColaPrioridad {
+  constructor() { this.m = []; }
+  meter(dato, prioridad) { insertar(this.m, { prioridad, dato }); }
+  sacar() { return extraer(this.m).dato; }
+  get vacia() { return this.m.length === 0; }
+}
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function buscar(mapa, letra) {
+  for (let y = 0; y < mapa.length; y++) {
+    const x = mapa[y].indexOf(letra);
+    if (x !== -1) return { x, y };
+  }
+  return null;
+}
+function dibujarCamino(mapa, camino, marca = "*") {
+  const filas = mapa.map((f) => f.split(""));
+  for (const p of camino) if (filas[p.y][p.x] === "." || filas[p.y][p.x] === "~") filas[p.y][p.x] = marca;
+  return filas.map((f) => f.join(""));
+}
+function aEstrella(mapa, inicio, meta) {
+  const ancho = mapa[0].length, clave = (p) => p.y * ancho + p.x;
+  const h = (p) => Math.abs(p.x - meta.x) + Math.abs(p.y - meta.y);
+  const abierta = new ColaPrioridad(), g = new Map([[clave(inicio), 0]]), cerrados = new Set();
+  abierta.meter(inicio, h(inicio));
+  while (!abierta.vacia) {
+    const a = abierta.sacar(), k = clave(a);
+    if (cerrados.has(k)) continue;
+    if (a.x === meta.x && a.y === meta.y) return { coste: g.get(k), explorados: cerrados.size };
+    cerrados.add(k);
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const v = { x: a.x + dx, y: a.y + dy }, kv = clave(v);
+      if (mapa[v.y][v.x] === "#") continue;
+      const ng = g.get(k) + 1;
+      if (!g.has(kv) || ng < g.get(kv)) { g.set(kv, ng); abierta.meter(v, ng + h(v)); }
+    }
+  }
+  return { coste: Infinity, explorados: cerrados.size };
+}
+    </script>
+    <textarea class="taller-codigo">const MAPA = [
+  "################",
+  "#Z.....#.......#",
+  "#......#..##...#",
+  "#..##..#...#...#",
+  "#Z.#.......#.J.#",
+  "#..#..######...#",
+  "#Z.............#",
+  "################",
+];
+const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+const libre = (x, y) =&gt; MAPA[y][x] !== "#";
+
+// Un solo BFS desde la jugadora: la distancia de TODAS las casillas hasta ella
+function mapaDeDistancias(origen) {
+  const dist = MAPA.map((fila) =&gt; Array(fila.length).fill(Infinity));
+  dist[origen.y][origen.x] = 0;
+  const cola = [origen];
+  let visitadas = 0;
+  while (cola.length &gt; 0) {
+    const p = cola.shift();
+    visitadas++;
+    for (const [dx, dy] of DIRS) {
+      const x = p.x + dx, y = p.y + dy;
+      if (libre(x, y) &amp;&amp; dist[y][x] === Infinity) {
+        dist[y][x] = dist[p.y][p.x] + 1;
+        cola.push({ x, y });
+      }
+    }
+  }
+  return { dist, visitadas };
+}
+
+// Cada zombi baja «cuesta abajo»: a la vecina con menor distancia que esté libre
+function moverZombis(zombis, dist) {
+  for (const z of zombis) {
+    let mejor = null;
+    for (const [dx, dy] of DIRS) {
+      const x = z.x + dx, y = z.y + dy;
+      const ocupada = zombis.some((o) =&gt; o !== z &amp;&amp; o.x === x &amp;&amp; o.y === y);
+      if (libre(x, y) &amp;&amp; !ocupada &amp;&amp; dist[y][x] &lt; dist[z.y][z.x] &amp;&amp; (!mejor || dist[y][x] &lt; dist[mejor.y][mejor.x])) mejor = { x, y };
+    }
+    if (mejor &amp;&amp; dist[mejor.y][mejor.x] &gt; 0) { z.x = mejor.x; z.y = mejor.y; } // no pisa a la jugadora
+  }
+}
+
+const jugadora = { x: 13, y: 4 };
+const zombis = [{ x: 1, y: 1 }, { x: 1, y: 4 }, { x: 1, y: 6 }];
+let totalBFS = 0, totalAEstrella = 0;
+for (let tick = 1; tick &lt;= 5; tick++) {
+  const { dist, visitadas } = mapaDeDistancias(jugadora);
+  totalBFS += visitadas;
+  for (const z of zombis) totalAEstrella += aEstrella(MAPA, z, jugadora).explorados; // lo que costaría un A* por zombi
+  moverZombis(zombis, dist);
+  if (tick === 1) console.log(dist.map((f) =&gt; f.map((d) =&gt; d === Infinity ? " ##" : String(d).padStart(3)).join("")).join("\n"));
+}
+console.log("Zombis tras 5 ticks:", zombis.map((z) =&gt; `(${z.x},${z.y})`).join(" "));
+console.log("Casillas exploradas con un BFS por tick:", totalBFS);
+console.log("Casillas exploradas con un A* por zombi y tick:", totalAEstrella);
+
+// Modifica: añade 10 zombis más a la lista. ¿Cuál de los dos totales crece?</textarea>
+  </div>
+  <p>Incluso con tres zombis gana el mapa de distancias: 335 casillas contra 489. Cada A* es barato, pero se repite por zombi; el BFS se hace una vez por tick sea cual sea el tamaño de la horda. Si añades diez zombis, el total de A* se multiplica y el del BFS no se mueve. Fíjate también en la regla «no pisar a otro zombi»: sin ella, todos acabarían en la misma casilla, porque todos bajan por la misma ladera.</p>
+
+  <h3>Cuadrícula, puntos de ruta o navmesh</h3>
+  <p>A* funciona sobre cualquier grafo. En un juego de casillas el grafo es la propia cuadrícula, pero en un mundo continuo (un nivel 3D, un plataformas con rampas) hay otras formas de representar por dónde se puede caminar:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 265" role="img" aria-label="El mismo nivel, una sala con un obstáculo en el centro, representado de tres formas. Cuadrícula: muchas casillas pequeñas y un camino en escalera. Puntos de ruta: seis nodos colocados a mano alrededor del obstáculo, unidos por aristas, y un camino por tres de ellos. Navmesh: cuatro polígonos que cubren el suelo caminable y un camino de dos tramos rectos que pasa rozando la esquina del obstáculo.">
+      <text class="d-rotulo" x="122" y="28" text-anchor="middle">Cuadrícula</text>
+      <rect class="d-caja" x="12" y="40" width="220" height="170" rx="4"/>
+      <rect class="d-caja-suave" x="14" y="47" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="34" y="47" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="54" y="47" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="74" y="47" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="94" y="47" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="114" y="47" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="134" y="47" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="154" y="47" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="174" y="47" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="194" y="47" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="214" y="47" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="14" y="67" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="34" y="67" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="54" y="67" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="74" y="67" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="94" y="67" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="114" y="67" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="134" y="67" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="154" y="67" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="174" y="67" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="194" y="67" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="214" y="67" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="14" y="87" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="34" y="87" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="54" y="87" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="74" y="87" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="154" y="87" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="174" y="87" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="194" y="87" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="214" y="87" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="14" y="107" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="34" y="107" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="54" y="107" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="74" y="107" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="154" y="107" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="174" y="107" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="194" y="107" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="214" y="107" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="14" y="127" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="34" y="127" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="54" y="127" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="74" y="127" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="154" y="127" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="174" y="127" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="194" y="127" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="214" y="127" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="14" y="147" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="34" y="147" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="54" y="147" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="74" y="147" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="154" y="147" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="174" y="147" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="194" y="147" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="214" y="147" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="14" y="167" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="34" y="167" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="54" y="167" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="74" y="167" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="94" y="167" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="114" y="167" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="134" y="167" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="154" y="167" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="174" y="167" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="194" y="167" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="214" y="167" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="14" y="187" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="34" y="187" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="54" y="187" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="74" y="187" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="94" y="187" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="114" y="187" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="134" y="187" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="154" y="187" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="174" y="187" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="194" y="187" width="16" height="16" rx="2"/>
+      <rect class="d-caja-suave" x="214" y="187" width="16" height="16" rx="2"/>
+      <rect class="d-solido" x="92" y="85" width="60" height="80" rx="3"/>
+      <path class="d-ok-trazo" d="M42 195 L62 195 L62 175 L82 175 L82 75 L162 75 L162 55 L202 55"/>
+      <circle class="d-acento" cx="42" cy="195" r="7"/>
+      <circle class="d-aviso" cx="202" cy="55" r="7"/>
+      <text class="d-rotulo" x="360" y="28" text-anchor="middle">Puntos de ruta</text>
+      <rect class="d-caja" x="250" y="40" width="220" height="170" rx="4"/>
+      <rect class="d-solido" x="330" y="90" width="60" height="70" rx="3"/>
+      <path class="d-punteada" d="M280 190L315 175"/>
+      <path class="d-punteada" d="M315 175L315 75"/>
+      <path class="d-punteada" d="M315 75L405 75"/>
+      <path class="d-punteada" d="M315 175L405 175"/>
+      <path class="d-punteada" d="M405 75L445 62"/>
+      <path class="d-punteada" d="M405 175L445 62"/>
+      <path class="d-punteada" d="M405 75L405 175"/>
+      <path class="d-punteada" d="M280 190L315 75"/>
+      <path class="d-ok-trazo" d="M280 190L315 75L405 75L445 62"/>
+      <circle class="d-tinta" cx="280" cy="190" r="5"/>
+      <circle class="d-tinta" cx="315" cy="175" r="5"/>
+      <circle class="d-tinta" cx="315" cy="75" r="5"/>
+      <circle class="d-tinta" cx="405" cy="75" r="5"/>
+      <circle class="d-tinta" cx="405" cy="175" r="5"/>
+      <circle class="d-tinta" cx="445" cy="62" r="5"/>
+      <circle class="d-acento" cx="280" cy="190" r="7"/>
+      <circle class="d-aviso" cx="445" cy="62" r="7"/>
+      <text class="d-rotulo" x="598" y="28" text-anchor="middle">Navmesh</text>
+      <rect class="d-caja" x="488" y="40" width="220" height="170" rx="4"/>
+      <path class="d-caja-suave" d="M488 40 L568 40 L568 210 L488 210Z"/><path class="d-punteada" d="M488 40 L568 40 L568 210 L488 210Z"/>
+      <path class="d-caja-suave" d="M568 40 L628 40 L628 90 L568 90Z"/><path class="d-punteada" d="M568 40 L628 40 L628 90 L568 90Z"/>
+      <path class="d-caja-suave" d="M568 160 L628 160 L628 210 L568 210Z"/><path class="d-punteada" d="M568 160 L628 160 L628 210 L568 210Z"/>
+      <path class="d-caja-suave" d="M628 40 L708 40 L708 210 L628 210Z"/><path class="d-punteada" d="M628 40 L708 40 L708 210 L628 210Z"/>
+      <rect class="d-solido" x="568" y="90" width="60" height="70" rx="3"/>
+      <path class="d-ok-trazo" d="M518 190L564 86L683 62"/>
+      <circle class="d-acento" cx="518" cy="190" r="7"/>
+      <circle class="d-aviso" cx="683" cy="62" r="7"/>
+      <text class="d-peq" x="122" y="234" text-anchor="middle">Fácil y exacta en juegos</text><text class="d-peq" x="122" y="252" text-anchor="middle">de casillas; muchos nodos.</text>
+      <text class="d-peq" x="360" y="234" text-anchor="middle">Pocos nodos puestos a mano;</text><text class="d-peq" x="360" y="252" text-anchor="middle">caminos con ángulos raros.</text>
+      <text class="d-peq" x="598" y="234" text-anchor="middle">Polígonos caminables: pocos,</text><text class="d-peq" x="598" y="252" text-anchor="middle">caminos rectos y naturales.</text>
+    </svg>
+    <figcaption>Tres representaciones del mismo nivel, con la salida en rojo y la meta en amarillo. La <strong>navmesh</strong> (<em>navigation mesh</em>, «malla de navegación») describe el suelo caminable con pocos polígonos convexos; A* busca sobre los polígonos y luego se tensa la cuerda dentro de ellos. Es lo que usan Godot, Unity y Unreal para mundos que no son de casillas.</figcaption>
+  </figure>
+  <p>Regla práctica: cuadrícula si tu juego ya es de casillas; puntos de ruta si el nivel es pequeño y los colocas a mano; navmesh para todo lo demás, generada por el motor. Cómo se hace en cada motor lo verás, junto con el resto de herramientas, al final de la <a href="#director">última sección</a>.</p>
+</section>

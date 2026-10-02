@@ -49,6 +49,7 @@
       <li><a href="#neurona">La neurona</a></li>
       <li><a href="#capas">Capas</a></li>
       <li><a href="#retropropagacion">Retropropagación</a></li>
+      <li><a href="#entrenar">Entrenar</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -852,6 +853,819 @@ console.log(Math.abs(a.grad - numerica) &lt; 1e-4 ? "gradiente correcto" : "¡re
   </figure>
   <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p><strong>Sumar el gradiente</strong> en lugar de restarlo: la red sube la montaña y la pérdida crece. <strong>Usar <code>=</code> en lugar de <code>+=</code></strong> en <code>_retro</code>: todo funciona mientras ningún valor se use dos veces, y falla en cuanto una red real reutiliza un peso o una entrada. <strong>No reiniciar los gradientes</strong> a 0 antes de cada <code>retro()</code>: como se acumulan con <code>+=</code>, los de la vuelta anterior se suman a los nuevos y los pasos se descontrolan.</p></div></aside>
   <p>En la práctica, el ejercicio «Completa la retro» te pide escribir tú el <code>_retro</code> del producto y de tanh, y una prueba de gradiente automática decide si están bien.</p>
+</section>
+
+<section id="entrenar" data-parada="Entrenar">
+  <h2>Entrenar una red sin sorpresas</h2>
+  <p>Ya tienes todas las piezas: una red que calcula, una pérdida que mide el error, una retropropagación que da los gradientes y una regla para bajar la montaña. <strong>Entrenar</strong> es repetirlas en bucle, siempre en el mismo orden:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Adelante.</strong> La red calcula sus predicciones con los pesos actuales.</p></div></li>
+    <li><div><p><strong>Pérdida.</strong> Se compara cada predicción con la respuesta correcta y se resume el error en un número.</p></div></li>
+    <li><div><p><strong>Gradientes a cero.</strong> Se borran los gradientes de la vuelta anterior, porque se acumulan con <code>+=</code>.</p></div></li>
+    <li><div><p><strong>Retro.</strong> <code>perdida.retro()</code> rellena el <code>.grad</code> de cada peso y cada sesgo.</p></div></li>
+    <li><div><p><strong>Actualizar.</strong> Cada parámetro da un pasito cuesta abajo: <code>p.dato -= tasa * p.grad</code>.</p></div></li>
+  </ol>
+  <p>Ordena el bucle que entrena XOR con tu biblioteca. <code>red.llamar(x)</code> es la propagación hacia delante de una red de objetos <code>Valor</code>, <code>X</code> son las cuatro entradas e <code>Y</code> las respuestas (−1 y 1, porque la salida es tanh). Pon a cero los gradientes justo antes de <code>retro()</code>:</p>
+  <div class="parsons" data-titulo="Ordena el bucle de entrenamiento" data-lenguaje="js" data-exito="¡Exacto! Adelante, pérdida, gradientes a cero, retro y actualizar. Es el mismo bucle que usa PyTorch, como verás pronto.">
+    <ol>
+      <li>for (let epoca = 1; epoca &lt;= 500; epoca++) {</li>
+      <li data-sangria="1">const predicciones = X.map((x) =&gt; red.llamar(x));</li>
+      <li data-sangria="1">let perdida = new Valor(0);</li>
+      <li data-sangria="1">for (let i = 0; i &lt; 4; i++) {</li>
+      <li data-sangria="2">const d = predicciones[i].suma(-Y[i]);</li>
+      <li data-sangria="2">perdida = perdida.suma(d.mul(d));</li>
+      <li data-sangria="1">}</li>
+      <li data-sangria="1">for (const p of red.parametros()) p.grad = 0;</li>
+      <li data-sangria="1">perdida.retro();</li>
+      <li data-sangria="1">for (const p of red.parametros()) p.dato -= tasa * p.grad;</li>
+      <li>}</li>
+    </ol>
+  </div>
+  <p>En la práctica, el ejercicio «Entrena XOR con tu biblioteca» te pide escribir este bucle y comprobar que la pérdida baja de 0.05 en 500 épocas. En Node tarda unos 20 milisegundos: la red tiene 17 parámetros.</p>
+
+  <h3>Épocas, lotes e iteraciones</h3>
+  <p>Con cuatro ejemplos puedes calcular la pérdida de todos en cada paso. Con las 55 000 imágenes de dígitos que usarás en PyTorch, sería muy lento dar un solo pasito por cada pasada completa. Por eso los datos se reparten en <strong>lotes</strong> (en inglés, <em>batches</em>): grupos pequeños, por ejemplo de 64 ejemplos. Con cada lote se calcula la pérdida, los gradientes y una actualización. Cada actualización es una <strong>iteración</strong>, y una <strong>época</strong> sigue siendo una pasada completa por los datos: con 55 000 imágenes y lotes de 64, una época son 860 iteraciones.</p>
+  <p>Estimar el gradiente con un lote en lugar de con todos los datos se llama <strong>descenso de gradiente estocástico</strong> (en inglés, <em>stochastic gradient descent</em>, SGD). El gradiente de un lote tiene algo de ruido, pero sale mucho más barato, y ese ruido hasta ayuda a no quedarse atascado. Hay mejoras que adaptan el tamaño del paso de cada parámetro según su historia; la más usada es <strong>Adam</strong>, que con una tasa de 0.001 es un punto de partida razonable para casi cualquier red.</p>
+
+  <h3>Empezar bien: inicialización y normalización</h3>
+  <p>Los pesos iniciales se eligen al azar, pequeños (por ejemplo, entre −1 y 1, o menos en capas grandes) y con una <strong>semilla</strong> fija, como en la <a href="18-matematicas.html#azar">Estación 18</a>, para que el experimento se pueda repetir. ¿Por qué no en cero? Porque si todas las neuronas de una capa empiezan iguales, reciben el mismo gradiente, cambian igual y siguen siendo idénticas para siempre: diez neuronas que valen por una. El azar rompe esa <strong>simetría</strong>.</p>
+  <p>Las entradas también se preparan: si una vale entre 0 y 1 y otra entre 0 y 10 000, la segunda domina las sumas y los gradientes. Se <strong>normalizan</strong> a escalas parecidas, igual que hiciste con los datos de la <a href="39-aprendizaje-automatico.html#datos">Estación 39</a>. Por eso la distancia del salto se dividía entre 12.</p>
+
+  <h3>La pérdida para varias clases: entropía cruzada</h3>
+  <p>Para una salida de sí o no, la 39 usó la pérdida logarítmica. Con softmax y varias clases se usa su hermana mayor, la <strong>entropía cruzada</strong> (en inglés, <em>cross-entropy</em>): menos el logaritmo de la probabilidad que la red le dio a la clase correcta.</p>
+  <pre><code class="language-js">const perdida = -Math.log(probabilidades[claseCorrecta]);</code></pre>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Probabilidad de la clase correcta</th><th scope="col">Pérdida (−log p)</th><th scope="col">Lectura</th></tr></thead>
+      <tbody>
+        <tr><td>0.99</td><td>0.01</td><td>Acertó y estaba segura.</td></tr>
+        <tr><td>0.9</td><td>0.11</td><td>Acertó con bastante confianza.</td></tr>
+        <tr><td>0.33</td><td>1.10</td><td>Lo mismo que adivinar entre tres.</td></tr>
+        <tr><td>0.01</td><td>4.61</td><td>Falló muy segura de sí misma: castigo fuerte.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El logaritmo (<a href="18-matematicas.html#crecimiento">Estación 18</a>) hace que equivocarse con mucha seguridad cueste muchísimo más que dudar. Y hay un regalo: si juntas softmax con la entropía cruzada, el gradiente en cada logit es simplemente <code>p − y</code>, la probabilidad que dio la red menos 1 para la clase correcta (y menos 0 para las demás). Lo verás en una línea del taller de runas.</p>
+
+  <h3>Leer la curva de pérdida</h3>
+  <p>Durante el entrenamiento se dibuja la pérdida de cada época. Esa curva es tu panel de control:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">La curva…</th><th scope="col">Qué suele significar</th><th scope="col">Qué probar</th></tr></thead>
+      <tbody>
+        <tr><td>Baja rápido y después se aplana</td><td>Todo va bien.</td><td>Mirar la validación para decidir cuándo parar.</td></tr>
+        <tr><td>Se queda plana desde el principio</td><td>Tasa demasiado pequeña, neuronas saturadas o apagadas, o un error en los datos.</td><td>Subir la tasa, revisar la normalización y la inicialización.</td></tr>
+        <tr><td>Baja pero oscila mucho</td><td>Tasa algo grande, o lotes muy pequeños.</td><td>Bajar la tasa o agrandar los lotes.</td></tr>
+        <tr><td>Sube</td><td>Tasa demasiado grande, o estás sumando el gradiente en vez de restarlo.</td><td>Revisar el signo y dividir la tasa entre 10.</td></tr>
+        <tr><td>Da <code>NaN</code></td><td>Algún número explotó: tasa enorme, <code>Math.log(0)</code> o una división entre 0.</td><td>Bajar la tasa y proteger los logaritmos (<code>p + 1e-9</code>).</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Gradientes que se desvanecen</p><p>La derivada de la sigmoide vale como mucho 0.25. En una red de 10 capas sigmoide, la regla de la cadena multiplica unas diez derivadas así: 0.25<sup>10</sup> es menos de una millonésima. Las primeras capas casi no reciben gradiente y no aprenden. Por eso las redes profundas usan ReLU en las capas ocultas: su derivada es 1 para los valores positivos y el gradiente llega entero. Lo verás en el taller siguiente: con sigmoide, la misma red aprende bastante más despacio.</p></div></aside>
+
+  <h3>El sobreajuste, en versión redes</h3>
+  <p>En la <a href="39-aprendizaje-automatico.html#evaluar">Estación 39</a> viste el <strong>sobreajuste</strong>: un modelo que memoriza los datos de entrenamiento y falla con datos nuevos. Las redes, con sus miles o millones de parámetros, son especialmente buenas memorizando. Estas son sus defensas propias:</p>
+  <ul>
+    <li><strong>Conjunto de validación.</strong> Una parte de los datos que la red nunca usa para aprender, solo para medir. El de prueba se guarda para el final, una sola vez.</li>
+    <li><strong>Parada temprana</strong> (en inglés, <em>early stopping</em>). Si la pérdida de validación deja de bajar durante varias épocas mientras la de entrenamiento sigue bajando, se detiene el entrenamiento y se guardan los pesos de la mejor época.</li>
+    <li><strong>Weight decay</strong> (regularización L2). Se castigan los pesos grandes: en cada actualización, cada peso se encoge un poquito hacia 0. Una red con pesos pequeños dibuja fronteras más suaves.</li>
+    <li><strong>Dropout.</strong> Durante el entrenamiento, en cada paso se apaga al azar una parte de las neuronas (por ejemplo, la mitad). Ninguna puede depender de otra concreta, y la red aprende rasgos redundantes. Al usarla, se encienden todas.</li>
+    <li><strong>Aumento de datos</strong> (en inglés, <em>data augmentation</em>). Se crean ejemplos nuevos transformando los que tienes: mover, girar un poco o cambiar el brillo de los sprites. Cuidado con las transformaciones que cambian el significado: voltear un 6 lo acerca a un 9, y una flecha a la izquierda volteada apunta a la derecha.</li>
+  </ul>
+  <aside class="senal oficio"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.5 6.5L17 4l3 3-2.5 2.5"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Consejo de oficio</p><p>El número de capas, las neuronas, la tasa, el tamaño del lote o el dropout son <strong>hiperparámetros</strong>: los eliges tú, no la red. Se encuentran probando, y quien entrena redes en serio anota cada experimento (configuración, semilla, pérdidas por época) para poder compararlos y repetir el mejor. En la práctica, el ejercicio «¿Qué entrenamiento eliges?» te pide buscar en una tabla de experimentos la mejor época y detectar el sobreajuste con SQL.</p></div></aside>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p><strong>Evaluar con los datos de entrenamiento</strong>: la red parece perfecta y en el juego falla. <strong>No barajar</strong> los ejemplos en cada época: si llegan todos los fuegos y después todos los hielos, la red olvida lo primero mientras aprende lo último. <strong>Entrenar de más</strong>: más épocas no siempre es mejor; mira la validación.</p></div></aside>
+
+  <h3>De números sueltos a tablas enteras</h3>
+  <p>Tu clase <code>Valor</code> es perfecta para entender, pero crea un objeto por cada suma y cada producto. Para trabajar se opera con tablas enteras de números. En JavaScript, <code>Float32Array</code> es un array de tamaño fijo en el que todos los elementos son números decimales de 32 bits, guardados uno detrás de otro en la memoria. Ocupa la mitad que un array normal de números y el motor lo recorre mucho más rápido:</p>
+  <pre><code class="language-js">const pesos = new Float32Array(64 * 16);   // 1024 pesos, todos a 0
+pesos[3] = 0.25;                            // se usa como un array normal</code></pre>
+  <p>Con los pesos de cada capa en un <code>Float32Array</code>, la propagación son bucles sobre tablas y la retropropagación de cada capa se escribe a mano una vez (es la misma regla de la cadena, aplicada a filas enteras). Así están hechos los dos talleres siguientes. Es también la idea de los tensores: operar con tablas completas.</p>
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Por qué las GPU</p><p>Una red pasa casi todo su tiempo multiplicando tablas: miles de productos punto independientes entre sí. Una CPU tiene unos pocos núcleos muy listos; una tarjeta gráfica (GPU) tiene miles de núcleos sencillos pensados para calcular a la vez el color de millones de píxeles en un videojuego. Resulta que multiplicar matrices para una red es el mismo tipo de trabajo. Las GPU, creadas para los videojuegos, son la razón práctica de que hoy se puedan entrenar redes enormes.</p></div></aside>
+
+  <h3>Un playground de redes</h3>
+  <p>Este taller entrena en vivo una red 2-H-1 sobre puntos de dos clases: el fondo pinta lo que la red opina en cada zona y la curva de abajo es la pérdida. Antes de que cargue la página ya ha hecho 300 épocas; después sigue entrenando hasta la 3000 y se comprueba cada 250. El reto: conseguir al menos un 90 % de acierto en los puntos de <em>validación</em> (los que ves pintados), que la red no usa para aprender. Con 2 neuronas ocultas no llega. <strong>Predice</strong> cuántas hacen falta para rodear el círculo y después prueba. Luego experimenta: activación sigmoide, tasa 5, la espiral.</p>
+  <div class="taller" data-modo="web" id="taller-playground" data-titulo="Mini playground" data-alto="30rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div class="fila"&gt;
+  &lt;canvas id="mapa" width="300" height="300"&gt;&lt;/canvas&gt;
+  &lt;div class="panel"&gt;
+    &lt;label&gt;Datos
+      &lt;select id="datos"&gt;&lt;option value="circulo"&gt;Círculo&lt;/option&gt;&lt;option value="espiral"&gt;Espiral&lt;/option&gt;&lt;/select&gt;
+    &lt;/label&gt;
+    &lt;label&gt;Neuronas ocultas &lt;input id="neuronas" type="range" min="1" max="16" value="2"&gt; &lt;output id="vNeuronas"&gt;&lt;/output&gt;&lt;/label&gt;
+    &lt;label&gt;Tasa &lt;input id="tasa" type="range" min="0.1" max="5" step="0.1" value="1"&gt; &lt;output id="vTasa"&gt;&lt;/output&gt;&lt;/label&gt;
+    &lt;label&gt;Activación
+      &lt;select id="activacion"&gt;&lt;option&gt;tanh&lt;/option&gt;&lt;option&gt;relu&lt;/option&gt;&lt;option&gt;sigmoide&lt;/option&gt;&lt;/select&gt;
+    &lt;/label&gt;
+    &lt;button id="reiniciar" type="button"&gt;Reiniciar&lt;/button&gt;
+    &lt;canvas id="curva" width="240" height="90"&gt;&lt;/canvas&gt;
+    &lt;p id="info"&gt;&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 8px; font-size: 14px; color: #1d1d1f; }
+.fila { display: flex; flex-wrap: wrap; gap: 12px; }
+canvas { border: 1px solid #999; border-radius: 6px; max-width: 100%; }
+.panel { display: grid; gap: 8px; align-content: start; }
+label { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+#info { font-weight: bold; margin: 0; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// ===== 1. Datos: dos clases de puntos, generados con semilla =====
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a &gt;&gt;&gt; 15), 1 | a);
+    t = (t + Math.imul(t ^ (t &gt;&gt;&gt; 7), 61 | t)) ^ t;
+    return ((t ^ (t &gt;&gt;&gt; 14)) &gt;&gt;&gt; 0) / 4294967296;
+  };
+}
+function generar(tipo, n, semilla) {
+  const azar = mulberry32(semilla);
+  const X = new Float32Array(n * 2), Y = new Float32Array(n);
+  for (let i = 0; i &lt; n; i++) {
+    const c = i % 2;
+    let x, y;
+    if (tipo === "circulo") {
+      const r = c ? azar() * 0.45 : 0.65 + azar() * 0.3, a = azar() * Math.PI * 2;
+      x = r * Math.cos(a); y = r * Math.sin(a);
+    } else {
+      const t = azar() * 0.9 + 0.1, a = t * 3 * Math.PI + c * Math.PI;
+      x = t * Math.cos(a) * 0.9 + (azar() - 0.5) * 0.08;
+      y = t * Math.sin(a) * 0.9 + (azar() - 0.5) * 0.08;
+    }
+    X[2 * i] = x; X[2 * i + 1] = y; Y[i] = c;
+  }
+  return { X, Y, n };
+}
+
+// ===== 2. Red 2-H-1 guardada en Float32Array =====
+const ACT = {
+  tanh: [Math.tanh, (a) =&gt; 1 - a * a],
+  relu: [(z) =&gt; (z &gt; 0 ? z : 0), (a) =&gt; (a &gt; 0 ? 1 : 0)],
+  sigmoide: [(z) =&gt; 1 / (1 + Math.exp(-z)), (a) =&gt; a * (1 - a)],
+};
+let cfg, red, entreno, validacion, epoca, historial, listo = false;
+
+function crearRed(h, semilla) {
+  const azar = mulberry32(semilla), al = (e) =&gt; (azar() * 2 - 1) * e;
+  return {
+    h,
+    W1: Float32Array.from({ length: h * 2 }, () =&gt; al(1)),   // pesos entrada → oculta
+    b1: new Float32Array(h),
+    W2: Float32Array.from({ length: h }, () =&gt; al(1 / Math.sqrt(h))),
+    b2: new Float32Array(1),
+  };
+}
+function predecir(x, y, oc) {
+  const f = ACT[cfg.activacion][0];
+  let s = red.b2[0];
+  for (let j = 0; j &lt; red.h; j++) {
+    const a = f(red.W1[2 * j] * x + red.W1[2 * j + 1] * y + red.b1[j]);
+    if (oc) oc[j] = a;
+    s += red.W2[j] * a;
+  }
+  return 1 / (1 + Math.exp(-s));   // salida sigmoide: probabilidad de la clase 1
+}
+function pasoDeEntrenamiento() {
+  // Una época con todos los puntos: adelante, pérdida, gradientes y actualización
+  const df = ACT[cfg.activacion][1], h = red.h, oc = new Float32Array(h);
+  const gW1 = new Float32Array(h * 2), gb1 = new Float32Array(h), gW2 = new Float32Array(h);
+  let gb2 = 0, perdida = 0;
+  for (let i = 0; i &lt; entreno.n; i++) {
+    const x = entreno.X[2 * i], y = entreno.X[2 * i + 1], t = entreno.Y[i];
+    const p = predecir(x, y, oc);
+    perdida -= t * Math.log(p + 1e-7) + (1 - t) * Math.log(1 - p + 1e-7);
+    const d = p - t;                         // gradiente de la pérdida en la salida
+    gb2 += d;
+    for (let j = 0; j &lt; h; j++) {
+      gW2[j] += d * oc[j];
+      const dh = d * red.W2[j] * df(oc[j]);  // regla de la cadena hacia la capa oculta
+      gW1[2 * j] += dh * x; gW1[2 * j + 1] += dh * y; gb1[j] += dh;
+    }
+  }
+  const k = cfg.tasa / entreno.n;
+  for (let j = 0; j &lt; h; j++) {
+    red.W2[j] -= k * gW2[j]; red.b1[j] -= k * gb1[j];
+    red.W1[2 * j] -= k * gW1[2 * j]; red.W1[2 * j + 1] -= k * gW1[2 * j + 1];
+  }
+  red.b2[0] -= k * gb2;
+  epoca++;
+  historial.push(perdida / entreno.n);
+}
+// La verificación usa esta función: exactitud sobre puntos que la red no vio al entrenar
+window.exactitudValidacion = function () {
+  let bien = 0;
+  for (let i = 0; i &lt; validacion.n; i++) {
+    const p = predecir(validacion.X[2 * i], validacion.X[2 * i + 1]);
+    if ((p &gt; 0.5) === (validacion.Y[i] === 1)) bien++;
+  }
+  return bien / validacion.n;
+};
+
+// ===== 3. Dibujo =====
+const mapa = document.querySelector("#mapa"), cm = mapa.getContext("2d");
+const curva = document.querySelector("#curva"), cc = curva.getContext("2d");
+function dibujar() {
+  const celda = 6;                                     // rejilla de 50 × 50: rápida
+  for (let px = 0; px &lt; 300; px += celda) {
+    for (let py = 0; py &lt; 300; py += celda) {
+      const p = predecir(px / 150 - 1, 1 - py / 150);
+      cm.fillStyle = `rgb(${Math.round(90 + 150 * p)}, ${Math.round(150 + 40 * (1 - Math.abs(2 * p - 1)))}, ${Math.round(240 - 150 * p)})`;
+      cm.fillRect(px, py, celda, celda);
+    }
+  }
+  for (let i = 0; i &lt; validacion.n; i++) {
+    cm.beginPath();
+    cm.arc((validacion.X[2 * i] + 1) * 150, (1 - validacion.X[2 * i + 1]) * 150, 3.5, 0, Math.PI * 2);
+    cm.fillStyle = validacion.Y[i] ? "#7a1f00" : "#0b2e6b"; cm.fill();
+    cm.strokeStyle = "#fff"; cm.stroke();
+  }
+  cc.clearRect(0, 0, 240, 90);
+  cc.strokeStyle = "#333"; cc.beginPath();
+  const maximo = Math.max(...historial.slice(0, 5), 0.01);
+  historial.forEach((v, i) =&gt; {
+    const x = (i / 3000) * 240, y = 88 - (v / maximo) * 84;
+    i ? cc.lineTo(x, y) : cc.moveTo(x, y);
+  });
+  cc.stroke();
+  document.querySelector("#info").textContent =
+    `Época ${epoca} · pérdida ${historial[historial.length - 1].toFixed(3)} · validación ${Math.round(exactitudValidacion() * 100)} %`;
+}
+
+// ===== 4. Controles =====
+const leer = () =&gt; ({
+  datos: document.querySelector("#datos").value,
+  neuronas: Number(document.querySelector("#neuronas").value),
+  tasa: Number(document.querySelector("#tasa").value),
+  activacion: document.querySelector("#activacion").value,
+});
+function reiniciar() {
+  cfg = leer();
+  document.querySelector("#vNeuronas").textContent = cfg.neuronas;
+  document.querySelector("#vTasa").textContent = cfg.tasa;
+  entreno = generar(cfg.datos, 200, 1);
+  validacion = generar(cfg.datos, 200, 2);
+  red = crearRed(cfg.neuronas, 3);
+  epoca = 0; historial = [];
+  for (let i = 0; i &lt; 300; i++) pasoDeEntrenamiento();   // 300 épocas al momento
+  dibujar();
+  if (listo &amp;&amp; window.comprobar) comprobar();   // vuelve a verificar con la configuración nueva
+}
+for (const id of ["datos", "neuronas", "tasa", "activacion"]) {
+  document.querySelector("#" + id).addEventListener("change", reiniciar);
+}
+document.querySelector("#reiniciar").addEventListener("click", reiniciar);
+
+function animar() {
+  if (epoca &lt; 3000) {
+    for (let i = 0; i &lt; 10; i++) pasoDeEntrenamiento();
+    dibujar();
+    if (epoca % 250 === 0 &amp;&amp; window.comprobar) comprobar();
+  }
+  requestAnimationFrame(animar);
+}
+reiniciar();
+listo = true;
+requestAnimationFrame(animar);</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (typeof window.exactitudValidacion !== "function") return "No encuentro la función exactitudValidacion. ¿La borraste?";
+var a = window.exactitudValidacion();
+if (a >= 0.9) return true;
+return "Exactitud en validación: " + Math.round(a * 100) + " %. Necesitas al menos un 90 %. Con 2 neuronas ocultas la red solo puede combinar 2 rectas: ¿cuántas hacen falta para encerrar el círculo?";
+    </script>
+  </div>
+  <p>Con 3 neuronas ocultas y tanh, la red pasa del 81 % al 99 %: tres rectas bastan para encerrar el círculo en un triángulo de bordes suaves. Con sigmoide, la misma red necesita muchas más épocas. Y la espiral con una sola capa oculta cuesta de verdad: con 8 o más neuronas llega a más del 90 % hacia la época 3000, y en el <a href="https://playground.tensorflow.org/">TensorFlow Playground</a> puedes comprobar que con una segunda capa oculta le resulta mucho más fácil.</p>
+
+  <h3>Runas 2.0: la red contra el kNN</h3>
+  <p>En el proyecto de la Estación 39 construiste Runas, un juego en el que dibujas un triángulo (fuego), un círculo (hielo) o un zigzag (rayo) y un clasificador de vecinos más cercanos reconoce el hechizo. Aquí reutilizas sus mismas 64 características (remuestrear el trazo a 32 puntos y normalizarlo) y pones en su lugar una red 64-16-3 con softmax. El programa genera 60 trazos de entrenamiento y 150 de prueba por código, con semilla, entrena la red antes de que cargue la página y compara su acierto con el del kNN de la 39.</p>
+  <p>Falta una pieza: la función <code>softmax</code>, que ahora mismo reparte la probabilidad a partes iguales, así que la red siempre contesta «fuego». Escríbela como viste en la sección de capas. Después dibuja en la pizarra y mira cómo opinan la red y el kNN; con los botones puedes añadir tus propios trazos a los datos de entrenamiento y reentrenar.</p>
+  <div class="taller" data-modo="web" id="taller-runas" data-titulo="Runas 2.0" data-alto="28rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div class="fila"&gt;
+  &lt;canvas id="pizarra" width="260" height="260"&gt;&lt;/canvas&gt;
+  &lt;div&gt;
+    &lt;p&gt;Dibuja una runa de un solo trazo.&lt;/p&gt;
+    &lt;div id="barras"&gt;&lt;/div&gt;
+    &lt;p id="knn"&gt;&lt;/p&gt;
+    &lt;p&gt;Añadir el trazo como:
+      &lt;button type="button" data-runa="fuego"&gt;fuego&lt;/button&gt;
+      &lt;button type="button" data-runa="hielo"&gt;hielo&lt;/button&gt;
+      &lt;button type="button" data-runa="rayo"&gt;rayo&lt;/button&gt;
+    &lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 8px; font-size: 14px; color: #1d1d1f; }
+.fila { display: flex; flex-wrap: wrap; gap: 12px; }
+canvas { border: 2px solid #999; border-radius: 8px; background: #fff; touch-action: none; max-width: 100%; }
+.barra { display: grid; grid-template-columns: 3.5rem 10rem 3rem; align-items: center; gap: 6px; margin: 4px 0; }
+.barra i { display: block; height: 14px; background: #c0392b; border-radius: 4px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// ===== 1. Trazos de ejemplo, generados por código con semilla =====
+const RUNAS = ["fuego", "hielo", "rayo"];   // triángulo, círculo y zigzag, como en la Estación 39
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a &gt;&gt;&gt; 15), 1 | a);
+    t = (t + Math.imul(t ^ (t &gt;&gt;&gt; 7), 61 | t)) ^ t;
+    return ((t ^ (t &gt;&gt;&gt; 14)) &gt;&gt;&gt; 0) / 4294967296;
+  };
+}
+function trazoDeEjemplo(runa, azar) {
+  const mueve = () =&gt; (azar() - 0.5) * 0.5, ruido = () =&gt; (azar() - 0.5) * 0.25;
+  let v;
+  if (runa === "fuego") {
+    const b = [[0, -1], [0.87, 0.5], [-0.87, 0.5]].map(([x, y]) =&gt; [x + mueve(), y + mueve()]);
+    v = [b[0], b[1], b[2], b[0]];
+  } else if (runa === "rayo") {
+    v = [[-1, -0.8], [0.4, -0.5], [-0.4, 0.5], [1, 0.8]].map(([x, y]) =&gt; [x + mueve(), y + mueve()]);
+  } else {
+    v = [];
+    const ini = azar() * Math.PI * 2, sentido = azar() &lt; 0.5 ? 1 : -1, vuelta = 0.85 + azar() * 0.25, ov = 1 + mueve();
+    for (let i = 0; i &lt;= 24; i++) {
+      const a = ini + sentido * (i / 24) * Math.PI * 2 * vuelta;
+      v.push([Math.cos(a) * ov, Math.sin(a)]);
+    }
+  }
+  const pts = [];
+  for (let i = 0; i &lt; v.length - 1; i++) {
+    for (let k = 0; k &lt; 8; k++) {
+      const t = k / 8;
+      pts.push({ x: v[i][0] + (v[i + 1][0] - v[i][0]) * t + ruido(), y: v[i][1] + (v[i + 1][1] - v[i][1]) * t + ruido() });
+    }
+  }
+  pts.push({ x: v[v.length - 1][0], y: v[v.length - 1][1] });
+  const esc = 40 + azar() * 60, cx = 120 + azar() * 40, cy = 120 + azar() * 40;
+  return pts.map((p) =&gt; ({ x: cx + esc * p.x, y: cy + esc * p.y }));
+}
+
+// ===== 2. Las 64 características de la Estación 39 =====
+function remuestrear(puntos, n = 32) {
+  let largo = 0;
+  for (let i = 1; i &lt; puntos.length; i++) largo += Math.hypot(puntos[i].x - puntos[i - 1].x, puntos[i].y - puntos[i - 1].y);
+  const paso = largo / (n - 1), p = puntos.map((q) =&gt; ({ ...q })), res = [{ ...p[0] }];
+  let acum = 0;
+  for (let i = 1; i &lt; p.length; i++) {
+    const d = Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y);
+    if (d &gt; 0 &amp;&amp; acum + d &gt;= paso) {
+      const t = (paso - acum) / d;
+      const q = { x: p[i - 1].x + t * (p[i].x - p[i - 1].x), y: p[i - 1].y + t * (p[i].y - p[i - 1].y) };
+      res.push(q); p.splice(i, 0, q); acum = 0;
+    } else acum += d;
+  }
+  while (res.length &lt; n) res.push({ ...p[p.length - 1] });
+  return res.slice(0, n);
+}
+function normalizar(pts) {
+  const cx = pts.reduce((s, p) =&gt; s + p.x, 0) / pts.length, cy = pts.reduce((s, p) =&gt; s + p.y, 0) / pts.length;
+  const xs = pts.map((p) =&gt; p.x), ys = pts.map((p) =&gt; p.y);
+  const lado = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) || 1;
+  return pts.map((p) =&gt; ({ x: (p.x - cx) / lado, y: (p.y - cy) / lado }));
+}
+function caracteristicas(trazo) {
+  const f = new Float32Array(64);
+  normalizar(remuestrear(trazo, 32)).forEach((p, i) =&gt; { f[2 * i] = p.x; f[2 * i + 1] = p.y; });
+  return f;
+}
+function conjunto(porRuna, semilla) {
+  const azar = mulberry32(semilla), datos = [];
+  for (let k = 0; k &lt; porRuna; k++) RUNAS.forEach((r, c) =&gt; datos.push({ x: caracteristicas(trazoDeEjemplo(r, azar)), c }));
+  return datos;
+}
+
+// ===== 3. La red 64-16-3 con softmax =====
+function softmax(logits) {
+  // TU CÓDIGO: la exponencial de cada logit, dividida entre la suma de todas
+  return logits.map(() =&gt; 1 / logits.length);
+}
+const E = 64, H = 16, S = 3;
+function crearRed(semilla) {
+  const azar = mulberry32(semilla), al = (k) =&gt; (azar() * 2 - 1) * k;
+  return { W1: Float32Array.from({ length: H * E }, () =&gt; al(0.2)), b1: new Float32Array(H),
+           W2: Float32Array.from({ length: S * H }, () =&gt; al(0.4)), b2: new Float32Array(S) };
+}
+function adelante(red, x) {
+  const h = new Float32Array(H), z = [];
+  for (let j = 0; j &lt; H; j++) {
+    let s = red.b1[j];
+    for (let i = 0; i &lt; E; i++) s += red.W1[j * E + i] * x[i];
+    h[j] = Math.tanh(s);
+  }
+  for (let k = 0; k &lt; S; k++) {
+    let s = red.b2[k];
+    for (let j = 0; j &lt; H; j++) s += red.W2[k * H + j] * h[j];
+    z.push(s);
+  }
+  return { h, p: softmax(z) };
+}
+function entrenar(red, datos, epocas, tasa, semilla) {
+  const azar = mulberry32(semilla), orden = datos.slice();
+  let perdida = 0;
+  for (let e = 0; e &lt; epocas; e++) {
+    for (let i = orden.length - 1; i &gt; 0; i--) {             // barajar cada época
+      const j = Math.floor(azar() * (i + 1)); [orden[i], orden[j]] = [orden[j], orden[i]];
+    }
+    perdida = 0;
+    for (const { x, c } of orden) {
+      const { h, p } = adelante(red, x);
+      perdida -= Math.log(p[c] + 1e-9);                        // entropía cruzada
+      const dz = p.slice(); dz[c] -= 1;                        // gradiente en los logits: p − y
+      const dh = new Float32Array(H);
+      for (let k = 0; k &lt; S; k++) {
+        for (let j = 0; j &lt; H; j++) { dh[j] += dz[k] * red.W2[k * H + j]; red.W2[k * H + j] -= tasa * dz[k] * h[j]; }
+        red.b2[k] -= tasa * dz[k];
+      }
+      for (let j = 0; j &lt; H; j++) {
+        const g = dh[j] * (1 - h[j] * h[j]);                    // derivada de tanh
+        for (let i = 0; i &lt; E; i++) red.W1[j * E + i] -= tasa * g * x[i];
+        red.b1[j] -= tasa * g;
+      }
+    }
+  }
+  return perdida / orden.length;
+}
+const claseDe = (p) =&gt; p.indexOf(Math.max(...p));
+
+// ===== 4. El kNN de la Estación 39, para comparar =====
+function knn(datos, x, k = 3) {
+  const cercanos = datos.map((d) =&gt; {
+    let s = 0;
+    for (let i = 0; i &lt; 64; i += 2) s += Math.hypot(d.x[i] - x[i], d.x[i + 1] - x[i + 1]);
+    return { c: d.c, dist: s / 32 };
+  }).sort((a, b) =&gt; a.dist - b.dist).slice(0, k);
+  const votos = [0, 0, 0];
+  cercanos.forEach((v) =&gt; votos[v.c]++);
+  return claseDe(votos);
+}
+
+// ===== 5. Entrenar y evaluar, antes de que termine de cargar la página =====
+const entreno = conjunto(20, 1), prueba = conjunto(50, 99);   // 60 y 150 trazos distintos
+let red = crearRed(3);
+const exactitud = (f) =&gt; prueba.filter((d) =&gt; f(d.x) === d.c).length / prueba.length;
+function entrenarYComparar() {
+  red = crearRed(3);
+  const perdida = entrenar(red, entreno, 60, 0.05, 4);
+  window.exactitudPrueba = exactitud((x) =&gt; claseDe(adelante(red, x).p));
+  const deKnn = exactitud((x) =&gt; knn(entreno, x));
+  console.log(`Con ${entreno.length} trazos: pérdida ${perdida.toFixed(3)} · red ${Math.round(window.exactitudPrueba * 100)} % · kNN ${Math.round(deKnn * 100)} % (sobre ${prueba.length} trazos nuevos)`);
+}
+entrenarYComparar();
+
+// ===== 6. Dibuja tú: la red y el kNN opinan =====
+const lienzo = document.querySelector("#pizarra"), ctx = lienzo.getContext("2d");
+let trazo = [], dibujando = false;
+function posicion(e) { const r = lienzo.getBoundingClientRect(); return { x: (e.clientX - r.left) * (lienzo.width / r.width), y: (e.clientY - r.top) * (lienzo.height / r.height) }; }
+lienzo.addEventListener("pointerdown", (e) =&gt; { dibujando = true; trazo = [posicion(e)]; lienzo.setPointerCapture(e.pointerId); ctx.clearRect(0, 0, 260, 260); });
+lienzo.addEventListener("pointermove", (e) =&gt; {
+  if (!dibujando) return;
+  const p = posicion(e), u = trazo[trazo.length - 1];
+  ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.strokeStyle = "#222";
+  ctx.beginPath(); ctx.moveTo(u.x, u.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+  trazo.push(p);
+});
+lienzo.addEventListener("pointerup", () =&gt; { dibujando = false; if (trazo.length &gt; 5) opinar(); });
+function opinar() {
+  const x = caracteristicas(trazo), p = adelante(red, x).p;
+  document.querySelector("#barras").innerHTML = RUNAS.map((r, i) =&gt;
+    `&lt;div class="barra"&gt;&lt;span&gt;${r}&lt;/span&gt;&lt;i style="width:${Math.round(p[i] * 100)}%"&gt;&lt;/i&gt;&lt;b&gt;${Math.round(p[i] * 100)} %&lt;/b&gt;&lt;/div&gt;`).join("");
+  document.querySelector("#knn").textContent = `El kNN dice: ${RUNAS[knn(entreno, x)]}`;
+}
+document.querySelectorAll("[data-runa]").forEach((b) =&gt; b.addEventListener("click", () =&gt; {
+  if (trazo.length &lt; 6) return;
+  entreno.push({ x: caracteristicas(trazo), c: RUNAS.indexOf(b.dataset.runa) });
+  entrenarYComparar();
+  opinar();
+}));</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (typeof window.softmax !== "function") return "No encuentro la función softmax.";
+var p = window.softmax([2, 1, 0.1]);
+if (!p || p.length !== 3) return "softmax debe devolver una lista con una probabilidad por logit.";
+var suma = p[0] + p[1] + p[2];
+if (Math.abs(suma - 1) > 1e-6) return "Las probabilidades deben sumar 1 y suman " + suma.toFixed(4) + ".";
+if (Math.abs(p[0] - 0.659) > 0.01 || Math.abs(p[2] - 0.099) > 0.01) return "softmax([2, 1, 0.1]) debería dar unos [0.659, 0.242, 0.099] y da [" + p.map(function (v) { return v.toFixed(3); }).join(", ") + "]. ¿Usaste Math.exp y dividiste entre la suma?";
+var q = window.softmax([0, 0, 5]);
+if (!(q[2] > q[0] && q[2] > q[1])) return "El logit más grande debe recibir la probabilidad más alta.";
+if (!(window.exactitudPrueba >= 0.9)) return "La red acierta un " + Math.round((window.exactitudPrueba || 0) * 100) + " % de los trazos de prueba; debería pasar del 90 %. Pulsa «Ejecutar» otra vez tras corregir softmax.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">function softmax(logits) {
+  const e = logits.map((z) =&gt; Math.exp(z));
+  const suma = e.reduce((a, b) =&gt; a + b, 0);
+  return e.map((v) =&gt; v / suma);
+}</code></pre>
+    <p>Con softmax correcta, la consola dice que la red acierta un 95 % de los 150 trazos nuevos, igual que el kNN. Con tan pocos datos y tan limpios, empatan: no esperes que una red gane siempre. Sus ventajas aparecen de otra forma. Para decidir, el kNN compara tu trazo con todos los ejemplos guardados; la red solo hace unas 1 100 multiplicaciones, tenga 60 ejemplos o 60 000. Y la red da probabilidades con las que puedes decidir «no estoy segura, no lanzo el hechizo». Añade trazos propios dibujados a tu manera y observa cómo cambian los dos.</p>
+  </details>
+
+  <h3 id="imagenes">Redes que ven: convoluciones</h3>
+  <p>Una imagen de 28 × 28 píxeles son 784 entradas. Una MLP las trata como 784 números sin relación entre sí: no sabe que un píxel y el de al lado son vecinos. Si aprende a reconocer un gato en la esquina izquierda, tiene que volver a aprenderlo, con otros pesos, para la esquina derecha. Y con imágenes grandes el número de pesos se dispara.</p>
+  <p>La solución es un <strong>filtro</strong> (en inglés, <em>kernel</em>): una ventanita de 3 × 3 pesos que recorre la imagen. En cada posición, la salida es otra vez un producto punto: los 9 píxeles de la ventana por los 9 pesos. Esa operación se llama <strong>convolución</strong>, y el resultado, una imagen nueva en la que cada casilla dice «cuánto se parece esta zona a lo que busca el filtro», es un <strong>mapa de rasgos</strong>.</p>
+  <figure class="capsula" data-titulo="Un filtro que recorre la imagen">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: una imagen de 6 por 6 casillas con una figura oscura, un filtro Sobel de 3 por 3 y un mapa de rasgos de 4 por 4. Una ventana de 3 por 3 recorre la imagen; cada posición produce una casilla del mapa como producto punto. El mapa final tiene valores positivos en el borde izquierdo de la figura y negativos en el derecho.">
+        <text class="d-rotulo" x="126" y="36" text-anchor="middle">Imagen 6×6</text>
+        <rect class="d-fondo" x="24" y="52" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="58" y="52" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="92" y="52" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="126" y="52" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="160" y="52" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="194" y="52" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="24" y="86" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-solido" x="58" y="86" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-solido" x="92" y="86" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-solido" x="126" y="86" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="160" y="86" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="194" y="86" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="24" y="120" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-solido" x="58" y="120" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-solido" x="92" y="120" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-solido" x="126" y="120" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-solido" x="160" y="120" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="194" y="120" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="24" y="154" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-solido" x="58" y="154" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-solido" x="92" y="154" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-solido" x="126" y="154" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-solido" x="160" y="154" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="194" y="154" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="24" y="188" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="58" y="188" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-solido" x="92" y="188" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-solido" x="126" y="188" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="160" y="188" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="194" y="188" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="24" y="222" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="58" y="222" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="92" y="222" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="126" y="222" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="160" y="222" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <rect class="d-fondo" x="194" y="222" width="34" height="34" stroke="currentColor" stroke-opacity="0.25"/>
+        <text class="d-rotulo" x="341.0" y="36" text-anchor="middle">Filtro 3×3</text>
+        <rect class="d-caja" x="290" y="52" width="34" height="34"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="307" y="74" text-anchor="middle">−1</text>
+        <rect class="d-caja" x="324" y="52" width="34" height="34"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="341" y="74" text-anchor="middle">0</text>
+        <rect class="d-caja" x="358" y="52" width="34" height="34"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="375" y="74" text-anchor="middle">1</text>
+        <rect class="d-caja" x="290" y="86" width="34" height="34"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="307" y="108" text-anchor="middle">−2</text>
+        <rect class="d-caja" x="324" y="86" width="34" height="34"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="341" y="108" text-anchor="middle">0</text>
+        <rect class="d-caja" x="358" y="86" width="34" height="34"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="375" y="108" text-anchor="middle">2</text>
+        <rect class="d-caja" x="290" y="120" width="34" height="34"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="307" y="142" text-anchor="middle">−1</text>
+        <rect class="d-caja" x="324" y="120" width="34" height="34"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="341" y="142" text-anchor="middle">0</text>
+        <rect class="d-caja" x="358" y="120" width="34" height="34"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="375" y="142" text-anchor="middle">1</text>
+        <text class="d-peq d-tenue" x="341" y="174" text-anchor="middle">Sobel: bordes</text>
+        <text class="d-peq d-tenue" x="341" y="192" text-anchor="middle">verticales</text>
+        <text class="d-rotulo" x="542" y="36" text-anchor="middle">Mapa de rasgos 4×4</text>
+        <rect class="d-caja" x="450" y="86" width="46" height="46"/>
+        <rect class="d-caja" x="496" y="86" width="46" height="46"/>
+        <rect class="d-caja" x="542" y="86" width="46" height="46"/>
+        <rect class="d-caja" x="588" y="86" width="46" height="46"/>
+        <rect class="d-caja" x="450" y="132" width="46" height="46"/>
+        <rect class="d-caja" x="496" y="132" width="46" height="46"/>
+        <rect class="d-caja" x="542" y="132" width="46" height="46"/>
+        <rect class="d-caja" x="588" y="132" width="46" height="46"/>
+        <rect class="d-caja" x="450" y="178" width="46" height="46"/>
+        <rect class="d-caja" x="496" y="178" width="46" height="46"/>
+        <rect class="d-caja" x="542" y="178" width="46" height="46"/>
+        <rect class="d-caja" x="588" y="178" width="46" height="46"/>
+        <rect class="d-caja" x="450" y="224" width="46" height="46"/>
+        <rect class="d-caja" x="496" y="224" width="46" height="46"/>
+        <rect class="d-caja" x="542" y="224" width="46" height="46"/>
+        <rect class="d-caja" x="588" y="224" width="46" height="46"/>
+        <g data-pasos="2-"><rect class="d-l2" x="453" y="89" width="40" height="40" fill-opacity="0.45"/><text xml:space="preserve" class="d-mono" x="473" y="115" text-anchor="middle">3</text></g>
+        <g data-pasos="3-"><rect class="d-caja-suave" x="499" y="89" width="40" height="40" fill-opacity="1"/><text xml:space="preserve" class="d-mono" x="519" y="115" text-anchor="middle">0</text></g>
+        <g data-pasos="5-"><rect class="d-l6" x="545" y="89" width="40" height="40" fill-opacity="0.45"/><text xml:space="preserve" class="d-mono" x="565" y="115" text-anchor="middle">−2</text></g>
+        <g data-pasos="5-"><rect class="d-l6" x="591" y="89" width="40" height="40" fill-opacity="0.45"/><text xml:space="preserve" class="d-mono" x="611" y="115" text-anchor="middle">−3</text></g>
+        <g data-pasos="4-"><rect class="d-l2" x="453" y="135" width="40" height="40" fill-opacity="0.45"/><text xml:space="preserve" class="d-mono" x="473" y="161" text-anchor="middle">4</text></g>
+        <g data-pasos="5-"><rect class="d-caja-suave" x="499" y="135" width="40" height="40" fill-opacity="1"/><text xml:space="preserve" class="d-mono" x="519" y="161" text-anchor="middle">0</text></g>
+        <g data-pasos="5-"><rect class="d-l6" x="545" y="135" width="40" height="40" fill-opacity="0.45"/><text xml:space="preserve" class="d-mono" x="565" y="161" text-anchor="middle">−1</text></g>
+        <g data-pasos="5-"><rect class="d-l6" x="591" y="135" width="40" height="40" fill-opacity="0.45"/><text xml:space="preserve" class="d-mono" x="611" y="161" text-anchor="middle">−4</text></g>
+        <g data-pasos="5-"><rect class="d-l2" x="453" y="181" width="40" height="40" fill-opacity="0.45"/><text xml:space="preserve" class="d-mono" x="473" y="207" text-anchor="middle">4</text></g>
+        <g data-pasos="5-"><rect class="d-l2" x="499" y="181" width="40" height="40" fill-opacity="0.45"/><text xml:space="preserve" class="d-mono" x="519" y="207" text-anchor="middle">1</text></g>
+        <g data-pasos="5-"><rect class="d-l6" x="545" y="181" width="40" height="40" fill-opacity="0.45"/><text xml:space="preserve" class="d-mono" x="565" y="207" text-anchor="middle">−1</text></g>
+        <g data-pasos="5-"><rect class="d-l6" x="591" y="181" width="40" height="40" fill-opacity="0.45"/><text xml:space="preserve" class="d-mono" x="611" y="207" text-anchor="middle">−4</text></g>
+        <g data-pasos="5-"><rect class="d-l2" x="453" y="227" width="40" height="40" fill-opacity="0.45"/><text xml:space="preserve" class="d-mono" x="473" y="253" text-anchor="middle">3</text></g>
+        <g data-pasos="5-"><rect class="d-l2" x="499" y="227" width="40" height="40" fill-opacity="0.45"/><text xml:space="preserve" class="d-mono" x="519" y="253" text-anchor="middle">2</text></g>
+        <g data-pasos="5-"><rect class="d-l6" x="545" y="227" width="40" height="40" fill-opacity="0.45"/><text xml:space="preserve" class="d-mono" x="565" y="253" text-anchor="middle">−2</text></g>
+        <g data-pasos="5-"><rect class="d-l6" x="591" y="227" width="40" height="40" fill-opacity="0.45"/><text xml:space="preserve" class="d-mono" x="611" y="253" text-anchor="middle">−3</text></g>
+        <rect class="d-acento-trazo" x="24" y="52" width="102" height="102" stroke-width="4" fill="none" data-pasos="2-5" data-mover="3:translate(34px,0px); 4:translate(0px,34px); 5:translate(102px,102px)"/>
+        <rect class="d-acento-trazo" x="450" y="86" width="46" height="46" stroke-width="4" fill="none" data-pasos="2-5" data-mover="3:translate(46px,0px); 4:translate(0px,46px); 5:translate(138px,138px)"/>
+        <text class="d-peq" x="360" y="284" text-anchor="middle" data-pasos="2-4">cada casilla del mapa = producto punto de la ventana con el filtro</text>
+        <text class="d-peq" x="360" y="284" text-anchor="middle" data-pasos="6">los mismos 9 pesos en todas las posiciones: pesos compartidos</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Una imagen de 6 × 6 (1 donde la figura es oscura, 0 donde es clara) y el filtro de Sobel, que detecta bordes verticales: resta lo de la izquierda y suma lo de la derecha.</li>
+        <li>La ventana se coloca en la esquina. Se multiplican los 9 píxeles por los 9 pesos y se suma: 3. Es la primera casilla del mapa.</li>
+        <li>La ventana avanza una casilla (el <strong>paso</strong>, en inglés <em>stride</em>, es 1) y calcula la siguiente: 0, porque dentro de la ventana no hay borde vertical.</li>
+        <li>Así, fila a fila. Donde la figura empieza (claro a la izquierda, oscuro a la derecha), el valor es alto.</li>
+        <li data-duracion="7">Al terminar, el mapa marca el borde izquierdo de la figura con positivos y el derecho con negativos. Aquí el mapa es de 4 × 4 porque la ventana no se sale; con <strong>relleno</strong> (<em>padding</em>), se añade un marco de ceros alrededor y el mapa conserva el tamaño 6 × 6.</li>
+        <li>Los mismos 9 pesos sirven para toda la imagen: son <strong>pesos compartidos</strong>. Un borde se detecta igual en cualquier sitio, y el filtro tiene 9 parámetros, no miles.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Hay filtros clásicos hechos a mano: el <strong>desenfoque</strong> (la media de los 9 vecinos), la <strong>nitidez</strong> (el centro reforzado menos sus vecinos) y los <strong>bordes</strong> de Sobel. Son los que usan los editores de imagen desde hace décadas. Pruébalos: el taller dibuja un fantasma de pixel art y aplica el filtro elegido. Escribe tú la función <code>convolucionar</code> y los pesos del desenfoque y de Sobel. Para leer píxeles de una imagen real usarías <code>getImageData</code>, que viste en la <a href="39-aprendizaje-automatico.html#agrupar">Estación 39</a>; aquí la imagen ya viene como una lista de grises.</p>
+  <div class="taller" data-modo="web" id="taller-filtros" data-titulo="Filtros de convolución" data-alto="22rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;label&gt;Filtro:
+  &lt;select id="kernel"&gt;
+    &lt;option value="identidad"&gt;identidad&lt;/option&gt;
+    &lt;option value="desenfoque"&gt;desenfoque&lt;/option&gt;
+    &lt;option value="nitidez"&gt;nitidez&lt;/option&gt;
+    &lt;option value="bordes" selected&gt;bordes (Sobel)&lt;/option&gt;
+  &lt;/select&gt;
+&lt;/label&gt;
+&lt;div class="fila"&gt;
+  &lt;figure&gt;&lt;canvas id="original" width="160" height="160"&gt;&lt;/canvas&gt;&lt;figcaption&gt;Original&lt;/figcaption&gt;&lt;/figure&gt;
+  &lt;figure&gt;&lt;canvas id="filtrada" width="160" height="160"&gt;&lt;/canvas&gt;&lt;figcaption&gt;Filtrada&lt;/figcaption&gt;&lt;/figure&gt;
+&lt;/div&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 8px; font-size: 14px; color: #1d1d1f; }
+.fila { display: flex; gap: 12px; flex-wrap: wrap; }
+figure { margin: 8px 0; text-align: center; }
+canvas { border: 1px solid #999; image-rendering: pixelated; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// Un fantasma de pixel art: # oscuro, + gris, . claro
+const SPRITE = [
+  "................",
+  "......####......",
+  "....########....",
+  "...##########...",
+  "..####++##++##..",
+  "..###+..#+..##..",
+  "..###+..#+..##..",
+  "..############..",
+  "..############..",
+  "..############..",
+  "..####++++####..",
+  "..############..",
+  "..############..",
+  "..##.###.###.#..",
+  "..#...#...#...#.",
+  "................",
+];
+const TONO = { "#": 0.1, "+": 0.55, ".": 0.95 };
+// Una imagen en escala de grises: ancho, alto y una lista de valores de 0 (negro) a 1 (blanco)
+const imagen = { ancho: 16, alto: 16, px: SPRITE.flatMap((fila) =&gt; [...fila].map((c) =&gt; TONO[c])) };
+
+const KERNELS = {
+  identidad: [[0, 0, 0], [0, 1, 0], [0, 0, 0]],
+  // TU CÓDIGO: el desenfoque es la media de los 9 vecinos (9 pesos iguales que suman 1)
+  desenfoque: [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
+  nitidez: [[0, -1, 0], [-1, 5, -1], [0, -1, 0]],
+  // TU CÓDIGO: Sobel para bordes verticales: -1 0 1 / -2 0 2 / -1 0 1
+  bordes: [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
+};
+
+function convolucionar(img, kernel) {
+  const salida = { ancho: img.ancho, alto: img.alto, px: new Array(img.px.length).fill(0) };
+  // TU CÓDIGO: para cada píxel (x, y), suma kernel[ky + 1][kx + 1] * píxel(x + kx, y + ky)
+  // con kx y ky de -1 a 1. Fuera de la imagen, el píxel vale 0 (relleno con ceros).
+  // El píxel (x, y) está en img.px[y * img.ancho + x].
+  salida.px = img.px.slice();   // borra esta línea cuando escribas la tuya
+  return salida;
+}
+
+function pintar(canvas, img, absoluto) {
+  const ctx = canvas.getContext("2d"), t = canvas.width / img.ancho;
+  for (let y = 0; y &lt; img.alto; y++) {
+    for (let x = 0; x &lt; img.ancho; x++) {
+      let v = img.px[y * img.ancho + x];
+      if (absoluto) v = 1 - Math.min(1, Math.abs(v));      // bordes: oscuro = cambio fuerte
+      const g = Math.round(Math.max(0, Math.min(1, v)) * 255);
+      ctx.fillStyle = `rgb(${g}, ${g}, ${g})`;
+      ctx.fillRect(x * t, y * t, t, t);
+    }
+  }
+}
+function mostrar() {
+  const nombre = document.querySelector("#kernel").value;
+  pintar(document.querySelector("#original"), imagen);
+  pintar(document.querySelector("#filtrada"), convolucionar(imagen, KERNELS[nombre]), nombre === "bordes");
+}
+document.querySelector("#kernel").addEventListener("change", mostrar);
+mostrar();</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (typeof convolucionar !== "function") return "No encuentro la función convolucionar.";
+if (typeof KERNELS === "undefined") return "No encuentro KERNELS.";
+var d = KERNELS.desenfoque, suma = 0;
+d.forEach(function (f) { f.forEach(function (v) { suma += v; }); });
+if (Math.abs(suma - 1) > 1e-6) return "Los pesos del desenfoque deben sumar 1 (ahora suman " + suma.toFixed(3) + "). Si no, la imagen se oscurece o se aclara.";
+if (!d.every(function (f) { return f.every(function (v) { return Math.abs(v - d[0][0]) < 1e-9; }); })) return "El desenfoque es la media de los 9 vecinos: 9 pesos iguales.";
+var sob = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], b = KERNELS.bordes;
+var igual = function (s) { return sob.every(function (f, i) { return f.every(function (v, j) { return b[i][j] === s * v; }); }); };
+if (!igual(1) && !igual(-1)) return "El kernel de bordes debe ser el de Sobel: -1 0 1 / -2 0 2 / -1 0 1.";
+var img = { ancho: 5, alto: 4, px: [0.1, 0.9, 0.3, 0.5, 0.2, 0.7, 0.4, 0.8, 0.6, 0.0, 0.5, 0.2, 1.0, 0.3, 0.9, 0.4, 0.6, 0.1, 0.8, 0.7] };
+var k = [[1, 2, 0], [0, -1, 3], [2, 0, 1]];
+var r = convolucionar(img, k);
+if (!r || !r.px || r.px.length !== 20) return "convolucionar debe devolver una imagen del mismo tamaño ({ ancho, alto, px }).";
+for (var y = 0; y < 4; y++) for (var x = 0; x < 5; x++) {
+  var s = 0;
+  for (var ky = -1; ky <= 1; ky++) for (var kx = -1; kx <= 1; kx++) {
+    var xx = x + kx, yy = y + ky;
+    if (xx >= 0 && xx < 5 && yy >= 0 && yy < 4) s += k[ky + 1][kx + 1] * img.px[yy * 5 + xx];
+  }
+  if (Math.abs(r.px[y * 5 + x] - s) > 1e-6) return "Con una imagen de prueba de 5 × 4, el píxel (" + x + ", " + y + ") debería valer " + s.toFixed(2) + " y vale " + Number(r.px[y * 5 + x]).toFixed(2) + ". Revisa los índices (y * ancho + x) y el relleno con ceros.";
+}
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">desenfoque: [[1 / 9, 1 / 9, 1 / 9], [1 / 9, 1 / 9, 1 / 9], [1 / 9, 1 / 9, 1 / 9]],
+bordes: [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]],
+
+function convolucionar(img, kernel) {
+  const salida = { ancho: img.ancho, alto: img.alto, px: new Array(img.px.length).fill(0) };
+  for (let y = 0; y &lt; img.alto; y++) {
+    for (let x = 0; x &lt; img.ancho; x++) {
+      let suma = 0;
+      for (let ky = -1; ky &lt;= 1; ky++) {
+        for (let kx = -1; kx &lt;= 1; kx++) {
+          const xx = x + kx, yy = y + ky;
+          if (xx &gt;= 0 &amp;&amp; xx &lt; img.ancho &amp;&amp; yy &gt;= 0 &amp;&amp; yy &lt; img.alto) {
+            suma += kernel[ky + 1][kx + 1] * img.px[yy * img.ancho + xx];
+          }
+        }
+      }
+      salida.px[y * img.ancho + x] = suma;
+    }
+  }
+  return salida;
+}</code></pre>
+    <p>Cuatro bucles: dos recorren la imagen y dos recorren la ventana. Los píxeles de fuera cuentan como 0, que es el relleno con ceros. Prueba a cambiar Sobel por su versión girada, <code>[[-1, -2, -1], [0, 0, 0], [1, 2, 1]]</code>: detecta los bordes horizontales.</p>
+  </details>
+  <p>Una <strong>red convolucional</strong> (CNN, del inglés <em>convolutional neural network</em>) apila capas de filtros como estos, pero no los escribe nadie: empiezan al azar y se aprenden con el mismo bucle y la misma retropropagación que ya conoces. Entre capas se suele añadir un <strong>max pooling</strong>, que se queda con el valor más alto de cada bloque de 2 × 2 y reduce el mapa a la mitad. Al entrenar aparece una jerarquía: las primeras capas aprenden bordes y manchas de color, las siguientes combinan bordes en formas (esquinas, curvas), después en partes (un ojo, una rueda) y al final en objetos.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Red para los dígitos de 28 × 28</th><th scope="col">Parámetros</th><th scope="col">Acierto en prueba (5 épocas)</th></tr></thead>
+      <tbody>
+        <tr><td>MLP 784-128-10</td><td>101 770</td><td>97.3 %</td></tr>
+        <tr><td>CNN pequeña (2 capas de filtros + 1 densa)</td><td>20 490</td><td>98.8 %</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Son los resultados reales de los guiones de PyTorch de la sección siguiente: la CNN tiene cinco veces menos parámetros y se equivoca menos de la mitad de veces. Las convoluciones están en los reconocedores de dígitos dibujados, los filtros de cámara de las redes sociales, el seguimiento de manos y el reescalado neuronal de los videojuegos, como DLSS de NVIDIA, que genera imágenes de más resolución a partir de otras más pequeñas.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">La red no ve como tú</p><p>Una red aprende cualquier atajo que le sirva con los datos que tiene. En un experimento de 2016, unos investigadores entrenaron a propósito un clasificador de «husky o lobo» con fotos en las que todos los lobos salían sobre nieve. Acertaba bastante, pero al mirar en qué píxeles se fijaba, resultó que había aprendido a detectar nieve. Si en tu juego todos los enemigos de un tipo aparecen de noche, la red puede aprender «noche» en vez de «enemigo».</p></div></aside>
+
+  <h3>Por qué el aprendizaje profundo llegó ahora</h3>
+  <p>Casi todas las ideas de esta estación tienen más de 30 años. Entonces, ¿por qué explotaron en la última década?</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 270" role="img" aria-label="Línea de tiempo: 1958, perceptrón de Rosenblatt; 1969, el libro Perceptrons muestra los límites; 1986, retropropagación de Rumelhart, Hinton y Williams; 1989 a 1998, LeNet reconoce dígitos con redes convolucionales; 2012, AlexNet gana ImageNet entrenada con 2 GPU; 2015, DQN juega 49 juegos de Atari; 2016, AlphaGo gana a Lee Sedol; 2017, el Transformer, base de los modelos de lenguaje; 2024, Nobel de Física para Hopfield y Hinton.">
+        <path class="d-linea" d="M20 150H700"/>
+        <circle class="d-caja" cx="60" cy="150" r="8"/>
+        <path class="d-linea" d="M60 140V110" stroke-opacity="0.5"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="60" y="64" text-anchor="middle">1958</text>
+        <text class="d-rotulo" x="60" y="84" text-anchor="middle">Perceptrón</text>
+        <text class="d-peq d-tenue" x="60" y="102" text-anchor="middle">Rosenblatt</text>
+        <circle class="d-caja" cx="135" cy="150" r="8"/>
+        <path class="d-linea" d="M135 160V190" stroke-opacity="0.5"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="135" y="208" text-anchor="middle">1969</text>
+        <text class="d-rotulo" x="135" y="228" text-anchor="middle">Perceptrons</text>
+        <text class="d-peq d-tenue" x="135" y="246" text-anchor="middle">los límites</text>
+        <circle class="d-caja" cx="210" cy="150" r="8"/>
+        <path class="d-linea" d="M210 140V110" stroke-opacity="0.5"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="210" y="64" text-anchor="middle">1986</text>
+        <text class="d-rotulo" x="210" y="84" text-anchor="middle">Retropropagación</text>
+        <text class="d-peq d-tenue" x="210" y="102" text-anchor="middle">Rumelhart, Hinton y Williams</text>
+        <circle class="d-caja" cx="285" cy="150" r="8"/>
+        <path class="d-linea" d="M285 160V190" stroke-opacity="0.5"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="285" y="208" text-anchor="middle">1989–98</text>
+        <text class="d-rotulo" x="285" y="228" text-anchor="middle">LeNet</text>
+        <text class="d-peq d-tenue" x="285" y="246" text-anchor="middle">dígitos con CNN</text>
+        <circle class="d-acento" cx="360" cy="150" r="8"/>
+        <path class="d-linea" d="M360 140V110" stroke-opacity="0.5"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="360" y="64" text-anchor="middle">2012</text>
+        <text class="d-rotulo" x="360" y="84" text-anchor="middle">AlexNet</text>
+        <text class="d-peq d-tenue" x="360" y="102" text-anchor="middle">ImageNet con 2 GPU</text>
+        <circle class="d-caja" cx="435" cy="150" r="8"/>
+        <path class="d-linea" d="M435 160V190" stroke-opacity="0.5"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="435" y="208" text-anchor="middle">2015</text>
+        <text class="d-rotulo" x="435" y="228" text-anchor="middle">DQN</text>
+        <text class="d-peq d-tenue" x="435" y="246" text-anchor="middle">49 juegos de Atari</text>
+        <circle class="d-caja" cx="510" cy="150" r="8"/>
+        <path class="d-linea" d="M510 140V110" stroke-opacity="0.5"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="510" y="64" text-anchor="middle">2016</text>
+        <text class="d-rotulo" x="510" y="84" text-anchor="middle">AlphaGo</text>
+        <text class="d-peq d-tenue" x="510" y="102" text-anchor="middle">gana a Lee Sedol</text>
+        <circle class="d-caja" cx="585" cy="150" r="8"/>
+        <path class="d-linea" d="M585 160V190" stroke-opacity="0.5"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="585" y="208" text-anchor="middle">2017</text>
+        <text class="d-rotulo" x="585" y="228" text-anchor="middle">Transformer</text>
+        <text class="d-peq d-tenue" x="585" y="246" text-anchor="middle">base de los LLM</text>
+        <circle class="d-caja" cx="660" cy="150" r="8"/>
+        <path class="d-linea" d="M660 140V110" stroke-opacity="0.5"/>
+        <text xml:space="preserve" class="d-mono d-peq" x="660" y="64" text-anchor="middle">2024</text>
+        <text class="d-rotulo" x="660" y="84" text-anchor="middle">Nobel</text>
+        <text class="d-peq d-tenue" x="660" y="102" text-anchor="middle">Hopfield y Hinton</text>
+    </svg>
+    <figcaption>Las redes neuronales tardaron medio siglo en despegar. El punto de giro fue 2012.</figcaption>
+  </figure>
+  <p>En 2012, AlexNet, una CNN entrenada con dos tarjetas gráficas de videojuegos, ganó el concurso ImageNet (1.2 millones de fotos de 1000 categorías) con un error muy inferior al de los demás métodos. Juntó los tres ingredientes que faltaban:</p>
+  <ul>
+    <li><strong>Datos:</strong> internet trajo millones de imágenes etiquetadas; antes había miles.</li>
+    <li><strong>Cómputo:</strong> las GPU hicieron en días lo que habría llevado meses.</li>
+    <li><strong>Algoritmos y software abierto:</strong> ReLU, dropout, mejores inicializaciones y, pronto, bibliotecas como PyTorch que cualquiera podía usar.</li>
+  </ul>
+  <p>Hay otras familias de redes que solo nombramos aquí: las <strong>recurrentes</strong> (RNN y LSTM), que procesaban secuencias paso a paso; las <strong>GAN</strong>, dos redes que compiten para generar imágenes; y los modelos de <strong>difusión</strong>, que generan imágenes quitando ruido poco a poco. El Transformer de 2017, la arquitectura de los modelos de lenguaje, es el tema de la <a href="41-modelos-lenguaje.html#transformer">Estación 41</a>.</p>
 </section>
   </main>
 </div>
