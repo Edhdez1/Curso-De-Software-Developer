@@ -3345,3 +3345,406 @@ return true;
   <p>No son excluyentes. En la práctica se combinan: un árbol cuyo selector, en vez de probar hijos en un orden fijo, elige por utilidad cuál intentar primero (un «selector de utilidad»); o un modelo de lenguaje que elige <em>qué decir</em> mientras el árbol sigue decidiendo <em>qué hacer</em> (perseguir, atacar), la arquitectura híbrida que verás en la <a href="41-modelos-lenguaje.html#npc">Estación 41</a>.</p>
   <p>Cómo se configuran EQS, los selectores de utilidad y GOAP en un motor real lo verás, con el resto de herramientas, al final de la sección de <a href="#director">dificultad y motores</a>.</p>
 </section>
+
+<section id="procedural" data-parada="Generación procedural">
+  <h2>Generar mundos con reglas</h2>
+  <p>La cripta del guardia, hasta ahora, la dibujaste tú a mano. La <a href="34-videojuegos.html#mundo">Estación 34</a> ya generó un nivel con una semilla y una bolsa de piezas: la <strong>generación procedural</strong> (en inglés, <em>procedural content generation</em>, <strong>PCG</strong>) lleva esa idea más lejos, creando mapas, mazmorras y paisajes enteros con reglas en vez de con un editor de niveles. Tres ingredientes, siempre: una <strong>semilla</strong> (para poder reproducir el mismo resultado, con <code>crearAzar</code> de la <a href="18-matematicas.html#azar">Estación 18</a>), unas <strong>reglas de diseño</strong> (qué hace que un nivel sea bueno: alcanzable, interesante, justo) y <strong>validación</strong> (comprobar que lo generado cumple esas reglas antes de dárselo a quien juega).</p>
+
+  <h3>Ruido: paisajes que no se repiten</h3>
+  <p>El <strong>ruido blanco</strong> (valores al azar, sin relación entre casillas vecinas) produce estática, no terreno: una montaña al lado de un abismo al lado de otra montaña, sin transición. El <strong>ruido de valor</strong> (en inglés, <em>value noise</em>) arregla eso: se sortea un valor al azar en cada punto <em>entero</em> de una rejilla, y entre dos puntos se <strong>interpola</strong> suavemente, con la misma curva <em>smoothstep</em> que ya usaste para suavizar movimientos (<a href="18-matematicas.html#angulos">Estación 18</a>). El resultado son colinas que suben y bajan sin saltos, siempre entre los valores de sus vecinos.</p>
+  <p>Una sola frecuencia da un paisaje demasiado redondeado, como una sábana estirada. La solución son las <strong>octavas</strong> (la técnica se llama <strong>fBm</strong>, de <em>fractal Brownian motion</em>): se suman varias capas de ruido, cada una al <strong>doble de frecuencia</strong> y la <strong>mitad de amplitud</strong> que la anterior. La primera pone las formas grandes; las siguientes añaden detalle sin taparlas.</p>
+  <figure class="capsula" data-titulo="Octavas de ruido">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 230" role="img" aria-label="Animación: tres curvas onduladas, cada una al doble de frecuencia y la mitad de amplitud que la anterior, se suman para formar una silueta de terreno que ya no se parece a ninguna de ellas por separado.">
+        <path class="d-linea" d="M20 210L700 210"/>
+        <g data-pasos="1-4">
+          <path class="d-t1" fill="none" stroke-width="2" d="M20 152 L37 147 L54 143 L71 139 L88 135 L105 131 L122 128 L139 125 L156 123 L173 121 L190 120 L207 119 L224 119 L241 119 L258 119 L275 120 L292 122 L309 124 L326 126 L343 129 L360 132 L377 136 L394 140 L411 144 L428 148 L445 152 L462 157 L479 161 L496 166 L513 170 L530 175 L547 179 L564 183 L581 187 L598 191 L615 194 L632 197 L649 200 L666 202 L683 204 L700 205"/>
+        </g>
+        <g data-pasos="2-4">
+          <path class="d-t2" fill="none" stroke-width="2" d="M20 150 L37 149 L54 148 L71 149 L88 151 L105 154 L122 158 L139 163 L156 168 L173 173 L190 178 L207 183 L224 187 L241 190 L258 192 L275 192 L292 191 L309 189 L326 186 L343 182 L360 177 L377 172 L394 166 L411 161 L428 157 L445 153 L462 150 L479 148 L496 148 L513 149 L530 151 L547 155 L564 159 L581 164 L598 169 L615 174 L632 179 L649 184 L666 188 L683 190 L700 192"/>
+        </g>
+        <g data-pasos="3-4">
+          <path class="d-t3" fill="none" stroke-width="2" d="M20 161 L37 164 L54 168 L71 173 L88 177 L105 180 L122 180 L139 177 L156 173 L173 168 L190 164 L207 161 L224 160 L241 162 L258 165 L275 170 L292 175 L309 178 L326 180 L343 179 L360 176 L377 172 L394 167 L411 163 L428 160 L445 160 L462 163 L479 167 L496 171 L513 176 L530 179 L547 180 L564 178 L581 175 L598 170 L615 165 L632 162 L649 160 L666 161 L683 164 L700 168"/>
+        </g>
+        <g data-pasos="4" class="d-acento-trazo">
+          <path fill="none" stroke-width="3" d="M20 123 L37 120 L54 119 L71 121 L88 123 L105 125 L122 126 L139 125 L156 124 L173 123 L190 122 L207 123 L224 126 L241 130 L258 136 L275 142 L292 148 L309 151 L326 152 L343 150 L360 145 L377 139 L394 133 L411 127 L428 125 L445 125 L462 129 L479 136 L496 145 L513 155 L530 165 L547 174 L564 180 L581 186 L598 190 L615 194 L632 198 L649 204 L666 210 L683 218 L700 225"/>
+        </g>
+        <text class="d-peq d-tenue" x="20" y="18">altura</text>
+        <text class="d-peq d-tenue" x="700" y="222" text-anchor="end">posición</text>
+        <g class="d-peq" data-pasos="1"><text class="d-titulo" x="560" y="40">Octava 1</text><text x="560" y="60">Frecuencia base,</text><text x="560" y="78">amplitud completa:</text><text x="560" y="96">las colinas grandes.</text></g>
+        <g class="d-peq" data-pasos="2"><text class="d-titulo" x="560" y="40">+ Octava 2</text><text x="560" y="60">El doble de frecuencia,</text><text x="560" y="78">la mitad de amplitud:</text><text x="560" y="96">ondulaciones medianas.</text></g>
+        <g class="d-peq" data-pasos="3"><text class="d-titulo" x="560" y="40">+ Octava 3</text><text x="560" y="60">Otra vez el doble de</text><text x="560" y="78">frecuencia, la mitad</text><text x="560" y="96">de amplitud: detalle fino.</text></g>
+        <g class="d-peq" data-pasos="4"><text class="d-titulo" x="560" y="40">La suma</text><text x="560" y="60">Tres curvas simples</text><text x="560" y="78">dan una silueta que ya</text><text x="560" y="96">no se ve repetitiva.</text></g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>La primera octava: frecuencia base, amplitud completa. Son las formas grandes del terreno.</li>
+        <li>Se suma una segunda octava: el doble de frecuencia, la mitad de amplitud. Añade ondulaciones medianas sin tapar la forma general.</li>
+        <li>Una tercera octava, otra vez al doble de frecuencia y la mitad de amplitud, añade detalle fino.</li>
+        <li data-duracion="6">La suma de las tres (línea gruesa) ya no se parece a ninguna por separado. Esa es la idea completa de fBm, la misma que usan los generadores de terreno de verdad.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>El <strong>ruido Perlin</strong> y el <strong>ruido simplex</strong> (Ken Perlin, 1983 y 2001) son versiones más suaves del mismo concepto: en vez de sortear un valor en cada punto entero, sortean un <em>vector gradiente</em>, lo que evita el aspecto «a cuadros» del ruido de valor simple. En la práctica casi nunca se programan a mano: se usa una librería (en la web, por ejemplo, <code>simplex-noise</code> para Node) o un recurso del motor, como <code>FastNoiseLite</code> en Godot, que verás al final de la última sección. Aquí programas el de valor porque es el que se entiende de principio a fin con álgebra de instituto.</p>
+  <p>Usos típicos: convertir una altura en un <strong>bioma</strong> por umbrales (agua, arena, hierba, roca, nieve), dibujar nubes, dar a un personaje un <strong>deambular</strong> orgánico (la sección de <a href="#movimiento">steering</a> ya lo insinuó) o temblar la cámara de forma natural en vez de con un simple <code>Math.random()</code> que tiembla distinto en cada fotograma.</p>
+  <p>Programa el ruido de valor con octavas tú mismo. El simulador oculto trae <code>crearAzar</code> de la 18; tu código define <code>ruido1D</code>, con interpolación suavizada, y <code>octavas</code>, que las combina. <strong>Predice</strong> antes de ejecutar: con 1, 2 y 4 octavas, ¿cuál de las tres siluetas tiene más detalle pequeño sin perder la forma general?</p>
+  <div class="taller" id="taller-montanas" data-titulo="Predice y modifica: montañas con ruido" data-exponer="octavas">
+    <script type="text/plain" class="taller-preparacion">
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+    </script>
+    <textarea class="taller-codigo">// Un valor al azar, pero siempre el mismo para el mismo entero y la misma semilla
+// (combina la semilla con el entero y usa crearAzar como una mano de cartas de un solo valor).
+function valorEntero(ix, semilla) {
+  return crearAzar(semilla + ix * 2654435761)();
+}
+function suavizar(t) { return t * t * (3 - 2 * t); }   // smoothstep (18#angulos)
+
+function ruido1D(x, semilla) {
+  const i0 = Math.floor(x), t = x - i0;
+  const a = valorEntero(i0, semilla), b = valorEntero(i0 + 1, semilla);
+  return a + (b - a) * suavizar(t);
+}
+
+function octavas(x, semilla, n) {
+  let total = 0, amplitud = 1, frecuencia = 1, max = 0;
+  for (let o = 0; o &lt; n; o++) {
+    total += ruido1D(x * frecuencia, semilla + o * 1000) * amplitud;
+    max += amplitud;
+    amplitud *= 0.5;
+    frecuencia *= 2;
+  }
+  return total / max;   // normalizado entre 0 y 1
+}
+
+function silueta(n, semilla) {
+  const ANCHO = 40, ALTO = 10;
+  const alturas = [];
+  for (let x = 0; x &lt; ANCHO; x++) alturas.push(Math.round(octavas(x * 0.15, semilla, n) * (ALTO - 1)));
+  const filas = [];
+  for (let fila = ALTO - 1; fila &gt;= 0; fila--) {
+    let linea = "";
+    for (let x = 0; x &lt; ANCHO; x++) linea += alturas[x] &gt;= fila ? "#" : " ";
+    filas.push(linea);
+  }
+  return filas.join("\n");
+}
+
+for (const n of [1, 2, 4]) {
+  console.log(`--- ${n} octava(s) ---`);
+  console.log(silueta(n, 42));
+}
+
+// Modifica: prueba con 8 octavas. ¿Se nota mucho más detalle que con 4,
+// o casi todas las octavas nuevas son demasiado pequeñas para verse?</textarea>
+    <script type="text/plain" class="taller-verificar">
+var oct = expuesto.octavas;
+if (typeof oct !== "function") return "No encuentro la función octavas: ¿se llama así y el programa terminó sin errores?";
+var a = oct(3.3, 42, 3), b = oct(3.3, 42, 3);
+if (a !== b) return "Con la misma semilla y la misma x, octavas debería dar siempre el mismo valor (" + a + " frente a " + b + ").";
+if (a < 0 || a > 1) return "El resultado debería quedar entre 0 y 1 (dio " + a + ").";
+var c = oct(3.3, 99, 3);
+if (c === a) return "Con una semilla distinta (99 en vez de 42) el paisaje debería cambiar.";
+return true;
+    </script>
+  </div>
+  <p>Con 1 octava, la silueta es una sola colina ancha. Con 2, aparecen quiebros medianos sin perder esa forma. Con 4, el detalle fino se nota en los bordes, pero la silueta general sigue siendo reconociblemente la misma: eso es exactamente lo que busca fBm. Si pruebas con 8, verás que casi no cambia nada más: a partir de cierto punto, cada octava nueva es tan pequeña que ni se ve a esta escala.</p>
+  <p>Ahora en dos dimensiones, coloreado por umbrales, con deslizadores. <strong>Predice</strong>: si subes la escala (el ruido se mira más «de cerca»), ¿las islas se harán más grandes o más pequeñas y recortadas?</p>
+  <div class="taller" data-modo="web" id="taller-islas" data-titulo="Predice y modifica: islas con ruido" data-alto="30rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas width="420" height="260"&gt;&lt;/canvas&gt;
+&lt;p&gt;
+  Semilla &lt;input id="semilla" type="range" min="0" max="999" value="7"&gt;
+  Escala &lt;input id="escala" type="range" min="2" max="20" value="8"&gt;
+  Octavas &lt;input id="octavas" type="range" min="1" max="5" value="4"&gt;
+  Nivel del mar &lt;input id="mar" type="range" min="0" max="100" value="45"&gt;
+&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; font-size: 13px; }
+canvas { display: block; width: 100%; max-width: 420px; border-radius: 8px; image-rendering: pixelated; }
+p { max-width: 420px; display: flex; flex-wrap: wrap; gap: 4px 14px; color: #c8d0e0; }
+input { vertical-align: middle; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const lienzo = document.querySelector("canvas");
+const ctx = lienzo.getContext("2d");
+const N = 70;   // casillas por lado
+const img = ctx.createImageData(N, N);
+
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla &gt;&gt;&gt; 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t &gt;&gt;&gt; 7), 61 | t)) ^ t;
+    return ((t ^ (t &gt;&gt;&gt; 14)) &gt;&gt;&gt; 0) / 4294967296;
+  };
+}
+function valorEntero2D(ix, iy, semilla) { return crearAzar((semilla + ix * 374761393 + iy * 668265263) | 0)(); }
+function suavizar(t) { return t * t * (3 - 2 * t); }
+
+// ruido2D(x, y, semilla): siempre entre 0 y 1, el mismo valor con la misma semilla
+function ruido2D(x, y, semilla) {
+  const ix = Math.floor(x), iy = Math.floor(y), tx = x - ix, ty = y - iy;
+  const a = valorEntero2D(ix, iy, semilla), b = valorEntero2D(ix + 1, iy, semilla);
+  const c = valorEntero2D(ix, iy + 1, semilla), d = valorEntero2D(ix + 1, iy + 1, semilla);
+  const sx = suavizar(tx), sy = suavizar(ty);
+  return (a + (b - a) * sx) * (1 - sy) + (c + (d - c) * sx) * sy;
+}
+function octavas2D(x, y, semilla, n) {
+  let total = 0, amplitud = 1, frecuencia = 1, max = 0;
+  for (let o = 0; o &lt; n; o++) {
+    total += ruido2D(x * frecuencia, y * frecuencia, semilla + o * 1000) * amplitud;
+    max += amplitud;
+    amplitud *= 0.5;
+    frecuencia *= 2;
+  }
+  return total / max;
+}
+
+const COLOR = {
+  agua:   [52, 94, 148],
+  arena:  [214, 198, 140],
+  hierba: [86, 150, 90],
+  roca:   [120, 112, 104],
+  nieve:  [235, 238, 242],
+};
+function colorDe(altura, nivelMar) {
+  if (altura &lt; nivelMar) return COLOR.agua;
+  if (altura &lt; nivelMar + 0.05) return COLOR.arena;
+  if (altura &lt; 0.68) return COLOR.hierba;
+  if (altura &lt; 0.85) return COLOR.roca;
+  return COLOR.nieve;
+}
+
+function dibujar() {
+  const semilla = Number(document.querySelector("#semilla").value);
+  const escala = Number(document.querySelector("#escala").value);
+  const nOct = Number(document.querySelector("#octavas").value);
+  const nivelMar = Number(document.querySelector("#mar").value) / 100;
+  for (let y = 0; y &lt; N; y++) {
+    for (let x = 0; x &lt; N; x++) {
+      const altura = octavas2D(x / escala, y / escala, semilla, nOct);
+      const [r, g, b] = colorDe(altura, nivelMar);
+      const i = (y * N + x) * 4;
+      img.data[i] = r; img.data[i + 1] = g; img.data[i + 2] = b; img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  ctx.drawImage(lienzo, 0, 0, N, N, 0, 0, lienzo.width, lienzo.height);
+}
+for (const id of ["semilla", "escala", "octavas", "mar"]) {
+  document.querySelector("#" + id).addEventListener("input", dibujar);
+}
+dibujar();</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (typeof ruido2D !== "function") return "No encuentro la función ruido2D.";
+var a = ruido2D(5.3, 7.1, 42), b = ruido2D(5.3, 7.1, 42);
+if (a !== b) return "Con la misma semilla y las mismas coordenadas, ruido2D debería dar siempre el mismo valor.";
+if (a < 0 || a > 1) return "ruido2D debería devolver siempre un valor entre 0 y 1 (dio " + a + ").";
+return true;
+    </script>
+  </div>
+  <p>Subir la escala hace que el ruido se mire «de más lejos»: cambia más despacio por píxel, así que las islas salen más grandes y redondeadas. Bajarla las encoge y las recorta, porque entra más ruido crudo en el mismo espacio de pantalla. El nivel del mar no cambia el ruido en absoluto: solo mueve el umbral que decide qué altura ya es agua, igual que el botón de un dique.</p>
+
+  <h3>Cuevas con autómatas celulares</h3>
+  <p>Para cuevas, un enfoque distinto funciona mejor que el ruido: los <strong>autómatas celulares</strong> (parientes del Juego de la Vida de Conway). La receta, popularizada en RogueBasin: se rellena la cuadrícula al azar, con cada casilla muro con cierta probabilidad; después, varias veces seguidas, cada casilla se vuelve muro si tiene <strong>5 o más muros</strong> entre sus 8 vecinas (contando fuera del mapa como muro), y suelo si no. Es la <strong>regla 4-5</strong>. Cada pasada suaviza el ruido: los grupos pequeños de muros se erosionan y los huecos se redondean, hasta que el resultado parece tallado, no aleatorio.</p>
+  <p>Una técnica relacionada para túneles es el <strong>recorrido aleatorio</strong> (<em>random walk</em>): un «cavador» avanza en una dirección, gira al azar de vez en cuando y abre un pasillo a su paso; varios cavadores sueltos dan una red de túneles orgánica. Para mazmorras con salas rectangulares y pasillos entre ellas, muchos juegos usan particionado binario del espacio (<strong>BSP</strong>, de <em>binary space partitioning</em>): dividir el mapa en dos, luego cada mitad en dos, hasta tener rectángulos del tamaño de una sala, y conectarlos.</p>
+  <p>El problema del autómata celular es que casi nunca da una sola región conectada: salen bolsas aisladas que nadie pidió. La <strong>validación</strong> con relleno por inundación (el mismo BFS de la <a href="20-algoritmos.html#caminos">Estación 20</a>) lo arregla: contar las regiones de suelo, quedarse con la mayor (o conectar todas con un túnel) y descartar el resto.</p>
+  <figure class="capsula" data-titulo="De ruido a cueva">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 650 420" role="img" aria-label="Animación: una rejilla de 12 por 7 casillas. El ruido inicial tiene un 45% de muros; tras una pasada del autómata 4-5 ya se ven huecos; tras tres pasadas quedan dos regiones, una grande en verde y una pequeña aislada en rojo; al limpiar, la región pequeña se rellena de muro y quedan marcadas la entrada y la salida, la casilla libre más lejana de la entrada según el mapa de distancias.">
+        <text class="d-rotulo d-peq" x="10" y="8" data-texto="1:Ruido inicial (45% muros); 2:Tras 1 pasada del autómata 4-5; 3:Tras 3 pasadas: dos regiones; 4:Isla rellenada · entrada y salida"></text>
+        <g transform="translate(0,16)">
+        <rect class="d-caja-suave" x="10" y="10" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="56" y="10" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="102" y="10" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido"/>
+        <rect class="d-caja-suave" x="148" y="10" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="194" y="10" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido"/>
+        <rect class="d-caja-suave" x="240" y="10" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="286" y="10" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="332" y="10" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="378" y="10" width="42" height="42" rx="3" data-clases="1:d-solido; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="424" y="10" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="470" y="10" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido"/>
+        <rect class="d-caja-suave" x="516" y="10" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido"/>
+        <rect class="d-caja-suave" x="10" y="56" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="56" y="56" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-solido"/>
+        <rect class="d-caja-suave" x="102" y="56" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-solido"/>
+        <rect class="d-caja-suave" x="148" y="56" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="194" y="56" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="240" y="56" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="286" y="56" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="332" y="56" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="378" y="56" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="424" y="56" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="470" y="56" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-solido"/>
+        <rect class="d-caja-suave" x="516" y="56" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="10" y="102" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido"/>
+        <rect class="d-caja-suave" x="56" y="102" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-mal; 4:d-solido"/>
+        <rect class="d-caja-suave" x="102" y="102" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-mal; 4:d-solido"/>
+        <rect class="d-caja-suave" x="148" y="102" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="194" y="102" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="240" y="102" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="286" y="102" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="332" y="102" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="378" y="102" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="424" y="102" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="470" y="102" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="516" y="102" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="10" y="148" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="56" y="148" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-mal; 4:d-solido"/>
+        <rect class="d-caja-suave" x="102" y="148" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-mal; 4:d-solido"/>
+        <rect class="d-caja-suave" x="148" y="148" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido; 3:d-mal; 4:d-solido"/>
+        <rect class="d-caja-suave" x="194" y="148" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="240" y="148" width="42" height="42" rx="3" data-clases="1:d-solido; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="286" y="148" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="332" y="148" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="378" y="148" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="424" y="148" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="470" y="148" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="516" y="148" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="10" y="194" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido"/>
+        <rect class="d-caja-suave" x="56" y="194" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-solido"/>
+        <rect class="d-caja-suave" x="102" y="194" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido"/>
+        <rect class="d-caja-suave" x="148" y="194" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="194" y="194" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="240" y="194" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="286" y="194" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido"/>
+        <rect class="d-caja-suave" x="332" y="194" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="378" y="194" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="424" y="194" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="470" y="194" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="516" y="194" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-solido"/>
+        <rect class="d-caja-suave" x="10" y="240" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="56" y="240" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-solido"/>
+        <rect class="d-caja-suave" x="102" y="240" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-solido"/>
+        <rect class="d-caja-suave" x="148" y="240" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-solido"/>
+        <rect class="d-caja-suave" x="194" y="240" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="240" y="240" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido"/>
+        <rect class="d-caja-suave" x="286" y="240" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-solido"/>
+        <rect class="d-caja-suave" x="332" y="240" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="378" y="240" width="42" height="42" rx="3" data-clases="1:d-solido; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="424" y="240" width="42" height="42" rx="3" data-clases="1:d-solido; 2:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="470" y="240" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-ok; 4:d-caja-suave"/>
+        <rect class="d-caja-suave" x="516" y="240" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 3:d-solido"/>
+        <rect class="d-caja-suave" x="10" y="286" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="56" y="286" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="102" y="286" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido"/>
+        <rect class="d-caja-suave" x="148" y="286" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido"/>
+        <rect class="d-caja-suave" x="194" y="286" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="240" y="286" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido"/>
+        <rect class="d-caja-suave" x="286" y="286" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="332" y="286" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="378" y="286" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="424" y="286" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <rect class="d-caja-suave" x="470" y="286" width="42" height="42" rx="3" data-clases="1:d-caja-suave; 2:d-solido"/>
+        <rect class="d-caja-suave" x="516" y="286" width="42" height="42" rx="3" data-clases="1:d-solido"/>
+        <circle class="d-acento" cx="261" cy="31" r="11" data-pasos="4"/>
+        <text class="d-rotulo d-sobre-acento d-peq" x="261" y="35" text-anchor="middle" data-pasos="4">E</text>
+        <circle class="d-aviso" cx="491" cy="261" r="11" data-pasos="4"/>
+        <text class="d-rotulo d-sobre-aviso d-peq" x="491" y="265" text-anchor="middle" data-pasos="4">S</text>
+        </g>
+        <g class="d-peq" data-pasos="1-4">
+          <rect class="d-solido" x="10" y="368" width="14" height="14"/><text x="30" y="379">muro</text>
+          <rect class="d-caja-suave" x="90" y="368" width="14" height="14"/><text x="110" y="379">libre</text>
+          <rect class="d-ok" x="170" y="368" width="14" height="14"/><text x="190" y="379">región mayor</text>
+          <rect class="d-mal" x="300" y="368" width="14" height="14"/><text x="320" y="379">región aislada</text>
+          <circle class="d-acento" cx="420" cy="375" r="7"/><text x="434" y="379">entrada</text>
+          <circle class="d-aviso" cx="510" cy="375" r="7"/><text x="524" y="379">salida</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>El relleno inicial: cada casilla es muro con un 45 % de probabilidad.</li>
+        <li>Tras una pasada del autómata (regla 4-5), ya aparecen huecos reconocibles.</li>
+        <li data-duracion="6">Tras tres pasadas, el ruido se ha convertido en algo que parece tallado: una región grande (verde) y una pequeña bolsa aislada (roja) que nadie pidió.</li>
+        <li data-duracion="7">Relleno por inundación: se cuentan las regiones, la pequeña se rellena de muro, y la salida (S) se coloca en la casilla libre más lejana de la entrada (E) según el mapa de distancias.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Practicarás la regla 4-5 en el ejercicio guiado <a href="#ej-paso-automata">Un paso del autómata</a>, y la limpieza con relleno por inundación en el ejercicio reto <a href="#ej-cueva-sin-islas">Una cueva sin islas</a>.</p>
+  <p>Y en Python, con un generador propio de números al azar (para que Brython y CPython den exactamente lo mismo, ya que el <code>random</code> de Brython no reproduce las secuencias de CPython). <strong>Predice</strong>: con un 55 % de muros iniciales y la regla 4-5, ¿la cueva crecerá más abierta o más cerrada tras cuatro pasadas?</p>
+  <div class="taller" data-modo="python" id="taller-cueva-python" data-titulo="Predice y modifica: cuevas en Python">
+    <textarea class="taller-codigo">def generador(semilla):
+    """Un generador congruencial propio, de pocas líneas: da el mismo resultado
+    en Brython y en CPython, cosa que random.seed() no garantiza."""
+    estado = semilla
+    def azar():
+        nonlocal estado
+        estado = (estado * 1103515245 + 12345) & 0x7fffffff
+        return estado / 0x7fffffff
+    return azar
+
+ANCHO, ALTO = 36, 20
+
+def mapa_inicial(semilla, probabilidad_muro=0.55):
+    azar = generador(semilla)
+    return [["#" if azar() < probabilidad_muro else "." for _ in range(ANCHO)] for _ in range(ALTO)]
+
+def contar_muros_alrededor(mapa, x, y):
+    cuenta = 0
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            if dx == 0 and dy == 0:
+                continue
+            nx, ny = x + dx, y + dy
+            # fuera del mapa cuenta como muro
+            if nx < 0 or ny < 0 or nx >= ANCHO or ny >= ALTO or mapa[ny][nx] == "#":
+                cuenta += 1
+    return cuenta
+
+def paso(mapa):
+    # regla 4-5: muro si tiene 5 o más muros alrededor
+    return [["#" if contar_muros_alrededor(mapa, x, y) >= 5 else "." for x in range(ANCHO)] for y in range(ALTO)]
+
+def cerrar_bordes(mapa):
+    for x in range(ANCHO):
+        mapa[0][x] = mapa[ALTO - 1][x] = "#"
+    for y in range(ALTO):
+        mapa[y][0] = mapa[y][ANCHO - 1] = "#"
+    return mapa
+
+def cueva(semilla, pasadas=4):
+    mapa = mapa_inicial(semilla)
+    for _ in range(pasadas):
+        mapa = paso(mapa)
+    return cerrar_bordes(mapa)
+
+mapa = cueva(2026)
+print("\n".join("".join(fila) for fila in mapa))
+muros = sum(fila.count("#") for fila in mapa)
+print(f"Muros: {muros} de {ANCHO * ALTO} ({100 * muros / (ANCHO * ALTO):.0f}%)")
+
+# Modifica: cambia pasadas a 1 y a 8. ¿Con cuántas pasadas deja de notarse
+# la diferencia de una más?</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (salida.length < 21) return "Debería imprimir las 20 filas del mapa y una línea de resumen al final.";
+var filas = salida.slice(0, 20);
+if (!filas.every(function (f) { return f.length === 36 && /^[#.]+$/.test(f); })) return "Cada fila debería tener 36 caracteres, solo con # y . (puntos).";
+var bordeOk = filas.every(function (f, i) { return (i === 0 || i === 19) ? f.indexOf(".") === -1 : (f[0] === "#" && f[35] === "#"); });
+if (!bordeOk) return "Los bordes del mapa deberían quedar siempre cerrados (solo #).";
+var m = /Muros: (\d+) de 720 \((\d+)%\)/.exec(salida[20]);
+if (!m) return "Falta la última línea: «Muros: N de 720 (XX%)».";
+var pct = Number(m[2]);
+if (pct < 35 || pct > 55) return "El porcentaje de muros debería quedar entre 35% y 55% (dio " + pct + "%).";
+return true;
+    </script>
+  </div>
+  <p>Con más muros de partida (55 % en vez del 45 % habitual) hacen falta las cuatro pasadas para que la cueva se abra lo suficiente; con menos pasadas queda demasiado cerrada, casi sin suelo. Entre 1 pasada y 8, la diferencia grande está entre la 1 y la 4; de la 4 a la 8 ya casi no cambia, porque el sistema se estabiliza.</p>
+
+  <h3>Colocar cosas y validar</h3>
+  <p>Generar el mapa es la mitad del trabajo; colocar lo que hay dentro es la otra. Con el <strong>mapa de distancias</strong> que ya conoces de la sección de <a href="#caminos">caminos</a> (un BFS desde la entrada), la <strong>salida</strong> se coloca en la casilla libre con mayor distancia: la más lejana de verdad, no en línea recta. Enemigos y tesoros se reparten con <strong>azar ponderado</strong> (<a href="18-matematicas.html#azar">Estación 18</a>) dando preferencia a casillas alejadas entre sí, para que no aparezcan todos amontonados.</p>
+  <p>Una mención breve antes de cerrar: el <strong>Wave Function Collapse</strong> (WFC) es otra forma de generar con reglas, pensada para que las piezas vecinas siempre encajen (como un mosaico con reglas de adyacencia). Es, en el fondo, un problema de <strong>restricciones</strong>: se colapsa primero la celda con menos opciones posibles y se propaga el efecto a sus vecinas. Lo programarás, con su propio taller, en la <a href="38-ia-busqueda.html#restricciones">Estación 38</a>.</p>
+
+  <h3>Lo procedural no sale gratis</h3>
+  <p><em>Minecraft</em> genera su mundo con ruido por capas; <em>Spelunky</em> arma sus niveles a partir de plantillas de sala conectadas con reglas; <em>Bad North</em>, <em>Townscaper</em> y <em>Caves of Qud</em> usan variantes de Wave Function Collapse para que sus piezas siempre encajen. Ninguno improvisa: cada uno valida lo que genera antes de mostrarlo.</p>
+  <p>La generación procedural exige tanto diseño y tantas pruebas como un nivel hecho a mano, quizás más, porque tiene que funcionar para miles de semillas, no solo para una. Y puede fallar de una forma sutil: producir miles de niveles técnicamente distintos pero igual de aburridos. La diseñadora e investigadora Kate Compton lo llamó el problema de los <strong>«10 000 tazones de avena»</strong>: puedes generar diez mil tazones distintos, cada uno con una cantidad de avena y de pasas ligeramente distinta, y seguirían siendo, para quien los mira, el mismo tazón de avena una y otra vez. La variedad numérica no es lo mismo que la variedad que se siente.</p>
+  <aside class="senal clave">
+    <p>La generación procedural clásica (ruido, autómatas, WFC) <strong>no es</strong> IA generativa. No hay ningún modelo entrenado con ejemplos: son reglas matemáticas escritas a mano, deterministas dada la semilla, que cualquiera puede leer y entender línea por línea. Es, otra vez, IA diseñada, no aprendida (repasa el mapa de la <a href="#que-es">primera sección</a>).</p>
+  </aside>
+  <p>Cómo generar ruido y navegar el resultado con las herramientas de un motor real (<code>FastNoiseLite</code> de Godot, entre otras) lo verás al final de la última sección, junto con la dificultad y la depuración.</p>
+</section>

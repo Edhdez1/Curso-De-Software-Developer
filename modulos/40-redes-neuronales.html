@@ -51,6 +51,11 @@
       <li><a href="#retropropagacion">Retropropagación</a></li>
       <li><a href="#entrenar">Entrenar</a></li>
       <li><a href="#pytorch">PyTorch</a></li>
+      <li><a href="#refuerzo">Refuerzo</a></li>
+      <li><a href="#q-learning">Q-learning</a></li>
+      <li><a href="#neuroevolucion">Neuroevolución</a></li>
+      <li><a href="#resumen">Resumen</a></li>
+      <li><a href="#practica">Práctica</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -1977,6 +1982,1197 @@ const resultado = manos.detectForVideo(video, performance.now());
 // resultado.landmarks[0] → 21 puntos { x, y, z } de la primera mano</code></pre>
   <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Impacto</p><p>Antes de meter un modelo preentrenado en tu app, revisa tres cosas. <strong>La licencia</strong>: la biblioteca puede ser libre y el modelo tener otra licencia distinta; léela en su ficha (la <em>model card</em>), que también cuenta con qué datos se entrenó y en qué falla. <strong>El tamaño</strong>: cada visitante descarga el modelo; decenas de megas en un móvil con datos es mucho. <strong>La privacidad</strong>: la gran ventaja de ejecutarlo en el navegador es que las imágenes y la voz no salen del dispositivo. Dilo en tu app, pide permiso para la cámara solo cuando haga falta y no guardes lo que no necesitas.</p></div></aside>
 </section>
+
+<section id="refuerzo" data-parada="Refuerzo">
+  <h2>Aprendizaje por refuerzo: aprender jugando</h2>
+  <p>En Runas 2.0 tenías algo muy valioso: para cada trazo, sabías la respuesta correcta («esto es fuego»). Esa es la situación del aprendizaje supervisado, el de toda esta estación hasta aquí. Pero nadie te da una lista de «la jugada correcta en cada instante» de una partida. Solo hay consecuencias: el perro de Saltarín choca o no choca, el marcador sube o no sube. El <strong>aprendizaje por refuerzo</strong> (en inglés, <em>reinforcement learning</em>, RL) aprende así, por prueba y error, de las consecuencias de sus propias decisiones.</p>
+  <p>El vocabulario es nuevo, pero las piezas encajan con lo que ya sabes: un <strong>agente de aprendizaje por refuerzo</strong> (el cerebro que decide) interactúa con un <strong>entorno</strong> (el juego) en una serie de instantes. En cada uno, el agente recibe un <strong>estado</strong> (también llamado <em>observación</em>: lo que puede ver, por ejemplo la distancia al obstáculo), elige una <strong>acción</strong> según su <strong>política</strong> (su estrategia, sea una tabla, una red o una regla) y el entorno responde con un <strong>estado</strong> nuevo y una <strong>recompensa</strong> (un número: +1 por seguir vivo, −10 por chocar). Una partida completa, del primer estado hasta que termina, es un <strong>episodio</strong>.</p>
+  <figure class="capsula" data-titulo="El bucle agente-entorno">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 270" role="img" aria-label="Animación: el agente y el entorno se pasan información en bucle. El entorno manda un estado (la distancia al obstáculo), la política del agente elige una acción (saltar), el entorno aplica la acción y devuelve un estado nuevo y una recompensa, y el episodio sigue hasta que termina en la meta o en la lava, momento en el que empieza uno nuevo.">
+        <rect class="d-caja" x="60" y="95" width="200" height="100" rx="10"/>
+        <text class="d-rotulo" x="160" y="128" text-anchor="middle">Agente</text>
+        <text class="d-peq d-tenue" x="160" y="150" text-anchor="middle">política</text>
+        <text xml:space="preserve" class="d-mono d-peq" x="160" y="172" text-anchor="middle" data-texto="1:?; 3:«saltar»">?</text>
+
+        <rect class="d-caja" x="460" y="95" width="200" height="100" rx="10"/>
+        <text class="d-rotulo" x="560" y="128" text-anchor="middle">Entorno</text>
+        <text class="d-peq d-tenue" x="560" y="150" text-anchor="middle">Saltarín corredor</text>
+        <text xml:space="preserve" class="d-mono d-peq" x="560" y="172" text-anchor="middle" data-texto="1:obstáculo a 0.4; 4:obstáculo a 0.1">obstáculo a 0.4</text>
+
+        <path class="d-linea" d="M460 132H264" data-clases="2:d-acento-trazo"/>
+        <path class="d-tinta" d="M264 132l16 -8v16z" data-clases="2:d-acento-trazo"/>
+        <text class="d-peq" x="362" y="115" text-anchor="middle">estado</text>
+
+        <path class="d-linea" d="M260 215H658" data-clases="3:d-acento-trazo"/>
+        <path class="d-tinta" d="M658 215l-16 -8v16z" data-clases="3:d-acento-trazo"/>
+        <text class="d-peq" x="459" y="235" text-anchor="middle">acción</text>
+
+        <path class="d-linea" d="M460 160H264" data-clases="4:d-ok-trazo" data-pasos="4-"/>
+        <path class="d-tinta" d="M264 160l16 -8v16z" data-clases="4:d-ok-trazo" data-pasos="4-"/>
+        <text class="d-peq" x="362" y="190" text-anchor="middle" data-pasos="4-">recompensa +1</text>
+
+        <g data-pasos="5">
+          <rect class="d-ok" x="260" y="18" width="200" height="42" rx="21"/>
+          <text class="d-sobre-ok" x="360" y="44" text-anchor="middle">episodio nuevo: otro obstáculo</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>El agente (el cerebro de Saltarín) y el entorno (el juego) se pasan información en bucle. En reposo, el entorno sabe que el obstáculo está a 0.4 de distancia.</li>
+        <li>El entorno manda ese número como estado: lo único que el agente puede ver.</li>
+        <li>La política recibe el estado y elige una acción: saltar.</li>
+        <li data-duracion="6">El entorno aplica la acción, avanza un paso y devuelve un estado nuevo (el obstáculo ya pasó, a 0.1 detrás) y una recompensa: +1 por seguir vivo.</li>
+        <li data-duracion="6">Si la recompensa fue por chocar o por llegar a la meta, el episodio termina y empieza uno nuevo con un obstáculo distinto. Si no, el bucle sigue con el estado nuevo.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>El <strong>retorno</strong> es la suma de todas las recompensas de un episodio, y es lo que de verdad quieres maximizar: ganar tres puntos ahora y perder diez después es peor que un solo punto que lleva a la victoria. Para no valorar igual una recompensa inmediata que una lejana, se usa un <strong>factor de descuento</strong> γ (gamma, un número entre 0 y 1, normalmente cerca de 1): una recompensa que llega <em>n</em> pasos después vale γⁿ veces menos (<a href="18-matematicas.html#crecimiento">Estación 18</a>). Con γ = 0.9, una recompensa dentro de 10 pasos vale 0.9¹⁰ ≈ 0.35 de lo que valdría ahora mismo: «una moneda hoy vale más que una moneda mañana».</p>
+
+  <h3>Tu propio entorno, sin pantalla</h3>
+  <p>Un entorno de aprendizaje por refuerzo se programa con dos funciones: <code>reset()</code>, que empieza un episodio nuevo y devuelve el primer estado, y <code>step(accion)</code>, que aplica una acción y devuelve lo que pasó. Puedes simularlo miles de veces sin dibujar nada en pantalla, y mucho más rápido que el tiempo real: es la misma idea del paso fijo de la <a href="28-arquitectura.html#videojuegos">Estación 28</a>, aplicada al entrenamiento en vez de al dibujo.</p>
+  <pre><code class="language-js">function crearEntorno(semilla) {
+  const azar = mulberry32(semilla);
+  let x, obstaculo, enAire, vy;
+  function estado() { return [(obstaculo - x) / 10, enAire ? 1 : 0]; }
+  function reset() {
+    x = 0; obstaculo = 6 + azar() * 4; enAire = false; vy = 0;
+    return estado();
+  }
+  function step(salta) {
+    if (salta &amp;&amp; !enAire) { enAire = true; vy = 0.08; }
+    if (enAire) { vy -= 0.01; if (vy &lt;= 0) enAire = false; }
+    x += 0.1;
+    let recompensa = 0.01, terminado = false;
+    if (Math.abs(x - obstaculo) &lt; 0.3) {
+      if (enAire) { recompensa = 1; obstaculo = x + 6 + azar() * 4; }       // lo saltó
+      else { recompensa = -1; terminado = true; }                          // chocó
+    }
+    return { estado: estado(), recompensa, terminado };
+  }
+  return { reset, step };
+}</code></pre>
+  <p>La biblioteca profesional de este mundo es <strong>Gymnasium</strong> (antes se llamaba Gym, de OpenAI; hoy la mantiene la organización Farama). Su API es la misma idea, con un poco más de detalle: <code>reset()</code> devuelve <code>(obs, info)</code> y <code>step(accion)</code> devuelve <code>(obs, reward, terminated, truncated, info)</code>. La diferencia entre sus dos banderas de fin es útil: <code>terminated</code> es que el episodio acabó por las reglas del propio entorno (llegaste a la meta, chocaste); <code>truncated</code> es que se cortó por un límite externo, como un máximo de pasos, sin que eso signifique nada sobre si lo hacías bien o mal. Tu <code>crearEntorno</code> mezcla las dos en un solo <code>terminado</code>, que basta para esta estación.</p>
+
+  <h3>Explorar o explotar</h3>
+  <p>Imagina tres cofres en una mazmorra. Cada uno da tesoro con una probabilidad oculta y distinta: no lo sabes hasta que lo abres. ¿Abres siempre el que mejor te ha ido hasta ahora (<strong>explotar</strong>) o pruebas uno distinto para asegurarte de que no hay uno mejor (<strong>explorar</strong>)? Es el mismo dilema de pedir siempre lo de siempre en tu restaurante favorito o probar un plato nuevo. Este problema, en su versión más simple (un solo estado, varias acciones), se llama el <strong>bandido multibrazo</strong> (el nombre viene de las tragaperras, <em>one-armed bandits</em>).</p>
+  <p>La estrategia más simple que funciona bien es <strong>ε-voraz</strong> (en inglés, <em>epsilon-greedy</em>): con una probabilidad pequeña ε (épsilon, por ejemplo 0.1) elige una acción al azar (explorar); el resto de las veces, la de mejor estimación hasta ahora (explotar, voraz). Normalmente ε empieza alto y <strong>decae</strong> poco a poco, porque al principio no sabes nada (conviene explorar mucho) y al final ya tienes buenas estimaciones (conviene explotar más). La estimación de cada acción se actualiza con la <strong>media incremental</strong>: no hace falta guardar todos los resultados, basta con el número de veces que la probaste.</p>
+  <pre><code class="language-js">estimacion[a] += (resultado - estimacion[a]) / veces[a];   // veces[a] ya cuenta este intento</code></pre>
+  <figure class="capsula" data-titulo="¿Explorar o explotar?">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 270" role="img" aria-label="Animación: tres cofres con una barra de estimación cada uno. El cofre 3 (el mejor, con probabilidad real 0.8) empieza con una estimación baja por mala suerte. La estrategia épsilon-voraz elige casi siempre el de mayor estimación, pero de vez en cuando explora al azar y así descubre que el cofre 3 es en realidad el mejor, y termina prefiriéndolo casi siempre.">
+        <g data-mover="1:translate(0px,0px)">
+          <rect class="d-caja" x="70" y="40" width="130" height="170" rx="10"/>
+          <text class="d-rotulo" x="135" y="66" text-anchor="middle">Cofre 1</text>
+          <rect class="d-fondo" x="90" y="150" width="90" height="16" rx="4"/>
+          <rect class="d-l1" x="90" y="150" width="90" height="16" rx="4" data-mover="1:scale(0.3,1)" style="transform-origin:90px 158px"/>
+          <text class="d-peq d-tenue" x="135" y="188" text-anchor="middle" data-texto="1:estim. 0.30; 4:estim. 0.21">estim. 0.30</text>
+        </g>
+        <g>
+          <rect class="d-caja" x="295" y="40" width="130" height="170" rx="10"/>
+          <text class="d-rotulo" x="360" y="66" text-anchor="middle">Cofre 2</text>
+          <rect class="d-fondo" x="315" y="150" width="90" height="16" rx="4"/>
+          <rect class="d-l2" x="315" y="150" width="90" height="16" rx="4" data-mover="1:scale(0.5,1)" style="transform-origin:315px 158px"/>
+          <text class="d-peq d-tenue" x="360" y="188" text-anchor="middle" data-texto="1:estim. 0.50; 4:estim. 0.47">estim. 0.50</text>
+        </g>
+        <g>
+          <rect class="d-caja" x="520" y="40" width="130" height="170" rx="10" data-clases="3:d-acento-trazo"/>
+          <text class="d-rotulo" x="585" y="66" text-anchor="middle">Cofre 3</text>
+          <rect class="d-fondo" x="540" y="150" width="90" height="16" rx="4"/>
+          <rect class="d-l6" x="540" y="150" width="90" height="16" rx="4" data-mover="1:scale(0.2,1); 3:scale(0.78,1)" style="transform-origin:540px 158px"/>
+          <text class="d-peq d-tenue" x="585" y="188" text-anchor="middle" data-texto="1:estim. 0.20 (mala suerte); 3:estim. 0.78; 4:estim. 0.80">estim. 0.20 (mala suerte)</text>
+        </g>
+        <g data-pasos="2">
+          <rect class="d-ok" x="315" y="218" width="90" height="34" rx="17"/>
+          <text class="d-sobre-ok d-peq" x="360" y="240" text-anchor="middle">explota: cofre 2</text>
+        </g>
+        <g data-pasos="3">
+          <rect class="d-mal" x="540" y="218" width="90" height="34" rx="17"/>
+          <text class="d-sobre-mal d-peq" x="585" y="240" text-anchor="middle">explora (ε): cofre 3</text>
+        </g>
+        <g data-pasos="4-">
+          <rect class="d-ok" x="540" y="218" width="90" height="34" rx="17"/>
+          <text class="d-sobre-ok d-peq" x="585" y="240" text-anchor="middle">explota: cofre 3</text>
+        </g>
+        <text class="d-peq d-tenue" x="360" y="24" text-anchor="middle" data-pasos="1">probabilidades reales: 0.2, 0.5 y 0.8 (ocultas para el agente)</text>
+        <text class="d-peq d-tenue" x="360" y="24" text-anchor="middle" data-pasos="5-">tras miles de aperturas, la estrategia ε-voraz converge al cofre 3</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Tres cofres con probabilidad real de dar tesoro 0.2, 0.5 y 0.8 (el agente no las conoce). Por mala suerte en las primeras aperturas, el cofre 3, el mejor, tiene de momento la peor estimación.</li>
+        <li>La mayoría de las veces, la estrategia explota: abre el de mayor estimación, el cofre 2.</li>
+        <li>De vez en cuando, con probabilidad ε, explora: abre uno al azar. Esta vez le toca el cofre 3, y le va bien.</li>
+        <li>La estimación del cofre 3 sube con la media incremental. Si sigue yendo bien al explorarlo de nuevo, pronto será el de mayor estimación.</li>
+        <li data-duracion="6">Con miles de aperturas y ε bajando poco a poco, las tres estimaciones se acercan a sus probabilidades reales y el agente explota casi siempre el cofre 3, el verdadero mejor.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <div class="taller" id="taller-cofres" data-titulo="Los cofres misteriosos" data-exponer="elecciones, estimaciones">
+    <textarea class="taller-codigo">// abrirCofre(i) está en la preparación: da 1 (tesoro) o 0, según una probabilidad oculta.
+// Hay 3 cofres (i = 0, 1 o 2).
+
+const N = 3;
+const estimaciones = [0, 0, 0];
+const veces = [0, 0, 0];
+const elecciones = [];   // qué cofre se eligió en cada apertura
+let epsilon = 1;
+
+for (let t = 0; t &lt; 2000; t++) {
+  let cofre;
+  // TU CÓDIGO: con probabilidad epsilon, elige un cofre al azar (Math.random());
+  // si no, el de mayor estimaciones[i] (usa indexOf(Math.max(...estimaciones))).
+  cofre = 0;   // reemplaza esta línea
+
+  const tesoro = abrirCofre(cofre);
+  veces[cofre]++;
+  // TU CÓDIGO: actualiza estimaciones[cofre] con la media incremental
+  // (mira la fórmula de arriba del taller)
+
+  elecciones.push(cofre);
+  epsilon = Math.max(0.01, epsilon * 0.995);   // decae poco a poco
+}
+
+console.log("estimaciones:", estimaciones.map((e) =&gt; e.toFixed(2)));</textarea>
+    <script type="text/plain" class="taller-preparacion">
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const _azarCofres = mulberry32(2024);
+const _PROBABILIDADES = [0.2, 0.5, 0.8];
+function abrirCofre(i) {
+  if (typeof i !== "number" || i < 0 || i > 2) throw new Error("Cofre inválido: usa 0, 1 o 2.");
+  return _azarCofres() < _PROBABILIDADES[i] ? 1 : 0;
+}
+    </script>
+    <script type="text/plain" class="taller-verificar">
+var elecciones = expuesto.elecciones, estimaciones = expuesto.estimaciones;
+if (!Array.isArray(elecciones) || elecciones.length < 2000) return "No encuentro 2000 elecciones en el array elecciones. ¿Le hiciste elecciones.push(cofre) en cada vuelta?";
+var ultimas = elecciones.slice(-500);
+var mejor = ultimas.filter(function (c) { return c === 2; }).length;
+if (mejor / 500 < 0.7) return "En las últimas 500 aperturas, el cofre 2 (el mejor, con probabilidad 0.8) se eligió solo " + mejor + " de 500 veces. Debería ser al menos 350 (70 %). Revisa la condición: ¿con probabilidad epsilon exploras, y si no, eliges el de mayor estimaciones[i]?";
+if (!Array.isArray(estimaciones) || typeof estimaciones[2] !== "number") return "No encuentro estimaciones[2] como un número. ¿Actualizas estimaciones[cofre] después de cada apertura?";
+if (Math.abs(estimaciones[2] - 0.8) > 0.1) return "La estimación final del cofre 2 es " + estimaciones[2].toFixed(2) + " y la probabilidad real es 0.8. Deberían quedar a menos de 0.1 de distancia. Revisa la media incremental: estimaciones[cofre] += (tesoro - estimaciones[cofre]) / veces[cofre].";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">for (let t = 0; t &lt; 2000; t++) {
+  let cofre;
+  if (Math.random() &lt; epsilon) {
+    cofre = Math.floor(Math.random() * N);
+  } else {
+    cofre = estimaciones.indexOf(Math.max(...estimaciones));
+  }
+  const tesoro = abrirCofre(cofre);
+  veces[cofre]++;
+  estimaciones[cofre] += (tesoro - estimaciones[cofre]) / veces[cofre];
+  elecciones.push(cofre);
+  epsilon = Math.max(0.01, epsilon * 0.995);
+}</code></pre>
+    <p>El cofre 2 (índice contando desde 0, el de probabilidad 0.8) gana casi siempre porque, aunque al principio todos se prueban por igual, su media sube más rápido y ε, cada vez más pequeño, hace que se explote casi siempre.</p>
+  </details>
+
+  <h3>Diseñar recompensas sin que te las revienten</h3>
+  <p>La recompensa es el único lenguaje con el que le dices al agente qué quieres. Puede ser <strong>dispersa</strong> (solo al llegar a la meta: +10 y nada más en todo el camino) o <strong>moldeada</strong> (en inglés, <em>reward shaping</em>: un poquito por acercarse, para guiar el aprendizaje). Moldear ayuda, pero es fácil hacerlo mal: si premias «acercarte a la meta» y el entorno permite acercarse y alejarse sin penalización, el agente puede aprender a oscilar cerca de la meta para cobrar una y otra vez, sin cruzarla nunca. La optimización de la <a href="38-ia-busqueda.html#optimizar">Estación 38</a> ya avisó de esto: un optimizador encuentra el camino más corto al número que le diste, no a lo que querías decir.</p>
+  <p>El ejemplo favorito de esta trampa es <strong>CoastRunners</strong>, un juego de barcas de carreras que un equipo de OpenAI usó para entrenar un agente en 2016. Le dieron puntos por golpear unos objetivos que aparecían en la pista, pensando que así aprendería a correr rápido. El agente encontró un bucle cerrado donde tres objetivos reaparecían sin parar: dio vueltas en círculo chocando contra barcas, incendiándose y sin terminar jamás la carrera, pero sacando más puntos que cualquier humano jugando limpio. Nadie programó esa trampa: el agente simplemente optimizó, con total fidelidad, el número que le dieron.</p>
+  <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>El agente optimiza lo que mides, no lo que quieres. Antes de entrenar nada, pregúntate: «si alguien encontrara el atajo más tonto para maximizar esta recompensa sin hacer lo que yo quiero, ¿cuál sería?». Si existe, lo va a encontrar.</p></div></aside>
+
+  <h3>Dónde se usa de verdad</h3>
+  <p>El aprendizaje por refuerzo brilla donde hay una señal de éxito clara pero ningún ejemplo de «la jugada perfecta». El estudio EA SEED de 2023 estimó que probar a mano las 601 funciones de un solo nivel de <em>Battlefield V</em> le habría costado al equipo humano unas 0.5 millones de horas; usaron agentes de refuerzo para automatizar buena parte de esas pruebas. <strong>GT Sophy</strong>, un agente entrenado por Sony AI, forma parte de <em>Gran Turismo 7</em> desde 2023 como rival de altísimo nivel. Aun así, la mayor parte de la IA de enemigos en los juegos comerciales se sigue escribiendo a mano, con las técnicas de la <a href="37-ia-personajes.html">Estación 37</a>: el refuerzo cuesta mucho entrenar, es difícil de depurar y es menos predecible.</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p><strong>Confundir recompensa con retorno.</strong> La recompensa es el número de un solo paso; el retorno es la suma (con descuento) de todo el episodio, y es lo que el agente debería intentar maximizar. <strong>ε = 0 desde el principio</strong>: el agente nunca prueba nada nuevo y se queda con la primera estrategia que funcionó un poco, aunque exista una mucho mejor. <strong>Evaluar con la exploración todavía activa</strong>: si mides el rendimiento con ε alto, estás midiendo en parte al azar, no a la política aprendida; para evaluar, usa ε = 0 (la política voraz pura).</p></div></aside>
+</section>
+
+<section id="q-learning" data-parada="Q-learning">
+  <h2>Q-learning desde cero, y qué hacer cuando la tabla no alcanza</h2>
+  <p><strong>Q-learning</strong> responde a una sola pregunta para cada combinación de estado y acción: <em>Q(s, a)</em>, «¿cuánto espero ganar en total si estoy en el estado <em>s</em>, hago la acción <em>a</em> ahora, y a partir de ahí juego lo mejor que sé?». Si conocieras ese número para cada acción posible en cada estado, jugar bien sería trivial: en cada estado, elige la acción con mayor <em>Q</em>. El truco de Q-learning es que aprende esos números sin conocerlos de antemano, jugando y corrigiéndose episodio a episodio.</p>
+  <p>Los valores de <em>Q</em> se guardan en una <strong>tabla</strong>: una fila por estado, una columna por acción. En JavaScript basta un array de arrays, o un <code>Map</code> si los estados no son números pequeños y consecutivos (<a href="19-estructuras-datos.html#hash">Estación 19</a>).</p>
+
+  <h3>La regla de actualización, por partes</h3>
+  <p>Después de cada paso (estado <em>s</em>, acción <em>a</em>, recompensa <em>r</em>, estado nuevo <em>s′</em>), se corrige <em>Q(s, a)</em> así:</p>
+  <pre class="consola"><code>Q(s, a)  ←  Q(s, a)  +  α · ( r + γ · max Q(s′, ·)  −  Q(s, a) )</code></pre>
+  <p>Léelo de dentro hacia fuera. <code>r + γ · max Q(s′, ·)</code> es el <strong>objetivo</strong>: la recompensa que acabas de cobrar, más lo mejor que crees que vale el estado al que llegaste (descontado por γ, como en la sección anterior). Restarle <code>Q(s, a)</code>, el valor que tenías antes, da la <strong>sorpresa</strong> (en inglés, <em>TD error</em>, error de diferencia temporal): cuánto te equivocabas. <code>α</code> (alfa, la tasa de aprendizaje de Q-learning, entre 0 y 1) decide qué tan grande es el paso de corrección. Si la sorpresa es 0, no cambia nada: ya lo tenías bien.</p>
+  <div class="traza" data-titulo="Una actualización de Q, con números" data-rotulo-memoria="Memoria">
+    <pre><code class="language-js">const alfa = 0.5, gamma = 0.9;
+const r = -0.01;                         // coste de dar un paso
+const futuro = Math.max(...Q[18]);       // lo mejor que ofrece el estado al que llegaste
+const objetivo = r + gamma * futuro;
+const sorpresa = objetivo - Q[12][1];
+Q[12][1] += alfa * sorpresa;</code></pre>
+    <script type="application/json">[
+      {"linea": 0, "vars": {"Q[12][1]": "0", "Q[18]": "[0.1, 0.4, 0.2, 0.05]"}, "nota": "Antes de esta actualización: Q[12][1] vale 0 (nunca se probó esa acción desde ese estado). Q[18] ya tiene algo aprendido de otras visitas."},
+      {"linea": 3, "vars": {"Q[12][1]": "0", "Q[18]": "[0.1, 0.4, 0.2, 0.05]", "futuro": "0.4"}, "nota": "El mejor valor del estado al que se llegó, el 18, es 0.4 (la segunda acción)."},
+      {"linea": 4, "vars": {"Q[12][1]": "0", "Q[18]": "[0.1, 0.4, 0.2, 0.05]", "futuro": "0.4", "objetivo": "0.35"}, "nota": "objetivo = −0.01 + 0.9 × 0.4 = 0.35: lo que esta jugada parece valer, con lo que ya sabes del futuro."},
+      {"linea": 5, "vars": {"Q[12][1]": "0", "Q[18]": "[0.1, 0.4, 0.2, 0.05]", "futuro": "0.4", "objetivo": "0.35", "sorpresa": "0.35"}, "nota": "sorpresa = 0.35 − 0 = 0.35: una sorpresa grande, porque Q[12][1] todavía no sabía nada."},
+      {"linea": 6, "vars": {"Q[12][1]": "0.175", "Q[18]": "[0.1, 0.4, 0.2, 0.05]", "futuro": "0.4", "objetivo": "0.35", "sorpresa": "0.35"}, "nota": "Q[12][1] += 0.5 × 0.35 = 0.175. Solo se corrige la mitad de la sorpresa, porque α = 0.5: aprende con cautela, no de golpe."}
+    ]</script>
+  </div>
+  <p>Cuando el estado nuevo es terminal (la partida acabó), no hay «futuro» que sumar: <code>max Q(s′, ·)</code> se sustituye por 0. Es la parte de la fórmula donde más se equivoca quien empieza.</p>
+  <div class="taller" id="taller-regla-q" data-titulo="La regla de Q-learning" data-exponer="actualizar">
+    <textarea class="taller-codigo">// Q es una tabla: Q[estado][accion]. La actualización MODIFICA Q[s][a] directamente.
+function actualizar(Q, s, a, r, s2, terminado, alfa, gamma) {
+  // TU CÓDIGO: el objetivo es r si terminado; si no, r + gamma * el mayor valor de Q[s2].
+  // Después: Q[s][a] += alfa * (objetivo - Q[s][a])
+}
+
+// Pruébalo con una tabla de 2 estados y 2 acciones
+const Q = [[0, 0], [0, 0]];
+actualizar(Q, 0, 0, 1, 1, false, 0.5, 0.9);
+console.log(Q[0][0]);   // 0.5: a medio camino entre 0 y el objetivo (1 + 0.9 × 0)</textarea>
+    <script type="text/plain" class="taller-verificar">
+var f = expuesto.actualizar;
+if (typeof f !== "function") return "No encuentro la función actualizar. ¿Se llama así y el programa terminó sin errores?";
+function prueba(Q, s, a, r, s2, terminado, alfa, gamma, esperado, desc) {
+  var copia = Q.map(function (fila) { return fila.slice(); });
+  try { f(copia, s, a, r, s2, terminado, alfa, gamma); } catch (e) { return desc + ": tu función lanzó un error (" + e.message + ")."; }
+  if (typeof copia[s][a] !== "number" || Math.abs(copia[s][a] - esperado) > 1e-6) {
+    return desc + ": Q[" + s + "][" + a + "] debería quedar en " + esperado + " y quedó en " + copia[s][a] + ".";
+  }
+  return null;
+}
+var casos = [
+  prueba([[0, 0], [0, 0]], 0, 0, 1, 1, false, 0.5, 0.9, 0.5, "Caso 1"),
+  prueba([[0, 0], [2, 5]], 0, 1, 0, 1, false, 0.5, 0.9, 2.25, "Caso 2"),
+  prueba([[1, 1], [1, 1]], 1, 0, 10, 0, true, 0.5, 0.9, 5.5, "Caso 3 (terminal: no se suma el futuro)"),
+  prueba([[0, 0], [0, 0], [0, 0]], 2, 1, -10, 0, false, 0.1, 0.5, -1, "Caso 4"),
+];
+for (var i = 0; i < casos.length; i++) if (casos[i]) return casos[i];
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">function actualizar(Q, s, a, r, s2, terminado, alfa, gamma) {
+  const futuro = terminado ? 0 : Math.max(...Q[s2]);
+  const objetivo = r + gamma * futuro;
+  Q[s][a] += alfa * (objetivo - Q[s][a]);
+}</code></pre>
+    <p>El caso 3 es el que más se olvida: con <code>terminado</code> en verdadero, el futuro vale 0 aunque <code>Q[s2]</code> tenga números. No hay «después» cuando la partida ya terminó.</p>
+  </details>
+
+  <h3>Los valores se propagan desde la meta</h3>
+  <p>Al principio, toda la tabla vale 0: no se sabe nada. La primera vez que un episodio llega a la meta, solo la última casilla antes de la meta aprende algo (la recompensa final). En el siguiente episodio, si el agente vuelve a pasar cerca, la casilla anterior a esa también aprende, porque ahora <code>max Q(s′, ·)</code> ya no es 0. Episodio a episodio, el valor se <strong>propaga hacia atrás</strong> desde la meta, una casilla más lejos cada vez que un episodio la visita. Es la misma idea que la programación dinámica de la <a href="20-algoritmos.html#estrategias">Estación 20</a>: resolver primero lo más cerca del caso base y construir el resto encima.</p>
+  <figure class="capsula" data-titulo="Los valores se propagan desde la meta">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 230" role="img" aria-label="Animación: una fila de 7 casillas, con una salida al final. Tras el episodio 1, solo la casilla justo antes de la salida tiene un valor alto. Tras el episodio 2, una casilla más atrás también lo tiene. El valor se propaga hacia atrás, una casilla más lejos en cada episodio, hasta llegar a la casilla de salida tras el episodio 5.">
+        <rect class="d-caja" x="20" y="80" width="80" height="70" rx="8"/>
+        <rect class="d-caja" x="110" y="80" width="80" height="70" rx="8"/>
+        <rect class="d-caja" x="200" y="80" width="80" height="70" rx="8"/>
+        <rect class="d-caja" x="290" y="80" width="80" height="70" rx="8"/>
+        <rect class="d-caja" x="380" y="80" width="80" height="70" rx="8"/>
+        <rect class="d-caja" x="470" y="80" width="80" height="70" rx="8"/>
+        <rect class="d-acento" x="560" y="80" width="90" height="70" rx="8"/>
+        <text class="d-sobre-acento d-rotulo" x="605" y="120" text-anchor="middle">salida</text>
+        <text xml:space="preserve" class="d-mono d-peq" x="60" y="120" text-anchor="middle" data-texto="5:0.35">0</text>
+        <text xml:space="preserve" class="d-mono d-peq" x="150" y="120" text-anchor="middle" data-texto="4:0.43">0</text>
+        <text xml:space="preserve" class="d-mono d-peq" x="240" y="120" text-anchor="middle" data-texto="3:0.53">0</text>
+        <text xml:space="preserve" class="d-mono d-peq" x="330" y="120" text-anchor="middle" data-texto="2:0.66">0</text>
+        <text xml:space="preserve" class="d-mono d-peq" x="420" y="120" text-anchor="middle" data-texto="1:0.81">0</text>
+        <rect class="d-ok" x="470" y="80" width="80" height="70" rx="8" fill-opacity="0.001" data-clases="1:d-ok"/>
+        <text xml:space="preserve" class="d-sobre-ok d-mono" x="510" y="120" text-anchor="middle" data-pasos="1-" data-texto="1:0.81">0.81</text>
+        <text xml:space="preserve" class="d-mono d-peq" x="240" y="120" text-anchor="middle" data-pasos="3-" data-clases="3:d-sobre-ok" data-texto="3:0.53"/>
+        <text class="d-peq d-tenue" x="360" y="58" text-anchor="middle" data-texto="1:episodio 1: solo la última casilla aprende; 2:episodio 2: una casilla más atrás; 3:episodio 3: sigue avanzando; 4:episodio 4: ya casi en el principio; 5:episodio 5: llegó hasta el inicio">episodio 1: solo la última casilla aprende</text>
+        <path class="d-linea" d="M20 180H650"/>
+        <path class="d-tinta" d="M20 180l16 -6v12z"/>
+        <text class="d-peq d-tenue" x="335" y="200" text-anchor="middle">dirección en la que se propaga el aprendizaje</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Una fila de 7 casillas con una salida al final (+1 de recompensa). Toda la tabla <em>Q</em> empieza en 0.</li>
+        <li data-duracion="6">Tras el primer episodio que llega a la salida, solo la casilla justo antes aprende algo: fue la única que vio una recompensa real.</li>
+        <li data-duracion="6">En el episodio 2, si el agente pasa por la casilla anterior a esa, ya encuentra un <code>max Q(s′, ·)</code> distinto de 0, y también aprende.</li>
+        <li data-duracion="6">El valor sigue propagándose hacia atrás, una casilla más lejos en cada episodio que recorre el camino.</li>
+        <li data-duracion="7">Tras varios episodios, cada casilla del camino sabe cuánto vale acercarse a la salida, aunque esté lejos de ella. Así es como Q-learning resuelve problemas con muchos pasos sin tener que llegar a la meta en cada episodio para seguir aprendiendo.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>El estado debe contener lo que importa</h3>
+  <p>Q-learning asume que el estado describe todo lo necesario para decidir bien: no hace falta recordar cómo se llegó hasta ahí, solo dónde se está ahora. Es la <strong>propiedad de Markov</strong>. Si tu estado es solo «la casilla donde estoy» pero la velocidad también importa para decidir si saltar, te falta información: dos situaciones con la misma casilla pero distinta velocidad necesitarían acciones distintas, y una tabla que solo mira la casilla no puede distinguirlas. La solución no es mágica: se mete la velocidad en el estado también (aunque eso agranda la tabla).</p>
+
+  <h3>Cuando la tabla no cabe</h3>
+  <p>Una mazmorra de 6 × 6 tiene 36 estados: una tabla ridículamente pequeña. Pero una pantalla de 84 × 84 píxeles en blanco y negro tiene 2<sup>84×84</sup> estados posibles, un número mayor que los átomos del universo observable. Ninguna tabla cabe en ninguna memoria. Esto se llama la <strong>explosión de estados</strong>, y es el límite duro de Q-learning tabular.</p>
+  <p>La solución, propuesta por DeepMind en 2015, se llama <strong>Deep Q-Learning</strong> (DQN): cambiar la tabla por una red neuronal que, dado un estado, estima <em>Q(s, a)</em> para cada acción a la vez. La red generaliza: aprende que estados parecidos (dos capturas de pantalla casi iguales) deberían tener valores parecidos, sin haber visto cada uno por separado. El mismo DQN, con la misma arquitectura y sin ningún conocimiento previo del juego, aprendió a jugar 49 juegos distintos de Atari con solo los píxeles de la pantalla como entrada, superando el nivel humano en la mayoría.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 260" role="img" aria-label="Diagrama de Deep Q-Learning: el estado (los píxeles de la pantalla o los sensores) entra a una red neuronal, que da un valor Q por cada acción posible. Se elige la acción de mayor valor. La transición (estado, acción, recompensa, estado siguiente) se guarda en una memoria de repetición, de la que luego se sacan lotes al azar para entrenar, comparando contra una red objetivo que se actualiza más despacio.">
+      <rect class="d-caja" x="20" y="90" width="120" height="80" rx="8"/>
+      <text class="d-rotulo" x="80" y="124" text-anchor="middle">Estado</text>
+      <text class="d-peq d-tenue" x="80" y="146" text-anchor="middle">píxeles o sensores</text>
+      <rect class="d-caja" x="190" y="80" width="150" height="100" rx="8"/>
+      <text class="d-rotulo" x="265" y="124" text-anchor="middle">Red</text>
+      <text class="d-peq d-tenue" x="265" y="146" text-anchor="middle">estima Q(s, ·)</text>
+      <rect class="d-caja-suave" x="390" y="40" width="150" height="34" rx="6"/><text class="d-peq" x="465" y="62" text-anchor="middle">Q(s, saltar) = 0.8</text>
+      <rect class="d-acento" x="390" y="84" width="150" height="34" rx="6"/><text class="d-sobre-acento d-peq" x="465" y="106" text-anchor="middle">Q(s, nada) = 1.3</text>
+      <rect class="d-caja-suave" x="390" y="128" width="150" height="34" rx="6"/><text class="d-peq" x="465" y="150" text-anchor="middle">Q(s, agacharse) = 0.2</text>
+      <path class="d-linea" d="M140 130H182"/><path class="d-tinta" d="M190 130l-14 -7v14z"/>
+      <path class="d-linea" d="M340 130H382"/><path class="d-tinta" d="M390 130l-14 -7v14z"/>
+      <path class="d-linea" d="M540 101H572"/><path class="d-tinta" d="M580 101l-14 -7v14z"/>
+      <rect class="d-ok" x="580" y="84" width="120" height="34" rx="17"/>
+      <text class="d-sobre-ok d-peq" x="640" y="106" text-anchor="middle">elige «nada»</text>
+      <rect class="d-caja-suave" x="140" y="200" width="440" height="46" rx="8"/>
+      <text class="d-peq" x="360" y="227" text-anchor="middle">(s, a, r, s′) se guarda en la memoria de repetición; se entrena con lotes al azar contra una red objetivo</text>
+    </svg>
+    <figcaption>Deep Q-Learning: una red sustituye a la tabla. La memoria de repetición (guardar transiciones y reusarlas en lotes al azar) y la red objetivo (una copia que se actualiza despacio) evitan que el entrenamiento se desestabilice.</figcaption>
+  </figure>
+  <p>Dos trucos lo hacen posible. La <strong>memoria de repetición</strong> (en inglés, <em>replay buffer</em>) guarda miles de transiciones pasadas y entrena con lotes sacados al azar de ahí, en vez de solo con lo que acaba de pasar: rompe la correlación entre pasos consecutivos, que confundiría a la red. La <strong>red objetivo</strong> (en inglés, <em>target network</em>) es una copia de la red que se actualiza mucho más despacio y se usa solo para calcular el <code>max Q(s′, ·)</code> del objetivo: si usaras la misma red que estás cambiando a cada paso para calcular su propio objetivo, estarías persiguiendo una meta que se mueve contigo.</p>
+  <p>Hay una familia más allá, los <strong>métodos de política</strong> (como PPO, <em>Proximal Policy Optimization</em>), que en vez de estimar <em>Q</em> aprenden directamente la política: una red que, dado un estado, da directamente una acción (o una probabilidad por acción). Son los que usan Stable-Baselines3 y Unity ML-Agents por defecto para la mayoría de problemas, porque suelen ser más estables. Aquí solo se nombran: en tu computadora, <code>DQN("MlpPolicy", "CartPole-v1")</code> o <code>PPO("MlpPolicy", "CartPole-v1")</code> de Stable-Baselines3 entrenan cualquiera de los dos con la misma interfaz, como verás en el paso opcional del proyecto.</p>
+  <aside class="senal ojo"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 21h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Ineficiencia de muestras</p><p>El DQN original necesitó cientos de millones de fotogramas de juego (semanas de Atari a toda velocidad) para aprender lo que un humano capta en minutos. Esa es la otra cara del aprendizaje por refuerzo: necesita muchísimos episodios, muchos más que el aprendizaje supervisado con los mismos datos. Por eso se simula sin pantalla y lo más rápido posible, y por eso herramientas como Unity ML-Agents y Godot RL Agents aceleran el tiempo de simulación muy por encima del tiempo real.</p></div></aside>
+
+  <h3>Míralo aprender</h3>
+  <p>Esta mazmorra de 6 × 6 tiene muros, una casilla de lava (−10, termina el episodio) y una salida (+10). El mapa de calor pinta cada casilla según su <code>max Q</code> (cuanto más intensa, mejor la cree el agente) y las flechas señalan la acción que elegiría ahora mismo en cada casilla. Antes de que cargue la página ya se entrenaron unos cientos de episodios; los deslizadores siguen entrenando con los valores que elijas.</p>
+  <div class="taller" data-modo="web" id="taller-mira-aprende" data-titulo="Mira cómo aprende" data-alto="28rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div class="fila"&gt;
+  &lt;canvas id="mapa" width="288" height="288"&gt;&lt;/canvas&gt;
+  &lt;div class="panel"&gt;
+    &lt;label&gt;α (alfa) &lt;input id="alfa" type="range" min="0.05" max="0.9" step="0.05" value="0.3"&gt; &lt;output id="vAlfa"&gt;&lt;/output&gt;&lt;/label&gt;
+    &lt;label&gt;γ (gamma) &lt;input id="gamma" type="range" min="0.5" max="0.99" step="0.01" value="0.9"&gt; &lt;output id="vGamma"&gt;&lt;/output&gt;&lt;/label&gt;
+    &lt;label&gt;ε inicial &lt;input id="epsilon" type="range" min="0.1" max="1" step="0.05" value="1"&gt; &lt;output id="vEpsilon"&gt;&lt;/output&gt;&lt;/label&gt;
+    &lt;label&gt;&lt;input id="moneda" type="checkbox"&gt; añadir una moneda (+1, reaparece)&lt;/label&gt;
+    &lt;button id="reiniciar" type="button"&gt;Reiniciar y entrenar&lt;/button&gt;
+    &lt;p id="info"&gt;&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 8px; font-size: 14px; color: #1d1d1f; }
+.fila { display: flex; flex-wrap: wrap; gap: 12px; }
+canvas { border: 1px solid #999; border-radius: 6px; max-width: 100%; }
+.panel { display: grid; gap: 8px; align-content: start; min-width: 14rem; }
+label { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+#info { font-weight: bold; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// ===== 1. La mazmorra: 6×6, muros, lava, salida y (opcional) una moneda =====
+const ANCHO = 6, ALTO = 6, CELDA = 48;
+const MUROS = new Set(["0,2", "1,2", "2,2", "3,2", "4,2"]);
+const LAVA = new Set(["0,4", "1,4"]);
+const SALIDA = "0,5";
+const MONEDA_POS = "3,0";
+const DX = [0, 0, -1, 1], DY = [-1, 1, 0, 0];   // arriba, abajo, izquierda, derecha
+
+let x, y, conMoneda;
+function indice(px, py) { return py * ANCHO + px; }
+function resetEntorno() { x = 0; y = 0; return indice(x, y); }
+function step(accion) {
+  const nx = x + DX[accion], ny = y + DY[accion];
+  if (nx >= 0 && nx < ANCHO && ny >= 0 && ny < ALTO && !MUROS.has(nx + "," + ny)) { x = nx; y = ny; }
+  const clave = x + "," + y;
+  if (conMoneda && clave === MONEDA_POS) return { s2: indice(x, y), r: 1, fin: false };   // reaparece: nunca termina
+  if (LAVA.has(clave)) return { s2: indice(x, y), r: -10, fin: true };
+  if (clave === SALIDA) return { s2: indice(x, y), r: 10, fin: true };
+  return { s2: indice(x, y), r: -0.05, fin: false };
+}
+
+// ===== 2. Q-learning =====
+let Q = Array.from({ length: ANCHO * ALTO }, () => [0, 0, 0, 0]);
+let epsilon = 1, episodios = 0;
+function actualizar(s, a, r, s2, fin, alfa, gamma) {
+  const futuro = fin ? 0 : Math.max(...Q[s2]);
+  Q[s][a] += alfa * (r + gamma * futuro - Q[s][a]);
+}
+function episodio(alfa, gamma) {
+  let s = resetEntorno();
+  for (let paso = 0; paso < 100; paso++) {
+    const a = Math.random() < epsilon ? Math.floor(Math.random() * 4) : Q[s].indexOf(Math.max(...Q[s]));
+    const { s2, r, fin } = step(a);
+    actualizar(s, a, r, s2, fin, alfa, gamma);
+    s = s2;
+    if (fin) break;
+  }
+  episodios++;
+  epsilon = Math.max(0.05, epsilon * 0.985);
+}
+
+// ===== 3. Dibujo: mapa de calor + flechas =====
+const lienzo = document.querySelector("#mapa"), ctx = lienzo.getContext("2d");
+const FLECHA = ["↑", "↓", "←", "→"];
+function dibujar() {
+  const maxQ = Math.max(1, ...Q.flat().map(Math.abs));
+  for (let py = 0; py < ALTO; py++) {
+    for (let px = 0; px < ANCHO; px++) {
+      const clave = px + "," + py, i = indice(px, py);
+      let color = "#eef2f6";
+      if (MUROS.has(clave)) color = "#555";
+      else if (LAVA.has(clave)) color = "#b23a1f";
+      else if (clave === SALIDA) color = "#2f8f4e";
+      else {
+        const v = Math.max(...Q[i]) / maxQ;
+        const t = Math.max(0, Math.min(1, v));
+        color = `rgb(${Math.round(235 - 120 * t)}, ${Math.round(240 - 40 * t)}, ${Math.round(246 - 60 * t)})`;
+      }
+      ctx.fillStyle = color;
+      ctx.fillRect(px * CELDA, py * CELDA, CELDA - 2, CELDA - 2);
+      if (!MUROS.has(clave) && !LAVA.has(clave) && clave !== SALIDA) {
+        const mejor = Q[i].indexOf(Math.max(...Q[i]));
+        ctx.fillStyle = "#1d1d1f";
+        ctx.font = "16px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(FLECHA[mejor], px * CELDA + CELDA / 2 - 1, py * CELDA + CELDA / 2 + 6);
+      }
+      if (conMoneda && clave === MONEDA_POS) {
+        ctx.fillStyle = "#c9960c";
+        ctx.beginPath(); ctx.arc(px * CELDA + CELDA / 2, py * CELDA + CELDA / 2, 8, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  }
+  document.querySelector("#info").textContent = `Episodios entrenados: ${episodios} · ε actual: ${epsilon.toFixed(2)}`;
+}
+
+// ===== 4. Controles =====
+function leer(id) { return Number(document.querySelector("#" + id).value); }
+function reiniciar() {
+  Q = Array.from({ length: ANCHO * ALTO }, () => [0, 0, 0, 0]);
+  epsilon = leer("epsilon"); episodios = 0;
+  conMoneda = document.querySelector("#moneda").checked;
+  for (let i = 0; i < 400; i++) episodio(leer("alfa"), leer("gamma"));   // entrenamiento inicial, síncrono
+  dibujar();
+}
+for (const id of ["alfa", "gamma", "epsilon"]) {
+  const el = document.querySelector("#" + id), out = document.querySelector("#v" + id[0].toUpperCase() + id.slice(1));
+  const act = () => { out.textContent = el.value; };
+  act(); el.addEventListener("input", act);
+}
+document.querySelector("#reiniciar").addEventListener("click", reiniciar);
+document.querySelector("#moneda").addEventListener("change", reiniciar);
+reiniciar();
+
+function seguirEntrenando() {
+  for (let i = 0; i < 5; i++) episodio(leer("alfa"), leer("gamma"));
+  dibujar();
+  requestAnimationFrame(seguirEntrenando);
+}
+requestAnimationFrame(seguirEntrenando);</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (!document.querySelector("#mapa")) return "Falta el canvas #mapa.";
+return true;
+    </script>
+  </div>
+  <p>Deja que entrene sin tocar nada y mira cómo el mapa de calor se enciende desde la salida hacia atrás, igual que en la cápsula de arriba. Después marca «añadir una moneda» y vuelve a entrenar: si la moneda da +1 cada vez que se pisa y nunca se agota, el agente aprende a quedarse dando vueltas sobre ella para siempre, y nunca llega a la salida. Es la misma trampa de CoastRunners, en tu propia mazmorra.</p>
+
+  <h3>Un vistazo en tu computadora</h3>
+  <p>En Python, el mismo bucle que acabas de programar funciona contra un entorno real de Gymnasium: <code>FrozenLake-v1</code> (un lago helado con agujeros) o <code>CliffWalking-v1</code> (un precipicio que castiga caerse) tienen exactamente la interfaz <code>reset()</code>/<code>step()</code> que ya conoces, con la única diferencia de que <code>step</code> devuelve cinco valores en vez de tres.</p>
+  <pre><code class="language-python">import gymnasium as gym
+
+entorno = gym.make("CliffWalking-v1")
+estado, info = entorno.reset(seed=0)
+terminado = truncado = False
+while not (terminado or truncado):
+    accion = entorno.action_space.sample()   # aquí iría tu política, no al azar
+    estado, recompensa, terminado, truncado, info = entorno.step(accion)
+entorno.close()</code></pre>
+  <p>Para entrenar de verdad sin escribir el bucle a mano, Stable-Baselines3 trae Q-learning profundo y métodos de política listos para usar, con la misma interfaz para todos:</p>
+  <pre><code class="language-python">from stable_baselines3 import DQN
+
+modelo = DQN("MlpPolicy", "CartPole-v1", verbose=0)
+modelo.learn(total_timesteps=20_000)
+modelo.save("cartpole_dqn")</code></pre>
+  <p>Cambiar <code>DQN</code> por <code>PPO</code> entrena con un método de política en vez de con valores Q, sin tocar nada más. Lo probarás de verdad, con su salida real, en el paso opcional del proyecto.</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p><strong>Olvidar el <code>max</code> del siguiente estado</strong>: actualizar con <code>Q[s2][a]</code> (la misma acción que acabas de hacer) en vez de con el mejor valor de <code>Q[s2]</code> rompe la fórmula; Q-learning aprende sobre la mejor acción futura posible, no sobre la que resulta que harás después. <strong>Evaluar con las mismas semillas del entrenamiento</strong>: si el agente solo vio un puñado de mapas o inicios, puede haberlos memorizado; compruébalo siempre con semillas que no usó para aprender.</p></div></aside>
+</section>
+
+<section id="neuroevolucion" data-parada="Neuroevolución">
+  <h2>Neuroevolución, motores y criterio</h2>
+  <p>Hay una tercera forma de entrenar una red, sin gradientes ni retropropagación: el <strong>algoritmo genético</strong> que programaste en la <a href="38-ia-busqueda.html#optimizar">Estación 38</a>, aplicado directamente a los pesos de una red. Cada individuo de la población no es una ruta ni un horario: es una red entera, sus pesos guardados en un <code>Float32Array</code>. Su <strong>aptitud</strong> no se calcula con una fórmula: se juega. Se pone al individuo a jugar una partida (o varias) y su puntuación es su aptitud. Selección, cruce y mutación funcionan exactamente igual que en la 38: no hay nada nuevo que aprender ahí, solo un genoma distinto.</p>
+  <p>La <strong>neuroevolución</strong> brilla justo donde Q-learning y la retropropagación sufren más: cuando la recompensa solo llega al final de una partida larga (no hay una pérdida que calcular en cada paso) y cuando evaluar un individuo es rápido y se puede hacer en paralelo, porque cada partida de la población es independiente de las demás. No necesita que nada sea derivable: a la red no le importa si la puntuación del juego viene de físicas, de reglas o de otro programa; solo necesita un número al final.</p>
+  <figure class="capsula" data-titulo="Una generación de neuroevolución">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 260" role="img" aria-label="Animación: una población de 8 saltadores, cada uno con sus pesos como una barra de colores. Juegan y cada uno obtiene una puntuación. Se ordenan de mejor a peor. Los 3 mejores (la élite) pasan tal cual a la siguiente generación. El resto se rellena cruzando y mutando parejas de la élite. La nueva generación, en promedio, supera más obstáculos que la anterior.">
+        <g data-pasos="1-2">
+          <text class="d-rotulo" x="360" y="26" text-anchor="middle">Generación N: 8 saltadores</text>
+          <g data-mover="1:translate(0px,0px); 3:translate(0px,0px)"><rect class="d-caja" x="20" y="46" width="76" height="40" rx="6"/><rect class="d-l1" x="28" y="56" width="60" height="18" data-texto="2:12"/></g>
+          <g><rect class="d-caja" x="104" y="46" width="76" height="40" rx="6"/><rect class="d-l2" x="112" y="56" width="60" height="18"/></g>
+          <g><rect class="d-caja" x="188" y="46" width="76" height="40" rx="6"/><rect class="d-l3" x="196" y="56" width="60" height="18"/></g>
+          <g><rect class="d-caja" x="272" y="46" width="76" height="40" rx="6"/><rect class="d-l4" x="280" y="56" width="60" height="18"/></g>
+          <g><rect class="d-caja" x="356" y="46" width="76" height="40" rx="6"/><rect class="d-l5" x="364" y="56" width="60" height="18"/></g>
+          <g><rect class="d-caja" x="440" y="46" width="76" height="40" rx="6"/><rect class="d-l6" x="448" y="56" width="60" height="18"/></g>
+          <g><rect class="d-caja" x="524" y="46" width="76" height="40" rx="6"/><rect class="d-l7" x="532" y="56" width="60" height="18"/></g>
+          <g><rect class="d-caja" x="608" y="46" width="76" height="40" rx="6"/><rect class="d-l8" x="616" y="56" width="60" height="18"/></g>
+        </g>
+        <text class="d-peq d-tenue" x="360" y="104" text-anchor="middle" data-pasos="2">juegan: cada uno obtiene una puntuación (su aptitud)</text>
+        <g data-pasos="3-">
+          <text class="d-peq d-tenue" x="360" y="104" text-anchor="middle">ordenados de mejor a peor aptitud</text>
+          <rect class="d-ok-trazo" x="20" y="46" width="76" height="40" rx="6" fill="none" stroke-width="3" data-pasos="3-4"/>
+          <rect class="d-ok-trazo" x="104" y="46" width="76" height="40" rx="6" fill="none" stroke-width="3" data-pasos="3-4"/>
+          <rect class="d-ok-trazo" x="188" y="46" width="76" height="40" rx="6" fill="none" stroke-width="3" data-pasos="3-4"/>
+          <text class="d-peq" x="138" y="100" text-anchor="middle" data-pasos="4">élite: pasan sin cambios</text>
+        </g>
+        <g data-pasos="5-">
+          <rect class="d-caja-suave" x="272" y="30" width="412" height="76" rx="8"/>
+          <text class="d-peq" x="478" y="56" text-anchor="middle">el resto: cruce de 2 de la élite al azar</text>
+          <text class="d-peq" x="478" y="76" text-anchor="middle">+ mutación (cada peso, con una probabilidad, cambia un poco)</text>
+          <text class="d-peq d-tenue" x="478" y="96" text-anchor="middle">→ 5 individuos nuevos</text>
+        </g>
+        <path class="d-linea" d="M360 120V158" data-pasos="3-"/>
+        <path class="d-tinta" d="M360 166l-8 -16h16z" data-pasos="3-"/>
+        <g data-pasos="6">
+          <text class="d-rotulo" x="360" y="190" text-anchor="middle">Generación N + 1: 8 saltadores</text>
+          <rect class="d-ok" x="20" y="200" width="76" height="40" rx="6"/>
+          <rect class="d-ok" x="104" y="200" width="76" height="40" rx="6"/>
+          <rect class="d-ok" x="188" y="200" width="76" height="40" rx="6"/>
+          <rect class="d-caja" x="272" y="200" width="76" height="40" rx="6"/>
+          <rect class="d-caja" x="356" y="200" width="76" height="40" rx="6"/>
+          <rect class="d-caja" x="440" y="200" width="76" height="40" rx="6"/>
+          <rect class="d-caja" x="524" y="200" width="76" height="40" rx="6"/>
+          <rect class="d-caja" x="608" y="200" width="76" height="40" rx="6"/>
+          <text class="d-peq d-tenue" x="360" y="256" text-anchor="middle">en promedio, supera más obstáculos que la generación N</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Una población de 8 saltadores. Los pesos de cada red son su genoma, como una barra de colores.</li>
+        <li data-duracion="6">Cada uno juega una partida (o varias, con semillas distintas) y se mide cuántos obstáculos superó: esa es su aptitud.</li>
+        <li>Se ordenan de mejor a peor aptitud.</li>
+        <li>Los mejores, la élite, pasan tal cual a la siguiente generación, sin tocarlos: así nunca se pierde lo mejor que se ha encontrado.</li>
+        <li data-duracion="7">El resto de la nueva población se rellena cruzando parejas de la élite (elegidas al azar) y mutando el resultado: cada peso cambia un poco con cierta probabilidad.</li>
+        <li data-duracion="6">La generación siguiente, en promedio, juega mejor que la anterior. Repetido durante muchas generaciones, los pesos convergen hacia una red que juega bien, sin que nadie haya calculado un solo gradiente.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>NEAT: evolucionar también la forma</h3>
+  <p>Hasta aquí, la forma de la red (cuántas neuronas, cuántas capas) se fija de antemano y solo evolucionan los pesos. <strong>NEAT</strong> (<em>NeuroEvolution of Augmenting Topologies</em>, Stanley y Miikkulainen, 2002) va un paso más allá: empieza con redes mínimas, sin capas ocultas, y las mutaciones pueden añadir una neurona nueva o una conexión nueva, además de cambiar pesos. La topología misma evoluciona junto con los números. Un «truco» extra, la <strong>especiación</strong>, agrupa individuos de topología parecida para que compitan entre ellos primero: así una red con una mutación estructural recién añadida (que todavía no ha tenido tiempo de ajustar sus pesos) no se extingue antes de poder demostrar si la idea servía.</p>
+  <p>El ejemplo más conocido es <strong>MarI/O</strong>, un video de 2015 en el que SethBling usa NEAT para evolucionar un agente que aprende a jugar niveles de <em>Super Mario World</em> sin que nadie le explique las reglas, viendo solo unos sensores simples sobre la pantalla. En Python, <strong>neat-python</strong> trae una implementación lista para usar, con un ejemplo clásico: enseñar XOR desde cero, evolucionando tanto los pesos como la topología. El capítulo 11 de <a href="https://natureofcode.com/neuroevolution/"><em>The Nature of Code</em></a>, de Daniel Shiffman, es una introducción visual muy querida a todo esto.</p>
+
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">Aprendizaje supervisado</th><th scope="col">Q-learning</th><th scope="col">Neuroevolución</th></tr></thead>
+      <tbody>
+        <tr><td>Qué necesita</td><td>Ejemplos con la respuesta correcta</td><td>Un entorno con <code>reset</code>/<code>step</code> y recompensa en (casi) cada paso</td><td>Un entorno con <code>reset</code>/<code>step</code> y una puntuación final por partida</td></tr>
+        <tr><td>Cómo aprende</td><td>Gradientes exactos, retropropagación</td><td>Diferencia temporal, paso a paso</td><td>Selección, cruce y mutación de poblaciones enteras</td></tr>
+        <tr><td>Cuándo brilla</td><td>Hay muchos ejemplos correctos (dígitos, runas)</td><td>Recompensas frecuentes, pocos estados o una red pequeña</td><td>Recompensa dispersa (solo al final), fácil de paralelizar, nada tiene que ser derivable</td></tr>
+        <tr><td>Coste</td><td>Barato de evaluar; caro conseguir y etiquetar los datos</td><td>Necesita muchos episodios (ineficiencia de muestras)</td><td>Necesita evaluar a toda la población en cada generación</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Dentro de los motores</h3>
+  <p>Unity y Godot no te hacen escribir el bucle de entrenamiento: te piden que definas el entorno con su propio vocabulario, y ellos ponen el algoritmo (casi siempre PPO) y aceleran la simulación muy por encima del tiempo real.</p>
+  <ul>
+    <li><strong>Unity ML-Agents.</strong> En un <code>Agent</code> de C#, <code>CollectObservations</code> es tu <code>reset</code>/estado, <code>OnActionReceived</code> es tu <code>step</code>, y <code>AddReward</code> suma a la recompensa del paso actual. Un script de Python aparte (el entrenador) se conecta al editor o a una compilación y entrena mientras Unity simula, a menudo a varias veces la velocidad normal y con decenas de copias del entorno en paralelo.</li>
+    <li><strong>Godot RL Agents.</strong> Añades un nodo <code>AIController</code> a tu escena, defines sus observaciones y acciones, y un script de Python con Stable-Baselines3 entrena contra el juego ejecutándose (también acelerado). El modelo entrenado se exporta a ONNX y se ejecuta dentro del propio Godot, en la versión .NET del editor.</li>
+  </ul>
+  <p>Ninguno de los dos te libra de diseñar bien el entorno y la recompensa: eso sigue siendo la parte difícil, y es exactamente lo que practicaste en esta estación con tus propios <code>reset</code>/<code>step</code>.</p>
+
+  <h3>Diseño: una IA perfecta no divierte</h3>
+  <p>Un agente entrenado a fondo, por refuerzo o por neuroevolución, puede jugar mejor que cualquier persona. En un juego, eso no es necesariamente bueno: como viste en el diseño de dificultad de la <a href="34-videojuegos.html#diseno">Estación 34</a>, nadie quiere perder siempre. Para que un agente entrenado sea un buen rival, se le añade a propósito <strong>retraso de reacción y ruido</strong>, el mismo ajuste de la IA director de la <a href="37-ia-personajes.html#director">Estación 37</a>. Importan además otras tres cosas que una IA perfecta no te regala solas: la <strong>previsibilidad</strong> (que la gente pueda aprender sus patrones, no que parezca aleatoria), la <strong>depuración</strong> (poder explicar por qué hizo algo) y las <strong>pruebas</strong> (que su comportamiento no cambie de golpe con cada reentrenamiento, algo que sí te garantiza una regla escrita a mano).</p>
+
+  <h3>Coste y ética</h3>
+  <p>Tu red de 37 pesos se entrena en tu computadora en milisegundos. Eso es muy distinto de entrenar un modelo gigante: según la Agencia Internacional de la Energía, los centros de datos consumieron unos 415 teravatios-hora en 2024, cerca del 1.5 % de la electricidad mundial, y proyecta que esa cifra ronde los 945 teravatios-hora en 2030, con la demanda de inteligencia artificial como uno de los motores principales. No es motivo para el pánico ni para quitarle importancia: es un costo real que crece, y que conviene tener presente al decidir si de verdad hace falta un modelo enorme para el problema que tienes delante, o si una red pequeña, o incluso una regla, ya bastan.</p>
+  <p>Ejecutar un modelo ya entrenado (la <strong>inferencia</strong>) en el dispositivo de la persona, como hiciste con ONNX Runtime Web, cuesta mucho menos que entrenarlo y tiene una ventaja extra: nada sale del dispositivo, lo que ayuda con la privacidad. Entrenar o ejecutar en la nube es más potente, pero manda datos fuera.</p>
+  <p>Y hay preguntas que no son técnicas. ¿De dónde salieron los datos con los que se entrenó un modelo, y tenía quien los recolectó permiso para usarlos? ¿Hereda el modelo los sesgos de esos datos, como viste en la <a href="39-aprendizaje-automatico.html#evaluar">Estación 39</a>? Una red es, para quien la usa, una <strong>caja negra</strong>: no hay una línea de código que explique una decisión, como sí la hay en un árbol de la 38. Y el aprendizaje por refuerzo tiene un filo especialmente delicado: optimizar «el tiempo que una persona pasa en la app» con las mismas técnicas de esta estación es la base técnica de varios patrones oscuros de la industria (<a href="17-diseno-ux.html#ux">Estación 17</a>). La técnica es neutra; lo que eliges medir como recompensa, no.</p>
+
+  <aside class="senal nota"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.5" r="2" fill="currentColor"/><path d="M12 11v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Reconocimientos</p><p>En 2024, el Premio Turing (el «Nobel de la computación») fue para Andrew Barto y Richard Sutton, por sentar las bases matemáticas del aprendizaje por refuerzo. Ese mismo año, el Nobel de Física fue para John Hopfield y Geoffrey Hinton, por su trabajo fundacional en redes neuronales, como ya viste en la línea de tiempo de esta estación. Dos premios distintos, el mismo año, para dos ideas que llevan medio siglo gestándose y que hoy sostienen buena parte de la inteligencia artificial.</p></div></aside>
+
+  <p>Todo lo que has construido en esta estación (la neurona, la red, la retropropagación, el refuerzo, la neuroevolución) son, en el fondo, formas distintas de ajustar números para que una función se comporte mejor. Los modelos de lenguaje, el tema de la <a href="41-modelos-lenguaje.html">Estación 41</a>, son una red neuronal más (con una arquitectura concreta, el <em>transformer</em>) entrenada con este mismo bucle de adelante, pérdida, retro y actualizar, a una escala miles de millones de veces mayor. No hay magia nueva que aprender ahí: hay la misma receta, con muchísimos más datos, muchísimos más parámetros y muchísimo más cómputo.</p>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Una <strong>neurona artificial</strong> es una suma ponderada (un producto punto más un sesgo) seguida de una activación. Un perceptrón aprende rectas; XOR necesita una capa oculta que invente rasgos nuevos.</li>
+    <li>Una red de varias capas (<strong>MLP</strong>) propaga valores hacia delante capa por capa; softmax reparte probabilidades entre varias clases, y sin activaciones no lineales, apilar capas no sirve de nada.</li>
+    <li>La <strong>retropropagación</strong> aplica la regla de la cadena sobre un grafo de cómputo, de atrás hacia delante, acumulando gradientes con <code>+=</code> cuando un valor se usa más de una vez. Tu clase <code>Valor</code> hace esto mismo que hace <code>autograd</code> en PyTorch.</li>
+    <li>Entrenar es el bucle de cinco pasos (adelante, pérdida, gradientes a cero, retro, actualizar), repetido por épocas y lotes. La validación, la parada temprana, el weight decay, el dropout y el aumento de datos defienden a la red del sobreajuste.</li>
+    <li>PyTorch hace con tensores lo mismo que tu biblioteca con números sueltos. Un modelo entrenado se exporta a ONNX para ejecutarlo en el navegador o en un motor, o a JSON para programar tu propia propagación sin dependencias.</li>
+    <li>El <strong>aprendizaje por refuerzo</strong> aprende de las consecuencias: un agente, un entorno con <code>reset</code>/<code>step</code>, estados, acciones y recompensas. La estrategia ε-voraz equilibra explorar y explotar, y una recompensa mal diseñada se puede explotar de formas que nadie quería.</li>
+    <li><strong>Q-learning</strong> aprende <em>Q(s, a)</em> con la regla Q ← Q + α·(r + γ·max Q(s′) − Q), propagando valores desde la meta hacia atrás. Cuando la tabla no cabe, una red la sustituye: es Deep Q-Learning.</li>
+    <li>La <strong>neuroevolución</strong> reutiliza el algoritmo genético de la 38 sobre los pesos de una red, sin gradientes: brilla cuando la recompensa solo llega al final y es fácil de paralelizar. NEAT evoluciona también la forma de la red.</li>
+    <li>No hay una técnica mejor que las demás: hay ejemplos correctos (supervisado), recompensa frecuente (Q-learning), recompensa dispersa (neuroevolución) o una regla que ya basta (nada de esto). El coste, la previsibilidad y la ética forman parte de esa decisión, no son un añadido.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-neurona-python"><header class="ejercicio-cabeza"><h3>Tu neurona en Python</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>Traduce el perceptrón de la sección de neurona a Python puro, con listas y <code>zip</code>, sin usar <code>random</code>: entrena un perceptrón para OR durante 10 épocas, con pesos y tasa fijos, y comprueba que el resultado siempre es el mismo. Es el puente hacia PyTorch: el mismo bucle de ajustar pesos, ahora en Python.</p>
+    <div class="taller" data-modo="python" id="taller-ej-neurona-python" data-titulo="Perceptrón en Python" data-esperado="[0.1, 0.1] 0.0">
+      <textarea class="taller-codigo">X = [(0, 0), (0, 1), (1, 0), (1, 1)]
+Y = [0, 1, 1, 1]   # OR
+pesos = [0.0, 0.0]
+sesgo = 0.0
+tasa = 0.1
+
+def predecir(x, pesos, sesgo):
+    z = sesgo + sum(p * xi for p, xi in zip(pesos, x))
+    return 1 if z > 0 else 0
+
+for epoca in range(10):
+    for x, y in zip(X, Y):
+        pred = predecir(x, pesos, sesgo)
+        error = y - pred
+        # TU CÓDIGO: la regla del perceptrón
+        # para cada i: pesos[i] += tasa * error * x[i]
+        # y además:    sesgo += tasa * error
+
+print([round(p, 2) for p in pesos], round(sesgo, 2))</textarea>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>zip(pesos, x)</code> empareja cada peso con su entrada, pero para modificar <code>pesos</code> necesitas el índice: usa <code>for i in range(len(pesos))</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La actualización va dentro del <code>for x, y in zip(X, Y)</code>, después de calcular <code>error</code>, no fuera del bucle.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-python">for i in range(len(pesos)):
+    pesos[i] += tasa * error * x[i]
+sesgo += tasa * error</code></pre>
+      <p>Tras 10 épocas, los pesos quedan en [0.1, 0.1] y el sesgo en 0.0: con esos números, <code>predecir</code> ya clasifica bien los 4 casos de OR (de hecho, converge mucho antes de llegar a la décima época; las vueltas siguientes no cambian nada porque el error ya es 0 en las cuatro).</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-retorno"><header class="ejercicio-cabeza"><h3>Calcula el retorno</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>El retorno es la suma de las recompensas de un episodio, cada una descontada según cuántos pasos tardó en llegar. Escribe <code>retorno(recompensas, gamma)</code>, que recibe la lista de recompensas en orden (la primera es la de ahora mismo) y devuelve la suma con descuento.</p>
+    <div class="taller" id="taller-ej-retorno" data-titulo="El retorno con descuento" data-exponer="retorno">
+      <textarea class="taller-codigo">function retorno(recompensas, gamma) {
+  // TU CÓDIGO: suma cada recompensas[i] multiplicada por gamma elevado a i
+  // (la recompensa de ahora, i = 0, no se descuenta: gamma^0 = 1)
+}
+
+console.log(retorno([1, 1, 1], 0.9).toFixed(4));   // 1 + 0.9 + 0.81 = 2.71</textarea>
+      <script type="text/plain" class="taller-verificar">
+var f = expuesto.retorno;
+if (typeof f !== "function") return "No encuentro la función retorno.";
+var casos = [
+  [[1, 1, 1], 0.9, 2.71],
+  [[0, 0, 10], 0.5, 2.5],
+  [[5], 0.9, 5],
+  [[2, -1, 3, 0, 1], 1, 5],
+];
+for (var i = 0; i < casos.length; i++) {
+  var r = f(casos[i][0], casos[i][1]);
+  if (typeof r !== "number" || Math.abs(r - casos[i][2]) > 1e-6) {
+    return "retorno(" + JSON.stringify(casos[i][0]) + ", " + casos[i][1] + ") debería dar " + casos[i][2] + " y dio " + r + ".";
+  }
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>Math.pow(gamma, i)</code> (o <code>gamma ** i</code>) da γ elevado a <code>i</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Un <code>for</code> que recorra <code>recompensas</code> con su índice <code>i</code> y vaya sumando a un acumulador basta.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function retorno(recompensas, gamma) {
+  let total = 0;
+  for (let i = 0; i &lt; recompensas.length; i++) total += recompensas[i] * Math.pow(gamma, i);
+  return total;
+}</code></pre>
+      <p>Con γ = 1 (sin descuento) el retorno es la suma normal, como en el último caso de prueba: útil para comprobar que tu fórmula no inventa nada cuando el descuento no pinta nada.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-completa-retro"><header class="ejercicio-cabeza"><h3>Completa la retro</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>La preparación de este taller ya trae la clase <code>Valor</code> con su constructor, <code>suma()</code> y <code>retro()</code>, tal como quedaron en la sección de retropropagación. Le faltan <code>mul()</code> y <code>tanh()</code>. Añádelas como métodos de su prototipo (<code>Valor.prototype.mul = function (otro) { ... }</code>): cada una debe crear el <code>Valor</code> de salida y darle su <code>_retro</code>, con la derivada local correcta.</p>
+    <div class="taller" id="taller-ej-completa-retro" data-titulo="mul y tanh de Valor" data-exponer="Valor" data-tiempo="8">
+      <textarea class="taller-codigo">// Valor ya existe (con suma() y retro()). Añádele mul() y tanh() al prototipo.
+
+Valor.prototype.mul = function (otro) {
+  // TU CÓDIGO: igual que suma(), pero con la derivada local del producto
+  // (cada hijo recibe el gradiente multiplicado por el OTRO factor)
+};
+
+Valor.prototype.tanh = function () {
+  // TU CÓDIGO: la derivada local de tanh es (1 - t²), donde t es el resultado
+};
+
+// Pruébalo con la expresión de la sección: L = tanh(a*b + a), con a usado dos veces
+const a = new Valor(1), b = new Valor(-0.5);
+const L = a.mul(b).suma(a).tanh();
+L.retro();
+console.log(a.grad.toFixed(3), b.grad.toFixed(3));   // 0.393 0.786</textarea>
+      <script type="text/plain" class="taller-preparacion">
+class Valor {
+  constructor(dato, hijos = [], op = "") {
+    this.dato = dato;
+    this.grad = 0;
+    this._hijos = hijos;
+    this._op = op;
+    this._retro = () => {};
+  }
+  suma(otro) {
+    otro = otro instanceof Valor ? otro : new Valor(otro);
+    const salida = new Valor(this.dato + otro.dato, [this, otro], "+");
+    salida._retro = () => {
+      this.grad += salida.grad;
+      otro.grad += salida.grad;
+    };
+    return salida;
+  }
+  retro() {
+    const orden = [], visitados = new Set();
+    const visitar = (v) => {
+      if (visitados.has(v)) return;
+      visitados.add(v);
+      for (const h of v._hijos) visitar(h);
+      orden.push(v);
+    };
+    visitar(this);
+    this.grad = 1;
+    for (let i = orden.length - 1; i >= 0; i--) orden[i]._retro();
+  }
+}
+      </script>
+      <script type="text/plain" class="taller-verificar">
+var Valor = expuesto.Valor;
+if (typeof Valor !== "function") return "No encuentro la clase Valor. ¿Sigue llamándose así?";
+var v = new Valor(2);
+if (typeof v.mul !== "function") return "Todavía falta Valor.prototype.mul.";
+if (typeof v.tanh !== "function") return "Todavía falta Valor.prototype.tanh.";
+
+function num(f, x, h) { h = h || 1e-6; return (f(x + h) - f(x - h)) / (2 * h); }
+function gradDeA(expr, a0, b0) {
+  var a = new Valor(a0), b = new Valor(b0), L;
+  try { L = expr(a, b); } catch (e) { return { error: "Tu código lanzó un error: " + e.message }; }
+  if (!(L instanceof Valor)) return { error: "La expresión no devolvió un Valor. ¿mul y tanh devuelven new Valor(...)?" };
+  L.retro();
+  return { grad: a.grad };
+}
+var casos = [
+  { nombre: "a × b", f: function (a, b) { return a.mul(b); }, fx: function (x) { return x * -0.5; }, a0: 1, b0: -0.5 },
+  { nombre: "tanh(a)", f: function (a, b) { return a.tanh(); }, fx: function (x) { return Math.tanh(x); }, a0: 0.6, b0: 0 },
+  { nombre: "tanh(a × b)", f: function (a, b) { return a.mul(b).tanh(); }, fx: function (x) { return Math.tanh(x * 2); }, a0: 0.3, b0: 2 },
+  { nombre: "tanh(a × b + a), a usada dos veces", f: function (a, b) { return a.mul(b).suma(a).tanh(); }, fx: function (x) { return Math.tanh(x * -0.5 + x); }, a0: 1, b0: -0.5 },
+  { nombre: "(a × b) × a, a usada dos veces", f: function (a, b) { return a.mul(b).mul(a); }, fx: function (x) { return x * 3 * x; }, a0: 2, b0: 3 },
+];
+for (var i = 0; i < casos.length; i++) {
+  var c = casos[i];
+  var r = gradDeA(c.f, c.a0, c.b0);
+  if (r.error) return "En «" + c.nombre + "»: " + r.error;
+  var esperado = num(c.fx, c.a0);
+  if (typeof r.grad !== "number" || Math.abs(r.grad - esperado) > 1e-3) {
+    return "En «" + c.nombre + "», el gradiente de a debería ser cerca de " + esperado.toFixed(4) + " y tu código da " + r.grad + ". " +
+      (i >= 3 ? "Esta expresión usa «a» dos veces: ¿acumulas con += en vez de sobrescribir con =?" : "Revisa la derivada local de mul o de tanh.");
+  }
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Calca la forma de <code>suma()</code>: crea <code>otro</code> como <code>Valor</code> si no lo es, crea <code>salida</code>, dale su <code>_retro</code> y devuélvela.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>mul</code>, <code>this.grad += otro.dato * salida.grad</code> y <code>otro.grad += this.dato * salida.grad</code>. En <code>tanh</code>, guarda <code>const t = Math.tanh(this.dato)</code> antes de crear <code>salida</code>, para poder usarlo en <code>_retro</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">Valor.prototype.mul = function (otro) {
+  otro = otro instanceof Valor ? otro : new Valor(otro);
+  const salida = new Valor(this.dato * otro.dato, [this, otro], "×");
+  salida._retro = () =&gt; {
+    this.grad += otro.dato * salida.grad;
+    otro.grad += this.dato * salida.grad;
+  };
+  return salida;
+};
+
+Valor.prototype.tanh = function () {
+  const t = Math.tanh(this.dato);
+  const salida = new Valor(t, [this], "tanh");
+  salida._retro = () =&gt; {
+    this.grad += (1 - t * t) * salida.grad;
+  };
+  return salida;
+};</code></pre>
+      <p>La verificación compara, para 5 expresiones distintas, tu gradiente contra la derivada numérica de la misma función escrita con operadores normales. Una de ellas reutiliza <code>a</code> dos veces a propósito: si usaste <code>=</code> en vez de <code>+=</code> dentro de <code>_retro</code>, esa es la que falla.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-entrena-xor"><header class="ejercicio-cabeza"><h3>Entrena XOR con tu biblioteca</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>La preparación trae <code>Valor</code> completa y <code>crearRed(semilla)</code>, que arma una pequeña red 2-4-1 (17 parámetros) con neuronas tanh y dos métodos: <code>red.llamar(x)</code> (la propagación hacia delante, con <code>x</code> un array de 2 números; devuelve un <code>Valor</code>) y <code>red.parametros()</code> (la lista plana de todos sus pesos y sesgos). Escribe el bucle de entrenamiento de 500 épocas, con los cinco pasos que ya conoces.</p>
+    <div class="taller" id="taller-ej-entrena-xor" data-titulo="Entrena XOR" data-exponer="red, perdidaFinal" data-tiempo="8">
+      <textarea class="taller-codigo">const red = crearRed(7);
+const X = [[0, 0], [0, 1], [1, 0], [1, 1]];
+const Y = [-1, 1, 1, -1];   // tanh da valores entre -1 y 1
+const tasa = 0.1;
+let perdidaFinal = Infinity;
+
+for (let epoca = 1; epoca &lt;= 500; epoca++) {
+  // TU CÓDIGO: los cinco pasos (adelante, pérdida, gradientes a 0, retro, actualizar).
+  // Al final de cada época, guarda: perdidaFinal = perdida.dato;
+}
+
+console.log("pérdida final:", perdidaFinal.toFixed(4));</textarea>
+      <script type="text/plain" class="taller-preparacion">
+class Valor {
+  constructor(dato, hijos = [], op = "") { this.dato = dato; this.grad = 0; this._hijos = hijos; this._op = op; this._retro = () => {}; }
+  suma(otro) {
+    otro = otro instanceof Valor ? otro : new Valor(otro);
+    const salida = new Valor(this.dato + otro.dato, [this, otro], "+");
+    salida._retro = () => { this.grad += salida.grad; otro.grad += salida.grad; };
+    return salida;
+  }
+  mul(otro) {
+    otro = otro instanceof Valor ? otro : new Valor(otro);
+    const salida = new Valor(this.dato * otro.dato, [this, otro], "×");
+    salida._retro = () => { this.grad += otro.dato * salida.grad; otro.grad += this.dato * salida.grad; };
+    return salida;
+  }
+  tanh() {
+    const t = Math.tanh(this.dato);
+    const salida = new Valor(t, [this], "tanh");
+    salida._retro = () => { this.grad += (1 - t * t) * salida.grad; };
+    return salida;
+  }
+  retro() {
+    const orden = [], visitados = new Set();
+    const visitar = (v) => { if (visitados.has(v)) return; visitados.add(v); for (const h of v._hijos) visitar(h); orden.push(v); };
+    visitar(this);
+    this.grad = 1;
+    for (let i = orden.length - 1; i >= 0; i--) orden[i]._retro();
+  }
+}
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function crearRed(semilla) {
+  const azar = mulberry32(semilla);
+  const al = () => new Valor(azar() * 2 - 1);
+  function capa(nEntradas, nSalidas) {
+    const neuronas = [];
+    for (let j = 0; j < nSalidas; j++) neuronas.push({ pesos: Array.from({ length: nEntradas }, al), sesgo: al() });
+    return neuronas;
+  }
+  const oculta = capa(2, 4), salida = capa(4, 1);
+  function aplicar(cap, entradas) {
+    return cap.map((n) => {
+      let z = n.sesgo;
+      for (let i = 0; i < entradas.length; i++) z = z.suma(n.pesos[i].mul(entradas[i]));
+      return z.tanh();
+    });
+  }
+  function llamar(x) {
+    const xs = x.map((v) => new Valor(v));
+    return aplicar(salida, aplicar(oculta, xs))[0];
+  }
+  function parametros() {
+    const ps = [];
+    for (const n of [...oculta, ...salida]) ps.push(...n.pesos, n.sesgo);
+    return ps;
+  }
+  return { llamar, parametros };
+}
+      </script>
+      <script type="text/plain" class="taller-verificar">
+var red = expuesto.red, perdidaFinal = expuesto.perdidaFinal;
+if (!red || typeof red.llamar !== "function") return "No encuentro red.llamar. ¿Sigue llamándose red?";
+if (typeof perdidaFinal !== "number" || !isFinite(perdidaFinal)) return "No encuentro un número en perdidaFinal. Guárdalo al final de cada época con perdidaFinal = perdida.dato;";
+if (perdidaFinal > 0.05) return "La pérdida final es " + perdidaFinal.toFixed(3) + ". Debería bajar de 0.05 en 500 épocas. ¿Entrenaste con los 5 pasos, en ese orden, y actualizaste TODOS los parámetros (red.parametros())?";
+var X = [[0, 0], [0, 1], [1, 0], [1, 1]], Y = [-1, 1, 1, -1], mal = [];
+for (var i = 0; i < 4; i++) { if ((red.llamar(X[i]).dato > 0) !== (Y[i] > 0)) mal.push(X[i]); }
+if (mal.length) return "La red entrenó, pero se equivoca en " + JSON.stringify(mal) + ", algo raro con pérdida tan baja: revisa que actualizas TODOS los parámetros.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Es el mismo bucle del Parsons «Ordena el bucle de entrenamiento» de la sección, con <code>red.llamar</code> en vez de tu propia red, y <code>red.parametros()</code> en los dos <code>for</code> finales.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La pérdida se acumula como <code>Valor</code>: <code>let perdida = new Valor(0)</code>, y para cada ejemplo <code>const d = prediccion.suma(-y); perdida = perdida.suma(d.mul(d));</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">for (let epoca = 1; epoca &lt;= 500; epoca++) {
+  const predicciones = X.map((x) =&gt; red.llamar(x));
+  let perdida = new Valor(0);
+  for (let i = 0; i &lt; 4; i++) {
+    const d = predicciones[i].suma(-Y[i]);
+    perdida = perdida.suma(d.mul(d));
+  }
+  for (const p of red.parametros()) p.grad = 0;
+  perdida.retro();
+  for (const p of red.parametros()) p.dato -= tasa * p.grad;
+  perdidaFinal = perdida.dato;
+}</code></pre>
+      <p>Con tasa 0.1 la pérdida baja de 0.05 cómodamente en las 500 épocas (unos 20 ms en Node). Si cambias <code>tasa</code> a 2.0, la pérdida oscila sin bajar: el mismo problema de «bajar la montaña» con pasos demasiado grandes, ahora con 17 perillas a la vez en vez de una.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-que-entrenamiento"><header class="ejercicio-cabeza"><h3>¿Qué entrenamiento eliges?</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>La preparación crea una tabla <code>ejecuciones(id, capas, tasa, epoca, perdida_entreno, perdida_validacion)</code> con el registro de tres entrenamientos, época a época. Escribe dos consultas: la primera, la ejecución y la época con menor pérdida de validación; la segunda, las épocas donde la validación sube mientras el entrenamiento sigue bajando (sobreajuste empezando), comparando cada fila con la época anterior de la misma ejecución.</p>
+    <div class="taller" data-modo="sql" id="taller-ej-sql" data-titulo="Elegir el mejor entrenamiento">
+      <script type="text/plain" class="taller-preparacion">CREATE TABLE ejecuciones (id INTEGER, capas TEXT, tasa REAL, epoca INTEGER, perdida_entreno REAL, perdida_validacion REAL);
+INSERT INTO ejecuciones VALUES
+ (1,'2-4-1',0.1,1,0.9,0.95),
+ (1,'2-4-1',0.1,2,0.6,0.65),
+ (1,'2-4-1',0.1,3,0.4,0.5),
+ (1,'2-4-1',0.1,4,0.3,0.48),
+ (1,'2-4-1',0.1,5,0.25,0.47),
+ (2,'2-16-1',0.1,1,0.8,0.85),
+ (2,'2-16-1',0.1,2,0.5,0.55),
+ (2,'2-16-1',0.1,3,0.2,0.4),
+ (2,'2-16-1',0.1,4,0.1,0.42),
+ (2,'2-16-1',0.1,5,0.05,0.5),
+ (3,'2-4-1',1.5,1,1.1,1.2),
+ (3,'2-4-1',1.5,2,1.3,1.4),
+ (3,'2-4-1',1.5,3,0.9,1.1),
+ (3,'2-4-1',1.5,4,1.6,1.7),
+ (3,'2-4-1',1.5,5,1.2,1.3);</script>
+      <textarea class="taller-codigo">-- 1. La ejecución y la época con menor pérdida de validación
+-- TU CÓDIGO (ordena por perdida_validacion y pide solo la primera fila)
+SELECT id, epoca FROM ejecuciones LIMIT 1;
+
+-- 2. Épocas donde sube la validación mientras baja el entrenamiento, comparadas
+--    con la época anterior DE LA MISMA ejecución (sobreajuste empezando)
+-- TU CÓDIGO (une la tabla consigo misma, emparejando cada época con la anterior)
+SELECT id, epoca FROM ejecuciones LIMIT 0;</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (!resultados[0] || !resultados[0].values.length) return "La primera consulta no devolvió ninguna fila.";
+var cols0 = resultados[0].columns, vals0 = resultados[0].values[0];
+var idi = cols0.indexOf("id"), epi = cols0.indexOf("epoca");
+if (idi < 0 || epi < 0) return "La primera consulta debe devolver las columnas id y epoca.";
+if (Number(vals0[idi]) !== 2 || Number(vals0[epi]) !== 3) return "La primera consulta debería devolver la ejecución 2 en la época 3 (la menor pérdida de validación, 0.4) y devolvió id " + vals0[idi] + ", época " + vals0[epi] + ". ¿Ordenaste por perdida_validacion y pediste solo la primera fila?";
+if (!resultados[1] || resultados[1].values.length < 2) return "La segunda consulta debería encontrar al menos 2 épocas donde sube la validación mientras baja el entrenamiento (busca la ejecución 2 hacia el final).";
+var cols1 = resultados[1].columns, idi2 = cols1.indexOf("id"), epi2 = cols1.indexOf("epoca");
+if (idi2 < 0 || epi2 < 0) return "La segunda consulta también debe devolver id y epoca.";
+var filas = resultados[1].values;
+var epocas = filas.map(function (f) { return Number(f[epi2]); }).sort();
+var todasId2 = filas.every(function (f) { return Number(f[idi2]) === 2; });
+if (!(todasId2 && epocas.indexOf(4) >= 0 && epocas.indexOf(5) >= 0)) return "La segunda consulta debería señalar la ejecución 2 en las épocas 4 y 5, donde la validación sube mientras el entrenamiento sigue bajando.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Para la primera: <code>ORDER BY perdida_validacion ASC LIMIT 1</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para la segunda, une <code>ejecuciones</code> consigo misma: <code>FROM ejecuciones a JOIN ejecuciones b ON a.id = b.id AND a.epoca = b.epoca + 1</code>, y filtra <code>a.perdida_entreno &lt; b.perdida_entreno AND a.perdida_validacion &gt; b.perdida_validacion</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-sql">SELECT id, epoca FROM ejecuciones ORDER BY perdida_validacion ASC LIMIT 1;
+
+SELECT a.id, a.epoca
+FROM ejecuciones a
+JOIN ejecuciones b ON a.id = b.id AND a.epoca = b.epoca + 1
+WHERE a.perdida_entreno &lt; b.perdida_entreno AND a.perdida_validacion &gt; b.perdida_validacion;</code></pre>
+      <p>La ejecución 2 (la red grande, 2-16-1) logra la menor pérdida de validación en la época 3, pero en las épocas 4 y 5 el entrenamiento sigue bajando mientras la validación sube: el sobreajuste ya empezó, aunque la pérdida de entrenamiento todavía mejore. Quien solo mira esa última cifra no lo vería.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-mazmorra"><header class="ejercicio-cabeza"><h3>Sal de la mazmorra</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>La preparación declara <code>crearMazmorra(semilla)</code>, con <code>reset()</code> y <code>step(accion)</code> en una cuadrícula de 6 × 6 con muros, lava (−10, termina el episodio) y una salida (+10). También trae <code>actualizar</code>, la misma función de la sección. Escribe el entrenamiento completo: 3000 episodios, con ε que decae. Acciones: 0 = arriba, 1 = abajo, 2 = izquierda, 3 = derecha.</p>
+    <div class="taller" id="taller-ej-mazmorra" data-titulo="Entrena y sal de la mazmorra" data-exponer="Q, crearMazmorra" data-tiempo="8">
+      <textarea class="taller-codigo">const env = crearMazmorra(1);
+const Q = Array.from({ length: 36 }, () =&gt; [0, 0, 0, 0]);   // 36 casillas × 4 acciones
+let epsilon = 1;
+const alfa = 0.3, gamma = 0.95;
+
+for (let episodio = 0; episodio &lt; 3000; episodio++) {
+  let s = env.reset();
+  for (let paso = 0; paso &lt; 150; paso++) {
+    // TU CÓDIGO: elige una acción con ε-voraz (al azar con probabilidad epsilon;
+    // si no, la de mayor Q[s][a]: usa Q[s].indexOf(Math.max(...Q[s]))).
+    let a = 0;   // reemplaza
+
+    const { estado: s2, recompensa, terminado } = env.step(a);
+    actualizar(Q, s, a, recompensa, s2, terminado, alfa, gamma);
+    s = s2;
+    if (terminado) break;
+  }
+  // TU CÓDIGO: haz que epsilon decaiga poco a poco, sin bajar de 0.05
+}
+
+console.log("entrenamiento terminado");</textarea>
+      <script type="text/plain" class="taller-preparacion">
+const _ANCHO = 6, _ALTO = 6;
+const _MUROS = new Set(["0,2", "1,2", "2,2", "3,2", "4,2"]);
+const _LAVA = new Set(["0,4", "1,4"]);
+const _SALIDA = "0,5";
+function crearMazmorra(semilla) {
+  let x, y, pasos;
+  const DX = [0, 0, -1, 1], DY = [-1, 1, 0, 0];
+  function indice(px, py) { return py * _ANCHO + px; }
+  function reset() { x = 0; y = 0; pasos = 0; return indice(x, y); }
+  function step(accion) {
+    pasos++;
+    const nx = x + DX[accion], ny = y + DY[accion];
+    if (nx >= 0 && nx < _ANCHO && ny >= 0 && ny < _ALTO && !_MUROS.has(nx + "," + ny)) { x = nx; y = ny; }
+    const clave = x + "," + y;
+    if (_LAVA.has(clave)) return { estado: indice(x, y), recompensa: -10, terminado: true };
+    if (clave === _SALIDA) return { estado: indice(x, y), recompensa: 10, terminado: true };
+    if (pasos >= 150) return { estado: indice(x, y), recompensa: -0.05, terminado: true };
+    return { estado: indice(x, y), recompensa: -0.05, terminado: false };
+  }
+  return { reset, step };
+}
+function actualizar(Q, s, a, r, s2, terminado, alfa, gamma) {
+  const futuro = terminado ? 0 : Math.max(...Q[s2]);
+  Q[s][a] += alfa * (r + gamma * futuro - Q[s][a]);
+}
+      </script>
+      <script type="text/plain" class="taller-verificar">
+var crearMazmorra = expuesto.crearMazmorra, Q = expuesto.Q;
+if (typeof crearMazmorra !== "function") return "No encuentro crearMazmorra. ¿Sigue en la preparación?";
+if (!Array.isArray(Q) || Q.length !== 36) return "No encuentro una tabla Q de 36 filas (una por casilla). Declárala como const Q = Array.from({length:36}, ...) al principio.";
+var env = crearMazmorra(99);
+var s = env.reset();
+var pasos = 0, terminado = false, exito = false;
+while (!terminado && pasos < 60) {
+  var fila = Q[s];
+  if (!Array.isArray(fila) || fila.length !== 4) return "Q[" + s + "] debería ser una lista de 4 valores (una acción cada uno).";
+  var mejor = 0;
+  for (var k = 1; k < 4; k++) if (fila[k] > fila[mejor]) mejor = k;
+  var r = env.step(mejor);
+  s = r.estado; terminado = r.terminado; exito = r.recompensa > 0;
+  pasos++;
+}
+if (!terminado) return "La política voraz (sin exploración) no termina en 60 pasos: parece que da vueltas. ¿Entrenaste suficientes episodios, o epsilon no baja?";
+if (!exito) return "La política voraz terminó sin llegar a la salida (probablemente pisó lava). Entrena más episodios o revisa la elección ε-voraz.";
+var ANCHO = 6, ALTO = 6;
+var MUROS = { "0,2": 1, "1,2": 1, "2,2": 1, "3,2": 1, "4,2": 1 };
+var LAVA = { "0,4": 1, "1,4": 1 };
+var SALIDA = "0,5";
+function bfsMinimo() {
+  var DX = [0, 0, -1, 1], DY = [-1, 1, 0, 0];
+  var visitado = new Array(36).fill(false), dist = new Array(36).fill(-1);
+  var cola = [0]; visitado[0] = true; dist[0] = 0;
+  while (cola.length) {
+    var actual = cola.shift();
+    var cx = actual % ANCHO, cy = Math.floor(actual / ANCHO);
+    if ((cx + "," + cy) === SALIDA) return dist[actual];
+    for (var a = 0; a < 4; a++) {
+      var nx = cx + DX[a], ny = cy + DY[a];
+      if (nx < 0 || nx >= ANCHO || ny < 0 || ny >= ALTO) continue;
+      if (MUROS[nx + "," + ny] || LAVA[nx + "," + ny]) continue;
+      var ni = ny * ANCHO + nx;
+      if (visitado[ni]) continue;
+      visitado[ni] = true; dist[ni] = dist[actual] + 1;
+      cola.push(ni);
+    }
+  }
+  return -1;
+}
+var minimo = bfsMinimo();
+if (pasos > minimo) return "Llegaste a la salida en " + pasos + " pasos; el camino más corto mide " + minimo + ". Entrena más episodios, o deja que epsilon baje más antes de llegar a 3000.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La elección de acción es casi literal: <code>Math.random() &lt; epsilon ? Math.floor(Math.random() * 4) : Q[s].indexOf(Math.max(...Q[s]))</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para el decaimiento, algo como <code>epsilon = Math.max(0.05, epsilon * 0.998)</code> al final de cada episodio (fuera del <code>for</code> de los pasos).</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">for (let episodio = 0; episodio &lt; 3000; episodio++) {
+  let s = env.reset();
+  for (let paso = 0; paso &lt; 150; paso++) {
+    let a;
+    if (Math.random() &lt; epsilon) a = Math.floor(Math.random() * 4);
+    else a = Q[s].indexOf(Math.max(...Q[s]));
+    const { estado: s2, recompensa, terminado } = env.step(a);
+    actualizar(Q, s, a, recompensa, s2, terminado, alfa, gamma);
+    s = s2;
+    if (terminado) break;
+  }
+  epsilon = Math.max(0.05, epsilon * 0.998);
+}</code></pre>
+      <p>Entrena en unos 30-50 milisegundos y la política voraz final sale por el camino más corto (15 pasos): el único camino bordea el muro y evita la lava, así que «más corto» y «más seguro» coinciden aquí. La verificación lo comprueba con un BFS propio, independiente de tu código, como el de la <a href="20-algoritmos.html#caminos">Estación 20</a>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-evoluciona-saltador"><header class="ejercicio-cabeza"><h3>Evoluciona un saltador</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>La preparación declara <code>jugar(pesos, semilla)</code>, que simula 600 pasos de un corredor de Saltarín con una red 4-6-1 (37 pesos) y devuelve cuántos obstáculos superó, y <code>aptitud(pesos, semillas)</code>, que promedia <code>jugar</code> en varias semillas. Escribe <code>mutar</code>, <code>cruzar</code> y el bucle de 30 generaciones con élite: el mismo algoritmo genético de la <a href="38-ia-busqueda.html#optimizar">Estación 38</a>, aplicado a los 37 pesos como si fueran un genoma.</p>
+    <div class="taller" id="taller-ej-evoluciona" data-titulo="Evoluciona un saltador" data-exponer="mejorDeTodos, jugar" data-tiempo="10">
+      <textarea class="taller-codigo">function mutar(pesos, azar, tasa) {
+  // TU CÓDIGO: cada peso, con una probabilidad (por ejemplo 15 %), cambia sumándole
+  // un número al azar entre -tasa y +tasa. Los demás se quedan igual. Devuelve un array nuevo.
+}
+
+function cruzar(a, b, azar) {
+  // TU CÓDIGO: cruce uniforme. Cada peso del resultado viene de a o de b, 50/50.
+}
+
+const azar = mulberry32(2024);
+const POBLACION = 50, GENERACIONES = 30, ELITE = 10;
+let poblacion = Array.from({ length: POBLACION }, () =&gt;
+  Array.from({ length: 37 }, () =&gt; azar() * 2 - 1));
+let mejorDeTodos = null, mejorAptitud = -1;
+
+for (let gen = 0; gen &lt; GENERACIONES; gen++) {
+  const semillas = [Math.floor(azar() * 1e5), Math.floor(azar() * 1e5), Math.floor(azar() * 1e5)];
+  // TU CÓDIGO:
+  // 1. Evalúa cada individuo de `poblacion` con aptitud(individuo, semillas).
+  // 2. Ordénalos de mejor a peor aptitud.
+  // 3. Si el mejor de esta generación supera a mejorAptitud, guárdalo en
+  //    mejorDeTodos y mejorAptitud (el mejor de TODA la carrera, no solo de esta generación).
+  // 4. Arma la nueva población: empieza con los ELITE mejores, SIN tocarlos,
+  //    y rellena el resto cruzando dos de la élite (al azar) y mutando el resultado.
+  //    Termina reasignando poblacion = nuevaPoblacion.
+}
+
+console.log("mejor aptitud alcanzada:", mejorAptitud.toFixed(1));</textarea>
+      <script type="text/plain" class="taller-preparacion">
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function _construirRed(pesos) {
+  const W1 = pesos.slice(0, 24), b1 = pesos.slice(24, 30), W2 = pesos.slice(30, 36), b2 = pesos[36];
+  return function (entradas) {
+    const h = new Array(6);
+    for (let j = 0; j < 6; j++) {
+      let z = b1[j];
+      for (let i = 0; i < 4; i++) z += W1[j * 4 + i] * entradas[i];
+      h[j] = Math.tanh(z);
+    }
+    let s = b2;
+    for (let j = 0; j < 6; j++) s += W2[j] * h[j];
+    return s;
+  };
+}
+const _DURACION_SALTO = 8;
+function jugar(pesos, semilla) {
+  const azar = mulberry32(semilla);
+  const red = _construirRed(pesos);
+  let enAire = false, pasosSalto = 0, superados = 0;
+  let cuenta = 15 + Math.floor(azar() * 10), altura = azar() < 0.5 ? 0 : 1;
+  for (let paso = 0; paso < 600; paso++) {
+    const entradas = [cuenta / 24, altura, enAire ? 1 : 0, pasosSalto / _DURACION_SALTO];
+    const salida = red(entradas);
+    if (salida > 0 && !enAire) { enAire = true; pasosSalto = 0; }
+    if (enAire) { pasosSalto++; if (pasosSalto >= _DURACION_SALTO) enAire = false; }
+    cuenta--;
+    if (cuenta <= 0) {
+      if (enAire) { superados++; cuenta = 15 + Math.floor(azar() * 10); altura = azar() < 0.5 ? 0 : 1; }
+      else return superados;
+    }
+  }
+  return superados;
+}
+function aptitud(pesos, semillas) {
+  let total = 0;
+  for (const s of semillas) total += jugar(pesos, s);
+  return total / semillas.length;
+}
+      </script>
+      <script type="text/plain" class="taller-verificar">
+var jugar = expuesto.jugar, mejor = expuesto.mejorDeTodos;
+if (typeof jugar !== "function") return "No encuentro jugar. ¿Sigue en la preparación?";
+if (!Array.isArray(mejor) || mejor.length !== 37) return "No encuentro mejorDeTodos como una lista de 37 números. ¿Lo actualizas dentro del bucle de generaciones, comparando con mejorAptitud?";
+var semillasPrueba = [9001, 9002, 9003];   // semillas que el entrenamiento no usó
+var total = 0;
+for (var i = 0; i < semillasPrueba.length; i++) total += jugar(mejor, semillasPrueba[i]);
+var media = total / semillasPrueba.length;
+if (media < 25) return "El mejor individuo supera una media de " + media.toFixed(1) + " obstáculos en semillas nuevas. Hacen falta al menos 25. Revisa mutar, cruzar y que guardes la élite sin tocarla.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>pesos.map((p) =&gt; azar() &lt; 0.15 ? p + (azar() * 2 - 1) * tasa : p)</code> es <code>mutar</code> completa en una línea.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para ordenar: <code>poblacion.map((ind) =&gt; ({ ind, apt: aptitud(ind, semillas) })).sort((a, b) =&gt; b.apt - a.apt)</code>. La élite son los primeros <code>ELITE</code> de ese array ya ordenado.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function mutar(pesos, azar, tasa) {
+  return pesos.map((p) =&gt; (azar() &lt; 0.15 ? p + (azar() * 2 - 1) * tasa : p));
+}
+function cruzar(a, b, azar) {
+  return a.map((v, i) =&gt; (azar() &lt; 0.5 ? v : b[i]));
+}
+
+for (let gen = 0; gen &lt; GENERACIONES; gen++) {
+  const semillas = [Math.floor(azar() * 1e5), Math.floor(azar() * 1e5), Math.floor(azar() * 1e5)];
+  const puntuados = poblacion.map((ind) =&gt; ({ ind, apt: aptitud(ind, semillas) }));
+  puntuados.sort((a, b) =&gt; b.apt - a.apt);
+  if (puntuados[0].apt &gt; mejorAptitud) { mejorAptitud = puntuados[0].apt; mejorDeTodos = puntuados[0].ind; }
+  const elite = puntuados.slice(0, ELITE).map((p) =&gt; p.ind);
+  const nueva = elite.slice();
+  while (nueva.length &lt; POBLACION) {
+    const p1 = elite[Math.floor(azar() * ELITE)], p2 = elite[Math.floor(azar() * ELITE)];
+    nueva.push(mutar(cruzar(p1, p2, azar), azar, 0.5));
+  }
+  poblacion = nueva;
+}</code></pre>
+      <p>En unas 30 generaciones el mejor individuo supera 30 obstáculos de media, muy por encima del umbral, en unos 200-300 milisegundos. Guardar <code>mejorDeTodos</code> por separado de la población actual importa: la mutación es al azar, así que la última generación puede ser, por pura mala suerte, peor que una anterior.</p>
+    </details>
+  </article>
+</section>
   </main>
 </div>
 
@@ -1998,6 +3194,7 @@ const resultado = manos.detectForVideo(video, performance.now());
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-gdscript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
 <script src="../assets/js/motor.js"></script>
 <script src="../assets/js/terminal.js"></script>
 <script src="../assets/js/practicas.js"></script>

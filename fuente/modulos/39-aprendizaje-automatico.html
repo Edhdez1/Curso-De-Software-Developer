@@ -2833,7 +2833,26 @@ return true;
     <details class="pista"><summary>Pista 1</summary><p><code>const raros = datos.filter((d) =&gt; d.rara); const comunes = datos.filter((d) =&gt; !d.rara);</code> y a cada una le aplicas por separado <code>fisherYates</code> y <code>partir70_15_15</code>.</p></details>
     <details class="pista"><summary>Pista 2</summary><p>El resultado final es <code>{ entrenamiento: pr.entrenamiento.concat(pc.entrenamiento), … }</code>, donde <code>pr</code> es la partición de los raros y <code>pc</code> la de los comunes.</p></details>
     <details class="solucion"><summary>Ver una solución</summary>
-      <pre><code class="language-js">function dividir(datos, azar) {
+      <pre><code class="language-js">function fisherYates(lista, azar) {
+  const copia = lista.slice();
+  for (let i = copia.length - 1; i &gt; 0; i--) {
+    const j = Math.floor(azar() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
+}
+
+function partir70_15_15(lista) {
+  const nEnt = Math.round(lista.length * 0.7);
+  const nVal = Math.round(lista.length * 0.15);
+  return {
+    entrenamiento: lista.slice(0, nEnt),
+    validacion: lista.slice(nEnt, nEnt + nVal),
+    prueba: lista.slice(nEnt + nVal),
+  };
+}
+
+function dividir(datos, azar) {
   const raros = fisherYates(datos.filter((d) =&gt; d.rara), azar);
   const comunes = fisherYates(datos.filter((d) =&gt; !d.rara), azar);
   const pr = partir70_15_15(raros);
@@ -3114,6 +3133,22 @@ function mover(puntos, asignaciones, centroides) {
       grupo.reduce((s, p) =&gt; s + p[1], 0) / grupo.length,
     ];
   });
+}
+
+function kmeans(puntos, centroidesIniciales) {
+  let centroides = centroidesIniciales.map((c) =&gt; c.slice());
+  let asignaciones = asignar(puntos, centroides);
+  let iteraciones = 0;
+  while (true) {
+    iteraciones++;
+    const nuevosCentroides = mover(puntos, asignaciones, centroides);
+    const nuevasAsignaciones = asignar(puntos, nuevosCentroides);
+    const cambio = nuevasAsignaciones.some((v, i) =&gt; v !== asignaciones[i]);
+    centroides = nuevosCentroides;
+    asignaciones = nuevasAsignaciones;
+    if (!cambio) break;
+  }
+  return { centroides, asignaciones, iteraciones };
 }</code></pre>
       <p>Con esos tres centroides iniciales (todos en x&nbsp;=&nbsp;50, repartidos en y), la primera asignación ya separa bastante bien los tres grupos naturales, pero hace falta una segunda ronda para que se terminen de asentar: 5 combatientes, 4 casuales y 5 exploradores, sin que nadie vuelva a cambiar de grupo. Si empezaras con los tres centroides amontonados en la misma esquina, probablemente necesitarías más iteraciones, o incluso un resultado peor: por eso scikit-learn repite el proceso varias veces (<code>n_init</code>) desde comienzos distintos.</p>
     </details>
@@ -3187,7 +3222,7 @@ var lF1 = lineaQue(/F1/);
 if (!lF1 || Math.abs(parseFloat((lF1.match(/(\d+\.\d+)/) || [])[1]) - 0.150) > 0.003) return "El F1 con umbral 0.5 debería ser 0.150. Tu línea: " + lF1;
 var lUmbral = lineaQue(/Menor umbral/);
 if (!lUmbral) return "Falta la línea «Menor umbral con precisión >= 0.95: X».";
-var umbral = parseFloat((lUmbral.match(/(\d+\.\d+)/) || [])[1]);
+var umbral = parseFloat((lUmbral.split(":").pop().match(/(\d+\.\d+)/) || [])[1]);
 if (isNaN(umbral) || Math.abs(umbral - 0.893) > 0.002) return "El menor umbral con precisión >= 0.95 debería ser 0.893. Tu línea dice: " + lUmbral;
 return true;
       </script>
@@ -3459,7 +3494,23 @@ class Vecinos:
     def score(self, X, y):
         predicciones = self.predict(X)
         aciertos = sum(1 for p, real in zip(predicciones, y) if p == real)
-        return aciertos / len(y)</code></pre>
+        return aciertos / len(y)
+
+
+datos_x = [[62, 205], [58, 230], [70, 190], [40, 260], [45, 250], [35, 275]]
+datos_y = ["tramposo", "tramposo", "tramposo", "honrado", "honrado", "honrado"]
+
+esc = Escalador()
+esc.fit(datos_x)
+x_escalado = esc.transform(datos_x)
+for fila in x_escalado:
+    print([round(v, 2) for v in fila])
+
+modelo = Vecinos(k=3)
+modelo.fit(x_escalado, datos_y)
+prueba_x = esc.transform([[50, 240], [65, 200]])
+print(modelo.predict(prueba_x))
+print(round(modelo.score(x_escalado, datos_y), 2))</code></pre>
       <p>Es la misma forma que usarás con scikit-learn de verdad: <code>fit</code> aprende (aquí, solo guardar datos), <code>transform</code> o <code>predict</code> usan lo aprendido, y <code>score</code> resume el resultado en un número. Cuando en la sección de herramientas escribas <code>KNeighborsClassifier(n_neighbors=3).fit(X, y).score(X_prueba, y_prueba)</code>, por dentro está pasando exactamente esto, solo que en C y a miles de veces esta velocidad.</p>
     </details>
   </article>
@@ -3595,4 +3646,601 @@ return true;
       <p><code>ultimoRefugio</code> comparte acción, cooperativo e historia con <code>nebulosa</code> (coseno 0.866, el más alto posible entre estos vectores de unos y ceros con esa cantidad de etiquetas en común), y por eso aparece primero. Nota que <code>enigmaGris</code> y <code>laberintoX</code> tienen exactamente las mismas etiquetas (puzle e historia): su coseno vale 1, idénticos en dirección aunque sean juegos distintos. Esto es, literalmente, el mismo kNN de la sección de clasificar, solo que con el coseno como medida de parecido en vez de la distancia euclídea.</p>
     </details>
   </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: Runas</h2>
+  <p>Vas a construir un juego de hechizos que aprende de tus propios trazos. El jugador dibuja una runa con el ratón o el dedo para lanzar un hechizo contra los enemigos que se acercan: un triángulo lanza fuego, un círculo lanza hielo y un zigzag lanza un rayo. El reconocedor es un clasificador de vecino más cercano, al estilo del <strong>$1 Unistroke Recognizer</strong> (Jacob O. Wobbrock, Andrew D. Wilson y Yang Li, UIST 2007), que su propia página de referencia describe como «un clasificador de vecino más cercano simple». Aprende de ejemplos, no de reglas sobre cómo «debería» verse cada trazo.</p>
+  <p>El punto de partida ya trae el juego entero: la captura de trazos con eventos de puntero, el modo de entrenamiento con su contador y su guardado en <code>localStorage</code>, la máquina de estados de la partida con vidas y puntos, y seis ejemplos generados por procedimiento (<code>plantillasIniciales</code>) para que el reconocedor funcione desde el primer instante, sin depender de lo que grabes. Te faltan las cuatro funciones que convierten un trazo en un vector de características y lo clasifican. Busca los comentarios <code>// Paso N</code> en el código.</p>
+  <ol class="pasos">
+    <li><div><p><strong>Paso 1, capturar (ya hecho).</strong> Cada trazo se guarda como un array de puntos <code>{ x, y }</code> con eventos de puntero, como en la <a href="34-videojuegos.html#controles">Estación 34</a>, y se dibuja mientras lo trazas. Léelo antes de seguir: todo lo demás depende de esta forma de dato.</p></div></li>
+    <li><div><p><strong>Paso 2, convertir el trazo en características.</strong> Completa <code>remuestrear(puntos, 32)</code>, que reparte 32 puntos a distancias iguales a lo largo del recorrido, y <code>normalizar(puntos)</code>, que traslada el centroide al origen y escala la caja que envuelve el trazo a que su lado mayor mida 1. Con las dos, un trazo de cualquier tamaño y en cualquier posición del lienzo se convierte en el mismo vector de 64 números (32 puntos × 2 coordenadas).</p></div></li>
+    <li><div><p><strong>Paso 3, crear el conjunto de datos (ya hecho).</strong> El modo «Grabar ejemplos» guarda al menos 5 trazos por runa con su etiqueta, muestra los recuentos y los guarda en <code>localStorage</code> (el botón «Reiniciar» del taller los borra). Al cargar la página, <code>plantillasIniciales()</code> añade 6 ejemplos sintéticos (2 por runa) para que el juego ya funcione antes de que grabes nada.</p></div></li>
+    <li><div><p><strong>Paso 4, programar el modelo.</strong> Completa <code>distanciaTrazos(a, b)</code>, la distancia media entre puntos correspondientes de dos trazos ya procesados, y <code>clasificar(trazo, k = 3)</code>, que vota entre los <code>k</code> ejemplos más cercanos y devuelve <code>{ runa, distancia }</code>. Si la distancia al vecino más cercano supera <code>UMBRAL</code>, debe devolver <code>"desconocida"</code> en vez de arriesgarse a lanzar el hechizo equivocado.</p></div></li>
+    <li><div><p><strong>Paso 5, evaluar (ya hecho).</strong> El botón «Evaluar» calcula la exactitud con <strong>dejar uno fuera</strong> (cada ejemplo se predice usando todos los demás, nunca a sí mismo) e imprime la matriz de confusión en la consola del navegador. Ábrela con <kbd>F12</kbd>, como en la <a href="06-primeros-pasos.html#navegador">Estación 6</a>. Si una runa se confunde mucho con otra, graba más ejemplos de esa runa o ajusta <code>UMBRAL</code>.</p></div></li>
+    <li><div><p><strong>Paso 6, jugar (ya hecho).</strong> Pulsa «Jugar»: aparece el símbolo de una runa, y dibujarla la hace desaparecer y suma un punto. Una runa equivocada o «desconocida» resta una vida; a cero vidas, la partida termina.</p></div></li>
+    <li><div><p><strong>Paso 7, criterio.</strong> Pídele a otra persona, o prueba tú con la otra mano o con el dedo en vez del ratón, que juegue un par de minutos en modo «Grabar ejemplos» y luego en modo «Jugar». Compara mentalmente cómo le fue: si falla mucho más que a ti, es la misma lección de sesgo de la sección de evaluación, aplicada a tus propios datos. Añade ejemplos variados (otra mano, otro tamaño de trazo) antes de dar el reconocedor por bueno. Y una nota de privacidad que sí puedes prometer de verdad: los trazos nunca salen de tu navegador.</p></div></li>
+    <li><div><p><strong>Paso 8, opcional, en tu computadora.</strong> Exporta el JSON de trazos grabados (están en <code>localStorage</code>, bajo la clave que usa el taller) y, en un cuaderno con uv y scikit-learn 1.9, compara <code>KNeighborsClassifier</code> con <code>LogisticRegression</code> usando <code>cross_val_score</code> sobre los 64 números de cada trazo. Si la logística rinde parecido, exporta sus coeficientes a JSON (como en «Del JSON al juego») y úsalos como un segundo reconocedor dentro del juego.</p></div></li>
+  </ol>
+  <p>La verificación no puede dibujar como una persona, así que prueba tus funciones con trazos sintéticos: triángulos, círculos y zigzags de otros tamaños y posiciones que los de <code>plantillasIniciales</code>, generados con las mismas funciones de apoyo (ya escritas, no las toques) y un poco de ruido. Comprueba que <code>remuestrear</code> reparte 32 puntos a distancias parecidas, que <code>normalizar</code> deja el centroide en <code>(0, 0)</code> y el lado mayor en 1, que <code>clasificar</code> acierta al menos 8 de 9 trazos de prueba y que un garabato al azar da <code>"desconocida"</code>.</p>
+  <div class="taller" data-modo="web" id="taller-proyecto" data-titulo="Proyecto: Runas" data-alto="30rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div class="cabecera"&gt;
+  &lt;div class="modos"&gt;
+    &lt;button type="button" id="boton-entrenar"&gt;Grabar ejemplos&lt;/button&gt;
+    &lt;button type="button" id="boton-jugar" class="activo"&gt;Jugar&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;p id="estado"&gt;Dibuja con el ratón o el dedo.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="zona"&gt;
+  &lt;canvas id="lienzo" width="300" height="300"&gt;&lt;/canvas&gt;
+  &lt;div class="lateral"&gt;
+    &lt;div id="panel-entreno" hidden&gt;
+      &lt;label&gt;Runa:
+        &lt;select id="runa-elegida"&gt;
+          &lt;option value="fuego"&gt;fuego (triángulo)&lt;/option&gt;
+          &lt;option value="hielo"&gt;hielo (círculo)&lt;/option&gt;
+          &lt;option value="rayo"&gt;rayo (zigzag)&lt;/option&gt;
+        &lt;/select&gt;
+      &lt;/label&gt;
+      &lt;p id="conteo"&gt;&lt;/p&gt;
+      &lt;button type="button" id="boton-evaluar"&gt;Evaluar (consola)&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;div id="panel-juego"&gt;
+      &lt;p&gt;Dibuja: &lt;strong id="objetivo"&gt;—&lt;/strong&gt;&lt;/p&gt;
+      &lt;p&gt;Puntos: &lt;span id="puntos"&gt;0&lt;/span&gt; · Vidas: &lt;span id="vidas"&gt;3&lt;/span&gt;&lt;/p&gt;
+      &lt;button type="button" id="boton-reiniciar-partida"&gt;Reiniciar partida&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;p id="mensaje"&gt;&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; font-size: 14px; color: #222; }
+.cabecera { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.modos button { font: inherit; padding: 6px 12px; cursor: pointer; }
+.modos button.activo { font-weight: bold; text-decoration: underline; }
+.zona { display: flex; gap: 14px; flex-wrap: wrap; }
+canvas { border: 1px solid #999; border-radius: 8px; touch-action: none; cursor: crosshair; background: #fff; }
+.lateral { min-width: 180px; }
+#mensaje { min-height: 2.4em; }
+#panel-juego p { margin: 4px 0; }
+button { font: inherit; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// ===== Paso 1: capturar trazos con eventos de puntero (ya hecho) =====
+const lienzo = document.querySelector("#lienzo");
+const ctx = lienzo.getContext("2d");
+let trazoActual = null;
+
+function posicion(e) {
+  const r = lienzo.getBoundingClientRect();
+  return {
+    x: ((e.clientX - r.left) / r.width) * lienzo.width,
+    y: ((e.clientY - r.top) / r.height) * lienzo.height,
+  };
+}
+function redibujarFondo() {
+  ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+  ctx.strokeStyle = "#2a6f97";
+  ctx.lineWidth = 4;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+}
+lienzo.addEventListener("pointerdown", (e) => {
+  trazoActual = [posicion(e)];
+  redibujarFondo();
+  ctx.beginPath();
+  ctx.moveTo(trazoActual[0].x, trazoActual[0].y);
+});
+lienzo.addEventListener("pointermove", (e) => {
+  if (!trazoActual) return;
+  const p = posicion(e);
+  trazoActual.push(p);
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+});
+addEventListener("pointerup", () => {
+  if (!trazoActual || trazoActual.length < 3) { trazoActual = null; return; }
+  const trazo = trazoActual;
+  trazoActual = null;
+  if (modo === "entrenar") {
+    agregarEjemplo(document.querySelector("#runa-elegida").value, trazo);
+    actualizarConteo();
+  } else {
+    atacar(trazo);
+  }
+});
+
+// ===== Funciones de apoyo para generar runas por procedimiento (ya hechas, no las toques) =====
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function puntosTriangulo(cx, cy, r, rot, ruido, azar, nPorLado) {
+  const vertices = [0, 1, 2].map((i) => {
+    const a = rot + (i * 2 * Math.PI) / 3 - Math.PI / 2;
+    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+  });
+  const puntos = [];
+  for (let lado = 0; lado < 3; lado++) {
+    const p0 = vertices[lado], p1 = vertices[(lado + 1) % 3];
+    for (let i = 0; i < nPorLado; i++) {
+      const t = i / nPorLado;
+      puntos.push({
+        x: p0.x + (p1.x - p0.x) * t + (azar() - 0.5) * ruido,
+        y: p0.y + (p1.y - p0.y) * t + (azar() - 0.5) * ruido,
+      });
+    }
+  }
+  puntos.push({ x: vertices[0].x, y: vertices[0].y });
+  return puntos;
+}
+function puntosCirculo(cx, cy, r, ruido, azar, n) {
+  const puntos = [];
+  for (let i = 0; i <= n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    puntos.push({
+      x: cx + r * Math.cos(a) + (azar() - 0.5) * ruido,
+      y: cy + r * Math.sin(a) + (azar() - 0.5) * ruido,
+    });
+  }
+  return puntos;
+}
+function puntosZigzag(cx, cy, ancho, alto, ruido, azar) {
+  const picos = [
+    { x: -ancho / 2, y: -alto / 2 }, { x: -ancho / 6, y: alto / 2 },
+    { x: ancho / 6, y: -alto / 2 }, { x: ancho / 2, y: alto / 2 },
+  ];
+  const puntos = [];
+  for (let seg = 0; seg < picos.length - 1; seg++) {
+    const p0 = picos[seg], p1 = picos[seg + 1];
+    for (let i = 0; i < 15; i++) {
+      const t = i / 15;
+      puntos.push({
+        x: cx + p0.x + (p1.x - p0.x) * t + (azar() - 0.5) * ruido,
+        y: cy + p0.y + (p1.y - p0.y) * t + (azar() - 0.5) * ruido,
+      });
+    }
+  }
+  puntos.push({ x: cx + picos[picos.length - 1].x, y: cy + picos[picos.length - 1].y });
+  return puntos;
+}
+function plantillasIniciales() {
+  const azar = crearAzar(39);
+  return [
+    { runa: "fuego", crudo: puntosTriangulo(140, 120, 70, 0, 3, azar, 18) },
+    { runa: "fuego", crudo: puntosTriangulo(90, 90, 50, 0.12, 4, azar, 14) },
+    { runa: "hielo", crudo: puntosCirculo(140, 120, 65, 3, azar, 50) },
+    { runa: "hielo", crudo: puntosCirculo(100, 100, 45, 4, azar, 36) },
+    { runa: "rayo", crudo: puntosZigzag(140, 120, 120, 100, 3, azar) },
+    { runa: "rayo", crudo: puntosZigzag(90, 90, 80, 70, 4, azar) },
+  ];
+}
+
+// ===== Paso 2: convertir el trazo en características =====
+function remuestrear(puntos, n) {
+  // Reparte n puntos a distancias iguales a lo largo del recorrido de "puntos".
+  // 1. Calcula la longitud total del trazo (suma de la distancia entre puntos consecutivos).
+  // 2. intervalo = longitud / (n - 1).
+  // 3. Recorre el trazo acumulando distancia; cuando el acumulado llegue al intervalo,
+  //    interpola un punto nuevo exactamente ahí, añádelo al resultado y reinicia el acumulado
+  //    (sigue avanzando desde ese punto nuevo, insertándolo en el recorrido).
+  // 4. Si por redondeo faltan puntos al final, repite el último.
+  return puntos.slice(0, n);
+}
+
+function normalizar(puntos) {
+  // 1. Calcula el centroide (media de x, media de y) y réstaselo a cada punto.
+  // 2. Calcula el ancho y el alto de la caja que envuelve esos puntos centrados.
+  // 3. Escala cada punto por 1 / Math.max(ancho, alto), para que el lado mayor mida 1.
+  return puntos;
+}
+
+// ===== Paso 3: crear el conjunto de datos (ya hecho) =====
+let ejemplos = [];
+function procesar(trazoCrudo) {
+  return normalizar(remuestrear(trazoCrudo.slice(), 32));
+}
+function agregarEjemplo(runa, trazoCrudo, guardar = true) {
+  ejemplos.push({ runa, vector: procesar(trazoCrudo) });
+  if (guardar) {
+    const lista = cargarGrabados();
+    lista.push({ runa, crudo: trazoCrudo });
+    try { localStorage.setItem("runas-grabados", JSON.stringify(lista)); } catch (err) { /* sin almacenamiento disponible */ }
+  }
+}
+function cargarGrabados() {
+  try { return JSON.parse(localStorage.getItem("runas-grabados") || "[]"); } catch (err) { return []; }
+}
+function actualizarConteo() {
+  const grabados = cargarGrabados();
+  const cuenta = { fuego: 0, hielo: 0, rayo: 0 };
+  for (const g of grabados) cuenta[g.runa]++;
+  document.querySelector("#conteo").textContent =
+    `Grabados: fuego ${cuenta.fuego} · hielo ${cuenta.hielo} · rayo ${cuenta.rayo} (mínimo recomendado: 5 cada uno).`;
+}
+plantillasIniciales().forEach((p) => agregarEjemplo(p.runa, p.crudo, false));
+cargarGrabados().forEach((g) => agregarEjemplo(g.runa, g.crudo, false));
+
+// ===== Paso 4: programar el modelo =====
+const UMBRAL = 0.4;
+function distanciaTrazos(a, b) {
+  // a y b: dos trazos YA procesados (remuestreados y normalizados), listas de 32 { x, y }.
+  // Devuelve la distancia MEDIA entre puntos correspondientes (a[0] con b[0], a[1] con b[1]…).
+  return 0;
+}
+
+function clasificar(trazo, k = 3) {
+  // trazo: puntos CRUDOS, tal como los capturó el puntero (sin procesar).
+  // 1. Procesa el trazo con procesar(trazo).
+  // 2. Calcula su distanciaTrazos a cada ejemplo de "ejemplos".
+  // 3. Ordena de menor a mayor distancia y quédate con los k más cercanos.
+  // 4. Vota por runa (en empate, gana el vecino más cercano, como en kNN).
+  // 5. Si la distancia del vecino más cercano supera UMBRAL, devuelve { runa: "desconocida", distancia }.
+  // 6. Si no, devuelve { runa: <la más votada>, distancia: <la del vecino más cercano> }.
+  return { runa: "desconocida", distancia: 0 };
+}
+
+// ===== Paso 5: evaluar con "dejar uno fuera" (ya hecho) =====
+function evaluarLOO() {
+  const runas = ["fuego", "hielo", "rayo"];
+  const matriz = {};
+  for (const r of runas) matriz[r] = { fuego: 0, hielo: 0, rayo: 0 };
+  let aciertos = 0;
+  ejemplos.forEach((ej, i) => {
+    const resto = ejemplos.filter((_, j) => j !== i);
+    const vecinos = resto
+      .map((e) => ({ runa: e.runa, d: distanciaTrazos(ej.vector, e.vector) }))
+      .sort((a, b) => a.d - b.d)
+      .slice(0, 3);
+    const votos = {};
+    for (const v of vecinos) votos[v.runa] = (votos[v.runa] || 0) + 1;
+    let predicha = vecinos[0].runa;
+    for (const r in votos) if (votos[r] > votos[predicha]) predicha = r;
+    if (matriz[ej.runa] && predicha in matriz[ej.runa]) matriz[ej.runa][predicha]++;
+    if (predicha === ej.runa) aciertos++;
+  });
+  console.log(`Exactitud (dejar uno fuera): ${(aciertos / ejemplos.length).toFixed(3)} sobre ${ejemplos.length} ejemplos`);
+  console.log("Matriz de confusión (filas: real, columnas: predicha):");
+  for (const real of runas) console.log(`  ${real}:`, runas.map((p) => matriz[real][p]).join(" / "));
+}
+document.querySelector("#boton-evaluar").addEventListener("click", evaluarLOO);
+
+// ===== Paso 6: jugar (ya hecho) =====
+let modo = "jugar";
+let vidas = 3, puntos = 0, objetivo = elegirObjetivo();
+function elegirObjetivo() {
+  const runas = ["fuego", "hielo", "rayo"];
+  return runas[Math.floor(Math.random() * runas.length)];
+}
+function actualizarPaneles() {
+  document.querySelector("#panel-entreno").hidden = modo !== "entrenar";
+  document.querySelector("#panel-juego").hidden = modo !== "jugar";
+  document.querySelector("#boton-entrenar").className = modo === "entrenar" ? "activo" : "";
+  document.querySelector("#boton-jugar").className = modo === "jugar" ? "activo" : "";
+  document.querySelector("#estado").textContent =
+    modo === "entrenar" ? "Elige una runa, dibújala y pulsa otra vez para grabar más." : "Dibuja la runa que se te pide.";
+}
+function actualizarEstadoJuego() {
+  document.querySelector("#objetivo").textContent = objetivo;
+  document.querySelector("#puntos").textContent = puntos;
+  document.querySelector("#vidas").textContent = vidas;
+}
+function atacar(trazoCrudo) {
+  if (vidas <= 0) return;
+  const resultado = clasificar(trazoCrudo, 3);
+  const mensaje = document.querySelector("#mensaje");
+  if (resultado.runa === objetivo) {
+    puntos++;
+    mensaje.textContent = `¡Hechizo de ${objetivo} correcto! (distancia ${resultado.distancia.toFixed(2)})`;
+    objetivo = elegirObjetivo();
+  } else {
+    vidas--;
+    mensaje.textContent = resultado.runa === "desconocida"
+      ? `Runa no reconocida (distancia ${resultado.distancia.toFixed(2)}). Pedían ${objetivo}.`
+      : `Dibujaste ${resultado.runa}, pedían ${objetivo}.`;
+    if (vidas <= 0) mensaje.textContent += " Partida terminada: pulsa «Reiniciar partida».";
+  }
+  actualizarEstadoJuego();
+}
+document.querySelector("#boton-entrenar").addEventListener("click", () => { modo = "entrenar"; actualizarPaneles(); });
+document.querySelector("#boton-jugar").addEventListener("click", () => { modo = "jugar"; actualizarPaneles(); });
+document.querySelector("#boton-reiniciar-partida").addEventListener("click", () => {
+  vidas = 3; puntos = 0; objetivo = elegirObjetivo();
+  document.querySelector("#mensaje").textContent = "";
+  actualizarEstadoJuego();
+});
+actualizarPaneles();
+actualizarEstadoJuego();
+actualizarConteo();</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (typeof remuestrear !== "function" || typeof normalizar !== "function" || typeof distanciaTrazos !== "function" || typeof clasificar !== "function") {
+  return "Necesito las cuatro funciones globales: remuestrear, normalizar, distanciaTrazos y clasificar.";
+}
+
+var linea = [{ x: 0, y: 0 }, { x: 40, y: 0 }, { x: 40, y: 30 }, { x: 100, y: 30 }];
+var r = remuestrear(linea, 32);
+if (!Array.isArray(r) || r.length !== 32) return "remuestrear(puntos, 32) debería devolver 32 puntos y devuelve " + (r && r.length) + ".";
+var distancias = [];
+for (var i = 1; i < r.length; i++) distancias.push(Math.hypot(r[i].x - r[i - 1].x, r[i].y - r[i - 1].y));
+var mediaDist = distancias.reduce(function (a, b) { return a + b; }, 0) / distancias.length;
+for (var i = 0; i < distancias.length; i++) {
+  if (Math.abs(distancias[i] - mediaDist) > mediaDist * 0.4 + 0.5) return "Los puntos de remuestrear no quedan a distancias parecidas: un tramo mide " + distancias[i].toFixed(2) + " y la media es " + mediaDist.toFixed(2) + ".";
+}
+
+var cuadrado = remuestrear([{ x: 10, y: 10 }, { x: 50, y: 10 }, { x: 50, y: 50 }, { x: 10, y: 50 }, { x: 10, y: 10 }], 32);
+var n = normalizar(cuadrado);
+if (!Array.isArray(n) || n.length !== 32) return "normalizar debería devolver los mismos 32 puntos que recibe.";
+var cx = n.reduce(function (s, p) { return s + p.x; }, 0) / n.length;
+var cy = n.reduce(function (s, p) { return s + p.y; }, 0) / n.length;
+if (Math.abs(cx) > 0.01 || Math.abs(cy) > 0.01) return "Tras normalizar, el centroide debería quedar en (0, 0) y queda en (" + cx.toFixed(3) + ", " + cy.toFixed(3) + ").";
+var xs = n.map(function (p) { return p.x; }), ys = n.map(function (p) { return p.y; });
+var ancho = Math.max.apply(null, xs) - Math.min.apply(null, xs);
+var alto = Math.max.apply(null, ys) - Math.min.apply(null, ys);
+if (Math.abs(Math.max(ancho, alto) - 1) > 0.02) return "Tras normalizar, el lado mayor de la caja debería medir 1 y mide " + Math.max(ancho, alto).toFixed(3) + ".";
+
+if (typeof plantillasIniciales !== "function" || typeof puntosTriangulo !== "function" || typeof puntosCirculo !== "function" || typeof puntosZigzag !== "function" || typeof crearAzar !== "function") {
+  return "No toques plantillasIniciales ni sus funciones de apoyo (crearAzar, puntosTriangulo, puntosCirculo, puntosZigzag): ya vienen escritas.";
+}
+var azarPrueba = crearAzar(4242);
+var pruebas = [
+  ["fuego", puntosTriangulo(300, 250, 55, 0.08, 5, azarPrueba, 12)],
+  ["fuego", puntosTriangulo(60, 400, 90, -0.1, 6, azarPrueba, 20)],
+  ["fuego", puntosTriangulo(500, 80, 60, 0.15, 3, azarPrueba, 10)],
+  ["hielo", puntosCirculo(300, 250, 60, 5, azarPrueba, 40)],
+  ["hielo", puntosCirculo(60, 400, 95, 6, azarPrueba, 70)],
+  ["hielo", puntosCirculo(500, 80, 30, 3, azarPrueba, 24)],
+  ["rayo", puntosZigzag(300, 250, 150, 130, 5, azarPrueba)],
+  ["rayo", puntosZigzag(60, 400, 60, 50, 4, azarPrueba)],
+  ["rayo", puntosZigzag(500, 80, 200, 160, 6, azarPrueba)],
+];
+var aciertos = 0, detalle = [];
+for (var p = 0; p < pruebas.length; p++) {
+  var res = clasificar(pruebas[p][1], 3);
+  if (!res || typeof res.runa !== "string") return "clasificar(trazo, 3) debe devolver un objeto { runa, distancia }.";
+  if (res.runa === pruebas[p][0]) aciertos++; else detalle.push(pruebas[p][0] + "→" + res.runa);
+}
+if (aciertos < 8) return "clasificar acertó " + aciertos + " de 9 trazos de prueba (hacen falta al menos 8). Confundió: " + detalle.join(", ") + ". Revisa distanciaTrazos y el orden de remuestrear/normalizar dentro de clasificar.";
+
+var azarGarabato = crearAzar(999);
+var gx = 100, gy = 100, garabato = [];
+for (var g = 0; g < 40; g++) {
+  gx += (azarGarabato() - 0.5) * 60;
+  gy += (azarGarabato() - 0.5) * 60;
+  garabato.push({ x: gx, y: gy });
+}
+var resGarabato = clasificar(garabato, 3);
+if (!resGarabato || resGarabato.runa !== "desconocida") return "Un garabato al azar debería devolver \"desconocida\" (está lejos de las tres runas) y devolviste " + (resGarabato && resGarabato.runa) + ".";
+
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">function remuestrear(puntos, n) {
+  const distancia = (a, b) =&gt; Math.hypot(a.x - b.x, a.y - b.y);
+  let longitud = 0;
+  for (let i = 1; i &lt; puntos.length; i++) longitud += distancia(puntos[i - 1], puntos[i]);
+  const intervalo = longitud / (n - 1);
+  const trabajo = puntos.map((p) =&gt; ({ x: p.x, y: p.y }));
+  const nuevos = [{ x: trabajo[0].x, y: trabajo[0].y }];
+  let acumulado = 0;
+  for (let i = 1; i &lt; trabajo.length; i++) {
+    const a = trabajo[i - 1], b = trabajo[i];
+    const d = distancia(a, b);
+    if (d === 0) continue;
+    if (acumulado + d &gt;= intervalo) {
+      const t = (intervalo - acumulado) / d;
+      const nuevo = { x: a.x + t * (b.x - a.x), y: a.y + t * (b.y - a.y) };
+      nuevos.push(nuevo);
+      trabajo.splice(i, 0, nuevo);
+      acumulado = 0;
+    } else {
+      acumulado += d;
+    }
+  }
+  while (nuevos.length &lt; n) nuevos.push(trabajo[trabajo.length - 1]);
+  return nuevos.slice(0, n);
+}
+
+function normalizar(puntos) {
+  const cx = puntos.reduce((s, p) =&gt; s + p.x, 0) / puntos.length;
+  const cy = puntos.reduce((s, p) =&gt; s + p.y, 0) / puntos.length;
+  const centrado = puntos.map((p) =&gt; ({ x: p.x - cx, y: p.y - cy }));
+  const xs = centrado.map((p) =&gt; p.x), ys = centrado.map((p) =&gt; p.y);
+  const ancho = Math.max(...xs) - Math.min(...xs);
+  const alto = Math.max(...ys) - Math.min(...ys);
+  const escala = 1 / Math.max(ancho, alto, 1e-9);
+  return centrado.map((p) =&gt; ({ x: p.x * escala, y: p.y * escala }));
+}
+
+function distanciaTrazos(a, b) {
+  let suma = 0;
+  for (let i = 0; i &lt; a.length; i++) suma += Math.hypot(a[i].x - b[i].x, a[i].y - b[i].y);
+  return suma / a.length;
+}
+
+function clasificar(trazo, k = 3) {
+  const procesado = procesar(trazo);
+  const vecinos = ejemplos
+    .map((e) =&gt; ({ runa: e.runa, distancia: distanciaTrazos(procesado, e.vector) }))
+    .sort((a, b) =&gt; a.distancia - b.distancia)
+    .slice(0, k);
+  const votos = {};
+  for (const v of vecinos) votos[v.runa] = (votos[v.runa] || 0) + 1;
+  let ganador = vecinos[0].runa;
+  for (const r in votos) if (votos[r] &gt; votos[ganador]) ganador = r;
+  if (vecinos[0].distancia &gt; UMBRAL) return { runa: "desconocida", distancia: vecinos[0].distancia };
+  return { runa: ganador, distancia: vecinos[0].distancia };
+}</code></pre>
+    <p><code>remuestrear</code> reutiliza una idea que ya conoces de los segmentos de recta: avanza por el trazo acumulando distancia, e interpola un punto nuevo (con el mismo truco de la proporción <code>t</code> que usaste con los rayos y las colisiones) cada vez que el acumulado llega al intervalo. <code>normalizar</code> hace exactamente lo que hiciste a mano con el escalado de la sección de datos, pero en dos dimensiones a la vez: centrar y dividir por una escala. Con las dos, el triángulo que dibujas grande en la esquina superior izquierda y el que dibujas pequeño en el centro se convierten en el mismo vector de 64 números, con tolerancia al ruido de la mano. <code>clasificar</code> es el mismo kNN con votación y desempate por el más cercano que programaste en la sección de clasificar, con una perilla nueva: el umbral que convierte «el vecino más parecido, aun así, no se parece lo suficiente» en una respuesta honesta, <code>"desconocida"</code>, en vez de un hechizo al azar.</p>
+  </details>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Si fallas alguna, lee la explicación entera: las cuatro opciones enseñan algo, no solo la correcta.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Un detector de tramposos tiene un 2&nbsp;% de tramposos en los datos. ¿Por qué no basta con mirar la exactitud?</p>
+      <ol class="opciones">
+        <li>Porque la exactitud no se puede calcular con clases desbalanceadas.<p class="explica">Sí se puede calcular; el problema es que el número sale engañosamente alto.</p></li>
+        <li>Porque la exactitud solo sirve para regresión, no para clasificación.<p class="explica">Es al revés: la exactitud es una medida de clasificación. En regresión se usa el MAE.</p></li>
+        <li>Porque un modelo que dijera siempre «honrado» acertaría el 98&nbsp;% sin detectar a ningún tramposo.<p class="explica">Correcto: con clases tan desbalanceadas, la exactitud la domina la clase mayoritaria y esconde que el detector no detecta nada.</p></li>
+        <li>Porque la exactitud solo se puede medir en el conjunto de entrenamiento.<p class="explica">Se mide donde quieras (entrenamiento, validación, prueba); el problema no es dónde se mide, sino que el número no distingue entre tipos de acierto.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Qué distingue a un parámetro de un hiperparámetro?</p>
+      <ol class="opciones">
+        <li>Los parámetros son números y los hiperparámetros son textos.<p class="explica">Los dos pueden ser números: por ejemplo, w y b son parámetros, y la tasa de aprendizaje es un hiperparámetro, también numérico.</p></li>
+        <li>El parámetro lo aprende el entrenamiento; el hiperparámetro lo eliges tú antes de entrenar.<p class="explica">Correcto: w y b en una recta, o los pesos de una logística, son parámetros; k en kNN o la profundidad de un árbol son hiperparámetros.</p></li>
+        <li>Solo las redes neuronales tienen hiperparámetros.<p class="explica">kNN, los árboles, k-means y la regresión logística también tienen hiperparámetros (k, profundidad máxima, umbral, C…).</p></li>
+        <li>Son sinónimos; cada autor usa el que prefiere.<p class="explica">No son sinónimos: distinguirlos importa porque cambia quién decide y cuándo se puede tocar sin «deshacer» el entrenamiento.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Entrenas una regresión lineal con descenso de gradiente y, tras unas pocas épocas, <code>w</code> y <code>b</code> se vuelven <code>NaN</code>. ¿Cuál es la causa más probable?</p>
+      <ol class="opciones">
+        <li>El conjunto de datos tiene menos de 10 ejemplos.<p class="explica">Pocos datos dan un modelo poco fiable, pero no produce NaN por sí solo.</p></li>
+        <li>Olvidaste barajar los datos antes de entrenar.<p class="explica">Barajar afecta a la división en entrenamiento/validación/prueba, no hace que el descenso de gradiente diverja.</p></li>
+        <li>Usaste <code>let</code> en vez de <code>const</code> para <code>w</code> y <code>b</code>.<p class="explica"><code>w</code> y <code>b</code> cambian en cada época, así que necesitan <code>let</code>; eso no causa el problema.</p></li>
+        <li>La tasa de aprendizaje es demasiado grande y el entrenamiento diverge.<p class="explica">Correcto: con una tasa grande, cada paso se pasa de largo del mínimo y la pérdida crece sin control hasta desbordar en Infinity y luego NaN. Hay que bajar la tasa.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Por qué k vecinos más cercanos y k-means necesitan escalar las características, pero un árbol de decisión no?</p>
+      <ol class="opciones">
+        <li>Porque kNN y k-means miden distancias entre puntos, y una característica con números grandes (como milisegundos) domina esa distancia; un árbol solo compara con umbrales, y eso da igual en cualquier escala.<p class="explica">Correcto: la distancia euclídea suma diferencias al cuadrado, así que la característica con el rango más grande pesa más, sin que importe más de verdad.</p></li>
+        <li>Porque los árboles de decisión no aceptan números negativos.<p class="explica">Los árboles trabajan perfectamente con números negativos; el umbral de un corte puede ser cualquier valor.</p></li>
+        <li>Porque kNN y k-means son modelos más nuevos que los árboles.<p class="explica">La antigüedad del algoritmo no tiene nada que ver con si necesita escalar.</p></li>
+        <li>Porque escalar solo hace falta cuando hay menos de 100 ejemplos.<p class="explica">El tamaño del conjunto no decide si hace falta escalar: depende de si el algoritmo mide distancias.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Divides tus datos en entrenamiento, validación y prueba. ¿Cuántas veces deberías mirar la nota del conjunto de prueba durante el proyecto?</p>
+      <ol class="opciones">
+        <li>Todas las que haga falta, para comparar modelos.<p class="explica">Para comparar modelos se usa la validación. Mirar la prueba muchas veces la convierte, en la práctica, en otro simulacro.</p></li>
+        <li>Una vez por cada hiperparámetro que pruebes.<p class="explica">Eso es justo lo que hace el conjunto de validación: elegir hiperparámetros mirando sus notas repetidamente.</p></li>
+        <li>Una sola vez, al final, cuando ya decidiste el modelo y sus hiperparámetros.<p class="explica">Correcto: es el examen final. Si lo miras y luego cambias algo, la siguiente nota de «prueba» ya no mide lo que promete.</p></li>
+        <li>Nunca: la prueba es solo para producción, no para el proyecto.<p class="explica">Sí se usa en el proyecto, pero una única vez, para saber con honestidad cómo le irá al modelo con datos que nunca vio.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Un modelo acierta el 99.8&nbsp;% de los datos de entrenamiento y el 77&nbsp;% de los de validación. ¿Qué está pasando, y qué NO ayudaría a arreglarlo?</p>
+      <ol class="opciones">
+        <li>Sobreajuste; reducir la profundidad máxima del árbol o aumentar k en kNN ayudaría.<p class="explica">Es verdad, pero la pregunta pide la opción que NO ayuda, y esta sí es un remedio real.</p></li>
+        <li>Sobreajuste; entrenar más épocas con el mismo modelo, sin cambiar nada más, lo empeoraría.<p class="explica">Correcto: la brecha entre 99.8&nbsp;% y 77&nbsp;% es la firma del sobreajuste (memorizó el entrenamiento). Entrenar más tiempo sin simplificar el modelo ni añadir datos no corrige eso; puede incluso agravarlo.</p></li>
+        <li>Sobreajuste; conseguir más datos de entrenamiento, variados, ayudaría.<p class="explica">Es un remedio real: con más ejemplos es más difícil memorizar casualidades.</p></li>
+        <li>Sobreajuste; añadir regularización (bajar <code>C</code> en <code>LogisticRegression</code>, por ejemplo) ayudaría.<p class="explica">También es un remedio real: penalizar pesos grandes evita que el modelo se retuerza para ajustar cada ejemplo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Quieres banear cuentas automáticamente por hacer trampa. ¿Qué umbral de probabilidad conviene y por qué?</p>
+      <ol class="opciones">
+        <li>Un umbral bajo, para no dejar escapar a ningún tramposo.<p class="explica">Un umbral bajo sube la exhaustividad pero hunde la precisión: acusarías a muchos inocentes, y el coste de un falso positivo (banear a alguien honrado) es gravísimo.</p></li>
+        <li>Da igual el umbral, porque la exactitud no cambia.<p class="explica">La exactitud sí cambia con el umbral, y además no es la medida que importa aquí: lo que importa es cuántos falsos positivos genera cada umbral.</p></li>
+        <li>0.5 siempre, porque es el valor por defecto de la sigmoide.<p class="explica">0.5 es un punto de partida razonable cuando no sabes nada más, pero no es «el correcto»: el umbral se elige según el coste de cada error, no por ser el valor por defecto.</p></li>
+        <li>Un umbral alto, que exija mucha precisión, y con revisión humana antes de banear.<p class="explica">Correcto: banear a un inocente cuesta muchísimo, así que conviene estar muy seguro (precisión alta) aunque eso deje escapar a algunos tramposos, y aun así revisar los casos antes de actuar, como hace VACnet.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">¿Qué significa que un nodo de un árbol de decisión tenga impureza de Gini igual a 0?</p>
+      <ol class="opciones">
+        <li>Que todas las decisiones de ese nodo pertenecen a la misma clase: el nodo es puro.<p class="explica">Correcto: Gini mide la probabilidad de equivocarte si etiquetas al azar según las proporciones del nodo; con una sola clase, esa probabilidad es 0.</p></li>
+        <li>Que el nodo no tiene ningún ejemplo.<p class="explica">Un nodo vacío no tiene Gini definido (se dividiría entre cero); 0 significa «puro», no «vacío».</p></li>
+        <li>Que el árbol llegó a su profundidad máxima.<p class="explica">La profundidad máxima es otro motivo para parar de construir, independiente de la impureza del nodo.</p></li>
+        <li>Que ese corte usó la característica equivocada.<p class="explica">Gini no evalúa si la característica es «correcta»: mide cuánta mezcla de clases queda, y 0 es la mejor mezcla posible.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Ejecutas k-means dos veces, con los mismos datos y el mismo k, pero con centroides iniciales distintos, y obtienes dos agrupamientos diferentes. ¿Qué dice esto de k-means?</p>
+      <ol class="opciones">
+        <li>Que hay un error en la implementación: k-means siempre debería dar el mismo resultado.<p class="explica">No es un error: es un comportamiento esperado del algoritmo, documentado en su propio diseño.</p></li>
+        <li>Que k-means no sirve para agrupar jugadores de un juego.<p class="explica">Sí sirve; solo hay que tenerlo en cuenta y mitigarlo (k-means++, n_init, semilla fija), no descartar el algoritmo.</p></li>
+        <li>Que k-means siempre reduce la inercia en cada paso, pero no garantiza encontrar el mejor agrupamiento posible: depende del punto de partida.<p class="explica">Correcto: por eso scikit-learn usa k-means++ para empezar mejor y <code>n_init</code> para repetir el proceso varias veces y quedarse con el resultado de menor inercia.</p></li>
+        <li>Que hay que aumentar k hasta que el resultado deje de cambiar.<p class="explica">Aumentar k cambia el problema (cuántos grupos buscas), no resuelve la dependencia del punto de partida con el mismo k.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">¿Cuál de estas es una fuga de datos?</p>
+      <ol class="opciones">
+        <li>Calcular la media y la desviación típica solo con el conjunto de entrenamiento, y aplicarlas igual a la prueba.<p class="explica">Esa es la forma correcta, no una fuga: es justo lo que evita que la información de la prueba se cuele en el entrenamiento.</p></li>
+        <li>Incluir la columna <code>dias_hasta_abandono</code> como característica para predecir si alguien va a abandonar.<p class="explica">Correcto: esa columna solo existe porque el jugador ya abandonó, así que es información del futuro disfrazada de característica. Es una fuga del objetivo.</p></li>
+        <li>Estratificar la división para que la clase rara tenga la misma proporción en las tres partes.<p class="explica">Estratificar es una buena práctica para evitar que, por azar, una parte se quede sin ejemplos de la clase rara; no es una fuga.</p></li>
+        <li>Fijar una semilla para que la división salga igual cada vez que ejecutas el programa.<p class="explica">Fijar la semilla es para la reproducibilidad, no causa ninguna fuga de información entre las partes.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Un reconocedor de gestos acierta el 94&nbsp;% en general, pero solo el 71&nbsp;% con trazos de pantalla táctil. ¿Qué deberías hacer antes de publicarlo?</p>
+      <ol class="opciones">
+        <li>Nada: un 94&nbsp;% de exactitud global ya es un buen resultado.<p class="explica">La nota global esconde el problema: si la mitad de tus jugadores usa pantalla táctil, para ellos el reconocedor está roto casi 3 de cada 10 veces.</p></li>
+        <li>Quitar el modo táctil del juego hasta tener tiempo de arreglarlo en otra versión.<p class="explica">Es una opción posible en un caso extremo, pero no es lo primero que harías: antes conviene diagnosticar y, casi siempre, se puede mejorar sin quitar la función.</p></li>
+        <li>Subir el umbral de decisión para que acierte más en general.<p class="explica">Subir el umbral cambia el reparto entre precisión y exhaustividad, pero no corrige que el modelo vio pocos ejemplos táctiles: no ataca la causa.</p></li>
+        <li>Evaluar las métricas por grupo (como ya hiciste), y si el táctil está infrarrepresentado en los datos de entrenamiento, conseguir más ejemplos de ese grupo.<p class="explica">Correcto: la causa más probable es que el entrenamiento tenía pocos trazos táctiles; evaluar por grupo lo detecta, y recoger más ejemplos variados es el remedio directo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Tienes un clasificador lineal pequeño (unos pocos pesos) y quieres usarlo dentro de un juego web, sin servidor, aceptando que alguien podría leerlo y hacer trampa con él. ¿Cuál de las tres formas de llevar el modelo encaja mejor?</p>
+      <ol class="opciones">
+        <li>Exportar los parámetros (medias, escalas, pesos, intercepto) a un archivo JSON y reproducir las cuentas con unas pocas líneas de JavaScript.<p class="explica">Correcto: para un modelo lineal pequeño es el camino más ligero y rápido, y es exactamente lo que probaste en «Del JSON al juego».</p></li>
+        <li>Convertirlo a ONNX y ejecutarlo con onnxruntime-web.<p class="explica">Funciona, pero añade un motor de varios megabytes para un modelo que son, literalmente, unos pocos números: es más trabajo del necesario.</p></li>
+        <li>Dejarlo en un servidor detrás de una API y consultarlo por red en cada fotograma.<p class="explica">Añade latencia de red innecesaria para algo tan pequeño, y no aporta nada si de todas formas aceptas que se ejecute (y se pueda leer) en el cliente.</p></li>
+        <li>Guardarlo con <code>pickle</code> y cargarlo directamente en el navegador.<p class="explica"><code>pickle</code> es un formato de Python que el navegador no entiende, y además cargar un pickle de origen desconocido puede ejecutar código arbitrario.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Aprendizaje automático</dt><dd>Enfoque de programación en el que, en vez de escribir las reglas a mano, se le dan al programa ejemplos y sus respuestas correctas, y un entrenamiento busca las reglas (el modelo). En inglés, <em>machine learning</em>.</dd>
+    <dt>Ejemplo</dt><dd>Un caso de los datos: una fila de la tabla, con sus características y, si las tiene, su etiqueta. En inglés, <em>sample</em>.</dd>
+    <dt>Característica</dt><dd>Un dato de cada ejemplo que el modelo puede usar para decidir; una columna de la tabla. En inglés, <em>feature</em>.</dd>
+    <dt>Etiqueta</dt><dd>La respuesta correcta que se quiere que el modelo aprenda a predecir. En inglés, <em>label</em>.</dd>
+    <dt>Modelo</dt><dd>La función que sale del entrenamiento: recibe características y devuelve una predicción.</dd>
+    <dt>Parámetro de un modelo</dt><dd>Un número del modelo que aprende el entrenamiento, como los pesos de una recta o de una regresión logística.</dd>
+    <dt>Hiperparámetro</dt><dd>Un ajuste que elige la persona antes de entrenar y que el entrenamiento no toca, como el k de kNN o la profundidad máxima de un árbol.</dd>
+    <dt>Entrenamiento</dt><dd>El proceso que busca los parámetros de un modelo a partir de los ejemplos. En inglés, <em>training</em>.</dd>
+    <dt>Inferencia</dt><dd>Usar un modelo ya entrenado con datos nuevos para obtener una predicción.</dd>
+    <dt>Problema de regresión</dt><dd>Problema de aprendizaje supervisado en el que la etiqueta es un número, como los segundos que tarda un nivel.</dd>
+    <dt>Clasificación</dt><dd>Problema de aprendizaje supervisado en el que la etiqueta es una categoría, como «tramposo» o «runa de fuego».</dd>
+    <dt>Agrupamiento</dt><dd>Problema de aprendizaje no supervisado que junta ejemplos parecidos sin usar etiquetas. En inglés, <em>clustering</em>.</dd>
+    <dt>Descenso de gradiente</dt><dd>Algoritmo que ajusta los parámetros de un modelo paso a paso, moviéndolos en contra del gradiente de la función de pérdida, hasta que esta deja de bajar.</dd>
+    <dt>Tasa de aprendizaje</dt><dd>Hiperparámetro del descenso de gradiente que controla el tamaño de cada paso. Demasiado grande, el entrenamiento diverge; demasiado pequeña, avanza muy despacio. En inglés, <em>learning rate</em>.</dd>
+    <dt>Época</dt><dd>Una vuelta completa del descenso de gradiente por todos los ejemplos del entrenamiento. En inglés, <em>epoch</em>.</dd>
+    <dt>Función de pérdida</dt><dd>Número que mide cuánto se equivoca un modelo; el entrenamiento busca los parámetros que la hacen más pequeña. El error cuadrático medio (MSE) y la pérdida logarítmica son dos ejemplos. En inglés, <em>loss function</em>.</dd>
+    <dt>Sigmoide</dt><dd>Curva en forma de S, <code>1 / (1 + e^(-z))</code>, que convierte cualquier número en una probabilidad entre 0 y 1. Es la base de la regresión logística.</dd>
+    <dt>Árbol de decisión</dt><dd>Modelo que clasifica o predice recorriendo una cadena de preguntas de sí o no aprendidas de los datos, hasta llegar a una hoja con la respuesta.</dd>
+    <dt>Impureza de Gini</dt><dd>Medida de cuánto se mezclan las clases en un nodo de un árbol de decisión, entre 0 (puro) y casi 1 (muy mezclado). Se usa para elegir la mejor pregunta en cada nodo.</dd>
+    <dt>k-means</dt><dd>Algoritmo de agrupamiento que reparte los ejemplos en k grupos, cada uno representado por un centroide, repitiendo «asignar al centroide más cercano» y «mover el centroide al promedio» hasta que nada cambia.</dd>
+    <dt>Línea base</dt><dd>El resultado de una estrategia muy simple (predecir siempre la clase más frecuente, o siempre la media), con el que se compara cualquier modelo antes de darlo por útil.</dd>
+    <dt>Matriz de confusión</dt><dd>Tabla que cruza las predicciones de un clasificador con las etiquetas reales, con las casillas de verdaderos y falsos positivos y negativos.</dd>
+    <dt>Exhaustividad</dt><dd>De todos los ejemplos que de verdad son de la clase positiva, la fracción que el modelo detectó: VP / (VP + FN). En inglés, <em>recall</em>; algunas fuentes lo traducen como «recuperación» o «sensibilidad».</dd>
+    <dt>Sobreajuste</dt><dd>Cuando un modelo se ajusta tanto a los ejemplos de entrenamiento (incluido su ruido) que deja de generalizar bien a datos nuevos. Se nota en una brecha grande entre el error de entrenamiento y el de validación. En inglés, <em>overfitting</em>.</dd>
+    <dt>Fuga de datos</dt><dd>Cuando información que no estará disponible al predecir se cuela en el entrenamiento o en la evaluación, e infla la nota del modelo de forma artificial. En inglés, <em>data leakage</em>.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación: te sirven para repasar los algoritmos con otra voz y otros ejemplos, no como primera explicación.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=A6FiCDoz8_4" data-canal="Dot CSV" data-idioma="es" data-nivel="intro" data-duracion="11 min" data-por-que="La misma idea de la bola bajando por el cuenco que viste en la cápsula de descenso de gradiente, con otra demostración visual.">¿Qué es el Descenso del Gradiente? Algoritmo de Inteligencia Artificial</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=eOhTuHAU5Uk" data-canal="The Glass Box AI Project" data-idioma="es" data-nivel="intro" data-duracion="10 min" data-por-que="kNN explicado desde cero, con el mismo «dime con quién andas» de la sección de clasificar.">KNN ALGORITMO en Español (K VECINOS MÁS CERCANOS) de CLASIFICACIÓN SUPERVISADA</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=hBssDI6LNKQ" data-canal="Álvaro Ramos" data-idioma="es" data-nivel="intro" data-duracion="3 min" data-por-que="Un repaso muy rápido de cómo un árbol de decisión aprende sus preguntas, para fijar la idea antes o después de programar mejorCorte.">De 0 a experto: entiende los árboles de decisión en 3 minutos</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=mICySHB0fh4" data-canal="Codigo Maquina" data-idioma="es" data-nivel="profundo" data-duracion="18 min" data-por-que="k-means con scikit-learn de verdad, incluido el método del codo para elegir k, complemento directo de la sección de herramientas.">K-means (o K-medias) para detección de Clusters: Algoritmo e implementación con Python</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://scikit-learn.org/stable/getting_started.html">Getting Started (scikit-learn)</a><p>La guía oficial: <code>fit</code>, <code>predict</code>, <code>Pipeline</code> y <code>GridSearchCV</code> en pocos minutos, directo de la fuente que usarás en tu computadora.</p></li>
+    <li><a href="https://mlu-explain.github.io/precision-recall/">Precision and Recall (MLU-Explain, Amazon)</a><p>Un explicador visual e interactivo: mueve el umbral tú misma y mira cómo cambian la precisión y la exhaustividad a la vez. En inglés.</p></li>
+    <li><a href="https://mlu-explain.github.io/train-test-validation/">Train, Test, and Validation Sets (MLU-Explain, Amazon)</a><p>Por qué se dividen los datos en tres partes, con una animación que muestra qué pasa si miras la prueba demasiadas veces. En inglés.</p></li>
+    <li><a href="https://www.naftaliharris.com/blog/visualizing-k-means-clustering/">Visualizing K-Means Clustering (Naftali Harris)</a><p>Elige tus propios puntos y mira k-means converger paso a paso, con distintos puntos de partida. En inglés.</p></li>
+    <li><a href="https://depts.washington.edu/acelab/proj/dollar/index.html">$1 Unistroke Recognizer (Universidad de Washington)</a><p>La página original del reconocedor en el que se basa el proyecto «Runas», con el artículo, el código de referencia y una demo para probar con el ratón.</p></li>
+    <li><a href="https://docs.astral.sh/uv/guides/integration/jupyter/">Using uv with Jupyter (documentación de uv)</a><p>La guía oficial para abrir cuadernos Jupyter desde un proyecto de uv, tal como lo harás en la sección de herramientas.</p></li>
+  </ul>
 </section>

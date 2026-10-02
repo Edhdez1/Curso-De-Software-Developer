@@ -193,6 +193,11 @@ JavaScript (se ejecuta en un Web Worker, sin DOM):
   rompe antes de terminar o el nombre no existe, `expuesto.aEstrella` vale `undefined`: devuelve un mensaje que lo diga
   («No encuentro la función aEstrella: ¿se llama así y el programa terminó sin errores?»). No hace falta que la persona
   escriba nada especial.
+- La verificación de un taller JS (no web) es **síncrona**: no soporta que devuelva una Promise. Si necesitas probar una
+  función `async` de la persona (por ejemplo, con reintentos o una demora simulada), no esperes su resultado desde la
+  verificación; haz que el propio código del taller (que sí corre dentro de un IIFE `async` con `await` de nivel
+  superior) ejecute los casos de prueba y deje el resultado ya resuelto en una variable de nivel superior
+  (`var resultados = …`), y pruébala con `data-exponer="resultados"` en vez de con la función async directamente.
 - Hay `console.log/info/dir/error/warn/table/group/groupEnd/count/time/timeEnd/assert/trace`, `setTimeout`, promesas y `await` de nivel superior. No hay `document`, `prompt` ni `alert` útiles.
 - `fetch` a otros sitios **no funciona en la versión publicada** del curso (el visor bloquea las peticiones
   externas). En talleres, simula la red con una función que devuelve una promesa (`setTimeout` + datos de ejemplo)

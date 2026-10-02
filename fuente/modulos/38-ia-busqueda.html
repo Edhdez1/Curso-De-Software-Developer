@@ -2900,7 +2900,8 @@ console.log("MRV + forward checking:", backtrackingMRV(t2), "colocaciones");</te
     <script type="text/plain" class="taller-verificar">
 var ec = expuesto.elegirCelda, mrv = expuesto.backtrackingMRV, ing = expuesto.backtrackingIngenuo;
 if (typeof ec !== "function" || typeof mrv !== "function") return "No encuentro elegirCelda y backtrackingMRV: ¿se llaman así y el programa terminó sin errores?";
-var tablero = new Array(81).fill(0);
+var tablero = new Array(81).fill(1);   // todas "llenas" salvo las tres de prueba
+tablero[10] = 0; tablero[40] = 0; tablero[60] = 0;
 var dominios = new Array(81).fill(null);
 dominios[10] = [3, 7];
 dominios[40] = [9];
@@ -3194,3 +3195,906 @@ print(p.getSolution())</code></pre>
     <p><strong>Olvidar que «no hay solución» es una respuesta válida.</strong> Un generador de mapas con 3 colores para Sudamérica no tiene ningún error: simplemente no existe una solución, y el código debe decirlo en vez de colgarse o devolver cualquier cosa.</p>
   </aside>
 </section>
+
+<section id="optimizar" data-parada="Optimizar">
+  <h2>Optimizar: búsqueda local, recocido simulado y algoritmos genéticos</h2>
+  <p>A veces ni el camino importa (como en la búsqueda) ni hace falta una asignación perfecta que cumpla todo (como en un CSP): basta con encontrar algo <strong>muy bueno</strong>, y el espacio de posibilidades es demasiado grande para mirarlo entero. ¿Qué ruta recorre 25 paradas de reparto en el menor tiempo? Hay más de 300 cuatrillones de órdenes posibles (24! ≈ 6,2 × 10<sup>23</sup>): ni A* ni backtracking la resuelven mirando todas. Esta sección trata esa situación: cuando no puedes revisarlo todo, pero puedes <strong>mejorar poco a poco</strong> lo que ya tienes.</p>
+
+  <h3>Función objetivo y el paisaje de soluciones</h3>
+  <p>Para mejorar algo hace falta medirlo. La <strong>función objetivo</strong> (o <strong>función de aptitud</strong>, <em>fitness</em>) asigna un número a cada solución posible: cuanto más alto (o más bajo, si se minimiza un costo), mejor. Imagina todas las soluciones posibles como puntos de un paisaje, y la aptitud como la altura de cada punto: hay <strong>máximos locales</strong> (colinas desde las que ya no se puede subir más moviéndose un poco, pero no son el punto más alto de todo el paisaje), <strong>mesetas</strong> (zonas planas donde moverse no cambia nada) y <strong>crestas</strong> (subidas estrechas, fáciles de perder). El reto de optimizar es moverse por este paisaje sin verlo entero.</p>
+
+  <h3>Ascenso de colinas</h3>
+  <p>El algoritmo más simple es el <strong>ascenso de colinas</strong> (<em>hill climbing</em>): parte de una solución cualquiera, mira soluciones «vecinas» (una pequeña modificación de la actual) y se mueve a la mejor vecina que encuentre. Repite hasta que ninguna vecina mejora lo que ya tiene. Es rápido y fácil de programar, pero se queda atrapado en el primer máximo local que encuentra, aunque sea mucho peor que el máximo global. Una mejora barata son los <strong>reinicios aleatorios</strong>: repetir el ascenso muchas veces desde puntos de partida distintos y quedarse con el mejor resultado de todos.</p>
+
+  <h3>Recocido simulado: a veces aceptar algo peor</h3>
+  <p>El <strong>recocido simulado</strong> (<em>simulated annealing</em>) toma su nombre de la metalurgia: al enfriar un metal muy despacio después de calentarlo, sus átomos tienen tiempo de acomodarse en una estructura más estable. El algoritmo imita esa idea con una <strong>temperatura</strong> que empieza alta y baja con el tiempo:</p>
+  <ul>
+    <li>En cada paso, genera una solución vecina, igual que el ascenso de colinas.</li>
+    <li>Si es mejor, la acepta siempre.</li>
+    <li>Si es <strong>peor</strong>, la acepta con una probabilidad que depende de cuánto peor es (Δ, la diferencia) y de la temperatura actual (<code>T</code>): <code>probabilidad = Math.exp(-Δ / T)</code>. <code>Math.exp</code> es la función exponencial: cuanto más grande el número que recibe (aquí, más negativo es <code>-Δ/T</code>), más chica es la probabilidad.</li>
+  </ul>
+  <p>Al principio, con <code>T</code> alta, casi cualquier solución peor se acepta: el algoritmo explora mucho, como si saltara libremente por el paisaje. A medida que <code>T</code> baja, acepta cada vez menos soluciones peores, hasta comportarse casi como el ascenso de colinas. Ese «casi cualquier cosa al principio, cada vez más estricto después» es lo que le permite escapar de máximos locales que atraparían al ascenso de colinas puro.</p>
+  <figure class="capsula" data-titulo="El paisaje del recocido">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 280" role="img" aria-label="Animación: una curva con tres picos de distinta altura, el del medio el más bajo, el de la derecha el más alto (el óptimo). Una bola empieza en la ladera izquierda. El ascenso de colinas la sube directo al primer pico y se detiene ahí, atrapada. El recocido, con temperatura alta al principio, la hace saltar varias veces entre picos, incluso bajando; al enfriarse, los saltos se acortan y termina asentada en el pico más alto, a la derecha.">
+        <path class="d-linea" d="M20 220 Q90 60 160 110 T 300 230 Q 380 80 460 40 T 620 130 Q 660 170 700 220" fill="none" stroke-width="3"/>
+        <g class="d-peq d-tenue" text-anchor="middle">
+          <text x="160" y="96">pico 1</text>
+          <text x="460" y="26">pico 2 (óptimo)</text>
+          <text x="620" y="116">pico 3</text>
+        </g>
+        <circle class="d-l1" cx="160" cy="110" r="5"/>
+        <circle class="d-l1" cx="460" cy="40" r="5"/>
+        <circle class="d-l1" cx="620" cy="130" r="5"/>
+        <circle class="d-acento" r="13" cx="40" cy="205" data-mover="1:translate(0px,0px); 2:translate(120px,-95px); 3:translate(140px,110px); 4:translate(300px,-170px); 5:translate(420px,-155px); 6:translate(420px,-170px)"/>
+        <text class="d-rotulo" x="700" y="30" text-anchor="end" data-texto="1:T alta; 2:T alta; 3:T media; 4:T media; 5:T baja; 6:óptimo">T alta</text>
+        <g class="d-peq" data-pasos="2-" text-anchor="middle">
+          <text x="360" y="260" data-texto="2:sube al pico 1 y se queda, atrapado (solo ascenso de colinas); 3:con T alta, el recocido a veces acepta bajar: escapa del pico 1; 4:sigue explorando, incluso pasando por el valle; 5:T más baja: ya casi no acepta bajar, solo sube; 6:terminó asentado en el pico más alto">sube al pico 1 y se queda, atrapado (solo ascenso de colinas)</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Un paisaje de aptitud con tres picos. La bola representa la solución actual, en una ladera baja.</li>
+        <li data-duracion="6">Ascenso de colinas puro: sube siempre hacia arriba. Llega al pico 1 y se detiene ahí, aunque haya picos mejores: ninguna vecina inmediata lo mejora.</li>
+        <li data-duracion="6">El recocido simulado, con la temperatura todavía alta, acepta a veces bajar. Eso le permite salir del pico 1 y cruzar hacia otra zona.</li>
+        <li data-duracion="6">Sigue moviéndose con libertad, incluso cruzando el valle entre picos.</li>
+        <li data-duracion="6">La temperatura bajó: ahora casi no acepta soluciones peores, y se comporta casi como un ascenso de colinas normal otra vez.</li>
+        <li data-duracion="6">Terminó asentado en el pico 2, el más alto: el que tenía la mejor aptitud de los tres.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Pruébalo: la ruta del repartidor</h3>
+  <p>El problema de encontrar la ruta más corta que visita un conjunto de puntos y vuelve al inicio se llama <strong>problema del viajante</strong> (<em>traveling salesman problem</em>, TSP). Con 25 puntos, no hay forma de probarlos todos. La preparación trae 25 puntos generados con <code>crearAzar</code> (<a href="18-matematicas.html#azar">Estación 18</a>) y las funciones <code>distancia</code> y <code>longitud</code> de una ruta. Tú escribes dos piezas: <code>vecino(ruta, azar)</code>, que genera una ruta vecina con un movimiento <strong>2-opt</strong> (invierte un tramo de la ruta: toma dos posiciones y da vuelta todo lo que hay entre ellas), y <code>aceptar(delta, temperatura, azar)</code>, el criterio del recocido. <strong>Predice</strong>: ¿cuánto crees que se acortará la ruta inicial (que visita los puntos en el orden en que se generaron) después de 20 000 pasos?</p>
+  <div class="taller" id="taller-repartidor" data-titulo="La ruta del repartidor" data-exponer="vecino, aceptar, recocido" data-tiempo="8">
+    <script type="text/plain" class="taller-preparacion">
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function crearPuntos(n, azar) {
+  const pts = [];
+  for (let i = 0; i < n; i++) pts.push([Math.floor(azar() * 400), Math.floor(azar() * 300)]);
+  return pts;
+}
+function distancia(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]); }
+function longitud(puntos, ruta) {
+  let total = 0;
+  for (let i = 0; i < ruta.length; i++) total += distancia(puntos[ruta[i]], puntos[ruta[(i + 1) % ruta.length]]);
+  return total;
+}
+    </script>
+    <textarea class="taller-codigo">const PUNTOS = crearPuntos(25, crearAzar(1));
+
+// Completa: una ruta vecina. Elige dos posiciones al azar (i, j) en la ruta
+// e invierte el tramo entre ellas (el movimiento "2-opt"). No modifiques
+// "ruta": devuelve un array nuevo.
+function vecino(ruta, azar) {
+  return ruta.slice();   // de momento, "vecino" es la misma ruta: nunca cambia nada
+}
+
+// Completa: ¿se acepta una ruta con esta diferencia de longitud (delta) a esta
+// temperatura? Si delta < 0 (mejora), acepta siempre. Si no, acepta con
+// probabilidad Math.exp(-delta / temperatura).
+function aceptar(delta, temperatura, azar) {
+  return delta < 0;   // de momento, solo acepta si mejora: es un ascenso de colinas
+}
+
+function recocido(puntos, pasos, azar) {
+  let ruta = puntos.map((_, i) => i);
+  let actual = longitud(puntos, ruta);
+  let mejor = ruta.slice(), mejorLongitud = actual;
+  let temperatura = 100;
+  for (let paso = 0; paso < pasos; paso++) {
+    const candidata = vecino(ruta, azar);
+    const delta = longitud(puntos, candidata) - actual;
+    if (aceptar(delta, temperatura, azar)) {
+      ruta = candidata;
+      actual += delta;
+      if (actual < mejorLongitud) { mejorLongitud = actual; mejor = ruta.slice(); }
+    }
+    temperatura *= 0.9995;
+  }
+  return { ruta: mejor, longitud: mejorLongitud };
+}
+
+const inicial = longitud(PUNTOS, PUNTOS.map((_, i) => i));
+const resultado = recocido(PUNTOS, 20000, crearAzar(1001));
+console.log("Longitud inicial:", Math.round(inicial));
+console.log("Longitud final:  ", Math.round(resultado.longitud));
+console.log("Mejora:", Math.round((1 - resultado.longitud / inicial) * 100) + "%");</textarea>
+    <script type="text/plain" class="taller-verificar">
+var vec = expuesto.vecino, acep = expuesto.aceptar, rec = expuesto.recocido;
+if (typeof vec !== "function" || typeof acep !== "function" || typeof rec !== "function") return "No encuentro vecino, aceptar y recocido: ¿se llaman así y el programa terminó sin errores?";
+if (acep(-5, 50, function () { return 0.999; }) !== true) return "aceptar debe devolver true siempre que delta sea negativo (la ruta mejora).";
+var siempreAlto = function () { return 0.999; };
+if (acep(1000, 0.001, siempreAlto) !== false) return "Con una temperatura casi en 0 y un delta grande, aceptar casi nunca debería aceptar empeorar (Math.exp(-1000/0.001) es prácticamente 0).";
+function crearAzar(semilla) { return function () { semilla = (semilla + 0x6D2B79F5) | 0; var t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function crearPuntos(n, azar) { var pts = []; for (var i = 0; i < n; i++) pts.push([Math.floor(azar() * 400), Math.floor(azar() * 300)]); return pts; }
+function distancia(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]); }
+function longitud(puntos, ruta) { var total = 0; for (var i = 0; i < ruta.length; i++) total += distancia(puntos[ruta[i]], puntos[ruta[(i + 1) % ruta.length]]); return total; }
+var puntos = crearPuntos(25, crearAzar(1));
+var inicial = longitud(puntos, puntos.map(function (_, i) { return i; }));
+var r = rec(puntos, 20000, crearAzar(1001));
+if (!Array.isArray(r.ruta) || r.ruta.length !== 25) return "El resultado debería traer una ruta con los 25 puntos.";
+var vistos = new Set(r.ruta);
+if (vistos.size !== 25) return "La ruta final repite o se salta algún punto: no es una permutación válida de los 25.";
+if (r.longitud >= inicial * 0.45) return "Con 20 000 pasos, la ruta debería acortarse al menos un 55 % (de " + Math.round(inicial) + " a menos de " + Math.round(inicial * 0.45) + ") y quedó en " + Math.round(r.longitud) + ".";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">const PUNTOS = crearPuntos(25, crearAzar(1));
+
+function vecino(ruta, azar) {
+  const n = ruta.length;
+  let i = Math.floor(azar() * n), j = Math.floor(azar() * n);
+  if (i &gt; j) [i, j] = [j, i];
+  if (i === j) j = (j + 1) % n;
+  const nueva = ruta.slice();
+  let a = i, b = j;
+  while (a &lt; b) { [nueva[a], nueva[b]] = [nueva[b], nueva[a]]; a++; b--; }
+  return nueva;
+}
+
+function aceptar(delta, temperatura, azar) {
+  if (delta &lt; 0) return true;
+  return azar() &lt; Math.exp(-delta / temperatura);
+}
+
+function recocido(puntos, pasos, azar) {
+  let ruta = puntos.map((_, i) =&gt; i);
+  let actual = longitud(puntos, ruta);
+  let mejor = ruta.slice(), mejorLongitud = actual;
+  let temperatura = 100;
+  for (let paso = 0; paso &lt; pasos; paso++) {
+    const candidata = vecino(ruta, azar);
+    const delta = longitud(puntos, candidata) - actual;
+    if (aceptar(delta, temperatura, azar)) {
+      ruta = candidata;
+      actual += delta;
+      if (actual &lt; mejorLongitud) { mejorLongitud = actual; mejor = ruta.slice(); }
+    }
+    temperatura *= 0.9995;
+  }
+  return { ruta: mejor, longitud: mejorLongitud };
+}
+
+const inicial = longitud(PUNTOS, PUNTOS.map((_, i) =&gt; i));
+const resultado = recocido(PUNTOS, 20000, crearAzar(1001));
+console.log("Longitud inicial:", Math.round(inicial));
+console.log("Longitud final:  ", Math.round(resultado.longitud));
+console.log("Mejora:", Math.round((1 - resultado.longitud / inicial) * 100) + "%");</code></pre>
+    <p>Con la implementación de referencia, la ruta baja de unos 4 400 píxeles de longitud a unos 1 400: una mejora de alrededor del 65 %. <code>i > j</code> se intercambia al principio para que el tramo a invertir siempre vaya de menor a mayor índice.</p>
+  </details>
+  <p><strong>Modifica</strong>: cambia el enfriamiento de <code>0.9995</code> a <code>0.98</code> (se enfría mucho más rápido). ¿La ruta final es tan buena? Con tan poco tiempo a temperatura alta, el recocido casi no explora y se parece más al ascenso de colinas, atrapado en el primer mínimo que encuentra.</p>
+
+  <h3>Algoritmos genéticos</h3>
+  <p>Los <strong>algoritmos genéticos</strong> optimizan con una idea distinta: en vez de mejorar una sola solución paso a paso, mantienen una <strong>población</strong> entera y la hacen evolucionar, imitando la selección natural a muy grandes rasgos.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Término</th><th scope="col">Qué es</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Genoma</strong></td><td>La forma en que se codifica una solución: un texto, una lista de números, los pesos de una evaluación.</td></tr>
+        <tr><td><strong>Aptitud</strong></td><td>Qué tan buena es esa solución (la misma idea que la función objetivo).</td></tr>
+        <tr><td><strong>Selección por torneo</strong></td><td>Para elegir quién se reproduce, se toman unos pocos individuos al azar y gana el de mejor aptitud.</td></tr>
+        <tr><td><strong>Cruce</strong> (<em>crossover</em>)</td><td>Combina el genoma de dos elegidos: en el cruce de un punto, corta a ambos en el mismo lugar y pega la primera mitad de uno con la segunda del otro.</td></tr>
+        <tr><td><strong>Mutación</strong></td><td>Cambia al azar una parte pequeña del genoma de un hijo, con una probabilidad baja. Sin mutación, la población nunca prueba nada que no estuviera ya en algún ancestro.</td></tr>
+        <tr><td><strong>Elitismo</strong></td><td>El mejor individuo de cada generación pasa directo a la siguiente, sin cruzarse ni mutar, para no perderlo por accidente.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Con estas piezas, una generación se arma así: evalúa la aptitud de todos, copia al mejor sin cambios (elitismo) y, hasta completar la nueva población, elige dos padres por torneo, los cruza y muta al hijo. La <strong>tasa de mutación</strong> es delicada: muy baja, y la población pierde diversidad y se estanca (converge antes de encontrar algo bueno); muy alta, y los hijos buenos se destruyen casi tan rápido como aparecen, y la búsqueda se vuelve casi al azar. Lo verás de primera mano en la práctica, con un algoritmo genético que evoluciona un texto letra por letra.</p>
+
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>Un algoritmo genético puede ajustar los pesos de una función de evaluación (como los <code>5</code>, <code>2</code>, <code>−4</code> y <code>3</code> del Conecta 4 en <a href="#minimax">Minimax y alfa-beta</a>): se generan poblaciones de conjuntos de pesos distintos, se los hace jugar entre sí y se usa el porcentaje de victorias como aptitud. También sirve para equilibrar un juego, probando combinaciones de parámetros hasta que ninguna estrategia sea claramente dominante (capítulo 17 de <a href="http://www.gameaipro.com/GameAIProOnlineEdition2021/GameAIProOnlineEdition2021_Chapter17_Game_Balancing_using_Genetic_Algorithms_to_Generate_Player_Agents.pdf">Game AI Pro Online Edition 2021</a>), o para generar niveles o criaturas, como en los experimentos de «criaturas que evolucionan» del libro <a href="https://natureofcode.com/genetic-algorithms/">The Nature of Code</a>. Ajustar los <em>pesos de una red neuronal completa</em> con un algoritmo genético se llama neuroevolución, y se trata en la <a href="40-redes-neuronales.html#neuroevolucion">Estación 40</a>. Un algoritmo genético no «aprende de datos» como los de la <a href="39-aprendizaje-automatico.html">Estación 39</a>: no generaliza a partir de ejemplos, solo busca y mejora dentro del espacio de soluciones que tú definiste.</p>
+  </aside>
+
+  <h3>El hackeo de la aptitud</h3>
+  <p>Un algoritmo genético (y el recocido, y en general cualquier optimizador) hace exactamente lo que la función de aptitud premia, no lo que tú <em>querías</em> que premiara. Si esos dos objetivos no coinciden del todo, el optimizador encuentra el hueco. A este fenómeno se le llama <strong>hackeo de la aptitud</strong> o <strong>juego de la especificación</strong> (<em>specification gaming</em>), y hay ejemplos documentados en investigación real de inteligencia artificial: DeepMind recopiló decenas de casos, como un agente que entrenaba para completar un circuito de barcos y aprendió a dar vueltas en un círculo chocando contra los mismos objetos una y otra vez para juntar puntos, en lugar de terminar la carrera, porque la función de puntaje premiaba los objetos recogidos, no llegar a la meta.</p>
+  <p>En un algoritmo genético para un juego, el hackeo aparece todo el tiempo: una aptitud que premia «sobrevivir mucho tiempo» puede producir una criatura que se queda quieta en una esquina seguro en lugar de explorar; una que premia «avanzar rápido» puede producir una que se cae constantemente hacia adelante sin controlarse. La única defensa es <strong>vigilar</strong>: mirar de verdad qué hace el mejor individuo de cada tanda (no solo su número de aptitud) y ajustar la función cuando el comportamiento no es el que buscabas.</p>
+
+  <aside class="senal error" data-titulo="Errores típicos al optimizar">
+    <p><strong>Aptitud mal definida.</strong> Si la función de aptitud no refleja de verdad lo que quieres, el optimizador «hace trampa» con total eficiencia: hace exactamente lo que se le pide, no lo que se quería decir.</p>
+    <p><strong>Población pequeña: convergencia prematura.</strong> Con pocos individuos, la población se vuelve casi idéntica en pocas generaciones y deja de explorar, atrapada en un máximo local.</p>
+    <p><strong>Aptitud cara de evaluar.</strong> Si cada individuo es una simulación completa (una partida entera, un nivel recorrido), evaluar una población grande puede ser el verdadero cuello de botella, más que el algoritmo en sí.</p>
+    <p><strong>No fijar la semilla.</strong> Sin un generador reproducible (<code>crearAzar</code>), cada ejecución da un resultado distinto y es imposible comparar si un cambio realmente mejoró algo.</p>
+  </aside>
+</section>
+
+<section id="elegir" data-parada="Elegir la técnica">
+  <h2>Elegir la técnica: juegos, apps y límites</h2>
+  <p>Has visto siete formas distintas de resolver problemas: búsqueda a ciegas, con heurística, reglas, planes, minimax, MCTS, restricciones y optimización. Ante un problema nuevo, la primera pregunta nunca es «¿cómo lo programo?», sino «¿qué tipo de problema es?». Las respuestas a unas pocas preguntas te llevan casi siempre a la técnica correcta.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 420" role="img" aria-label="Árbol de decisión. Primera pregunta: ¿hay un rival que también decide? Si sí: ¿el árbol de jugadas es manejable? Si sí, minimax o alfa-beta (ajedrez, Conecta 4). Si no, MCTS (Go, juegos con muchas unidades). Si no hay rival: ¿buscas una secuencia de pasos hasta una meta? Si sí: ¿tienes una heurística que estima lo que falta? Si sí, A estrella o GOAP (rutas, planes, puzles). Si no, búsqueda en anchura o costo uniforme. Si no buscas una secuencia: ¿necesitas que se cumplan todas las reglas a la vez? Si sí, backtracking con MRV o un CSP (sudoku, horarios, niveles). Si no, y basta con algo muy bueno: búsqueda local, recocido o un algoritmo genético (rutas, equilibrar un juego).">
+      <g class="d-mono d-peq" text-anchor="middle">
+        <rect class="d-caja" x="280" y="10" width="160" height="40" rx="8"/>
+        <text x="360" y="35">¿Hay un rival?</text>
+        <path class="d-linea" d="M360 50V74M360 74L180 110M360 74L540 110"/>
+        <text class="d-peq d-tenue" x="250" y="90">sí</text><text class="d-peq d-tenue" x="470" y="90">no</text>
+
+        <rect class="d-caja" x="100" y="110" width="160" height="40" rx="8"/>
+        <text x="180" y="135">¿Árbol manejable?</text>
+        <path class="d-linea" d="M180 150V174M180 174L80 210M180 174L280 210"/>
+        <text class="d-peq d-tenue" x="100" y="190">sí</text><text class="d-peq d-tenue" x="255" y="190">no</text>
+        <rect class="d-ok" x="10" y="210" width="140" height="46" rx="8"/>
+        <text class="d-sobre-ok" x="80" y="230">Minimax /</text><text class="d-sobre-ok" x="80" y="246">alfa-beta</text>
+        <rect class="d-ok" x="210" y="210" width="140" height="46" rx="8"/>
+        <text class="d-sobre-ok" x="280" y="230">MCTS</text>
+        <text class="d-peq d-tenue" x="80" y="272" text-anchor="middle">ajedrez, Conecta 4</text>
+        <text class="d-peq d-tenue" x="280" y="272" text-anchor="middle">Go, muchas unidades</text>
+
+        <rect class="d-caja" x="460" y="110" width="170" height="40" rx="8"/>
+        <text x="545" y="130">¿Secuencia de</text><text x="545" y="145">pasos hasta una meta?</text>
+        <path class="d-linea" d="M545 150V174M545 174L460 210M545 174L560 210"/>
+        <text class="d-peq d-tenue" x="470" y="190">sí</text><text class="d-peq d-tenue" x="610" y="190">no</text>
+
+        <rect class="d-caja" x="380" y="210" width="150" height="40" rx="8"/>
+        <text x="455" y="230">¿Heurística</text><text x="455" y="244">que ayuda?</text>
+        <path class="d-linea" d="M455 250V274M455 274L400 300M455 274L520 300"/>
+        <text class="d-peq d-tenue" x="400" y="290">sí</text><text class="d-peq d-tenue" x="540" y="290">no</text>
+        <rect class="d-ok" x="330" y="300" width="140" height="46" rx="8"/>
+        <text class="d-sobre-ok" x="400" y="320">A* / GOAP</text>
+        <text class="d-peq d-tenue" x="400" y="362" text-anchor="middle">rutas, planes, puzles</text>
+        <rect class="d-ok" x="490" y="300" width="150" height="46" rx="8"/>
+        <text class="d-sobre-ok" x="565" y="320">BFS / costo</text><text class="d-sobre-ok" x="565" y="336">uniforme</text>
+
+        <rect class="d-caja" x="560" y="210" width="150" height="40" rx="8"/>
+        <text x="635" y="226">¿Cumplir reglas</text><text x="635" y="240">a la vez?</text>
+        <path class="d-linea" d="M635 250V274M635 274L600 300M635 274L690 300"/>
+        <text class="d-peq d-tenue" x="600" y="290">sí</text><text class="d-peq d-tenue" x="705" y="290">no</text>
+        <rect class="d-ok" x="560" y="300" width="130" height="46" rx="8" data-clases="1:"/>
+      </g>
+      <g class="d-mono d-peq" text-anchor="middle">
+        <text x="625" y="320">CSP</text>
+        <text class="d-sobre-ok" x="625" y="320">CSP</text>
+        <text class="d-peq d-tenue" x="625" y="362">sudoku, horarios, niveles</text>
+        <text x="625" y="394">↓ si solo quieres «muy bueno»:</text>
+        <rect class="d-ok" x="540" y="396" width="160" height="20" rx="6"/>
+        <text class="d-sobre-ok d-peq" x="620" y="410">local / recocido / genético</text>
+      </g>
+    </svg>
+    <figcaption>Un árbol de decisión para elegir técnica de búsqueda. No cubre el aprendizaje automático ni las redes neuronales: eso viene en las próximas estaciones.</figcaption>
+  </figure>
+
+  <h3>Casos reales</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Dónde</th><th scope="col">Técnica</th></tr></thead>
+      <tbody>
+        <tr><td>Stockfish (ajedrez)</td><td>Alfa-beta muy refinado, con la red NNUE para evaluar posiciones.</td></tr>
+        <tr><td>Leela Chess Zero</td><td>MCTS guiado por una red neuronal, en vez de una función de evaluación escrita a mano.</td></tr>
+        <tr><td><em>F.E.A.R.</em> (2005)</td><td>GOAP: cada soldado planifica su secuencia de acciones con A* sobre hechos del mundo.</td></tr>
+        <tr><td>Puzles con botón de «pista»</td><td>Un solucionador (A* o backtracking) corre en segundo plano y ofrece el siguiente paso.</td></tr>
+        <tr><td>Generadores de niveles o mapas</td><td>CSP con propagación (WFC) o generar y probar con un solucionador.</td></tr>
+        <tr><td>Rutas de reparto, turnos de personal</td><td>CP-SAT u otros resolutores de restricciones y optimización (OR-Tools).</td></tr>
+        <tr><td>Planificador de estudio o de turnos en una app</td><td>CSP con restricciones blandas: cada materia tiene horas mínimas, nadie estudia dos cosas a la vez.</td></tr>
+        <tr><td>Configurador de un producto (una app de compras)</td><td>CSP: las opciones elegidas deben ser compatibles entre sí.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>El presupuesto de un fotograma</h3>
+  <p>En un juego a 60 fotogramas por segundo, cada fotograma dura 16,6 milisegundos (el bucle de la <a href="34-videojuegos.html#bucle">Estación 34</a>), y la IA es solo una parte de ese tiempo: compite con el renderizado, la física y el sonido. Tres estrategias para que la búsqueda no congele el juego:</p>
+  <ul>
+    <li><strong>Moverla a otro hilo</strong>: un Web Worker (<a href="22-ejecucion.html#workers">Estación 22</a>) para que la búsqueda no bloquee la página mientras calcula.</li>
+    <li><strong>Repartirla entre fotogramas</strong>: avanzar unos pocos nodos por fotograma en vez de todos de una vez, como la profundización iterativa con reloj que programaste en minimax.</li>
+    <li><strong>Hacerla «anytime»</strong>: MCTS y la profundización iterativa siempre tienen una respuesta lista, mejor cuanto más tiempo se les da; cortar cuando se acaba el presupuesto no deja al juego sin jugada.</li>
+  </ul>
+  <p>Una <strong>caché</strong> o una <strong>tabla de transposición</strong> (un <code>Map</code> con la clave del tablero, mencionado en <a href="#minimax">Minimax y alfa-beta</a>) evita recalcular lo mismo dos veces, algo frecuente cuando distintas secuencias de jugadas llegan a la misma posición.</p>
+
+  <h3>Probar la IA</h3>
+  <p>Una IA se prueba igual que cualquier otro código: con pruebas automáticas (<a href="26-testing.html#casos">Estación 26</a>) sobre posiciones concretas («desde aquí debe ganar en 1», «desde aquí debe bloquear») y con torneos entre versiones para medir si un cambio realmente mejora algo, como el del proyecto de esta estación. Fijar la semilla (<a href="18-matematicas.html#azar">Estación 18</a>) en todo lo que usa azar (MCTS, el recocido, los algoritmos genéticos) es lo que hace posible reproducir un resultado y comparar de verdad.</p>
+
+  <h3>IA divertida, no IA perfecta</h3>
+  <p>Una IA perfecta no siempre es la mejor IA para un juego. El tres en raya jugado a la perfección siempre termina en empate: divertido una vez, aburrido después. Minimax sin límites gana siempre que puede, lo que puede hacer que un juego se sienta injusto. Bajar la dificultad de forma creíble (limitar la profundidad, fallar con cierta probabilidad, elegir entre las <em>k</em> mejores jugadas en vez de siempre la mejor) ya lo viste como patrón <strong>Strategy</strong> (<a href="25-codigo-limpio.html#patrones">Estación 25</a>) en <a href="37-ia-personajes.html#director">el director de la Estación 37</a>: ahí se aplica igual a estas técnicas. Diseñar la dificultad es una decisión de diseño, no solo técnica: una IA legible y algo falible suele ser más divertida que una invencible.</p>
+
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>Los optimizadores que deciden sobre personas (quién recibe qué turno, qué ruta de reparto le toca a cada repartidor, a quién se le asigna cada tarea) no son neutrales solo porque sean matemáticos. Una función de aptitud que minimiza el costo total puede, sin que nadie lo pida, dejarle siempre los peores turnos a la misma persona porque «optimiza mejor» así. Igual que en <a href="#optimizar">el hackeo de la aptitud</a>, el optimizador hace lo que se le pide, no lo que es justo. Diseñar estos sistemas implica añadir restricciones explícitas de equidad (descansos mínimos, reparto parejo de los turnos buenos y malos), revisar lo que producen y poder explicar con qué criterio se decidió, no solo publicar el resultado.</p>
+  </aside>
+
+  <h3>Lo que viene después</h3>
+  <p>Todo lo de esta estación <strong>garantiza y explica</strong>: A* encuentra el camino más corto y puede probarlo; un sistema experto dice exactamente qué regla usó; un CSP te dice con certeza si no hay solución. Las próximas estaciones cambian de enfoque. El <strong>aprendizaje automático</strong> (<a href="39-aprendizaje-automatico.html">Estación 39</a>) y las <strong>redes neuronales</strong> (<a href="40-redes-neuronales.html">Estación 40</a>) no programan reglas: las extraen de datos, y <strong>generalizan</strong> a situaciones nuevas en lugar de garantizar nada. Un <strong>modelo de lenguaje</strong> (<a href="41-modelos-lenguaje.html">Estación 41</a>) tampoco garantiza que se cumplan tus restricciones, por más convincente que suene su respuesta. Un patrón que combina lo mejor de los dos mundos, y que usarás en la Estación 41, es que el modelo traduzca un pedido en lenguaje natural a un problema formal, y que un solucionador como los de esta estación lo resuelva y verifique la respuesta antes de mostrarla.</p>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul class="resumen">
+    <li>Un problema de búsqueda se modela con cinco piezas: estado inicial, <code>acciones</code>, <code>resultado</code>, <code>esMeta</code> y <code>costo</code>. Con esa interfaz común, el mismo código de frontera y alcanzados sirve para las jarras, el 8-puzzle o un plan de acciones.</li>
+    <li>BFS, DFS, profundidad iterativa y costo uniforme buscan «a ciegas»: solo cambia qué estructura de datos usa la frontera (cola, pila o cola de prioridad) y eso define si son completos, óptimos, y cuánto tiempo y memoria gastan.</li>
+    <li>Una heurística <code>h(n)</code> estima lo que falta. A* (<code>f = g + h</code>) es óptimo si <code>h</code> nunca sobreestima (es admisible); inventar heurísticas es relajar las reglas del problema.</li>
+    <li>Un sistema de reglas con encadenamiento hacia delante puede explicar su conclusión regla por regla; un planificador (GOAP) convierte un objetivo en una secuencia de acciones con precondiciones, efectos y costo, resuelto con A* sobre estados del mundo.</li>
+    <li>Minimax calcula el valor de un juego de suma cero con información perfecta; la poda alfa-beta da el mismo resultado mirando muchos menos nodos, y el orden de las jugadas decide cuánto se poda.</li>
+    <li>MCTS estima el valor de una jugada con partidas simuladas, concentrando el esfuerzo en lo prometedor con UCB1; no necesita una función de evaluación, solo saber jugar hasta el final.</li>
+    <li>Un CSP (variables, dominios, restricciones) se resuelve con backtracking; MRV (elegir primero la variable más restringida) y forward checking (propagar lo que acabas de decidir) reducen el trabajo en varios órdenes de magnitud.</li>
+    <li>Cuando ni el camino ni una asignación perfecta importan, el ascenso de colinas, el recocido simulado y los algoritmos genéticos buscan «algo muy bueno» en espacios demasiado grandes para revisar entero.</li>
+    <li>Un optimizador hace exactamente lo que su función de aptitud premia, no lo que querías decir: vigilarlo es la única defensa contra el hackeo de la aptitud.</li>
+    <li>Elegir la técnica depende de si hay un rival, si buscas una secuencia de pasos, si necesitas cumplir reglas a la vez o si basta con algo muy bueno; en un juego, además, hay que encajarla en el presupuesto de un fotograma.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Ocho ejercicios para fijar lo que acabas de aprender. Los dos primeros son guiados (casi todo escrito), dos son semiguiados y cuatro son retos con menos ayuda. Las soluciones completas están en cada «Ver una solución», pero vale más intentarlo primero.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-rio">
+    <h3>Lobo, cabra y col</h3>
+    <p>Un granjero tiene que cruzar un río en un bote donde solo caben él y una cosa más. Lleva un lobo, una cabra y una col. Si los deja solos sin él, el lobo se come a la cabra, o la cabra se come la col. El estado es <code>[granjero, lobo, cabra, col]</code>, con <code>0</code> para la orilla de salida y <code>1</code> para la de llegada. Completa <code>esSeguro(estado)</code> (ningún par peligroso se queda solo) y <code>acciones(estado)</code> (el granjero puede cruzar solo, o con lo que esté en su misma orilla). La búsqueda en anchura ya está cargada, igual que en <a href="#estados">Modelar un problema</a>.</p>
+    <div class="taller" id="taller-ej-rio" data-titulo="Lobo, cabra y col" data-exponer="esSeguro, acciones, resultado">
+      <script type="text/plain" class="taller-preparacion">
+function clave(estado) { return estado.join(","); }
+function reconstruir(vieneDe, k) {
+  const plan = [];
+  while (vieneDe.get(k) !== null) { const paso = vieneDe.get(k); plan.push(paso.accion); k = paso.desde; }
+  return plan.reverse();
+}
+function anchura(problema) {
+  const inicio = problema.inicial;
+  const vieneDe = new Map([[clave(inicio), null]]);
+  if (problema.esMeta(inicio)) return { plan: [], alcanzados: 1 };
+  const frontera = [inicio];
+  let cabeza = 0;
+  while (cabeza < frontera.length) {
+    const estado = frontera[cabeza++];
+    for (const accion of problema.acciones(estado)) {
+      const siguiente = problema.resultado(estado, accion);
+      if (!problema.esSeguro(siguiente)) continue;
+      const k = clave(siguiente);
+      if (vieneDe.has(k)) continue;
+      vieneDe.set(k, { desde: clave(estado), accion });
+      if (problema.esMeta(siguiente)) return { plan: reconstruir(vieneDe, k), alcanzados: vieneDe.size };
+      frontera.push(siguiente);
+    }
+  }
+  return { plan: null, alcanzados: vieneDe.size };
+}
+      </script>
+      <textarea class="taller-codigo">// estado = [granjero, lobo, cabra, col], cada uno 0 (orilla de salida) o 1 (llegada)
+
+// Completa: ¿es seguro este estado? No es seguro si el lobo y la cabra están
+// juntos SIN el granjero, o si la cabra y la col están juntas SIN el granjero.
+function esSeguro(estado) {
+  return true;   // de momento, todo se considera seguro: nada se vigila
+}
+
+// Completa: el granjero siempre puede cruzar "solo". Además puede cruzar con
+// "lobo", "cabra" o "col" si esa cosa está en su misma orilla (estado[1..3] === estado[0]).
+function acciones(estado) {
+  return ["solo"];   // de momento, solo puede cruzar solo
+}
+
+function resultado(estado, accion) {
+  const [g, lobo, cabra, col] = estado;
+  const ng = g === 0 ? 1 : 0;
+  return [
+    ng,
+    accion === "lobo" ? ng : lobo,
+    accion === "cabra" ? ng : cabra,
+    accion === "col" ? ng : col,
+  ];
+}
+
+const problema = {
+  inicial: [0, 0, 0, 0],
+  acciones,
+  resultado,
+  esSeguro,
+  esMeta: (e) => e.every((x) => x === 1),
+};
+
+const r = anchura(problema);
+console.log(r.plan ? `${r.plan.length} cruces: ${r.plan.join(", ")}` : "No hay plan");</textarea>
+      <script type="text/plain" class="taller-verificar">
+var es = expuesto.esSeguro, ac = expuesto.acciones, re = expuesto.resultado;
+if (typeof es !== "function" || typeof ac !== "function" || typeof re !== "function") return "No encuentro esSeguro, acciones y resultado: ¿se llaman así y el programa terminó sin errores?";
+if (es([0, 1, 1, 0]) !== false) return "esSeguro([0,1,1,0]) debería ser false: el lobo y la cabra están juntos (orilla 1) sin el granjero (orilla 0).";
+if (es([0, 0, 1, 1]) !== false) return "esSeguro([0,0,1,1]) debería ser false: la cabra y la col están juntas sin el granjero.";
+if (es([1, 1, 1, 0]) !== true) return "esSeguro([1,1,1,0]) debería ser true: el granjero está con el lobo y la cabra, así que nada pasa.";
+if (es([0, 1, 0, 1]) !== true) return "esSeguro([0,1,0,1]) debería ser true: el lobo y la col no son peligrosos entre sí.";
+var accionesVacio = ac([0, 0, 0, 0]);
+if (!Array.isArray(accionesVacio) || accionesVacio.indexOf("solo") === -1 || accionesVacio.indexOf("lobo") === -1 || accionesVacio.indexOf("cabra") === -1 || accionesVacio.indexOf("col") === -1) {
+  return "Desde [0,0,0,0] (todo en la orilla de salida), acciones debería incluir solo, lobo, cabra y col.";
+}
+var accionesCruzado = ac([1, 0, 1, 0]);
+if (accionesCruzado.indexOf("lobo") !== -1 || accionesCruzado.indexOf("col") !== -1) return "Desde [1,0,1,0], el granjero (orilla 1) no puede cruzar con el lobo o la col: están en la otra orilla (0).";
+function clave(e) { return e.join(","); }
+function anchura(problema) {
+  var vieneDe = new Map([[clave(problema.inicial), null]]);
+  if (problema.esMeta(problema.inicial)) return { plan: [] };
+  var frontera = [problema.inicial], cabeza = 0;
+  while (cabeza < frontera.length) {
+    var estado = frontera[cabeza++];
+    var accs = problema.acciones(estado);
+    for (var i = 0; i < accs.length; i++) {
+      var siguiente = problema.resultado(estado, accs[i]);
+      if (!problema.esSeguro(siguiente)) continue;
+      var k = clave(siguiente);
+      if (vieneDe.has(k)) continue;
+      vieneDe.set(k, { desde: clave(estado), accion: accs[i] });
+      if (problema.esMeta(siguiente)) {
+        var plan = [], kk = k;
+        while (vieneDe.get(kk) !== null) { var p = vieneDe.get(kk); plan.push(p.accion); kk = p.desde; }
+        return { plan: plan.reverse() };
+      }
+      frontera.push(siguiente);
+    }
+  }
+  return { plan: null };
+}
+var r = anchura({ inicial: [0, 0, 0, 0], acciones: ac, resultado: re, esSeguro: es, esMeta: function (e) { return e.every(function (x) { return x === 1; }); } });
+if (!r.plan) return "No se encontró ningún plan para cruzar los cuatro.";
+if (r.plan.length !== 7) return "El plan más corto debería tener 7 cruces y tiene " + r.plan.length + ".";
+var estado = [0, 0, 0, 0];
+for (var j = 0; j < r.plan.length; j++) {
+  estado = re(estado, r.plan[j]);
+  if (!es(estado)) return "Al simular el plan paso a paso, un estado intermedio no es seguro: " + JSON.stringify(estado);
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>esSeguro</code> no depende de dónde está el granjero más que para decidir si vigila. El peligro es «lobo y cabra en la misma orilla, y esa orilla no es la del granjero» (y lo mismo para cabra y col).</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>acciones</code>, compara <code>estado[0]</code> (dónde está el granjero) con <code>estado[1]</code>, <code>estado[2]</code> y <code>estado[3]</code>: si coinciden, esa cosa se puede llevar.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function esSeguro(estado) {
+  const [g, lobo, cabra, col] = estado;
+  if (lobo === cabra && g !== lobo) return false;
+  if (cabra === col && g !== cabra) return false;
+  return true;
+}
+
+function acciones(estado) {
+  const [g, lobo, cabra, col] = estado;
+  const r = ["solo"];
+  if (lobo === g) r.push("lobo");
+  if (cabra === g) r.push("cabra");
+  if (col === g) r.push("col");
+  return r;
+}
+
+function resultado(estado, accion) {
+  const [g, lobo, cabra, col] = estado;
+  const ng = g === 0 ? 1 : 0;
+  return [
+    ng,
+    accion === "lobo" ? ng : lobo,
+    accion === "cabra" ? ng : cabra,
+    accion === "col" ? ng : col,
+  ];
+}
+
+const problema = {
+  inicial: [0, 0, 0, 0],
+  acciones,
+  resultado,
+  esSeguro,
+  esMeta: (e) =&gt; e.every((x) =&gt; x === 1),
+};
+
+const r = anchura(problema);
+console.log(r.plan ? `${r.plan.length} cruces: ${r.plan.join(", ")}` : "No hay plan");</code></pre>
+      <p>El plan de 7 cruces: lleva la cabra, vuelve solo, lleva el lobo, trae de vuelta la cabra, lleva la col, vuelve solo, lleva la cabra. El truco siempre es el mismo: la cabra es la pieza «problemática» con las otras dos, así que cruza dos veces.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-tres-en-raya">
+    <h3>Tres en raya invencible</h3>
+    <p>Completa <code>minimax(tablero, turno)</code> para el tres en raya: recorre las jugadas libres, prueba cada una, llama a <code>minimax</code> con el turno cambiado, deshaz la jugada y quédate con el máximo si el turno es <code>"X"</code> o el mínimo si es <code>"O"</code>. Cada vez que entres a la función (antes de cualquier otra cosa) suma 1 a <code>nodosMinimax</code>. Después completa <code>alfaBeta</code> igual, pero cortando cuando <code>alfa &gt;= beta</code>.</p>
+    <div class="taller" id="taller-ej-tres-en-raya" data-titulo="Tres en raya invencible" data-exponer="minimax, alfaBeta, nodosMinimax, nodosAlfaBeta" data-tiempo="10">
+      <textarea class="taller-codigo">const LINEAS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function ganador(t) {
+  for (const [a, b, c] of LINEAS) if (t[a] !== " " && t[a] === t[b] && t[a] === t[c]) return t[a];
+  return t.includes(" ") ? null : "empate";
+}
+function libres(t) { const r = []; for (let i = 0; i < 9; i++) if (t[i] === " ") r.push(i); return r; }
+function otro(turno) { return turno === "X" ? "O" : "X"; }
+function utilidad(g) { return g === "X" ? 1 : g === "O" ? -1 : 0; }
+
+let nodosMinimax = 0;
+function minimax(tablero, turno) {
+  nodosMinimax++;
+  // Completa: caso base (ganador(tablero) !== null, devuelve utilidad) y
+  // caso recursivo (recorre libres(tablero), hacer/llamar/deshacer, máximo o mínimo).
+  return 0;
+}
+
+let nodosAlfaBeta = 0;
+function alfaBeta(tablero, turno, alfa, beta) {
+  nodosAlfaBeta++;
+  // Completa: igual que minimax, pero cortando el bucle cuando alfa >= beta.
+  return 0;
+}
+
+const vacio1 = Array(9).fill(" ");
+console.log("minimax:   valor =", minimax(vacio1, "X"), "| nodos =", nodosMinimax);
+const vacio2 = Array(9).fill(" ");
+console.log("alfa-beta: valor =", alfaBeta(vacio2, "X", -Infinity, Infinity), "| nodos =", nodosAlfaBeta);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var mm = expuesto.minimax, ab = expuesto.alfaBeta;
+if (typeof mm !== "function" || typeof ab !== "function") return "No encuentro minimax y alfaBeta: ¿se llaman así y el programa terminó sin errores?";
+var antesMM = expuesto.nodosMinimax || 0;
+var vacio1 = Array(9).fill(" ");
+var valorMM = mm(vacio1, "X");
+var nodosMM = (expuesto.nodosMinimax || 0) - antesMM;
+if (valorMM !== 0) return "minimax desde el tablero vacío debería valer 0 (empate con juego perfecto) y da " + valorMM + ".";
+if (nodosMM < 500000) return "minimax sin poda debería visitar más de 500 000 nodos desde el tablero vacío y visitó " + nodosMM + ". ¿Recorres TODAS las jugadas libres en cada nodo?";
+var antesAB = expuesto.nodosAlfaBeta || 0;
+var vacio2 = Array(9).fill(" ");
+var valorAB = ab(vacio2, "X", -Infinity, Infinity);
+var nodosAB = (expuesto.nodosAlfaBeta || 0) - antesAB;
+if (valorAB !== 0) return "alfaBeta debería dar el mismo valor que minimax (0) y da " + valorAB + ".";
+if (nodosAB < 1000) return "alfaBeta debería visitar bastantes nodos (no puede saber el resultado sin explorar) y visitó solo " + nodosAB + ". ¿Está completa la recursión?";
+if (nodosAB >= 20000) return "alfaBeta debería visitar menos de 20 000 nodos (la poda funciona) y visitó " + nodosAB + ". ¿Cortas el bucle con `if (alfa >= beta) break;`?";
+function ganarEn1() { return ["X", "X", " ", " ", " ", " ", " ", " ", " "]; }
+function bloquear() { return ["O", "O", " ", " ", " ", " ", " ", " ", " "]; }
+function mejorJugada(tablero, turno) {
+  var mejorC = -1, mejorV = turno === "X" ? -Infinity : Infinity;
+  for (var i = 0; i < 9; i++) {
+    if (tablero[i] !== " ") continue;
+    var copia = tablero.slice(); copia[i] = turno;
+    var v = ab(copia, turno === "X" ? "O" : "X", -Infinity, Infinity);
+    if (turno === "X" ? v > mejorV : v < mejorV) { mejorV = v; mejorC = i; }
+  }
+  return mejorC;
+}
+if (mejorJugada(ganarEn1(), "X") !== 2) return "Con X en 0 y 1, la mejor jugada para X debería ser la casilla 2 (ganar ya).";
+if (mejorJugada(bloquear(), "X") !== 2) return "Con O en 0 y 1 y le toca a X, debería bloquear en la casilla 2.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El caso base es idéntico al de la cápsula «Minimax sube los valores»: si <code>ganador(tablero)</code> no es <code>null</code>, ya terminó, y devuelves <code>utilidad(ganador(tablero))</code> sin mirar nada más.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para alfa-beta, lleva un <code>mejor</code> igual que en minimax, pero después de cada jugada actualiza <code>alfa</code> (si el turno es <code>"X"</code>) o <code>beta</code> (si es <code>"O"</code>) con <code>Math.max</code>/<code>Math.min</code>, y corta el <code>for</code> con <code>if (alfa &gt;= beta) break;</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const LINEAS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function ganador(t) {
+  for (const [a, b, c] of LINEAS) if (t[a] !== " " && t[a] === t[b] && t[a] === t[c]) return t[a];
+  return t.includes(" ") ? null : "empate";
+}
+function libres(t) { const r = []; for (let i = 0; i &lt; 9; i++) if (t[i] === " ") r.push(i); return r; }
+function otro(turno) { return turno === "X" ? "O" : "X"; }
+function utilidad(g) { return g === "X" ? 1 : g === "O" ? -1 : 0; }
+
+let nodosMinimax = 0;
+function minimax(tablero, turno) {
+  nodosMinimax++;
+  const g = ganador(tablero);
+  if (g !== null) return utilidad(g);
+  let mejor = turno === "X" ? -Infinity : Infinity;
+  for (const c of libres(tablero)) {
+    tablero[c] = turno;
+    const v = minimax(tablero, otro(turno));
+    tablero[c] = " ";
+    mejor = turno === "X" ? Math.max(mejor, v) : Math.min(mejor, v);
+  }
+  return mejor;
+}
+
+let nodosAlfaBeta = 0;
+function alfaBeta(tablero, turno, alfa, beta) {
+  nodosAlfaBeta++;
+  const g = ganador(tablero);
+  if (g !== null) return utilidad(g);
+  let mejor = turno === "X" ? -Infinity : Infinity;
+  for (const c of libres(tablero)) {
+    tablero[c] = turno;
+    const v = alfaBeta(tablero, otro(turno), alfa, beta);
+    tablero[c] = " ";
+    if (turno === "X") { mejor = Math.max(mejor, v); alfa = Math.max(alfa, mejor); }
+    else { mejor = Math.min(mejor, v); beta = Math.min(beta, mejor); }
+    if (alfa &gt;= beta) break;
+  }
+  return mejor;
+}
+
+const vacio1 = Array(9).fill(" ");
+console.log("minimax:   valor =", minimax(vacio1, "X"), "| nodos =", nodosMinimax);
+const vacio2 = Array(9).fill(" ");
+console.log("alfa-beta: valor =", alfaBeta(vacio2, "X", -Infinity, Infinity), "| nodos =", nodosAlfaBeta);</code></pre>
+      <p>Con esta implementación: minimax visita exactamente <strong>549 946</strong> nodos y alfa-beta, <strong>18 297</strong>: unas 30 veces menos, con el mismo resultado (0, empate con juego perfecto).</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-reloj">
+    <h3>Pensar con reloj</h3>
+    <p>En un torneo no puedes dejar que la IA piense para siempre. Escribe <code>pensarConReloj(tablero, jugador, presupuesto)</code> para Conecta 4: usa profundización iterativa (empieza en profundidad 1 y sube de a uno) con alfa-beta, y antes de aceptar el resultado de una profundidad completa comprueba si te pasarías del <code>presupuesto</code> de nodos; si te pasarías, quédate con el resultado de la profundidad anterior y para ahí. La preparación trae el motor de Conecta 4 (<code>crearTablero</code>, <code>jugadasValidas</code>, <code>soltar</code>, <code>quitar</code>, <code>hayGanador</code>) y <code>evaluar</code>, iguales a los de <a href="#minimax">Minimax y alfa-beta</a>.</p>
+    <div class="taller" id="taller-ej-reloj" data-titulo="Pensar con reloj" data-exponer="pensarConReloj" data-tiempo="10">
+      <script type="text/plain" class="taller-preparacion">
+const FILAS = 6, COLUMNAS = 7;
+const ORDEN_CENTRO = [3, 2, 4, 1, 5, 0, 6];
+function crearTablero() { return Array.from({ length: FILAS }, () => Array(COLUMNAS).fill(0)); }
+function jugadasValidas(t) { return ORDEN_CENTRO.filter((c) => t[0][c] === 0); }
+function soltar(t, columna, jugador) {
+  for (let fila = FILAS - 1; fila >= 0; fila--) { if (t[fila][columna] === 0) { t[fila][columna] = jugador; return fila; } }
+  return -1;
+}
+function quitar(t, columna) {
+  for (let fila = 0; fila < FILAS; fila++) { if (t[fila][columna] !== 0) { t[fila][columna] = 0; return; } }
+}
+const DIRECCIONES = [[0, 1], [1, 0], [1, 1], [1, -1]];
+function hayGanador(t, jugador) {
+  for (let f = 0; f < FILAS; f++) for (let c = 0; c < COLUMNAS; c++) {
+    if (t[f][c] !== jugador) continue;
+    for (const [df, dc] of DIRECCIONES) {
+      const f3 = f + 3 * df, c3 = c + 3 * dc;
+      if (f3 < 0 || f3 >= FILAS || c3 < 0 || c3 >= COLUMNAS) continue;
+      if (t[f + df][c + dc] === jugador && t[f + 2 * df][c + 2 * dc] === jugador && t[f3][c3] === jugador) return true;
+    }
+  }
+  return false;
+}
+const VENTANAS = [];
+for (let f = 0; f < FILAS; f++) for (let c = 0; c < COLUMNAS; c++) for (const [df, dc] of DIRECCIONES) {
+  const celdas = [];
+  for (let k = 0; k < 4; k++) celdas.push([f + df * k, c + dc * k]);
+  if (celdas.every(([x, y]) => x >= 0 && x < FILAS && y >= 0 && y < COLUMNAS)) VENTANAS.push(celdas);
+}
+function evaluar(t, jugador) {
+  let puntos = 0;
+  for (let f = 0; f < FILAS; f++) if (t[f][3] === jugador) puntos += 3;
+  for (const ventana of VENTANAS) {
+    let mias = 0, suyas = 0;
+    for (let k = 0; k < 4; k++) { const v = t[ventana[k][0]][ventana[k][1]]; if (v === jugador) mias++; else if (v !== 0) suyas++; }
+    const huecos = 4 - mias - suyas;
+    if (mias === 3 && huecos === 1) puntos += 5;
+    else if (mias === 2 && huecos === 2) puntos += 2;
+    if (suyas === 3 && huecos === 1) puntos -= 4;
+  }
+  return puntos;
+}
+const GANAR = 1000000;
+function alfaBetaNodos(t, prof, alfa, beta, turno, yo, contador) {
+  contador.n++;
+  if (hayGanador(t, yo)) return GANAR + prof;
+  if (hayGanador(t, 3 - yo)) return -GANAR - prof;
+  const jugadas = jugadasValidas(t);
+  if (jugadas.length === 0) return 0;
+  if (prof === 0) return evaluar(t, yo);
+  if (turno === yo) {
+    let mejor = -Infinity;
+    for (const c of jugadas) { soltar(t, c, turno); mejor = Math.max(mejor, alfaBetaNodos(t, prof - 1, alfa, beta, 3 - turno, yo, contador)); quitar(t, c); alfa = Math.max(alfa, mejor); if (alfa >= beta) break; }
+    return mejor;
+  }
+  let mejor = Infinity;
+  for (const c of jugadas) { soltar(t, c, turno); mejor = Math.min(mejor, alfaBetaNodos(t, prof - 1, alfa, beta, 3 - turno, yo, contador)); quitar(t, c); beta = Math.min(beta, mejor); if (alfa >= beta) break; }
+  return mejor;
+}
+      </script>
+      <textarea class="taller-codigo">// Completa: profundización iterativa con presupuesto de nodos.
+// En cada vuelta: calcula la mejor jugada a profundidad "profundidad" con
+// alfaBetaNodos (ya cargada), contando los nodos en un objeto { n: 0 }.
+// Si sumar esos nodos al total se pasaría del presupuesto, PARA y devuelve
+// el resultado de la vuelta anterior. Si no, guarda el resultado, suma los
+// nodos al total y sube la profundidad (hasta un tope, por ejemplo 12).
+function pensarConReloj(tablero, jugador, presupuesto) {
+  return { columna: jugadasValidas(tablero)[0], nodosUsados: 0, profundidad: 0 };
+}
+
+const t = crearTablero();
+const r = pensarConReloj(t, 1, 20000);
+console.log("Jugada:", r.columna, "| nodos usados:", r.nodosUsados, "| profundidad alcanzada:", r.profundidad);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var pcr = expuesto.pensarConReloj;
+if (typeof pcr !== "function") return "No encuentro pensarConReloj: ¿se llama así y el programa terminó sin errores?";
+function crearTablero() { return Array.from({ length: 6 }, function () { return Array(7).fill(0); }); }
+function soltar(t, c, j) { for (var f = 5; f >= 0; f--) if (t[f][c] === 0) { t[f][c] = j; return; } }
+for (var vuelta = 0; vuelta < 3; vuelta++) {
+  var presupuesto = [500, 2000, 50000][vuelta];
+  var t1 = crearTablero();
+  var r1 = pcr(t1, 1, presupuesto);
+  if (typeof r1.columna !== "number" || r1.columna < 0 || r1.columna > 6 || t1[0][r1.columna] !== 0) return "Con presupuesto " + presupuesto + ", pensarConReloj debería devolver una columna jugable (0 a 6, no llena) y devolvió " + JSON.stringify(r1.columna) + ".";
+  if (r1.nodosUsados > presupuesto) return "Con presupuesto " + presupuesto + ", nodosUsados (" + r1.nodosUsados + ") no debería superar el presupuesto.";
+}
+var tAmenaza = crearTablero();
+soltar(tAmenaza, 0, 1); soltar(tAmenaza, 1, 1); soltar(tAmenaza, 2, 1);
+var rAmenaza = pcr(tAmenaza, 1, 50000);
+if (rAmenaza.columna !== 3) return "Con tres fichas propias seguidas (columnas 0, 1, 2) y presupuesto 50000, debería jugar la columna 3 para ganar, y jugó " + rAmenaza.columna + ".";
+var tVacio = crearTablero();
+var rChico = pcr(tVacio, 1, 300);
+var rGrande = pcr(crearTablero(), 1, 50000);
+if (!(rGrande.profundidad > rChico.profundidad)) return "Con más presupuesto (50000 contra 300) debería alcanzar más profundidad; alcanzó " + rGrande.profundidad + " contra " + rChico.profundidad + ".";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Estructura: <code>let profundidad = 1; while (profundidad &lt;= 12) { ...calcula la vuelta...; if (sePasaría) break; ...guarda el resultado...; profundidad++; }</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para «calcular la vuelta», recorre <code>jugadasValidas(tablero)</code>, para cada una haz <code>soltar</code>, llama a <code>alfaBetaNodos(tablero, profundidad - 1, alfa, Infinity, rival, jugador, contador)</code>, <code>quitar</code>, y quédate con la de mayor valor (actualiza <code>alfa</code> entre jugadas para que la poda funcione también entre las jugadas del nivel superior).</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function pensarConReloj(tablero, jugador, presupuesto) {
+  let mejorColumna = jugadasValidas(tablero)[0];
+  let nodosUsados = 0;
+  let profundidad = 1;
+  while (profundidad &lt;= 12) {
+    const contador = { n: 0 };
+    let mejorC = -1, mejorV = -Infinity, alfa = -Infinity;
+    for (const c of jugadasValidas(tablero)) {
+      soltar(tablero, c, jugador);
+      const v = alfaBetaNodos(tablero, profundidad - 1, alfa, Infinity, 3 - jugador, jugador, contador);
+      quitar(tablero, c);
+      if (v &gt; mejorV) { mejorV = v; mejorC = c; }
+      alfa = Math.max(alfa, mejorV);
+    }
+    if (nodosUsados + contador.n &gt; presupuesto) break;   // esta profundidad se pasaría: no se usa
+    nodosUsados += contador.n;
+    mejorColumna = mejorC;
+    if (mejorV &gt;= 1000000) break;   // ya encontró una victoria seguida: no hace falta mirar más hondo
+    profundidad++;
+  }
+  return { columna: mejorColumna, nodosUsados, profundidad };
+}
+
+const t = crearTablero();
+const r = pensarConReloj(t, 1, 20000);
+console.log("Jugada:", r.columna, "| nodos usados:", r.nodosUsados, "| profundidad alcanzada:", r.profundidad);</code></pre>
+      <p>Con 20 000 nodos de presupuesto, esta implementación llega a profundidad 6 o 7 desde el tablero vacío, usando unos 900 a 2 000 nodos: sobra presupuesto porque el Conecta 4 vacío, con el centro primero, se poda muchísimo. El presupuesto se nota más en mitad de partida, cuando el árbol es más complicado.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-mcts-azar">
+    <h3>MCTS contra el azar</h3>
+    <p>Adapta el MCTS de <a href="#mcts">Monte Carlo Tree Search</a> de tres en raya a Conecta 4. Completa <code>ucb1</code> y <code>retropropagar</code> (igual que en la sección) y <code>simular</code> (una partida al azar completa desde un tablero y turno dados, usando <code>jugadasValidas</code>, <code>soltar</code> y <code>resultadoPartida</code>, que devuelve <code>1</code>, <code>2</code>, <code>0</code> para empate o <code>null</code> si sigue). La preparación trae el resto del motor y <code>mcts(tablero, turno, iteraciones, azar)</code>, que ya usa tus tres funciones.</p>
+    <div class="taller" id="taller-ej-mcts-azar" data-titulo="MCTS contra el azar" data-exponer="ucb1, retropropagar, simular, mcts, jugarContraAzar" data-tiempo="15">
+      <script type="text/plain" class="taller-preparacion">
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const FILAS = 6, COLUMNAS = 7;
+const ORDEN_CENTRO = [3, 2, 4, 1, 5, 0, 6];
+function crearTablero() { return Array.from({ length: FILAS }, () => Array(COLUMNAS).fill(0)); }
+function copiarTablero(t) { return t.map((f) => f.slice()); }
+function jugadasValidas(t) { return ORDEN_CENTRO.filter((c) => t[0][c] === 0); }
+function soltar(t, columna, jugador) {
+  for (let fila = FILAS - 1; fila >= 0; fila--) { if (t[fila][columna] === 0) { t[fila][columna] = jugador; return fila; } }
+  return -1;
+}
+const DIRECCIONES = [[0, 1], [1, 0], [1, 1], [1, -1]];
+function hayGanador(t, jugador) {
+  for (let f = 0; f < FILAS; f++) for (let c = 0; c < COLUMNAS; c++) {
+    if (t[f][c] !== jugador) continue;
+    for (const [df, dc] of DIRECCIONES) {
+      const f3 = f + 3 * df, c3 = c + 3 * dc;
+      if (f3 < 0 || f3 >= FILAS || c3 < 0 || c3 >= COLUMNAS) continue;
+      if (t[f + df][c + dc] === jugador && t[f + 2 * df][c + 2 * dc] === jugador && t[f3][c3] === jugador) return true;
+    }
+  }
+  return false;
+}
+function tableroLleno(t) { return t[0].every((x) => x !== 0); }
+function resultadoPartida(t) {
+  if (hayGanador(t, 1)) return 1;
+  if (hayGanador(t, 2)) return 2;
+  if (tableroLleno(t)) return 0;
+  return null;
+}
+function crearNodo(tablero, turno, padre, jugada) { return { tablero, turno, padre, jugada, hijos: null, visitas: 0, victorias: 0 }; }
+function mcts(tablero, turno, iteraciones, azar) {
+  const raiz = crearNodo(tablero, turno, null, -1);
+  for (let k = 0; k < iteraciones; k++) {
+    let nodo = raiz;
+    while (nodo.hijos !== null && nodo.hijos.length > 0) {
+      let mejor = nodo.hijos[0];
+      for (const hijo of nodo.hijos) if (ucb1(hijo, nodo) > ucb1(mejor, nodo)) mejor = hijo;
+      nodo = mejor;
+    }
+    if (resultadoPartida(nodo.tablero) === null) {
+      nodo.hijos = jugadasValidas(nodo.tablero).map((c) => {
+        const t2 = copiarTablero(nodo.tablero);
+        soltar(t2, c, nodo.turno);
+        return crearNodo(t2, 3 - nodo.turno, nodo, c);
+      });
+      nodo = nodo.hijos[Math.floor(azar() * nodo.hijos.length)];
+    }
+    const resultado = simular(nodo.tablero, nodo.turno, azar);
+    retropropagar(nodo, resultado);
+  }
+  let elegido = raiz.hijos[0];
+  for (const hijo of raiz.hijos) if (hijo.visitas > elegido.visitas) elegido = hijo;
+  return elegido.jugada;
+}
+function jugarContraAzar(iteraciones, empiezaMCTS, azarJuego, azarMCTS) {
+  let t = crearTablero(), turno = 1;
+  while (true) {
+    const esMCTS = (turno === 1) === empiezaMCTS;
+    let columna;
+    if (esMCTS) columna = mcts(t, turno, iteraciones, azarMCTS);
+    else { const j = jugadasValidas(t); columna = j[Math.floor(azarJuego() * j.length)]; }
+    soltar(t, columna, turno);
+    const r = resultadoPartida(t);
+    if (r !== null) return r === 0 ? "empate" : ((turno === 1) === empiezaMCTS ? "mcts" : "azar");
+    turno = 3 - turno;
+  }
+}
+      </script>
+      <textarea class="taller-codigo">// Completa: igual que en la sección MCTS, pero ahora para Conecta 4.
+
+// UCB1: media de victorias + bonificación por explorar
+function ucb1(hijo, padre) {
+  return 0;   // Completa: Infinity si hijo.visitas === 0; si no, la fórmula de UCB1
+}
+
+// Sube desde "nodo" hasta la raíz sumando la partida simulada.
+// resultado: 1, 2 (quién ganó) o 0 (empate). Las victorias cuentan para
+// quien MOVIÓ hasta ese nodo: 3 - nodo.turno.
+function retropropagar(nodo, resultado) {
+  // Completa
+}
+
+// Partida al azar completa desde "tablero" y "turno" hasta el final.
+// No modifiques "tablero": trabaja sobre una copia.
+function simular(tablero, turno, azar) {
+  return 0;   // Completa: usa copiarTablero, jugadasValidas, soltar y resultadoPartida
+}
+
+const inicio = crearTablero();
+const jugada = mcts(inicio, 1, 1000, crearAzar(1));
+console.log("Desde el tablero vacío, MCTS juega la columna:", jugada);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var u = expuesto.ucb1, rp = expuesto.retropropagar, sim = expuesto.simular;
+if (typeof u !== "function" || typeof rp !== "function" || typeof sim !== "function") return "No encuentro ucb1, retropropagar y simular: ¿se llaman así y el programa terminó sin errores?";
+if (u({ visitas: 0, victorias: 0 }, { visitas: 5 }) !== Infinity) return "ucb1 de un hijo sin visitas debe ser Infinity.";
+function crearTablero() { return Array.from({ length: 6 }, function () { return Array(7).fill(0); }); }
+function soltar(t, c, j) { for (var f = 5; f >= 0; f--) if (t[f][c] === 0) { t[f][c] = j; return; } }
+var tSim = crearTablero();
+soltar(tSim, 0, 1); soltar(tSim, 1, 1); soltar(tSim, 2, 1); soltar(tSim, 3, 2);
+var azarFijo = (function () { var vals = [0.1, 0.5, 0.9, 0.3, 0.7, 0.2, 0.6]; var i = 0; return function () { return vals[i++ % vals.length]; }; })();
+var resultadoSim = sim(tSim, 2, azarFijo);
+if (tSim[0][3] !== 2) return "simular no debería modificar el tablero que recibió (trabaja sobre una copia).";
+if (resultadoSim !== 0 && resultadoSim !== 1 && resultadoSim !== 2) return "simular debe devolver 1, 2 o 0 (empate), y devolvió " + resultadoSim + ".";
+var tAmenaza = crearTablero();
+soltar(tAmenaza, 0, 2); soltar(tAmenaza, 1, 2); soltar(tAmenaza, 2, 2);
+var columna = expuesto.mcts ? expuesto.mcts(tAmenaza, 1, 500, crearAzarRef(5)) : null;
+function crearAzarRef(semilla) { return function () { semilla = (semilla + 0x6D2B79F5) | 0; var t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };}
+if (columna !== 3) return "Con una amenaza de O en las columnas 0, 1 y 2, MCTS (500 iteraciones, semilla 5) debería bloquear en la columna 3 y jugó " + columna + ".";
+var victorias = 0;
+for (var i = 0; i < 10; i++) {
+  var empiezaMCTS = i % 2 === 0;
+  var res = expuesto.jugarContraAzar(500, empiezaMCTS, crearAzarRef(300 + i), crearAzarRef(700 + i));
+  if (res === "mcts") victorias++;
+}
+if (victorias < 9) return "MCTS (500 iteraciones) debería ganarle al azar al menos 9 de 10 partidas y ganó " + victorias + ".";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>ucb1</code> y <code>retropropagar</code> son exactamente los mismos que en <a href="#mcts">Monte Carlo Tree Search</a>, cambiando solo cómo se comparan los jugadores (aquí son <code>1</code> y <code>2</code>, no <code>"X"</code> y <code>"O"</code>).</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>simular</code>: copia el tablero, y mientras <code>resultadoPartida(copia)</code> sea <code>null</code>, elige una columna al azar de <code>jugadasValidas(copia)</code>, suéltala con el turno actual y cambia de turno (<code>3 - turno</code>). Al final devuelve el resultado.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function ucb1(hijo, padre) {
+  if (hijo.visitas === 0) return Infinity;
+  return hijo.victorias / hijo.visitas + Math.SQRT2 * Math.sqrt(Math.log(padre.visitas) / hijo.visitas);
+}
+
+function retropropagar(nodo, resultado) {
+  for (let n = nodo; n !== null; n = n.padre) {
+    n.visitas++;
+    const quienMovio = 3 - n.turno;
+    if (resultado === quienMovio) n.victorias += 1;
+    else if (resultado === 0) n.victorias += 0.5;
+  }
+}
+
+function simular(tablero, turno, azar) {
+  const t = copiarTablero(tablero);
+  let r = resultadoPartida(t);
+  while (r === null) {
+    const jugadas = jugadasValidas(t);
+    const c = jugadas[Math.floor(azar() * jugadas.length)];
+    soltar(t, c, turno);
+    turno = 3 - turno;
+    r = resultadoPartida(t);
+  }
+  return r;
+}
+
+const inicio = crearTablero();
+const jugada = mcts(inicio, 1, 1000, crearAzar(1));
+console.log("Desde el tablero vacío, MCTS juega la columna:", jugada);</code></pre>
+      <p>Con 500 iteraciones por jugada, MCTS le gana al azar prácticamente siempre: el azar pierde ventanas de cuatro con tanta frecuencia que incluso partidas simuladas sin ninguna inteligencia bastan para que las estadísticas lo delaten.</p>
+    </details>
+  </article>
