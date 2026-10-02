@@ -113,7 +113,7 @@ Nunca uses colores literales: usa clases (respetan el tema claro/oscuro):
 `d-caja` (rectángulo con borde), `d-caja-suave`, `d-linea`, `d-flecha`, `d-punteada`, `d-acento` (relleno del color
 de la línea), `d-acento-trazo`, `d-sobre-acento` (texto sobre el acento), `d-tenue` (texto secundario),
 `d-fondo`, `d-fondo-2`, `d-tinta`, `d-mono`, `d-rotulo`, `d-titulo`, `d-peq`, `d-ok`/`d-mal`/`d-aviso` (rellenos
-semánticos), `d-ok-trazo`/`d-mal-trazo`, `d-l1`…`d-l8` (rellenos de color de cada línea), `d-t1`…`d-t8` (trazos),
+semánticos), `d-ok-trazo`/`d-mal-trazo`, `d-sobre-ok`/`d-sobre-mal`/`d-sobre-aviso` (texto legible encima de esos rellenos), `d-l1`…`d-l8` (rellenos de color de cada línea), `d-t1`…`d-t8` (trazos),
 `d-codigo` (fondo de código), `d-solido`/`d-solido-trazo` (oscuro en los dos temas: muros, bloques sólidos), `d-codigo-texto`, `d-codigo-tenue`, `d-resalte` (resaltado de línea; es translúcido: si hay líneas detrás, pon debajo una forma `d-fondo`).
 El `<svg>` pone color de tinta, tipografía y 16px por herencia: una clase en un `<g>` (por ejemplo `d-peq` o `d-ok`) afecta a todos sus textos. En `data-texto`, `data-clases` y `data-mover` las entradas se separan con `;` seguido del número de paso, así que un texto puede contener `;` siempre que no vaya seguido de «número:». Deja margen en el `viewBox` para etiquetas.
 Puntas de flecha: dibújalas como `<path class="d-tinta" d="M… l12 8 -12 8z"/>` (sin `marker`).
@@ -144,6 +144,8 @@ Geometría precisa, nada de dibujos «a mano alzada» ni figuras humanas.
 
 Reglas: 3–8 pasos. Si un elemento rotado (`transform="rotate(…)"`) también se anima o cambia de texto, envuélvelo en un `<g>` y pon las marcas en el `<g>`. No pongas `opacity` en el atributo `style` de un elemento animado: usa `fill-opacity` o `stroke-opacity`. Cada `li` explica lo que cambia en ese paso. El paso 1 debe entenderse solo (es lo que se ve
 en reposo). `data-mover`, `data-clases` y `data-texto` aplican el último valor cuyo número de paso sea ≤ al actual.
+En los pasos anteriores a la primera entrada de `data-clases`, esas clases se quitan del elemento aunque estén en su
+atributo `class`: si una clase debe verse desde el principio, añade también la entrada `1:clase`.
 Usa `px` en `translate`. Para contenido HTML (no SVG) la escena puede tener `div`s con las mismas marcas.
 
 ### Traza (máquina paso a paso)
@@ -185,6 +187,20 @@ JavaScript (se ejecuta en un Web Worker, sin DOM):
 - Formato de la consola (igual que Node.js): strings tal cual; arrays `[ 1, 2 ]`; objetos `{ a: 1, b: 'x' }`;
   Map `Map(1) { 'a' => 1 }`. Prefiere verificar valores simples.
 - Opcionales: `data-tiempo="10"` (segundos máximos, por defecto 5), `data-exito="mensaje"`.
+- Probar funciones de la persona con casos ocultos: `data-exponer="aEstrella, vecinos"` en el taller. La verificación
+  recibe un cuarto parámetro, `expuesto`, con esos nombres del código de la persona (funciones, clases o variables de
+  nivel superior): `return expuesto.aEstrella && expuesto.aEstrella(mapa, a, b).length === 7 || "…"`. Si el programa se
+  rompe antes de terminar o el nombre no existe, `expuesto.aEstrella` vale `undefined`: devuelve un mensaje que lo diga
+  («No encuentro la función aEstrella: ¿se llama así y el programa terminó sin errores?»). No hace falta que la persona
+  escriba nada especial. Cuidado si expones un **contador** para medir cuánto hizo el código (nodos visitados,
+  iteraciones…): una variable primitiva (`let contador = 0`) se expone como una foto fija del momento en que el programa
+  terminó, no como una referencia viva, así que leerla «antes» y «después» siempre da la misma foto. Expón un objeto
+  mutable (`let contador = { n: 0 }`, y súmale con `contador.n++`) para que la verificación pueda comparar dos lecturas.
+- La verificación de un taller JS (no web) es **síncrona**: no soporta que devuelva una Promise. Si necesitas probar una
+  función `async` de la persona (por ejemplo, con reintentos o una demora simulada), no esperes su resultado desde la
+  verificación; haz que el propio código del taller (que sí corre dentro de un IIFE `async` con `await` de nivel
+  superior) ejecute los casos de prueba y deje el resultado ya resuelto en una variable de nivel superior
+  (`var resultados = …`), y pruébala con `data-exponer="resultados"` en vez de con la función async directamente.
 - Hay `console.log/info/dir/error/warn/table/group/groupEnd/count/time/timeEnd/assert/trace`, `setTimeout`, promesas y `await` de nivel superior. No hay `document`, `prompt` ni `alert` útiles.
 - `fetch` a otros sitios **no funciona en la versión publicada** del curso (el visor bloquea las peticiones
   externas). En talleres, simula la red con una función que devuelve una promesa (`setTimeout` + datos de ejemplo)
@@ -206,10 +222,21 @@ Página web (HTML/CSS/JS con vista previa):
 </div>
 ```
 
+Cuándo se verifica un taller web: 0,15 s después de cargar la vista previa. Si la página necesita tiempo (una animación,
+un entrenamiento, un temporizador), usa `data-esperar="2"` (segundos) o haz que la verificación devuelva una promesa.
+Además, la propia página puede llamar a `comprobar()` para verificar otra vez, por ejemplo cuando la persona mueve un
+deslizador o cuando termina un entrenamiento: así la verificación ve el estado nuevo. Lo más robusto es verificar
+funciones globales puras (`window.clasifica`, `window.pasoDeEntrenamiento`) y no el estado de una animación en marcha.
 `data-auto` ejecuta al cargar (útil para demos). En la vista previa la validación nativa de formularios funciona (required, pattern…); al enviar un formulario válido o pulsar un enlace externo se muestra un aviso en la consola en vez de navegar; los enlaces `#id` desplazan dentro de la vista previa. `localStorage` y `sessionStorage` funcionan dentro del taller web: los datos de `localStorage` duran entre ejecuciones del mismo taller y «Reiniciar» los borra (no hace falta ningún ayudante propio). Los errores indican la línea contando desde la pestaña JS, y `console.log` de un elemento muestra su etiqueta (`<p id="n">`). El HTML puede cargar librerías con
 `<script src="https://cdnjs.cloudflare.com/ajax/libs/...">` (versiones exactas), por ejemplo React 18.3.1 UMD
 (`react/18.3.1/umd/react.development.js` y `react-dom/18.3.1/umd/react-dom.development.js`) con
-`babel-standalone/7.26.4/babel.min.js` para JSX, o `phaser/3.90.0/phaser.min.js`. Solo cdnjs, solo scripts.
+`babel-standalone/7.26.4/babel.min.js` para JSX, o `phaser/3.90.0/phaser.min.js`. Solo cdnjs, solo scripts. Pon
+`crossorigin="anonymous"` en esas etiquetas: sin él, un error que salte dentro de la librería (por ejemplo, un JSX mal
+escrito que compila Babel) solo aparece como «Script error.». Verificar talleres de React: React actualiza el DOM de
+forma asíncrona, así que en la verificación envuelve los clics simulados en `ReactDOM.flushSync(() => boton.click())`
+y, para escribir en un campo controlado, usa el setter nativo de `value` y dispara un evento `input` con `bubbles: true`.
+`console.log` entiende las sustituciones `%s`, `%d`, `%i`, `%f`, `%o` y `%c` como Node y los navegadores. Con Phaser, pon `banner: false` en la
+configuración del juego para que no llene la consola del taller con su anuncio.
 
 Python (se ejecuta con Brython en el navegador; se verifica con Python real en las pruebas):
 
@@ -220,8 +247,16 @@ Python (se ejecuta con Brython en el navegador; se verifica con Python real en l
 </div>
 ```
 
-No uses `input()` en talleres (no funciona en todos los visores). La biblioteca estándar (`random`, `math`, `json`,
+No uses `input()` en talleres (no funciona en todos los visores). En Brython, `random` no reproduce las secuencias de
+CPython aunque uses la misma semilla (las pruebas se ejecutan con Python real): no verifiques números aleatorios exactos;
+si necesitas azar reproducible, escribe un generador de pocas líneas en el propio taller. La biblioteca estándar (`random`, `math`, `json`,
 `datetime`…) funciona; paquetes externos (`requests`, `pandas`…) no.
+
+JavaScript con código de preparación oculto: `<script type="text/plain" class="taller-preparacion">…</script>` dentro
+de un taller JS se ejecuta antes que el código de la persona, que puede usar lo que declara (por ejemplo, un
+simulador pequeño de una biblioteca). No se ve en el editor y no cambia los números de línea de los errores. Úsalo
+cuando el mismo código de apoyo se repetiría en varios talleres (también para dar datos, un simulador de API o una
+biblioteca pequeña ya hecha).
 
 SQL (SQLite real en el navegador):
 
@@ -252,6 +287,10 @@ SQL (SQLite real en el navegador):
 </article>
 ```
 
+La solución debe ser un programa **completo y autónomo** (incluida la preparación oculta, si la necesita: esa se
+antepone sola). «Solo cambió esta función, el resto sigue igual» no vale: `probar-talleres.mjs` ejecuta exactamente lo
+que hay dentro de `<code>`, así que un fragmento rompe la prueba.
+
 `data-nivel`: `guiado`, `semi` o `reto`. La primera `details.solucion` después de un taller es su solución y
 **debe pasar la verificación** (lo comprueba `node herramientas/probar-talleres.mjs`). El código inicial no debe
 pasarla ya. En estaciones sin código ejecutable (por ejemplo, conceptos o herramientas que se instalan), los
@@ -270,7 +309,7 @@ el concepto.
 </div>
 ```
 
-Opcional: `data-exito="mensaje"` cambia el mensaje de acierto. Escribe las líneas **en el orden correcto**: la página las desordena y la persona las ordena. Si varias líneas pueden ir en cualquier orden entre sí, dales el mismo `data-grupo="a"`: la corrección acepta cualquier orden dentro del grupo.
+Opcional: `data-exito="mensaje"` cambia el mensaje de acierto. `data-sangria` admite de 0 a 4 niveles. Escribe las líneas **en el orden correcto**: la página las desordena y la persona las ordena. Si varias líneas pueden ir en cualquier orden entre sí, dales el mismo `data-grupo="a"`: la corrección acepta cualquier orden dentro del grupo.
 
 ### Terminal simulada (comandos y Git sin instalar nada)
 
@@ -284,10 +323,14 @@ Opcional: `data-exito="mensaje"` cambia el mensaje de acierto. Escribe las líne
 </div>
 ```
 
+Dentro del JSON de `terminal-sistema`, un `</script>` literal corta el bloque: escríbelo `<\/script>` (es JSON válido y
+significa lo mismo). `construir.mjs` avisa si el JSON no es válido.
+
 Instrucciones visibles dentro de la terminal (opcional): `<div class="terminal-instrucciones"><p>…</p></div>` dentro del
 `div.terminal-sim`. La misión recibe también `salida` (líneas que imprimieron los comandos y `node`).
 Comandos: `pwd ls cd mkdir touch cat echo (con > y >>) rm rmdir mv cp clear help history`, `node archivo.js` (ejecuta el archivo con el motor de los talleres; `node -v`), `cp -r`, comodines `*` y `?`, y
-`git init status add commit -m log --oneline branch switch checkout merge diff restore`.
+`git init status (-s) add (respeta .gitignore) commit (-m, -am, --amend) log (--oneline) show branch switch checkout merge (con conflictos y --abort) diff restore config`.
+El `git` que recibe la misión (o `null` sin repositorio) es `{ raiz, rama, ramas: [nombres], punteros: { rama: idDelCommit }, commits: [{ id, mensaje, padres, arbol, rama }], preparados: [archivos], conflictos: [archivos], fusionEnCurso, limpio }`.
 
 ### Objetivos, autoevaluación, glosario, videos, recursos
 
@@ -305,6 +348,11 @@ Comandos: `pwd ls cd mkdir touch cat echo (con > y >>) rm rmdir mv cp clear help
 </div>
 
 <dl class="glosario"><dt>Término</dt><dd>Definición sencilla en una o dos frases.</dd></dl>
+
+El glosario global junta los términos con el mismo nombre (sin contar lo que va entre paréntesis) y muestra la
+definición de la primera estación. Si un término significa otra cosa en tu estación, dale un nombre distinto: por
+ejemplo, «Token de un modelo de lenguaje» (no «Token», que ya es el del analizador léxico de la Estación 22) o
+«Agente de aprendizaje por refuerzo» (no «Agente»).
 
 <ul class="videos">
   <li><a class="video" href="https://www.youtube.com/watch?v=ID11CARACT" data-canal="Nombre exacto del canal"

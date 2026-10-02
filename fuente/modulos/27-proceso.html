@@ -1,0 +1,1975 @@
+<section id="ruta" data-parada="Lo que vas a lograr">
+  <h2>Lo que vas a lograr</h2>
+  <p class="entradilla">Hasta ahora has programado sola o solo, con ejercicios que alguien ya había pensado por ti. En un proyecto real nadie te da el enunciado: hay una idea difusa, varias personas, poco tiempo y muchas cosas que podrían hacerse. Esta estación trata de cómo se organiza ese trabajo para que la idea llegue a ser software que funciona, sin que el equipo se pise, se agote o construya lo que nadie quería.</p>
+  <ul class="objetivos">
+    <li>Explicar el ciclo de vida del software y la diferencia entre trabajar en cascada y de forma iterativa e incremental.</li>
+    <li>Resumir los valores del Manifiesto Ágil y distinguir lo que es ser ágil de lo que solo lo parece.</li>
+    <li>Describir Scrum (responsabilidades, eventos y artefactos) y Kanban (flujo y límites de trabajo en curso), y elegir entre ellos.</li>
+    <li>Escribir requisitos funcionales y no funcionales, e historias de usuario que cumplan INVEST con criterios de aceptación Dado/Cuando/Entonces.</li>
+    <li>Estimar con puntos, tallas de camiseta y planning poker, pronosticar con rangos y conocer los límites de cualquier estimación.</li>
+    <li>Priorizar con MoSCoW, definir un producto mínimo viable y una definición de «hecho» para tu equipo.</li>
+    <li>Dar y recibir comentarios en una revisión de código de forma útil y respetuosa.</li>
+    <li>Comunicarte bien en un equipo remoto y documentar un proyecto con README, guía de contribución y registros de decisiones.</li>
+    <li>Planificar tu participación en una game jam y convertir una idea de juego en un plan de trabajo realista.</li>
+    <li>Reconocer tus responsabilidades éticas como profesional con ayuda del código de ética de ACM e IEEE.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="Antes de empezar">
+    <p>Esta estación tiene menos código que las anteriores, pero los talleres usan funciones, arrays y objetos (<a href="10-funciones.html">Estación 10</a> y <a href="11-colecciones.html">Estación 11</a>), y uno de ellos usa el DOM (<a href="15-dom.html">Estación 15</a>). Te ayudará haber pasado por la <a href="24-git.html">Estación 24: Git y GitHub</a>, porque aquí hablaremos de pull requests y revisiones sin repetir cómo se hacen en GitHub, y por la <a href="26-testing.html">Estación 26: Pruebas</a>, porque los criterios de aceptación se convierten en pruebas.</p>
+  </aside>
+</section>
+
+<section id="ciclo" data-parada="Ciclo de vida">
+  <h2>De la idea al software: el ciclo de vida</h2>
+  <p>Imagina que tú y tres amistades deciden hacer un juego de plataformas protagonizado por tu perro. El primer día todo es entusiasmo. A la semana aparecen las preguntas: ¿quién hace los enemigos?, ¿el salto doble es imprescindible o es un capricho?, ¿cuándo está «terminado» un nivel?, ¿por qué dos personas programaron la misma pantalla de menú? Nadie hizo nada mal: faltaban acuerdos.</p>
+  <p>Un <strong>proceso de desarrollo</strong> es el conjunto de acuerdos de un equipo sobre cómo pasar de una idea a software que funciona: qué se hace primero, quién decide, cómo se comprueba que algo está bien y cómo se corrige el rumbo. No es burocracia: es lo que permite que cinco personas trabajen como un equipo y no como cinco proyectos que chocan.</p>
+
+  <h3>Las actividades de siempre</h3>
+  <p>Cualquier software, desde una calculadora hasta un videojuego con cien personas detrás, pasa por las mismas actividades. A este recorrido se le llama <strong>ciclo de vida del software</strong> (en inglés, <em>software development life cycle</em> o SDLC):</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 320" role="img" aria-label="Diagrama circular del ciclo de vida del software con seis actividades unidas por flechas: requisitos, diseño, implementación, pruebas, despliegue y mantenimiento, que vuelve a requisitos. En el centro dice que el mantenimiento alimenta nuevos requisitos.">
+      <g class="d-peq">
+        <rect class="d-caja" x="270" y="14" width="180" height="56" rx="10"/>
+        <text class="d-rotulo" x="360" y="40" text-anchor="middle" style="font-size:17px">1. Requisitos</text>
+        <text class="d-tenue" x="360" y="60" text-anchor="middle">¿Qué hay que hacer?</text>
+        <rect class="d-caja" x="500" y="74" width="190" height="56" rx="10"/>
+        <text class="d-rotulo" x="595" y="100" text-anchor="middle" style="font-size:17px">2. Diseño</text>
+        <text class="d-tenue" x="595" y="120" text-anchor="middle">¿Cómo lo organizamos?</text>
+        <rect class="d-caja" x="500" y="190" width="190" height="56" rx="10"/>
+        <text class="d-rotulo" x="595" y="216" text-anchor="middle" style="font-size:17px">3. Implementación</text>
+        <text class="d-tenue" x="595" y="236" text-anchor="middle">Escribir el código</text>
+        <rect class="d-caja" x="270" y="250" width="180" height="56" rx="10"/>
+        <text class="d-rotulo" x="360" y="276" text-anchor="middle" style="font-size:17px">4. Pruebas</text>
+        <text class="d-tenue" x="360" y="296" text-anchor="middle">¿Hace lo que debe?</text>
+        <rect class="d-caja" x="30" y="190" width="190" height="56" rx="10"/>
+        <text class="d-rotulo" x="125" y="216" text-anchor="middle" style="font-size:17px">5. Despliegue</text>
+        <text class="d-tenue" x="125" y="236" text-anchor="middle">Llega a las personas</text>
+        <rect class="d-caja" x="30" y="74" width="190" height="56" rx="10"/>
+        <text class="d-rotulo" x="125" y="100" text-anchor="middle" style="font-size:17px">6. Mantenimiento</text>
+        <text class="d-tenue" x="125" y="120" text-anchor="middle">Corregir, mejorar, adaptar</text>
+      </g>
+      <path class="d-flecha" d="M450 46 C 520 46 580 52 590 66"/>
+      <path class="d-tinta" d="M584 60 l10 10 2 -14z"/>
+      <path class="d-flecha" d="M595 130 V 178"/>
+      <path class="d-tinta" d="M589 176 l6 12 6 -12z"/>
+      <path class="d-flecha" d="M590 246 C 580 270 520 278 462 278"/>
+      <path class="d-tinta" d="M464 272 l-12 6 12 6z"/>
+      <path class="d-flecha" d="M270 278 C 200 278 140 270 130 254"/>
+      <path class="d-tinta" d="M124 258 l6 -12 8 10z"/>
+      <path class="d-flecha" d="M125 190 V 142"/>
+      <path class="d-tinta" d="M119 144 l6 -12 6 12z"/>
+      <path class="d-flecha" d="M130 74 C 140 52 200 46 258 46"/>
+      <path class="d-tinta" d="M256 40 l12 6 -12 6z"/>
+      <text class="d-tenue" x="360" y="150" text-anchor="middle" style="font-size:15px">Lo que aprendes al mantener</text>
+      <text class="d-tenue" x="360" y="172" text-anchor="middle" style="font-size:15px">se convierte en nuevos requisitos</text>
+    </svg>
+    <figcaption>Las seis actividades del ciclo de vida. La flecha que vuelve de mantenimiento a requisitos es la más importante: un programa útil nunca está terminado del todo.</figcaption>
+  </figure>
+  <ul>
+    <li><strong>Requisitos</strong>: averiguar qué necesitan las personas que usarán el software y qué debe cumplir. Lo verás en la sección <a href="#historias">Requisitos e historias de usuario</a>.</li>
+    <li><strong>Diseño</strong>: decidir cómo se organiza: qué partes tiene, cómo se hablan entre sí, dónde se guardan los datos. Es el tema de la <a href="28-arquitectura.html">Estación 28: Arquitectura</a>. El diseño visual de la interfaz lo viste en la <a href="17-diseno-ux.html">Estación 17</a>.</li>
+    <li><strong>Implementación</strong>: escribir el código. Es lo que llevas haciendo desde la Línea 2.</li>
+    <li><strong>Pruebas</strong>: comprobar que hace lo que debe (<a href="26-testing.html">Estación 26</a>).</li>
+    <li><strong>Despliegue</strong>: ponerlo en manos de las personas: publicarlo en internet, en una tienda de apps o en itch.io (<a href="35-devops.html">Estación 35</a>).</li>
+    <li><strong>Mantenimiento</strong>: corregir errores, adaptarlo a nuevos navegadores o sistemas, añadir lo que piden las personas. En un producto que tiene éxito, esta es la etapa más larga: el software vive años después de su primera versión.</li>
+  </ul>
+  <p>Todas las formas de trabajar hacen estas seis actividades. Lo que cambia es <strong>el orden, el tamaño de cada vuelta y cuándo ven el resultado las personas usuarias</strong>. Ahí aparecen los dos grandes enfoques.</p>
+
+  <h3>Cascada: una fase detrás de otra</h3>
+  <p>En el modelo en <strong>cascada</strong> (en inglés, <em>waterfall</em>) cada actividad se hace completa, una sola vez y en orden: primero todos los requisitos, luego todo el diseño, luego todo el código, luego todas las pruebas y al final la entrega. Como el agua que cae de un escalón al siguiente, no se vuelve atrás.</p>
+  <p>Tiene una lógica atractiva: pensar antes de construir. Funciona cuando los requisitos no van a cambiar y cambiar algo es carísimo, por ejemplo, el programa grabado en el chip de una lavadora que no se puede actualizar una vez vendida, o un contrato que fija por ley cada detalle antes de empezar. El problema aparece cuando no sabes con seguridad qué necesitas, que es lo normal en apps y videojuegos: la primera vez que alguien usa el software es al final, cuando ya no queda tiempo ni dinero para corregir el rumbo.</p>
+  <aside class="senal nota" data-titulo="El artículo que todos citan y pocos leyeron">
+    <p>El origen de la cascada suele atribuirse a un artículo de Winston Royce de 1970, «Managing the development of large software systems». Pero Royce presentaba el modelo en fila para criticarlo: escribió que esa forma de implementarlo «es arriesgada e invita al fracaso» y propuso repetir el proceso y enseñar el producto a la clientela durante el camino. Ni siquiera usaba la palabra «cascada». La industria adoptó justo lo que el artículo desaconsejaba.</p>
+  </aside>
+
+  <h3>Iterativo e incremental: muchas vueltas pequeñas</h3>
+  <p>La alternativa es recorrer el ciclo completo muchas veces, en vueltas cortas de una a cuatro semanas. Dos palabras que se usan juntas pero significan cosas distintas:</p>
+  <ul>
+    <li><strong>Iterativo</strong>: repites el ciclo y en cada vuelta (cada <strong>iteración</strong>) mejoras lo que ya existe con lo que aprendiste.</li>
+    <li><strong>Incremental</strong>: construyes el producto por partes que funcionan. Cada vuelta añade un <strong>incremento</strong>: un trozo nuevo que se puede usar.</li>
+  </ul>
+  <p>Mira qué pasa con dos equipos que hacen el mismo juego en seis meses, uno en cascada y otro por iteraciones, cuando a mitad de camino descubren que una parte sobraba:</p>
+  <figure class="capsula" data-titulo="Cascada frente a iterativo">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: dos carriles de seis meses. En cascada, las fases requisitos, diseño, código, pruebas y entrega ocupan los meses uno tras otro y la clienta ve el juego por primera vez en el mes 6. En iterativo, cada mes sale una versión jugable, de v1 a v6. En el mes 4 se descubre que la tienda sobra: en cascada ya estaba diseñada y programada y se tira ese trabajo; en iterativo, la tienda aún no se había hecho y sale del plan sin haber costado nada.">
+        <g class="d-peq d-tenue">
+          <text x="167" y="22" text-anchor="middle">Mes 1</text>
+          <text x="262" y="22" text-anchor="middle">Mes 2</text>
+          <text x="357" y="22" text-anchor="middle">Mes 3</text>
+          <text x="452" y="22" text-anchor="middle">Mes 4</text>
+          <text x="547" y="22" text-anchor="middle">Mes 5</text>
+          <text x="642" y="22" text-anchor="middle">Mes 6</text>
+        </g>
+        <path class="d-punteada" d="M120 30V250M215 30V250M310 30V250M405 30V250M500 30V250M595 30V250M690 30V250"/>
+        <text class="d-rotulo" x="12" y="86" style="font-size:17px">Cascada</text>
+        <text class="d-rotulo" x="12" y="196" style="font-size:17px">Iterativo</text>
+        <rect class="d-caja-suave" x="120" y="54" width="570" height="64" rx="6"/>
+        <rect class="d-caja-suave" x="120" y="164" width="570" height="64" rx="6"/>
+        <g class="d-peq">
+          <g data-pasos="2-"><rect class="d-caja" x="124" y="62" width="87" height="48" rx="6"/><text x="167" y="91" text-anchor="middle">Requisitos</text></g>
+          <g data-pasos="2-"><rect class="d-caja" x="219" y="62" width="87" height="48" rx="6"/><text x="262" y="91" text-anchor="middle">Diseño</text></g>
+          <g data-pasos="3-"><rect class="d-caja" x="314" y="62" width="182" height="48" rx="6"/><text x="405" y="91" text-anchor="middle">Código (incluida la tienda)</text></g>
+          <rect class="d-mal-trazo" x="314" y="62" width="182" height="48" rx="6" data-pasos="4-"/>
+          <g data-pasos="5-"><rect class="d-caja" x="504" y="62" width="87" height="48" rx="6"/><text x="547" y="91" text-anchor="middle">Pruebas</text></g>
+          <g data-pasos="5-"><rect class="d-acento" x="599" y="62" width="87" height="48" rx="6"/><text class="d-sobre-acento" x="642" y="91" text-anchor="middle">Entrega</text></g>
+        </g>
+        <g class="d-peq">
+          <g data-pasos="2-"><rect class="d-acento" x="137" y="176" width="60" height="40" rx="6"/><text class="d-sobre-acento d-rotulo" x="167" y="201" text-anchor="middle">v1</text></g>
+          <g data-pasos="2-"><rect class="d-acento" x="232" y="176" width="60" height="40" rx="6"/><text class="d-sobre-acento d-rotulo" x="262" y="201" text-anchor="middle">v2</text></g>
+          <g data-pasos="3-"><rect class="d-acento" x="327" y="176" width="60" height="40" rx="6"/><text class="d-sobre-acento d-rotulo" x="357" y="201" text-anchor="middle">v3</text></g>
+          <g data-pasos="4-"><rect class="d-acento" x="422" y="176" width="60" height="40" rx="6"/><text class="d-sobre-acento d-rotulo" x="452" y="201" text-anchor="middle">v4</text></g>
+          <g data-pasos="5-"><rect class="d-acento" x="517" y="176" width="60" height="40" rx="6"/><text class="d-sobre-acento d-rotulo" x="547" y="201" text-anchor="middle">v5</text></g>
+          <g data-pasos="5-"><rect class="d-acento" x="612" y="176" width="60" height="40" rx="6"/><text class="d-sobre-acento d-rotulo" x="642" y="201" text-anchor="middle">v6</text></g>
+        </g>
+        <g data-pasos="4-">
+          <path class="d-mal-trazo" d="M405 32V54M405 118V164M405 228V250"/>
+          <rect class="d-fondo" x="330" y="128" width="150" height="26" rx="4"/>
+          <text class="d-rotulo" x="405" y="146" text-anchor="middle" style="font-size:15px">¡La tienda sobra!</text>
+        </g>
+        <text class="d-peq" x="120" y="272" data-texto="1:Mismo juego, mismo plazo, dos formas de trabajar.; 2:Iterativo: la clienta ya juega en el mes 1. Cascada: solo hay documentos.; 3:Mes 3: v3 incluye lo que la clienta pidió al jugar v1 y v2.; 4:Cascada tira código ya hecho. Iterativo quita la tienda del plan y sigue.; 5:Cascada: la clienta juega por primera vez en el mes 6.">Mismo juego, mismo plazo, dos formas de trabajar.</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Dos equipos tienen seis meses para hacer el mismo juego. Arriba, un equipo en cascada; abajo, uno que trabaja por iteraciones de un mes.</li>
+        <li>En los dos primeros meses, el equipo en cascada escribe todos los requisitos y diseña todo el juego. El equipo iterativo recorre el ciclo completo en pequeño cada mes: al final del mes 1 ya hay una versión jugable muy básica (v1), y la clienta la prueba.</li>
+        <li>Mes 3: el equipo en cascada programa todo lo diseñado. El iterativo entrega v3, que ya incorpora lo que la clienta dijo al jugar v1 y v2. Cada versión es un incremento que funciona.</li>
+        <li data-duracion="7">Mes 4: jugando, alguien descubre que la tienda de objetos no divierte a nadie. En cascada, la tienda ya estaba diseñada y programada: ese trabajo se tira. En iterativo, la tienda todavía no se había hecho, porque estaba más abajo en la lista: sale del plan y v4 dedica ese tiempo a otra cosa.</li>
+        <li>Meses 5 y 6: cascada prueba y entrega todo de golpe; es la primera vez que la clienta ve el juego. El equipo iterativo lleva seis entregas y cinco oportunidades de corregir el rumbo.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <aside class="senal analogia">
+    <p>Cocinar para una fiesta en cascada es escribir el menú completo, comprar todo, cocinar los diez platos y servirlos a la vez. Hacerlo por iteraciones es preparar primero un plato, que alguien lo pruebe, ajustar la sal y seguir. La analogía tiene un límite: en la cocina la receta ya existe y en el software casi nunca; por eso probar pronto importa todavía más al programar.</p>
+  </aside>
+  <p>Antes de ejecutar el siguiente programa, <strong>predice</strong> qué dirá cada línea. Simula el progreso de los dos equipos: cada <code>#</code> es una función del juego que la clienta ya puede probar.</p>
+  <div class="taller" id="taller-cascada" data-titulo="Predice: ¿cuándo juega la clienta?">
+    <textarea class="taller-codigo">const meses = 6;
+const funciones = 6; // mapa, salto, enemigos, jefe, tienda, música
+
+function barra(listas) {
+  return "#".repeat(listas) + "-".repeat(funciones - listas);
+}
+
+console.log("CASCADA");
+for (let mes = 1; mes <= meses; mes++) {
+  const listas = mes === meses ? funciones : 0; // todo llega al final
+  console.log(`Mes ${mes}: ${barra(listas)}`);
+}
+
+console.log("ITERATIVO");
+for (let mes = 1; mes <= meses; mes++) {
+  const listas = mes; // una función jugable más cada mes
+  console.log(`Mes ${mes}: ${barra(listas)}`);
+}
+
+// Modifica: ¿y si el equipo iterativo entregara cada dos meses?
+// Pista: const listas = Math.floor(mes / 2) * 2;</textarea>
+  </div>
+  <p>Las dos columnas llegan a <code>######</code> en el mes 6. La diferencia está en todos los meses anteriores: el equipo iterativo tuvo cinco momentos para escuchar a la clienta y cambiar de idea con poco costo. Eso es lo que se llama acortar el <strong>ciclo de retroalimentación</strong>: el tiempo que pasa entre hacer algo y saber si estaba bien. Es la misma idea que ejecutar tu programa a menudo en lugar de escribir doscientas líneas de golpe.</p>
+  <aside class="senal ojo">
+    <p>Iterativo no significa «sin plan». Los equipos iterativos planifican mucho, pero a menudo y con poco detalle a largo plazo: el plan de las próximas dos semanas es muy concreto; el de dentro de cuatro meses, un borrador que se revisa. Tampoco significa «sin diseño»: se diseña en cada vuelta lo necesario para esa vuelta.</p>
+  </aside>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">Cascada</th><th scope="col">Iterativo e incremental</th></tr></thead>
+      <tbody>
+        <tr><td>Cuándo se ve software funcionando</td><td>Al final</td><td>Desde la primera iteración</td></tr>
+        <tr><td>Cambiar los requisitos</td><td>Caro: hay que rehacer fases terminadas</td><td>Barato si afecta a lo que aún no se hizo</td></tr>
+        <tr><td>Riesgo principal</td><td>Descubrir tarde que se construyó lo que no era</td><td>Perder la visión de conjunto si nadie la cuida</td></tr>
+        <tr><td>Funciona bien cuando…</td><td>Los requisitos son estables y conocidos, o cambiar después es imposible</td><td>Hay incertidumbre sobre qué necesita la gente, que es lo habitual en apps y juegos</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="agil" data-parada="Ágil y Scrum">
+  <h2>El Manifiesto Ágil y Scrum</h2>
+  <p>En los años noventa muchos equipos estaban hartos de proyectos que tardaban años, generaban miles de páginas de documentos y entregaban software que ya nadie quería. Cada grupo inventaba su alternativa: Scrum, Extreme Programming (XP), DSDM, Crystal… En febrero de 2001, diecisiete de esas personas se reunieron en una estación de esquí de Utah, en Estados Unidos, y acordaron lo que tenían en común. El resultado fue una página corta: el <strong>Manifiesto Ágil</strong>.</p>
+
+  <h3>Los cuatro valores</h3>
+  <p>Esta es la traducción oficial al español que publica el propio sitio del manifiesto:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Valoramos más…</th><th scope="col">…que</th><th scope="col">Qué significa en la práctica</th></tr></thead>
+      <tbody>
+        <tr><td>Individuos e interacciones</td><td>procesos y herramientas</td><td>Una conversación de cinco minutos resuelve más que un formulario perfecto. La herramienta sirve al equipo, no al revés.</td></tr>
+        <tr><td>Software funcionando</td><td>documentación extensiva</td><td>El progreso se mide en cosas que funcionan, no en documentos terminados.</td></tr>
+        <tr><td>Colaboración con el cliente</td><td>negociación contractual</td><td>Quien pide el software participa durante todo el proyecto, no solo al firmar y al recibir.</td></tr>
+        <tr><td>Respuesta ante el cambio</td><td>seguir un plan</td><td>Si aprendes algo nuevo, cambias el plan en lugar de defenderlo.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La frase que cierra los valores es la más malinterpretada: «Esto es, aunque valoramos los elementos de la derecha, valoramos más los de la izquierda». No dice que la documentación, los procesos o los planes sobren. Dice que, <em>cuando chocan</em>, gana lo de la izquierda.</p>
+  <p>Detrás de los valores hay <strong>doce principios</strong>. Estos cinco son los que más vas a notar en tu día a día:</p>
+  <ul>
+    <li>«Nuestra mayor prioridad es satisfacer al cliente mediante la entrega temprana y continua de software con valor.»</li>
+    <li>«Aceptamos que los requisitos cambien, incluso en etapas tardías del desarrollo.»</li>
+    <li>«El software funcionando es la medida principal de progreso.»</li>
+    <li>«Los procesos Ágiles promueven el desarrollo sostenible. […] Debemos ser capaces de mantener un ritmo constante de forma indefinida.» Es decir: nada de semanas de 70 horas.</li>
+    <li>«La simplicidad, o el arte de maximizar la cantidad de trabajo no realizado, es esencial.» Lo que no hace falta, no se construye.</li>
+  </ul>
+  <aside class="senal error" data-titulo="Ágil de fachada">
+    <p>Muchas empresas dicen que son ágiles porque hacen reuniones con nombres en inglés y usan un tablero con tarjetas. Si el plan del año no se puede tocar, el equipo nunca habla con quien usa el producto y las personas trabajan de noche para cumplir fechas impuestas, eso no es ágil, por muchos rituales que tenga. Ágil es una forma de pensar (entregar pronto, aprender, adaptarse, ritmo sostenible), no un conjunto de reuniones. Y tampoco es una excusa para no documentar ni planificar.</p>
+  </aside>
+
+  <h3>Scrum: un marco de trabajo en iteraciones</h3>
+  <p><strong>Scrum</strong> es el marco de trabajo ágil más usado. Un <strong>marco de trabajo</strong> (en inglés, <em>framework</em>) es una estructura mínima que tú completas con tus propias prácticas. Lo crearon Ken Schwaber y Jeff Sutherland en los años noventa y lo describen en la <strong>Guía de Scrum</strong>, un documento gratuito de unas trece páginas. La versión oficial vigente es la de noviembre de 2020, traducida al español. En 2025 apareció un documento complementario, el <em>Scrum Guide Expansion Pack</em>, pero no sustituye a la guía.</p>
+  <p>Scrum se apoya en el <strong>empirismo</strong>: decidir según lo que se observa y no según lo que se supone. Por eso tiene tres pilares: <strong>transparencia</strong> (el trabajo y su estado están a la vista de todos), <strong>inspección</strong> (se revisa a menudo cómo va) y <strong>adaptación</strong> (si algo se desvía, se corrige cuanto antes).</p>
+  <p>El trabajo se organiza en <strong>Sprints</strong>: iteraciones de duración fija de un mes o menos (muchos equipos usan dos semanas). Un Sprint empieza justo cuando termina el anterior. Dentro de Scrum hay tres tipos de piezas: responsabilidades, eventos y artefactos.</p>
+
+  <h3>Las tres responsabilidades</h3>
+  <p>Un <strong>Scrum Team</strong> es un grupo pequeño, normalmente de diez personas o menos, sin jerarquías internas. La guía no habla de «puestos» sino de <strong>responsabilidades</strong> (en inglés, <em>accountabilities</em>):</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Responsabilidad</th><th scope="col">Qué hace</th><th scope="col">Lo que no es</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Product Owner</strong></td><td>Maximiza el valor del producto. Define el Objetivo del Producto y ordena el Product Backlog: decide qué va primero. Es una sola persona, no un comité.</td><td>No es quien dice a los Developers cómo programar.</td></tr>
+        <tr><td><strong>Scrum Master</strong></td><td>Ayuda a que el equipo sea efectivo: enseña Scrum, facilita los eventos y se ocupa de quitar los <strong>impedimentos</strong>, los obstáculos que frenan al equipo.</td><td>No es jefe ni secretario del equipo, ni quien reparte tareas.</td></tr>
+        <tr><td><strong>Developers</strong></td><td>Las personas que crean el incremento: programación, diseño, pruebas, arte… Planifican el Sprint y responden de la calidad.</td><td>No son solo quienes programan: en un juego, la artista también es Developer.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La traducción oficial al español mantiene los nombres en inglés (Product Owner, Scrum Master, Developers), y así se usan en los equipos hispanohablantes.</p>
+
+  <h3>Los cinco eventos</h3>
+  <p>Los <strong>eventos</strong> son los momentos fijos en los que el equipo inspecciona y adapta. Cada uno tiene un tiempo máximo (en inglés, <em>timebox</em>) pensado para un Sprint de un mes; si el Sprint es más corto, suelen durar menos.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Evento</th><th scope="col">Para qué sirve</th><th scope="col">Duración máxima</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Sprint</strong></td><td>El contenedor de todos los demás eventos. Durante el Sprint no se hacen cambios que pongan en peligro su objetivo.</td><td>Un mes</td></tr>
+        <tr><td><strong>Sprint Planning</strong></td><td>Responder tres preguntas: por qué es valioso este Sprint (el Objetivo del Sprint), qué se puede hacer y cómo se hará.</td><td>8 horas</td></tr>
+        <tr><td><strong>Daily Scrum</strong></td><td>Reunión diaria de los Developers para revisar el avance hacia el Objetivo del Sprint y ajustar el plan del día.</td><td>15 minutos</td></tr>
+        <tr><td><strong>Sprint Review</strong></td><td>Enseñar el resultado a las personas interesadas, recoger lo que opinan y decidir juntos qué hacer después.</td><td>4 horas</td></tr>
+        <tr><td><strong>Sprint Retrospective</strong></td><td>Revisar cómo trabajó el equipo (personas, herramientas, acuerdos) y elegir mejoras concretas.</td><td>3 horas</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal ojo" data-titulo="Tres confusiones frecuentes">
+    <p><strong>La Daily no es un informe al jefe.</strong> Es una reunión de los Developers para coordinarse. La guía de 2020 eliminó las famosas tres preguntas («qué hice ayer, qué haré hoy, qué me bloquea»): el equipo elige el formato. <strong>La Review no es una demo para que aprueben</strong>: es una sesión de trabajo para decidir el siguiente paso. <strong>La Retrospectiva no es para buscar culpables</strong>: se habla del sistema de trabajo, no de personas.</p>
+  </aside>
+
+  <h3>Los tres artefactos</h3>
+  <p>Los <strong>artefactos</strong> son la información que el equipo mantiene visible. Cada uno tiene asociado un compromiso que le da sentido:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Artefacto</th><th scope="col">Qué es</th><th scope="col">Su compromiso</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Product Backlog</strong></td><td>La lista ordenada de todo lo que podría necesitar el producto. Lo de arriba está más detallado y listo; lo de abajo, apenas esbozado. Nunca está completo.</td><td><strong>Objetivo del Producto</strong>: el estado futuro que se quiere alcanzar.</td></tr>
+        <tr><td><strong>Sprint Backlog</strong></td><td>Lo elegido para este Sprint, más el plan para hacerlo. Pertenece a los Developers y se actualiza a diario.</td><td><strong>Objetivo del Sprint</strong>: la razón de ser de este Sprint, en una frase.</td></tr>
+        <tr><td><strong>Increment</strong></td><td>Cada paso concreto hacia el Objetivo del Producto: software que funciona y que se suma a lo anterior.</td><td><strong>Definición de Terminado</strong>: la lista de calidad que todo debe cumplir para contar como hecho.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>A la tarea continua de ordenar, dividir y detallar los elementos del Product Backlog se la llama <strong>refinamiento</strong>. No es un evento oficial: se hace cuando hace falta, normalmente un rato cada semana.</p>
+  <p>Así encajan todas las piezas durante un Sprint:</p>
+  <figure class="capsula" data-titulo="Un Sprint de principio a fin">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación de un Sprint de dos semanas. El Product Backlog tiene tarjetas ordenadas. En la Sprint Planning las tres de arriba pasan al Sprint Backlog con un Objetivo del Sprint. Durante el Sprint, cada día hay una Daily Scrum. Dos tarjetas cumplen la Definición de Terminado y forman el Increment; una vuelve al Product Backlog. En la Sprint Review aparece una tarjeta nueva en el Product Backlog y en la Retrospective se elige una mejora para el siguiente Sprint.">
+        <text class="d-rotulo" x="20" y="28" style="font-size:16px">Product Backlog</text>
+        <rect class="d-caja-suave" x="20" y="38" width="150" height="220" rx="8"/>
+        <text class="d-rotulo" x="270" y="28" style="font-size:16px">Sprint Backlog</text>
+        <rect class="d-caja-suave" x="250" y="38" width="170" height="220" rx="8"/>
+        <text class="d-rotulo" x="530" y="28" style="font-size:16px">Increment</text>
+        <rect class="d-caja-suave" x="500" y="38" width="200" height="220" rx="8"/>
+        <g class="d-peq">
+          <g data-mover="2:translate(245px,32px); 4:translate(495px,32px)"><rect class="d-caja" x="32" y="50" width="126" height="32" rx="5"/><text x="95" y="71" text-anchor="middle">Saltar</text></g>
+          <g data-mover="2:translate(245px,32px); 4:translate(495px,32px)"><rect class="d-caja" x="32" y="90" width="126" height="32" rx="5"/><text x="95" y="111" text-anchor="middle">Mover al perro</text></g>
+          <g data-mover="2:translate(245px,32px); 4:translate(0px,-80px)"><rect class="d-caja" x="32" y="130" width="126" height="32" rx="5"/><rect class="d-mal-trazo" x="32" y="130" width="126" height="32" rx="5" data-pasos="4"/><text x="95" y="151" text-anchor="middle">Enemigos</text></g>
+          <g data-mover="4:translate(0px,-80px); 5:translate(0px,-40px)"><rect class="d-caja" x="32" y="170" width="126" height="32" rx="5"/><text x="95" y="191" text-anchor="middle">Tienda</text></g>
+          <g data-mover="4:translate(0px,-80px); 5:translate(0px,-40px)"><rect class="d-caja" x="32" y="210" width="126" height="32" rx="5"/><text x="95" y="231" text-anchor="middle">Música</text></g>
+          <g data-pasos="5-"><rect class="d-acento" x="32" y="90" width="126" height="32" rx="5"/><text class="d-sobre-acento" x="95" y="111" text-anchor="middle">Salto más corto</text></g>
+        </g>
+        <g data-pasos="2-3">
+          <rect class="d-acento" x="258" y="46" width="154" height="26" rx="13"/>
+          <text class="d-sobre-acento d-peq d-rotulo" x="335" y="64" text-anchor="middle">Objetivo: primer nivel</text>
+        </g>
+        <g data-pasos="3">
+          <circle class="d-acento-trazo" cx="335" cy="226" r="24"/>
+          <path class="d-tinta" d="M357 214 l4 12 -12 -2z"/>
+          <text class="d-peq d-rotulo" x="335" y="231" text-anchor="middle">Daily</text>
+          <text class="d-peq d-tenue" x="376" y="222">15 min,</text>
+          <text class="d-peq d-tenue" x="376" y="238">cada día</text>
+        </g>
+        <g data-pasos="4-">
+          <rect class="d-acento" x="512" y="46" width="176" height="26" rx="13"/>
+          <text class="d-sobre-acento d-peq d-rotulo" x="600" y="64" text-anchor="middle">Terminado de verdad</text>
+        </g>
+        <text class="d-peq" x="20" y="286" data-texto="1:El Product Owner mantiene la lista ordenada: lo más valioso arriba.; 2:Sprint Planning: los Developers eligen lo que cabe y acuerdan el objetivo.; 3:Durante el Sprint, la Daily Scrum ajusta el plan cada día.; 4:Lo terminado forma el Increment. «Enemigos» no llegó: vuelve a la lista.; 5:Review: jugando, surge «Salto más corto». Retro: una mejora para el próximo Sprint.">El Product Owner mantiene la lista ordenada: lo más valioso arriba.</text>
+        <g data-pasos="5-">
+          <rect class="d-caja" x="258" y="176" width="154" height="66" rx="8"/>
+          <text class="d-peq d-rotulo" x="335" y="200" text-anchor="middle">Retrospectiva</text>
+          <text class="d-peq" x="335" y="220" text-anchor="middle">Mejora: revisar los</text>
+          <text class="d-peq" x="335" y="236" text-anchor="middle">PR el mismo día</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Todo empieza en el Product Backlog: la lista de lo que podría tener el juego, ordenada por el Product Owner. Lo de arriba es lo más valioso.</li>
+        <li>Sprint Planning. El equipo acuerda por qué es valioso este Sprint («tener el primer nivel jugable») y los Developers eligen de arriba de la lista lo que creen que cabe en dos semanas. Eso forma el Sprint Backlog.</li>
+        <li>Durante el Sprint, los Developers trabajan y se reúnen quince minutos cada día en la Daily Scrum para ver cómo van hacia el objetivo y ajustar el plan.</li>
+        <li data-duracion="7">Al final, lo que cumple la Definición de Terminado forma el Increment: saltar y mover al perro ya funcionan de verdad. «Enemigos» quedó a medias: no se muestra ni se cuenta como hecho, y vuelve al Product Backlog. El Product Owner la deja arriba, porque sigue siendo lo más valioso.</li>
+        <li data-duracion="7">En la Sprint Review, las personas interesadas juegan el nivel y surge una idea nueva, «salto más corto», que entra en el Product Backlog en segundo lugar. En la Retrospectiva, el equipo elige una mejora de su forma de trabajar. Y empieza el siguiente Sprint.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Comprueba si recuerdas el orden. Algunas cosas ocurren a la vez durante el Sprint; en ese caso, cualquier orden entre ellas es válido.</p>
+  <div class="parsons" data-titulo="Ordena lo que pasa en un Sprint" data-lenguaje="text" data-exito="¡Correcto! Planificar, construir con una Daily cada día, revisar el producto, revisar la forma de trabajar y volver a empezar.">
+    <ol>
+      <li>Sprint Planning: el equipo acuerda el Objetivo del Sprint</li>
+      <li>Los Developers eligen elementos del Product Backlog y planifican cómo hacerlos</li>
+      <li data-grupo="a">Daily Scrum de 15 minutos cada día de trabajo</li>
+      <li data-grupo="a">Construir y probar el incremento según la Definición de Terminado</li>
+      <li>Sprint Review: enseñar el resultado y ajustar el Product Backlog</li>
+      <li>Sprint Retrospective: elegir una mejora para la forma de trabajar</li>
+      <li>Empieza el siguiente Sprint con una nueva Sprint Planning</li>
+    </ol>
+  </div>
+  <aside class="senal oficio">
+    <p>La Guía de Scrum no menciona historias de usuario, puntos de historia, velocidad ni tableros. Son prácticas que muchos equipos añaden porque encajan bien, y las verás en las próximas secciones. Si alguien te dice que «Scrum obliga a estimar en puntos», no es así: Scrum pide que el equipo pronostique qué cabe en el Sprint, y deja libre cómo hacerlo.</p>
+  </aside>
+</section>
+
+<section id="kanban" data-parada="Kanban y tableros">
+  <h2>Kanban: que el trabajo fluya</h2>
+  <p>Mira el tablero de muchos equipos un viernes: quince tareas «en curso» y ninguna terminada. Cada persona empezó tres cosas, esperó una respuesta en cada una y, mientras tanto, empezó otra. Todo avanza un poco y nada llega a las personas usuarias. Además, saltar de una tarea a otra cuesta: cada vez que cambias, tardas un rato en recordar dónde estabas.</p>
+  <p><strong>Kanban</strong> ataca justo ese problema. La palabra es japonesa y significa algo así como «tarjeta» o «letrero»: viene del sistema de producción de Toyota, donde unas tarjetas indicaban cuándo reponer piezas. David J. Anderson adaptó la idea al desarrollo de software a mediados de la década de 2000. Hoy la referencia breve es <strong>la Guía de Kanban</strong> de John Coleman y Daniel Vacanti, cuya edición vigente es de mayo de 2025. La define como «una estrategia para optimizar el flujo de valor a través de un proceso».</p>
+
+  <h3>Las tres prácticas</h3>
+  <ol class="pasos">
+    <li><div><p><strong>Definir y visualizar el flujo de trabajo.</strong> El equipo acuerda por escrito qué es una unidad de trabajo, en qué estados puede estar (por ejemplo, «Por hacer», «En curso», «En revisión», «Hecho»), cuándo se considera empezada y terminada, y qué reglas hay para moverla. Luego lo dibuja en un <strong>tablero</strong>: una columna por estado y una tarjeta por unidad de trabajo.</p></div></li>
+    <li><div><p><strong>Gestionar activamente el trabajo en curso.</strong> El equipo limita cuántas tarjetas pueden estar empezadas a la vez, vigila las que llevan demasiado tiempo quietas y las desbloquea.</p></div></li>
+    <li><div><p><strong>Mejorar el flujo continuamente.</strong> Con los datos del tablero, el equipo revisa sus reglas y las ajusta.</p></div></li>
+  </ol>
+  <p>La pieza central es el <strong>límite de trabajo en curso</strong>, o <strong>límite WIP</strong> (del inglés <em>work in progress</em>): el número máximo de tarjetas que puede haber a la vez en una columna o en todo el tablero. Si una columna está llena, nadie mete otra tarjeta: primero hay que sacar alguna. Eso convierte el tablero en un <strong>sistema de arrastre</strong> (en inglés, <em>pull system</em>): el trabajo se toma cuando hay hueco, no se empuja porque alguien lo pide. En los equipos Kanban se repite una frase que lo resume: «deja de empezar, empieza a terminar».</p>
+  <figure class="capsula" data-titulo="Un límite WIP en acción">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación de un tablero Kanban con cuatro columnas: Por hacer, En curso con límite 2, Revisión con límite 1 y Hecho. Dos tarjetas pasan a En curso y la columna se llena. Una tercera no puede entrar. Cuando la primera tarjeta pasa a Revisión y luego a Hecho, se libera un hueco y la tercera tarjeta entra en En curso.">
+        <rect class="d-caja-suave" x="20" y="14" width="160" height="262" rx="8"/>
+        <rect class="d-caja-suave" x="195" y="14" width="160" height="262" rx="8"/>
+        <rect class="d-caja-suave" x="370" y="14" width="160" height="262" rx="8"/>
+        <rect class="d-caja-suave" x="545" y="14" width="160" height="262" rx="8"/>
+        <rect class="d-mal-trazo" x="195" y="14" width="160" height="262" rx="8" data-pasos="3"/>
+        <text class="d-rotulo" x="100" y="40" text-anchor="middle" style="font-size:16px">Por hacer</text>
+        <text class="d-rotulo" x="275" y="40" text-anchor="middle" style="font-size:16px" data-texto="1:En curso 0/2; 2:En curso 2/2; 3:En curso 2/2; 4:En curso 1/2; 5:En curso 2/2">En curso 0/2</text>
+        <text class="d-rotulo" x="450" y="40" text-anchor="middle" style="font-size:16px" data-texto="1:Revisión 0/1; 4:Revisión 1/1; 5:Revisión 0/1">Revisión 0/1</text>
+        <text class="d-rotulo" x="625" y="40" text-anchor="middle" style="font-size:16px" data-texto="1:Hecho: 0; 5:Hecho: 1">Hecho: 0</text>
+        <g class="d-peq">
+          <g data-mover="2:translate(175px,0px); 4:translate(350px,0px); 5:translate(525px,0px)"><rect class="d-caja" x="40" y="62" width="120" height="36" rx="5"/><text x="100" y="85" text-anchor="middle">A · Mapa</text></g>
+          <g data-mover="2:translate(175px,0px)"><rect class="d-caja" x="40" y="108" width="120" height="36" rx="5"/><text x="100" y="131" text-anchor="middle">B · Salto</text></g>
+          <g data-mover="2:translate(0px,-92px); 3:translate(10px,-92px); 4:translate(0px,-92px); 5:translate(175px,-92px)"><rect class="d-caja" x="40" y="154" width="120" height="36" rx="5"/><rect class="d-mal-trazo" x="40" y="154" width="120" height="36" rx="5" data-pasos="3"/><text x="100" y="177" text-anchor="middle">C · Enemigo</text></g>
+          <g data-mover="2:translate(0px,-92px)"><rect class="d-caja" x="40" y="200" width="120" height="36" rx="5"/><text x="100" y="223" text-anchor="middle">D · Pausa</text></g>
+        </g>
+        <g data-pasos="3">
+          <rect class="d-fondo" x="186" y="200" width="188" height="48" rx="6"/>
+          <text class="d-peq d-rotulo" x="280" y="220" text-anchor="middle">Columna llena:</text>
+          <text class="d-peq" x="280" y="238" text-anchor="middle">C tiene que esperar</text>
+        </g>
+        <g data-pasos="4">
+          <text class="d-peq" x="450" y="128" text-anchor="middle">Sol no empieza C:</text>
+          <text class="d-peq" x="450" y="146" text-anchor="middle">revisa A</text>
+        </g>
+        <text class="d-peq" x="20" y="294" data-texto="1:Cuatro columnas. En curso admite 2 tarjetas; Revisión, 1.; 2:A y B empiezan. En curso está lleno.; 3:C no puede entrar: el límite obliga a terminar antes de empezar.; 4:A pasa a Revisión. La persona libre ayuda a revisar.; 5:A llega a Hecho y C entra en el hueco libre.">Cuatro columnas. En curso admite 2 tarjetas; Revisión, 1.</text>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Un tablero con cuatro columnas. Los números indican cuántas tarjetas hay y cuántas caben: «En curso» admite 2 y «Revisión» solo 1. «Por hacer» y «Hecho» no tienen límite.</li>
+        <li>Ana empieza A (el mapa) y Leo empieza B (el salto). La columna «En curso» llega a su límite: 2 de 2.</li>
+        <li data-duracion="6">Sol termina lo suyo y quiere empezar C. No puede: la columna está llena. Sin límite, C se habría sumado a la pila de cosas a medias.</li>
+        <li data-duracion="6">Ana termina A y lo pasa a «Revisión». En lugar de empezar algo nuevo, Sol se pone a revisar A: así A no se queda esperando. Esto se llama <strong>enjambrar</strong> (en inglés, <em>swarming</em>): varias personas se juntan para terminar lo que está más cerca del final.</li>
+        <li>A llega a «Hecho»: una cosa terminada de verdad. Ahora sí hay hueco en «En curso» y C entra. El trabajo fluye de izquierda a derecha sin atascos.</li>
+      </ol>
+    </figcaption>
+  </figure>
+  <p>Sigue esta pequeña función que aplica un límite WIP. Fíjate en qué pasa la tercera vez que se llama:</p>
+  <div class="traza" data-titulo="Empezar tareas con un límite" data-rotulo-memoria="Memoria">
+    <pre><code class="language-js">const LIMITE = 2;
+const enCurso = [];
+function empezar(tarea) {
+  if (enCurso.length &gt;= LIMITE) {
+    return "espera: " + tarea;
+  }
+  enCurso.push(tarea);
+  return "empieza: " + tarea;
+}
+console.log(empezar("mapa"));
+console.log(empezar("salto"));
+console.log(empezar("tienda"));
+const hecha = enCurso.shift();
+console.log(empezar("tienda"));</code></pre>
+    <script type="application/json">[
+      {"linea": 1, "vars": {"LIMITE": "2"}, "nota": "El límite de trabajo en curso: como mucho 2 tareas empezadas a la vez."},
+      {"linea": 2, "vars": {"LIMITE": "2", "enCurso": "[]"}, "nota": "La columna «En curso» empieza vacía. Es un array: cada elemento es una tarea empezada."},
+      {"linea": 3, "vars": {"LIMITE": "2", "enCurso": "[]", "empezar": "función"}, "nota": "Se guarda la función empezar. Su cuerpo (líneas 4 a 8) todavía no se ejecuta."},
+      {"linea": 4, "vars": {"LIMITE": "2", "enCurso": "[]", "empezar": "función", "tarea (local)": "\"mapa\""}, "nota": "La línea 10 llama a empezar(\"mapa\"). ¿Hay 2 o más tareas en curso? enCurso.length es 0, así que la condición es falsa y se salta el bloque de las líneas 5 y 6."},
+      {"linea": 7, "vars": {"LIMITE": "2", "enCurso": "[\"mapa\"]", "empezar": "función", "tarea (local)": "\"mapa\""}, "nota": "Hay hueco: la tarea entra en la columna."},
+      {"linea": 8, "vars": {"LIMITE": "2", "enCurso": "[\"mapa\"]", "empezar": "función", "tarea (local)": "\"mapa\""}, "nota": "La función devuelve el texto «empieza: mapa» y termina."},
+      {"linea": 10, "vars": {"LIMITE": "2", "enCurso": "[\"mapa\"]", "empezar": "función"}, "salida": "empieza: mapa", "nota": "console.log imprime lo que devolvió la función. La variable local tarea ya no existe."},
+      {"linea": 4, "vars": {"LIMITE": "2", "enCurso": "[\"mapa\"]", "empezar": "función", "tarea (local)": "\"salto\""}, "nota": "Línea 11: empezar(\"salto\"). Hay 1 tarea en curso; 1 no es mayor o igual que 2, así que sigue."},
+      {"linea": 7, "vars": {"LIMITE": "2", "enCurso": "[\"mapa\", \"salto\"]", "empezar": "función", "tarea (local)": "\"salto\""}, "nota": "La segunda tarea entra. La columna ya está llena."},
+      {"linea": 11, "vars": {"LIMITE": "2", "enCurso": "[\"mapa\", \"salto\"]", "empezar": "función"}, "salida": "empieza: salto", "nota": "La función devolvió «empieza: salto» en la línea 8 y se imprime."},
+      {"linea": 4, "vars": {"LIMITE": "2", "enCurso": "[\"mapa\", \"salto\"]", "empezar": "función", "tarea (local)": "\"tienda\""}, "nota": "Línea 12: empezar(\"tienda\"). Ahora enCurso.length es 2, y 2 >= 2 es verdadero: se entra en el bloque."},
+      {"linea": 5, "vars": {"LIMITE": "2", "enCurso": "[\"mapa\", \"salto\"]", "empezar": "función", "tarea (local)": "\"tienda\""}, "nota": "return \"espera: tienda\" termina la función aquí mismo. Las líneas 7 y 8 no se ejecutan: la tienda no entra."},
+      {"linea": 12, "vars": {"LIMITE": "2", "enCurso": "[\"mapa\", \"salto\"]", "empezar": "función"}, "salida": "espera: tienda", "nota": "El límite obliga a terminar algo antes de empezar más."},
+      {"linea": 13, "vars": {"LIMITE": "2", "enCurso": "[\"salto\"]", "empezar": "función", "hecha": "\"mapa\""}, "nota": "Se termina la primera tarea: shift saca el primer elemento del array y lo devuelve. Queda un hueco."},
+      {"linea": 7, "vars": {"LIMITE": "2", "enCurso": "[\"salto\", \"tienda\"]", "empezar": "función", "hecha": "\"mapa\"", "tarea (local)": "\"tienda\""}, "nota": "Línea 14: empezar(\"tienda\") otra vez. En la línea 4, 1 >= 2 es falso, así que ahora la tienda sí entra."},
+      {"linea": 14, "vars": {"LIMITE": "2", "enCurso": "[\"salto\", \"tienda\"]", "empezar": "función", "hecha": "\"mapa\""}, "salida": "empieza: tienda", "nota": "Terminar una tarea es lo que abre la puerta a la siguiente. Así funciona un sistema de arrastre."}
+    ]</script>
+  </div>
+
+  <h3>Pruébalo en un tablero de verdad</h3>
+  <p>Este tablero aplica límites WIP. Pulsa una tarjeta para pasarla a la columna siguiente. Intenta meter tres tarjetas en «En curso» y observa qué pasa. Después <strong>modifica</strong>: cambia el límite de «Revisión» a 2, o añade una columna «Pruebas» con límite 1 entre «Revisión» y «Hecho».</p>
+  <div class="taller" data-modo="web" id="taller-tablero" data-titulo="Tablero Kanban con límites" data-alto="25rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;p id="aviso" role="status"&gt;Pulsa una tarjeta para pasarla a la columna siguiente.&lt;/p&gt;
+&lt;p id="terminadas"&gt;&lt;/p&gt;
+&lt;div id="tablero"&gt;&lt;/div&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { font-family: system-ui, sans-serif; margin: 1rem; background: #fafafa; color: #222; }
+#tablero { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: .75rem; }
+.columna { background: #eceff1; border: 3px solid transparent; border-radius: 8px; padding: .5rem; min-height: 12rem; }
+.columna.llena { border-color: #c62828; }
+.columna h3 { font-size: .95rem; margin: 0 0 .5rem; }
+.columna button { display: block; width: 100%; margin-bottom: .4rem; padding: .5rem; text-align: left; background: #fff; border: 1px solid #90a4ae; border-radius: 6px; font: inherit; cursor: pointer; }
+.columna button:focus-visible { outline: 3px solid #1565c0; }
+#aviso { min-height: 1.5em; font-weight: bold; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const columnas = [
+  { nombre: "Por hacer", limite: Infinity },
+  { nombre: "En curso", limite: 2 },
+  { nombre: "Revisión", limite: 1 },
+  { nombre: "Hecho", limite: Infinity },
+];
+const tarjetas = [
+  { titulo: "Mapa del nivel 1", col: 0 },
+  { titulo: "Salto", col: 0 },
+  { titulo: "Enemigo que patrulla", col: 0 },
+  { titulo: "Menú de pausa", col: 0 },
+  { titulo: "Música", col: 0 },
+];
+const tablero = document.querySelector("#tablero");
+const aviso = document.querySelector("#aviso");
+
+function cuantas(col) {
+  return tarjetas.filter((t) => t.col === col).length;
+}
+
+function mover(tarjeta) {
+  const destino = tarjeta.col + 1;
+  if (destino >= columnas.length) {
+    aviso.textContent = `«${tarjeta.titulo}» ya está hecha.`;
+    return;
+  }
+  if (cuantas(destino) >= columnas[destino].limite) {
+    aviso.textContent = `No cabe en «${columnas[destino].nombre}»: termina algo antes de empezar más.`;
+    return;
+  }
+  tarjeta.col = destino;
+  aviso.textContent = `«${tarjeta.titulo}» pasa a «${columnas[destino].nombre}».`;
+  dibujar();
+}
+
+function dibujar() {
+  tablero.textContent = "";
+  columnas.forEach((columna, i) => {
+    const caja = document.createElement("section");
+    caja.className = "columna";
+    if (cuantas(i) >= columna.limite) caja.classList.add("llena");
+    const titulo = document.createElement("h3");
+    titulo.textContent = columna.limite === Infinity
+      ? columna.nombre
+      : `${columna.nombre} (${cuantas(i)}/${columna.limite})`;
+    caja.append(titulo);
+    tarjetas.filter((t) => t.col === i).forEach((t) => {
+      const boton = document.createElement("button");
+      boton.textContent = t.titulo;
+      boton.addEventListener("click", () => mover(t));
+      caja.append(boton);
+    });
+    tablero.append(caja);
+  });
+  const hechas = cuantas(columnas.length - 1);
+  document.querySelector("#terminadas").textContent = `Terminadas: ${hechas} de ${tarjetas.length}`;
+}
+
+dibujar();</textarea>
+  </div>
+  <p>Fíjate en que el tablero no te impide trabajar: te impide <em>acumular</em>. Si «Revisión» está llena, la tarjeta que quieres empezar puede esperar; lo útil es ir a revisar lo que otra persona terminó.</p>
+  <aside class="senal ojo" data-titulo="¿Qué límite pongo?">
+    <p>No hay un número mágico. Un punto de partida común es que el límite de «En curso» sea algo menor que el número de personas, para empujar a colaborar. Si el tablero se atasca a menudo, el límite es demasiado bajo o hay un cuello de botella; si nunca se alcanza, es demasiado alto y no sirve. Se ajusta con la experiencia, que es justo la tercera práctica de Kanban.</p>
+  </aside>
+
+  <h3>Medir el flujo</h3>
+  <p>La Guía de Kanban pide medir al menos cuatro cosas. Todas salen de anotar cuándo empieza y cuándo termina cada tarjeta:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Métrica</th><th scope="col">Qué mide</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Trabajo en curso</strong> (WIP)</td><td>Cuántas tarjetas están empezadas y sin terminar.</td><td>6 tarjetas</td></tr>
+        <tr><td><strong>Rendimiento</strong> (<em>throughput</em>)</td><td>Cuántas se terminan por unidad de tiempo.</td><td>4 por semana</td></tr>
+        <tr><td><strong>Edad</strong> (<em>work item age</em>)</td><td>Cuánto lleva empezada una tarjeta que aún no terminó.</td><td>«El enemigo lleva 9 días»</td></tr>
+        <tr><td><strong>Tiempo de ciclo</strong> (<em>cycle time</em>)</td><td>Cuánto tardó una tarjeta desde que empezó hasta que terminó.</td><td>3 días de media</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Estas métricas se relacionan con una fórmula que viene de la teoría de colas, la <strong>ley de Little</strong>: en promedio, el tiempo de ciclo es el trabajo en curso dividido entre el rendimiento. Si tienes 12 tareas empezadas y terminas 4 por semana, cada tarea tarda de media unas 3 semanas en salir. Con solo 6 empezadas y el mismo ritmo, tardan semana y media. Terminas lo mismo por semana, pero cada cosa llega antes a las personas. La ley se cumple con promedios en periodos estables; no sirve para predecir una tarea concreta.</p>
+
+  <h3>Scrum, Kanban o las dos cosas</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">Scrum</th><th scope="col">Kanban</th></tr></thead>
+      <tbody>
+        <tr><td>Ritmo</td><td>Sprints de duración fija</td><td>Flujo continuo, sin iteraciones obligatorias</td></tr>
+        <tr><td>Cómo limita el trabajo</td><td>Lo que cabe en el Sprint</td><td>Límites WIP por columna o por tablero</td></tr>
+        <tr><td>Responsabilidades</td><td>Product Owner, Scrum Master, Developers</td><td>No define ninguna: se usan las que ya hay</td></tr>
+        <tr><td>Cambios a mitad de camino</td><td>Se evitan cambios que pongan en peligro el Objetivo del Sprint</td><td>Una tarjeta nueva puede entrar en cuanto haya hueco</td></tr>
+        <tr><td>Encaja bien con…</td><td>Producto nuevo que se construye por entregas</td><td>Trabajo que llega sin parar: soporte, errores, mantenimiento, operaciones</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>No son rivales. Muchos equipos Scrum usan un tablero con límites WIP dentro del Sprint, y la propia comunidad de Kanban publica guías para combinarlo con Scrum. A esa mezcla a veces se la llama <strong>Scrumban</strong>.</p>
+
+  <h3>Tableros y herramientas</h3>
+  <p>El tablero puede ser una pared con notas adhesivas o una aplicación. Si tu código vive en GitHub, lo más cómodo es <strong>GitHub Projects</strong>, que conecta el tablero con tus <em>issues</em> (las incidencias o tareas del repositorio) y tus pull requests. Según su documentación actual:</p>
+  <ul>
+    <li>Un mismo proyecto se ve de tres formas: <strong>tabla</strong> (como una hoja de cálculo), <strong>tablero</strong> (columnas estilo Kanban) y <strong>hoja de ruta</strong> (una línea de tiempo).</li>
+    <li>Puedes añadir <strong>campos personalizados</strong> de texto, número, fecha, selección única e <strong>iteración</strong>. Este último sirve para organizar el trabajo en Sprints.</li>
+    <li>Los <strong>flujos de trabajo integrados</strong> mueven tarjetas solos; por ejemplo, marcan como «Done» una tarjeta cuando se cierra su issue o se fusiona su pull request.</li>
+    <li>Puedes crear <strong>borradores</strong> (<em>draft issues</em>) para ideas que todavía no merecen una issue completa.</li>
+  </ul>
+  <p>Cómo crear issues, enlazarlas a pull requests y trabajar con ellas lo ves en la <a href="24-git.html">Estación 24</a>. Otras herramientas muy usadas: <strong>Trello</strong> (tableros sencillos), <strong>Jira</strong> (muy común en empresas grandes), <strong>Linear</strong> (popular en empresas nuevas de software), las <strong>issue boards de GitLab</strong> y <strong>Taiga</strong>, que es de código abierto. Todas cambian a menudo su plan gratuito: compruébalo en su web antes de elegir.</p>
+  <aside class="senal oficio">
+    <p>La herramienta importa mucho menos que los acuerdos. Un equipo que no se pone de acuerdo sobre qué significa «En revisión» tendrá el mismo caos en Jira que en una pizarra. Empieza con pocas columnas y pocas reglas, escríbelas en el propio tablero o en el README, y añade complejidad solo cuando un problema real lo pida.</p>
+  </aside>
+</section>
+
+<section id="historias" data-parada="Historias de usuario">
+  <h2>Requisitos e historias de usuario</h2>
+  <p>«Quiero una app para organizar los torneos de mi barrio.» Eso es una idea, no algo que se pueda programar. ¿Quién la usa: quien organiza, quien juega, quien mira? ¿Qué tiene que poder hacer cada uno? ¿Tiene que funcionar en un teléfono viejo? Transformar la idea en respuestas concretas es trabajar los <strong>requisitos</strong>: las condiciones que el software debe cumplir para ser útil a quien lo usa.</p>
+
+  <h3>Funcionales y no funcionales</h3>
+  <p>Los requisitos se dividen en dos grandes grupos:</p>
+  <ul>
+    <li>Los <strong>requisitos funcionales</strong> dicen <em>qué hace</em> el sistema: «quien organiza puede crear un torneo con fecha y lugar», «el personaje puede saltar sobre los enemigos».</li>
+    <li>Los <strong>requisitos no funcionales</strong> dicen <em>cómo de bien</em> lo hace: rapidez, seguridad, accesibilidad, facilidad de uso, costo. También se llaman <strong>atributos de calidad</strong>, y son la materia prima de la arquitectura (<a href="28-arquitectura.html">Estación 28</a>).</li>
+  </ul>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Tipo</th><th scope="col">App de torneos</th><th scope="col">Juego de plataformas</th></tr></thead>
+      <tbody>
+        <tr><td>Funcional</td><td>Un equipo se inscribe con nombre y cinco integrantes.</td><td>Al tocar un enemigo, el personaje pierde una vida.</td></tr>
+        <tr><td>Funcional</td><td>Quien organiza ve la lista de inscritos y puede exportarla.</td><td>El récord se guarda entre partidas.</td></tr>
+        <tr><td>No funcional (rendimiento)</td><td>La página del torneo carga en menos de 3 segundos en un teléfono con conexión 4G.</td><td>El juego va a 60 fotogramas por segundo en una computadora portátil de hace cinco años.</td></tr>
+        <tr><td>No funcional (accesibilidad)</td><td>Todo el formulario se puede usar solo con teclado y cumple WCAG 2.2 nivel AA (<a href="17-diseno-ux.html#accesibilidad">Estación 17</a>).</td><td>Los controles se pueden reasignar y ninguna información depende solo del color.</td></tr>
+        <tr><td>No funcional (seguridad)</td><td>Los teléfonos de las personas inscritas solo los ve quien organiza.</td><td>Las partidas guardadas no incluyen datos personales.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal error">
+    <p>El error más común con los requisitos no funcionales es escribirlos de forma que no se puedan comprobar: «la app debe ser rápida», «el juego debe ser fácil de usar». ¿Rápida cuánto?, ¿en qué dispositivo?, ¿fácil para quién? Un requisito que no se puede medir no se puede cumplir ni incumplir. Ponle números y condiciones: «en menos de 3 segundos», «en un teléfono de gama baja», «cinco personas que nunca lo usaron completan la inscripción sin ayuda».</p>
+  </aside>
+
+  <h3>Historias de usuario</h3>
+  <p>En los equipos ágiles, los requisitos funcionales suelen escribirse como <strong>historias de usuario</strong>: descripciones cortas de algo que una persona quiere hacer con el producto, contadas desde su punto de vista. El formato más extendido nació hacia 2001 en Connextra, una empresa de Londres, en el equipo de Rachel Davies:</p>
+  <pre><code class="language-text">Como &lt;tipo de persona&gt;,
+quiero &lt;hacer algo&gt;
+para &lt;conseguir un beneficio&gt;.</code></pre>
+  <p>Por ejemplo: «Como organizadora de torneos, quiero ver quién pagó la inscripción para no tener que revisar las transferencias una por una». Las tres partes importan: el <strong>rol</strong> te recuerda para quién trabajas; la <strong>acción</strong>, qué necesita; y el <strong>beneficio</strong>, por qué. El beneficio es la parte que más se olvida y la más valiosa: si cambias la acción por otra mejor que consiga lo mismo, la historia sigue cumplida.</p>
+  <p>Ron Jeffries, uno de los creadores de Extreme Programming, resumió en 2001 qué es una historia con <strong>tres C</strong>:</p>
+  <ul>
+    <li><strong>Card</strong> (tarjeta): la frase escrita, corta, que cabe en una tarjeta.</li>
+    <li><strong>Conversation</strong> (conversación): los detalles no están en la tarjeta; se hablan entre quien pide y quien construye.</li>
+    <li><strong>Confirmation</strong> (confirmación): los criterios que dirán si está hecha, que verás enseguida.</li>
+  </ul>
+  <aside class="senal analogia">
+    <p>Una historia de usuario es como la nota «llamar a mamá por lo del cumpleaños» pegada en la nevera. La nota no contiene toda la información: te recuerda que tienes que tener una conversación. Si intentas meter toda la conversación en la nota, deja de ser una nota y se convierte en una carta que nadie lee. El límite de la analogía: en software, lo que se acuerda en la conversación sí hay que dejarlo por escrito, en forma de criterios de aceptación.</p>
+  </aside>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">No son historias de usuario</p>
+      <pre><code class="language-text">Como desarrollador, quiero crear la tabla
+de puntuaciones en la base de datos.
+
+Como jugador, quiero un botón azul arriba
+a la derecha.
+
+El juego tiene tienda.</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Historias de usuario</p>
+      <pre><code class="language-text">Como jugadora, quiero ver mi mejor
+puntuación al terminar la partida para
+saber si me estoy superando.
+
+Como jugador con poco tiempo, quiero pausar
+en cualquier momento para atender una
+llamada sin perder la partida.</code></pre>
+    </div>
+  </div>
+  <p>La primera de la izquierda es una <strong>tarea técnica</strong>: nadie que juega quiere una tabla. La segunda impone una solución («botón azul») en lugar de contar la necesidad. La tercera no dice quién ni para qué. Las tareas técnicas existen y son necesarias, pero se anotan como tareas dentro de una historia, no como historias.</p>
+  <p>Este programa revisa historias automáticamente con tres reglas sencillas. Ejecútalo, mira qué historias fallan y <strong>modifica</strong> esas historias (no la función) hasta que todas salgan con <code>[ok]</code>:</p>
+  <div class="taller" id="taller-historias" data-titulo="Modifica: arregla las historias">
+    <textarea class="taller-codigo">function revisar(historia) {
+  const partes = historia.match(/^Como (.+?), quiero (.+?) para (.+)$/);
+  if (!partes) return "[revisar] formato: usa «Como ..., quiero ... para ...»";
+  const [, rol, accion, beneficio] = partes;
+  if (/desarroll|programad|sistema|equipo t[eé]cnico/i.test(rol)) {
+    return "[revisar] el rol debe ser alguien que usa el producto";
+  }
+  if (/tabla|base de datos|localStorage|API|JSON|clase|función/i.test(accion)) {
+    return "[revisar] cuenta la necesidad, no la solución técnica";
+  }
+  if (beneficio.split(" ").length < 3) return "[revisar] explica mejor el beneficio";
+  return "[ok] " + rol;
+}
+
+const historias = [
+  "Como jugadora, quiero pausar la partida para atender una llamada sin perder.",
+  "Como desarrollador, quiero crear la tabla de puntuaciones para guardar datos.",
+  "Como jugador, quiero guardar mi récord en localStorage para verlo mañana.",
+  "El juego tiene tienda.",
+];
+
+historias.forEach((h, i) => console.log(`${i + 1}. ${revisar(h)}`));</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (salida.length < 4) return "Deberían revisarse las 4 historias. No borres ninguna: reescríbelas.";
+for (var i = 0; i < salida.length; i++) {
+  if (salida[i].indexOf("[ok]") === -1) return "La historia " + (i + 1) + " todavía no pasa: «" + salida[i] + "».";
+}
+return true;
+    </script>
+  </div>
+  <aside class="senal ojo">
+    <p>Una revisión automática como esta solo comprueba la forma. Una historia puede pasar las tres reglas y ser inútil («Como persona, quiero cosas para estar bien»). Lo que de verdad valida una historia es la conversación con quien la necesita.</p>
+  </aside>
+
+  <h3>INVEST: seis preguntas para una buena historia</h3>
+  <p>En 2003, Bill Wake propuso el acrónimo <strong>INVEST</strong> (en inglés, «invertir») para revisar historias. Cada letra es una cualidad:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Letra</th><th scope="col">Cualidad</th><th scope="col">Pregúntate</th><th scope="col">Señal de que falla</th></tr></thead>
+      <tbody>
+        <tr><td><strong>I</strong></td><td>Independiente</td><td>¿Se puede hacer sin esperar a otras historias?</td><td>«Esta solo se puede empezar cuando terminen las otras cuatro.»</td></tr>
+        <tr><td><strong>N</strong></td><td>Negociable</td><td>¿Deja espacio para acordar los detalles?</td><td>Trae el diseño completo de la pantalla y no admite cambios.</td></tr>
+        <tr><td><strong>V</strong></td><td>Valiosa</td><td>¿Aporta algo a quien usa o paga el producto?</td><td>Solo le importa al equipo técnico.</td></tr>
+        <tr><td><strong>E</strong></td><td>Estimable</td><td>¿El equipo entiende lo suficiente para calcular su tamaño?</td><td>«Integrar con el sistema de la federación», sin saber qué sistema es.</td></tr>
+        <tr><td><strong>S</strong></td><td>Pequeña (<em>small</em>)</td><td>¿Cabe con holgura en una iteración?</td><td>«Como jugador, quiero un modo multijugador en línea.»</td></tr>
+        <tr><td><strong>T</strong></td><td>Comprobable (<em>testable</em>)</td><td>¿Se puede saber sin discusión si está hecha?</td><td>«El juego debe ser divertido.»</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Wake presentó INVEST como una guía, no como un examen. Es difícil que una historia cumpla las seis cualidades perfectamente; úsalas para detectar problemas antes de empezar.</p>
+
+  <h3>Criterios de aceptación: Dado, Cuando, Entonces</h3>
+  <p>Los <strong>criterios de aceptación</strong> son las condiciones concretas que una historia debe cumplir para darse por aceptada. Son la «confirmación» de las tres C. Una forma muy extendida de escribirlos viene del <strong>desarrollo guiado por comportamiento</strong> (en inglés, <em>behavior-driven development</em> o BDD), una práctica que popularizó Dan North a mediados de la década de 2000. Cada criterio es un <strong>escenario</strong> con tres partes:</p>
+  <ul>
+    <li><strong>Dado</strong> (<em>Given</em>): la situación de partida.</li>
+    <li><strong>Cuando</strong> (<em>When</em>): lo que hace la persona o lo que ocurre.</li>
+    <li><strong>Entonces</strong> (<em>Then</em>): el resultado que se debe poder observar.</li>
+  </ul>
+  <p>Se pueden encadenar condiciones con <strong>Y</strong> (<em>And</em>) y <strong>Pero</strong> (<em>But</em>). Para la historia de la pausa:</p>
+  <pre><code class="language-text">Historia: Como jugador con poco tiempo, quiero pausar en cualquier
+momento para atender una llamada sin perder la partida.
+
+Escenario: pausar durante la partida
+  Dado que estoy jugando el nivel 2 con 3 vidas
+  Cuando pulso la tecla Escape
+  Entonces el juego se detiene y aparece el menú de pausa
+  Y el temporizador del nivel deja de avanzar
+
+Escenario: volver de la pausa
+  Dado que el juego está en pausa
+  Cuando elijo «Continuar»
+  Entonces el juego sigue desde el mismo punto
+  Y conservo mis 3 vidas y mis puntos
+
+Escenario: no se puede morir en pausa
+  Dado que el juego está en pausa
+  Y hay un enemigo tocando al personaje
+  Cuando pasan 10 segundos
+  Entonces el personaje sigue teniendo 3 vidas</code></pre>
+  <p>Este formato tiene nombre propio: <strong>Gherkin</strong>, el lenguaje que usa la herramienta de pruebas Cucumber. Gherkin admite palabras clave en español (Característica, Escenario, Dado, Cuando, Entonces, Y, Pero), así que esos escenarios pueden convertirse casi tal cual en pruebas automáticas. Aunque no uses Cucumber, cada escenario es una prueba esperando a ser escrita, con su preparación, su acción y su comprobación: el mismo patrón de la <a href="26-testing.html">Estación 26</a>.</p>
+  <aside class="senal clave">
+    <p>Un buen escenario se puede comprobar sin opinar. «Entonces el menú aparece» se comprueba; «Entonces la pausa funciona bien» no. Si en el «Entonces» aparece «bien», «correctamente», «rápido» o «intuitivo», reescríbelo con algo que se pueda ver o medir.</p>
+  </aside>
+
+  <h3>Dividir historias grandes</h3>
+  <p>Una historia demasiado grande para una iteración se llama <strong>épica</strong>. «Como jugadora, quiero un modo historia» es una épica. Para dividirla, la regla de oro es cortar en <strong>rebanadas verticales</strong>: cada trozo debe atravesar todas las capas (lo que se ve, la lógica, los datos) y funcionar de principio a fin, aunque sea en pequeño.</p>
+  <aside class="senal analogia">
+    <p>Piensa en una tarta de tres pisos: bizcocho, crema y fruta. Si la cortas en horizontal, a quien le toca el bizcocho no prueba la tarta. Si la cortas en porciones verticales, cada porción es pequeña pero tiene los tres pisos. Dividir por capas («primero toda la base de datos, luego toda la interfaz») es cortar en horizontal: nadie puede usar nada hasta el final. El límite: en software, a veces una rebanada necesita un poco de trabajo previo que no se ve, y está bien hacerlo, siempre que sea el mínimo.</p>
+  </aside>
+  <p>Algunas formas útiles de cortar una épica:</p>
+  <ul>
+    <li><strong>Por pasos del recorrido</strong>: primero el camino feliz (todo sale bien), después los casos de error.</li>
+    <li><strong>Por reglas</strong>: primero la inscripción sin límite de plazas; después, el límite; después, la lista de espera.</li>
+    <li><strong>Por variantes de datos</strong>: primero un solo tipo de enemigo; después, los demás.</li>
+    <li><strong>Por calidad</strong>: primero que funcione con teclado; después, con mando.</li>
+  </ul>
+  <p>Esta forma de descomponer es la que practicaste con algoritmos en la <a href="04-pensamiento.html#pilares">Estación 4</a>, aplicada ahora al trabajo de un equipo.</p>
+</section>
+
+<section id="estimar" data-parada="Estimar y priorizar">
+  <h2>Estimar, priorizar y el producto mínimo viable</h2>
+  <p>Tarde o temprano alguien preguntará: «¿Para cuándo está?». Y casi siempre habrá más ideas que tiempo. Estimar y priorizar son las dos herramientas para responder con honestidad: cuánto cuesta cada cosa y cuáles merecen hacerse primero.</p>
+
+  <h3>Para qué sirve estimar</h3>
+  <p>Una <strong>estimación</strong> es una predicción aproximada de cuánto trabajo o tiempo llevará algo. Sirve para decidir: ¿vale la pena esta función para lo que cuesta?, ¿qué cabe en las próximas dos semanas?, ¿llegamos a la fecha de la jam? No es una promesa. Steve McConnell, autor de referencia sobre estimación, distingue tres cosas que en las reuniones se mezclan sin querer:</p>
+  <ul>
+    <li><strong>Estimación</strong>: lo que creemos que costará, según lo que sabemos hoy. «Entre cuatro y seis semanas.»</li>
+    <li><strong>Objetivo</strong>: lo que el negocio desea. «Queremos lanzarlo antes de Navidad.»</li>
+    <li><strong>Compromiso</strong>: lo que el equipo promete entregar, a menudo recortando alcance para llegar. «Para Navidad tendremos los tres niveles; el editor de niveles, después.»</li>
+  </ul>
+  <aside class="senal error">
+    <p>El error más dañino: que alguien convierta tu estimación en un compromiso sin preguntarte. Si dices «quizá dos semanas» y en la reunión siguiente aparece como «entrega: día 14», aclara en ese momento que era una estimación con incertidumbre, y ofrece un rango o qué partes sí puedes comprometer.</p>
+  </aside>
+
+  <h3>Estimar comparando: puntos y tallas</h3>
+  <p>A las personas se nos da mal decir cuántas horas llevará algo nuevo, pero bastante bien decir si una cosa es más grande que otra. Por eso muchos equipos estiman de forma <strong>relativa</strong>: comparando con trabajos que ya conocen.</p>
+  <ul>
+    <li>Los <strong>puntos de historia</strong> (en inglés, <em>story points</em>) son una unidad inventada por cada equipo para medir el tamaño de una historia: esfuerzo, complejidad e incertidumbre juntos. Si «añadir el menú de pausa» vale 2, algo que parece el doble de grande vale 5, y algo mucho mayor, 13. Se suele usar una serie inspirada en la de Fibonacci: <strong>1, 2, 3, 5, 8, 13, 20, 40, 100</strong>. Los saltos crecen a propósito: cuanto más grande es algo, menos sentido tiene discutir si es 14 o 15.</li>
+    <li>Las <strong>tallas de camiseta</strong> (XS, S, M, L, XL) son todavía más gruesas. Se usan al principio, cuando solo quieres saber si algo es pequeño, mediano o enorme, por ejemplo para decidir qué ideas estudiar.</li>
+  </ul>
+  <aside class="senal ojo">
+    <p>Los puntos no son horas disfrazadas y no sirven para comparar equipos: el 5 de un equipo no tiene nada que ver con el 5 de otro. Si un jefe empieza a exigir «más puntos por Sprint», el equipo acabará inflando las estimaciones sin trabajar más. Es la <strong>ley de Goodhart</strong>: cuando una medida se convierte en objetivo, deja de ser una buena medida.</p>
+  </aside>
+
+  <h3>Planning poker</h3>
+  <p>El <strong>planning poker</strong> es una técnica para estimar en grupo que propuso James Grenning en 2002 y popularizó Mike Cohn en su libro <em>Agile Estimating and Planning</em> (2005). Cada persona tiene cartas con la serie de números, y a veces una con «?» (no lo sé) y otra con una taza de café (necesito un descanso). Funciona así:</p>
+  <ol class="pasos">
+    <li><div><p>Quien conoce mejor la historia la lee en voz alta y responde dudas.</p></div></li>
+    <li><div><p>Cada persona elige su carta <strong>en secreto</strong>.</p></div></li>
+    <li><div><p>Todas se muestran <strong>a la vez</strong>.</p></div></li>
+    <li><div><p>Si hay diferencias grandes, quien puso la más alta y quien puso la más baja explican por qué. Suele ser lo más valioso de todo: quizá una persona vio un problema que nadie más vio, o conoce un atajo.</p></div></li>
+    <li><div><p>Se vuelve a votar hasta que las cartas se acercan lo suficiente, y se anota el número.</p></div></li>
+  </ol>
+  <p>Mostrar las cartas a la vez evita el <strong>anclaje</strong>: el sesgo por el que el primer número que se dice en voz alta arrastra a todos los demás. Si la persona con más experiencia dice «esto es un 3», nadie se atreve a decir 13, aunque tenga buenas razones.</p>
+
+  <h3>Velocidad y pronósticos con rango</h3>
+  <p>Los equipos que usan puntos suelen medir su <strong>velocidad</strong>: cuántos puntos terminan de media por Sprint. Con la velocidad de Sprints pasados se puede hacer un <strong>pronóstico</strong> del futuro. Lo honesto es darlo como un rango, no como un número. Antes de ejecutar, <strong>predice</strong>: si el equipo terminó entre 17 y 25 puntos por Sprint y quedan 120, ¿entre cuántos Sprints dirías que terminará?</p>
+  <div class="taller" id="taller-pronostico" data-titulo="Predice: un pronóstico con rango">
+    <textarea class="taller-codigo">const velocidades = [21, 18, 25, 17, 23]; // puntos terminados en los últimos 5 Sprints
+const pendiente = 120; // puntos que quedan en el Product Backlog
+
+const peor = Math.min(...velocidades);
+const mejor = Math.max(...velocidades);
+const media = velocidades.reduce((a, b) => a + b, 0) / velocidades.length;
+
+console.log(`Velocidad: entre ${peor} y ${mejor} puntos (media ${media})`);
+console.log(`Con la media: ${Math.ceil(pendiente / media)} Sprints`);
+console.log(`Con el rango: entre ${Math.ceil(pendiente / mejor)} y ${Math.ceil(pendiente / peor)} Sprints`);
+
+// Modifica: alguien añade 30 puntos al Product Backlog. ¿Cuánto se mueve el rango?</textarea>
+  </div>
+  <p>Con la media sale un número redondo, 6 Sprints, que suena muy seguro. El rango, entre 5 y 8, dice la verdad: hay incertidumbre, y si alguien necesita una fecha firme, la conversación útil es qué partes se pueden garantizar en 5 Sprints. Usamos <code>Math.ceil</code> porque un Sprint a medias no existe: si hacen falta 4,8 Sprints, son 5.</p>
+
+  <h3>Los límites de cualquier estimación</h3>
+  <p>Cuanto antes se estima, menos se sabe. En 1981, Barry Boehm mostró con datos de proyectos reales que las estimaciones al principio de un proyecto pueden equivocarse por un factor de 4 hacia arriba o hacia abajo. Steve McConnell llamó a ese gráfico el <strong>cono de incertidumbre</strong>:</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 320" role="img" aria-label="Gráfico del cono de incertidumbre. En el eje horizontal, cinco momentos del proyecto: idea inicial, producto definido, requisitos completos, interfaz diseñada y software terminado. En el eje vertical, el error posible de la estimación. En la idea inicial el resultado real puede estar entre 0,25 y 4 veces lo estimado; con el producto definido, entre 0,5 y 2 veces; con los requisitos completos, entre 0,67 y 1,5; con la interfaz diseñada, entre 0,8 y 1,25; y al terminar, coincide.">
+      <path class="d-caja-suave" d="M110 40 L240 95 L370 118 L500 132 L650 150 L500 168 L370 182 L240 205 L110 260 Z"/>
+      <path class="d-acento-trazo" d="M110 40 L240 95 L370 118 L500 132 L650 150"/>
+      <path class="d-acento-trazo" d="M110 260 L240 205 L370 182 L500 168 L650 150"/>
+      <path class="d-punteada" d="M70 150 H 680"/>
+      <path class="d-linea" d="M70 30 V 262"/>
+      <g class="d-mono d-peq" text-anchor="end">
+        <text x="62" y="45">4×</text>
+        <text x="62" y="100">2×</text>
+        <text x="62" y="155">1×</text>
+        <text x="62" y="210">0,5×</text>
+        <text x="62" y="265">0,25×</text>
+      </g>
+      <g class="d-mono d-peq" text-anchor="middle">
+        <text x="240" y="84">2×</text>
+        <text x="370" y="107">1,5×</text>
+        <text x="500" y="121">1,25×</text>
+        <text x="370" y="200">0,67×</text>
+        <text x="500" y="186">0,8×</text>
+      </g>
+      <g fill-opacity="1">
+        <circle class="d-acento" cx="110" cy="40" r="5"/><circle class="d-acento" cx="240" cy="95" r="5"/><circle class="d-acento" cx="370" cy="118" r="5"/><circle class="d-acento" cx="500" cy="132" r="5"/><circle class="d-acento" cx="650" cy="150" r="6"/>
+        <circle class="d-acento" cx="110" cy="260" r="5"/><circle class="d-acento" cx="240" cy="205" r="5"/><circle class="d-acento" cx="370" cy="182" r="5"/><circle class="d-acento" cx="500" cy="168" r="5"/>
+      </g>
+      <g class="d-peq" text-anchor="middle">
+        <text x="110" y="286">Idea</text><text x="110" y="302">inicial</text>
+        <text x="240" y="286">Producto</text><text x="240" y="302">definido</text>
+        <text x="370" y="286">Requisitos</text><text x="370" y="302">completos</text>
+        <text x="500" y="286">Interfaz</text><text x="500" y="302">diseñada</text>
+        <text x="650" y="286">Software</text><text x="650" y="302">terminado</text>
+      </g>
+      <text class="d-peq d-tenue" x="690" y="140" text-anchor="end">lo estimado</text>
+    </svg>
+    <figcaption>El cono de incertidumbre, según los valores que publica McConnell. Al principio, algo estimado en 10 semanas puede acabar costando entre 2,5 y 40. Son los márgenes de personas expertas estimando bien: con malas prácticas, el error es mayor.</figcaption>
+  </figure>
+  <p>Dos lecciones del cono. La primera: el cono no se estrecha solo con el paso del tiempo; se estrecha cuando el equipo <strong>toma decisiones</strong> que eliminan incertidumbre (qué se hará y, sobre todo, qué no se hará). La segunda: una estimación temprana dada como número exacto es una falsa precisión. Da rangos y actualízalos a medida que aprendes.</p>
+  <aside class="senal nota" data-titulo="Siempre tarda más">
+    <p>El escritor Douglas Hofstadter formuló una ley medio en broma: «Siempre tarda más de lo que esperas, incluso teniendo en cuenta la ley de Hofstadter». Los psicólogos Daniel Kahneman y Amos Tversky lo estudiaron en serio y lo llamaron <strong>falacia de la planificación</strong>: tendemos a imaginar el caso en que todo sale bien. Un antídoto práctico es comparar con cuánto tardaron de verdad trabajos parecidos en el pasado, en lugar de imaginar el futuro.</p>
+  </aside>
+  <p>Hay equipos que han dejado de estimar historias una por una. El movimiento <strong>#NoEstimates</strong>, que difundió Woody Zuill hacia 2012, propone dividir el trabajo en trozos de tamaño parecido y pronosticar contando cuántos se terminan por semana, como el rendimiento de Kanban. No es «no planificar»: es planificar con datos reales en lugar de con apuestas. Las dos formas son válidas; lo importante es no presentar ninguna como una certeza.</p>
+
+  <h3>Priorizar con MoSCoW</h3>
+  <p>Priorizar es decidir qué va primero y, sobre todo, qué no se hará. Una técnica sencilla y muy usada es <strong>MoSCoW</strong>, que viene del método DSDM (hoy mantenido por el Agile Business Consortium). Sus letras son las iniciales en inglés de cuatro categorías; las «o» solo están para que se pueda pronunciar:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Categoría</th><th scope="col">Significado</th><th scope="col">Ejemplo en un juego de jam</th></tr></thead>
+      <tbody>
+        <tr><td><strong>M</strong>ust have (imprescindible)</td><td>Sin esto no tiene sentido entregar. DSDM lo define como el subconjunto mínimo usable.</td><td>Moverse, saltar, una forma de ganar y otra de perder.</td></tr>
+        <tr><td><strong>S</strong>hould have (importante)</td><td>Duele dejarlo fuera, pero el producto sigue funcionando sin ello o con un apaño.</td><td>Efectos de sonido, menú de inicio.</td></tr>
+        <tr><td><strong>C</strong>ould have (deseable)</td><td>Estaría bien; si se queda fuera, el impacto es pequeño.</td><td>Un segundo nivel, partículas al saltar.</td></tr>
+        <tr><td><strong>W</strong>on't have this time (esta vez no)</td><td>Acordado explícitamente que no se hará ahora. Escribirlo evita discusiones y falsas expectativas.</td><td>Multijugador en línea, tienda.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La guía de DSDM añade una regla que casi todo el mundo olvida: lo imprescindible no debería superar el <strong>60 % del esfuerzo</strong> estimado, y conviene que lo deseable ronde el 20 %. Así, si algo se complica, se recortan los «Could» y los «Should» y lo imprescindible sigue llegando. Si todo es «Must», no has priorizado: has hecho una lista.</p>
+  <aside class="senal error">
+    <p>Priorizar por cantidad de elementos («tenemos 5 Must y 10 Could, vamos bien») engaña: un solo «Must» puede ser el 80 % del trabajo. La proporción se calcula sobre el esfuerzo estimado, no sobre el número de tarjetas.</p>
+  </aside>
+  <p>Otra herramienta rápida es cruzar <strong>valor</strong> y <strong>esfuerzo</strong>: lo que aporta mucho y cuesta poco va primero; lo que aporta poco y cuesta mucho, probablemente nunca. Lo que aporta mucho y cuesta mucho hay que dividirlo en rebanadas más pequeñas.</p>
+
+  <h3>El producto mínimo viable</h3>
+  <p>Eric Ries, en <em>The Lean Startup</em> (2011), definió el <strong>producto mínimo viable</strong> o <strong>MVP</strong> (del inglés <em>minimum viable product</em>) como «la versión de un producto nuevo que permite a un equipo reunir la mayor cantidad de aprendizaje validado sobre sus clientes con el menor esfuerzo». La clave está en «aprendizaje»: un MVP es un experimento para averiguar si la idea funciona con personas reales antes de invertir meses en ella.</p>
+  <aside class="senal analogia">
+    <p>Henrik Kniberg lo ilustró con un dibujo famoso: si alguien necesita desplazarse, no le entregues primero una rueda, luego un chasis y al final un coche; entrégale un patinete, luego una bicicleta, luego una moto y al final un coche. Cada versión es pequeña pero resuelve el problema de verdad, y con cada una aprendes qué necesita. El límite: a veces descubres con el patinete que la persona no quería un coche, sino un autobús. Ese descubrimiento es precisamente el objetivo.</p>
+  </aside>
+  <p>En un videojuego, el equivalente suele ser el <strong>bucle principal</strong> (en inglés, <em>core loop</em>) jugable: la acción que se repite una y otra vez (saltar y esquivar, disparar y cubrirse, plantar y cosechar). Si ese bucle no divierte con cubos de colores, no lo arreglarán ni los gráficos ni la música. La <a href="34-videojuegos.html">Estación 34</a> profundiza en el diseño de juegos.</p>
+  <aside class="senal error">
+    <p>Dos malentendidos frecuentes. «MVP» no significa un producto a medias y lleno de errores: lo poco que hace, lo hace bien. Y no es lo mismo que un <strong>prototipo</strong>: un prototipo responde a una pregunta del equipo («¿se entiende este control?») y puede tirarse; un MVP se pone delante de personas usuarias reales para aprender de lo que hacen, no de lo que dicen.</p>
+  </aside>
+</section>
+
+<section id="revision" data-parada="Hecho y revisado">
+  <h2>Hecho de verdad: definición de terminado y revisión de código</h2>
+  <p>«¿Está hecho?» «Sí, bueno, falta probarlo en el teléfono, y no tiene pruebas, y está en mi rama…» Si cada persona entiende «hecho» de una forma, el tablero miente: las tarjetas llegan a la última columna y el producto no funciona. Esta sección trata de cómo un equipo decide que algo está terminado de verdad, y de la práctica que más ayuda a conseguirlo: revisar el código de las demás personas.</p>
+
+  <h3>La definición de terminado</h3>
+  <p>La <strong>definición de terminado</strong> (en inglés, <em>Definition of Done</em> o DoD; la traducción oficial de la Guía de Scrum la llama «Definición de Terminado») es una lista de comprobación que <strong>todo</strong> trabajo debe cumplir para contar como hecho. La escribe el equipo, está a la vista y se mejora con el tiempo. Un ejemplo para un equipo que hace un juego web:</p>
+  <ul>
+    <li>El código está en la rama principal, a través de un pull request aprobado por al menos otra persona.</li>
+    <li>Las pruebas automáticas pasan, y hay pruebas nuevas para la lógica nueva.</li>
+    <li>Se cumplen todos los criterios de aceptación de la historia.</li>
+    <li>Funciona en Chrome y Firefox, en escritorio y en un teléfono.</li>
+    <li>Se puede jugar solo con teclado.</li>
+    <li>El README o la ayuda del juego están actualizados si algo cambió para quien lo usa.</li>
+    <li>Está publicado en el entorno de pruebas y alguien que no lo programó lo probó.</li>
+  </ul>
+  <p>No hay que confundirla con los criterios de aceptación:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">Criterios de aceptación</th><th scope="col">Definición de terminado</th></tr></thead>
+      <tbody>
+        <tr><td>Se aplica a…</td><td>Una historia concreta</td><td>Todo el trabajo del equipo</td></tr>
+        <tr><td>Responde a…</td><td>¿Hace lo que esta historia pedía?</td><td>¿Tiene la calidad que exigimos a todo?</td></tr>
+        <tr><td>Ejemplo</td><td>«Al pulsar Escape, el juego se pausa.»</td><td>«Revisado por otra persona y con pruebas.»</td></tr>
+        <tr><td>Quién la escribe</td><td>Product Owner y equipo, en la conversación de cada historia</td><td>El equipo, una vez, y la mejora en las retrospectivas</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal clave">
+    <p>«Casi hecho» es «no hecho». Una tarea al 90 % no le sirve a nadie y, además, esconde el 10 % más difícil. Según la Guía de Scrum, lo que no cumple la definición de terminado no se muestra en la Sprint Review ni se entrega: vuelve al Product Backlog.</p>
+  </aside>
+  <p>Algunos equipos usan también una <strong>definición de listo</strong> (<em>Definition of Ready</em>): lo que una historia debe tener antes de empezarla, como criterios de aceptación y estimación. No forma parte de la Guía de Scrum. Puede ser útil, pero cuidado con convertirla en un trámite que impide empezar cualquier cosa.</p>
+
+  <h3>Para qué sirve revisar código</h3>
+  <p>En la <strong>revisión de código</strong> (en inglés, <em>code review</em>), otra persona lee los cambios antes de que entren en la rama principal. En GitHub se hace sobre un pull request: la mecánica (abrir el PR, comentar líneas, aprobar o pedir cambios) la tienes en la <a href="24-git.html">Estación 24</a>. Aquí nos ocupamos de la parte humana: qué buscar, cómo decirlo y cómo recibirlo.</p>
+  <p>Una revisión sirve para mucho más que cazar errores:</p>
+  <ul>
+    <li><strong>Encontrar problemas</strong> antes de que lleguen a las personas usuarias.</li>
+    <li><strong>Compartir conocimiento</strong>: quien revisa aprende cómo funciona esa parte, y ya no depende todo de una sola persona.</li>
+    <li><strong>Mantener la coherencia</strong> del código: nombres, estructura y estilo que todo el equipo entiende.</li>
+    <li><strong>Aprender</strong>: en los dos sentidos. Como principiante, las revisiones de tu código son una de las mejores clases que vas a recibir.</li>
+  </ul>
+  <p>La guía pública de prácticas de ingeniería de Google lo resume así: el propósito principal de la revisión es asegurar que la salud general del código mejora con el tiempo. Y añade un principio que evita revisiones eternas: se debe aprobar un cambio cuando mejora claramente la salud del código, <strong>aunque no sea perfecto</strong>.</p>
+
+  <h3>Cuando tu código es el revisado</h3>
+  <ul>
+    <li><strong>Haz cambios pequeños.</strong> La guía de Google considera razonable un cambio de unas 100 líneas y demasiado grande uno de 1000. Los cambios pequeños se revisan antes, mejor y con menos riesgo.</li>
+    <li><strong>Revísalo tú primero.</strong> Lee tu propio diff como si fuera de otra persona. Encontrarás el <code>console.log</code> olvidado antes que nadie.</li>
+    <li><strong>Escribe una buena descripción</strong>: qué cambia, por qué, cómo probarlo y, si toca la interfaz, una captura. Enlaza la historia o la issue.</li>
+    <li><strong>Deja lo automático a las máquinas.</strong> El formato y los errores típicos los detectan el formateador y el linter (<a href="25-codigo-limpio.html">Estación 25</a>) y las pruebas (<a href="26-testing.html">Estación 26</a>). La revisión humana es para lo que una máquina no ve.</li>
+    <li><strong>Responde a cada comentario</strong>, aunque sea con «hecho» o «prefiero dejarlo así porque…». Si no entiendes un comentario, pregunta.</li>
+    <li><strong>Separa tu valor de tu código.</strong> Un comentario sobre tu función no es un juicio sobre ti. Da las gracias: alguien dedicó su tiempo a mejorar tu trabajo.</li>
+  </ul>
+
+  <h3>Cuando revisas el código de otra persona</h3>
+  <ul>
+    <li><strong>Primero lo grande, después lo pequeño.</strong> ¿Resuelve el problema correcto? ¿El enfoque tiene sentido? Si el diseño está mal, no pierdas tiempo en comas.</li>
+    <li><strong>Habla del código, no de la persona.</strong> «Esta función hace tres cosas» en lugar de «tú siempre haces funciones enormes».</li>
+    <li><strong>Explica el porqué</strong> y, si puedes, propone una alternativa.</li>
+    <li><strong>Pregunta cuando no estés seguro.</strong> «¿Qué pasa aquí si la lista está vacía?» suele funcionar mejor que «esto falla con listas vacías», y a veces descubres que estabas equivocado.</li>
+    <li><strong>Marca la importancia de cada comentario.</strong> Google recomienda empezar con «Nit:» (de <em>nitpick</em>, «detalle menor») lo que es solo pulido y se puede ignorar.</li>
+    <li><strong>Reconoce lo bueno.</strong> Si algo está bien resuelto, dilo. También es información útil.</li>
+    <li><strong>Responde pronto.</strong> La guía de Google fija como máximo un día laborable para dar una primera respuesta. Una revisión lenta frena a todo el equipo.</li>
+  </ul>
+  <p>Una convención que ayuda a marcar la intención de cada comentario son los <strong>Conventional Comments</strong>: cada comentario empieza con una etiqueta y, si hace falta, una decoración entre paréntesis.</p>
+  <pre><code class="language-text">etiqueta (decoración): asunto
+
+  discusión opcional
+
+Etiquetas: praise (elogio), nitpick (detalle), suggestion (sugerencia),
+issue (problema), todo (tarea pendiente), question (pregunta),
+thought (idea), chore (trámite), note (nota)
+Decoraciones: (blocking) bloquea la aprobación, (non-blocking) no bloquea,
+(if-minor) solo si el cambio es pequeño</code></pre>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Comentarios que hieren y no ayudan</p>
+      <pre><code class="language-text">Esto está mal.
+
+¿Por qué no usaste un Map? Es obvio.
+
+Nombres horribles, como siempre.
+
+???</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Comentarios que ayudan</p>
+      <pre><code class="language-text">issue (blocking): si la lista de enemigos
+está vacía, esta línea lanza un TypeError.
+¿Añadimos una comprobación antes del bucle?
+
+suggestion (non-blocking): con un Map la
+búsqueda sería directa, porque buscamos por id.
+
+nitpick: «datos2» no dice qué guarda;
+¿«enemigosVivos»?
+
+praise: muy clara la separación entre
+calcular el daño y mostrarlo.</code></pre>
+    </div>
+  </div>
+  <aside class="senal oficio">
+    <p>Si una conversación en los comentarios se alarga más de dos o tres respuestas, pasa a una llamada corta o a hablarlo en persona, y luego deja escrito en el PR lo que acordaron. Por escrito, un desacuerdo técnico se enfría mal; hablando, suele resolverse en minutos. Y cuando no haya acuerdo, lo decide quien tenga esa responsabilidad en el equipo, no quien insista más.</p>
+  </aside>
+  <aside class="senal ojo" data-titulo="Revisiones con IA">
+    <p>En 2026 es habitual que una herramienta de IA haga una primera revisión automática de cada pull request. Puede encontrar errores reales, pero también comenta cosas irrelevantes o se equivoca con seguridad. No sustituye a la revisión humana ni te quita la responsabilidad: si apruebas código, respondes de él, lo haya escrito una persona o una máquina. Lo verás a fondo en la <a href="42-ia.html">Estación 42</a>.</p>
+  </aside>
+  <p>Una trampa clásica de las revisiones es la <strong>ley de la trivialidad</strong> de C. Northcote Parkinson, también conocida como «el cobertizo para bicicletas» (<em>bikeshedding</em>): un comité que aprueba una central nuclear en minutos discute durante horas el color del cobertizo de las bicicletas, porque de eso todo el mundo opina. En un PR se nota cuando hay veinte comentarios sobre nombres y ninguno sobre si la lógica es correcta.</p>
+</section>
+
+<section id="comunicacion" data-parada="Comunicar y documentar">
+  <h2>Comunicación en equipos remotos y documentación</h2>
+  <p>Imagina un equipo con una persona en Ciudad de México, otra en Bogotá y otra en Madrid. En verano, cuando en Madrid son las 9 de la mañana, en Ciudad de México es la 1 de la madrugada. Solo coinciden despiertas y trabajando unas tres horas al día. Si todo se decide en reuniones, alguien se lo pierde siempre. En los equipos remotos, y cada vez más en los presenciales, la mayor parte de la comunicación es <strong>escrita</strong>.</p>
+
+  <h3>Síncrono y asíncrono</h3>
+  <p>La comunicación <strong>síncrona</strong> ocurre en tiempo real: una llamada, una reunión, un chat en el que las dos personas están respondiendo en ese momento. La <strong>asíncrona</strong> no exige estar a la vez: un mensaje que la otra persona lee cuando puede, un comentario en un pull request, una issue, un documento. Es la misma idea de la <a href="16-asincronia.html">Estación 16</a>, aplicada a personas: pides algo y sigues con lo tuyo mientras llega la respuesta.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">Asíncrono (escrito)</th><th scope="col">Síncrono (en vivo)</th></tr></thead>
+      <tbody>
+        <tr><td>Ventajas</td><td>Respeta husos horarios y concentración. Queda registro. Da tiempo a pensar la respuesta.</td><td>Rápido para resolver malentendidos. Transmite tono y confianza.</td></tr>
+        <tr><td>Inconvenientes</td><td>Lento si hacen falta muchas idas y vueltas. Un mensaje ambiguo se malinterpreta.</td><td>Interrumpe. Excluye a quien no puede estar. Se olvida si no se anota.</td></tr>
+        <tr><td>Úsalo para…</td><td>Avisos de estado, preguntas con contexto, propuestas, revisiones de código, decisiones que hay que dejar escritas.</td><td>Conflictos, temas delicados o personales, lluvia de ideas, desbloquear algo que lleva tres rondas de mensajes.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Escribir para que te entiendan sin preguntarte</h3>
+  <p>Un buen mensaje asíncrono se puede entender y responder sin necesitar una conversación previa. Algunas reglas:</p>
+  <ul>
+    <li><strong>Lo importante primero.</strong> Empieza por lo que necesitas o por la conclusión; el contexto, después.</li>
+    <li><strong>Contexto suficiente</strong> para leerse solo: qué intentabas, qué pasó, qué probaste, enlaces a la issue o al PR.</li>
+    <li><strong>Una petición clara</strong>, con quién y para cuándo: «¿Puedes revisarlo antes del jueves?».</li>
+    <li><strong>Un tema por mensaje o por hilo</strong>, para que las respuestas no se mezclen.</li>
+    <li><strong>No escribas solo «hola»</strong> y esperes. Quien lo recibe tiene que responder «hola, dime» y esperar a su vez. Escribe el saludo y la pregunta en el mismo mensaje. Hay hasta un sitio web que lo explica, nohello.net.</li>
+    <li><strong>Formato que se lee rápido</strong>: párrafos cortos, listas, código como texto (nunca como captura) y negritas solo para lo esencial.</li>
+  </ul>
+  <div class="comparar">
+    <div>
+      <p class="comparar-rotulo mal">Obliga a una conversación</p>
+      <pre><code class="language-text">hola
+
+(una hora después)
+oye el juego no va
+
+(otra hora después)
+lo del salto</code></pre>
+    </div>
+    <div>
+      <p class="comparar-rotulo bien">Se responde de una vez</p>
+      <pre><code class="language-text">Hola, Leo. ¿Puedes mirar el PR #42 hoy?
+El personaje atraviesa el suelo si salta
+justo al empezar el nivel.
+
+Pasos: iniciar nivel 1 y pulsar Espacio
+en el primer segundo.
+Esperado: aterriza en el suelo.
+Obtenido: cae al vacío.
+Creo que es el orden de gravedad y
+colisión en actualizar(). Probé a
+invertirlo y lo arregla, pero no sé si
+rompe otra cosa.</code></pre>
+    </div>
+  </div>
+  <p>El segundo mensaje sigue el patrón de un buen informe de error: pasos para reproducirlo, qué esperabas y qué obtuviste. Cómo preparar un ejemplo mínimo que otra persona pueda ejecutar lo tienes en la <a href="12-depuracion.html#ayuda">Estación 12</a>, y cuándo conviene pedir ayuda, en la <a href="01-bienvenida.html#atascos">Estación 1</a>.</p>
+  <p>Muchos equipos remotos sustituyen parte de las reuniones por una <strong>actualización de estado</strong> escrita, diaria o varias veces por semana, en un canal compartido. Un formato habitual:</p>
+  <pre><code class="language-text">Terminé: pausa del juego (PR #42, listo para revisar).
+Sigo con: enemigo que patrulla; espero terminarlo mañana.
+Bloqueos: necesito el sprite del enemigo; @Sol, ¿lo tienes para el jueves?</code></pre>
+  <aside class="senal oficio">
+    <p>Las decisiones que se toman en una llamada o en un chat se pierden. Regla de oro: <strong>si no está escrito donde el equipo lo encuentre, no se decidió</strong>. Tras cada reunión, alguien anota en la issue, en el PR o en el documento del proyecto qué se decidió, quién hace qué y para cuándo.</p>
+  </aside>
+
+  <h3>La documentación que todo proyecto necesita</h3>
+  <p>La documentación es comunicación asíncrona con personas que todavía no conoces, incluida tu versión de dentro de seis meses. En los proyectos modernos vive <strong>dentro del repositorio</strong>, en archivos de texto con formato Markdown, y se revisa en los pull requests igual que el código. Tres archivos son casi obligatorios.</p>
+  <p>El <strong>README</strong> («léeme») es la portada del proyecto: GitHub lo muestra debajo de la lista de archivos. Según la documentación de GitHub, explica qué hace el proyecto, por qué es útil, cómo empezar a usarlo, dónde pedir ayuda y quién lo mantiene. Un esqueleto:</p>
+  <pre><code class="language-text"># Saltarín
+
+Juego de plataformas en el navegador: ayuda a un perro a recuperar
+sus huesos antes de que se ponga el sol. Hecho en la jam de octubre.
+
+![Captura del nivel 1](docs/captura.png)
+
+## Cómo jugar
+Abre https://ejemplo.itch.io/saltarin o ejecútalo en local (abajo).
+Flechas para moverte, Espacio para saltar, Escape para pausar.
+
+## Ejecutarlo en tu computadora
+1. Clona el repositorio.
+2. Ejecuta `npx serve .` y abre la dirección que aparece.
+
+## Estado
+Jugable: nivel 1. En progreso: enemigos. Fuera de alcance: multijugador.
+
+## Contribuir
+Lee CONTRIBUTING.md. Las ideas y errores, en las issues.
+
+## Licencia
+Código con licencia MIT. Arte con licencia CC BY 4.0.</code></pre>
+  <p>La <strong>guía de contribución</strong>, <code>CONTRIBUTING.md</code>, explica cómo participar: cómo preparar el entorno, cómo nombrar las ramas, qué formato tienen los mensajes de commit, qué se espera de un pull request y cómo se revisa. GitHub la reconoce si está en la raíz del repositorio, en <code>docs</code> o en <code>.github</code>, y muestra un enlace a ella cuando alguien abre una issue o un pull request.</p>
+  <p>El <strong>código de conducta</strong>, <code>CODE_OF_CONDUCT.md</code>, dice qué comportamiento se espera en la comunidad del proyecto y qué hacer si alguien lo incumple. Muchos proyectos adoptan el <strong>Contributor Covenant</strong>, cuya versión 3.0 se publicó en julio de 2025 y tiene traducción al español.</p>
+
+  <h3>Registros de decisiones de arquitectura</h3>
+  <p>Dentro de un año alguien preguntará: «¿Por qué no usamos un motor de juegos?». Si la respuesta solo estaba en la cabeza de una persona que ya no está, el equipo repetirá la discusión, o peor, deshará una buena decisión sin saber por qué se tomó. Un <strong>registro de decisión de arquitectura</strong> o <strong>ADR</strong> (del inglés <em>architecture decision record</em>) es un documento corto que guarda una decisión importante con su porqué. Michael Nygard propuso en 2011 este formato:</p>
+  <pre><code class="language-text"># 1. Usar Canvas 2D sin motor de juegos
+
+Estado: Aceptado (3 de octubre)
+
+## Contexto
+Tenemos 48 horas. Dos de las tres personas conocen Canvas y ninguna
+conoce Godot ni Phaser. El juego es una sola pantalla con pocos objetos.
+
+## Decisión
+Programaremos el juego con Canvas 2D y JavaScript, sin motor.
+
+## Consecuencias
++ Nadie pierde tiempo aprendiendo una herramienta nueva.
+- Tendremos que programar a mano las colisiones y las animaciones.
+- Si el juego crece después de la jam, revisaremos esta decisión.</code></pre>
+  <p>Cada ADR lleva un número que nunca se reutiliza y se guarda en el repositorio, por ejemplo en <code>docs/adr/</code>. Cuando una decisión cambia, no se borra el ADR antiguo: se marca como <strong>reemplazado</strong> y se escribe uno nuevo que lo cite. Así queda la historia completa. Nygard recomienda que cada uno ocupe una o dos páginas como mucho. En la <a href="28-arquitectura.html">Estación 28: Arquitectura</a> aprenderás qué decisiones merecen un ADR y cómo justificarlas.</p>
+  <p>Ponlo en práctica en la terminal. Vas a documentar el proyecto de un juego y guardarlo en un commit:</p>
+  <div class="terminal-sim" data-titulo="Documenta el proyecto" data-inicio="/home/tu">
+    <div class="terminal-instrucciones">
+      <p>La carpeta <code>saltarin</code> ya tiene el código del juego, pero ninguna documentación.</p>
+      <ol>
+        <li>Entra en <code>saltarin</code> e inicia un repositorio con <code>git init</code>.</li>
+        <li>Crea <code>README.md</code> con un título: <code>echo "# Saltarín" &gt; README.md</code>. Añade una segunda línea con una descripción usando <code>&gt;&gt;</code>.</li>
+        <li>Crea <code>CONTRIBUTING.md</code> con al menos una regla, por ejemplo: <code>echo "Abre una issue antes de un cambio grande." &gt; CONTRIBUTING.md</code></li>
+        <li>Crea la carpeta <code>docs/adr</code> (<code>mkdir -p docs/adr</code>) y dentro un archivo <code>0001-usar-canvas.md</code> que empiece con un título (<code>#</code>).</li>
+        <li>Guarda todo en un commit con <code>git add .</code> y <code>git commit -m "docs: ..."</code>.</li>
+      </ol>
+    </div>
+    <script type="application/json" class="terminal-sistema">{"saltarin": {"index.html": "<canvas id=\"juego\"></canvas>", "juego.js": "// bucle del juego"}}</script>
+    <script type="text/plain" class="terminal-mision">
+var s = sistema.saltarin;
+if (!s || typeof s !== "object") return "La carpeta saltarin ya no está. Pulsa «Reiniciar».";
+if (!git) return "Paso 1: entra con cd saltarin y escribe git init.";
+if (typeof s["README.md"] !== "string") return "Paso 2: crea README.md con echo \"# Saltarín\" > README.md";
+var lineas = s["README.md"].split("\n").filter(function (l) { return l.trim(); });
+if (!/^#\s+\S/.test(lineas[0] || "")) return "La primera línea de README.md debe ser un título que empiece por «# ». Vuelve a crearlo con > (un solo signo reemplaza el contenido).";
+if (lineas.length < 2) return "Añade una segunda línea al README con una descripción: echo \"Juego de plataformas...\" >> README.md (dos signos > añaden al final).";
+if (typeof s["CONTRIBUTING.md"] !== "string" || !s["CONTRIBUTING.md"].trim()) return "Paso 3: crea CONTRIBUTING.md con al menos una regla.";
+var adr = s.docs && s.docs.adr;
+if (!adr || typeof adr !== "object") return "Paso 4: crea la carpeta docs/adr con mkdir -p docs/adr";
+var nombres = Object.keys(adr).filter(function (n) { return /^0001-.+\.md$/.test(n); });
+if (!nombres.length) return "Paso 4: dentro de docs/adr crea un archivo 0001-usar-canvas.md (debe empezar por 0001- y acabar en .md).";
+if (!/^#\s+\S/.test(String(adr[nombres[0]]).trim())) return "El ADR debe empezar con un título: echo \"# 1. Usar Canvas 2D\" > docs/adr/" + nombres[0];
+var guardado = git.commits.some(function (c) {
+  var k = Object.keys(c.arbol);
+  return k.indexOf("README.md") !== -1 && k.indexOf("CONTRIBUTING.md") !== -1 && k.some(function (x) { return /^docs\/adr\/0001-.+\.md$/.test(x); });
+});
+if (!guardado) return "Paso 5: guarda los documentos en un commit: git add . y después git commit -m \"docs: añade README, guía y primer ADR\"";
+if (!git.limpio) return "Hay cambios sin guardar. Mira git status y haz otro commit.";
+return true;
+    </script>
+  </div>
+  <aside class="senal ojo">
+    <p>La documentación desactualizada es peor que ninguna: engaña. Por eso en la definición de terminado de muchos equipos aparece «documentación actualizada si algo cambió». Documenta poco, pero mantenlo al día. Y documenta el <em>porqué</em>: el <em>qué</em> ya lo cuenta el código.</p>
+  </aside>
+</section>
+
+<section id="jam" data-parada="Game jam">
+  <h2>Trabajar en una game jam</h2>
+  <p>Una <strong>game jam</strong> es un evento en el que personas o equipos hacen un videojuego completo en muy poco tiempo, normalmente entre 48 y 72 horas, a partir de un <strong>tema</strong> que se anuncia al empezar. Es la forma más intensa y divertida de practicar todo lo de esta estación: en dos días tienes que pasar de una idea a algo jugable, en equipo, con un plazo que no se mueve.</p>
+  <ul>
+    <li>La <strong>Global Game Jam</strong> se celebra cada año a finales de enero en sedes de todo el mundo y en línea. La de 2026 fue del 26 de enero al 1 de febrero, y la mayoría de sedes la hicieron de viernes a domingo. Participan decenas de miles de personas.</li>
+    <li><strong>Ludum Dare</strong> se celebra dos veces al año, en abril y en octubre, con una modalidad individual de 48 horas y otra de 72 horas en la que se puede participar en equipo. Su organizador anunció en 2026 que la última edición programada será la de octubre de 2028.</li>
+    <li><strong>itch.io</strong>, la tienda de juegos independientes, aloja cada semana decenas de jams de todo tipo: para principiantes, de un solo botón, de juegos en el navegador… Es un buen sitio para buscar la primera.</li>
+  </ul>
+  <p>Las fechas cambian cada año: compruébalas en la web oficial de cada jam antes de apuntarte.</p>
+
+  <h3>La jam como un proyecto en miniatura</h3>
+  <p>Una jam es un proyecto completo comprimido, y funciona mejor con un proceso mínimo. Un plan típico para 48 horas:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Momento</th><th scope="col">Qué hacer</th><th scope="col">Idea de la estación que aplicas</th></tr></thead>
+      <tbody>
+        <tr><td>Antes de empezar</td><td>Formar el equipo, elegir motor o herramientas, crear el repositorio y el tablero, probar que todos pueden subir cambios.</td><td>Acuerdos, herramientas, ADR de la tecnología</td></tr>
+        <tr><td>Horas 0 a 2</td><td>Leer el tema, lluvia de ideas, elegir la idea <em>más pequeña</em> que os ilusione. Definir el bucle principal y escribir la lista MoSCoW.</td><td>MVP, priorización</td></tr>
+        <tr><td>Horas 2 a 16</td><td>Primer jugable: el bucle principal con formas simples, sin arte final.</td><td>Incremento, rebanada vertical</td></tr>
+        <tr><td>Horas 16 a 36</td><td>Arte, sonido, niveles, pulir. Probar con alguien de fuera del equipo.</td><td>Iterar con retroalimentación</td></tr>
+        <tr><td>Hora 36</td><td><strong>Congelar funciones</strong>: a partir de aquí no se añade nada nuevo, solo se corrigen errores.</td><td>Definición de terminado, «Won't have»</td></tr>
+        <tr><td>Horas 36 a 46</td><td>Corregir errores, página del juego, capturas, instrucciones.</td><td>Documentación</td></tr>
+        <tr><td>Antes de la hora 46</td><td>Subir el juego. Nunca en los últimos minutos: las plataformas se saturan.</td><td>Despliegue temprano</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="senal clave">
+    <p>El error número uno en las jams es el alcance: una idea que necesitaría dos meses. Divide tu primera idea entre cuatro, y luego otra vez entre dos. Un juego pequeño terminado y pulido gusta mucho más que uno ambicioso que no se puede jugar.</p>
+  </aside>
+  <h3>Trabajar en equipo sin pisarse</h3>
+  <ul>
+    <li><strong>Roles claros</strong> desde el principio: programación, arte, sonido, diseño de niveles. Una persona se encarga de <strong>integrar</strong>: junta las piezas y comprueba que el juego arranca.</li>
+    <li><strong>Un tablero con tres columnas</strong> y límite de una tarea en curso por persona. En una jam no hay tiempo para cosas a medias.</li>
+    <li><strong>Divide los archivos</strong> para no editar los mismos. Las escenas de los motores y los archivos binarios (imágenes, sonidos) no se pueden fusionar bien con Git: acordad quién toca cada uno (<a href="24-git.html">Estación 24</a>).</li>
+    <li><strong>Integra a menudo</strong>, varias veces al día. Juntar todo en la hora 44 es la receta para no entregar.</li>
+    <li><strong>Pequeñas retrospectivas</strong>: cada pocas horas, cinco minutos para preguntar qué va bien, qué no y qué cambiar.</li>
+  </ul>
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>Dormir es parte del plan. Las jams tienen fama de noches sin dormir, pero el cansancio produce errores que luego cuesta horas arreglar, y ninguna jam vale tu salud. La industria del videojuego arrastra un problema serio de <strong>crunch</strong>: semanas o meses de horas extra obligatorias antes de un lanzamiento. Una jam bien planificada es también un ensayo de cómo trabajar a un ritmo sostenible, como pide el Manifiesto Ágil.</p>
+  </aside>
+  <p>Las jams también son una forma excelente de hacer portafolio, conocer gente con la que formar equipo y probar ideas sin arriesgar meses. Cómo programar el juego lo aprenderás en la <a href="34-videojuegos.html">Estación 34</a>, y cómo presentar esos proyectos, en la <a href="44-carrera.html">Estación 44</a>.</p>
+</section>
+
+<section id="etica" data-parada="Ética e impacto">
+  <h2>Ética profesional e impacto social</h2>
+  <p>El software ya no se queda en la pantalla: decide quién recibe un préstamo, qué noticias ve una persona, cuánto cobra un repartidor o si un avión corrige su rumbo. Por eso las personas que lo construyen tienen responsabilidades que van más allá de que el código funcione.</p>
+  <p>Dos casos reales muestran lo que está en juego:</p>
+  <ul>
+    <li><strong>Horizon, en Reino Unido.</strong> Entre 1999 y 2015, la empresa pública de correos procesó judicialmente a más de 900 personas que gestionaban oficinas postales, acusadas de robar dinero que en realidad eran errores del sistema informático Horizon. Hubo condenas a prisión, ruinas y suicidios. Durante años se afirmó que el sistema era fiable, a pesar de que se conocían fallos. Una investigación pública publicó en julio de 2025 el primer volumen de su informe final. Es considerado uno de los mayores errores judiciales de la historia británica.</li>
+    <li><strong>El caso de las emisiones de Volkswagen.</strong> En 2015 se descubrió que el software de millones de coches diésel detectaba cuándo estaba pasando una prueba de emisiones y solo entonces contaminaba menos. Un ingeniero de la empresa fue condenado en Estados Unidos a 40 meses de prisión. «Me lo mandaron» no le sirvió como defensa.</li>
+  </ul>
+  <p>Ninguno de los dos casos fue un error de sintaxis. Fueron decisiones: callar un fallo, escribir lo que se pedía sin preguntar para qué, confiar en el sistema más que en las personas.</p>
+
+  <h3>El código de ética de ACM e IEEE</h3>
+  <p>Las dos grandes asociaciones profesionales de la informática, la ACM (Association for Computing Machinery) y la IEEE Computer Society, aprobaron en 1999 un <strong>Código de Ética y Práctica Profesional de la Ingeniería de Software</strong>. Tiene ocho principios; el primero, y el que pesa más cuando hay conflicto, es el interés público:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Principio</th><th scope="col">Qué pide, en pocas palabras</th><th scope="col">En tu día a día</th></tr></thead>
+      <tbody>
+        <tr><td>1. Público</td><td>Actuar de acuerdo con el interés público.</td><td>Aprobar software solo si crees con fundamento que es seguro, cumple lo que debe y no daña la privacidad ni el ambiente. Avisar de peligros reales.</td></tr>
+        <tr><td>2. Cliente y empleador</td><td>Actuar en el mejor interés de quien te contrata, sin ir contra el público.</td><td>Ser honesto sobre lo que no sabes hacer. Avisar pronto si un proyecto va a fracasar o a costar mucho más.</td></tr>
+        <tr><td>3. Producto</td><td>Buscar los estándares profesionales más altos posibles.</td><td>Estimaciones realistas <em>con su incertidumbre</em>; pruebas y revisiones adecuadas.</td></tr>
+        <tr><td>4. Juicio</td><td>Mantener la integridad y la independencia de tu criterio profesional.</td><td>No firmar ni aprobar algo con lo que no estás de acuerdo solo por presión.</td></tr>
+        <tr><td>5. Gestión</td><td>Quien dirige equipos promueve una gestión ética.</td><td>Plazos y cargas de trabajo realistas; asignar tareas teniendo en cuenta la formación de cada persona.</td></tr>
+        <tr><td>6. Profesión</td><td>Cuidar la integridad y la reputación de la profesión.</td><td>No engañar sobre lo que hace un producto; informar de violaciones graves del código.</td></tr>
+        <tr><td>7. Colegas</td><td>Ser justo con los compañeros y apoyarlos.</td><td>Reconocer el trabajo ajeno sin apropiártelo; revisar el trabajo de otros de forma objetiva, franca y documentada.</td></tr>
+        <tr><td>8. Uno mismo</td><td>Aprender durante toda la carrera y promover una práctica ética.</td><td>Seguir formándote; no tratar a nadie de forma injusta por prejuicios.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Fíjate en cuántas ideas de esta estación aparecen en el código: estimaciones con su incertidumbre (cláusula 3.09), revisiones del trabajo ajeno objetivas y documentadas (7.04), avisar pronto si un proyecto va a fracasar (2.06). La ética profesional no es un tema aparte: está en cómo planificas, estimas y revisas cada día. La ACM tiene además un código general para toda la profesión informática, actualizado en 2018.</p>
+
+  <h3>Cuando algo no te parece bien</h3>
+  <p>Algún día te pedirán algo que te incomode: guardar más datos personales de los necesarios, esconder el botón de darse de baja, publicar sin probar algo que maneja dinero. No hay una receta, pero sí un método razonable:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Identifica a quién afecta</strong>: personas usuarias, colegas, gente que ni siquiera usa el producto.</p></div></li>
+    <li><div><p><strong>Pregunta y entiende</strong> el motivo de la petición. A veces hay una razón legítima que no conocías.</p></div></li>
+    <li><div><p><strong>Plantea alternativas</strong> que consigan el objetivo sin el daño: «podemos medir la retención sin guardar la ubicación exacta».</p></div></li>
+    <li><div><p><strong>Déjalo por escrito</strong>: tu preocupación y la respuesta. Es la misma disciplina que un ADR.</p></div></li>
+    <li><div><p><strong>Escala si hace falta</strong>, a otra persona responsable o, en casos graves, a quien corresponda fuera de la empresa, como pide el principio 1.</p></div></li>
+  </ol>
+
+  <h3>Impacto social del software que haces</h3>
+  <ul>
+    <li><strong>Accesibilidad.</strong> Un producto que no se puede usar con lector de pantalla o con teclado excluye a millones de personas. En la Unión Europea, la Ley Europea de Accesibilidad obliga desde el 28 de junio de 2025 a que muchos productos y servicios digitales, como tiendas en línea y servicios bancarios, sean accesibles. Lo aprendiste en la <a href="17-diseno-ux.html#accesibilidad">Estación 17</a>.</li>
+    <li><strong>Privacidad.</strong> Recoge solo los datos que necesitas, guárdalos el tiempo mínimo y protégelos (<a href="31-seguridad.html">Estación 31</a>).</li>
+    <li><strong>Diseño honesto.</strong> Los patrones engañosos (<em>dark patterns</em>) que viste en la <a href="17-diseno-ux.html#microcopy">Estación 17</a> funcionan a corto plazo y destruyen la confianza.</li>
+    <li><strong>Sostenibilidad.</strong> El software consume energía. Un algoritmo eficiente (<a href="20-algoritmos.html">Estación 20</a>) y páginas ligeras también son una decisión ambiental.</li>
+    <li><strong>Equipos inclusivos.</strong> Un equipo diverso detecta más problemas antes de que lleguen a las personas usuarias. Un código de conducta, revisiones respetuosas y reuniones en horarios que respetan a todos son parte de eso.</li>
+    <li><strong>Inteligencia artificial.</strong> Si usas IA para generar código o funciones que deciden sobre personas, la responsabilidad sigue siendo tuya y de tu equipo (<a href="42-ia.html">Estación 42</a>).</li>
+  </ul>
+  <aside class="senal nota" data-titulo="Impacto">
+    <p>Como principiante puede parecer que estas decisiones las toman otras personas. No es así: la persona que escribe el formulario decide qué casillas vienen marcadas por defecto, y la que revisa un PR decide si deja pasar un registro de contraseñas en texto plano. Las decisiones éticas del software se toman, sobre todo, en detalles pequeños de todos los días.</p>
+  </aside>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>El ciclo de vida del software tiene seis actividades: requisitos, diseño, implementación, pruebas, despliegue y mantenimiento. Cascada las hace una vez y en orden; el enfoque iterativo e incremental las repite en vueltas cortas que entregan software que funciona.</li>
+    <li>El Manifiesto Ágil (2001) valora más las personas, el software funcionando, la colaboración y la respuesta al cambio, sin despreciar lo otro. Ágil es una forma de pensar, no un conjunto de reuniones.</li>
+    <li>Scrum organiza el trabajo en Sprints de un mes o menos, con tres responsabilidades (Product Owner, Scrum Master, Developers), cinco eventos y tres artefactos, cada uno con su compromiso.</li>
+    <li>Kanban optimiza el flujo: visualiza el trabajo, limita el trabajo en curso (WIP) y mide rendimiento, edad y tiempo de ciclo. Menos cosas empezadas significa que cada una termina antes.</li>
+    <li>Los requisitos son funcionales (qué hace) y no funcionales (cómo de bien, siempre medibles). Las historias de usuario siguen «Como…, quiero… para…», cumplen INVEST y se confirman con criterios Dado/Cuando/Entonces.</li>
+    <li>Estimar sirve para decidir, no para prometer. Se estima comparando (puntos, tallas, planning poker), se pronostica con rangos y se respeta el cono de incertidumbre.</li>
+    <li>MoSCoW separa lo imprescindible de lo que puede esperar; lo imprescindible no debería pasar del 60 % del esfuerzo. Un MVP es la versión más pequeña que permite aprender de personas reales.</li>
+    <li>La definición de terminado es la lista de calidad de todo el trabajo; «casi hecho» es «no hecho». En las revisiones de código se habla del código, se explica el porqué, se marca la importancia y se responde pronto.</li>
+    <li>En equipos remotos, casi todo es escrito: mensajes que se entienden solos, decisiones anotadas, README, CONTRIBUTING, código de conducta y ADR en el repositorio.</li>
+    <li>Una game jam es un proyecto completo comprimido: alcance pequeño, bucle principal primero, congelar funciones a tiempo y dormir. La ética profesional está en cada decisión pequeña, empezando por el interés público.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Estos ejercicios convierten las ideas de la estación en trabajo concreto: redactar historias y criterios, ordenar y priorizar un backlog, programar las reglas de un tablero, pronosticar y revisar código con buenos modales. Los talleres comprueban tu respuesta automáticamente. Intenta cada uno unos minutos antes de abrir las pistas.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-formato">
+    <h3>Completa las historias</h3>
+    <p>Vas a hacer una app para inscribir equipos en los torneos de fútbol del barrio. Completa las tres historias sustituyendo cada <code>___</code>. Cada una debe seguir el formato «Como …, quiero … para …», terminar en punto, tener un beneficio de al menos tres palabras y hablar de una necesidad, no de una solución técnica.</p>
+    <div class="taller" id="taller-ej-formato" data-titulo="Ejercicio 1">
+      <textarea class="taller-codigo">const historias = [
+  "Como capitana de un equipo, quiero ___ para ___.",
+  "Como organizador del torneo, quiero ___ para ___.",
+  "Como ___, quiero consultar el calendario de partidos en el móvil para ___.",
+];
+
+historias.forEach((h) => console.log(h));</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (salida.length !== 3) return "Deberían imprimirse exactamente 3 historias. No borres ni añadas elementos al array.";
+for (var i = 0; i < 3; i++) {
+  var h = salida[i];
+  if (h.indexOf("___") !== -1) return "La historia " + (i + 1) + " todavía tiene huecos ___ sin completar.";
+  var m = h.match(/^Como (.+?), quiero (.+?) para (.+)\.$/);
+  if (!m) return "La historia " + (i + 1) + " no sigue el formato «Como ..., quiero ... para ...» con punto final: «" + h + "».";
+  if (/desarroll|programad|sistema|base de datos/i.test(m[1])) return "En la historia " + (i + 1) + ", el rol debe ser alguien que usa la app, no quien la construye.";
+  if (/tabla|base de datos|localStorage|API|JSON|servidor|bot[oó]n/i.test(m[2])) return "En la historia " + (i + 1) + ", cuenta la necesidad y no la solución técnica (nada de tablas, botones o servidores).";
+  if (m[3].trim().split(/\s+/).length < 3) return "En la historia " + (i + 1) + ", el beneficio es muy corto. ¿Para qué lo quiere de verdad esa persona?";
+}
+if (!/^Como capitana de un equipo, quiero /.test(salida[0])) return "La primera historia debe seguir siendo de la capitana de un equipo.";
+if (!/^Como organizador del torneo, quiero /.test(salida[1])) return "La segunda historia debe seguir siendo del organizador del torneo.";
+if (salida[2].indexOf("quiero consultar el calendario de partidos en el móvil para ") === -1) return "En la tercera historia, conserva la acción «consultar el calendario de partidos en el móvil».";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Piensa en qué hace cada persona en un torneo real. La capitana inscribe a su equipo y a sus jugadoras; el organizador revisa inscripciones y pagos; alguien que juega o que va a mirar necesita saber cuándo y dónde es el partido.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El beneficio responde «¿y eso para qué?». No vale «para inscribirme»: di qué consigue. Por ejemplo, «para no tener que llevar los datos en papel el día del torneo».</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const historias = [
+  "Como capitana de un equipo, quiero inscribir a mi equipo con sus cinco integrantes para asegurar nuestra plaza antes de que se llene el torneo.",
+  "Como organizador del torneo, quiero ver qué equipos pagaron la inscripción para no revisar las transferencias una por una.",
+  "Como jugadora, quiero consultar el calendario de partidos en el móvil para saber a qué hora y en qué cancha juego.",
+];
+
+historias.forEach((h) =&gt; console.log(h));</code></pre>
+      <p>Hay muchas respuestas válidas. Fíjate en que ninguna menciona cómo se hará (formularios, bases de datos, notificaciones): eso se decide al hablar la historia con el equipo.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-criterios">
+    <h3>Criterios de aceptación para el récord</h3>
+    <p>La historia es: «Como jugadora, quiero ver mi récord al terminar la partida para saber si me estoy superando». Completa los dos escenarios Dado/Cuando/Entonces. Cada parte debe tener al menos tres palabras, el «Entonces» debe describir algo que se pueda ver o medir (nada de «funciona bien» o «correctamente») y al menos un «Entonces» debe incluir un número concreto.</p>
+    <div class="taller" id="taller-ej-criterios" data-titulo="Ejercicio 2">
+      <textarea class="taller-codigo">const escenarios = [
+  {
+    nombre: "Supero mi récord",
+    dado: "que mi récord es 1200 puntos",
+    cuando: "termino una partida con 1500 puntos",
+    entonces: "", // ¿qué aparece en pantalla y qué se guarda?
+  },
+  {
+    nombre: "No supero mi récord",
+    dado: "",
+    cuando: "",
+    entonces: "",
+  },
+];
+
+escenarios.forEach((e) => {
+  console.log(`Escenario: ${e.nombre}`);
+  console.log(`  Dado ${e.dado}`);
+  console.log(`  Cuando ${e.cuando}`);
+  console.log(`  Entonces ${e.entonces}`);
+});</textarea>
+      <script type="text/plain" class="taller-verificar">
+var n = salida.filter(function (l) { return /^Escenario:/.test(l); }).length;
+if (n < 2) return "Tiene que haber al menos 2 escenarios.";
+var conNumero = false;
+for (var i = 0; i < salida.length; i++) {
+  var l = salida[i].trim();
+  var m = l.match(/^(Dado|Cuando|Entonces) ?(.*)$/);
+  if (!m) continue;
+  var palabras = m[2].trim() ? m[2].trim().split(/\s+/).length : 0;
+  if (palabras < 3) return "La línea «" + l + "» está vacía o es muy corta. Describe la situación con al menos tres palabras.";
+  if (m[1] === "Entonces") {
+    if (/\b(bien|correctamente|adecuad|r[aá]pid|intuitiv|funciona)/i.test(m[2])) return "«" + l + "» no se puede comprobar sin opinar. Di qué se ve o qué valor queda guardado.";
+    if (/\d/.test(m[2])) conNumero = true;
+  }
+}
+if (!conNumero) return "Al menos un «Entonces» debería incluir un número concreto, por ejemplo el récord que se muestra o se guarda.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Para el primer escenario, piensa en dos cosas observables: el mensaje que aparece y el valor del récord que queda guardado para la próxima partida.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El segundo escenario es el caso contrario: parte del mismo récord, termina con menos puntos y describe que el récord <em>no</em> cambia. Es un caso borde típico que se olvida al programar.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const escenarios = [
+  {
+    nombre: "Supero mi récord",
+    dado: "que mi récord es 1200 puntos",
+    cuando: "termino una partida con 1500 puntos",
+    entonces: "aparece «¡Nuevo récord: 1500!» y el récord guardado pasa a 1500",
+  },
+  {
+    nombre: "No supero mi récord",
+    dado: "que mi récord es 1200 puntos",
+    cuando: "termino una partida con 800 puntos",
+    entonces: "aparece «Récord: 1200» y el récord guardado sigue en 1200",
+  },
+];
+
+escenarios.forEach((e) =&gt; {
+  console.log(`Escenario: ${e.nombre}`);
+  console.log(`  Dado ${e.dado}`);
+  console.log(`  Cuando ${e.cuando}`);
+  console.log(`  Entonces ${e.entonces}`);
+});</code></pre>
+      <p>Podrías añadir un tercer escenario para el empate (1200 exactos): ¿cuenta como nuevo récord? Justo esas preguntas son las que los criterios sacan a la luz antes de programar.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-tablero">
+    <h3>Ordena el backlog de la jam</h3>
+    <p>Tu equipo tiene 48 horas para hacer un juego de plataformas. Ordena el Product Backlog de arriba (se hace primero) abajo, con estas reglas: primero lo <strong>imprescindible</strong> para que exista un juego (controlarlo, un objetivo, ganar y perder); después lo <strong>importante</strong> (la organización de la jam valora que haya sonido e instrucciones); después lo <strong>deseable</strong> (más contenido o adornos); y al final lo que el equipo acordó que <strong>esta vez no</strong> se hará. Dentro de cada grupo, el orden da igual.</p>
+    <div class="parsons" data-titulo="Ordena el Product Backlog" data-lenguaje="text" data-exito="¡Bien priorizado! Primero lo que hace que sea un juego, luego lo que valoran, luego los adornos, y al final lo que queda fuera por escrito.">
+      <ol>
+        <li data-grupo="m">Mover al perro con las flechas</li>
+        <li data-grupo="m">Saltar con la barra espaciadora</li>
+        <li data-grupo="m">Perder al caer al vacío</li>
+        <li data-grupo="m">Ganar al llegar a la caseta</li>
+        <li data-grupo="s">Efectos de sonido al saltar y al perder</li>
+        <li data-grupo="s">Pantalla de inicio con las instrucciones</li>
+        <li data-grupo="c">Segundo nivel</li>
+        <li data-grupo="c">Partículas de polvo al aterrizar</li>
+        <li>Tabla de récords en línea (acordado: esta vez no)</li>
+      </ol>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Pregúntate por cada tarjeta: «si no la hacemos, ¿sigue habiendo un juego que se puede ganar y perder?». Si la respuesta es no, es imprescindible.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La tabla de récords en línea necesita un servidor: en 48 horas es un riesgo enorme. Está en el backlog para que quede escrito que no se hará, no para hacerla.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <p>Imprescindible (en cualquier orden): mover, saltar, perder al caer y ganar al llegar a la caseta. Importante: sonido y pantalla de inicio con instrucciones. Deseable: segundo nivel y partículas. Esta vez no: tabla de récords en línea. Mantener lo descartado al final de la lista, marcado como tal, evita que alguien lo empiece «porque tenía un rato libre».</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-invest">
+    <h3>Diagnóstico INVEST</h3>
+    <p>Cada historia incumple sobre todo una de las cualidades de INVEST, y ninguna letra se repite. Escribe en <code>diagnostico</code> la letra que corresponde a cada una: <code>"I"</code>, <code>"N"</code>, <code>"V"</code>, <code>"E"</code>, <code>"S"</code> o <code>"T"</code>.</p>
+    <div class="taller" id="taller-ej-invest" data-titulo="Ejercicio 4">
+      <textarea class="taller-codigo">// h1: Como jugador, quiero un modo historia con 20 niveles, jefes y cinemáticas
+//     para vivir una aventura larga.
+// h2: Como jugadora, quiero que el juego sea divertido para pasarlo bien.
+// h3: Como administrador de la base de datos, quiero índices en la tabla partidas
+//     para que las consultas tarden menos.
+// h4: Como organizadora, quiero exportar los inscritos al formato de la federación
+//     para enviárselos (nadie del equipo sabe todavía cómo es ese formato).
+// h5: Como jugador, quiero un botón azul de 48 píxeles arriba a la derecha que abra
+//     un menú con exactamente estas seis opciones para configurar el sonido.
+// h6: Como jugadora, quiero ver las estadísticas de mis partidas para mejorar,
+//     pero solo se puede empezar cuando estén terminadas las historias 3, 4 y 5.
+
+const diagnostico = {
+  h1: "",
+  h2: "",
+  h3: "",
+  h4: "",
+  h5: "",
+  h6: "",
+};
+
+Object.keys(diagnostico).forEach((h) => console.log(h + ": " + diagnostico[h]));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = { h1: "S", h2: "T", h3: "V", h4: "E", h5: "N", h6: "I" };
+var pistas = {
+  h1: "h1: ¿cabría en una sola iteración de dos semanas?",
+  h2: "h2: ¿cómo sabrías, sin discutir, si está terminada?",
+  h3: "h3: ¿a quién que use o pague el producto le aporta algo directamente, tal como está escrita?",
+  h4: "h4: si nadie conoce el formato, ¿puede el equipo calcular cuánto trabajo es?",
+  h5: "h5: ¿deja algún margen para acordar los detalles con el equipo?",
+  h6: "h6: ¿se puede hacer sin esperar a otras historias?"
+};
+var real = {};
+salida.forEach(function (l) { var m = l.match(/^(h\d): ?(.*)$/); if (m) real[m[1]] = m[2].trim().toUpperCase(); });
+var claves = Object.keys(esperado);
+for (var i = 0; i < claves.length; i++) {
+  var k = claves[i];
+  if (!real[k]) return "Falta la letra de " + k + ".";
+  if ("INVEST".indexOf(real[k]) === -1 || real[k].length !== 1) return k + ": escribe una sola letra de INVEST, entre comillas, por ejemplo \"S\".";
+}
+for (var j = 0; j < claves.length; j++) {
+  var c = claves[j];
+  if (real[c] !== esperado[c]) return "Revisa " + pistas[c];
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Empieza por las fáciles: la que es enorme (S), la que no se puede comprobar (T) y la que depende de otras (I). Luego quedan tres.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La del botón azul describe la solución con tanto detalle que no queda nada que conversar. La del formato desconocido no se puede medir porque falta información.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const diagnostico = {
+  h1: "S", // enorme: es una épica que hay que dividir
+  h2: "T", // «divertido» no se puede comprobar sin opinar
+  h3: "V", // tarea técnica: el valor para quien juega no aparece
+  h4: "E", // nadie conoce el formato: no se puede estimar
+  h5: "N", // impone la solución y no deja nada que negociar
+  h6: "I", // depende de otras tres historias
+};
+
+Object.keys(diagnostico).forEach((h) =&gt; console.log(h + ": " + diagnostico[h]));</code></pre>
+      <p>En la vida real, una historia suele fallar en varias letras a la vez: h3, por ejemplo, tampoco es muy negociable. INVEST sirve para detectar el problema principal y decidir cómo reescribirla: h1 se divide, h2 se convierte en criterios medibles, h4 necesita antes una investigación corta (en muchos equipos se llama <em>spike</em>).</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-wip">
+    <h3>Las reglas del tablero</h3>
+    <p>Programa dos funciones para un tablero Kanban. <code>puedeEntrar(tablero, columna)</code> devuelve <code>true</code> si en esa columna cabe una tarjeta más según <code>limites</code>, y <code>false</code> si no. <code>mover(tablero, tarjeta, desde, hacia)</code> usa <code>puedeEntrar</code>: si cabe, quita la tarjeta de la columna <code>desde</code>, la añade al final de <code>hacia</code> y devuelve <code>true</code>; si no cabe, no cambia nada y devuelve <code>false</code>. Las pruebas de abajo deben imprimir lo que indican los comentarios.</p>
+    <div class="taller" id="taller-ej-wip" data-titulo="Ejercicio 5">
+      <textarea class="taller-codigo">const limites = { porHacer: Infinity, enCurso: 2, revision: 1, hecho: Infinity };
+
+function puedeEntrar(tablero, columna) {
+  // Tu código aquí
+}
+
+function mover(tablero, tarjeta, desde, hacia) {
+  // Tu código aquí
+}
+
+// Pruebas (no las cambies)
+const tablero = { porHacer: ["C", "D"], enCurso: ["A", "B"], revision: [], hecho: [] };
+console.log(puedeEntrar(tablero, "enCurso"));            // false
+console.log(puedeEntrar(tablero, "revision"));           // true
+console.log(puedeEntrar(tablero, "hecho"));              // true
+console.log(mover(tablero, "C", "porHacer", "enCurso")); // false: En curso está lleno
+console.log(mover(tablero, "A", "enCurso", "revision")); // true
+console.log(mover(tablero, "C", "porHacer", "enCurso")); // true: ya hay hueco
+console.log(mover(tablero, "B", "enCurso", "revision")); // false: Revisión está llena
+console.log(tablero.enCurso.join(", "));                 // B, C
+console.log(tablero.revision.join(", "));                // A</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["false", "true", "true", "false", "true", "true", "false", "B, C", "A"];
+if (!/limites\s*\[/.test(codigo)) return "puedeEntrar debería consultar el límite de la columna con limites[columna].";
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La línea " + (i + 1) + " debería ser «" + esp[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>puedeEntrar</code> cabe en una línea: compara cuántas tarjetas hay (<code>tablero[columna].length</code>) con el límite (<code>limites[columna]</code>). Recuerda que cualquier número es menor que <code>Infinity</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>mover</code>, sal pronto con <code>return false</code> si no cabe. Si cabe, puedes quitar la tarjeta con <code>filter</code> (reasignando <code>tablero[desde]</code>) o buscando su posición con <code>indexOf</code> y usando <code>splice</code>; después, <code>push</code> en <code>tablero[hacia]</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const limites = { porHacer: Infinity, enCurso: 2, revision: 1, hecho: Infinity };
+
+function puedeEntrar(tablero, columna) {
+  return tablero[columna].length &lt; limites[columna];
+}
+
+function mover(tablero, tarjeta, desde, hacia) {
+  if (!puedeEntrar(tablero, hacia)) return false;
+  tablero[desde] = tablero[desde].filter((t) =&gt; t !== tarjeta);
+  tablero[hacia].push(tarjeta);
+  return true;
+}
+
+// Pruebas (no las cambies)
+const tablero = { porHacer: ["C", "D"], enCurso: ["A", "B"], revision: [], hecho: [] };
+console.log(puedeEntrar(tablero, "enCurso"));            // false
+console.log(puedeEntrar(tablero, "revision"));           // true
+console.log(puedeEntrar(tablero, "hecho"));              // true
+console.log(mover(tablero, "C", "porHacer", "enCurso")); // false: En curso está lleno
+console.log(mover(tablero, "A", "enCurso", "revision")); // true
+console.log(mover(tablero, "C", "porHacer", "enCurso")); // true: ya hay hueco
+console.log(mover(tablero, "B", "enCurso", "revision")); // false: Revisión está llena
+console.log(tablero.enCurso.join(", "));                 // B, C
+console.log(tablero.revision.join(", "));                // A</code></pre>
+      <p>Usar <code>Infinity</code> como límite de las columnas sin límite evita casos especiales: <code>n &lt; Infinity</code> es siempre verdadero. Y como <code>mover</code> reutiliza <code>puedeEntrar</code>, la regla del límite vive en un solo sitio, como pedía el principio DRY de la <a href="10-funciones.html">Estación 10</a>.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-moscow">
+    <h3>Prioriza con MoSCoW</h3>
+    <p>El equipo cree que puede hacer unos 40 puntos durante la jam. Rellena <code>prioridad</code> con <code>"M"</code>, <code>"S"</code>, <code>"C"</code> o <code>"W"</code> cumpliendo estas reglas:</p>
+    <ul>
+      <li>Moverse y saltar, ganar y perder, y un nivel completo son imprescindibles: sin ellos no hay juego.</li>
+      <li>Lo imprescindible no puede pasar del 60 % de la capacidad.</li>
+      <li>Todo lo que no sea «W» debe caber en la capacidad.</li>
+      <li>Lo que necesita un servidor queda fuera esta vez.</li>
+      <li>Tiene que haber al menos un «S» y al menos un «C», para tener margen si algo se complica.</li>
+    </ul>
+    <div class="taller" id="taller-ej-moscow" data-titulo="Ejercicio 6">
+      <textarea class="taller-codigo">const capacidad = 40;
+const backlog = [
+  { tarea: "Moverse y saltar", puntos: 8, prioridad: "" },
+  { tarea: "Ganar al llegar a la meta y perder al caer", puntos: 5, prioridad: "" },
+  { tarea: "Un nivel completo", puntos: 8, prioridad: "" },
+  { tarea: "Efectos de sonido", puntos: 3, prioridad: "" },
+  { tarea: "Pantalla de inicio con instrucciones", puntos: 3, prioridad: "" },
+  { tarea: "Segundo nivel", puntos: 8, prioridad: "" },
+  { tarea: "Partículas y sacudida de cámara", puntos: 5, prioridad: "" },
+  { tarea: "Tabla de récords en línea (necesita servidor)", puntos: 13, prioridad: "" },
+];
+
+// No cambies lo de abajo: muestra el backlog y los totales
+backlog.forEach((b) => console.log(`${b.prioridad || "?"} · ${b.tarea} (${b.puntos})`));
+const suma = (letra) => backlog.filter((b) => b.prioridad === letra).reduce((t, b) => t + b.puntos, 0);
+console.log(`Must: ${suma("M")} de ${capacidad} puntos (${Math.round(suma("M") / capacidad * 100)} %)`);
+console.log(`Planificado sin W: ${suma("M") + suma("S") + suma("C")} de ${capacidad} puntos`);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var items = [];
+salida.forEach(function (l) { var m = l.match(/^([A-Z?]+) · (.+) \((\d+)\)$/); if (m) items.push({ p: m[1], t: m[2], n: Number(m[3]) }); });
+if (items.length !== 8) return "Deberían mostrarse las 8 tareas del backlog. No borres ninguna.";
+for (var i = 0; i < items.length; i++) if (["M", "S", "C", "W"].indexOf(items[i].p) === -1) return "A «" + items[i].t + "» le falta una prioridad válida: \"M\", \"S\", \"C\" o \"W\".";
+function de(texto) { for (var j = 0; j < items.length; j++) if (items[j].t.indexOf(texto) === 0) return items[j]; return null; }
+var nucleo = ["Moverse y saltar", "Ganar al llegar", "Un nivel completo"];
+for (var k = 0; k < nucleo.length; k++) { var it = de(nucleo[k]); if (!it || it.p !== "M") return "«" + nucleo[k] + "…» es imprescindible: sin eso no hay juego. Márcalo como \"M\"."; }
+if (de("Tabla de récords").p !== "W") return "La tabla de récords en línea necesita un servidor: en 48 horas, esta vez no (\"W\").";
+var suma = function (p) { return items.filter(function (x) { return x.p === p; }).reduce(function (t, x) { return t + x.n; }, 0); };
+if (suma("M") > 24) return "Lo imprescindible suma " + suma("M") + " puntos: más del 60 % de 40 (24). Pasa algo de \"M\" a \"S\" o \"C\".";
+if (suma("M") + suma("S") + suma("C") > 40) return "Lo planificado (sin W) suma " + (suma("M") + suma("S") + suma("C")) + " puntos y la capacidad es 40. Algo tiene que pasar a \"W\".";
+if (!suma("S")) return "Marca al menos una tarea como \"S\" (importante).";
+if (!suma("C")) return "Marca al menos una tarea como \"C\" (deseable): es el margen que se recorta si algo se complica.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Suma primero las tres tareas imprescindibles: 8 + 5 + 8. ¿Queda por debajo de 24, el 60 % de 40?</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Si pasas la tabla de récords a «W», lo que queda suma exactamente 40. Reparte el resto entre «S» y «C» pensando en qué dolería más dejar fuera.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const capacidad = 40;
+const backlog = [
+  { tarea: "Moverse y saltar", puntos: 8, prioridad: "M" },
+  { tarea: "Ganar al llegar a la meta y perder al caer", puntos: 5, prioridad: "M" },
+  { tarea: "Un nivel completo", puntos: 8, prioridad: "M" },
+  { tarea: "Efectos de sonido", puntos: 3, prioridad: "S" },
+  { tarea: "Pantalla de inicio con instrucciones", puntos: 3, prioridad: "S" },
+  { tarea: "Segundo nivel", puntos: 8, prioridad: "C" },
+  { tarea: "Partículas y sacudida de cámara", puntos: 5, prioridad: "C" },
+  { tarea: "Tabla de récords en línea (necesita servidor)", puntos: 13, prioridad: "W" },
+];
+
+// No cambies lo de abajo: muestra el backlog y los totales
+backlog.forEach((b) =&gt; console.log(`${b.prioridad || "?"} · ${b.tarea} (${b.puntos})`));
+const suma = (letra) =&gt; backlog.filter((b) =&gt; b.prioridad === letra).reduce((t, b) =&gt; t + b.puntos, 0);
+console.log(`Must: ${suma("M")} de ${capacidad} puntos (${Math.round(suma("M") / capacidad * 100)} %)`);
+console.log(`Planificado sin W: ${suma("M") + suma("S") + suma("C")} de ${capacidad} puntos`);</code></pre>
+      <p>Lo imprescindible queda en 21 puntos (53 %) y los «C» suman 13 (algo más del 30 %): si algo se complica, el segundo nivel y las partículas son lo primero que se recorta, y el juego sigue siendo un juego. Otras combinaciones de «S» y «C» también son válidas.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-pronostico">
+    <h3>Un pronosticador honesto</h3>
+    <p>Escribe <code>pronosticar(velocidades, pendiente)</code>, que recibe los puntos terminados en Sprints anteriores y los puntos que quedan, y devuelve un texto:</p>
+    <ul>
+      <li>Ignora los Sprints con velocidad 0 o negativa (vacaciones, Sprints cancelados).</li>
+      <li>Si no quedan Sprints válidos, devuelve <code>"Sin datos"</code>.</li>
+      <li>Si <code>pendiente</code> es 0 o menos, devuelve <code>"Nada pendiente"</code>.</li>
+      <li>Si no, calcula los Sprints necesarios con la mejor y con la peor velocidad, redondeando hacia arriba. Si coinciden, devuelve por ejemplo <code>"3 Sprints"</code>; si no, <code>"Entre 5 y 8 Sprints"</code>.</li>
+    </ul>
+    <div class="taller" id="taller-ej-pronostico" data-titulo="Ejercicio 7">
+      <textarea class="taller-codigo">function pronosticar(velocidades, pendiente) {
+  // Tu código aquí
+}
+
+// Pruebas (no las cambies)
+console.log(pronosticar([21, 18, 25, 17, 23], 120)); // Entre 5 y 8 Sprints
+console.log(pronosticar([10, 10, 10], 30));          // 3 Sprints
+console.log(pronosticar([], 50));                    // Sin datos
+console.log(pronosticar([12, 0, 15], 40));           // Entre 3 y 4 Sprints
+console.log(pronosticar([0, 0], 40));                // Sin datos
+console.log(pronosticar([20, 22], 0));               // Nada pendiente</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esp = ["Entre 5 y 8 Sprints", "3 Sprints", "Sin datos", "Entre 3 y 4 Sprints", "Sin datos", "Nada pendiente"];
+if (codigo.indexOf("Math.ceil") === -1) return "Redondea hacia arriba con Math.ceil: medio Sprint no existe.";
+if (/return\s*["'`]Entre 5 y 8/.test(codigo)) return "No escribas los resultados a mano: calcúlalos a partir de los datos.";
+for (var i = 0; i < esp.length; i++) {
+  if (salida[i] !== esp[i]) return "La prueba " + (i + 1) + " debería imprimir «" + esp[i] + "» y imprime «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "».";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Empieza filtrando: <code>const validas = velocidades.filter((v) =&gt; v &gt; 0);</code>. Después comprueba los dos casos especiales con <code>return</code> tempranos, en el orden que da cada prueba.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Con la <em>mejor</em> velocidad (<code>Math.max(...validas)</code>) salen <em>menos</em> Sprints, y con la peor, más. Calcula <code>Math.ceil(pendiente / mejor)</code> y <code>Math.ceil(pendiente / peor)</code> y compáralos antes de armar el texto.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function pronosticar(velocidades, pendiente) {
+  const validas = velocidades.filter((v) =&gt; v &gt; 0);
+  if (validas.length === 0) return "Sin datos";
+  if (pendiente &lt;= 0) return "Nada pendiente";
+  const pocos = Math.ceil(pendiente / Math.max(...validas));
+  const muchos = Math.ceil(pendiente / Math.min(...validas));
+  if (pocos === muchos) return `${pocos} Sprints`;
+  return `Entre ${pocos} y ${muchos} Sprints`;
+}
+
+// Pruebas (no las cambies)
+console.log(pronosticar([21, 18, 25, 17, 23], 120)); // Entre 5 y 8 Sprints
+console.log(pronosticar([10, 10, 10], 30));          // 3 Sprints
+console.log(pronosticar([], 50));                    // Sin datos
+console.log(pronosticar([12, 0, 15], 40));           // Entre 3 y 4 Sprints
+console.log(pronosticar([0, 0], 40));                // Sin datos
+console.log(pronosticar([20, 22], 0));               // Nada pendiente</code></pre>
+      <p>Sin el filtro, un Sprint de vacaciones con velocidad 0 haría que <code>pendiente / 0</code> diera <code>Infinity</code>: un pronóstico de «entre 2 e infinitos Sprints». Los casos borde también existen en la planificación. Fíjate además en que la función nunca devuelve un número suelto: el formato del resultado obliga a comunicar la incertidumbre.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-comentarios">
+    <h3>Reescribe la revisión</h3>
+    <p>Estos comentarios de revisión dicen cosas ciertas de la peor forma posible. Reescríbelos y añade un cuarto que reconozca algo bueno. Reglas: cada comentario empieza con una etiqueta de Conventional Comments (<code>praise</code>, <code>nitpick</code>, <code>suggestion</code>, <code>issue</code>, <code>question</code>, <code>todo</code>, <code>thought</code>, <code>chore</code> o <code>note</code>), opcionalmente con <code>(blocking)</code>, <code>(non-blocking)</code> o <code>(if-minor)</code>, y dos puntos; habla del código, no de la persona (nada de «tú», «siempre», «nunca», «horrible» u «obvio»); y, salvo el elogio, explica el porqué (con «porque» o «para») o hace una pregunta. El primero debe seguir hablando de la lista vacía.</p>
+    <div class="taller" id="taller-ej-comentarios" data-titulo="Ejercicio 8">
+      <textarea class="taller-codigo">const comentarios = [
+  "Esto está mal, tú siempre te olvidas de la lista vacía.",
+  "Nombres horribles.",
+  "¿Por qué no usaste un Map? Es obvio.",
+  // Añade aquí un comentario de elogio (praise)
+];
+
+comentarios.forEach((c, i) => console.log(`${i + 1}. ${c}`));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var etiqueta = /^(praise|nitpick|suggestion|issue|question|todo|thought|chore|note)( \((blocking|non-blocking|if-minor)\))?: \S/;
+var cs = salida.map(function (l) { return l.replace(/^\d+\.\s*/, ""); });
+if (cs.length < 4) return "Tiene que haber 4 comentarios: los 3 reescritos y uno de elogio.";
+var hayElogio = false;
+for (var i = 0; i < cs.length; i++) {
+  var c = cs[i];
+  if (!etiqueta.test(c)) return "El comentario " + (i + 1) + " debe empezar con una etiqueta y dos puntos, por ejemplo «issue (blocking): ...». Ahora empieza así: «" + c.slice(0, 30) + "».";
+  if (/(^|[^a-záéíóúñ])(tú|siempre|nunca|horrible|obvi|basura|rid[ií]cul)/i.test(c)) return "El comentario " + (i + 1) + " todavía habla de la persona o usa palabras que hieren: «" + c + "».";
+  if (/^praise/.test(c)) { hayElogio = true; continue; }
+  if (!/porque|para|\?/.test(c)) return "El comentario " + (i + 1) + " no explica el porqué ni hace una pregunta. Añade «porque…», «para…» o termina con una pregunta.";
+}
+if (!hayElogio) return "Falta un comentario de elogio que empiece por «praise:».";
+if (!/vac[ií]/i.test(cs[0])) return "El primer comentario debería seguir hablando del caso de la lista vacía.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Para el primero, describe qué pasa exactamente con una lista vacía y propone una solución en forma de pregunta: «issue (blocking): si la lista de enemigos está vacía, … ¿Añadimos…?».</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El de los nombres es un detalle menor: <code>nitpick</code>, con un ejemplo concreto de nombre mejor y por qué. El del Map es una sugerencia que no bloquea: <code>suggestion (non-blocking)</code>, explicando qué se gana.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const comentarios = [
+  "issue (blocking): si la lista de enemigos está vacía, enemigos[0].x lanza un TypeError. ¿Añadimos una comprobación antes del bucle?",
+  "nitpick: «datos2» no dice qué guarda. ¿Qué tal «enemigosVivos», para leer la función sin seguir todo el código?",
+  "suggestion (non-blocking): un Map haría directa la búsqueda por id, porque ahora recorremos todo el array en cada fotograma.",
+  "praise: muy clara la separación entre calcular el daño y dibujarlo; así se puede probar sin la pantalla.",
+];
+
+comentarios.forEach((c, i) =&gt; console.log(`${i + 1}. ${c}`));</code></pre>
+      <p>Compara con los originales: cada comentario dice ahora qué pasa, por qué importa y qué se podría hacer, y quien lo recibe sabe qué es obligatorio (<code>blocking</code>) y qué es opcional. El contenido técnico es el mismo; lo que cambia es que ahora ayuda.</p>
+    </details>
+  </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto">
+  <h2>Proyecto: de la idea al plan de tu juego</h2>
+  <p>Vas a hacer lo que hace un equipo en las primeras horas de una game jam o de un proyecto nuevo: convertir una idea en un plan de trabajo que se pueda empezar mañana. El plan tendrá historias de usuario con criterios de aceptación, estimaciones, prioridades MoSCoW que respeten la capacidad del equipo y una definición de terminado. El taller revisa que el plan sea coherente.</p>
+  <ol class="pasos">
+    <li><div><p><strong>La idea.</strong> Elige un juego pequeño para una jam de 48 horas. Si no se te ocurre ninguno, usa el del ejemplo: un perro que recoge huesos antes de que se ponga el sol. Escríbela en una frase.</p></div></li>
+    <li><div><p><strong>Las historias.</strong> Escribe al menos cinco historias de usuario con el formato «Como…, quiero… para…». Recuerda el bucle principal: ¿qué hace quien juega una y otra vez?</p></div></li>
+    <li><div><p><strong>Los criterios.</strong> Añade al menos un escenario Dado/Cuando/Entonces a cada historia imprescindible. Mejor dos: el caso normal y un caso borde.</p></div></li>
+    <li><div><p><strong>Las estimaciones.</strong> Da a cada historia un tamaño en puntos con la serie 1, 2, 3, 5, 8, 13 o 20. Si puedes, hazlo en planning poker con otra persona, aunque no programe: explicar tus números en voz alta ya te obliga a pensar.</p></div></li>
+    <li><div><p><strong>Las prioridades.</strong> Clasifica con MoSCoW para una capacidad de 40 puntos: lo imprescindible, como mucho el 60 %; todo lo que no sea «W», dentro de la capacidad; y al menos una historia descartada explícitamente («W») y alguna «S» o «C» como margen.</p></div></li>
+    <li><div><p><strong>La definición de terminado.</strong> Escribe al menos cuatro condiciones que cumplirá todo el trabajo del equipo.</p></div></li>
+    <li><div><p><strong>Revisión.</strong> Ejecuta el taller y corrige lo que te indique hasta que el plan quede listo. Después léelo en voz alta como si se lo presentaras al equipo: ¿se entiende sin explicaciones?</p></div></li>
+  </ol>
+  <div class="taller" id="taller-proyecto" data-titulo="Proyecto: el plan de la jam">
+    <textarea class="taller-codigo">const plan = {
+  idea: "Un perro recoge huesos antes de que se ponga el sol",
+  capacidad: 40,
+  historias: [
+    {
+      texto: "Como jugadora, quiero mover al perro y saltar para esquivar los charcos.",
+      puntos: 8,
+      prioridad: "M",
+      criterios: [
+        "Dado que el perro está en el suelo, Cuando pulso Espacio, Entonces salta y vuelve a caer al suelo",
+      ],
+    },
+    // Añade al menos 4 historias más
+  ],
+  hecho: [
+    "Revisado por otra persona en un pull request",
+    // Añade al menos 3 condiciones más
+  ],
+};
+
+// No cambies lo de abajo: muestra el plan como lo verá el equipo
+console.log(`IDEA: ${plan.idea}`);
+plan.historias.forEach((h, i) => {
+  console.log(`#${i + 1} [${h.prioridad}] ${h.puntos} pts · ${h.texto}`);
+  h.criterios.forEach((c) => console.log(`    - ${c}`));
+});
+const total = (p) => plan.historias.filter((h) => h.prioridad === p).reduce((t, h) => t + h.puntos, 0);
+console.log(`MUST: ${total("M")} de ${plan.capacidad} puntos`);
+console.log(`SIN W: ${total("M") + total("S") + total("C")} de ${plan.capacidad} puntos`);
+plan.hecho.forEach((d) => console.log(`HECHO: ${d}`));</textarea>
+    <script type="text/plain" class="taller-verificar">
+var idea = salida.filter(function (l) { return l.indexOf("IDEA: ") === 0; })[0] || "";
+if (idea.replace("IDEA: ", "").trim().split(/\s+/).length < 4) return "Describe la idea en una frase de al menos cuatro palabras.";
+var historias = [], actual = null;
+salida.forEach(function (l) {
+  var m = l.match(/^#(\d+) \[([^\]]*)\] (\d+) pts · (.+)$/);
+  if (m) { actual = { n: m[1], p: m[2], pts: Number(m[3]), texto: m[4], criterios: [] }; historias.push(actual); return; }
+  var c = l.trim();
+  if (actual && c.indexOf("- ") === 0) actual.criterios.push(c.slice(2));
+});
+if (historias.length < 5) return "El plan tiene " + historias.length + (historias.length === 1 ? " historia" : " historias") + ". Escribe al menos 5.";
+var serie = [1, 2, 3, 5, 8, 13, 20];
+for (var i = 0; i < historias.length; i++) {
+  var h = historias[i];
+  if (!/^Como .+?, quiero .+? para .+$/.test(h.texto)) return "La historia #" + h.n + " no sigue el formato «Como ..., quiero ... para ...».";
+  if (["M", "S", "C", "W"].indexOf(h.p) === -1) return "La historia #" + h.n + " necesita una prioridad \"M\", \"S\", \"C\" o \"W\".";
+  if (serie.indexOf(h.pts) === -1) return "La historia #" + h.n + " tiene " + h.pts + " puntos. Usa la serie 1, 2, 3, 5, 8, 13 o 20.";
+  if (h.p === "M" && !h.criterios.length) return "La historia #" + h.n + " es imprescindible y no tiene criterios de aceptación.";
+  for (var j = 0; j < h.criterios.length; j++) {
+    if (!/Dado .+Cuando .+Entonces .+/i.test(h.criterios[j])) return "Un criterio de la historia #" + h.n + " no tiene la forma «Dado …, Cuando …, Entonces …».";
+  }
+}
+var suma = function (p) { return historias.filter(function (x) { return x.p === p; }).reduce(function (t, x) { return t + x.pts; }, 0); };
+if (!suma("M")) return "Ninguna historia es imprescindible. ¿Qué necesita el juego para ser un juego?";
+if (suma("M") > 24) return "Lo imprescindible suma " + suma("M") + " puntos: más del 60 % de 40. Pasa algo a \"S\" o \"C\", o divide historias.";
+if (suma("M") + suma("S") + suma("C") > 40) return "Lo planificado sin «W» suma " + (suma("M") + suma("S") + suma("C")) + " puntos y la capacidad es 40.";
+if (!suma("W")) return "Deja por escrito al menos una historia descartada para esta jam (\"W\").";
+if (!suma("S") && !suma("C")) return "Añade alguna historia \"S\" o \"C\": es el margen que se recorta si algo se complica.";
+var dod = salida.filter(function (l) { return l.indexOf("HECHO: ") === 0; });
+if (dod.length < 4) return "La definición de terminado tiene " + dod.length + " condiciones. Escribe al menos 4.";
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <pre><code class="language-js">const plan = {
+  idea: "Un perro recoge huesos antes de que se ponga el sol",
+  capacidad: 40,
+  historias: [
+    {
+      texto: "Como jugadora, quiero mover al perro y saltar para esquivar los charcos.",
+      puntos: 8,
+      prioridad: "M",
+      criterios: [
+        "Dado que el perro está en el suelo, Cuando pulso Espacio, Entonces salta y vuelve a caer al suelo",
+        "Dado que el perro está en el aire, Cuando pulso Espacio, Entonces no salta otra vez",
+      ],
+    },
+    {
+      texto: "Como jugador, quiero perder una vida al caer en un charco para que haya riesgo.",
+      puntos: 5,
+      prioridad: "M",
+      criterios: [
+        "Dado que tengo 3 vidas, Cuando caigo en un charco, Entonces me quedan 2 y reaparezco al inicio",
+      ],
+    },
+    {
+      texto: "Como jugadora, quiero recoger todos los huesos antes de que se ponga el sol para ganar la partida.",
+      puntos: 8,
+      prioridad: "M",
+      criterios: [
+        "Dado que me falta 1 hueso y quedan 10 segundos, Cuando lo recojo, Entonces aparece «¡Ganaste!»",
+        "Dado que me faltan huesos, Cuando el contador llega a 0, Entonces aparece «Se hizo de noche»",
+      ],
+    },
+    {
+      texto: "Como jugador, quiero oír un sonido al saltar y al recoger un hueso para notar mis acciones sin mirar el marcador.",
+      puntos: 3,
+      prioridad: "S",
+      criterios: [],
+    },
+    {
+      texto: "Como jugadora nueva, quiero ver los controles en la pantalla de inicio para empezar sin preguntar a nadie.",
+      puntos: 3,
+      prioridad: "S",
+      criterios: [],
+    },
+    {
+      texto: "Como jugador, quiero un segundo nivel más difícil para seguir jugando cuando supere el primero.",
+      puntos: 5,
+      prioridad: "C",
+      criterios: [],
+    },
+    {
+      texto: "Como jugadora, quiero comparar mi récord con el de otras personas en línea para competir.",
+      puntos: 13,
+      prioridad: "W",
+      criterios: [],
+    },
+  ],
+  hecho: [
+    "Revisado por otra persona en un pull request",
+    "Cumple todos sus criterios de aceptación",
+    "Se juega solo con teclado, en Chrome y en Firefox",
+    "Integrado en la rama principal y el juego arranca sin errores en la consola",
+  ],
+};
+
+// No cambies lo de abajo: muestra el plan como lo verá el equipo
+console.log(`IDEA: ${plan.idea}`);
+plan.historias.forEach((h, i) =&gt; {
+  console.log(`#${i + 1} [${h.prioridad}] ${h.puntos} pts · ${h.texto}`);
+  h.criterios.forEach((c) =&gt; console.log(`    - ${c}`));
+});
+const total = (p) =&gt; plan.historias.filter((h) =&gt; h.prioridad === p).reduce((t, h) =&gt; t + h.puntos, 0);
+console.log(`MUST: ${total("M")} de ${plan.capacidad} puntos`);
+console.log(`SIN W: ${total("M") + total("S") + total("C")} de ${plan.capacidad} puntos`);
+plan.hecho.forEach((d) =&gt; console.log(`HECHO: ${d}`));</code></pre>
+    <p>Lo imprescindible suma 21 puntos (el 53 % de 40) y el total planificado, 32: quedan 8 puntos de margen para imprevistos, que siempre los hay. El primer jugable son las tres historias «M»: con ellas ya se puede ganar y perder.</p>
+  </details>
+  <p><strong>Para ir más allá:</strong> pasa el plan a GitHub Projects: una issue por historia, un campo de selección única para la prioridad, otro numérico para los puntos y una vista de tablero con límite de trabajo en curso (<a href="24-git.html">Estación 24</a>). Escribe el README del juego y un primer ADR sobre la tecnología elegida. Y si te animas, busca una jam para principiantes en itch.io y lleva tu plan a la práctica: en la <a href="34-videojuegos.html">Estación 34</a> tendrás todo lo necesario para programarlo.</p>
+</section>
+
+<section id="autoevaluacion" data-parada="Autoevaluación">
+  <h2>Autoevaluación</h2>
+  <p>Responde sin mirar arriba. Si fallas alguna, lee la explicación de cada opción: equivocarte aquí es la forma más barata de aprender.</p>
+  <div class="quiz">
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Cuál es la principal ventaja de trabajar en iteraciones cortas frente a hacerlo en cascada, cuando no se sabe bien qué necesitan las personas usuarias?</p>
+      <ol class="opciones">
+        <li>Que no hace falta planificar.<p class="explica">No. Los equipos iterativos planifican a menudo; lo que cambia es que el plan a largo plazo es menos detallado y se revisa.</p></li>
+        <li>Que el proyecto siempre termina antes.<p class="explica">No necesariamente. El trabajo total puede ser parecido; lo que mejora es cuándo se descubren los errores de rumbo.</p></li>
+        <li>Que se recibe retroalimentación pronto y se puede corregir el rumbo cuando todavía es barato.<p class="explica">Correcto. Cada iteración entrega algo que funciona y que alguien puede probar, así que los malentendidos salen a la luz en semanas, no al final.</p></li>
+        <li>Que no hay que escribir documentación.<p class="explica">No. El Manifiesto Ágil valora más el software funcionando, pero no dice que la documentación sobre.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">El Manifiesto Ágil dice «software funcionando sobre documentación extensiva». ¿Qué significa?</p>
+      <ol class="opciones">
+        <li>Que en los equipos ágiles no se documenta.<p class="explica">Es la interpretación errónea más común. El propio manifiesto aclara que valora los elementos de la derecha.</p></li>
+        <li>Que la documentación tiene valor, pero cuando choca con entregar software que funciona, gana lo segundo.<p class="explica">Correcto. «Aunque valoramos los elementos de la derecha, valoramos más los de la izquierda.»</p></li>
+        <li>Que la documentación se escribe al final del proyecto.<p class="explica">El manifiesto no habla de cuándo documentar. De hecho, documentar poco y a menudo es más ágil que hacerlo todo al final.</p></li>
+        <li>Que solo el código cuenta como documentación.<p class="explica">El código cuenta el qué, pero no el porqué: por eso existen los README y los ADR.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">En Scrum, ¿quién es responsable de ordenar el Product Backlog?</p>
+      <ol class="opciones">
+        <li>El Scrum Master.<p class="explica">El Scrum Master ayuda a que el equipo sea efectivo y a entender Scrum, pero no decide las prioridades del producto.</p></li>
+        <li>Los Developers, por votación.<p class="explica">Los Developers eligen qué cabe en el Sprint y cómo hacerlo, pero el orden del Product Backlog no se vota.</p></li>
+        <li>La persona con más experiencia técnica.<p class="explica">Scrum no asigna esta responsabilidad por experiencia técnica.</p></li>
+        <li>El Product Owner.<p class="explica">Correcto. Es una sola persona, responsable de maximizar el valor del producto; puede escuchar a muchas, pero la decisión es suya.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Según la Guía de Scrum de 2020, ¿para qué sirve la Daily Scrum?</p>
+      <ol class="opciones">
+        <li>Para que los Developers revisen el avance hacia el Objetivo del Sprint y ajusten el plan del día.<p class="explica">Correcto. Es una reunión de coordinación de los Developers, de 15 minutos como máximo.</p></li>
+        <li>Para informar al jefe de lo que hizo cada persona ayer.<p class="explica">No es un informe de control. Además, la guía de 2020 eliminó las tres preguntas obligatorias.</p></li>
+        <li>Para enseñar el producto a las personas interesadas.<p class="explica">Eso es la Sprint Review, al final del Sprint.</p></li>
+        <li>Para decidir mejoras en la forma de trabajar.<p class="explica">Eso es la Sprint Retrospective.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">La columna «En curso» tiene límite 3 y está llena. Acabas de pasar tu tarea a «Revisión» y tienes tiempo libre. Según Kanban, ¿qué es lo más útil?</p>
+      <ol class="opciones">
+        <li>Empezar una tarea nueva de «Por hacer»: así no pierdes tiempo.<p class="explica">La columna está llena: empezar otra rompe el límite y suma una cosa más a medias.</p></li>
+        <li>Ayudar a terminar o revisar algo que ya está empezado.<p class="explica">Correcto. «Deja de empezar, empieza a terminar»: lo más valioso es que lo que ya está en marcha llegue a «Hecho».</p></li>
+        <li>Subir el límite de «En curso» a 4.<p class="explica">Subir el límite cada vez que molesta anula su propósito. Los límites se ajustan en la mejora del flujo, con datos, no para saltárselos.</p></li>
+        <li>Esperar sin hacer nada hasta que haya hueco.<p class="explica">No hace falta quedarse parado: revisar, probar o desbloquear el trabajo de otras personas hace avanzar el flujo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">Un equipo tiene de media 12 tareas empezadas y termina unas 4 por semana. Según la ley de Little, ¿cuánto tarda de media cada tarea desde que empieza hasta que termina?</p>
+      <ol class="opciones">
+        <li>4 semanas.<p class="explica">Ese es el rendimiento (tareas por semana), no el tiempo de ciclo.</p></li>
+        <li>48 semanas.<p class="explica">Multiplicaste en lugar de dividir. El tiempo de ciclo es trabajo en curso entre rendimiento.</p></li>
+        <li>3 semanas.<p class="explica">Correcto: 12 tareas / 4 por semana = 3 semanas. Con 6 tareas empezadas y el mismo ritmo, serían 1,5 semanas.</p></li>
+        <li>No se puede saber sin estimar cada tarea.<p class="explica">Para el promedio sí se puede: es justo lo que da la ley de Little en un periodo estable. Lo que no puede es predecir una tarea concreta.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">«Como jugador, quiero que el juego sea divertido para pasarlo bien.» ¿Qué cualidad de INVEST incumple más claramente?</p>
+      <ol class="opciones">
+        <li>Independiente.<p class="explica">No depende de otras historias; ese no es su problema principal.</p></li>
+        <li>Valiosa.<p class="explica">La diversión tiene mucho valor. El problema es otro.</p></li>
+        <li>Negociable.<p class="explica">Es tan abierta que se puede negociar todo; el problema está en otra letra.</p></li>
+        <li>Comprobable (testable).<p class="explica">Correcto. No hay forma de saber sin discutir si está terminada. Habría que traducirla a criterios observables, o dividirla en historias concretas.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">«Todo cambio pasa por un pull request aprobado por otra persona y con las pruebas en verde.» ¿Qué es esta frase?</p>
+      <ol class="opciones">
+        <li>Un elemento de la definición de terminado.<p class="explica">Correcto. Se aplica a todo el trabajo del equipo, no a una historia concreta.</p></li>
+        <li>Un criterio de aceptación.<p class="explica">Los criterios de aceptación son específicos de una historia («al pulsar Escape, el juego se pausa»).</p></li>
+        <li>Una historia de usuario.<p class="explica">No tiene rol, acción ni beneficio para alguien que usa el producto.</p></li>
+        <li>Un requisito no funcional del producto.<p class="explica">Es una regla de calidad del proceso del equipo, no algo que el producto deba cumplir para sus usuarios.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">El equipo terminó entre 15 y 25 puntos por Sprint y quedan 100 puntos. ¿Qué respuesta es más honesta cuando te preguntan «para cuándo»?</p>
+      <ol class="opciones">
+        <li>«En 5 Sprints», porque la media es 20.<p class="explica">Da una falsa sensación de certeza: con la peor velocidad harían falta 7 Sprints.</p></li>
+        <li>«Entre 4 y 7 Sprints; si necesitas una fecha firme, veamos qué partes podemos garantizar.»<p class="explica">Correcto: 100 / 25 = 4 y 100 / 15 ≈ 6,7, que se redondea a 7. El rango comunica la incertidumbre y abre la conversación sobre el alcance.</p></li>
+        <li>«En 4 Sprints», para no desanimar a nadie.<p class="explica">Dar solo el caso optimista es la falacia de la planificación en acción. El código de ética pide estimaciones realistas con su incertidumbre.</p></li>
+        <li>«No se puede saber.»<p class="explica">Algo sí se sabe: los datos del pasado dan un rango razonable. Negarse a pronosticar no ayuda a nadie a decidir.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="3">
+      <p class="enunciado">La capacidad del equipo para la jam es de 50 puntos y las historias marcadas como «Must» suman 45. ¿Qué indica?</p>
+      <ol class="opciones">
+        <li>Que el plan es ambicioso y está bien.<p class="explica">Con casi todo marcado como imprescindible, no queda margen: cualquier imprevisto deja el juego sin terminar.</p></li>
+        <li>Nada, mientras el total no pase de 50.<p class="explica">DSDM recomienda que lo imprescindible no pase del 60 % del esfuerzo precisamente para tener margen.</p></li>
+        <li>Que no se priorizó de verdad: lo imprescindible supera con creces el 60 % (30 puntos) y no hay margen para imprevistos.<p class="explica">Correcto. Hay que dividir historias o pasar parte a «Should» o «Could». Si todo es imprescindible, nada lo es.</p></li>
+        <li>Que hay que subir la capacidad a 75 puntos.<p class="explica">La capacidad sale de lo que el equipo puede hacer, no de lo que se desea. Subirla en el papel no añade horas al fin de semana.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">¿Cuál de estos comentarios de revisión es el más útil?</p>
+      <ol class="opciones">
+        <li>«Esto no se hace así.»<p class="explica">No dice qué está mal, ni por qué, ni cómo mejorarlo.</p></li>
+        <li>«¿Otra vez funciones gigantes? Siempre igual.»<p class="explica">Habla de la persona, no del código, y no propone nada.</p></li>
+        <li>«Cambia todo esto por un patrón Strategy.»<p class="explica">Da una orden sin explicar qué problema resuelve ni si bloquea la aprobación.</p></li>
+        <li>«issue (blocking): con la lista vacía, esta línea lanza un TypeError. ¿Añadimos una comprobación antes del bucle?»<p class="explica">Correcto. Dice qué pasa y cuándo, marca que bloquea la aprobación y propone una solución en forma de pregunta.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="1">
+      <p class="enunciado">Según el código de ética de ACM e IEEE para la ingeniería de software, ¿qué debe pesar más cuando entra en conflicto con lo demás?</p>
+      <ol class="opciones">
+        <li>El interés público.<p class="explica">Correcto. Es el primer principio, y el propio código lo pone por encima de los intereses del cliente, del empleador y de la propia persona.</p></li>
+        <li>Lo que pida el cliente, que es quien paga.<p class="explica">El segundo principio pide servir al cliente y al empleador, pero «de forma coherente con el interés público».</p></li>
+        <li>Cumplir la fecha de entrega.<p class="explica">El código pide estimaciones realistas y avisar pronto de los retrasos, no cumplir fechas a cualquier precio.</p></li>
+        <li>La reputación de la empresa.<p class="explica">Callar un fallo para proteger la reputación es justo lo que ocurrió en casos como el de Horizon.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="glosario" data-parada="Glosario">
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Ciclo de vida del software</dt><dd>Las actividades por las que pasa todo software: requisitos, diseño, implementación, pruebas, despliegue y mantenimiento. En inglés, <em>software development life cycle</em> (SDLC).</dd>
+    <dt>Cascada</dt><dd>Forma de trabajar en la que cada actividad del ciclo de vida se hace completa, una sola vez y en orden, y el producto se entrega al final. En inglés, <em>waterfall</em>.</dd>
+    <dt>Iterativo e incremental</dt><dd>Forma de trabajar que recorre el ciclo de vida muchas veces en vueltas cortas (iteraciones), y en cada una entrega una parte nueva que funciona (un incremento).</dd>
+    <dt>Manifiesto Ágil</dt><dd>Declaración de 2001 con cuatro valores y doce principios para desarrollar software entregando pronto, colaborando y adaptándose al cambio.</dd>
+    <dt>Scrum</dt><dd>Marco de trabajo ágil que organiza el trabajo en Sprints, con tres responsabilidades, cinco eventos y tres artefactos. Se describe en la Guía de Scrum (2020).</dd>
+    <dt>Sprint</dt><dd>Iteración de duración fija, de un mes o menos, que contiene todo el trabajo y los eventos de Scrum.</dd>
+    <dt>Product Owner</dt><dd>En Scrum, la persona responsable de maximizar el valor del producto y de ordenar el Product Backlog.</dd>
+    <dt>Scrum Master</dt><dd>En Scrum, la persona responsable de que el equipo sea efectivo: enseña Scrum, facilita y ayuda a quitar impedimentos. No es la jefa del equipo.</dd>
+    <dt>Product Backlog</dt><dd>Lista ordenada de todo lo que podría necesitar el producto. Lo de arriba está más detallado y se hace antes.</dd>
+    <dt>Definición de terminado</dt><dd>Lista de condiciones de calidad que todo trabajo debe cumplir para contar como hecho. En inglés, <em>Definition of Done</em>.</dd>
+    <dt>Kanban</dt><dd>Estrategia para optimizar el flujo de trabajo: visualizarlo en un tablero, limitar el trabajo en curso y mejorar el proceso con datos.</dd>
+    <dt>Límite WIP</dt><dd>Número máximo de tareas que puede haber empezadas a la vez en una columna o en un tablero. WIP viene del inglés <em>work in progress</em>, «trabajo en curso».</dd>
+    <dt>Tiempo de ciclo</dt><dd>Tiempo que pasa desde que una tarea se empieza hasta que se termina. En inglés, <em>cycle time</em>.</dd>
+    <dt>Historia de usuario</dt><dd>Descripción corta de algo que una persona quiere hacer con el producto, contada desde su punto de vista: «Como…, quiero… para…».</dd>
+    <dt>INVEST</dt><dd>Acrónimo para revisar historias de usuario: Independiente, Negociable, Valiosa, Estimable, Pequeña (<em>Small</em>) y Comprobable (<em>Testable</em>).</dd>
+    <dt>Criterios de aceptación</dt><dd>Condiciones concretas que una historia debe cumplir para darse por aceptada. Suelen escribirse como escenarios Dado/Cuando/Entonces.</dd>
+    <dt>Requisito no funcional</dt><dd>Requisito que describe cómo de bien debe funcionar el sistema (rapidez, seguridad, accesibilidad…), no qué hace. También se llama atributo de calidad.</dd>
+    <dt>Punto de historia</dt><dd>Unidad relativa, propia de cada equipo, para estimar el tamaño de una historia: esfuerzo, complejidad e incertidumbre juntos. No equivale a horas.</dd>
+    <dt>Planning poker</dt><dd>Técnica de estimación en grupo en la que cada persona elige un número en secreto y todos se muestran a la vez, para evitar el anclaje y provocar la conversación.</dd>
+    <dt>Velocidad</dt><dd>Cantidad de puntos que un equipo termina por Sprint. Sirve para pronosticar con rangos, no para comparar equipos.</dd>
+    <dt>MoSCoW</dt><dd>Técnica de priorización que clasifica el trabajo en imprescindible (<em>Must</em>), importante (<em>Should</em>), deseable (<em>Could</em>) y «esta vez no» (<em>Won't</em>).</dd>
+    <dt>Producto mínimo viable (MVP)</dt><dd>Versión de un producto nuevo que permite aprender lo máximo sobre sus usuarios con el menor esfuerzo. En inglés, <em>minimum viable product</em>.</dd>
+    <dt>Revisión de código</dt><dd>Práctica en la que otra persona lee y comenta los cambios de código antes de que se integren. En inglés, <em>code review</em>.</dd>
+    <dt>ADR</dt><dd>Registro de decisión de arquitectura: documento corto que guarda una decisión importante con su contexto y sus consecuencias. En inglés, <em>architecture decision record</em>.</dd>
+    <dt>Game jam</dt><dd>Evento en el que se crea un videojuego completo en muy poco tiempo, normalmente de 48 a 72 horas, a partir de un tema.</dd>
+  </dl>
+</section>
+
+<section id="videos" data-parada="Videos">
+  <h2>Videos recomendados</h2>
+  <p>Míralos después de leer la estación: te servirán para repasar y para ver cómo lo explican personas que trabajan con estas prácticas a diario.</p>
+  <ul class="videos">
+    <li><a class="video" href="https://www.youtube.com/watch?v=sLexw-z13Fo" data-canal="EDteam" data-idioma="es" data-nivel="intro" data-duracion="18 min" data-por-que="Explicación completa de Scrum con ejemplos. Es de hace unos años: si oyes «equipo de desarrollo», la guía de 2020 lo llama Developers.">¿Qué es Scrum? - La mejor explicación en español</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=vzwE8ADmccI" data-canal="Ágil Es Por Cris Rúa" data-idioma="es" data-nivel="profundo" data-duracion="16 min" data-por-que="Aclara la diferencia entre definición de terminado, definición de listo y criterios de aceptación.">Diferencia entre Definition of Done - Definition of Ready - Criterios de aceptación</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=z2WFjCwdIW4" data-canal="Oscar Barajas @gndx" data-idioma="es" data-nivel="profundo" data-duracion="25 min" data-por-que="Buenas prácticas para revisar código en equipo, contadas por un desarrollador con experiencia.">Buenas prácticas para hacer Code Reviews</a></li>
+    <li><a class="video" href="https://www.youtube.com/watch?v=X7CgaBvQwVU" data-canal="Alva Majo" data-idioma="es" data-nivel="intro" data-duracion="12 min" data-por-que="Un desarrollador independiente explica cómo elegir y acotar una idea para que el juego de una jam funcione.">Cómo hacer un buen juego de jam</a></li>
+  </ul>
+</section>
+
+<section id="profundizar" data-parada="Para profundizar">
+  <h2>Para profundizar</h2>
+  <ul class="recursos">
+    <li><a href="https://scrumguides.org/docs/scrumguide/v2020/2020-Scrum-Guide-Spanish-Latin-South-American.pdf">La Guía de Scrum 2020, en español (scrumguides.org, PDF)</a><p>La fuente oficial de Scrum, escrita por sus creadores. Se lee en menos de una hora.</p></li>
+    <li><a href="https://agilemanifesto.org/iso/es/manifesto.html">Manifiesto por el Desarrollo Ágil de Software (agilemanifesto.org)</a><p>Los cuatro valores en la traducción oficial, con enlace a los doce principios.</p></li>
+    <li><a href="https://kanbanguides.org/the-kanban-guide/2025.5/">The Kanban Guide, mayo de 2025 (Kanban Guides, en inglés)</a><p>La guía breve de Kanban: prácticas, definición del flujo de trabajo y las cuatro métricas.</p></li>
+    <li><a href="https://google.github.io/eng-practices/review/">Google Engineering Practices: Code Review (en inglés)</a><p>Cómo revisa código Google: qué buscar, cómo escribir comentarios, velocidad y cambios pequeños.</p></li>
+    <li><a href="https://docs.github.com/es/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects">Acerca de Projects (GitHub Docs, en español)</a><p>Vistas de tabla, tablero y hoja de ruta, campos personalizados y automatizaciones.</p></li>
+    <li><a href="https://www.computer.org/education/code-of-ethics">Software Engineering Code of Ethics (IEEE Computer Society, en inglés)</a><p>El código de ética de ACM e IEEE completo, con los ocho principios y todas sus cláusulas.</p></li>
+  </ul>
+</section>

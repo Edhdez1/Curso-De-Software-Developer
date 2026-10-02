@@ -73,8 +73,26 @@
 
     var __errores = [];
     var __sangria = "";
+    // Sustituciones de console.log("%s tiene %d años", nombre, edad), como en Node y en los navegadores.
+    function __sustituir(args) {
+      var fmt = function (a) { return __formato(a, 0, false); };
+      if (typeof args[0] !== "string" || args.length < 2 || args[0].indexOf("%") === -1) return Array.prototype.map.call(args, fmt);
+      var resto = Array.prototype.slice.call(args, 1), i = 0;
+      var texto = args[0].replace(/%([sdifoOjc%])/g, function (t, c) {
+        if (c === "%") return "%";
+        if (i >= resto.length) return t;
+        var v = resto[i++];
+        if (c === "s") return v !== null && typeof v === "object" ? __formato(v, 1, false) : String(v);
+        if (c === "d") return v !== null && typeof v === "object" ? "NaN" : String(Number(v));
+        if (c === "i") return v !== null && typeof v === "object" ? "NaN" : String(parseInt(v, 10));
+        if (c === "f") return String(parseFloat(v));
+        if (c === "c") return "";
+        return fmt(v);
+      });
+      return [texto].concat(resto.slice(i).map(fmt));
+    }
     function __imprimir(tipo, args) {
-      var texto = Array.prototype.map.call(args, function (a) { return __formato(a, 0, false); }).join(" ");
+      var texto = __sustituir(args).join(" ");
       if (__sangria) texto = texto.split("\n").map(function (l) { return __sangria + l; }).join("\n");
       if (tipo === "log") __lineas.push(texto); else __errores.push(texto);
       __enviar(tipo, texto);
@@ -177,24 +195,33 @@
     return { formato: __formato };
   }
 
-  function construirFuente(codigo, verificacion) {
+  // preparacion: código oculto (por ejemplo, una pequeña biblioteca) que se ejecuta antes que el de la persona
+  // y cuyas declaraciones puede usar; cuenta en el desfase para que los números de línea sigan siendo los suyos.
+  // exponer: nombres (funciones, clases, variables) del código de la persona que la verificación
+  // recibe en su cuarto parámetro, «expuesto»; se leen con referencias normales al final del programa.
+  function construirFuente(codigo, verificacion, preparacion, exponer) {
     var cuerpo = preludio.toString();
     cuerpo = cuerpo.slice(cuerpo.indexOf("{") + 1, cuerpo.lastIndexOf("return {"));
     var lineasPreludio = cuerpo.split("\n").length;
     var verif = verificacion && verificacion.trim()
-      ? "function __verificar(){ var __r; try { __r = (function(salida, codigo, errores){\n" + verificacion + "\n})(__lineas.slice(), " + JSON.stringify(codigo) + ", __errores.slice()); } catch (e) { __r = 'La verificación falló: ' + (e && e.message); } __enviar('veredicto', __r === undefined ? true : __r); __enviar('fin'); }"
+      ? "function __verificar(){ var __r; try { __r = (function(salida, codigo, errores, expuesto){\n" + verificacion + "\n})(__lineas.slice(), " + JSON.stringify(codigo) + ", __errores.slice(), __expuesto); } catch (e) { __r = 'La verificación falló: ' + (e && e.message); } __enviar('veredicto', __r === undefined ? true : __r); __enviar('fin'); }"
       : "function __verificar(){ __enviar('fin'); }";
-    var cabecera = "(function(){\n" + cuerpo + "\n" + verif + "\n(async function(){\n";
+    var cabecera = "(function(){\n" + cuerpo + "\nvar __expuesto = {};\n" + verif + "\n" + (preparacion ? preparacion + "\n" : "") + "(async function(){\n";
+    var nombres = String(exponer || "").split(/[\s,]+/).filter(function (n) { return /^[A-Za-z_$][\w$]*$/.test(n); });
+    var exposicion = nombres.map(function (n) { return "__expuesto[" + JSON.stringify(n) + "] = typeof " + n + " !== \"undefined\" ? " + n + " : undefined;"; }).join(" ");
     var desfase = cabecera.split("\n").length - 1;
     cabecera = cabecera.replace("__DESFASE__", String(desfase));
-    var fuente = cabecera + codigo + "\n})().then(function(){ __principalTerminado = true; __quizaTerminar(); }, function(e){ __errorEjecucion(e); __principalTerminado = true; __quizaTerminar(); });\n})();\n";
+    var fuente = cabecera + codigo + "\n" + exposicion + "\n})().then(function(){ __principalTerminado = true; __quizaTerminar(); }, function(e){ __errorEjecucion(e); __principalTerminado = true; __quizaTerminar(); });\n})();\n";
     return { fuente: fuente, desfase: desfase, lineasPreludio: lineasPreludio };
   }
 
   // Explicaciones en español para los errores más comunes de principiantes.
-  function explicarError(nombre, mensaje) {
+  // enEjecucion: el error saltó con el programa ya en marcha (no es un fallo al compilar el código).
+  function explicarError(nombre, mensaje, enEjecucion) {
     var m = String(mensaje || "");
     var r;
+    if (nombre === "SyntaxError" && /JSON/.test(m)) return "El texto que le pasaste a JSON.parse no es JSON válido. Revisa que claves y textos usen comillas dobles y que no sobren ni falten comas o llaves.";
+    if (nombre === "SyntaxError" && enEjecucion) return "Este SyntaxError saltó con el programa ya en marcha: tu código está bien escrito, pero algo lo lanzó (un throw tuyo, new RegExp, JSON.parse…). Lee el mensaje para saber qué falló.";
     if ((r = m.match(/^(.+?) is not defined$/))) return "No existe nada llamado «" + r[1] + "». Revisa que esté bien escrito (mayúsculas incluidas) y que lo hayas declarado antes de usarlo.";
     if ((r = m.match(/^Cannot access '(.+?)' before initialization$/))) return "Usaste «" + r[1] + "» antes de la línea donde se crea con let/const. Mueve la declaración más arriba.";
     if (/Assignment to constant variable/.test(m)) return "Intentaste cambiar el valor de una constante (const). Si necesitas cambiarla, declárala con let.";

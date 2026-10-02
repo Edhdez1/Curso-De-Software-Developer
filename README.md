@@ -3,7 +3,7 @@
 Curso gratuito, visual e interactivo de **desarrollo e ingeniería de software**, en español, para empezar
 desde cero y llegar a crear tus propias aplicaciones y videojuegos, sola o en equipo.
 
-El curso es un **mapa de metro**: 39 estaciones (módulos) repartidas en 8 líneas de colores. Cada estación
+El curso es un **mapa de metro**: 44 estaciones (módulos) repartidas en 9 líneas de colores. Cada estación
 explica un tema con animaciones paso a paso, ejemplos que puedes ejecutar, ejercicios que se corrigen solos,
 un proyecto, una autoevaluación, un glosario y videos recomendados.
 
@@ -16,7 +16,8 @@ un proyecto, una autoevaluación, un glosario y videos recomendados.
 | 5 | Ingeniería de software | Git · Código limpio · Pruebas · Proceso y equipo · Arquitectura |
 | 6 | Backend y datos | Backend · Bases de datos · Seguridad |
 | 7 | Construir productos | React · Móvil y escritorio · Videojuegos · Publicar y operar |
-| 8 | Profesional | Python · Programar con IA · Proyecto final · Terminal (tu carrera) |
+| 8 | Python e IA | Python · IA de personajes · Buscar y decidir · Aprendizaje automático · Redes neuronales · Modelos de lenguaje |
+| 9 | Profesional | Programar con IA · Proyecto final · Terminal (tu carrera) |
 
 ## Cómo abrir el curso
 
@@ -35,7 +36,7 @@ navegador. Si cambias de navegador o de computadora, empiezas con el progreso va
 ```
 index.html              Portada: mapa de metro, cómo funciona cada estación, horarios
 glosario.html           Todos los términos del curso, con buscador
-modulos/                Las 39 estaciones ya generadas (lo que se abre en el navegador)
+modulos/                Las 44 estaciones ya generadas (lo que se abre en el navegador)
 assets/css/             El sistema visual (colores por línea, tipografía, componentes)
 assets/js/              Los componentes interactivos: cápsulas animadas, talleres de código,
                         trazas paso a paso, autoevaluaciones, ordenar líneas y terminal simulada

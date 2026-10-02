@@ -21,6 +21,19 @@ const avisos = [];
 
 const esc = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const archivoModulo = (m) => `${m.num}-${m.slug}.html`;
+// Fuente de un módulo: NN-slug.html; si se renumeró, vale cualquier NN con el mismo slug (con aviso).
+const fuenteDe = (m) => {
+  const ruta = `fuente/modulos/${archivoModulo(m)}`;
+  if (existe(ruta)) return ruta;
+  const otro = existe("fuente/modulos") && fs.readdirSync(path.join(RAIZ, "fuente/modulos")).find((f) => f.replace(/^\d+-/, "") === `${m.slug}.html`);
+  if (otro) { avisos.push(`fuente/modulos/${otro} debería llamarse ${archivoModulo(m)}`); return `fuente/modulos/${otro}`; }
+  return ruta;
+};
+// Los enlaces entre estaciones se corrigen por slug si el número cambió (las fuentes pueden quedar con números antiguos).
+const enlacesAlDia = (html) => html.replace(/href="(\d\d)-([a-z0-9-]+)\.html/g, (t, num, slug) => {
+  const d = modulos.find((x) => x.slug === slug);
+  return d && d.num !== num ? `href="${archivoModulo(d)}` : t;
+});
 const lineaDe = (n) => curso.lineas.find((l) => l.n === n);
 const horasTexto = (h) => (h === 1 ? "1 hora" : `${String(h).replace(".", ",")} horas`);
 
@@ -109,7 +122,8 @@ function seccionesDe(html) {
 
 function lenguajesDe(html) {
   const set = new Set();
-  for (const m of html.matchAll(/language-([\w-]+)/g)) set.add(m[1]);
+  // Solo en atributos class (un texto como «typescript-language-server» no es un lenguaje).
+  for (const m of html.matchAll(/class="[^"]*\blanguage-([\w-]+)/g)) set.add(m[1]);
   for (const m of html.matchAll(/data-lenguaje="([\w-]+)"/g)) set.add(m[1]);
   if (/class="taller"/.test(html) || /class="traza"/.test(html)) set.add("js");
   return set;
@@ -182,14 +196,18 @@ function partirNombre(t, max) {
 const OBLIGATORIAS = ["ruta", "resumen", "practica", "proyecto", "autoevaluacion", "glosario", "videos", "profundizar"];
 
 function paginaModulo(m, i) {
-  const ruta = `fuente/modulos/${archivoModulo(m)}`;
+  const ruta = fuenteDe(m);
   let cuerpo;
   if (existe(ruta)) cuerpo = leer(ruta);
   else {
     avisos.push(`Falta el contenido de ${ruta}`);
     cuerpo = `<section id="ruta" data-parada="En construcción"><h2>Estación en construcción</h2><p class="entradilla">Este módulo todavía se está escribiendo.</p></section>`;
   }
-  cuerpo = nivelEjercicios(expandirVideos(expandirSenales(cuerpo)));
+  // El JSON de una terminal simulada se corta sin avisar si contiene «</script>»: se comprueba aquí.
+  for (const [, json] of cuerpo.matchAll(/<script type="application\/json" class="terminal-sistema">([\s\S]*?)<\/script>/g)) {
+    try { JSON.parse(json); } catch (e) { avisos.push(`${m.slug}: el JSON de una terminal simulada no es válido (${e.message}). Si contiene «</script>», escríbelo «<\\/script>».`); }
+  }
+  cuerpo = enlacesAlDia(nivelEjercicios(expandirVideos(expandirSenales(cuerpo))));
   // Chrome no aplica white-space:pre al texto SVG: el código dentro de diagramas conserva su sangría con xml:space.
   cuerpo = cuerpo.replace(/<text(?![^>]*xml:space)([^>]*class="[^"]*\b(?:d-mono|d-codigo-texto|d-codigo-tenue)\b[^"]*"[^>]*)>/g, '<text xml:space="preserve"$1>');
   const secciones = seccionesDe(cuerpo);
@@ -281,7 +299,7 @@ ${scriptsPrism(lenguajesDe(cuerpo))}
 // ---------------------------------------------------------------------------
 function mapaRed() {
   const W = 1440, H = 800;
-  const P = [[200, 610], [200, 140], [250, 90], [1190, 90], [1240, 140], [1240, 670], [1190, 720], [390, 720], [340, 670], [340, 280], [390, 230], [1050, 230], [1100, 280], [1100, 530], [1050, 580], [600, 580]];
+  const P = [[200, 610], [200, 140], [250, 90], [1190, 90], [1240, 140], [1240, 670], [1190, 720], [390, 720], [340, 670], [340, 280], [390, 230], [1050, 230], [1100, 280], [1100, 570], [1050, 620], [600, 620]];
   const seg = [];
   let total = 0;
   for (let i = 0; i < P.length - 1; i++) {
@@ -349,7 +367,7 @@ function mapaRed() {
   });
   const inicio = est[0];
   const tren = `<g class="mapa-tren" transform="translate(${inicio.x} ${inicio.y})" aria-hidden="true"><g transform="translate(0 -26)"><rect x="-18" y="-10" width="36" height="18" rx="6" class="mapa-tren-cuerpo"/><rect x="-12" y="-5.5" width="7" height="7" rx="1.5" class="mapa-tren-vent"/><rect x="-2.5" y="-5.5" width="7" height="7" rx="1.5" class="mapa-tren-vent"/><rect x="7" y="-5.5" width="5" height="7" rx="1.5" class="mapa-tren-vent"/><path d="M0 8v8" class="mapa-tren-poste"/></g></g>`;
-  return `<svg class="mapa-red" viewBox="0 0 ${W} ${H}" role="group" aria-label="Mapa del curso: 39 estaciones en 8 líneas">
+  return `<svg class="mapa-red" viewBox="0 0 ${W} ${H}" role="group" aria-label="Mapa del curso: ${n} estaciones en ${curso.lineas.length} líneas">
 <text class="mapa-inicio" x="${inicio.x - 20}" y="${inicio.y + 58}" text-anchor="start">Salida</text>
 <path class="mapa-inicio-flecha" d="M${inicio.x} ${inicio.y + 40}v-24"/>
 ${vias.join("\n")}
@@ -370,6 +388,20 @@ ${suyas.map((m) => `    <li><a href="modulos/${archivoModulo(m)}" data-slug="${m
   </ol>
 </li>`;
   }).join("\n");
+}
+
+// Ejemplo de ritmo intensivo que pidió la persona: 4 h de lunes a viernes y 8 h el sábado y el domingo.
+function ejemploIntensivo(total, consolidacion) {
+  const porSemana = 5 * 4 + 2 * 8;
+  const sem = (h) => h / porSemana;
+  const mes = (h) => (Math.round((h / porSemana / 4.345) * 2) / 2).toString().replace(".", ",");
+  const min = tiempo?.totalMin ?? total, max = tiempo?.totalMax ?? total;
+  const cMin = tiempo?.consolidacionMin ?? consolidacion, cMax = tiempo?.consolidacionMax ?? consolidacion;
+  return `<div class="horarios-ejemplo">
+  <h3>Ejemplo: 4 horas de lunes a viernes y 8 el sábado y el domingo</h3>
+  <p>Son <strong>${porSemana} horas por semana</strong>, casi una jornada completa. Con ese ritmo terminas el curso en unas <strong>${Math.round(sem(total))} semanas (${mes(total)} meses)</strong>, entre ${mes(min)} y ${mes(max)} meses según lo rápido que avances. Sumando los proyectos propios, llegas al nivel junior en unos <strong>${mes(total + consolidacion)} meses</strong> (entre ${mes(min + cMin)} y ${mes(max + cMax)}).</p>
+  <p>Es un ritmo exigente: guarda al menos medio día libre a la semana y duerme bien, porque lo aprendido se asienta al descansar. Si notas que rindes menos, baja a 25 o 30 horas: tardarás unas semanas más, pero llegarás.</p>
+</div>`;
 }
 
 function notasTiempo() {
@@ -404,6 +436,7 @@ function portada() {
     .replaceAll("{{MAPA}}", mapaRed())
     .replaceAll("{{INDICE_LINEAS}}", indiceLineas())
     .replaceAll("{{FILAS_HORARIO}}", filasHorario)
+    .replaceAll("{{EJEMPLO_INTENSIVO}}", ejemploIntensivo(totalHoras, consolidacion))
     .replaceAll("{{TOTAL_HORAS}}", String(totalHoras))
     .replaceAll("{{CONSOLIDACION}}", String(consolidacion))
     .replaceAll("{{NUM_MODULOS}}", String(modulos.length))
@@ -419,7 +452,7 @@ function portada() {
 function glosario() {
   const terminos = [];
   for (const m of modulos) {
-    const ruta = `fuente/modulos/${archivoModulo(m)}`;
+    const ruta = fuenteDe(m);
     if (!existe(ruta)) continue;
     const html = leer(ruta);
     const dl = (html.match(/<dl class="glosario">([\s\S]*?)<\/dl>/) || [])[1];
@@ -460,6 +493,10 @@ function glosario() {
 
 // ---------------------------------------------------------------------------
 modulos.forEach((m, i) => escribir(`modulos/${archivoModulo(m)}`, paginaModulo(m, i)));
+// Borra las páginas generadas que ya no corresponden a ninguna estación (por ejemplo, tras renumerar).
+for (const f of fs.readdirSync(path.join(RAIZ, "modulos"))) {
+  if (f.endsWith(".html") && !modulos.some((m) => archivoModulo(m) === f)) fs.unlinkSync(path.join(RAIZ, "modulos", f));
+}
 if (existe("fuente/portada.html")) escribir("index.html", portada());
 if (existe("fuente/glosario.html")) escribir("glosario.html", glosario());
 console.log(`Generadas ${modulos.length} páginas de módulo${existe("fuente/portada.html") ? ", portada" : ""}${existe("fuente/glosario.html") ? " y glosario" : ""}.`);

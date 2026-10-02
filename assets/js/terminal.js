@@ -430,6 +430,8 @@
         "return 'Imprimiste más líneas de las esperadas. Sobra: «' + real[esp.length] + '».';";
     }
     var tiempoMax = (parseFloat(caja.getAttribute("data-tiempo")) || 5) * 1000;
+    // Talleres web: segundos que se espera tras cargar antes de verificar (por defecto, 0,15 s).
+    var esperaWeb = Math.round((parseFloat(caja.getAttribute("data-esperar")) || 0.15) * 1000);
     var clave = caja.id ? "taller:" + location.pathname + "#" + caja.id : null;
 
     var enMarco = modo === "web" || modo === "python" || modo === "sql";
@@ -526,7 +528,7 @@
     function informarError(d) {
       var texto = d.nombre + ": " + d.mensaje + (d.linea ? "  (línea " + d.linea + ")" : "");
       linea("error", texto);
-      var ayuda = window.TerminalMotor ? window.TerminalMotor.explicarError(d.nombre, d.mensaje) : "";
+      var ayuda = window.TerminalMotor ? window.TerminalMotor.explicarError(d.nombre, d.mensaje, d.enEjecucion) : "";
       if (ayuda) linea("aviso", "Pista: " + ayuda);
     }
 
@@ -543,7 +545,7 @@
       if (enMarco) return ejecutarMarco();
       var codigo = editores[0].editor.valor();
       if (!window.TerminalMotor) { linea("error", "No se pudo cargar el motor de ejecución."); return; }
-      var fuente = window.TerminalMotor.construirFuente(codigo, verificacion);
+      var fuente = window.TerminalMotor.construirFuente(codigo, verificacion, preparacion, caja.getAttribute("data-exponer"));
       var hubo = false;
       var totalLineas = codigo.split("\n").length;
       bEjecutar.disabled = true;
@@ -562,7 +564,7 @@
         else if (m.tipo === "error") { hubo = true; linea("error", m.datos); }
         else if (m.tipo === "aviso") { hubo = true; linea("aviso", m.datos); }
         else if (m.tipo === "limpiar") { cuerpoSalida.innerHTML = ""; }
-        else if (m.tipo === "excepcion") { hubo = true; informarError(m.datos); }
+        else if (m.tipo === "excepcion") { hubo = true; m.datos.enEjecucion = true; informarError(m.datos); }
         else if (m.tipo === "veredicto") { mostrarVeredicto(m.datos); if (m.datos === true) marcarEjercicio(caja); }
         else if (m.tipo === "fin") { if (!hubo) cuerpoSalida.appendChild(crear("div", { "class": "vacio", texto: "(El programa terminó sin imprimir nada.)" })); terminar(); }
       };
@@ -613,35 +615,41 @@
         // localStorage de mentira: el iframe aislado no puede usar el real; los datos se guardan en el taller y duran entre ejecuciones.
         "function almacen(ini,persistir){var d=ini||{};function g(){if(persistir)P.postMessage({terminalTaller:" + JSON.stringify(idTaller) + ",tipo:'almacen',datos:d},'*');}return {getItem:function(k){k=String(k);return Object.prototype.hasOwnProperty.call(d,k)?d[k]:null;},setItem:function(k,v){d[String(k)]=String(v);g();},removeItem:function(k){delete d[String(k)];g();},clear:function(){d={};g();},key:function(i){var ks=Object.keys(d);return i<ks.length?ks[i]:null;},get length(){return Object.keys(d).length;}};}" +
         "try{Object.defineProperty(window,'localStorage',{value:almacen(" + JSON.stringify(almacenTaller).replace(/</g, "\\u003c") + ",true),configurable:true});Object.defineProperty(window,'sessionStorage',{value:almacen({},false),configurable:true});}catch(e){}" +
-        "window.__salida=[];var PY=" + (modo === "python") + ",buf={log:'',error:''};function emitir(k,a){if(PY){if(/error in loaders|handle error|frame obj/.test(a))return;a=a.replace(/File \"[^\"]*principal\"/,'File \"tu_programa.py\"');}if(k==='log'||k==='info')window.__salida.push(a);P.postMessage({terminalTaller:" + idJ + ",tipo:k==='error'?'error':(k==='warn'?'aviso':'log'),datos:a},'*');}" +
+        "window.__salida=[];var PY=" + (modo === "python") + ",buf={log:'',error:''};function emitir(k,a){if(PY){if(/error in loaders|handle error|frame obj/.test(a))return;a=a.replace(/File \"[^\"]*__main__\"/,'File \"tu_programa.py\"');}if(k==='log'||k==='info')window.__salida.push(a);P.postMessage({terminalTaller:" + idJ + ",tipo:k==='error'?'error':(k==='warn'?'aviso':'log'),datos:a},'*');}" +
         "window.__vaciar=function(){['log','error'].forEach(function(k){if(buf[k]){emitir(k,buf[k]);buf[k]='';}});};" +
-        "['log','info','warn','error'].forEach(function(k){var o=console[k];console[k]=function(){var a=[].slice.call(arguments).map(f).join(' ');" +
+        "function sus(a){if(typeof a[0]!=='string'||a.length<2||a[0].indexOf('%')<0)return a.map(f);var r=a.slice(1),i=0;var t=a[0].replace(/%([sdifoOjc%])/g,function(m,c){if(c==='%')return '%';if(i>=r.length)return m;var v=r[i++];if(c==='s')return v!==null&&typeof v==='object'?f(v):String(v);if(c==='d')return v!==null&&typeof v==='object'?'NaN':String(Number(v));if(c==='i')return v!==null&&typeof v==='object'?'NaN':String(parseInt(v,10));if(c==='f')return String(parseFloat(v));if(c==='c')return '';return f(v);});return [t].concat(r.slice(i).map(f));}" +
+        "['log','info','warn','error'].forEach(function(k){var o=console[k];console[k]=function(){var a=sus([].slice.call(arguments)).join(' ');" +
         "if(PY&&(k==='log'||k==='error')){buf[k]+=a;var partes=buf[k].split('\\n');buf[k]=partes.pop();partes.forEach(function(l){emitir(k,l);});}else emitir(k,a);o&&o.apply(console,arguments);};});" +
         "window.addEventListener('error',function(e){P.postMessage({terminalTaller:" + idJ + ",tipo:'excepcion',datos:{nombre:(e.error&&e.error.name)||'Error',mensaje:(e.error&&e.error.message)||e.message,linea:e.lineno||null}},'*');});" +
         // En la vista previa los enlaces no navegan y los formularios no se envían a ningún sitio.
         "document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a||e.defaultPrevented)return;var h=a.getAttribute('href');if(h.charAt(0)==='#'){e.preventDefault();var d=h.length>1&&document.getElementById(decodeURIComponent(h.slice(1)));if(d)d.scrollIntoView();return;}e.preventDefault();console.info('(Vista previa) Este enlace llevaría a: '+h);});" +
         "window.addEventListener('submit',function(e){if(e.defaultPrevented)return;e.preventDefault();console.info('(Vista previa) El formulario pasó la validación y se enviaría. Aquí no se envía a ningún sitio.');});" +
+        // La verificación puede devolver una promesa; la página puede volver a comprobar llamando a comprobar().
         "window.__terminar=function(extra){window.__vaciar();var r=true;" + (verificacion ? "try{r=(function(salida,codigo,resultados){" + sinCierre(verificacion) + "\n})(window.__salida.slice()," + sinCierre(JSON.stringify(modo === "web" ? partes : (partes[modo] || ""))) + ",window.__resultados||[]);}catch(e){r='La verificación falló: '+e.message;}" : "") +
-        "P.postMessage({terminalTaller:" + idJ + ",tipo:'fin',datos:" + (verificacion ? "(r===undefined?true:r)" : "null") + "},'*');};})();<\/script>";
+        "var enviar=function(v){window.__vaciar();P.postMessage({terminalTaller:" + idJ + ",tipo:'fin',datos:" + (verificacion ? "(v===undefined?true:v)" : "null") + "},'*');};" +
+        "if(r&&typeof r.then==='function')r.then(enviar,function(e){enviar('La verificación falló: '+(e&&e.message||e));});else enviar(r);};window.comprobar=function(){window.__terminar();};})();<\/script>";
       var cabeza = "<!doctype html><html lang='es'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" + puente;
       var html;
       if (modo === "python") {
         html = cabeza + "<script src='" + CDN + "brython/3.14.3/brython.min.js'><\/script><script src='" + CDN + "brython/3.14.3/brython_stdlib.js'><\/script></head><body>" +
-          "<brython-options indexeddb='false' cache='false'></brython-options><script type='text/python' id='principal'>\n" + sinCierre(partes.python) + "\n<\/script>" +
+          "<brython-options indexeddb='false' cache='false'></brython-options><script type='text/python' id='__main__'>\n" + sinCierre(partes.python) + "\n<\/script>" +
           "<script>window.addEventListener('load',function(){if(!window.__BRYTHON__){console.error('No se pudo cargar el intérprete de Python.');}setTimeout(window.__terminar,300);});<\/script></body></html>";
       } else if (modo === "sql") {
         html = cabeza + "<script src='" + CDN + "sql.js/1.14.2/sql-asm.js'><\/script></head><body><script>" +
           "var tablaTexto=" + window.TerminalMotor.tablaTexto.toString() + ";" +
           "initSqlJs().then(function(SQL){var db=new SQL.Database();window.__resultados=[];" +
           "try{db.run(" + sinCierre(JSON.stringify(preparacion)) + ");}catch(e){console.error('Error en los datos de ejemplo: '+e.message);}" +
-          "try{var res=db.exec(" + sinCierre(JSON.stringify(partes.sql)) + ");res.forEach(function(r){window.__resultados.push(r);tablaTexto(r.columns,r.values).forEach(function(l){console.log(l);});});" +
-          "if(!res.length)console.log('Listo: la instrucción se ejecutó y no devolvió filas.');}catch(e){console.error('Error de SQL: '+e.message);}" +
+          // Instrucción por instrucción: los SELECT sin filas también cuentan como resultado (igual que en las pruebas)
+          // y, si una instrucción falla, se conservan los resultados de las anteriores.
+          "var n=0;try{var it=db.iterateStatements(" + sinCierre(JSON.stringify(partes.sql)) + "),paso;while(!(paso=it.next()).done){var st=paso.value,cols=st.getColumnNames(),vals=[];while(st.step())vals.push(st.get());" +
+          "if(cols.length){n++;window.__resultados.push({columns:cols,values:vals});tablaTexto(cols,vals).forEach(function(l){console.log(l);});}}" +
+          "if(!n)console.log('Listo: la instrucción se ejecutó y no devolvió filas.');}catch(e){console.error('Error de SQL: '+e.message);}" +
           "window.__terminar();}).catch(function(e){console.error('No se pudo cargar SQLite: '+e.message);window.__terminar();});<\/script></body></html>";
       } else {
         var antesJs = cabeza + "<style>" + partes.css + "</style></head><body>" + partes.html + "<script>";
         desfaseWeb = (antesJs.match(/\n/g) || []).length;
         html = antesJs + sinCierre(partes.js) + "\n<\/script>" +
-          "<script>window.addEventListener('load',function(){setTimeout(window.__terminar,150);});<\/script></body></html>";
+          "<script>window.addEventListener('load',function(){setTimeout(window.__terminar," + esperaWeb + ");});<\/script></body></html>";
       }
       if (modo !== "web") linea("vacio", modo === "python" ? "Ejecutando Python…" : "Ejecutando SQL…");
       iframe.srcdoc = html;
@@ -881,12 +889,14 @@
     var filas = $$("[data-linea-horas]", caja);
     var totalEl = $("[data-total-meses]", caja);
     var juniorEl = $("[data-junior-meses]", caja);
+    var totalFecha = $("[data-total-fecha]", caja), juniorFecha = $("[data-junior-fecha]", caja);
+    var laborable = $("[data-horas-laborable]", caja), finde = $("[data-horas-finde]", caja);
     var totalHoras = parseFloat(caja.getAttribute("data-total-horas"));
     var consolidacion = parseFloat(caja.getAttribute("data-consolidacion"));
     function meses(h, porSemana) { return h / porSemana / 4.345; }
     function formato(m) {
       if (m < 1) return Math.max(1, Math.round(m * 4.345)) + " sem.";
-      if (m < 24) return (Math.round(m * 2) / 2).toString().replace(".", ",") + " meses";
+      if (m < 24) { var r = Math.round(m * 2) / 2; return r.toString().replace(".", ",") + (r === 1 ? " mes" : " meses"); }
       return (Math.round(m / 12 * 10) / 10).toString().replace(".", ",") + " años";
     }
     function pintar() {
@@ -903,11 +913,35 @@
       });
       if (totalEl) totalEl.textContent = formato(meses(totalHoras, h));
       if (juniorEl) juniorEl.textContent = formato(meses(totalHoras + consolidacion, h));
+      if (totalFecha) totalFecha.textContent = fecha(totalHoras / h);
+      if (juniorFecha) juniorFecha.textContent = fecha((totalHoras + consolidacion) / h);
       almacen.cambiar(function (d) { d.horasSemana = h; });
     }
-    var previo = almacen.leer().horasSemana;
-    if (previo) entrada.value = previo;
-    entrada.addEventListener("input", pintar);
+    // Fecha aproximada de llegada contando desde hoy («hacia abril de 2027»).
+    function fecha(semanas) {
+      var d = new Date(Date.now() + semanas * 7 * 864e5);
+      try { return "hacia " + d.toLocaleDateString("es", { month: "long", year: "numeric" }); } catch (e) { return ""; }
+    }
+    // Horas por día: de lunes a viernes y el fin de semana; mueven el control de horas por semana.
+    function porDias() {
+      var a = parseFloat(laborable.value) || 0, b = parseFloat(finde.value) || 0;
+      if (!a && !b) return;
+      entrada.value = Math.max(1, Math.min(60, Math.round(a * 5 + b * 2)));
+      almacen.cambiar(function (d) { d.horasDia = [a, b]; });
+      pintar();
+    }
+    var guardado = almacen.leer();
+    if (guardado.horasSemana) entrada.value = guardado.horasSemana;
+    if (laborable && finde) {
+      if (guardado.horasDia) { laborable.value = guardado.horasDia[0] || ""; finde.value = guardado.horasDia[1] || ""; }
+      laborable.addEventListener("input", porDias);
+      finde.addEventListener("input", porDias);
+    }
+    entrada.addEventListener("input", function () {
+      // Si se mueve el control a mano, los campos por días dejan de valer.
+      if (laborable && finde) { laborable.value = ""; finde.value = ""; almacen.cambiar(function (d) { d.horasDia = null; }); }
+      pintar();
+    });
     pintar();
   }
 
