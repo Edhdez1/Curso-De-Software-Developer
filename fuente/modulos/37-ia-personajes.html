@@ -4268,3 +4268,1267 @@ function perseguir(cazador, presa) {
     </details>
   </article>
 
+  <article class="ejercicio" data-nivel="semi" id="ej-pantanos">
+    <h3>Pantanos y diagonales</h3>
+    <p>Completa <code>aEstrella(mapa, inicio, meta)</code>: ocho direcciones, costes enteros (10 recto, 14 diagonal), <strong>sin cortar esquinas</strong> (una diagonal solo vale si las dos casillas rectas que la rodean están libres) y <strong>pantano</strong> (<code>"~"</code>): cuesta el triple entrar en él. La <code>ColaPrioridad</code> y la heurística octil ya están en la preparación, como en la sección de <a href="#caminos">caminos</a>.</p>
+    <div class="taller" id="taller-ej-pantanos" data-titulo="Ejercicio 6" data-exponer="aEstrella">
+      <script type="text/plain" class="taller-preparacion">
+function __padre(i) { return Math.floor((i - 1) / 2); }
+function insertar(monticulo, elemento) {
+  monticulo.push(elemento);
+  let i = monticulo.length - 1;
+  while (i > 0 && monticulo[i].prioridad < monticulo[__padre(i)].prioridad) {
+    [monticulo[i], monticulo[__padre(i)]] = [monticulo[__padre(i)], monticulo[i]];
+    i = __padre(i);
+  }
+}
+function extraer(monticulo) {
+  if (monticulo.length === 0) return undefined;
+  const primero = monticulo[0];
+  const ultimo = monticulo.pop();
+  if (monticulo.length > 0) {
+    monticulo[0] = ultimo;
+    let i = 0;
+    while (true) {
+      const izq = 2 * i + 1, der = 2 * i + 2;
+      let menor = i;
+      if (izq < monticulo.length && monticulo[izq].prioridad < monticulo[menor].prioridad) menor = izq;
+      if (der < monticulo.length && monticulo[der].prioridad < monticulo[menor].prioridad) menor = der;
+      if (menor === i) break;
+      [monticulo[i], monticulo[menor]] = [monticulo[menor], monticulo[i]];
+      i = menor;
+    }
+  }
+  return primero;
+}
+class ColaPrioridad {
+  constructor() { this.m = []; }
+  meter(dato, prioridad) { insertar(this.m, { prioridad, dato }); }
+  sacar() { return extraer(this.m).dato; }
+  get vacia() { return this.m.length === 0; }
+}
+function octil(a, b) {
+  const dx = Math.abs(a.x - b.x), dy = Math.abs(a.y - b.y);
+  return 10 * (dx + dy) - 6 * Math.min(dx, dy);
+}
+function buscar(mapa, letra) {
+  for (let y = 0; y < mapa.length; y++) { const x = mapa[y].indexOf(letra); if (x !== -1) return { x, y }; }
+  return null;
+}
+const __MAPA1 = [".....", ".....", "..S..", ".....", "....M"];
+const __MAPA2 = ["......", "..~~~.", "S.~~~M", "..~~~.", "......"];
+const __MAPA3 = [".....", ".##..", "S#.M.", "..##.", "....."];
+      </script>
+      <textarea class="taller-codigo">// Las 8 vecinas libres de p, sin cortar esquinas en las diagonales.
+function vecinosOcho(mapa, p) {
+  const out = [];
+  for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]) {
+    const x = p.x + dx, y = p.y + dy;
+    if (y &lt; 0 || y &gt;= mapa.length || x &lt; 0 || x &gt;= mapa[0].length) continue;
+    if (mapa[y][x] === "#") continue;
+    if (dx !== 0 &amp;&amp; dy !== 0) {
+      // sin cortar esquinas: las dos casillas rectas vecinas también deben estar libres
+      if (mapa[p.y][x] === "#" || mapa[y][p.x] === "#") continue;
+    }
+    out.push({ x, y, diagonal: dx !== 0 &amp;&amp; dy !== 0 });
+  }
+  return out;
+}
+function costeTerreno(mapa, p) { return mapa[p.y][p.x] === "~" ? 3 : 1; }
+
+function aEstrella(mapa, inicio, meta) {
+  // completa aquí: g, h = octil, f = g + h, con ColaPrioridad, vecinosOcho y costeTerreno.
+  // coste de un paso: (diagonal ? 14 : 10) * costeTerreno(mapa, vecino)
+  // devuelve { coste, camino }
+}
+
+console.log("mapa1:", aEstrella(__MAPA1, buscar(__MAPA1, "S"), buscar(__MAPA1, "M")).coste);
+console.log("mapa2:", aEstrella(__MAPA2, buscar(__MAPA2, "S"), buscar(__MAPA2, "M")).coste);
+console.log("mapa3:", aEstrella(__MAPA3, buscar(__MAPA3, "S"), buscar(__MAPA3, "M")).coste);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var f = expuesto.aEstrella;
+if (typeof f !== "function") return "No encuentro la función aEstrella.";
+var r1 = f(__MAPA1, buscar(__MAPA1, "S"), buscar(__MAPA1, "M"));
+if (!r1 || r1.coste !== 28) return "Mapa 1 (sin obstáculos, dos pasos en diagonal): el coste debería ser 28, y da " + (r1 && r1.coste) + ".";
+var r2 = f(__MAPA2, buscar(__MAPA2, "S"), buscar(__MAPA2, "M"));
+if (!r2 || r2.coste !== 72) return "Mapa 2 (conviene rodear el pantano): el coste debería ser 72, y da " + (r2 && r2.coste) + ". Si da menos, probablemente estás atravesando el pantano; si da mucho más, revisa el coste del paso diagonal.";
+var r3 = f(__MAPA3, buscar(__MAPA3, "S"), buscar(__MAPA3, "M"));
+if (!r3 || r3.coste !== 70) return "Mapa 3 (una esquina que no se puede atravesar): el coste debería ser 70, y da " + (r3 && r3.coste) + ". Si da menos, probablemente estás cortando una esquina que debería estar bloqueada.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Es casi el mismo bucle del taller «A* por dentro» de la sección de caminos, pero con <code>vecinosOcho</code> en vez de 4 direcciones, y el coste del paso es <code>(vecino.diagonal ? 14 : 10) * costeTerreno(mapa, vecino)</code> en vez de 1.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>La heurística es <code>octil(nodo, meta)</code>, ya dada en la preparación. No olvides reconstruir el camino siguiendo <code>vieneDe</code> igual que antes.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function vecinosOcho(mapa, p) {
+  const out = [];
+  for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]) {
+    const x = p.x + dx, y = p.y + dy;
+    if (y &lt; 0 || y &gt;= mapa.length || x &lt; 0 || x &gt;= mapa[0].length) continue;
+    if (mapa[y][x] === "#") continue;
+    if (dx !== 0 &amp;&amp; dy !== 0) {
+      if (mapa[p.y][x] === "#" || mapa[y][p.x] === "#") continue;
+    }
+    out.push({ x, y, diagonal: dx !== 0 &amp;&amp; dy !== 0 });
+  }
+  return out;
+}
+function costeTerreno(mapa, p) { return mapa[p.y][p.x] === "~" ? 3 : 1; }
+
+function aEstrella(mapa, inicio, meta) {
+  const ancho = mapa[0].length, clave = (p) =&gt; p.y * ancho + p.x;
+  const abierta = new ColaPrioridad();
+  const g = new Map([[clave(inicio), 0]]);
+  const vieneDe = new Map();
+  const cerrados = new Set();
+  abierta.meter(inicio, octil(inicio, meta));
+  while (!abierta.vacia) {
+    const actual = abierta.sacar(), k = clave(actual);
+    if (cerrados.has(k)) continue;
+    if (k === clave(meta)) {
+      const camino = [actual];
+      let p = actual;
+      while (vieneDe.has(clave(p))) { p = vieneDe.get(clave(p)); camino.unshift(p); }
+      return { coste: g.get(k), camino };
+    }
+    cerrados.add(k);
+    for (const v of vecinosOcho(mapa, actual)) {
+      const pasoBase = v.diagonal ? 14 : 10;
+      const nuevaG = g.get(k) + pasoBase * costeTerreno(mapa, v);
+      const kv = clave(v);
+      if (!g.has(kv) || nuevaG &lt; g.get(kv)) {
+        g.set(kv, nuevaG);
+        vieneDe.set(kv, actual);
+        abierta.meter(v, nuevaG + octil(v, meta));
+      }
+    }
+  }
+  return null;
+}
+
+console.log("mapa1:", aEstrella(__MAPA1, buscar(__MAPA1, "S"), buscar(__MAPA1, "M")).coste);</code></pre>
+      <p>En el mapa 2, atravesar las tres casillas de pantano en línea recta costaría 10×3×3 = 90, más que los 72 de rodearlo: por eso A* rodea. En el mapa 3, la diagonal de (0,2) a (1,1) tocaría la esquina de un muro (la casilla (1,2) es muro), así que queda prohibida y el camino sube en línea recta por la izquierda.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-decoradores">
+    <h3>Decoradores</h3>
+    <p>Añade tres decoradores al intérprete de árboles de la sección de <a href="#arboles">árboles</a>: <code>Inversor</code> (EXITO↔FALLO, EN_CURSO igual), <code>Repetir(nombre, hijo, veces)</code> (EN_CURSO hasta completar <code>veces</code> éxitos seguidos, luego EXITO) y <code>Enfriamiento(nombre, hijo, segundos)</code> (tras un EXITO, FALLO sin ni llamar al hijo hasta que pase ese tiempo; recibe <code>p.dt</code> en la pizarra).</p>
+    <div class="taller" id="taller-ej-decoradores" data-titulo="Ejercicio 7" data-exponer="Inversor, Repetir, Enfriamiento">
+      <script type="text/plain" class="taller-preparacion">
+class Nodo {
+  constructor(tipo, nombre) { this.tipo = tipo; this.nombre = nombre; this.ultimo = null; }
+  tick(p) { return (this.ultimo = this.evaluar(p)); }
+}
+class Accion extends Nodo {
+  constructor(nombre, ejecutar) { super("accion", nombre); this.ejecutar = ejecutar; }
+  evaluar(p) { return this.ejecutar(p); }
+}
+      </script>
+      <textarea class="taller-codigo">class Inversor extends Nodo {
+  constructor(nombre, hijo) {
+    super("decorador", nombre);
+    this.hijo = hijo;
+  }
+  evaluar(p) {
+    // completa aquí
+  }
+}
+
+class Repetir extends Nodo {
+  constructor(nombre, hijo, veces) {
+    super("decorador", nombre);
+    this.hijo = hijo;
+    this.veces = veces;
+    this.hechas = 0;
+  }
+  evaluar(p) {
+    // completa aquí
+  }
+}
+
+class Enfriamiento extends Nodo {
+  constructor(nombre, hijo, segundos) {
+    super("decorador", nombre);
+    this.hijo = hijo;
+    this.segundos = segundos;
+    this.restante = 0;
+  }
+  evaluar(p) {
+    // completa aquí
+  }
+}</textarea>
+      <script type="text/plain" class="taller-verificar">
+var Inv = expuesto.Inversor, Rep = expuesto.Repetir, Enf = expuesto.Enfriamiento;
+if (typeof Inv !== "function") return "No encuentro la clase Inversor.";
+if (typeof Rep !== "function") return "No encuentro la clase Repetir.";
+if (typeof Enf !== "function") return "No encuentro la clase Enfriamiento.";
+
+var siempreExito = new Accion("siempre", function () { return "EXITO"; });
+if (new Inv("no", siempreExito).tick({}) !== "FALLO") return "Inversor sobre una acción que da EXITO debería dar FALLO.";
+var siempreFallo = new Accion("nunca", function () { return "FALLO"; });
+if (new Inv("no2", siempreFallo).tick({}) !== "EXITO") return "Inversor sobre una acción que da FALLO debería dar EXITO.";
+var siempreCurso = new Accion("curso", function () { return "EN_CURSO"; });
+if (new Inv("no3", siempreCurso).tick({}) !== "EN_CURSO") return "Inversor sobre EN_CURSO debería dejarlo igual (EN_CURSO), sin invertirlo.";
+
+var intentos = 0;
+var pasoAPaso = new Accion("intentar", function () { intentos++; return "EXITO"; });
+var rep = new Rep("repetir3", pasoAPaso, 3);
+var r1 = rep.tick({}), r2 = rep.tick({}), r3 = rep.tick({});
+if (r1 !== "EN_CURSO" || r2 !== "EN_CURSO" || r3 !== "EXITO") return "Repetir(hijo, 3) debería dar EN_CURSO, EN_CURSO, EXITO en tres ticks seguidos con un hijo que siempre da EXITO (dio " + [r1, r2, r3] + ").";
+
+var ataque = new Accion("ataque", function () { return "EXITO"; });
+var conEnfriamiento = new Enf("ataque con enfriamiento", ataque, 2);
+var resultados = [];
+for (var i = 0; i < 8; i++) resultados.push(conEnfriamiento.tick({ dt: 0.5 }));
+var esperado = ["EXITO", "FALLO", "FALLO", "FALLO", "EXITO", "FALLO", "FALLO", "FALLO"];
+for (var j = 0; j < esperado.length; j++) {
+  if (resultados[j] !== esperado[j]) return "Con enfriamiento de 2 s y dt=0.5, en el tick " + j + " se esperaba " + esperado[j] + " y dio " + resultados[j] + " (secuencia completa: " + resultados.join(", ") + ").";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Para Inversor: llama a <code>this.hijo.tick(p)</code>, guarda el resultado, y devuelve FALLO si era EXITO, EXITO si era FALLO, o el mismo valor si era EN_CURSO (usa un <code>if</code>/<code>else if</code>/<code>else</code>, no un simple <code>!</code>, que no funciona con strings).</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para Enfriamiento: primero resta <code>p.dt</code> a <code>this.restante</code>. Si sigue siendo mayor que 0, devuelve FALLO sin tocar al hijo. Si no, llama al hijo; si da EXITO, pon <code>this.restante = this.segundos</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">class Inversor extends Nodo {
+  constructor(nombre, hijo) { super("decorador", nombre); this.hijo = hijo; }
+  evaluar(p) {
+    const r = this.hijo.tick(p);
+    if (r === "EXITO") return "FALLO";
+    if (r === "FALLO") return "EXITO";
+    return r;
+  }
+}
+
+class Repetir extends Nodo {
+  constructor(nombre, hijo, veces) { super("decorador", nombre); this.hijo = hijo; this.veces = veces; this.hechas = 0; }
+  evaluar(p) {
+    const r = this.hijo.tick(p);
+    if (r === "EXITO") {
+      this.hechas++;
+      return this.hechas &gt;= this.veces ? "EXITO" : "EN_CURSO";
+    }
+    return r;
+  }
+}
+
+class Enfriamiento extends Nodo {
+  constructor(nombre, hijo, segundos) { super("decorador", nombre); this.hijo = hijo; this.segundos = segundos; this.restante = 0; }
+  evaluar(p) {
+    this.restante -= p.dt || 0;
+    if (this.restante &gt; 0) return "FALLO";
+    const r = this.hijo.tick(p);
+    if (r === "EXITO") this.restante = this.segundos;
+    return r;
+  }
+}</code></pre>
+      <p>Con 2 s de enfriamiento y 0,5 s por tick, el ataque solo puede repetirse cada 4 ticks: EXITO en el 0, FALLO en el 1, 2 y 3, EXITO otra vez en el 4. <code>Enfriamiento</code> ni siquiera llama a <code>this.hijo.tick(p)</code> mientras <code>restante &gt; 0</code>: eso es justo lo que le ahorra trabajo al árbol.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-enemigo-elige">
+    <h3>El enemigo que elige</h3>
+    <p>Completa <code>lineal</code>, <code>cuadratica</code> y <code>logistica</code> (con <code>math.exp</code>, como en la sección de <a href="#utilidad">utilidad</a>). Las cuatro acciones y las cinco situaciones ya están escritas; con las curvas completas, <code>max(acciones, key=puntuar)</code> debería elegir una acción distinta en cada situación.</p>
+    <div class="taller" data-modo="python" id="taller-ej-enemigo" data-titulo="Ejercicio 8">
+      <textarea class="taller-codigo">import math
+
+def lineal(x):
+    # completa aquí: proporcional a la entrada
+    return 0
+
+def cuadratica(x):
+    # completa aquí: casi no reacciona hasta que x es alto
+    return 0
+
+def logistica(x, centro=0.5, pendiente=10):
+    # completa aquí: 1 / (1 + e^(-pendiente * (x - centro)))
+    return 0
+
+def atacar(s):
+    return lineal(s["municion"]) * cuadratica(1 - s["distancia"])
+
+def curarse(s):
+    return cuadratica(1 - s["vida"]) * logistica(s["distancia"], 0.4, 8)
+
+def cubrirse(s):
+    return logistica(1 - s["municion"], 0.5, 8) * lineal(s["distancia"])
+
+def huir(s):
+    return cuadratica(1 - s["vida"]) * logistica(1 - s["distancia"], 0.4, 8)
+
+acciones = {"atacar": atacar, "curarse": curarse, "cubrirse": cubrirse, "huir": huir}
+
+situaciones = [
+    {"nombre": "A", "vida": 0.9, "distancia": 0.1, "municion": 0.8},
+    {"nombre": "B", "vida": 0.15, "distancia": 0.1, "municion": 0.6},
+    {"nombre": "C", "vida": 0.8, "distancia": 0.9, "municion": 0.05},
+    {"nombre": "D", "vida": 0.2, "distancia": 0.85, "municion": 0.5},
+    {"nombre": "E", "vida": 0.5, "distancia": 0.5, "municion": 0.5},
+]
+
+for s in situaciones:
+    puntuaciones = {a: f(s) for a, f in acciones.items()}
+    mejor = max(acciones, key=lambda a: puntuaciones[a])
+    print(f"{s['nombre']}: {mejor} ({puntuaciones[mejor]:.2f})")</textarea>
+      <script type="text/plain" class="taller-verificar">
+var esperado = ["A: atacar (0.65)", "B: huir (0.71)", "C: cubrirse (0.88)", "D: curarse (0.62)", "E: cubrirse (0.25)"];
+for (var i = 0; i < esperado.length; i++) {
+  if (salida[i] !== esperado[i]) return "La línea " + (i + 1) + " debería ser «" + esperado[i] + "» y es «" + (salida[i] === undefined ? "(nada)" : salida[i]) + "». Revisa lineal, cuadratica y logistica.";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>lineal(x)</code> es, literalmente, <code>return x</code>. <code>cuadratica(x)</code> es <code>return x * x</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>logistica</code> necesita <code>math.exp(-pendiente * (x - centro))</code> dentro de <code>1 / (1 + …)</code>. Cuidado con los paréntesis: el signo menos va antes de <code>pendiente</code>, no antes de <code>x</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-python">import math
+
+def lineal(x):
+    return x
+
+def cuadratica(x):
+    return x * x
+
+def logistica(x, centro=0.5, pendiente=10):
+    return 1 / (1 + math.exp(-pendiente * (x - centro)))
+
+def atacar(s):
+    return lineal(s["municion"]) * cuadratica(1 - s["distancia"])
+
+def curarse(s):
+    return cuadratica(1 - s["vida"]) * logistica(s["distancia"], 0.4, 8)
+
+def cubrirse(s):
+    return logistica(1 - s["municion"], 0.5, 8) * lineal(s["distancia"])
+
+def huir(s):
+    return cuadratica(1 - s["vida"]) * logistica(1 - s["distancia"], 0.4, 8)
+
+acciones = {"atacar": atacar, "curarse": curarse, "cubrirse": cubrirse, "huir": huir}
+
+situaciones = [
+    {"nombre": "A", "vida": 0.9, "distancia": 0.1, "municion": 0.8},
+    {"nombre": "B", "vida": 0.15, "distancia": 0.1, "municion": 0.6},
+    {"nombre": "C", "vida": 0.8, "distancia": 0.9, "municion": 0.05},
+    {"nombre": "D", "vida": 0.2, "distancia": 0.85, "municion": 0.5},
+    {"nombre": "E", "vida": 0.5, "distancia": 0.5, "municion": 0.5},
+]
+
+for s in situaciones:
+    puntuaciones = {a: f(s) for a, f in acciones.items()}
+    mejor = max(acciones, key=lambda a: puntuaciones[a])
+    print(f"{s['nombre']}: {mejor} ({puntuaciones[mejor]:.2f})")</code></pre>
+      <p>Cinco situaciones, cuatro ganadoras distintas: A (sana, cerca, con munición) ataca; B (herida, cerca) huye; C (lejos, sin munición) se cubre; D (herida, lejos) se cura; E, equilibrada, se cubre por poco margen. Ningún <code>if</code> decidió esto: solo números que compiten.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-cueva-sin-islas">
+    <h3>Una cueva sin islas</h3>
+    <p>La preparación trae <code>generarBruto(semilla)</code>: una cueva de 28×16 con la regla 4-5, igual que en la sección de <a href="#procedural">procedural</a>, que casi nunca sale de una sola pieza. Escribe <code>contarRegiones(mapa)</code> (relleno por inundación: un array con el tamaño de cada región de casillas libres) y <code>limpiarCueva(mapa)</code>, que se queda solo con la región mayor (el resto, muro) y devuelve <code>{ mapa, entrada, salida }</code>: <code>entrada</code>, cualquier casilla libre de esa región; <code>salida</code>, la casilla libre más lejana de la entrada según un mapa de distancias (BFS).</p>
+    <div class="taller" id="taller-ej-cueva-sin-islas" data-titulo="Ejercicio 9" data-exponer="contarRegiones, limpiarCueva" data-tiempo="8">
+      <script type="text/plain" class="taller-preparacion">
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const __ANCHO = 28, __ALTO = 16;
+function generarBruto(semilla) {
+  const azar = crearAzar(semilla);
+  let mapa = [];
+  for (let y = 0; y < __ALTO; y++) {
+    let fila = "";
+    for (let x = 0; x < __ANCHO; x++) fila += azar() < 0.55 ? "#" : ".";
+    mapa.push(fila);
+  }
+  function contar(m, x, y) {
+    let c = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = x + dx, ny = y + dy;
+      if (ny < 0 || ny >= __ALTO || nx < 0 || nx >= __ANCHO || m[ny][nx] === "#") c++;
+    }
+    return c;
+  }
+  for (let paso = 0; paso < 4; paso++) {
+    const nuevo = [];
+    for (let y = 0; y < __ALTO; y++) {
+      let fila = "";
+      for (let x = 0; x < __ANCHO; x++) fila += contar(mapa, x, y) >= 5 ? "#" : ".";
+      nuevo.push(fila);
+    }
+    mapa = nuevo;
+  }
+  return mapa.map((f, y) => (y === 0 || y === __ALTO - 1) ? "#".repeat(__ANCHO) : "#" + f.slice(1, __ANCHO - 1) + "#");
+}
+      </script>
+      <textarea class="taller-codigo">// Las 4 vecinas (no diagonales) de una casilla libre dentro del mapa.
+function vecinosLibres(mapa, p) {
+  const out = [];
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const x = p.x + dx, y = p.y + dy;
+    if (y &gt;= 0 &amp;&amp; y &lt; mapa.length &amp;&amp; x &gt;= 0 &amp;&amp; x &lt; mapa[0].length &amp;&amp; mapa[y][x] !== "#") out.push({ x, y });
+  }
+  return out;
+}
+
+function contarRegiones(mapa) {
+  // completa aquí: relleno por inundación. Devuelve un array con el tamaño de cada región.
+}
+
+function limpiarCueva(mapa) {
+  // completa aquí: encuentra la región mayor (reutiliza la misma idea de relleno
+  // por inundación, guardando las casillas en vez de solo contarlas), construye un
+  // mapa nuevo que solo la conserva, y calcula la salida con un mapa de distancias
+  // (BFS) desde una entrada cualquiera de esa región.
+}
+
+const bruto = generarBruto(2025);
+console.log("Regiones en bruto:", contarRegiones(bruto));
+const limpio = limpiarCueva(bruto);
+console.log(limpio.mapa.join("\n"));
+console.log("Entrada:", limpio.entrada, "Salida:", limpio.salida);</textarea>
+      <script type="text/plain" class="taller-verificar">
+var cr = expuesto.contarRegiones, lc = expuesto.limpiarCueva;
+if (typeof cr !== "function") return "No encuentro la función contarRegiones.";
+if (typeof lc !== "function") return "No encuentro la función limpiarCueva.";
+
+function floodFillRef(mapa) {
+  const alto = mapa.length, ancho = mapa[0].length;
+  const visto = Array.from({ length: alto }, function () { return Array(ancho).fill(false); });
+  const regiones = [];
+  for (let y = 0; y < alto; y++) for (let x = 0; x < ancho; x++) {
+    if (mapa[y][x] === "#" || visto[y][x]) continue;
+    const celdas = []; const pila = [{ x, y }]; visto[y][x] = true;
+    while (pila.length) {
+      const p = pila.pop(); celdas.push(p);
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nx = p.x + dx, ny = p.y + dy;
+        if (nx >= 0 && nx < ancho && ny >= 0 && ny < alto && mapa[ny][nx] !== "#" && !visto[ny][nx]) { visto[ny][nx] = true; pila.push({ x: nx, y: ny }); }
+      }
+    }
+    regiones.push(celdas);
+  }
+  return regiones;
+}
+function bfsRef(mapa, origen) {
+  const alto = mapa.length, ancho = mapa[0].length;
+  const dist = new Map([[origen.y * ancho + origen.x, 0]]);
+  const cola = [origen];
+  while (cola.length) {
+    const p = cola.shift();
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const nx = p.x + dx, ny = p.y + dy, k = ny * ancho + nx;
+      if (nx >= 0 && nx < ancho && ny >= 0 && ny < alto && mapa[ny][nx] !== "#" && !dist.has(k)) { dist.set(k, dist.get(p.y * ancho + p.x) + 1); cola.push({ x: nx, y: ny }); }
+    }
+  }
+  return dist;
+}
+
+for (const semilla of [2025, 42, 2027]) {
+  const bruto = generarBruto(semilla);
+  const refRegiones = floodFillRef(bruto).map(function (r) { return r.length; }).sort(function (a, b) { return b - a; });
+  const propRegiones = (cr(bruto) || []).slice().sort(function (a, b) { return b - a; });
+  if (propRegiones.length !== refRegiones.length) return "Semilla " + semilla + ": contarRegiones da " + propRegiones.length + " regiones y debería dar " + refRegiones.length + ".";
+  if (propRegiones[0] !== refRegiones[0]) return "Semilla " + semilla + ": la región más grande debería tener " + refRegiones[0] + " casillas, y contarRegiones dice " + propRegiones[0] + ".";
+
+  const resultado = lc(bruto);
+  if (!resultado || !resultado.mapa || !resultado.entrada || !resultado.salida) return "Semilla " + semilla + ": limpiarCueva debe devolver { mapa, entrada, salida }.";
+  const limpias = floodFillRef(resultado.mapa);
+  if (limpias.length !== 1) return "Semilla " + semilla + ": tras limpiar debería quedar una sola región de casillas libres (hay " + limpias.length + ").";
+  if (limpias[0].length !== refRegiones[0]) return "Semilla " + semilla + ": la región limpia debería conservar las " + refRegiones[0] + " casillas de la región mayor original (tiene " + limpias[0].length + ").";
+  if (resultado.mapa[resultado.entrada.y][resultado.entrada.x] === "#") return "Semilla " + semilla + ": la entrada cae sobre un muro.";
+  if (resultado.mapa[resultado.salida.y][resultado.salida.x] === "#") return "Semilla " + semilla + ": la salida cae sobre un muro.";
+
+  const dist = bfsRef(resultado.mapa, resultado.entrada);
+  let maxDist = -1;
+  for (const d of dist.values()) if (d > maxDist) maxDist = d;
+  const distSalida = dist.get(resultado.salida.y * 28 + resultado.salida.x);
+  if (distSalida !== maxDist) return "Semilla " + semilla + ": la salida debería ser la casilla libre más lejana de la entrada (a distancia " + maxDist + "), y la que diste queda a distancia " + distSalida + ".";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>contarRegiones</code> recorre toda la cuadrícula; en cuanto encuentra una casilla libre no visitada, hace un relleno por inundación (pila o cola, con <code>vecinosLibres</code>) contando cuántas casillas tiene esa región, y pasa a la siguiente sin visitar.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>limpiarCueva</code> es lo mismo, pero en vez de solo contar, guarda las casillas de cada región; al final te quedas con el array más largo. Con esas casillas en un <code>Set</code>, construye el mapa nuevo: libre si está en el set, muro si no. Para la salida, haz un BFS (igual que el mapa de distancias de <a href="#caminos">caminos</a>) desde la entrada y quédate con la casilla de mayor distancia.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function vecinosLibres(mapa, p) {
+  const out = [];
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const x = p.x + dx, y = p.y + dy;
+    if (y &gt;= 0 &amp;&amp; y &lt; mapa.length &amp;&amp; x &gt;= 0 &amp;&amp; x &lt; mapa[0].length &amp;&amp; mapa[y][x] !== "#") out.push({ x, y });
+  }
+  return out;
+}
+
+function regionDesde(mapa, inicio, visto) {
+  const celdas = [], pila = [inicio];
+  visto.add(inicio.y * mapa[0].length + inicio.x);
+  while (pila.length) {
+    const p = pila.pop();
+    celdas.push(p);
+    for (const v of vecinosLibres(mapa, p)) {
+      const k = v.y * mapa[0].length + v.x;
+      if (!visto.has(k)) { visto.add(k); pila.push(v); }
+    }
+  }
+  return celdas;
+}
+
+function contarRegiones(mapa) {
+  const visto = new Set(), tamanos = [];
+  for (let y = 0; y &lt; mapa.length; y++) {
+    for (let x = 0; x &lt; mapa[0].length; x++) {
+      if (mapa[y][x] === "#" || visto.has(y * mapa[0].length + x)) continue;
+      tamanos.push(regionDesde(mapa, { x, y }, visto).length);
+    }
+  }
+  return tamanos;
+}
+
+function limpiarCueva(mapa) {
+  const ancho = mapa[0].length, alto = mapa.length;
+  const visto = new Set();
+  let mejor = null;
+  for (let y = 0; y &lt; alto; y++) {
+    for (let x = 0; x &lt; ancho; x++) {
+      if (mapa[y][x] === "#" || visto.has(y * ancho + x)) continue;
+      const region = regionDesde(mapa, { x, y }, visto);
+      if (!mejor || region.length &gt; mejor.length) mejor = region;
+    }
+  }
+  const libres = new Set(mejor.map((p) =&gt; p.y * ancho + p.x));
+  const nuevoMapa = [];
+  for (let y = 0; y &lt; alto; y++) {
+    let fila = "";
+    for (let x = 0; x &lt; ancho; x++) fila += libres.has(y * ancho + x) ? "." : "#";
+    nuevoMapa.push(fila);
+  }
+  const entrada = mejor[0];
+  const dist = new Map([[entrada.y * ancho + entrada.x, 0]]);
+  const cola = [entrada];
+  let salida = entrada;
+  while (cola.length) {
+    const p = cola.shift();
+    if (dist.get(p.y * ancho + p.x) &gt; dist.get(salida.y * ancho + salida.x)) salida = p;
+    for (const v of vecinosLibres(nuevoMapa, p)) {
+      const k = v.y * ancho + v.x;
+      if (!dist.has(k)) { dist.set(k, dist.get(p.y * ancho + p.x) + 1); cola.push(v); }
+    }
+  }
+  return { mapa: nuevoMapa, entrada, salida };
+}
+
+const bruto = generarBruto(2025);
+console.log("Regiones en bruto:", contarRegiones(bruto));
+console.log(limpiarCueva(bruto).mapa.join("\n"));</code></pre>
+      <p>El truco está en reutilizar la misma idea (relleno por inundación) dos veces: una para solo contar tamaños, otra para quedarte con las casillas de la región ganadora. El BFS para la salida es, otra vez, el mismo mapa de distancias de la sección de caminos, solo que aquí el «enemigo» eres tú mismo, buscando el punto más alejado de donde entraste.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-fichas-director">
+    <h3>Fichas de ataque y un director justo</h3>
+    <p>Dos piezas de la sección de <a href="#director">dificultad y motores</a>. Primero, <code>Fichas</code>: un cupo de ataque compartido entre 5 enemigos (la preparación los simula durante 40 ticks, pidiendo y devolviendo fichas). Escribe la clase con <code>pedir()</code> (devuelve <code>true</code> y gasta una ficha si hay alguna libre; si no, <code>false</code> sin gastar nada) y <code>devolver()</code> (libera una, sin pasarse del máximo). Segundo, <code>director(partidas)</code>: recibe un array de <code>"derrota"</code>/<code>"victoria"</code> y devuelve un <strong>multiplicador de agresividad</strong> que empieza en 1, sube un poco tras una victoria y baja tras una derrota, <strong>suavizado</strong> (nunca de golpe) y siempre entre <strong>0,7 y 1,2</strong>.</p>
+    <div class="taller" id="taller-ej-fichas" data-titulo="Ejercicio 10" data-exponer="Fichas, director">
+      <script type="text/plain" class="taller-preparacion">
+const __QUIERE_ATACAR = {
+  0: [2, 3, 4, 5, 6, 20, 21, 22],
+  1: [2, 3, 4, 7, 8, 9, 25, 26],
+  2: [5, 6, 7, 8, 9, 10, 30, 31],
+  3: [10, 11, 12, 13, 14, 15, 35, 36],
+  4: [15, 16, 17, 18, 19, 20, 38, 39],
+};
+function simularAtaques(fichas) {
+  const atacando = new Set(), atacaronAlgunaVez = new Set();
+  let maxSimultaneos = 0;
+  for (let tick = 0; tick < 40; tick++) {
+    for (let e = 0; e < 5; e++) {
+      const quiere = (__QUIERE_ATACAR[e] || []).includes(tick);
+      if (quiere && !atacando.has(e)) {
+        if (fichas.pedir()) { atacando.add(e); atacaronAlgunaVez.add(e); }
+      } else if (!quiere && atacando.has(e)) {
+        fichas.devolver();
+        atacando.delete(e);
+      }
+    }
+    maxSimultaneos = Math.max(maxSimultaneos, atacando.size);
+  }
+  return { maxSimultaneos, atacaron: atacaronAlgunaVez };
+}
+      </script>
+      <textarea class="taller-codigo">class Fichas {
+  constructor(maximo) {
+    this.maximo = maximo;
+    this.libres = maximo;
+  }
+  pedir() {
+    // completa aquí
+  }
+  devolver() {
+    // completa aquí
+  }
+}
+
+function director(partidas) {
+  // completa aquí: multiplicador empieza en 1, se suaviza hacia un objetivo
+  // (más bajo tras "derrota", más alto tras "victoria") y se recorta a [0.7, 1.2]
+}
+
+const r = simularAtaques(new Fichas(2));
+console.log("Máximo de atacantes a la vez:", r.maxSimultaneos);
+console.log("Enemigos que llegaron a atacar:", [...r.atacaron].sort().join(","));
+console.log("Multiplicador tras 6 derrotas y 8 victorias:",
+  director(["derrota","derrota","derrota","derrota","derrota","derrota",
+            "victoria","victoria","victoria","victoria","victoria","victoria","victoria","victoria"]).toFixed(2));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var F = expuesto.Fichas, dir = expuesto.director;
+if (typeof F !== "function") return "No encuentro la clase Fichas.";
+if (typeof dir !== "function") return "No encuentro la función director.";
+
+var r = simularAtaques(new F(2));
+if (r.maxSimultaneos > 2) return "Con Fichas(2), nunca deberían atacar más de 2 a la vez (llegaron a atacar " + r.maxSimultaneos + ").";
+if (r.atacaron.size !== 5) return "Los 5 enemigos deberían llegar a atacar en algún momento de los 40 ticks (solo lo hicieron " + r.atacaron.size + ").";
+
+var mixta = ["derrota","derrota","victoria","derrota","victoria","victoria","victoria","derrota","derrota","derrota","derrota","victoria"];
+for (var i = 1; i <= mixta.length; i++) {
+  var m = dir(mixta.slice(0, i));
+  if (typeof m !== "number" || Number.isNaN(m)) return "director debería devolver un número (con " + i + " partidas dio " + m + ").";
+  if (m < 0.7 || m > 1.2) return "El multiplicador debería quedar siempre entre 0.7 y 1.2 (con " + i + " partidas de la secuencia dio " + m.toFixed(3) + ").";
+}
+var soloDerrotas = dir(["derrota","derrota","derrota","derrota","derrota","derrota","derrota","derrota"]);
+if (soloDerrotas >= 1) return "Tras muchas derrotas seguidas, el multiplicador debería bajar de 1 (dio " + soloDerrotas.toFixed(2) + ").";
+var soloVictorias = dir(["victoria","victoria","victoria","victoria","victoria","victoria","victoria","victoria"]);
+if (soloVictorias <= 1) return "Tras muchas victorias seguidas, el multiplicador debería subir de 1 (dio " + soloVictorias.toFixed(2) + ").";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>pedir()</code>: si <code>this.libres</code> es 0 o menos, devuelve <code>false</code> sin tocar nada; si no, resta 1 y devuelve <code>true</code>. <code>devolver()</code>: suma 1, pero sin pasar de <code>this.maximo</code> (<code>Math.min</code>).</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para <code>director</code>, calcula un <code>objetivo</code> (por ejemplo, <code>multiplicador - 0.15</code> tras derrota, <code>multiplicador + 0.1</code> tras victoria) y acércate a él poco a poco: <code>multiplicador += (objetivo - multiplicador) * 0.5</code>. Recorta con <code>Math.max(0.7, Math.min(1.2, multiplicador))</code> en cada partida, no solo al final.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">class Fichas {
+  constructor(maximo) { this.maximo = maximo; this.libres = maximo; }
+  pedir() {
+    if (this.libres &lt;= 0) return false;
+    this.libres--;
+    return true;
+  }
+  devolver() {
+    this.libres = Math.min(this.maximo, this.libres + 1);
+  }
+}
+
+function director(partidas) {
+  let multiplicador = 1;
+  for (const resultado of partidas) {
+    const objetivo = resultado === "derrota" ? multiplicador - 0.15 : multiplicador + 0.1;
+    multiplicador += (objetivo - multiplicador) * 0.5;
+    multiplicador = Math.max(0.7, Math.min(1.2, multiplicador));
+  }
+  return multiplicador;
+}</code></pre>
+      <p>Las fichas son un semáforo contando: como mucho 2 abiertas a la vez, y cada enemigo que termina de atacar libera la suya para el siguiente que la pida. El director nunca salta directo al objetivo: se mueve la mitad de la distancia que le falta en cada partida, así que una sola derrota apenas se nota, pero una racha larga sí mueve la aguja, siempre dentro de los límites.</p>
+    </details>
+  </article>
+</section>
+
+<section id="proyecto" data-parada="Proyecto: Rebaño">
+  <h2>Proyecto: Rebaño</h2>
+  <p class="entradilla">Saltarín guía a su rebaño de ovejas hasta el corral, de noche, a través de un bosque que nunca es el mismo dos veces. Unos lobos acechan entre los árboles: ven, oyen los ladridos del perro, deciden con un árbol de comportamiento y persiguen con A* a la oveja que su criterio les dice que es la más fácil.</p>
+  <p>Es un taller grande con código base ya hecho: el bosque, la cámara, el control de Saltarín (flechas, WASD o toque), el perro, las ovejas moviéndose por física simple y el dibujo de todo el mundo. Lo que programas tú es la <strong>IA</strong>: cómo se mueven las ovejas en rebaño, qué perciben los lobos, a qué oveja deciden ir, cómo deciden con un árbol de comportamiento y cómo llegan hasta ella con A*. El mismo código se puede copiar a un editor en tu computadora si prefieres trabajar fuera del navegador.</p>
+  <ol class="pasos">
+    <li><div><p><strong>El bosque (ya hecho).</strong> <code>generarBosque(semilla)</code> usa el autómata celular de la sección de <a href="#procedural">procedural</a> (regla 4-5, varias pasadas) y relleno por inundación para quedarse con una sola región conectada. También coloca el corral en la casilla más lejana del punto de partida, con el mismo truco del mapa de distancias que viste en <a href="#caminos">caminos</a>.</p></div></li>
+    <li><div><p><strong>Ovejas: boids y huida.</strong> Completa <code>fuerzaOveja(oveja, rebano, amenazas)</code>: separación, alineación y cohesión con el resto del rebaño (<a href="#movimiento">steering</a>), más una fuerza de huida de cualquier amenaza cercana (el perro, un lobo). La mecánica del pastoreo sale sola de ahí: las ovejas huyen del perro, así que si te colocas detrás del rebaño con el perro, lo empujas hacia el corral.</p></div></li>
+    <li><div><p><strong>Percepción de los lobos.</strong> Completa <code>percibirLobo(lobo, mundo)</code>: qué ovejas ve (distancia y línea de visión entre los árboles, con <code>hayLineaDeVision</code> ya dado) y si oye el ladrido del perro (un evento de ruido propagado por casillas con BFS, igual que en <a href="#percepcion">percepción</a>).</p></div></li>
+    <li><div><p><strong>Elegir objetivo por utilidad.</strong> Completa <code>elegirObjetivo(lobo, ovejasVisibles, perro)</code>: puntúa cada oveja visible combinando su <strong>aislamiento</strong> (qué tan lejos está de las demás ovejas), la <strong>distancia</strong> al lobo y qué tan <strong>lejos</strong> está el perro, y devuelve la de mayor puntuación (o <code>null</code> si no ve ninguna).</p></div></li>
+    <li><div><p><strong>El cerebro: un árbol de comportamiento.</strong> Completa <code>construirArbolLobo(lobo)</code> con las clases de <a href="#arboles">árboles</a>, ya dadas: <code>Selector["huir" si oyó el ladrido cerca, "atacar" la oveja aislada (pidiendo una ficha compartida, como en el ejercicio de <a href="#ej-fichas-director">fichas</a>), "acechar" si ve algo pero no puede atacar, "merodear" si no]</code>.</p></div></li>
+    <li><div><p><strong>Moverse con A*.</strong> Completa <code>moverLoboHaciaObjetivo(lobo, destino, mapa)</code>: calcula un camino con <code>aEstrella</code> (ya dado) y síguelo con <code>arrive</code>; replanifica cada 0,5 s o si el objetivo se alejó más de 2 casillas del destino con el que calculaste el camino la última vez.</p></div></li>
+  </ol>
+
+  <div class="taller" data-modo="web" id="taller-proyecto-rebano" data-titulo="Proyecto: Rebaño" data-alto="30rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas width="480" height="300" tabindex="0"&gt;&lt;/canvas&gt;
+&lt;p&gt;
+  &lt;button id="ladrar"&gt;Ladrar&lt;/button&gt;
+  &lt;button id="reiniciar"&gt;Nuevo bosque&lt;/button&gt;
+  Semilla &lt;input id="semilla" type="number" min="1" max="99999" value="2026"&gt;
+  &lt;span id="estado"&gt;&lt;/span&gt;
+&lt;/p&gt;
+&lt;p class="ayuda"&gt;Flechas o WASD para mover a Saltarín; toca el bosque para caminar hasta ahí. Guía a las ovejas (blancas) hasta el corral (la zona verde) sin que los lobos (rojos) atrapen a una aislada. Ladra para asustar a los lobos cercanos.&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; font-size: 13px; color: #c8d0e0; }
+canvas { display: block; width: 100%; max-width: 480px; background: #10150e; border-radius: 8px; touch-action: none; outline: none; }
+p { max-width: 480px; margin: 6px 0; }
+.ayuda { color: #8391ad; }
+button, input { font: inherit; padding: 3px 10px; }
+input[type="number"] { width: 5.5em; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">// ===== Vectores y utilidades (18) =====
+function limitarMag(v, max) {
+  const m = Math.hypot(v.x, v.y);
+  return m &lt;= max || m === 0 ? v : { x: v.x / m * max, y: v.y / m * max };
+}
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+// ===== Azar y cola de prioridad (18, 19) =====
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla &gt;&gt;&gt; 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t &gt;&gt;&gt; 7), 61 | t)) ^ t;
+    return ((t ^ (t &gt;&gt;&gt; 14)) &gt;&gt;&gt; 0) / 4294967296;
+  };
+}
+class ColaPrioridad {
+  constructor() { this.m = []; }
+  meter(dato, prioridad) {
+    this.m.push({ dato, prioridad });
+    let i = this.m.length - 1;
+    while (i &gt; 0) {
+      const p = Math.floor((i - 1) / 2);
+      if (this.m[p].prioridad &lt;= this.m[i].prioridad) break;
+      [this.m[p], this.m[i]] = [this.m[i], this.m[p]]; i = p;
+    }
+  }
+  sacar() {
+    const raiz = this.m[0], ultimo = this.m.pop();
+    if (this.m.length) {
+      this.m[0] = ultimo;
+      let i = 0;
+      while (true) {
+        const iz = 2 * i + 1, de = 2 * i + 2; let m = i;
+        if (iz &lt; this.m.length &amp;&amp; this.m[iz].prioridad &lt; this.m[m].prioridad) m = iz;
+        if (de &lt; this.m.length &amp;&amp; this.m[de].prioridad &lt; this.m[m].prioridad) m = de;
+        if (m === i) break;
+        [this.m[m], this.m[i]] = [this.m[i], this.m[m]]; i = m;
+      }
+    }
+    return raiz.dato;
+  }
+  get vacia() { return this.m.length === 0; }
+}
+
+// ===== Árboles de comportamiento (ya dado, de la sección de árboles) =====
+class Nodo {
+  constructor(tipo, nombre) { this.tipo = tipo; this.nombre = nombre; this.ultimo = null; }
+  tick(m) { return (this.ultimo = this.evaluar(m)); }
+}
+class Condicion extends Nodo {
+  constructor(nombre, prueba) { super("condicion", nombre); this.prueba = prueba; }
+  evaluar(m) { return this.prueba(m) ? "EXITO" : "FALLO"; }
+}
+class Accion extends Nodo {
+  constructor(nombre, ejecutar) { super("accion", nombre); this.ejecutar = ejecutar; }
+  evaluar(m) { return this.ejecutar(m); }
+}
+class Secuencia extends Nodo {
+  constructor(nombre, hijos) { super("secuencia", nombre); this.hijos = hijos; }
+  evaluar(m) { for (const h of this.hijos) { const r = h.tick(m); if (r !== "EXITO") return r; } return "EXITO"; }
+}
+class Selector extends Nodo {
+  constructor(nombre, hijos) { super("selector", nombre); this.hijos = hijos; }
+  evaluar(m) { for (const h of this.hijos) { const r = h.tick(m); if (r !== "FALLO") return r; } return "FALLO"; }
+}
+
+// ===== Fichas compartidas (del ejercicio de fichas de ataque) =====
+class Fichas {
+  constructor(maximo) { this.maximo = maximo; this.libres = maximo; }
+  pedir() { if (this.libres &lt;= 0) return false; this.libres--; return true; }
+  devolver() { this.libres = Math.min(this.maximo, this.libres + 1); }
+}
+
+// ===== PASO 1 (ya hecho): el bosque =====
+const T = 20, ANCHO = 36, ALTO = 22;
+function vecinosLibresTile(mapa, p) {
+  const out = [];
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const x = p.x + dx, y = p.y + dy;
+    if (y &gt;= 0 &amp;&amp; y &lt; mapa.length &amp;&amp; x &gt;= 0 &amp;&amp; x &lt; mapa[0].length &amp;&amp; mapa[y][x] !== "#") out.push({ x, y });
+  }
+  return out;
+}
+function bfsDistTile(mapa, origen) {
+  const dmap = new Map([[origen.y * ANCHO + origen.x, 0]]);
+  const cola = [origen];
+  while (cola.length) {
+    const p = cola.shift();
+    for (const v of vecinosLibresTile(mapa, p)) {
+      const k = v.y * ANCHO + v.x;
+      if (!dmap.has(k)) { dmap.set(k, dmap.get(p.y * ANCHO + p.x) + 1); cola.push(v); }
+    }
+  }
+  return dmap;
+}
+function generarBosque(semilla) {
+  const azar = crearAzar(semilla);
+  let mapa = [];
+  for (let y = 0; y &lt; ALTO; y++) {
+    let fila = "";
+    for (let x = 0; x &lt; ANCHO; x++) fila += azar() &lt; 0.52 ? "#" : ".";
+    mapa.push(fila);
+  }
+  function contar(m, x, y) {
+    let c = 0;
+    for (let dy = -1; dy &lt;= 1; dy++) for (let dx = -1; dx &lt;= 1; dx++) {
+      if (dx === 0 &amp;&amp; dy === 0) continue;
+      const nx = x + dx, ny = y + dy;
+      if (ny &lt; 0 || ny &gt;= ALTO || nx &lt; 0 || nx &gt;= ANCHO || m[ny][nx] === "#") c++;
+    }
+    return c;
+  }
+  for (let paso = 0; paso &lt; 4; paso++) {
+    const nuevo = [];
+    for (let y = 0; y &lt; ALTO; y++) {
+      let fila = "";
+      for (let x = 0; x &lt; ANCHO; x++) fila += contar(mapa, x, y) &gt;= 5 ? "#" : ".";
+      nuevo.push(fila);
+    }
+    mapa = nuevo;
+  }
+  mapa = mapa.map((f, y) =&gt; (y === 0 || y === ALTO - 1) ? "#".repeat(ANCHO) : "#" + f.slice(1, ANCHO - 1) + "#");
+  const visto = Array.from({ length: ALTO }, () =&gt; Array(ANCHO).fill(false));
+  let mejor = null;
+  for (let y = 0; y &lt; ALTO; y++) for (let x = 0; x &lt; ANCHO; x++) {
+    if (mapa[y][x] === "#" || visto[y][x]) continue;
+    const celdas = [], pila = [{ x, y }]; visto[y][x] = true;
+    while (pila.length) {
+      const p = pila.pop(); celdas.push(p);
+      for (const v of vecinosLibresTile(mapa, p)) if (!visto[v.y][v.x]) { visto[v.y][v.x] = true; pila.push(v); }
+    }
+    if (!mejor || celdas.length &gt; mejor.length) mejor = celdas;
+  }
+  const libres = new Set(mejor.map((p) =&gt; p.y * ANCHO + p.x));
+  const filas = [];
+  for (let y = 0; y &lt; ALTO; y++) {
+    let f = "";
+    for (let x = 0; x &lt; ANCHO; x++) f += libres.has(y * ANCHO + x) ? "." : "#";
+    filas.push(f);
+  }
+  const inicio = mejor[0];
+  const distInicio = bfsDistTile(filas, inicio);
+  let corral = inicio, max = -1;
+  for (const [k, d] of distInicio) if (d &gt; max) { max = d; corral = { x: k % ANCHO, y: Math.floor(k / ANCHO) }; }
+  return { mapa: filas, inicio, corral };
+}
+
+// Línea de visión entre dos casillas (igual que en la sección de percepción).
+function hayLineaDeVision(mapa, a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const pasos = Math.max(Math.abs(dx), Math.abs(dy)) * 3 || 1;
+  let ux = -1, uy = -1;
+  for (let i = 1; i &lt;= pasos; i++) {
+    const t = i / pasos;
+    const x = Math.round(a.x + dx * t), y = Math.round(a.y + dy * t);
+    if (x === ux &amp;&amp; y === uy) continue;
+    ux = x; uy = y;
+    if (x === b.x &amp;&amp; y === b.y) continue;
+    if (mapa[y][x] === "#") return false;
+  }
+  return true;
+}
+
+// A* en 4 direcciones (la sección de caminos ya lo hizo con 8; aquí lo tienes hecho para centrarte en la IA).
+function aEstrella(mapa, inicio, meta) {
+  const clave = (p) =&gt; p.y * ANCHO + p.x;
+  const h = (p) =&gt; Math.abs(p.x - meta.x) + Math.abs(p.y - meta.y);
+  const abierta = new ColaPrioridad(), g = new Map([[clave(inicio), 0]]), vieneDe = new Map(), cerrados = new Set();
+  abierta.meter(inicio, h(inicio));
+  while (!abierta.vacia) {
+    const actual = abierta.sacar(), k = clave(actual);
+    if (cerrados.has(k)) continue;
+    if (k === clave(meta)) {
+      const camino = [actual]; let p = actual;
+      while (vieneDe.has(clave(p))) { p = vieneDe.get(clave(p)); camino.unshift(p); }
+      return { camino };
+    }
+    cerrados.add(k);
+    for (const v of vecinosLibresTile(mapa, actual)) {
+      const ng = g.get(k) + 1, kv = clave(v);
+      if (!g.has(kv) || ng &lt; g.get(kv)) { g.set(kv, ng); vieneDe.set(kv, actual); abierta.meter(v, ng + h(v)); }
+    }
+  }
+  return null;
+}
+
+// Mover libremente hacia un punto en píxeles, sin atravesar árboles.
+function moverLibre(entidad, px, py, mapa, velocidad = 70) {
+  const dx = px - entidad.x, dy = py - entidad.y, d = Math.hypot(dx, dy);
+  if (d &lt; 1) return;
+  const paso = Math.min(d, velocidad * __dt);
+  const nx = entidad.x + dx / d * paso, ny = entidad.y + dy / d * paso;
+  const libre = (x, y) =&gt; {
+    const tx = Math.floor(x / T), ty = Math.floor(y / T);
+    return tx &gt;= 0 &amp;&amp; ty &gt;= 0 &amp;&amp; tx &lt; ANCHO &amp;&amp; ty &lt; ALTO &amp;&amp; mapa[ty][tx] !== "#";
+  };
+  if (libre(nx, entidad.y)) entidad.x = nx;
+  if (libre(entidad.x, ny)) entidad.y = ny;
+}
+function casillaLibreAlAzar(mapa, cerca) {
+  const azar = __azarMerodeo;
+  const cx = Math.floor(cerca.x / T), cy = Math.floor(cerca.y / T);
+  for (let i = 0; i &lt; 30; i++) {
+    const x = Math.max(1, Math.min(ANCHO - 2, cx + Math.floor((azar() - 0.5) * 14)));
+    const y = Math.max(1, Math.min(ALTO - 2, cy + Math.floor((azar() - 0.5) * 14)));
+    if (mapa[y][x] !== "#") return { x: (x + 0.5) * T, y: (y + 0.5) * T };
+  }
+  return { x: cerca.x, y: cerca.y };
+}
+
+// ===== PASO 2: ovejas, boids y huida =====
+const RADIO_VECINDAD = T * 3.5, RADIO_MIEDO = T * 4, VEL_OVEJA = 55;
+
+function fuerzaOveja(oveja, rebano, amenazas) {
+  // completa aquí: separación + alineación + cohesión con rebano (vecinos dentro
+  // de RADIO_VECINDAD), más una fuerza de huida de cada amenaza dentro de RADIO_MIEDO.
+  return { x: 0, y: 0 };
+}
+
+function actualizarOvejas(dt, mundo) {
+  const amenazas = [mundo.perro, ...mundo.lobos.filter((l) =&gt; l.atacando)];
+  for (const o of mundo.ovejas) {
+    const rebano = mundo.ovejas.filter((x) =&gt; x !== o);
+    const f = fuerzaOveja(o, rebano, amenazas);
+    const v = limitarMag({ x: o.vx + f.x * dt, y: o.vy + f.y * dt }, VEL_OVEJA);
+    o.vx = v.x; o.vy = v.y;
+    moverLibre(o, o.x + o.vx * dt, o.y + o.vy * dt, mundo.mapa, 1e9);
+  }
+}
+
+// ===== PASO 3: percepción de los lobos =====
+const RADIO_VISTA_LOBO = 7;   // casillas
+
+function percibirLobo(lobo, mundo) {
+  // completa aquí: devuelve { ovejasVisibles: [...], oyeLadrido: boolean }
+  // usa hayLineaDeVision(mundo.mapa, casillaDelLobo, casillaDeLaOveja) y mundo.ladridos
+  // (un array de { celdas: Set de casillas alcanzadas, hasta: tiempo límite }).
+  return { ovejasVisibles: [], oyeLadrido: false };
+}
+
+// ===== PASO 4: elegir objetivo por utilidad =====
+function elegirObjetivo(lobo, ovejasVisibles, perro) {
+  // completa aquí: puntúa cada oveja visible (aislamiento, distancia al lobo,
+  // lejanía del perro) y devuelve la de mayor puntuación, o null si no hay ninguna.
+  return null;
+}
+
+// ===== Acciones de los lobos (ya dadas) =====
+// Soltar la ficha es responsabilidad de quien deja de atacar, ahí mismo: si lo
+// hicieras comparando "antes" y "después" de un tick entero, un lobo que pide la
+// ficha y atrapa a su presa en el mismo tick pasaría de atacando=false a
+// atacando=false (true solo por dentro, un instante) y la ficha se perdería para
+// siempre. Por eso cada función que puede dejar de atacar devuelve su propia ficha.
+function huirLobo(lobo, mundo) {
+  if (lobo.atacando) { fichasAtaque.devolver(); lobo.atacando = false; }
+  const dx = lobo.x - mundo.perro.x, dy = lobo.y - mundo.perro.y, d = Math.hypot(dx, dy) || 1;
+  moverLibre(lobo, lobo.x + dx / d * T * 5, lobo.y + dy / d * T * 5, mundo.mapa, 90);
+  return "EN_CURSO";
+}
+function acecharLobo(lobo, mundo) {
+  if (!lobo.objetivoCandidato) return "FALLO";
+  moverLoboHaciaObjetivo(lobo, lobo.objetivoCandidato, mundo.mapa);
+  return "EN_CURSO";
+}
+function perseguirYAtacar(lobo, mundo) {
+  if (!lobo.objetivo || !mundo.ovejas.includes(lobo.objetivo)) {
+    if (lobo.atacando) fichasAtaque.devolver();
+    lobo.atacando = false;
+    return "FALLO";
+  }
+  lobo.atacando = true;
+  moverLoboHaciaObjetivo(lobo, lobo.objetivo, mundo.mapa);
+  if (dist(lobo, lobo.objetivo) &lt; T * 0.6) {
+    mundo.atrapar(lobo.objetivo);
+    fichasAtaque.devolver();
+    lobo.atacando = false;
+    return "EXITO";
+  }
+  return "EN_CURSO";
+}
+function merodearLobo(lobo, mundo) {
+  lobo.atacando = false;
+  if (!lobo.destinoMerodeo || dist(lobo, lobo.destinoMerodeo) &lt; T) lobo.destinoMerodeo = casillaLibreAlAzar(mundo.mapa, lobo);
+  moverLoboHaciaObjetivo(lobo, lobo.destinoMerodeo, mundo.mapa);
+  return "EN_CURSO";
+}
+
+// ===== PASO 5: el árbol de comportamiento del lobo =====
+function construirArbolLobo(lobo) {
+  // completa aquí: Selector["huir" si m.percepcion.oyeLadrido,
+  //                          "atacar" si hay objetivo aislado y una ficha libre,
+  //                          "acechar" si ve alguna oveja,
+  //                          "merodear" en cualquier otro caso]
+  return new Accion("merodear", (m) =&gt; merodearLobo(lobo, m));
+}
+
+// ===== PASO 6: moverse con A* =====
+function moverLoboHaciaObjetivo(lobo, destino, mapa) {
+  // completa aquí: calcula (o reutiliza) un camino con aEstrella y avanza por él
+  // con moverLibre; replanifica si pasaron más de 0,5 s desde el último plan, o
+  // si el objetivo se alejó más de 2 casillas de donde apuntaba el plan anterior.
+}
+
+// ===== El mundo =====
+let mapa, inicio, corral, semilla;
+let saltarin, perro, ovejas, lobos, fichasAtaque, ladridos, reloj, ganado, perdido, __azarMerodeo;
+const lienzo = document.querySelector("canvas"), ctx = lienzo.getContext("2d");
+const estadoEl = document.querySelector("#estado");
+
+function atraparOveja(oveja) { ovejas = ovejas.filter((o) =&gt; o !== oveja); }
+
+function iniciar(s) {
+  semilla = s;
+  const g = generarBosque(semilla);
+  mapa = g.mapa; inicio = g.inicio; corral = g.corral;
+  __azarMerodeo = crearAzar(semilla + 55);
+  saltarin = { x: (inicio.x + 0.5) * T, y: (inicio.y + 0.5) * T };
+  perro = { x: saltarin.x - T, y: saltarin.y, ladrando: 0 };
+  const az = crearAzar(semilla + 777);
+  ovejas = [];
+  for (let i = 0; i &lt; 400 &amp;&amp; ovejas.length &lt; 6; i++) {
+    const x = 1 + Math.floor(az() * (ANCHO - 2)), y = 1 + Math.floor(az() * (ALTO - 2));
+    if (mapa[y][x] === "#") continue;
+    if (Math.hypot(x - corral.x, y - corral.y) &lt; 6) continue;
+    if (Math.hypot(x - inicio.x, y - inicio.y) &gt; 11) continue;
+    ovejas.push({ x: (x + 0.5) * T, y: (y + 0.5) * T, vx: 0, vy: 0 });
+  }
+  lobos = [];
+  fichasAtaque = new Fichas(1);
+  for (let i = 0; i &lt; 400 &amp;&amp; lobos.length &lt; 3; i++) {
+    const x = 1 + Math.floor(az() * (ANCHO - 2)), y = 1 + Math.floor(az() * (ALTO - 2));
+    if (mapa[y][x] === "#") continue;
+    if (Math.hypot(x - inicio.x, y - inicio.y) &lt; 8) continue;
+    lobos.push({ x: (x + 0.5) * T, y: (y + 0.5) * T, objetivo: null, atacando: false, camino: [], indiceCamino: 0, ultimoPlan: -10, destinoPlan: null, destinoMerodeo: null });
+  }
+  for (const l of lobos) l.arbol = construirArbolLobo(l);
+  ladridos = []; reloj = 0; ganado = false; perdido = false;
+}
+
+function actualizarLobos(dt, mundo) {
+  for (const lobo of mundo.lobos) {
+    const percepcion = percibirLobo(lobo, mundo);
+    lobo.objetivoCandidato = elegirObjetivo(lobo, percepcion.ovejasVisibles, mundo.perro);
+    lobo.arbol.tick(Object.assign({ percepcion }, mundo));
+  }
+}
+
+// ===== Entrada =====
+const teclas = new Set();
+let destinoToque = null;
+addEventListener("keydown", (e) =&gt; { teclas.add(e.key.toLowerCase()); if (e.key.startsWith("Arrow")) e.preventDefault(); });
+addEventListener("keyup", (e) =&gt; teclas.delete(e.key.toLowerCase()));
+function alTocar(e) {
+  const caja = lienzo.getBoundingClientRect();
+  const x = (e.clientX - caja.left) * lienzo.width / caja.width + camara.x;
+  const y = (e.clientY - caja.top) * lienzo.height / caja.height + camara.y;
+  destinoToque = { x, y };
+}
+lienzo.addEventListener("pointerdown", (e) =&gt; { alTocar(e); lienzo.focus(); });
+
+document.querySelector("#ladrar").addEventListener("click", () =&gt; {
+  perro.ladrando = 0.4;
+  const origen = { x: Math.floor(perro.x / T), y: Math.floor(perro.y / T) };
+  const dmap = bfsDistTile(mapa, origen);
+  const celdas = new Set();
+  for (const [k, d] of dmap) if (d &lt;= 6) celdas.add(k);
+  ladridos.push({ celdas, hasta: reloj + 1.2 });
+});
+document.querySelector("#reiniciar").addEventListener("click", () =&gt; {
+  iniciar(Number(document.querySelector("#semilla").value) || 1);
+});
+
+// ===== Cámara y dibujo =====
+const camara = { x: 0, y: 0 };
+function dibujarMundo() {
+  camara.x = Math.max(0, Math.min(ANCHO * T - lienzo.width, saltarin.x - lienzo.width / 2));
+  camara.y = Math.max(0, Math.min(ALTO * T - lienzo.height, saltarin.y - lienzo.height / 2));
+  ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+  ctx.save();
+  ctx.translate(-camara.x, -camara.y);
+  const x0 = Math.floor(camara.x / T), y0 = Math.floor(camara.y / T);
+  const x1 = Math.ceil((camara.x + lienzo.width) / T), y1 = Math.ceil((camara.y + lienzo.height) / T);
+  for (let y = Math.max(0, y0); y &lt; Math.min(ALTO, y1); y++) {
+    for (let x = Math.max(0, x0); x &lt; Math.min(ANCHO, x1); x++) {
+      ctx.fillStyle = mapa[y][x] === "#" ? "#1d2e1a" : ((x + y) % 2 ? "#232b1c" : "#262f1e");
+      ctx.fillRect(x * T, y * T, T, T);
+    }
+  }
+  ctx.fillStyle = "rgba(111, 207, 151, 0.35)";
+  ctx.beginPath(); ctx.arc((corral.x + 0.5) * T, (corral.y + 0.5) * T, T * 1.8, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  for (const o of ovejas) { ctx.beginPath(); ctx.arc(o.x, o.y, 6, 0, Math.PI * 2); ctx.fill(); }
+  for (const l of lobos) {
+    ctx.fillStyle = "#ff6b6b";
+    ctx.beginPath(); ctx.arc(l.x, l.y, 7, 0, Math.PI * 2); ctx.fill();
+    if (l.atacando) { ctx.fillStyle = "#ffcc4d"; ctx.font = "bold 14px system-ui"; ctx.textAlign = "center"; ctx.fillText("!", l.x, l.y - 14); }
+  }
+  ctx.fillStyle = perro.ladrando &gt; 0 ? "#ffcc4d" : "#d59bff";
+  ctx.beginPath(); ctx.arc(perro.x, perro.y, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#4f8cff";
+  ctx.beginPath(); ctx.arc(saltarin.x, saltarin.y, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+// ===== Bucle =====
+let anterior = null, __dt = 0;
+function bucle(ahora) {
+  if (anterior === null) anterior = ahora;
+  __dt = Math.min((ahora - anterior) / 1000, 1 / 30);
+  anterior = ahora;
+  reloj += __dt;
+  if (!ganado &amp;&amp; !perdido) {
+    let vx = 0, vy = 0;
+    if (teclas.has("arrowleft") || teclas.has("a")) vx -= 1;
+    if (teclas.has("arrowright") || teclas.has("d")) vx += 1;
+    if (teclas.has("arrowup") || teclas.has("w")) vy -= 1;
+    if (teclas.has("arrowdown") || teclas.has("s")) vy += 1;
+    if (vx || vy) { const l = Math.hypot(vx, vy); moverLibre(saltarin, saltarin.x + vx / l * T, saltarin.y + vy / l * T, mapa, 90); destinoToque = null; }
+    else if (destinoToque) { moverLibre(saltarin, destinoToque.x, destinoToque.y, mapa, 90); if (dist(saltarin, destinoToque) &lt; 3) destinoToque = null; }
+    moverLibre(perro, saltarin.x - 14, saltarin.y + 10, mapa, 120);
+    perro.ladrando = Math.max(0, perro.ladrando - __dt);
+    const mundo = { mapa, ovejas, lobos, perro, ladridos, atrapar: atraparOveja };
+    actualizarOvejas(__dt, mundo);
+    actualizarLobos(__dt, mundo);
+    if (ovejas.length === 0) perdido = true;
+    else if (ovejas.every((o) =&gt; dist(o, { x: (corral.x + 0.5) * T, y: (corral.y + 0.5) * T }) &lt; T * 2.2)) ganado = true;
+  }
+  dibujarMundo();
+  estadoEl.textContent = ganado ? `¡Lo lograste! Las ${ovejas.length} ovejas están a salvo.`
+    : perdido ? "Los lobos se llevaron todo el rebaño."
+    : `Ovejas en el rebaño: ${ovejas.length} · fichas de ataque libres: ${fichasAtaque.libres}`;
+  requestAnimationFrame(bucle);
+}
+iniciar(Number(document.querySelector("#semilla").value) || 2026);
+requestAnimationFrame(bucle);</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (typeof generarBosque !== "function") return "No encuentro la función generarBosque.";
+var g1 = generarBosque(2026), g2 = generarBosque(2026);
+if (JSON.stringify(g1.mapa) !== JSON.stringify(g2.mapa)) return "generarBosque debería dar siempre el mismo bosque con la misma semilla.";
+if (typeof fuerzaOveja !== "function") return "No encuentro la función fuerzaOveja.";
+var lejos = fuerzaOveja({ x: 0, y: 0 }, [], [{ x: 10, y: 0 }]);
+if (!(lejos.x < -0.01)) return "Con una amenaza a la derecha y nada más cerca, fuerzaOveja debería huir hacia la izquierda (x negativa).";
+if (typeof construirArbolLobo !== "function") return "No encuentro la función construirArbolLobo.";
+var arbolDePrueba = construirArbolLobo({ x: 0, y: 0 });
+if (!arbolDePrueba || arbolDePrueba.tipo !== "selector") return "construirArbolLobo debería devolver un Selector como raíz.";
+return true;
+    </script>
+  </div>
+  <details class="pista"><summary>Pista: fuerzaOveja (paso 2)</summary><p>Acumula separación, alineación y cohesión solo con los vecinos dentro de <code>RADIO_VECINDAD</code> (como en la sección de <a href="#movimiento">steering</a>), y súmales una fuerza que empuje a la oveja lejos de cada amenaza dentro de <code>RADIO_MIEDO</code>, más fuerte cuanto más cerca.</p></details>
+  <details class="pista"><summary>Pista: percibirLobo y elegirObjetivo (pasos 3 y 4)</summary><p>Convierte las posiciones en píxeles a casillas dividiendo entre <code>T</code> y redondeando hacia abajo antes de llamar a <code>hayLineaDeVision</code>. Para «oye el ladrido», comprueba si la casilla del lobo está en el <code>Set</code> de algún ladrido cuyo <code>hasta</code> todavía no haya pasado (<code>reloj</code>). Para la utilidad, normaliza cada consideración entre 0 y 1 antes de combinarla.</p></details>
+  <details class="pista"><summary>Pista: construirArbolLobo (paso 5)</summary><p>La condición de «atacar» es la única con efectos secundarios: solo devuelve EXITO si el lobo ya estaba atacando (para no soltar la ficha a medio ataque) o si pide una ficha nueva y la consigue, y en ese caso debe fijar <code>lobo.objetivo = lobo.objetivoCandidato</code>.</p></details>
+  <details class="pista"><summary>Pista: moverLoboHaciaObjetivo (paso 6)</summary><p>Guarda en el lobo cuándo calculaste el último camino (<code>lobo.ultimoPlan</code>) y hacia qué casilla (<code>lobo.destinoPlan</code>). Antes de llamar a <code>aEstrella</code> otra vez, comprueba esas dos condiciones; si no hace falta replanificar, sigue avanzando por <code>lobo.camino</code> con <code>moverLibre</code>.</p></details>
+  <details class="solucion"><summary>Ver una solución de referencia</summary>
+    <p>El HTML y el CSS no cambian. Esto reemplaza las cinco funciones marcadas «completa aquí» (el resto del JavaScript sigue igual):</p>
+    <pre><code class="language-js">function fuerzaOveja(oveja, rebano, amenazas) {
+  let sep = { x: 0, y: 0 }, ali = { x: 0, y: 0 }, coh = { x: 0, y: 0 }, vecinos = 0;
+  for (const otra of rebano) {
+    const d = dist(oveja, otra);
+    if (d &gt; 0 &amp;&amp; d &lt; RADIO_VECINDAD) {
+      sep.x += (oveja.x - otra.x) / d; sep.y += (oveja.y - otra.y) / d;
+      ali.x += otra.vx; ali.y += otra.vy;
+      coh.x += otra.x; coh.y += otra.y;
+      vecinos++;
+    }
+  }
+  const fuerza = { x: 0, y: 0 };
+  if (vecinos &gt; 0) {
+    coh.x = coh.x / vecinos - oveja.x; coh.y = coh.y / vecinos - oveja.y;
+    fuerza.x += sep.x * 1.6 + (ali.x / vecinos) * 0.3 + coh.x * 0.02;
+    fuerza.y += sep.y * 1.6 + (ali.y / vecinos) * 0.3 + coh.y * 0.02;
+  }
+  for (const amenaza of amenazas) {
+    const d = dist(oveja, amenaza);
+    if (d &lt; RADIO_MIEDO) {
+      const peso = (RADIO_MIEDO - d) / RADIO_MIEDO;
+      fuerza.x += (oveja.x - amenaza.x) / Math.max(d, 1) * peso * 5;
+      fuerza.y += (oveja.y - amenaza.y) / Math.max(d, 1) * peso * 5;
+    }
+  }
+  return fuerza;
+}
+
+function percibirLobo(lobo, mundo) {
+  const loboTile = { x: Math.floor(lobo.x / T), y: Math.floor(lobo.y / T) };
+  const ovejasVisibles = mundo.ovejas.filter((o) =&gt; {
+    const oTile = { x: Math.floor(o.x / T), y: Math.floor(o.y / T) };
+    return dist(lobo, o) / T &lt;= RADIO_VISTA_LOBO &amp;&amp; hayLineaDeVision(mundo.mapa, loboTile, oTile);
+  });
+  const clave = loboTile.y * ANCHO + loboTile.x;
+  const oyeLadrido = mundo.ladridos.some((l) =&gt; l.hasta &gt; reloj &amp;&amp; l.celdas.has(clave));
+  return { ovejasVisibles, oyeLadrido };
+}
+
+function elegirObjetivo(lobo, ovejasVisibles, perro) {
+  if (ovejasVisibles.length === 0) return null;
+  let mejor = null, mejorPuntuacion = -Infinity;
+  for (const o of ovejasVisibles) {
+    let masCercana = Infinity;
+    for (const otra of ovejasVisibles) {
+      if (otra !== o) masCercana = Math.min(masCercana, dist(o, otra));
+    }
+    if (masCercana === Infinity) masCercana = RADIO_VISTA_LOBO * T;
+    const aislamiento = Math.min(1, masCercana / (5 * T));
+    const cercaniaLobo = Math.max(0, 1 - dist(lobo, o) / (RADIO_VISTA_LOBO * T));
+    const lejaniaPerro = Math.min(1, dist(perro, o) / (6 * T));
+    const puntuacion = aislamiento * 0.5 + cercaniaLobo * 0.3 + lejaniaPerro * 0.2;
+    if (puntuacion &gt; mejorPuntuacion) { mejorPuntuacion = puntuacion; mejor = o; }
+  }
+  return mejor;
+}
+
+function construirArbolLobo(lobo) {
+  return new Selector("raiz", [
+    new Secuencia("huir", [
+      new Condicion("oyo el ladrido cerca", (m) =&gt; m.percepcion.oyeLadrido),
+      new Accion("huir", (m) =&gt; huirLobo(lobo, m)),
+    ]),
+    new Secuencia("atacar", [
+      new Condicion("tiene objetivo aislado y ficha", (m) =&gt; {
+        if (lobo.atacando) return true;
+        if (!lobo.objetivoCandidato) return false;
+        if (!fichasAtaque.pedir()) return false;
+        lobo.objetivo = lobo.objetivoCandidato;
+        return true;
+      }),
+      new Accion("perseguir y atacar", (m) =&gt; perseguirYAtacar(lobo, m)),
+    ]),
+    new Secuencia("acechar", [
+      new Condicion("ve alguna oveja", (m) =&gt; m.percepcion.ovejasVisibles.length &gt; 0),
+      new Accion("acechar", (m) =&gt; acecharLobo(lobo, m)),
+    ]),
+    new Accion("merodear", (m) =&gt; merodearLobo(lobo, m)),
+  ]);
+}
+
+function moverLoboHaciaObjetivo(lobo, destino, mapa) {
+  const loboTile = { x: Math.floor(lobo.x / T), y: Math.floor(lobo.y / T) };
+  const destTile = { x: Math.floor(destino.x / T), y: Math.floor(destino.y / T) };
+  const hayQueReplanificar = reloj - lobo.ultimoPlan &gt; 0.5 || !lobo.destinoPlan ||
+    Math.abs(lobo.destinoPlan.x - destTile.x) + Math.abs(lobo.destinoPlan.y - destTile.y) &gt; 2;
+  if (hayQueReplanificar) {
+    const r = aEstrella(mapa, loboTile, destTile);
+    lobo.camino = r ? r.camino : [];
+    lobo.indiceCamino = 0;
+    lobo.ultimoPlan = reloj;
+    lobo.destinoPlan = destTile;
+  }
+  if (lobo.camino.length === 0) { moverLibre(lobo, destino.x, destino.y, mapa, 85); return; }
+  const casilla = lobo.camino[lobo.indiceCamino];
+  const px = (casilla.x + 0.5) * T, py = (casilla.y + 0.5) * T;
+  if (dist(lobo, { x: px, y: py }) &lt; T * 0.4 &amp;&amp; lobo.indiceCamino &lt; lobo.camino.length - 1) lobo.indiceCamino++;
+  moverLibre(lobo, px, py, mapa, 85);
+}</code></pre>
+    <p>Con estas cinco funciones, las ovejas se agrupan y huyen de verdad, los lobos solo ven lo que alcanzan a ver, eligen a la oveja aislada más conveniente, lo hacen con un árbol reactivo que se interrumpe en cuanto ladras cerca, y persiguen por el bosque con A*, recalculando el camino solo cuando hace falta.</p>
+  </details>
+
+  <p>Lista de comprobación para jugar: ¿se nota, por los movimientos de las ovejas, cuándo un lobo las ha puesto nerviosas? ¿el lobo que ataca avisa con un «!» un momento antes de atrapar, en vez de hacerlo sin aviso? ¿nunca atacan dos lobos a la vez a la misma oveja aislada? ¿el bosque siempre tiene un camino entre el punto de partida y el corral, para cualquier semilla que pruebes?</p>
+
+  <h3>Para ir más allá</h3>
+  <ul>
+    <li>Añade un <strong>director</strong> (<a href="#director">sección de dificultad</a>): si el rebaño llega completo al corral muy rápido, que los lobos sean un poco más atrevidos (acechen desde más cerca) la próxima partida; si pierdes muchas ovejas, un poco más tímidos. Con límites y una opción para desactivarlo.</li>
+    <li>Escribe una función que genere <strong>200 semillas</strong> y compruebe que todas dan un bosque conexo, con el corral alcanzable desde el punto de partida (la misma idea del ejercicio <a href="#ej-cueva-sin-islas">Una cueva sin islas</a>, pero como prueba automática).</li>
+    <li>Decora el borde del bosque con <strong>Wave Function Collapse</strong> (una frase y el enlace están en <a href="38-ia-busqueda.html#restricciones">la Estación 38</a>).</li>
+    <li>Rehazlo en Godot 4.7 con <code>TileMapLayer</code> y <code>AStarGrid2D</code> (o <code>NavigationRegion2D</code>), y el árbol de comportamiento en LimboAI o Beehave.</li>
+    <li>Porta <code>generarBosque</code> a Python y expórtalo como JSON, para reutilizarlo en otro proyecto.</li>
+  </ul>
+</section>
+
