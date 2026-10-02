@@ -54,6 +54,8 @@
       <li><a href="#arboles">Árboles de comportamiento</a></li>
       <li><a href="#utilidad">Utilidad y planes</a></li>
       <li><a href="#procedural">Generación procedural</a></li>
+      <li><a href="#director">Dificultad y motores</a></li>
+      <li><a href="#resumen">Resumen</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -3784,6 +3786,124 @@ return true;
   <aside class="senal clave"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Idea clave</p><p>La generación procedural clásica (ruido, autómatas, WFC) <strong>no es</strong> IA generativa. No hay ningún modelo entrenado con ejemplos: son reglas matemáticas escritas a mano, deterministas dada la semilla, que cualquiera puede leer y entender línea por línea. Es, otra vez, IA diseñada, no aprendida (repasa el mapa de la <a href="#que-es">primera sección</a>).</p></div></aside>
   <p>Cómo generar ruido y navegar el resultado con las herramientas de un motor real (<code>FastNoiseLite</code> de Godot, entre otras) lo verás al final de la última sección, junto con la dificultad y la depuración.</p>
 </section>
+
+<section id="director" data-parada="Dificultad y motores">
+  <h2>Dificultad justa, depuración y motores</h2>
+  <p>Ya sabes dar a un personaje estados, movimiento, sentidos, caminos, árboles, criterio y un mundo donde vivir. Falta la capa que lo envuelve todo: ajustar lo difícil que es el juego sin que se note, depurar la IA cuando algo sale mal, y reconocer estas mismas ideas en las herramientas que usarás de verdad.</p>
+
+  <h3>Dificultad dinámica</h3>
+  <p>Un juego con una sola dificultad fija es o demasiado fácil para quien ya domina el juego, o demasiado difícil para quien recién empieza. La <strong>dificultad dinámica</strong> (en inglés, <em>dynamic difficulty adjustment</em>, <strong>DDA</strong>) mide cómo le va a quien juega (muertes, tiempo por nivel, vida media al terminar un combate) y ajusta algo con cuidado: despacio (nunca de golpe, para que no se note el truco) y con <strong>límites</strong> (nunca tan fácil que no haya reto, nunca tan difícil que parezca imposible).</p>
+  <p>Tres casos documentados, con matices distintos:</p>
+  <ul>
+    <li><em>Mario Kart</em> reparte los objetos según la posición en la carrera: quien va último tiene más probabilidad de sacar un objeto potente; quien va primero, casi ninguna. Es dificultad dinámica a la vista, y forma parte del diseño declarado de la saga.</li>
+    <li><em>Resident Evil 4</em> (2005) tiene un sistema de dificultad oculto que ajusta, sin avisar, la puntería de los enemigos, el daño que hacen y hasta la frecuencia con la que sueltan objetos, según cómo le va a quien juega. A diferencia de Mario Kart, aquí el ajuste no se ve: la persona solo siente que el juego «está bien calibrado».</li>
+    <li>El <strong>Director</strong> de <em>Left 4 Dead</em> (2008) no ajusta solo la dificultad: dirige el <em>ritmo</em> de toda la partida, como un maestro de juego humano.</li>
+  </ul>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 260" role="img" aria-label="Diagrama: la curva de intensidad del Director de Left 4 Dead a lo largo del tiempo, con cuatro fases que se repiten en ciclos: acumulación (la intensidad sube poco a poco), pico (se mantiene alta y aparecen oleadas de enemigos, marcadas con iconos), descenso (cae rápido) y relajación (se queda baja un rato antes de volver a subir).">
+      <rect class="d-fondo-2" x="20" y="20" width="60" height="190"/>
+      <rect class="d-caja-suave" x="80" y="20" width="110" height="190"/>
+      <rect class="d-fondo-2" x="190" y="20" width="45" height="190"/>
+      <rect class="d-caja-suave" x="235" y="20" width="55" height="190"/>
+      <text class="d-peq d-tenue" x="50" y="235" text-anchor="middle">acumulación</text>
+      <text class="d-peq d-tenue" x="135" y="235" text-anchor="middle">pico</text>
+      <text class="d-peq d-tenue" x="212" y="235" text-anchor="middle">descenso</text>
+      <text class="d-peq d-tenue" x="262" y="235" text-anchor="middle">relajación</text>
+      <path class="d-linea" d="M20 20L20 210"/>
+      <path class="d-linea" d="M20 210L700 210"/>
+      <text class="d-peq d-tenue" x="20" y="14">intensidad</text>
+      <text class="d-peq d-tenue" x="700" y="226" text-anchor="end">tiempo</text>
+      <path class="d-acento-trazo" fill="none" stroke-width="3" d="M20 193 L80 185 L130 110 L170 68 L200 62 L225 90 L255 175 L290 195 L330 190 L370 165 L410 108 L450 65 L480 62 L505 100 L535 183 L575 197 L610 190 L640 160 L670 108 L700 75"/>
+      <g class="d-mal"><circle cx="150" cy="60" r="6"/><circle cx="175" cy="52" r="6"/><circle cx="200" cy="58" r="6"/></g>
+      <text class="d-peq" x="175" y="36" text-anchor="middle">oleada</text>
+      <g class="d-mal"><circle cx="430" cy="58" r="6"/><circle cx="455" cy="50" r="6"/><circle cx="480" cy="56" r="6"/></g>
+      <text class="d-peq" x="455" y="34" text-anchor="middle">oleada</text>
+      <path class="d-punteada" d="M290 20L290 210"/>
+      <text class="d-peq d-tenue" x="296" y="30">un ciclo</text>
+    </svg>
+    <figcaption>La curva de intensidad del Director de <em>Left 4 Dead</em> (Mike Booth, 2009): mide la intensidad que vive quien juega (daño recibido, munición, ritmo de disparos) y decide cuándo soltar una oleada de infectados (acumulación y pico), cuándo dejar de hacerlo (descenso) y cuánto dejar respirar antes del siguiente ciclo (relajación). El ciclo se repite, pero nunca exactamente igual dos veces.</figcaption>
+  </figure>
+
+  <h3>Trampas justas y legibles</h3>
+  <p>Un director también puede hacer trampa a favor del drama, siempre que quien juega no lo sienta como injusto. En <em>Alien: Isolation</em> (2014), un director de alto nivel sabe en todo momento dónde está la jugadora, pero <strong>nunca se lo dice directamente al alien</strong>: solo le da pistas (un ruido, un olor) coherentes con lo que el alien podría percibir de verdad. El bicho parece saber demasiado, pero nunca hace trampa a la vista.</p>
+  <p>Con varios enemigos a la vez, un truco habitual son las <strong>fichas de ataque</strong>, a veces llamado el «círculo de kung-fu»: aunque cinco enemigos rodeen a la jugadora, solo uno o dos piden permiso para atacar a la vez (una ficha de un cupo limitado); el resto espera su turno rodeando, amenazante pero pasivo. Sin esto, cinco atacantes simultáneos son, sencillamente, injugables. Otros trucos del oficio: hacer fallar el primer disparo a propósito quien dispara por primera vez contra la jugadora (le da tiempo a reaccionar al susto), y anunciar un golpe fuerte con una animación lenta y reconocible antes de lanzarlo, para que esquivarlo sea una habilidad, no una lotería. Programarás las fichas de ataque y un director sencillo en el ejercicio reto <a href="#ej-fichas-director">Fichas de ataque y un director justo</a>.</p>
+
+  <h3>Ética y accesibilidad</h3>
+  <p>Ajustar la dificultad a escondidas plantea una pregunta incómoda: ¿a quién sirve el ajuste? Algunos principios, en la línea de lo que ya viste sobre accesibilidad en juegos (<a href="17-usabilidad.html#criterio">Estación 17</a>):</p>
+  <ul>
+    <li><strong>Transparencia</strong> cuando sea posible: un modo de asistencia visible y opcional (como los de <em>Celeste</em>, que dejan elegir velocidad reducida, invencibilidad o saltos extra, sin esconder nada) respeta más a quien juega que un ajuste invisible que nadie pidió.</li>
+    <li><strong>No usar la adaptación para empujar a comprar</strong>: hacer un juego artificialmente más duro para presionar hacia una compra (vidas extra, mejoras de pago) es manipulación, no diseño.</li>
+    <li><strong>Respetar la autonomía</strong> de quien juega: si alguien quiere que el juego sea difícil de verdad, un ajuste invisible que lo suaviza sin preguntar le quita esa decisión.</li>
+  </ul>
+
+  <h3>Depurar, probar y rendir</h3>
+  <p>La IA es de las partes más difíciles de depurar con solo <code>console.log</code>, porque el problema casi siempre es espacial: «¿por qué no me vio si estaba delante?» se responde mejor <em>mirando</em> que leyendo texto. Dibuja encima del juego lo que la IA está pensando: el cono de visión, el camino calculado, el nombre del estado o el nodo del árbol en curso, el nivel de sospecha. Guarda un registro (<em>log</em>) de las decisiones importantes. Y fija la semilla al reproducir un error: con <code>crearAzar(semilla)</code>, la misma partida se repite exactamente igual, así que un fallo que «a veces pasa» se vuelve un fallo que pasa siempre con esa semilla.</p>
+  <p>Las pruebas automáticas (<a href="26-pruebas.html">Estación 26</a>) también cubren la IA: una prueba por cada transición importante de una máquina de estados («con vida baja, desde cualquier estado, se pasa a huir»), una por cada nodo clave de un árbol, y pruebas de propiedades sobre la generación procedural, como la que ya escribiste: «para 1000 semillas distintas, el mapa generado es siempre conexo y tiene salida».</p>
+  <p>Y el rendimiento importa: 50 enemigos recalculando percepción, árbol y camino en cada fotograma hunden hasta un móvil potente. Las soluciones ya las has visto repartidas por la estación, juntas aquí: <strong>decidir con menos frecuencia</strong> (el cerebro a 5-10 Hz, no a 60); <strong>repartir el trabajo entre fotogramas</strong> (este fotograma deciden los agentes 1 a 10, el siguiente los 11 a 20); <strong>nivel de detalle en la IA</strong> (un enemigo lejos de la cámara puede saltarse la percepción fina o el árbol completo y usar una versión simplificada); y, para cálculos pesados en mapas grandes, un <strong>Web Worker</strong> (<a href="22-ejecucion.html#workers">Estación 22</a>) para que A* no congele el fotograma mientras busca.</p>
+
+  <h3>Estas técnicas en los motores (septiembre de 2026)</h3>
+  <p>Todo lo que programaste desde cero en esta estación existe, ya hecho y optimizado, en los motores que probablemente uses para tu próximo juego. No hace falta que los instales para seguir el curso: basta con que reconozcas las piezas.</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Motor</th><th scope="col">Caminos y navegación</th><th scope="col">Árboles / FSM</th><th scope="col">Utilidad / consultas</th><th scope="col">Ruido</th></tr></thead>
+      <tbody>
+        <tr><td>Godot 4.7.2</td><td><code>AStarGrid2D</code> (A* en cuadrícula) y <code>NavigationAgent2D</code>/<code>3D</code> (navmesh)</td><td>LimboAI (árboles y HFSM, editor y depurador visual) o Beehave (árboles como nodos de escena), desde la Asset Store</td><td>Sin sistema propio: se programa a mano</td><td><code>FastNoiseLite</code> (Perlin, simplex, celular, de valor, con octavas)</td></tr>
+        <tr><td>Unity 6.3 LTS / 6.5</td><td>Paquete AI Navigation 2.0 (<code>NavMeshSurface</code>, <code>NavMeshAgent.SetDestination</code>)</td><td>Paquete Unity Behavior 1.0 (grafos de comportamiento con pizarra); todavía joven, con menos nodos que alternativas veteranas de pago</td><td>Sin sistema propio incluido</td><td>Sin recurso propio incluido; se usan librerías o se programa a mano</td></tr>
+        <tr><td>Unreal Engine 5.8</td><td>NavMesh + <code>MoveTo</code></td><td>Behavior Trees + Blackboard (el modelo clásico) y StateTree (HFSM con selectores, más nuevo)</td><td>EQS (<em>environment query system</em>): consultas del entorno integradas en el editor</td><td>Nodos de material y de Niagara con ruido integrado</td></tr>
+        <tr><td>Web (Phaser 4.2.1)</td><td>No incluye navegación: se programa aparte (como en esta estación) o con <code>recast-navigation-js</code> para navmesh en 3D con three.js</td><td>Sin sistema propio: se programa a mano</td><td>Sin sistema propio</td><td>Sin recurso propio; se programa a mano o con una librería en la computadora</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Dos fragmentos cortos, solo para leer y reconocer, sin tutorial de editor. En GDScript, pedir un camino con <code>AStarGrid2D</code> y seguirlo con un agente de navegación:</p>
+  <pre><code class="language-gdscript">@onready var astar := AStarGrid2D.new()
+
+func _ready() -&gt; void:
+	astar.region = Rect2i(0, 0, 40, 25)
+	astar.cell_size = Vector2(32, 32)
+	astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	astar.default_compute_heuristic = AStarGrid2D.HEURISTIC_OCTILE
+	astar.update()
+	# astar.set_point_solid(Vector2i(x, y)) marca una casilla como muro
+
+func calcular_camino(desde: Vector2i, hasta: Vector2i) -&gt; PackedVector2Array:
+	return astar.get_point_path(desde, hasta)   # la misma idea que tu aEstrella, ya optimizada</code></pre>
+  <p>En C#, moviendo un agente con el paquete AI Navigation de Unity:</p>
+  <pre><code class="language-csharp">using UnityEngine;
+using UnityEngine.AI;
+
+public class Perseguidor : MonoBehaviour {
+    public Transform jugadora;
+    NavMeshAgent agente;
+
+    void Start() { agente = GetComponent&lt;NavMeshAgent&gt;(); }
+
+    void Update() {
+        // reemplaza tu propio seguimiento de camino con arrive: el motor
+        // recalcula y suaviza el camino por ti sobre el navmesh
+        agente.SetDestination(jugadora.position);
+    }
+}</code></pre>
+  <p>Reconoces las piezas: <code>AStarGrid2D</code> es tu <code>aEstrella</code>, con heurísticas y costes ya resueltos; <code>NavMeshAgent</code> hace el seguimiento de camino y el suavizado que programaste con <code>arrive</code>; LimboAI, Beehave, Unity Behavior y los árboles de Unreal son tu intérprete de 50 líneas, con editor visual y depurador encima; EQS es tu mapa de influencia, integrado en el motor.</p>
+
+  <h3>Qué viene después</h3>
+  <p>Todo lo de esta estación se escribe a mano: reglas que alguien pensó, probó y ajustó. Es, con diferencia, la forma más común de hacer IA de juegos, pero no la única. En la <a href="39-aprendizaje-automatico.html">Estación 39</a> y la <a href="40-redes-neuronales.html">40</a> verás agentes que <em>aprenden</em> en vez de seguir reglas escritas, incluyendo el aprendizaje por refuerzo (un agente que mejora jugando, por prueba y error). Y en la <a href="41-modelos-lenguaje.html">41</a>, NPC que conversan de verdad con un modelo de lenguaje, con una idea clave que ya adelantó el mapa de la <a href="#que-es">primera sección</a>: el modelo habla, pero el árbol de comportamiento sigue actuando. Nada de lo que aprendiste aquí se tira: se combina.</p>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Ideas clave</h2>
+  <ul>
+    <li>La IA de un juego fabrica la <strong>ilusión</strong> de inteligencia al servicio de la diversión. Su objetivo no es ganar: es ser justa, legible y divertida de vencer.</li>
+    <li>Un NPC es un <strong>agente</strong> que percibe, decide y actúa dentro del bucle de juego, a ritmos distintos: los sentidos cada pocos fotogramas, el cerebro unas pocas veces por segundo, el cuerpo en cada fotograma.</li>
+    <li>Las <strong>máquinas de estados</strong> (con entrar/actualizar/salir, histéresis y jerarquía) dan comportamiento predecible y fácil de depurar, pero se enredan al crecer.</li>
+    <li>El <strong>steering</strong> de Reynolds mueve personajes con fuerzas limitadas, no con teletransporte: seek, arrive, pursuit con predicción, separación y boids.</li>
+    <li>Un <strong>sistema de percepción</strong> decide qué sabe el agente (distancia, cono, línea de visión, oído propagado por casillas, memoria que decae): nunca lee el mundo directamente, o se vuelve omnisciente e injusto.</li>
+    <li><strong>A*</strong> completo (ocho direcciones, costes de terreno, heurística octil) encuentra el camino más corto; un solo <strong>mapa de distancias</strong> mueve a toda una horda sin repetir la búsqueda por cada enemigo.</li>
+    <li>Los <strong>árboles de comportamiento</strong> (secuencias, selectores, decoradores, pizarra) reutilizan piezas pequeñas entre personajes y se depuran coloreando el último resultado de cada nodo.</li>
+    <li>La <strong>IA por utilidad</strong> puntúa opciones con curvas de respuesta y las combina multiplicando; da matices y variedad que una regla tajante no da. GOAP planifica una cadena de acciones por sí solo.</li>
+    <li>La <strong>generación procedural</strong> (ruido con octavas, autómatas celulares, relleno por inundación) crea mundos distintos con cada semilla, siempre validados antes de mostrarse: lo procedural no sale gratis.</li>
+    <li>La <strong>dificultad dinámica</strong> y trucos como las fichas de ataque hacen trampa a favor de la diversión, con límites, y lo mejor cuando pueden ser transparentes.</li>
+  </ul>
+</section>
   </main>
 </div>
 
@@ -3804,6 +3924,7 @@ return true;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-gdscript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
 <script src="../assets/js/motor.js"></script>
 <script src="../assets/js/terminal.js"></script>
 <script src="../assets/js/practicas.js"></script>

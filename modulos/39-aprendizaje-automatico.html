@@ -3272,7 +3272,7 @@ for (const u of candidatos) {
   if (mu.VP + mu.FP === 0) continue;
   if (mu.VP / (mu.VP + mu.FP) &gt;= 0.95) { menorUmbral = u; break; }
 }
-console.log("Menor umbral con precisión >= 0.95: " + menorUmbral);</code></pre>
+console.log("Menor umbral con precisión &gt;= 0.95: " + menorUmbral);</code></pre>
       <p>Con el umbral de siempre, 0.5, el detector encuentra a los 20 tramposos (exhaustividad 1.0) pero acusa también a 227 personas honradas: solo 1 de cada 12 acusaciones es correcta (precisión 0.081). Para llegar a una precisión del 95&nbsp;%, el umbral sube hasta 0.893, y ahí el coste es el contrario: ya no hay falsas alarmas (FP = 0), pero solo se detecta a 7 de los 20 tramposos. No hay un umbral que gane en las dos: hay que decidir según lo que cuesta cada error, como viste en la sección de evaluación.</p>
     </details>
   </article>
@@ -3494,7 +3494,7 @@ class Vecinos:
                 votos[clase] = votos.get(clase, 0) + 1
             ganador = vecinos[0][1]
             for clase, votosClase in votos.items():
-                if votosClase > votos[ganador]:
+                if votosClase &gt; votos[ganador]:
                     ganador = clase
             predicciones.append(ganador)
         return predicciones
@@ -4104,93 +4104,93 @@ function clasificar(trazo, k = 3) {
         <li>Son sinónimos; cada autor usa el que prefiere.<p class="explica">No son sinónimos: distinguirlos importa porque cambia quién decide y cuándo se puede tocar sin «deshacer» el entrenamiento.</p></li>
       </ol>
     </div>
-    <div class="pregunta" data-correcta="4">
+    <div class="pregunta" data-correcta="1">
       <p class="enunciado">Entrenas una regresión lineal con descenso de gradiente y, tras unas pocas épocas, <code>w</code> y <code>b</code> se vuelven <code>NaN</code>. ¿Cuál es la causa más probable?</p>
       <ol class="opciones">
+        <li>La tasa de aprendizaje es demasiado grande y el entrenamiento diverge.<p class="explica">Correcto: con una tasa grande, cada paso se pasa de largo del mínimo y la pérdida crece sin control hasta desbordar en Infinity y luego NaN. Hay que bajar la tasa.</p></li>
         <li>El conjunto de datos tiene menos de 10 ejemplos.<p class="explica">Pocos datos dan un modelo poco fiable, pero no produce NaN por sí solo.</p></li>
         <li>Olvidaste barajar los datos antes de entrenar.<p class="explica">Barajar afecta a la división en entrenamiento/validación/prueba, no hace que el descenso de gradiente diverja.</p></li>
         <li>Usaste <code>let</code> en vez de <code>const</code> para <code>w</code> y <code>b</code>.<p class="explica"><code>w</code> y <code>b</code> cambian en cada época, así que necesitan <code>let</code>; eso no causa el problema.</p></li>
-        <li>La tasa de aprendizaje es demasiado grande y el entrenamiento diverge.<p class="explica">Correcto: con una tasa grande, cada paso se pasa de largo del mínimo y la pérdida crece sin control hasta desbordar en Infinity y luego NaN. Hay que bajar la tasa.</p></li>
-      </ol>
-    </div>
-    <div class="pregunta" data-correcta="1">
-      <p class="enunciado">¿Por qué k vecinos más cercanos y k-means necesitan escalar las características, pero un árbol de decisión no?</p>
-      <ol class="opciones">
-        <li>Porque kNN y k-means miden distancias entre puntos, y una característica con números grandes (como milisegundos) domina esa distancia; un árbol solo compara con umbrales, y eso da igual en cualquier escala.<p class="explica">Correcto: la distancia euclídea suma diferencias al cuadrado, así que la característica con el rango más grande pesa más, sin que importe más de verdad.</p></li>
-        <li>Porque los árboles de decisión no aceptan números negativos.<p class="explica">Los árboles trabajan perfectamente con números negativos; el umbral de un corte puede ser cualquier valor.</p></li>
-        <li>Porque kNN y k-means son modelos más nuevos que los árboles.<p class="explica">La antigüedad del algoritmo no tiene nada que ver con si necesita escalar.</p></li>
-        <li>Porque escalar solo hace falta cuando hay menos de 100 ejemplos.<p class="explica">El tamaño del conjunto no decide si hace falta escalar: depende de si el algoritmo mide distancias.</p></li>
-      </ol>
-    </div>
-    <div class="pregunta" data-correcta="3">
-      <p class="enunciado">Divides tus datos en entrenamiento, validación y prueba. ¿Cuántas veces deberías mirar la nota del conjunto de prueba durante el proyecto?</p>
-      <ol class="opciones">
-        <li>Todas las que haga falta, para comparar modelos.<p class="explica">Para comparar modelos se usa la validación. Mirar la prueba muchas veces la convierte, en la práctica, en otro simulacro.</p></li>
-        <li>Una vez por cada hiperparámetro que pruebes.<p class="explica">Eso es justo lo que hace el conjunto de validación: elegir hiperparámetros mirando sus notas repetidamente.</p></li>
-        <li>Una sola vez, al final, cuando ya decidiste el modelo y sus hiperparámetros.<p class="explica">Correcto: es el examen final. Si lo miras y luego cambias algo, la siguiente nota de «prueba» ya no mide lo que promete.</p></li>
-        <li>Nunca: la prueba es solo para producción, no para el proyecto.<p class="explica">Sí se usa en el proyecto, pero una única vez, para saber con honestidad cómo le irá al modelo con datos que nunca vio.</p></li>
-      </ol>
-    </div>
-    <div class="pregunta" data-correcta="2">
-      <p class="enunciado">Un modelo acierta el 99.8&nbsp;% de los datos de entrenamiento y el 77&nbsp;% de los de validación. ¿Qué está pasando, y qué NO ayudaría a arreglarlo?</p>
-      <ol class="opciones">
-        <li>Sobreajuste; reducir la profundidad máxima del árbol o aumentar k en kNN ayudaría.<p class="explica">Es verdad, pero la pregunta pide la opción que NO ayuda, y esta sí es un remedio real.</p></li>
-        <li>Sobreajuste; entrenar más épocas con el mismo modelo, sin cambiar nada más, lo empeoraría.<p class="explica">Correcto: la brecha entre 99.8&nbsp;% y 77&nbsp;% es la firma del sobreajuste (memorizó el entrenamiento). Entrenar más tiempo sin simplificar el modelo ni añadir datos no corrige eso; puede incluso agravarlo.</p></li>
-        <li>Sobreajuste; conseguir más datos de entrenamiento, variados, ayudaría.<p class="explica">Es un remedio real: con más ejemplos es más difícil memorizar casualidades.</p></li>
-        <li>Sobreajuste; añadir regularización (bajar <code>C</code> en <code>LogisticRegression</code>, por ejemplo) ayudaría.<p class="explica">También es un remedio real: penalizar pesos grandes evita que el modelo se retuerza para ajustar cada ejemplo.</p></li>
       </ol>
     </div>
     <div class="pregunta" data-correcta="4">
-      <p class="enunciado">Quieres banear cuentas automáticamente por hacer trampa. ¿Qué umbral de probabilidad conviene y por qué?</p>
+      <p class="enunciado">¿Por qué k vecinos más cercanos y k-means necesitan escalar las características, pero un árbol de decisión no?</p>
       <ol class="opciones">
-        <li>Un umbral bajo, para no dejar escapar a ningún tramposo.<p class="explica">Un umbral bajo sube la exhaustividad pero hunde la precisión: acusarías a muchos inocentes, y el coste de un falso positivo (banear a alguien honrado) es gravísimo.</p></li>
-        <li>Da igual el umbral, porque la exactitud no cambia.<p class="explica">La exactitud sí cambia con el umbral, y además no es la medida que importa aquí: lo que importa es cuántos falsos positivos genera cada umbral.</p></li>
-        <li>0.5 siempre, porque es el valor por defecto de la sigmoide.<p class="explica">0.5 es un punto de partida razonable cuando no sabes nada más, pero no es «el correcto»: el umbral se elige según el coste de cada error, no por ser el valor por defecto.</p></li>
-        <li>Un umbral alto, que exija mucha precisión, y con revisión humana antes de banear.<p class="explica">Correcto: banear a un inocente cuesta muchísimo, así que conviene estar muy seguro (precisión alta) aunque eso deje escapar a algunos tramposos, y aun así revisar los casos antes de actuar, como hace VACnet.</p></li>
+        <li>Porque los árboles de decisión no aceptan números negativos.<p class="explica">Los árboles trabajan perfectamente con números negativos; el umbral de un corte puede ser cualquier valor.</p></li>
+        <li>Porque kNN y k-means son modelos más nuevos que los árboles.<p class="explica">La antigüedad del algoritmo no tiene nada que ver con si necesita escalar.</p></li>
+        <li>Porque escalar solo hace falta cuando hay menos de 100 ejemplos.<p class="explica">El tamaño del conjunto no decide si hace falta escalar: depende de si el algoritmo mide distancias.</p></li>
+        <li>Porque kNN y k-means miden distancias entre puntos, y una característica con números grandes (como milisegundos) domina esa distancia; un árbol solo compara con umbrales, y eso da igual en cualquier escala.<p class="explica">Correcto: la distancia euclídea suma diferencias al cuadrado, así que la característica con el rango más grande pesa más, sin que importe más de verdad.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="2">
+      <p class="enunciado">Divides tus datos en entrenamiento, validación y prueba. ¿Cuántas veces deberías mirar la nota del conjunto de prueba durante el proyecto?</p>
+      <ol class="opciones">
+        <li>Todas las que haga falta, para comparar modelos.<p class="explica">Para comparar modelos se usa la validación. Mirar la prueba muchas veces la convierte, en la práctica, en otro simulacro.</p></li>
+        <li>Una sola vez, al final, cuando ya decidiste el modelo y sus hiperparámetros.<p class="explica">Correcto: es el examen final. Si lo miras y luego cambias algo, la siguiente nota de «prueba» ya no mide lo que promete.</p></li>
+        <li>Una vez por cada hiperparámetro que pruebes.<p class="explica">Eso es justo lo que hace el conjunto de validación: elegir hiperparámetros mirando sus notas repetidamente.</p></li>
+        <li>Nunca: la prueba es solo para producción, no para el proyecto.<p class="explica">Sí se usa en el proyecto, pero una única vez, para saber con honestidad cómo le irá al modelo con datos que nunca vio.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
+      <p class="enunciado">Un modelo acierta el 99.8&nbsp;% de los datos de entrenamiento y el 77&nbsp;% de los de validación. ¿Qué está pasando, y qué NO ayudaría a arreglarlo?</p>
+      <ol class="opciones">
+        <li>Sobreajuste; reducir la profundidad máxima del árbol o aumentar k en kNN ayudaría.<p class="explica">Es verdad, pero la pregunta pide la opción que NO ayuda, y esta sí es un remedio real.</p></li>
+        <li>Sobreajuste; conseguir más datos de entrenamiento, variados, ayudaría.<p class="explica">Es un remedio real: con más ejemplos es más difícil memorizar casualidades.</p></li>
+        <li>Sobreajuste; añadir regularización (bajar <code>C</code> en <code>LogisticRegression</code>, por ejemplo) ayudaría.<p class="explica">También es un remedio real: penalizar pesos grandes evita que el modelo se retuerza para ajustar cada ejemplo.</p></li>
+        <li>Sobreajuste; entrenar más épocas con el mismo modelo, sin cambiar nada más, lo empeoraría.<p class="explica">Correcto: la brecha entre 99.8&nbsp;% y 77&nbsp;% es la firma del sobreajuste (memorizó el entrenamiento). Entrenar más tiempo sin simplificar el modelo ni añadir datos no corrige eso; puede incluso agravarlo.</p></li>
       </ol>
     </div>
     <div class="pregunta" data-correcta="1">
-      <p class="enunciado">¿Qué significa que un nodo de un árbol de decisión tenga impureza de Gini igual a 0?</p>
+      <p class="enunciado">Quieres banear cuentas automáticamente por hacer trampa. ¿Qué umbral de probabilidad conviene y por qué?</p>
       <ol class="opciones">
-        <li>Que todas las decisiones de ese nodo pertenecen a la misma clase: el nodo es puro.<p class="explica">Correcto: Gini mide la probabilidad de equivocarte si etiquetas al azar según las proporciones del nodo; con una sola clase, esa probabilidad es 0.</p></li>
-        <li>Que el nodo no tiene ningún ejemplo.<p class="explica">Un nodo vacío no tiene Gini definido (se dividiría entre cero); 0 significa «puro», no «vacío».</p></li>
-        <li>Que el árbol llegó a su profundidad máxima.<p class="explica">La profundidad máxima es otro motivo para parar de construir, independiente de la impureza del nodo.</p></li>
-        <li>Que ese corte usó la característica equivocada.<p class="explica">Gini no evalúa si la característica es «correcta»: mide cuánta mezcla de clases queda, y 0 es la mejor mezcla posible.</p></li>
+        <li>Un umbral alto, que exija mucha precisión, y con revisión humana antes de banear.<p class="explica">Correcto: banear a un inocente cuesta muchísimo, así que conviene estar muy seguro (precisión alta) aunque eso deje escapar a algunos tramposos, y aun así revisar los casos antes de actuar, como hace VACnet.</p></li>
+        <li>Un umbral bajo, para no dejar escapar a ningún tramposo.<p class="explica">Un umbral bajo sube la exhaustividad pero hunde la precisión: acusarías a muchos inocentes, y el coste de un falso positivo (banear a alguien honrado) es gravísimo.</p></li>
+        <li>Da igual el umbral, porque la exactitud no cambia.<p class="explica">La exactitud sí cambia con el umbral, y además no es la medida que importa aquí: lo que importa es cuántos falsos positivos genera cada umbral.</p></li>
+        <li>0.5 siempre, porque es el valor por defecto de la sigmoide.<p class="explica">0.5 es un punto de partida razonable cuando no sabes nada más, pero no es «el correcto»: el umbral se elige según el coste de cada error, no por ser el valor por defecto.</p></li>
       </ol>
     </div>
     <div class="pregunta" data-correcta="3">
+      <p class="enunciado">¿Qué significa que un nodo de un árbol de decisión tenga impureza de Gini igual a 0?</p>
+      <ol class="opciones">
+        <li>Que el nodo no tiene ningún ejemplo.<p class="explica">Un nodo vacío no tiene Gini definido (se dividiría entre cero); 0 significa «puro», no «vacío».</p></li>
+        <li>Que ese corte usó la característica equivocada.<p class="explica">Gini no evalúa si la característica es «correcta»: mide cuánta mezcla de clases queda, y 0 es la mejor mezcla posible.</p></li>
+        <li>Que todas las decisiones de ese nodo pertenecen a la misma clase: el nodo es puro.<p class="explica">Correcto: Gini mide la probabilidad de equivocarte si etiquetas al azar según las proporciones del nodo; con una sola clase, esa probabilidad es 0.</p></li>
+        <li>Que el árbol llegó a su profundidad máxima.<p class="explica">La profundidad máxima es otro motivo para parar de construir, independiente de la impureza del nodo.</p></li>
+      </ol>
+    </div>
+    <div class="pregunta" data-correcta="4">
       <p class="enunciado">Ejecutas k-means dos veces, con los mismos datos y el mismo k, pero con centroides iniciales distintos, y obtienes dos agrupamientos diferentes. ¿Qué dice esto de k-means?</p>
       <ol class="opciones">
         <li>Que hay un error en la implementación: k-means siempre debería dar el mismo resultado.<p class="explica">No es un error: es un comportamiento esperado del algoritmo, documentado en su propio diseño.</p></li>
         <li>Que k-means no sirve para agrupar jugadores de un juego.<p class="explica">Sí sirve; solo hay que tenerlo en cuenta y mitigarlo (k-means++, n_init, semilla fija), no descartar el algoritmo.</p></li>
-        <li>Que k-means siempre reduce la inercia en cada paso, pero no garantiza encontrar el mejor agrupamiento posible: depende del punto de partida.<p class="explica">Correcto: por eso scikit-learn usa k-means++ para empezar mejor y <code>n_init</code> para repetir el proceso varias veces y quedarse con el resultado de menor inercia.</p></li>
         <li>Que hay que aumentar k hasta que el resultado deje de cambiar.<p class="explica">Aumentar k cambia el problema (cuántos grupos buscas), no resuelve la dependencia del punto de partida con el mismo k.</p></li>
+        <li>Que k-means siempre reduce la inercia en cada paso, pero no garantiza encontrar el mejor agrupamiento posible: depende del punto de partida.<p class="explica">Correcto: por eso scikit-learn usa k-means++ para empezar mejor y <code>n_init</code> para repetir el proceso varias veces y quedarse con el resultado de menor inercia.</p></li>
       </ol>
     </div>
-    <div class="pregunta" data-correcta="2">
+    <div class="pregunta" data-correcta="1">
       <p class="enunciado">¿Cuál de estas es una fuga de datos?</p>
       <ol class="opciones">
-        <li>Calcular la media y la desviación típica solo con el conjunto de entrenamiento, y aplicarlas igual a la prueba.<p class="explica">Esa es la forma correcta, no una fuga: es justo lo que evita que la información de la prueba se cuele en el entrenamiento.</p></li>
         <li>Incluir la columna <code>dias_hasta_abandono</code> como característica para predecir si alguien va a abandonar.<p class="explica">Correcto: esa columna solo existe porque el jugador ya abandonó, así que es información del futuro disfrazada de característica. Es una fuga del objetivo.</p></li>
+        <li>Calcular la media y la desviación típica solo con el conjunto de entrenamiento, y aplicarlas igual a la prueba.<p class="explica">Esa es la forma correcta, no una fuga: es justo lo que evita que la información de la prueba se cuele en el entrenamiento.</p></li>
         <li>Estratificar la división para que la clase rara tenga la misma proporción en las tres partes.<p class="explica">Estratificar es una buena práctica para evitar que, por azar, una parte se quede sin ejemplos de la clase rara; no es una fuga.</p></li>
         <li>Fijar una semilla para que la división salga igual cada vez que ejecutas el programa.<p class="explica">Fijar la semilla es para la reproducibilidad, no causa ninguna fuga de información entre las partes.</p></li>
       </ol>
     </div>
-    <div class="pregunta" data-correcta="4">
+    <div class="pregunta" data-correcta="2">
       <p class="enunciado">Un reconocedor de gestos acierta el 94&nbsp;% en general, pero solo el 71&nbsp;% con trazos de pantalla táctil. ¿Qué deberías hacer antes de publicarlo?</p>
       <ol class="opciones">
         <li>Nada: un 94&nbsp;% de exactitud global ya es un buen resultado.<p class="explica">La nota global esconde el problema: si la mitad de tus jugadores usa pantalla táctil, para ellos el reconocedor está roto casi 3 de cada 10 veces.</p></li>
+        <li>Evaluar las métricas por grupo (como ya hiciste), y si el táctil está infrarrepresentado en los datos de entrenamiento, conseguir más ejemplos de ese grupo.<p class="explica">Correcto: la causa más probable es que el entrenamiento tenía pocos trazos táctiles; evaluar por grupo lo detecta, y recoger más ejemplos variados es el remedio directo.</p></li>
         <li>Quitar el modo táctil del juego hasta tener tiempo de arreglarlo en otra versión.<p class="explica">Es una opción posible en un caso extremo, pero no es lo primero que harías: antes conviene diagnosticar y, casi siempre, se puede mejorar sin quitar la función.</p></li>
         <li>Subir el umbral de decisión para que acierte más en general.<p class="explica">Subir el umbral cambia el reparto entre precisión y exhaustividad, pero no corrige que el modelo vio pocos ejemplos táctiles: no ataca la causa.</p></li>
-        <li>Evaluar las métricas por grupo (como ya hiciste), y si el táctil está infrarrepresentado en los datos de entrenamiento, conseguir más ejemplos de ese grupo.<p class="explica">Correcto: la causa más probable es que el entrenamiento tenía pocos trazos táctiles; evaluar por grupo lo detecta, y recoger más ejemplos variados es el remedio directo.</p></li>
       </ol>
     </div>
-    <div class="pregunta" data-correcta="1">
+    <div class="pregunta" data-correcta="3">
       <p class="enunciado">Tienes un clasificador lineal pequeño (unos pocos pesos) y quieres usarlo dentro de un juego web, sin servidor, aceptando que alguien podría leerlo y hacer trampa con él. ¿Cuál de las tres formas de llevar el modelo encaja mejor?</p>
       <ol class="opciones">
-        <li>Exportar los parámetros (medias, escalas, pesos, intercepto) a un archivo JSON y reproducir las cuentas con unas pocas líneas de JavaScript.<p class="explica">Correcto: para un modelo lineal pequeño es el camino más ligero y rápido, y es exactamente lo que probaste en «Del JSON al juego».</p></li>
         <li>Convertirlo a ONNX y ejecutarlo con onnxruntime-web.<p class="explica">Funciona, pero añade un motor de varios megabytes para un modelo que son, literalmente, unos pocos números: es más trabajo del necesario.</p></li>
         <li>Dejarlo en un servidor detrás de una API y consultarlo por red en cada fotograma.<p class="explica">Añade latencia de red innecesaria para algo tan pequeño, y no aporta nada si de todas formas aceptas que se ejecute (y se pueda leer) en el cliente.</p></li>
+        <li>Exportar los parámetros (medias, escalas, pesos, intercepto) a un archivo JSON y reproducir las cuentas con unas pocas líneas de JavaScript.<p class="explica">Correcto: para un modelo lineal pequeño es el camino más ligero y rápido, y es exactamente lo que probaste en «Del JSON al juego».</p></li>
         <li>Guardarlo con <code>pickle</code> y cargarlo directamente en el navegador.<p class="explica"><code>pickle</code> es un formato de Python que el navegador no entiende, y además cargar un pickle de origen desconocido puede ejecutar código arbitrario.</p></li>
       </ol>
     </div>

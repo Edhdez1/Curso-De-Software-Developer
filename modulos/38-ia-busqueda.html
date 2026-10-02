@@ -3694,8 +3694,8 @@ console.log(r.plan ? `${r.plan.length} cruces: ${r.plan.join(", ")}` : "No hay p
   </article>
 
   <article class="ejercicio" data-nivel="semi" id="ej-tres-en-raya"><header class="ejercicio-cabeza"><h3>Tres en raya invencible</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
-    <p>Completa <code>minimax(tablero, turno)</code> para el tres en raya: recorre las jugadas libres, prueba cada una, llama a <code>minimax</code> con el turno cambiado, deshaz la jugada y quédate con el máximo si el turno es <code>"X"</code> o el mínimo si es <code>"O"</code>. Cada vez que entres a la función (antes de cualquier otra cosa) suma 1 a <code>nodosMinimax</code>. Después completa <code>alfaBeta</code> igual, pero cortando cuando <code>alfa &gt;= beta</code>.</p>
-    <div class="taller" id="taller-ej-tres-en-raya" data-titulo="Tres en raya invencible" data-exponer="minimax, alfaBeta, nodosMinimax, nodosAlfaBeta" data-tiempo="10">
+    <p>Completa <code>minimax(tablero, turno)</code> para el tres en raya: recorre las jugadas libres, prueba cada una, llama a <code>minimax</code> con el turno cambiado, deshaz la jugada y quédate con el máximo si el turno es <code>"X"</code> o el mínimo si es <code>"O"</code>. Cada vez que entres a la función (antes de cualquier otra cosa) suma 1 a <code>contador.minimax</code>. Después completa <code>alfaBeta</code> igual, pero cortando cuando <code>alfa &gt;= beta</code>.</p>
+    <div class="taller" id="taller-ej-tres-en-raya" data-titulo="Tres en raya invencible" data-exponer="minimax, alfaBeta, contador" data-tiempo="10">
       <textarea class="taller-codigo">const LINEAS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 function ganador(t) {
   for (const [a, b, c] of LINEAS) if (t[a] !== " " && t[a] === t[b] && t[a] === t[c]) return t[a];
@@ -3705,38 +3705,38 @@ function libres(t) { const r = []; for (let i = 0; i < 9; i++) if (t[i] === " ")
 function otro(turno) { return turno === "X" ? "O" : "X"; }
 function utilidad(g) { return g === "X" ? 1 : g === "O" ? -1 : 0; }
 
-let nodosMinimax = 0;
+const contador = { minimax: 0, alfaBeta: 0 };
+
 function minimax(tablero, turno) {
-  nodosMinimax++;
+  contador.minimax++;
   // Completa: caso base (ganador(tablero) !== null, devuelve utilidad) y
   // caso recursivo (recorre libres(tablero), hacer/llamar/deshacer, máximo o mínimo).
   return 0;
 }
 
-let nodosAlfaBeta = 0;
 function alfaBeta(tablero, turno, alfa, beta) {
-  nodosAlfaBeta++;
+  contador.alfaBeta++;
   // Completa: igual que minimax, pero cortando el bucle cuando alfa >= beta.
   return 0;
 }
 
 const vacio1 = Array(9).fill(" ");
-console.log("minimax:   valor =", minimax(vacio1, "X"), "| nodos =", nodosMinimax);
+console.log("minimax:   valor =", minimax(vacio1, "X"), "| nodos =", contador.minimax);
 const vacio2 = Array(9).fill(" ");
-console.log("alfa-beta: valor =", alfaBeta(vacio2, "X", -Infinity, Infinity), "| nodos =", nodosAlfaBeta);</textarea>
+console.log("alfa-beta: valor =", alfaBeta(vacio2, "X", -Infinity, Infinity), "| nodos =", contador.alfaBeta);</textarea>
       <script type="text/plain" class="taller-verificar">
-var mm = expuesto.minimax, ab = expuesto.alfaBeta;
-if (typeof mm !== "function" || typeof ab !== "function") return "No encuentro minimax y alfaBeta: ¿se llaman así y el programa terminó sin errores?";
-var antesMM = expuesto.nodosMinimax || 0;
+var mm = expuesto.minimax, ab = expuesto.alfaBeta, contador = expuesto.contador;
+if (typeof mm !== "function" || typeof ab !== "function" || !contador) return "No encuentro minimax, alfaBeta y contador: ¿se llaman así y el programa terminó sin errores?";
+var antesMM = contador.minimax;
 var vacio1 = Array(9).fill(" ");
 var valorMM = mm(vacio1, "X");
-var nodosMM = (expuesto.nodosMinimax || 0) - antesMM;
+var nodosMM = contador.minimax - antesMM;
 if (valorMM !== 0) return "minimax desde el tablero vacío debería valer 0 (empate con juego perfecto) y da " + valorMM + ".";
 if (nodosMM < 500000) return "minimax sin poda debería visitar más de 500 000 nodos desde el tablero vacío y visitó " + nodosMM + ". ¿Recorres TODAS las jugadas libres en cada nodo?";
-var antesAB = expuesto.nodosAlfaBeta || 0;
+var antesAB = contador.alfaBeta;
 var vacio2 = Array(9).fill(" ");
 var valorAB = ab(vacio2, "X", -Infinity, Infinity);
-var nodosAB = (expuesto.nodosAlfaBeta || 0) - antesAB;
+var nodosAB = contador.alfaBeta - antesAB;
 if (valorAB !== 0) return "alfaBeta debería dar el mismo valor que minimax (0) y da " + valorAB + ".";
 if (nodosAB < 1000) return "alfaBeta debería visitar bastantes nodos (no puede saber el resultado sin explorar) y visitó solo " + nodosAB + ". ¿Está completa la recursión?";
 if (nodosAB >= 20000) return "alfaBeta debería visitar menos de 20 000 nodos (la poda funciona) y visitó " + nodosAB + ". ¿Cortas el bucle con `if (alfa >= beta) break;`?";
@@ -3769,9 +3769,10 @@ function libres(t) { const r = []; for (let i = 0; i &lt; 9; i++) if (t[i] === "
 function otro(turno) { return turno === "X" ? "O" : "X"; }
 function utilidad(g) { return g === "X" ? 1 : g === "O" ? -1 : 0; }
 
-let nodosMinimax = 0;
+const contador = { minimax: 0, alfaBeta: 0 };
+
 function minimax(tablero, turno) {
-  nodosMinimax++;
+  contador.minimax++;
   const g = ganador(tablero);
   if (g !== null) return utilidad(g);
   let mejor = turno === "X" ? -Infinity : Infinity;
@@ -3784,9 +3785,8 @@ function minimax(tablero, turno) {
   return mejor;
 }
 
-let nodosAlfaBeta = 0;
 function alfaBeta(tablero, turno, alfa, beta) {
-  nodosAlfaBeta++;
+  contador.alfaBeta++;
   const g = ganador(tablero);
   if (g !== null) return utilidad(g);
   let mejor = turno === "X" ? -Infinity : Infinity;
@@ -3802,9 +3802,9 @@ function alfaBeta(tablero, turno, alfa, beta) {
 }
 
 const vacio1 = Array(9).fill(" ");
-console.log("minimax:   valor =", minimax(vacio1, "X"), "| nodos =", nodosMinimax);
+console.log("minimax:   valor =", minimax(vacio1, "X"), "| nodos =", contador.minimax);
 const vacio2 = Array(9).fill(" ");
-console.log("alfa-beta: valor =", alfaBeta(vacio2, "X", -Infinity, Infinity), "| nodos =", nodosAlfaBeta);</code></pre>
+console.log("alfa-beta: valor =", alfaBeta(vacio2, "X", -Infinity, Infinity), "| nodos =", contador.alfaBeta);</code></pre>
       <p>Con esta implementación: minimax visita exactamente <strong>549 946</strong> nodos y alfa-beta, <strong>18 297</strong>: unas 30 veces menos, con el mismo resultado (0, empate con juego perfecto).</p>
     </details>
   </article>
@@ -3983,6 +3983,28 @@ function resultadoPartida(t) {
   return null;
 }
 function crearNodo(tablero, turno, padre, jugada) { return { tablero, turno, padre, jugada, hijos: null, visitas: 0, victorias: 0 }; }
+      </script>
+      <textarea class="taller-codigo">// Completa: igual que en la sección MCTS, pero ahora para Conecta 4.
+
+// UCB1: media de victorias + bonificación por explorar
+function ucb1(hijo, padre) {
+  return 0;   // Completa: Infinity si hijo.visitas === 0; si no, la fórmula de UCB1
+}
+
+// Sube desde "nodo" hasta la raíz sumando la partida simulada.
+// resultado: 1, 2 (quién ganó) o 0 (empate). Las victorias cuentan para
+// quien MOVIÓ hasta ese nodo: 3 - nodo.turno.
+function retropropagar(nodo, resultado) {
+  // Completa
+}
+
+// Partida al azar completa desde "tablero" y "turno" hasta el final.
+// No modifiques "tablero": trabaja sobre una copia.
+function simular(tablero, turno, azar) {
+  return 0;   // Completa: usa copiarTablero, jugadasValidas, soltar y resultadoPartida
+}
+
+// Ya completo: las cuatro fases de MCTS, igual que en la sección.
 function mcts(tablero, turno, iteraciones, azar) {
   const raiz = crearNodo(tablero, turno, null, -1);
   for (let k = 0; k < iteraciones; k++) {
@@ -4007,6 +4029,8 @@ function mcts(tablero, turno, iteraciones, azar) {
   for (const hijo of raiz.hijos) if (hijo.visitas > elegido.visitas) elegido = hijo;
   return elegido.jugada;
 }
+
+// Ya completo: una partida de MCTS contra un jugador al azar.
 function jugarContraAzar(iteraciones, empiezaMCTS, azarJuego, azarMCTS) {
   let t = crearTablero(), turno = 1;
   while (true) {
@@ -4020,26 +4044,6 @@ function jugarContraAzar(iteraciones, empiezaMCTS, azarJuego, azarMCTS) {
     turno = 3 - turno;
   }
 }
-      </script>
-      <textarea class="taller-codigo">// Completa: igual que en la sección MCTS, pero ahora para Conecta 4.
-
-// UCB1: media de victorias + bonificación por explorar
-function ucb1(hijo, padre) {
-  return 0;   // Completa: Infinity si hijo.visitas === 0; si no, la fórmula de UCB1
-}
-
-// Sube desde "nodo" hasta la raíz sumando la partida simulada.
-// resultado: 1, 2 (quién ganó) o 0 (empate). Las victorias cuentan para
-// quien MOVIÓ hasta ese nodo: 3 - nodo.turno.
-function retropropagar(nodo, resultado) {
-  // Completa
-}
-
-// Partida al azar completa desde "tablero" y "turno" hasta el final.
-// No modifiques "tablero": trabaja sobre una copia.
-function simular(tablero, turno, azar) {
-  return 0;   // Completa: usa copiarTablero, jugadasValidas, soltar y resultadoPartida
-}
 
 const inicio = crearTablero();
 const jugada = mcts(inicio, 1, 1000, crearAzar(1));
@@ -4052,9 +4056,10 @@ function crearTablero() { return Array.from({ length: 6 }, function () { return 
 function soltar(t, c, j) { for (var f = 5; f >= 0; f--) if (t[f][c] === 0) { t[f][c] = j; return; } }
 var tSim = crearTablero();
 soltar(tSim, 0, 1); soltar(tSim, 1, 1); soltar(tSim, 2, 1); soltar(tSim, 3, 2);
+var copiaAntes = JSON.stringify(tSim);
 var azarFijo = (function () { var vals = [0.1, 0.5, 0.9, 0.3, 0.7, 0.2, 0.6]; var i = 0; return function () { return vals[i++ % vals.length]; }; })();
 var resultadoSim = sim(tSim, 2, azarFijo);
-if (tSim[0][3] !== 2) return "simular no debería modificar el tablero que recibió (trabaja sobre una copia).";
+if (JSON.stringify(tSim) !== copiaAntes) return "simular no debería modificar el tablero que recibió: trabaja sobre una copia (copiarTablero).";
 if (resultadoSim !== 0 && resultadoSim !== 1 && resultadoSim !== 2) return "simular debe devolver 1, 2 o 0 (empate), y devolvió " + resultadoSim + ".";
 var tAmenaza = crearTablero();
 soltar(tAmenaza, 0, 2); soltar(tAmenaza, 1, 2); soltar(tAmenaza, 2, 2);
@@ -4101,12 +4106,543 @@ function simular(tablero, turno, azar) {
   return r;
 }
 
+function mcts(tablero, turno, iteraciones, azar) {
+  const raiz = crearNodo(tablero, turno, null, -1);
+  for (let k = 0; k &lt; iteraciones; k++) {
+    let nodo = raiz;
+    while (nodo.hijos !== null &amp;&amp; nodo.hijos.length &gt; 0) {
+      let mejor = nodo.hijos[0];
+      for (const hijo of nodo.hijos) if (ucb1(hijo, nodo) &gt; ucb1(mejor, nodo)) mejor = hijo;
+      nodo = mejor;
+    }
+    if (resultadoPartida(nodo.tablero) === null) {
+      nodo.hijos = jugadasValidas(nodo.tablero).map((c) =&gt; {
+        const t2 = copiarTablero(nodo.tablero);
+        soltar(t2, c, nodo.turno);
+        return crearNodo(t2, 3 - nodo.turno, nodo, c);
+      });
+      nodo = nodo.hijos[Math.floor(azar() * nodo.hijos.length)];
+    }
+    const resultado = simular(nodo.tablero, nodo.turno, azar);
+    retropropagar(nodo, resultado);
+  }
+  let elegido = raiz.hijos[0];
+  for (const hijo of raiz.hijos) if (hijo.visitas &gt; elegido.visitas) elegido = hijo;
+  return elegido.jugada;
+}
+
+function jugarContraAzar(iteraciones, empiezaMCTS, azarJuego, azarMCTS) {
+  let t = crearTablero(), turno = 1;
+  while (true) {
+    const esMCTS = (turno === 1) === empiezaMCTS;
+    let columna;
+    if (esMCTS) columna = mcts(t, turno, iteraciones, azarMCTS);
+    else { const j = jugadasValidas(t); columna = j[Math.floor(azarJuego() * j.length)]; }
+    soltar(t, columna, turno);
+    const r = resultadoPartida(t);
+    if (r !== null) return r === 0 ? "empate" : ((turno === 1) === empiezaMCTS ? "mcts" : "azar");
+    turno = 3 - turno;
+  }
+}
+
 const inicio = crearTablero();
 const jugada = mcts(inicio, 1, 1000, crearAzar(1));
 console.log("Desde el tablero vacío, MCTS juega la columna:", jugada);</code></pre>
       <p>Con 500 iteraciones por jugada, MCTS le gana al azar prácticamente siempre: el azar pierde ventanas de cuatro con tanta frecuencia que incluso partidas simuladas sin ninguna inteligencia bastan para que las estadísticas lo delaten.</p>
     </details>
   </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-mapa-python"><header class="ejercicio-cabeza"><h3>Colorea Sudamérica, en Python</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Esta vez en Python. <code>VECINOS</code>, <code>PAISES</code>, <code>forward_check</code> y <code>deshacer</code> ya están escritos. Completa <code>resolver(asignacion, dominios)</code>: si ya asignaste todos los países, devuelve una copia de <code>asignacion</code>; si no, toma el siguiente país sin asignar (<code>PAISES[len(asignacion)]</code>), prueba cada color de su dominio, propaga con <code>forward_check</code>, y si ningún vecino se quedó sin opciones, sigue recursivamente; si un color no funciona, deshaz y prueba el siguiente.</p>
+    <div class="taller" data-modo="python" id="taller-ej-mapa-python" data-titulo="Colorea Sudamérica (Python)">
+      <textarea class="taller-codigo">VECINOS = {
+    "Argentina": ["Bolivia", "Brasil", "Chile", "Paraguay", "Uruguay"],
+    "Bolivia": ["Argentina", "Brasil", "Chile", "Paraguay", "Peru"],
+    "Brasil": ["Argentina", "Bolivia", "Colombia", "Guyana", "Paraguay", "Peru", "Suriname", "Uruguay", "Venezuela"],
+    "Chile": ["Argentina", "Bolivia", "Peru"],
+    "Colombia": ["Brasil", "Ecuador", "Peru", "Venezuela"],
+    "Ecuador": ["Colombia", "Peru"],
+    "Guyana": ["Brasil", "Suriname", "Venezuela"],
+    "Paraguay": ["Argentina", "Bolivia", "Brasil"],
+    "Peru": ["Bolivia", "Brasil", "Chile", "Colombia", "Ecuador"],
+    "Suriname": ["Brasil", "Guyana"],
+    "Uruguay": ["Argentina", "Brasil"],
+    "Venezuela": ["Brasil", "Colombia", "Guyana"],
+}
+PAISES = list(VECINOS.keys())
+
+def forward_check(pais, color, dominios, asignacion):
+    # Quita "color" del dominio de los vecinos todavia sin asignar.
+    # Devuelve la lista de vecinos a los que se lo quito, para deshacerlo despues.
+    quitados = []
+    for vecino in VECINOS[pais]:
+        if vecino in asignacion:
+            continue
+        if color in dominios[vecino]:
+            dominios[vecino].remove(color)
+            quitados.append(vecino)
+    return quitados
+
+def deshacer(quitados, color, dominios):
+    for vecino in quitados:
+        dominios[vecino].append(color)
+
+# Completa: backtracking con forward checking (asignar, comprobar, deshacer).
+def resolver(asignacion, dominios):
+    return None
+
+def colorear(colores):
+    dominios = {p: list(colores) for p in PAISES}
+    return resolver({}, dominios)
+
+resultado4 = colorear(["verde", "azul", "rojo", "amarillo"])
+print("4 colores:", resultado4 is not None)
+if resultado4:
+    for pais in PAISES:
+        print(pais + "=" + resultado4[pais])
+
+resultado3 = colorear(["verde", "azul", "rojo"])
+print("3 colores:", resultado3)</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (salida.indexOf("4 colores: True") === -1) return "Con 4 colores debería encontrar una solución e imprimir «4 colores: True».";
+if (salida.indexOf("3 colores: None") === -1) return "Con solo 3 colores no hay forma de colorear el grupo Argentina-Bolivia-Brasil-Paraguay (los cuatro son vecinos entre sí): debería imprimir «3 colores: None».";
+var VECINOS = {
+  "Argentina": ["Bolivia", "Brasil", "Chile", "Paraguay", "Uruguay"],
+  "Bolivia": ["Argentina", "Brasil", "Chile", "Paraguay", "Peru"],
+  "Brasil": ["Argentina", "Bolivia", "Colombia", "Guyana", "Paraguay", "Peru", "Suriname", "Uruguay", "Venezuela"],
+  "Chile": ["Argentina", "Bolivia", "Peru"],
+  "Colombia": ["Brasil", "Ecuador", "Peru", "Venezuela"],
+  "Ecuador": ["Colombia", "Peru"],
+  "Guyana": ["Brasil", "Suriname", "Venezuela"],
+  "Paraguay": ["Argentina", "Bolivia", "Brasil"],
+  "Peru": ["Bolivia", "Brasil", "Chile", "Colombia", "Ecuador"],
+  "Suriname": ["Brasil", "Guyana"],
+  "Uruguay": ["Argentina", "Brasil"],
+  "Venezuela": ["Brasil", "Colombia", "Guyana"],
+};
+var colores = {};
+for (var i = 0; i < salida.length; i++) {
+  var m = salida[i].match(/^([A-Za-zñÑ]+)=([a-z]+)$/);
+  if (m) colores[m[1]] = m[2];
+}
+var paises = Object.keys(VECINOS);
+if (paises.some(function (p) { return !colores[p]; })) return "Faltan países en la lista impresa con su color (deberían ser los 12).";
+for (var p in VECINOS) {
+  for (var j = 0; j < VECINOS[p].length; j++) {
+    var v = VECINOS[p][j];
+    if (colores[p] === colores[v]) return "Dos países vecinos, " + p + " y " + v + ", quedaron con el mismo color (" + colores[p] + ").";
+  }
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>El caso base: <code>if len(asignacion) == len(PAISES): return dict(asignacion)</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para cada color del dominio del país: <code>asignacion[pais] = color</code>; llama a <code>forward_check</code>; si ningún dominio de los vecinos quedó vacío, llama a <code>resolver</code> de nuevo y, si devuelve algo, propágalo; si no, <code>deshacer(...)</code> y <code>del asignacion[pais]</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-python">VECINOS = {
+    "Argentina": ["Bolivia", "Brasil", "Chile", "Paraguay", "Uruguay"],
+    "Bolivia": ["Argentina", "Brasil", "Chile", "Paraguay", "Peru"],
+    "Brasil": ["Argentina", "Bolivia", "Colombia", "Guyana", "Paraguay", "Peru", "Suriname", "Uruguay", "Venezuela"],
+    "Chile": ["Argentina", "Bolivia", "Peru"],
+    "Colombia": ["Brasil", "Ecuador", "Peru", "Venezuela"],
+    "Ecuador": ["Colombia", "Peru"],
+    "Guyana": ["Brasil", "Suriname", "Venezuela"],
+    "Paraguay": ["Argentina", "Bolivia", "Brasil"],
+    "Peru": ["Bolivia", "Brasil", "Chile", "Colombia", "Ecuador"],
+    "Suriname": ["Brasil", "Guyana"],
+    "Uruguay": ["Argentina", "Brasil"],
+    "Venezuela": ["Brasil", "Colombia", "Guyana"],
+}
+PAISES = list(VECINOS.keys())
+
+def forward_check(pais, color, dominios, asignacion):
+    quitados = []
+    for vecino in VECINOS[pais]:
+        if vecino in asignacion:
+            continue
+        if color in dominios[vecino]:
+            dominios[vecino].remove(color)
+            quitados.append(vecino)
+    return quitados
+
+def deshacer(quitados, color, dominios):
+    for vecino in quitados:
+        dominios[vecino].append(color)
+
+def resolver(asignacion, dominios):
+    if len(asignacion) == len(PAISES):
+        return dict(asignacion)
+    pais = PAISES[len(asignacion)]
+    for color in list(dominios[pais]):
+        asignacion[pais] = color
+        quitados = forward_check(pais, color, dominios, asignacion)
+        hay_vacio = any(len(dominios[v]) == 0 for v in quitados)
+        if not hay_vacio:
+            resultado = resolver(asignacion, dominios)
+            if resultado is not None:
+                return resultado
+        deshacer(quitados, color, dominios)
+        del asignacion[pais]
+    return None
+
+def colorear(colores):
+    dominios = {p: list(colores) for p in PAISES}
+    return resolver({}, dominios)
+
+resultado4 = colorear(["verde", "azul", "rojo", "amarillo"])
+print("4 colores:", resultado4 is not None)
+if resultado4:
+    for pais in PAISES:
+        print(pais + "=" + resultado4[pais])
+
+resultado3 = colorear(["verde", "azul", "rojo"])
+print("3 colores:", resultado3)</code></pre>
+      <p>Argentina, Bolivia, Brasil y Paraguay se tocan los cuatro entre sí (comparte frontera cada par de ellos), así que forman un grupo donde cada uno necesita un color distinto de los otros tres: hacen falta cuatro colores como mínimo, y con tres es matemáticamente imposible.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-cofres"><header class="ejercicio-cabeza"><h3>Coloca los cofres del nivel</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>Un pequeño nivel está representado como un grafo: <code>NODOS</code> son las casillas libres, <code>ARISTAS</code> dice cuáles son vecinas y <code>ENTRADA</code> es por donde entra el jugador. Hay que colocar cuatro cosas: <code>cofre1</code>, <code>cofre2</code>, <code>llave</code> y <code>puerta</code>, cada una en una casilla distinta (ninguna en la entrada), cumpliendo cuatro restricciones. <code>alcanzable(desde, excluir)</code> (ya escrita) hace un recorrido en anchura devolviendo el conjunto de casillas alcanzables desde «desde», sin pasar por el nodo «excluir» (o sin excluir nada si «excluir» es <code>null</code>). Completa <code>cumpleRestricciones(asignacion)</code>: 1) las cuatro variables son nodos distintos y ninguna es la entrada; 2) <code>cofre1</code> y <code>cofre2</code> no son vecinos; 3) las cuatro son alcanzables desde la entrada; 4) la <code>llave</code> es alcanzable desde la entrada <strong>sin pasar por la puerta</strong>. El backtracking que las usa ya está escrito.</p>
+    <div class="taller" id="taller-ej-cofres" data-titulo="Coloca los cofres del nivel" data-exponer="cumpleRestricciones, colocar">
+      <script type="text/plain" class="taller-preparacion">
+const NODOS = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+const ENTRADA = 0;
+const ARISTAS = [[0, 1], [0, 2], [1, 3], [3, 7], [3, 8], [2, 4], [4, 5], [4, 6]];
+function sonVecinos(a, b) { return ARISTAS.some(([x, y]) => (x === a && y === b) || (x === b && y === a)); }
+function vecinosDe(n) { return ARISTAS.filter(([a, b]) => a === n || b === n).map(([a, b]) => (a === n ? b : a)); }
+function alcanzable(desde, excluir) {
+  const visto = new Set([desde]);
+  const cola = [desde];
+  while (cola.length > 0) {
+    const n = cola.shift();
+    for (const v of vecinosDe(n)) {
+      if (v === excluir || visto.has(v)) continue;
+      visto.add(v);
+      cola.push(v);
+    }
+  }
+  return visto;
+}
+      </script>
+      <textarea class="taller-codigo">// Completa: ¿la asignacion { cofre1, cofre2, llave, puerta } cumple las 4 reglas?
+function cumpleRestricciones(asignacion) {
+  return true;   // de momento, acepta cualquier cosa
+}
+
+function colocar() {
+  const candidatos = NODOS.filter((n) => n !== ENTRADA);
+  const variables = ["cofre1", "cofre2", "llave", "puerta"];
+  function backtrack(asignados, restantes) {
+    if (Object.keys(asignados).length === variables.length) {
+      return cumpleRestricciones(asignados) ? asignados : null;
+    }
+    const variable = variables[Object.keys(asignados).length];
+    for (const nodo of restantes) {
+      const nuevo = { ...asignados, [variable]: nodo };
+      const resto = restantes.filter((x) => x !== nodo);
+      const r = backtrack(nuevo, resto);
+      if (r) return r;
+    }
+    return null;
+  }
+  return backtrack({}, candidatos);
+}
+
+console.log(colocar());</textarea>
+      <script type="text/plain" class="taller-verificar">
+var cr = expuesto.cumpleRestricciones, col = expuesto.colocar;
+if (typeof cr !== "function" || typeof col !== "function") return "No encuentro cumpleRestricciones y colocar: ¿se llaman así y el programa terminó sin errores?";
+if (cr({ cofre1: 5, cofre2: 6, llave: 1, puerta: 2 }) !== true) return "{ cofre1: 5, cofre2: 6, llave: 1, puerta: 2 } cumple las 4 reglas y debería dar true.";
+if (cr({ cofre1: 4, cofre2: 5, llave: 1, puerta: 2 }) !== false) return "{ cofre1: 4, cofre2: 5, ... } debería dar false: 4 y 5 son vecinos (hay una arista entre ellos).";
+if (cr({ cofre1: 7, cofre2: 8, llave: 5, puerta: 2 }) !== false) return "{ ..., llave: 5, puerta: 2 } debería dar false: sin pasar por la puerta (nodo 2), la llave (5) no se puede alcanzar.";
+if (cr({ cofre1: 5, cofre2: 5, llave: 1, puerta: 2 }) !== false) return "{ cofre1: 5, cofre2: 5, ... } debería dar false: cofre1 y cofre2 no pueden ser la misma casilla.";
+if (cr({ cofre1: 0, cofre2: 5, llave: 1, puerta: 2 }) !== false) return "{ cofre1: 0, ... } debería dar false: ninguna variable puede ser la ENTRADA (0).";
+var r = col();
+if (!r) return "colocar() no encontró ninguna solución, y sí existe al menos una.";
+var valores = [r.cofre1, r.cofre2, r.llave, r.puerta];
+if (new Set(valores).size !== 4) return "La solución de colocar() repite alguna casilla entre las cuatro variables.";
+if (valores.indexOf(0) !== -1) return "La solución de colocar() usa la casilla de la ENTRADA (0) para una de las variables.";
+function sonVecinosRef(a, b) { var ARISTAS = [[0, 1], [0, 2], [1, 3], [3, 7], [3, 8], [2, 4], [4, 5], [4, 6]]; return ARISTAS.some(function (e) { return (e[0] === a && e[1] === b) || (e[0] === b && e[1] === a); }); }
+if (sonVecinosRef(r.cofre1, r.cofre2)) return "En la solución de colocar(), cofre1 y cofre2 son vecinos y no deberían serlo.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Las cuatro reglas en código: <code>new Set(Object.values(asignacion)).size === 4 &amp;&amp; !Object.values(asignacion).includes(ENTRADA)</code> para la primera.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para la regla 3 y 4, usa <code>alcanzable(ENTRADA, null)</code> (todas las casillas alcanzables sin restricción) y <code>alcanzable(ENTRADA, asignacion.puerta)</code> (alcanzables sin pasar por la puerta). Comprueba con <code>.has(nodo)</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function cumpleRestricciones(asignacion) {
+  const { cofre1, cofre2, llave, puerta } = asignacion;
+  const valores = [cofre1, cofre2, llave, puerta];
+  if (new Set(valores).size !== 4) return false;              // 1) distintas
+  if (valores.includes(ENTRADA)) return false;                 // 1) ninguna es la entrada
+  if (sonVecinos(cofre1, cofre2)) return false;                 // 2) cofres no vecinos
+  const todas = alcanzable(ENTRADA, null);
+  if (!valores.every((v) =&gt; todas.has(v))) return false;        // 3) todas alcanzables
+  const sinPuerta = alcanzable(ENTRADA, puerta);
+  if (!sinPuerta.has(llave)) return false;                      // 4) llave sin cruzar la puerta
+  return true;
+}
+
+function colocar() {
+  const candidatos = NODOS.filter((n) =&gt; n !== ENTRADA);
+  const variables = ["cofre1", "cofre2", "llave", "puerta"];
+  function backtrack(asignados, restantes) {
+    if (Object.keys(asignados).length === variables.length) {
+      return cumpleRestricciones(asignados) ? asignados : null;
+    }
+    const variable = variables[Object.keys(asignados).length];
+    for (const nodo of restantes) {
+      const nuevo = { ...asignados, [variable]: nodo };
+      const resto = restantes.filter((x) =&gt; x !== nodo);
+      const r = backtrack(nuevo, resto);
+      if (r) return r;
+    }
+    return null;
+  }
+  return backtrack({}, candidatos);
+}
+
+console.log(colocar());</code></pre>
+      <p>Con este grafo, una solución válida es <code>puerta: 2, llave: 1, cofre1: 5, cofre2: 6</code>: la llave está en la zona abierta (no hace falta la puerta para llegar a ella) y los dos cofres, detrás de la puerta, premian a quien la abre.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-niveles"><header class="ejercicio-cabeza"><h3>Niveles que se pueden terminar</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>La preparación trae <code>generarLaberinto(semilla)</code> (un laberinto de 9 × 9 con semilla, usando <code>crearAzar</code>) y <code>resolver(laberinto)</code>, que devuelve el número de pasos de la solución más corta (BFS) o <code>null</code> si no hay. Completa <code>nivelesResolubles(cuantos, maxIntentos)</code>: prueba las semillas <code>0, 1, 2, …</code> (hasta <code>maxIntentos</code>), genera y resuelve cada laberinto, y guarda los que tengan una solución de entre 12 y 20 pasos (incluidos), hasta juntar <code>cuantos</code>. Devuelve un array de <code>{ semilla, pasos }</code>.</p>
+    <div class="taller" id="taller-ej-niveles" data-titulo="Niveles que se pueden terminar" data-exponer="nivelesResolubles, generarLaberinto, resolver" data-tiempo="10">
+      <script type="text/plain" class="taller-preparacion">
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const TAM = 9;
+function generarLaberinto(semilla) {
+  const azar = crearAzar(semilla);
+  const g = Array.from({ length: TAM }, () => Array(TAM).fill(1));
+  function tallar(f, c) {
+    g[f][c] = 0;
+    const dirs = [[0, 2], [0, -2], [2, 0], [-2, 0]];
+    for (let i = dirs.length - 1; i > 0; i--) { const j = Math.floor(azar() * (i + 1)); [dirs[i], dirs[j]] = [dirs[j], dirs[i]]; }
+    for (const [df, dc] of dirs) {
+      const nf = f + df, nc = c + dc;
+      if (nf < 0 || nf >= TAM || nc < 0 || nc >= TAM) continue;
+      if (g[nf][nc] !== 1) continue;
+      g[f + df / 2][c + dc / 2] = 0;
+      tallar(nf, nc);
+    }
+  }
+  tallar(0, 0);
+  g[TAM - 1][TAM - 1] = 0;
+  return g;
+}
+function resolver(laberinto) {
+  const meta = [TAM - 1, TAM - 1];
+  const visto = new Set(["0,0"]);
+  const cola = [[0, 0, 0]];
+  let cabeza = 0;
+  while (cabeza < cola.length) {
+    const [f, c, d] = cola[cabeza++];
+    if (f === meta[0] && c === meta[1]) return d;
+    for (const [df, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+      const nf = f + df, nc = c + dc;
+      if (nf < 0 || nf >= TAM || nc < 0 || nc >= TAM) continue;
+      if (laberinto[nf][nc] === 1) continue;
+      const k = nf + "," + nc;
+      if (visto.has(k)) continue;
+      visto.add(k);
+      cola.push([nf, nc, d + 1]);
+    }
+  }
+  return null;
+}
+      </script>
+      <textarea class="taller-codigo">// Completa: genera y prueba semillas 0, 1, 2, ... hasta encontrar "cuantos"
+// niveles cuya solución tenga entre 12 y 20 pasos (los dos incluidos), o
+// hasta llegar a "maxIntentos" semillas probadas.
+function nivelesResolubles(cuantos, maxIntentos) {
+  return [];   // de momento, no guarda ninguno
+}
+
+console.log(nivelesResolubles(5, 200));</textarea>
+      <script type="text/plain" class="taller-verificar">
+var nr = expuesto.nivelesResolubles, gen = expuesto.generarLaberinto, res = expuesto.resolver;
+if (typeof nr !== "function" || typeof gen !== "function" || typeof res !== "function") return "No encuentro nivelesResolubles, generarLaberinto y resolver: ¿se llaman así y el programa terminó sin errores?";
+var niveles = nr(5, 200);
+if (!Array.isArray(niveles) || niveles.length < 5) return "nivelesResolubles(5, 200) debería devolver al menos 5 niveles y devolvió " + (Array.isArray(niveles) ? niveles.length : typeof niveles) + ".";
+var semillasVistas = new Set();
+for (var i = 0; i < niveles.length; i++) {
+  var n = niveles[i];
+  if (typeof n.semilla !== "number" || typeof n.pasos !== "number") return "Cada nivel debería ser { semilla, pasos }.";
+  if (semillasVistas.has(n.semilla)) return "La semilla " + n.semilla + " aparece repetida.";
+  semillasVistas.add(n.semilla);
+  var pasosReales = res(gen(n.semilla));
+  if (pasosReales !== n.pasos) return "Para la semilla " + n.semilla + ", resolver(generarLaberinto(...)) da " + pasosReales + " pasos, no " + n.pasos + ".";
+  if (n.pasos < 12 || n.pasos > 20) return "El nivel de la semilla " + n.semilla + " tiene " + n.pasos + " pasos, fuera del rango 12-20.";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Estructura: <code>const buenos = []; for (let s = 0; s &lt; maxIntentos &amp;&amp; buenos.length &lt; cuantos; s++) { ...generar, resolver, comprobar el rango, empujar si corresponde... } return buenos;</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>resolver</code> puede devolver <code>null</code> (sin solución): descarta esos laberintos antes de comparar con 12 y 20.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function nivelesResolubles(cuantos, maxIntentos) {
+  const buenos = [];
+  for (let s = 0; s &lt; maxIntentos &amp;&amp; buenos.length &lt; cuantos; s++) {
+    const laberinto = generarLaberinto(s);
+    const pasos = resolver(laberinto);
+    if (pasos !== null &amp;&amp; pasos &gt;= 12 &amp;&amp; pasos &lt;= 20) {
+      buenos.push({ semilla: s, pasos });
+    }
+  }
+  return buenos;
+}
+
+console.log(nivelesResolubles(5, 200));</code></pre>
+      <p>De las primeras 60 semillas de este generador, unas 20 caen dentro del rango 12-20: «generar y probar» no necesita ser elegante para funcionar, solo rápido, porque descartar un nivel malo cuesta casi nada.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-frase"><header class="ejercicio-cabeza"><h3>Evoluciona la frase</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>Un algoritmo genético completo para adivinar una frase de 30 caracteres, letra por letra, sin que el programa sepa cuál es: solo recibe un puntaje (cuántas letras coinciden en su posición). Completa <code>aptitud(texto)</code>, <code>cruzar(a, b, azar)</code> (cruce de un punto) y <code>mutar(texto, tasa, azar)</code> (cada carácter cambia con probabilidad <code>tasa</code>). El resto (población, torneo, elitismo, el bucle de generaciones) ya está.</p>
+    <div class="taller" id="taller-ej-frase" data-titulo="Evoluciona la frase" data-exponer="aptitud, cruzar, mutar, evolucionar" data-tiempo="10">
+      <script type="text/plain" class="taller-preparacion">
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const OBJETIVO = "aprender es pensar paso a paso";
+const ALFABETO = "abcdefghijklmnopqrstuvwxyz ";
+function genomaAzar(azar) {
+  let s = "";
+  for (let i = 0; i < OBJETIVO.length; i++) s += ALFABETO[Math.floor(azar() * ALFABETO.length)];
+  return s;
+}
+function torneo(poblacion, aptitudes, azar, k = 5) {
+  let mejor = -1, mejorApt = -1;
+  for (let i = 0; i < k; i++) {
+    const idx = Math.floor(azar() * poblacion.length);
+    if (aptitudes[idx] > mejorApt) { mejorApt = aptitudes[idx]; mejor = idx; }
+  }
+  return poblacion[mejor];
+}
+      </script>
+      <textarea class="taller-codigo">const OBJETIVO = "aprender es pensar paso a paso";
+const ALFABETO = "abcdefghijklmnopqrstuvwxyz ";
+
+// Completa: cuántos caracteres de "texto" coinciden con OBJETIVO en la misma posición.
+function aptitud(texto) {
+  return 0;
+}
+
+// Completa: cruce de un punto. Elige una posición al azar entre 0 y a.length,
+// y devuelve la primera parte de "a" pegada con la segunda parte de "b".
+function cruzar(a, b, azar) {
+  return a;
+}
+
+// Completa: cada carácter de "texto" cambia a una letra al azar del ALFABETO
+// con probabilidad "tasa" (si no, se queda igual).
+function mutar(texto, tasa, azar) {
+  return texto;
+}
+
+function evolucionar(tasaMutacion, azar, tope = 1000, tamPoblacion = 200) {
+  let poblacion = [];
+  for (let i = 0; i < tamPoblacion; i++) poblacion.push(genomaAzar(azar));
+  for (let gen = 0; gen < tope; gen++) {
+    const aptitudes = poblacion.map(aptitud);
+    const mejorApt = Math.max(...aptitudes);
+    if (mejorApt === OBJETIVO.length) return { generacion: gen, lograda: true, frase: poblacion[aptitudes.indexOf(mejorApt)] };
+    const idxMejor = aptitudes.indexOf(mejorApt);
+    const nueva = [poblacion[idxMejor]];   // elitismo: el mejor pasa directo
+    while (nueva.length < tamPoblacion) {
+      const p1 = torneo(poblacion, aptitudes, azar);
+      const p2 = torneo(poblacion, aptitudes, azar);
+      nueva.push(mutar(cruzar(p1, p2, azar), tasaMutacion, azar));
+    }
+    poblacion = nueva;
+  }
+  return { generacion: tope, lograda: false };
+}
+
+const r = evolucionar(0.02, crearAzar(1));
+console.log(r.lograda ? `Lograda en la generación ${r.generacion}: "${r.frase}"` : "No se logró en 1000 generaciones");</textarea>
+      <script type="text/plain" class="taller-verificar">
+var apt = expuesto.aptitud, cru = expuesto.cruzar, mut = expuesto.mutar, evo = expuesto.evolucionar;
+if (typeof apt !== "function" || typeof cru !== "function" || typeof mut !== "function" || typeof evo !== "function") return "No encuentro aptitud, cruzar, mutar y evolucionar: ¿se llaman así y el programa terminó sin errores?";
+if (apt("aprender es pensar paso a paso") !== 30) return "aptitud(OBJETIVO) debería dar 30 (todas las letras coinciden) y da " + apt("aprender es pensar paso a paso") + ".";
+if (apt("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") !== 0) return "aptitud de un texto sin ninguna letra en su sitio debería dar 0.";
+function crearAzarRef(semilla) { return function () { semilla = (semilla + 0x6D2B79F5) | 0; var t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+var hijo = cru("AAAAAAAAAA", "BBBBBBBBBB", function () { return 0.5; });
+if (hijo.length !== 10 || hijo[0] !== "A" || hijo[9] !== "B") return "cruzar debería pegar el inicio de 'a' con el final de 'b' en algún punto intermedio; con azar()=0.5 debería ser algo como AAAAABBBBB y dio " + hijo + ".";
+var sinMutar = mut("aaaaaaaaaa", 0, function () { return 0.9; });
+if (sinMutar !== "aaaaaaaaaa") return "Con tasa 0, mutar no debería cambiar nada.";
+var contadorAzar = 0;
+var siempreMuta = mut("aaaaaaaaaa", 1, function () { contadorAzar++; return contadorAzar % 2 === 1 ? 0 : 0.5; });
+if (siempreMuta === "aaaaaaaaaa" || siempreMuta.length !== 10) return "Con tasa 1 y un azar que siempre 'dispara' la mutación (y elige otra letra), el texto debería cambiar (y mantener el largo). Con esta implementación debería dar «oooooooooo» y dio «" + siempreMuta + "».";
+var r1 = evo(0.02, crearAzarRef(1), 300);
+if (!r1.lograda) return "Con tasa de mutación 0.02 y semilla 1, debería lograr la frase en 300 generaciones o menos.";
+var r2 = evo(0, crearAzarRef(2), 300);
+if (r2.lograda) return "Con tasa de mutación 0 (sin mutación), la población no debería lograr la frase en 300 generaciones: pierde diversidad y se estanca.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>aptitud</code>: recorre las posiciones con un <code>for</code> y suma 1 cada vez que <code>texto[i] === OBJETIVO[i]</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>cruzar</code>: <code>const punto = Math.floor(azar() * a.length); return a.slice(0, punto) + b.slice(punto);</code>. <code>mutar</code>: recorre cada carácter, y si <code>azar() &lt; tasa</code>, reemplázalo con <code>ALFABETO[Math.floor(azar() * ALFABETO.length)]</code>.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const OBJETIVO = "aprender es pensar paso a paso";
+const ALFABETO = "abcdefghijklmnopqrstuvwxyz ";
+
+function aptitud(texto) {
+  let puntos = 0;
+  for (let i = 0; i &lt; OBJETIVO.length; i++) if (texto[i] === OBJETIVO[i]) puntos++;
+  return puntos;
+}
+
+function cruzar(a, b, azar) {
+  const punto = Math.floor(azar() * a.length);
+  return a.slice(0, punto) + b.slice(punto);
+}
+
+function mutar(texto, tasa, azar) {
+  let s = "";
+  for (let i = 0; i &lt; texto.length; i++) s += azar() &lt; tasa ? ALFABETO[Math.floor(azar() * ALFABETO.length)] : texto[i];
+  return s;
+}
+
+function evolucionar(tasaMutacion, azar, tope = 1000, tamPoblacion = 200) {
+  let poblacion = [];
+  for (let i = 0; i &lt; tamPoblacion; i++) poblacion.push(genomaAzar(azar));
+  for (let gen = 0; gen &lt; tope; gen++) {
+    const aptitudes = poblacion.map(aptitud);
+    const mejorApt = Math.max(...aptitudes);
+    if (mejorApt === OBJETIVO.length) return { generacion: gen, lograda: true, frase: poblacion[aptitudes.indexOf(mejorApt)] };
+    const idxMejor = aptitudes.indexOf(mejorApt);
+    const nueva = [poblacion[idxMejor]];
+    while (nueva.length &lt; tamPoblacion) {
+      const p1 = torneo(poblacion, aptitudes, azar);
+      const p2 = torneo(poblacion, aptitudes, azar);
+      nueva.push(mutar(cruzar(p1, p2, azar), tasaMutacion, azar));
+    }
+    poblacion = nueva;
+  }
+  return { generacion: tope, lograda: false };
+}
+
+const r = evolucionar(0.02, crearAzar(1));
+console.log(r.lograda ? `Lograda en la generación ${r.generacion}: "${r.frase}"` : "No se logró en 1000 generaciones");</code></pre>
+      <p>Con tasa 0,02 y semilla 1, llega a la frase completa en unas 30 a 70 generaciones. <strong>Modifica</strong>: prueba con tasa 0,2. ¿Converge igual de rápido? Con tanta mutación, los hijos buenos se destruyen casi tan rápido como aparecen.</p>
+    </details>
+  </article>
+</section>
   </main>
 </div>
 
