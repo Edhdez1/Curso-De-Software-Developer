@@ -2653,3 +2653,544 @@ console.log("Con amenaza de O → casilla", r2.jugada, "| visitas:", JSON.string
     <p><strong>Confundir la jugada más visitada con la de mejor media.</strong> Elige la más visitada.</p>
   </aside>
 </section>
+
+<section id="restricciones" data-parada="Restricciones">
+  <h2>Restricciones: sudoku, horarios y niveles</h2>
+  <p>En todas las secciones anteriores importaba <em>el camino</em>: la secuencia de acciones que lleva a la meta, o la jugada que gana la partida. Ahora cambia la pregunta. En un sudoku no te interesa cómo llegaste a la solución, solo que los 81 números cumplan las reglas. En un mapa, no importa en qué orden pintaste los países, sino que dos países vecinos nunca compartan color. Esta familia de problemas se llama <strong>problema de satisfacción de restricciones</strong> (<em>constraint satisfaction problem</em>, CSP), y tiene su propia forma de resolverse.</p>
+
+  <h3>Qué es un CSP</h3>
+  <p>Un CSP tiene tres ingredientes:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Ingrediente</th><th scope="col">Qué es</th><th scope="col">En el sudoku</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Variables</strong></td><td>Las cosas a las que hay que darles un valor.</td><td>Las 81 casillas.</td></tr>
+        <tr><td><strong>Dominios</strong></td><td>Los valores posibles de cada variable.</td><td>Los dígitos del 1 al 9 (menos los que ya están escritos).</td></tr>
+        <tr><td><strong>Restricciones</strong></td><td>Reglas que limitan qué combinaciones de valores son válidas.</td><td>Todas las casillas de una misma fila, columna o caja de 3 × 3 deben ser distintas.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Una <strong>solución</strong> es una asignación completa (todas las variables tienen un valor) y <strong>consistente</strong> (ninguna restricción se rompe). No hay estado inicial ni meta que perseguir: solo una foto final que tiene que cuadrar.</p>
+  <p>La misma idea describe problemas muy distintos:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Problema</th><th scope="col">Variables</th><th scope="col">Dominio</th><th scope="col">Restricciones</th></tr></thead>
+      <tbody>
+        <tr><td>Sudoku</td><td>81 casillas</td><td>1–9</td><td>Todas distintas por fila, columna y caja.</td></tr>
+        <tr><td>Colorear un mapa</td><td>Cada país</td><td>Los colores disponibles</td><td>Dos países vecinos no comparten color.</td></tr>
+        <tr><td>Horario de exámenes o turnos de una cafetería</td><td>Cada examen o cada turno del día</td><td>Las franjas horarias o las personas disponibles</td><td>Nadie rinde dos exámenes a la vez; nadie cubre dos turnos seguidos; cada turno tiene alguien.</td></tr>
+        <tr><td>Objetos de un nivel (cofres, llave, puerta)</td><td>La posición de cada objeto</td><td>Las casillas libres del nivel</td><td>Los cofres no quedan pegados; todo es alcanzable; la llave se consigue antes que la puerta.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Por qué un mapa necesita cuatro colores</h3>
+  <p>Colorear un mapa para que dos países vecinos nunca compartan color es un CSP clásico. El mapa de Sudamérica da un ejemplo claro: Argentina, Bolivia, Brasil y Paraguay se tocan entre sí, los cuatro con los cuatro. Con tres colores es imposible pintarlos: en cuanto tres de ellos usan los tres colores disponibles, al cuarto no le queda ninguno. Hacen falta cuatro.</p>
+  <figure class="diagrama">
+    <svg viewBox="0 0 720 320" role="img" aria-label="Grafo de países como un CSP. Argentina, Bolivia, Brasil y Paraguay forman un grupo donde los cuatro son vecinos entre sí (seis líneas los conectan todos con todos), así que necesitan cuatro colores distintos. Chile, vecino de Argentina y Bolivia, puede repetir el color de Brasil o Paraguay. Uruguay, vecino de Argentina y Brasil, puede repetir el color de Bolivia o Paraguay.">
+      <text class="d-rotulo" x="20" y="28">Un mapa es un CSP: países = variables, colores = dominio, «vecino» = restricción</text>
+      <g class="d-linea">
+        <path d="M380 60L540 150M540 150L380 240M380 240L220 150M220 150L380 60M380 60L380 240M220 150L540 150"/>
+        <path d="M220 150L90 150M380 60L380 20M540 150L650 150M380 240L380 300"/>
+      </g>
+      <circle class="d-l1" cx="380" cy="60" r="26"/>
+      <circle class="d-l2" cx="540" cy="150" r="26"/>
+      <circle class="d-l3" cx="380" cy="240" r="26"/>
+      <circle class="d-l4" cx="220" cy="150" r="26"/>
+      <circle class="d-caja-suave" cx="90" cy="150" r="22"/>
+      <circle class="d-caja-suave" cx="650" cy="150" r="22"/>
+      <g class="d-mono d-peq" text-anchor="middle">
+        <text x="380" y="66">BO</text>
+        <text x="540" y="156">BR</text>
+        <text x="380" y="246">PY</text>
+        <text x="220" y="156">AR</text>
+        <text x="90" y="156">CH</text>
+        <text x="650" y="156">UY</text>
+      </g>
+      <g class="d-peq d-tenue" text-anchor="middle">
+        <text x="380" y="310">4 colores, los cuatro vecinos entre sí</text>
+        <text x="90" y="186">vecino de AR y BO</text>
+        <text x="650" y="186">vecino de AR y BR</text>
+      </g>
+    </svg>
+    <figcaption>Mapa simplificado (se muestran solo algunos países). Argentina, Bolivia, Brasil y Paraguay son vecinos todos con todos: con 3 colores no alcanza, con 4 sí.</figcaption>
+  </figure>
+
+  <h3>Backtracking: asignar, comprobar y deshacer</h3>
+  <p>El algoritmo base para resolver un CSP es el mismo patrón de recursión que viste en la <a href="20-algoritmos.html#recursion">Estación 20</a>: prueba un valor, si rompe una restricción descártalo, si no, sigue con la siguiente variable, y si te atascas, deshaz y prueba otra cosa. Se llama <strong>backtracking</strong> (vuelta atrás).</p>
+  <pre><code class="language-js">function backtracking(asignacion, variables, dominios, restricciones) {
+  if (asignacion.length === variables.length) return asignacion.slice();   // completa
+  const variable = variables[asignacion.length];
+  for (const valor of dominios[variable]) {
+    asignacion.push(valor);                               // asignar
+    if (cumpleRestricciones(asignacion, restricciones)) {  // comprobar
+      const resultado = backtracking(asignacion, variables, dominios, restricciones);
+      if (resultado !== null) return resultado;
+    }
+    asignacion.pop();                                      // deshacer
+  }
+  return null;   // ningún valor de esta variable funcionó: «no hay solución» por aquí
+}</code></pre>
+  <p>Ordena este mismo algoritmo:</p>
+  <div class="parsons" data-titulo="Ordena el backtracking" data-lenguaje="js">
+    <ol>
+      <li>function backtracking(asignacion, variables, dominios, restricciones) {</li>
+      <li data-sangria="1">if (asignacion.length === variables.length) return asignacion.slice();</li>
+      <li data-sangria="1">const variable = variables[asignacion.length];</li>
+      <li data-sangria="1">for (const valor of dominios[variable]) {</li>
+      <li data-sangria="2">asignacion.push(valor);</li>
+      <li data-sangria="2">if (cumpleRestricciones(asignacion, restricciones)) {</li>
+      <li data-sangria="3">const resultado = backtracking(asignacion, variables, dominios, restricciones);</li>
+      <li data-sangria="3">if (resultado !== null) return resultado;</li>
+      <li data-sangria="2">}</li>
+      <li data-sangria="2">asignacion.pop();</li>
+      <li data-sangria="1">}</li>
+      <li data-sangria="1">return null;</li>
+      <li>}</li>
+    </ol>
+  </div>
+  <p>Este backtracking «ingenuo» prueba las variables en cualquier orden y comprueba las restricciones recién después de asignar. Funciona, pero explora muchísimos callejones sin salida: puede rellenar media casilla y descubrir el problema diez pasos después, cuando ya era evidente desde el principio. Dos ideas lo mejoran mucho.</p>
+
+  <h3>Elegir mejor: MRV, grado y valor menos restrictivo</h3>
+  <p>La primera mejora es <strong>qué variable asignar primero</strong>. La heurística más usada es <strong>MRV</strong> (<em>minimum remaining values</em>, valores restantes mínimos): elige la variable con <strong>menos valores posibles</strong>. Tiene lógica: si una casilla del sudoku ya solo puede ser un 7, asígnala ya; si esperas, otra decisión podría eliminar ese 7 y dejarla sin solución, y lo sabrás antes si la atacas primero. Como desempate, se usa la heurística de <strong>grado</strong>: la variable que participa en más restricciones con variables todavía libres. Para el <em>valor</em> que se prueba dentro de esa variable, conviene el de <strong>menor restricción</strong>: el que menos opciones le quita a los vecinos.</p>
+
+  <h3>Mirar antes de fallar: forward checking y AC-3</h3>
+  <p>La segunda mejora es <strong>propagar</strong> lo que acabas de decidir. Cuando asignas un valor, mira de inmediato a las variables conectadas por una restricción y quítales ese valor de su dominio. Es el <strong>forward checking</strong>: en vez de descubrir el conflicto varias casillas después, lo ves en el momento. Si el dominio de alguna variable queda vacío, no hace falta seguir bajando: ya sabes que esta rama falla, así que vuelves atrás ahí mismo.</p>
+  <p>Forward checking solo mira a los vecinos directos de la variable que acabas de fijar. Un algoritmo más a fondo, <strong>AC-3</strong> (<em>arc consistency</em> 3), sigue propagando en cadena: si el dominio de un vecino se reduce, revisa también a <em>sus</em> vecinos, y así hasta que nada cambie. Detecta contradicciones todavía más temprano, a cambio de más trabajo en cada paso. Aquí solo se menciona la idea; el taller de WFC, más abajo, usa una versión de esa propagación en cadena.</p>
+
+  <figure class="capsula" data-titulo="Sudoku 4×4 con propagación">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: un sudoku 4 por 4 con cajas de 2 por 2. Hay dos pistas: arriba a la izquierda un 1, abajo a la derecha un 1. Las demás casillas muestran, a lápiz, los dígitos que todavía podrían ir ahí. MRV elige la casilla con menos candidatos, un 3, y la asigna; forward checking tacha el 3 de sus vecinas. Luego elige otra casilla reducida a un solo candidato, un 4, pero al asignarlo dos casillas más se quedan sin candidatos: vuelta atrás, se deshace el 4 y se prueba el otro candidato.">
+        <g transform="translate(40,30)">
+          <rect class="d-caja" x="0" y="0" width="240" height="240"/>
+          <path class="d-linea" d="M60 0V240M120 0V240M180 0V240M0 60H240M0 120H240M0 180H240"/>
+          <rect class="d-solido" x="0" y="0" width="120" height="120" fill="none" stroke-width="3" class="d-tinta"/>
+          <path class="d-tinta" d="M0 0H120V120H0z" fill="none" stroke-width="3"/>
+          <path class="d-tinta" d="M120 120H240V240H120z" fill="none" stroke-width="3"/>
+          <text class="d-mono" x="30" y="40" text-anchor="middle" style="font-size:26px">1</text>
+          <text class="d-mono" x="210" y="220" text-anchor="middle" style="font-size:26px">1</text>
+          <g class="d-peq d-tenue" text-anchor="middle" data-pasos="1">
+            <text x="90" y="38">2 3</text><text x="150" y="38">2 3 4</text><text x="210" y="38">2 3 4</text>
+            <text x="30" y="98">3 4</text><text x="90" y="98">3 4</text><text x="150" y="98">2 3</text>
+            <text x="30" y="158">2 4</text><text x="90" y="158">2 3 4</text><text x="150" y="158">2 3</text>
+            <text x="30" y="218">2 3</text><text x="90" y="218">2 3</text>
+          </g>
+          <rect class="d-acento" data-pasos="2" x="120" y="60" width="60" height="60" fill-opacity="0.25"/>
+          <text class="d-mono d-acento-trazo" data-pasos="2-" x="150" y="98" text-anchor="middle" style="font-size:26px" data-texto="2:3; 3:3">3</text>
+          <g class="d-peq d-tenue" text-anchor="middle" data-pasos="3-">
+            <text x="90" y="38" data-texto="3:2">2 3</text>
+            <text x="210" y="38" data-texto="3:2 4">2 3 4</text>
+            <text x="150" y="158" data-texto="3:2">2 3</text>
+          </g>
+          <rect class="d-acento" data-pasos="4" x="0" y="60" width="60" height="60" fill-opacity="0.25"/>
+          <text class="d-mono" data-pasos="4-" x="30" y="98" text-anchor="middle" style="font-size:26px" data-clases="4:d-acento-trazo; 5:d-mal-trazo" data-texto="4:4; 5:4">4</text>
+          <rect class="d-mal" data-pasos="5" x="0" y="120" width="60" height="60" fill-opacity="0.22"/>
+          <text class="d-peq d-mal-trazo" data-pasos="5" x="30" y="158" text-anchor="middle">sin candidatos</text>
+          <g data-pasos="6">
+            <text class="d-mono d-ok-trazo" x="30" y="98" text-anchor="middle" style="font-size:26px">2</text>
+          </g>
+        </g>
+        <g class="d-peq" transform="translate(320,60)">
+          <text class="d-rotulo" x="0" y="0" data-texto="1:Dominios iniciales; 2:MRV elige la casilla con menos candidatos; 3:Forward checking tacha el 3 de sus vecinas; 4:Otra celda queda en un solo candidato: se asigna; 5:Dos vecinas se quedan sin candidatos: contradicción; 6:Vuelta atrás: se deshace y se prueba el otro valor">Dominios iniciales</text>
+          <text x="0" y="30" data-texto="1:cada casilla libre muestra, a lápiz, lo que todavía podría ir ahí.; 2:la celda central-derecha solo tiene 2 candidatos (3 y 4).; 3:las dos casillas de su caja y de su fila pierden el 3 como opción.; 4:la celda de abajo a la izquierda queda forzada a un único valor: 4.; 5:esa celda comparte fila y caja con casillas que también necesitaban el 4.; 6:no se repite todo el sudoku: solo se deshace la última decisión.">cada casilla libre muestra, a lápiz, lo que todavía podría ir ahí.</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Un sudoku 4 × 4 (cajas de 2 × 2) con dos pistas. El resto de casillas anota a lápiz sus candidatos.</li>
+        <li data-duracion="6">MRV elige la casilla con menos candidatos: solo dos, 3 y 4.</li>
+        <li data-duracion="6">Se asigna el 3. Forward checking tacha el 3 de los vecinos de esa casilla (misma fila, columna o caja).</li>
+        <li data-duracion="6">Una tachadura deja a otra casilla con un solo candidato, el 4, así que también se asigna.</li>
+        <li data-duracion="7">Pero ese 4 deja a dos vecinas sin ningún candidato: una contradicción.</li>
+        <li data-duracion="6">Vuelta atrás: se deshace esa última asignación y se prueba el otro valor. Backtracking no repite todo desde cero, solo el último paso.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Pruébalo: sudoku con y sin cabeza</h3>
+  <p>El taller resuelve el mismo sudoku «fácil» de dos formas: <code>backtrackingIngenuo</code>, que ya está completo, prueba las casillas en orden y cuenta cada intento de colocar un dígito. <code>backtrackingMRV</code> hace lo mismo pero con forward checking (ya escrito) y debería elegir siempre la casilla de menor dominio. Te toca <code>elegirCelda(tablero, dominios)</code>: debe devolver el índice de la casilla vacía (<code>tablero[i] === 0</code>) cuyo <code>dominios[i]</code> tiene menos elementos. <strong>Predice</strong> antes de ejecutar: ¿cuántas veces menos colocaciones crees que hará la versión con cabeza?</p>
+  <div class="taller" id="taller-sudoku" data-titulo="Sudoku con y sin cabeza" data-exponer="elegirCelda, backtrackingMRV, backtrackingIngenuo" data-tiempo="8">
+    <script type="text/plain" class="taller-preparacion">
+function filaDe(i) { return Math.floor(i / 9); }
+function colDe(i) { return i % 9; }
+function cajaDe(i) { const f = filaDe(i), c = colDe(i); return Math.floor(f / 3) * 3 + Math.floor(c / 3); }
+function esValido(tablero, i, d) {
+  const f = filaDe(i), c = colDe(i), caja = cajaDe(i);
+  for (let k = 0; k < 81; k++) {
+    if (k === i) continue;
+    if (tablero[k] === d && (filaDe(k) === f || colDe(k) === c || cajaDe(k) === caja)) return false;
+  }
+  return true;
+}
+function vecinosDe(i) {
+  const f = filaDe(i), c = colDe(i), caja = cajaDe(i);
+  const r = [];
+  for (let k = 0; k < 81; k++) if (k !== i && (filaDe(k) === f || colDe(k) === c || cajaDe(k) === caja)) r.push(k);
+  return r;
+}
+    </script>
+    <textarea class="taller-codigo">// Sudoku "fácil": 0 es una casilla vacía
+const FACIL = [5,3,0, 0,7,0, 0,0,0,  6,0,0, 1,9,5, 0,0,0,  0,9,8, 0,0,0, 0,6,0,
+               8,0,0, 0,6,0, 0,0,3,  4,0,0, 8,0,3, 0,0,1,  7,0,0, 0,2,0, 0,0,6,
+               0,6,0, 0,0,0, 2,8,0,  0,0,0, 4,1,9, 0,0,5,  0,0,0, 0,8,0, 0,7,9];
+
+function backtrackingIngenuo(tablero) {
+  let colocaciones = 0;
+  function resolver() {
+    const i = tablero.indexOf(0);
+    if (i === -1) return true;
+    for (let d = 1; d <= 9; d++) {
+      colocaciones++;
+      if (esValido(tablero, i, d)) {
+        tablero[i] = d;
+        if (resolver()) return true;
+        tablero[i] = 0;
+      }
+    }
+    return false;
+  }
+  resolver();
+  return colocaciones;
+}
+
+// Completa: el índice (0 a 80) de la casilla vacía con MENOS candidatos
+// en dominios[i]. dominios[i] es null si la casilla ya tiene un número.
+function elegirCelda(tablero, dominios) {
+  return tablero.indexOf(0);   // de momento, elige siempre la primera vacía
+}
+
+function backtrackingMRV(tablero) {
+  let colocaciones = 0;
+  const dominios = [];
+  for (let i = 0; i < 81; i++) {
+    if (tablero[i] !== 0) { dominios.push(null); continue; }
+    const d = [];
+    for (let v = 1; v <= 9; v++) if (esValido(tablero, i, v)) d.push(v);
+    dominios.push(d);
+  }
+  function resolver() {
+    const i = elegirCelda(tablero, dominios);
+    if (i === -1) return true;
+    const candidatos = dominios[i].slice();
+    for (const d of candidatos) {
+      colocaciones++;
+      tablero[i] = d;
+      const cambiados = [];
+      let fallo = false;
+      for (const v of vecinosDe(i)) {
+        if (tablero[v] !== 0) continue;
+        const idx = dominios[v].indexOf(d);
+        if (idx !== -1) { dominios[v].splice(idx, 1); cambiados.push(v); if (dominios[v].length === 0) fallo = true; }
+      }
+      if (!fallo && resolver()) return true;
+      tablero[i] = 0;
+      for (const v of cambiados) dominios[v].push(d);
+    }
+    return false;
+  }
+  resolver();
+  return colocaciones;
+}
+
+const t1 = FACIL.slice();
+console.log("Ingenuo:        ", backtrackingIngenuo(t1), "colocaciones");
+const t2 = FACIL.slice();
+console.log("MRV + forward checking:", backtrackingMRV(t2), "colocaciones");</textarea>
+    <script type="text/plain" class="taller-verificar">
+var ec = expuesto.elegirCelda, mrv = expuesto.backtrackingMRV, ing = expuesto.backtrackingIngenuo;
+if (typeof ec !== "function" || typeof mrv !== "function") return "No encuentro elegirCelda y backtrackingMRV: ¿se llaman así y el programa terminó sin errores?";
+var tablero = new Array(81).fill(0);
+var dominios = new Array(81).fill(null);
+dominios[10] = [3, 7];
+dominios[40] = [9];
+dominios[60] = [1, 2, 3, 4, 5];
+var elegido = ec(tablero, dominios);
+if (elegido !== 40) return "Con dominios de tamaño 2, 1 y 5, elegirCelda debería devolver la casilla 40 (la de un solo candidato) y devuelve " + elegido + ".";
+var FACIL = [5,3,0,0,7,0,0,0,0, 6,0,0,1,9,5,0,0,0, 0,9,8,0,0,0,0,6,0, 8,0,0,0,6,0,0,0,3, 4,0,0,8,0,3,0,0,1, 7,0,0,0,2,0,0,0,6, 0,6,0,0,0,0,2,8,0, 0,0,0,4,1,9,0,0,5, 0,0,0,0,8,0,0,7,9];
+var copia = FACIL.slice();
+var colocacionesMRV = mrv(copia);
+if (copia.indexOf(0) !== -1) return "El sudoku no quedó resuelto: alguna casilla sigue en 0.";
+for (var f = 0; f < 9; f++) { var s = new Set(copia.slice(f * 9, f * 9 + 9)); if (s.size !== 9) return "La fila " + f + " no tiene los 9 dígitos distintos."; }
+if (colocacionesMRV >= 200) return "Con MRV, resolver este sudoku debería costar menos de 200 colocaciones (con esta implementación, unas 51) y costó " + colocacionesMRV + ". ¿elegirCelda compara dominios[i].length de verdad?";
+if (typeof ing === "function") {
+  var colocacionesIngenuo = ing(FACIL.slice());
+  if (colocacionesIngenuo < 1000) return "El backtracking ingenuo debería necesitar muchas más colocaciones que MRV (unas 37 000 en esta implementación). ¿Lo dejaste intacto?";
+}
+return true;
+    </script>
+  </div>
+  <details class="solucion"><summary>Ver una solución</summary>
+    <pre><code class="language-js">const FACIL = [5,3,0, 0,7,0, 0,0,0,  6,0,0, 1,9,5, 0,0,0,  0,9,8, 0,0,0, 0,6,0,
+               8,0,0, 0,6,0, 0,0,3,  4,0,0, 8,0,3, 0,0,1,  7,0,0, 0,2,0, 0,0,6,
+               0,6,0, 0,0,0, 2,8,0,  0,0,0, 4,1,9, 0,0,5,  0,0,0, 0,8,0, 0,7,9];
+
+function backtrackingIngenuo(tablero) {
+  let colocaciones = 0;
+  function resolver() {
+    const i = tablero.indexOf(0);
+    if (i === -1) return true;
+    for (let d = 1; d &lt;= 9; d++) {
+      colocaciones++;
+      if (esValido(tablero, i, d)) {
+        tablero[i] = d;
+        if (resolver()) return true;
+        tablero[i] = 0;
+      }
+    }
+    return false;
+  }
+  resolver();
+  return colocaciones;
+}
+
+function elegirCelda(tablero, dominios) {
+  let mejor = -1, minimo = Infinity;
+  for (let i = 0; i &lt; 81; i++) {
+    if (tablero[i] !== 0) continue;
+    if (dominios[i].length &lt; minimo) { minimo = dominios[i].length; mejor = i; }
+  }
+  return mejor;
+}
+
+function backtrackingMRV(tablero) {
+  let colocaciones = 0;
+  const dominios = [];
+  for (let i = 0; i &lt; 81; i++) {
+    if (tablero[i] !== 0) { dominios.push(null); continue; }
+    const d = [];
+    for (let v = 1; v &lt;= 9; v++) if (esValido(tablero, i, v)) d.push(v);
+    dominios.push(d);
+  }
+  function resolver() {
+    const i = elegirCelda(tablero, dominios);
+    if (i === -1) return true;
+    const candidatos = dominios[i].slice();
+    for (const d of candidatos) {
+      colocaciones++;
+      tablero[i] = d;
+      const cambiados = [];
+      let fallo = false;
+      for (const v of vecinosDe(i)) {
+        if (tablero[v] !== 0) continue;
+        const idx = dominios[v].indexOf(d);
+        if (idx !== -1) { dominios[v].splice(idx, 1); cambiados.push(v); if (dominios[v].length === 0) fallo = true; }
+      }
+      if (!fallo && resolver()) return true;
+      tablero[i] = 0;
+      for (const v of cambiados) dominios[v].push(d);
+    }
+    return false;
+  }
+  resolver();
+  return colocaciones;
+}
+
+const t1 = FACIL.slice();
+console.log("Ingenuo:        ", backtrackingIngenuo(t1), "colocaciones");
+const t2 = FACIL.slice();
+console.log("MRV + forward checking:", backtrackingMRV(t2), "colocaciones");</code></pre>
+    <p>Con la implementación de referencia: el backtracking ingenuo necesita <strong>37 652 colocaciones</strong>; con MRV y forward checking, solo <strong>51</strong>. En el sudoku difícil de 17 pistas (el mínimo posible para que tenga una única solución), la diferencia es todavía más brutal: el ingenuo necesita unas <strong>239 millones de colocaciones</strong> (unos 24 s, medido en Node, fuera del navegador) y MRV con forward checking solo <strong>4 852</strong> (17 ms). Elegir bien <em>qué</em> decidir primero vale más que cualquier otra optimización.</p>
+  </details>
+  <p><strong>Modifica</strong>: cambia la heurística de desempate: cuando dos casillas tengan el mismo tamaño de dominio, que gane la que tiene más vecinos ya asignados (la heurística de grado). ¿Cambia el número de colocaciones?</p>
+
+  <h3>Niveles resolubles: generar y probar</h3>
+  <p>Un generador de niveles (laberintos, mazmorras, puzles) puede crear disposiciones imposibles de terminar sin darse cuenta: una llave detrás de una puerta que necesita esa misma llave, un cofre en una esquina sin camino. La receta más simple para evitarlo es <strong>generar y probar</strong>: crea un nivel al azar y resuélvelo tú mismo con un algoritmo de búsqueda; si no tiene solución, o la solución es demasiado corta o demasiado larga, descártalo y genera otro. Ya viste esta idea aplicada a plataformas en el ejercicio <a href="34-videojuegos.html#ej-pasable"><code>esPasable</code></a> de la Estación 34: aquí se generaliza a cualquier nivel, usando backtracking o búsqueda en anchura como solucionador.</p>
+
+  <h3>WFC: el mapa que se arma solo propagando restricciones</h3>
+  <p>En la <a href="37-ia-personajes.html#procedural">Estación 37</a> viste <strong>Wave Function Collapse</strong> (WFC) como generador de mapas. Por dentro, WFC es exactamente un CSP con propagación: cada casilla es una variable, su dominio es el conjunto de piezas que todavía podrían ir ahí, y la restricción es «esta pieza debe encajar con sus vecinas». El algoritmo repite tres pasos:</p>
+  <ol class="pasos">
+    <li><div><p><strong>Elegir</strong> la casilla sin resolver con <strong>menor entropía</strong>: la que tiene menos piezas posibles en su dominio. Es MRV con otro nombre.</p></div></li>
+    <li><div><p><strong>Colapsar</strong>: fijar esa casilla a una de sus piezas posibles, al azar.</p></div></li>
+    <li><div><p><strong>Propagar</strong>: quitar del dominio de las casillas vecinas las piezas que ya no encajan con la elegida, y seguir la cadena si alguna vecina queda fijada también (forward checking, encadenado). Si el dominio de alguna casilla queda vacío, hay una <strong>contradicción</strong>: se reinicia la cuadrícula (o, en generadores más elaborados, se vuelve atrás) y se sigue.</p></div></li>
+  </ol>
+  <p>Este taller lo arma paso a paso con un terreno de tres piezas: tierra, playa y mar. La única regla de encaje la escribes tú:</p>
+  <div class="taller" data-modo="web" data-titulo="El mapa que se arma solo (WFC)" data-alto="26rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;p&gt;Terreno generado con <strong>Wave Function Collapse</strong>. Cada paso colapsa la casilla de menor entropía y propaga la restricción a sus vecinas.&lt;/p&gt;
+&lt;div id="cuadricula"&gt;&lt;/div&gt;
+&lt;p id="estado"&gt;&lt;/p&gt;
+&lt;div class="botones"&gt;
+  &lt;button id="btnPaso"&gt;Un paso&lt;/button&gt;
+  &lt;button id="btnTodo"&gt;Resolver todo&lt;/button&gt;
+  &lt;button id="btnOtra"&gt;Otra semilla&lt;/button&gt;
+&lt;/div&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">#cuadricula { display: grid; grid-template-columns: repeat(6, 36px); gap: 2px; margin: 10px 0; }
+#cuadricula div { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  font: 11px monospace; border-radius: 4px; color: #fff; }
+.tierra { background: #6b8f3e; }
+.playa { background: #d9c08a; color: #333; }
+.mar { background: #2a6f97; }
+.sin-colapsar { background: #cccccc; color: #333; }
+.botones button { margin-right: 8px; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const FILAS = 5, COLUMNAS = 6;
+const TILES = ["tierra", "playa", "mar"];
+
+// Completa: dos casillas son compatibles si son el mismo terreno,
+// o si alguna de las dos es "playa" (la playa conecta con todo lo demás:
+// tierra con playa, y playa con mar, pero no tierra pegada al mar).
+function compatibles(a, b) {
+  return true;   // de momento, todo encaja con todo: sin esta regla no hay restricción real
+}
+
+let azar, cuadricula, semillaActual;
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function reiniciarCuadricula() {
+  cuadricula = [];
+  for (let f = 0; f < FILAS; f++) { const fila = []; for (let c = 0; c < COLUMNAS; c++) fila.push(TILES.slice()); cuadricula.push(fila); }
+}
+function reiniciar(semilla) { semillaActual = semilla; azar = crearAzar(semilla); reiniciarCuadricula(); }
+function vecinosDe(f, c) {
+  const r = [];
+  if (f > 0) r.push([f - 1, c]);
+  if (f < FILAS - 1) r.push([f + 1, c]);
+  if (c > 0) r.push([f, c - 1]);
+  if (c < COLUMNAS - 1) r.push([f, c + 1]);
+  return r;
+}
+function colapsarUnPaso() {
+  let candidatas = [], minimo = Infinity;
+  for (let f = 0; f < FILAS; f++) for (let c = 0; c < COLUMNAS; c++) {
+    const n = cuadricula[f][c].length;
+    if (n <= 1) continue;
+    if (n < minimo) { minimo = n; candidatas = [[f, c]]; }
+    else if (n === minimo) candidatas.push([f, c]);
+  }
+  if (candidatas.length === 0) return { terminado: true, contradiccion: false };
+  const [f, c] = candidatas[Math.floor(azar() * candidatas.length)];
+  const dominio = cuadricula[f][c];
+  const elegido = dominio[Math.floor(azar() * dominio.length)];
+  cuadricula[f][c] = [elegido];
+  const cola = [[f, c]];
+  while (cola.length > 0) {
+    const [cf, cc] = cola.shift();
+    const fijo = cuadricula[cf][cc][0];
+    for (const [vf, vc] of vecinosDe(cf, cc)) {
+      if (cuadricula[vf][vc].length === 1) continue;
+      const antes = cuadricula[vf][vc].length;
+      cuadricula[vf][vc] = cuadricula[vf][vc].filter((t) => compatibles(fijo, t));
+      if (cuadricula[vf][vc].length === 0) { reiniciarCuadricula(); return { terminado: false, contradiccion: true }; }
+      if (cuadricula[vf][vc].length === 1 && cuadricula[vf][vc].length < antes) cola.push([vf, vc]);
+    }
+  }
+  return { terminado: false, contradiccion: false };
+}
+
+// --- Pinta la cuadrícula y conecta los botones ---
+function dibujar() {
+  const cont = document.getElementById("cuadricula");
+  cont.innerHTML = "";
+  let pendientes = 0;
+  for (let f = 0; f < FILAS; f++) for (let c = 0; c < COLUMNAS; c++) {
+    const div = document.createElement("div");
+    const dom = cuadricula[f][c];
+    if (dom.length === 1) { div.className = dom[0]; div.textContent = dom[0][0].toUpperCase(); }
+    else { div.className = "sin-colapsar"; div.textContent = dom.length; pendientes++; }
+    cont.appendChild(div);
+  }
+  document.getElementById("estado").textContent = pendientes === 0
+    ? "Cuadrícula completa (semilla " + semillaActual + ")."
+    : pendientes + " casillas sin colapsar.";
+}
+reiniciar(7);
+dibujar();
+document.getElementById("btnPaso").addEventListener("click", () => { colapsarUnPaso(); dibujar(); comprobar(); });
+document.getElementById("btnTodo").addEventListener("click", () => {
+  let pasos = 0;
+  while (pasos < 500) { const r = colapsarUnPaso(); pasos++; if (r.terminado) break; }
+  dibujar();
+  comprobar();
+});
+document.getElementById("btnOtra").addEventListener("click", () => { reiniciar(Math.floor(Math.random() * 100000)); dibujar(); comprobar(); });
+window.reiniciar = reiniciar;
+window.colapsarUnPaso = colapsarUnPaso;
+window.obtenerCuadricula = () => cuadricula;</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (typeof window.reiniciar !== "function" || typeof window.colapsarUnPaso !== "function" || typeof window.obtenerCuadricula !== "function") {
+  return "Faltan reiniciar, colapsarUnPaso u obtenerCuadricula en window.";
+}
+function compatiblesRef(a, b) { return a === b || a === "playa" || b === "playa"; }
+for (var s = 0; s < 3; s++) {
+  var semilla = [1, 7, 42][s];
+  window.reiniciar(semilla);
+  var pasos = 0, r;
+  while (pasos < 300) { r = window.colapsarUnPaso(); pasos++; if (r.terminado) break; }
+  var estado = window.obtenerCuadricula();
+  for (var f = 0; f < estado.length; f++) {
+    for (var c = 0; c < estado[f].length; c++) {
+      if (estado[f][c].length !== 1) return "Con la semilla " + semilla + " quedó una casilla sin colapsar del todo. ¿compatibles descarta algo?";
+    }
+  }
+  for (var f = 0; f < estado.length; f++) {
+    for (var c = 0; c < estado[f].length; c++) {
+      var aqui = estado[f][c][0];
+      if (c + 1 < estado[f].length) {
+        var der = estado[f][c + 1][0];
+        if (!compatiblesRef(aqui, der)) return "Con la semilla " + semilla + ", dos casillas vecinas (" + aqui + " y " + der + ") no deberían ser compatibles. Revisa compatibles(a, b).";
+      }
+      if (f + 1 < estado.length) {
+        var abajo = estado[f + 1][c][0];
+        if (!compatiblesRef(aqui, abajo)) return "Con la semilla " + semilla + ", dos casillas vecinas no deberían ser compatibles. Revisa compatibles(a, b).";
+      }
+    }
+  }
+}
+return true;
+    </script>
+  </div>
+  <p><strong>Predice</strong> antes de pulsar «Resolver todo»: ¿quedará una franja de playa entre la tierra y el mar, o pueden tocarse directamente? <strong>Modifica</strong>: quita la condición de la playa (deja solo <code>a === b</code>) y pulsa «Otra semilla» varias veces. El mapa queda de un solo terreno, de punta a punta: sin una pieza «puente», la única forma de que todo encaje es que todo sea igual. Con piezas más variadas (más formas, conexiones que no son simétricas) las contradicciones reales y los reinicios son mucho más frecuentes; aquí, con solo tres piezas y la playa de comodín, casi nunca hace falta.</p>
+
+  <h3>Restricciones blandas y cuándo pasar a una librería</h3>
+  <p>No todas las restricciones son innegociables. Las <strong>restricciones duras</strong> no pueden romperse (dos exámenes no pueden ocurrir a la vez). Las <strong>restricciones blandas</strong> son preferencias que conviene cumplir, pero que a veces hay que sacrificar (que nadie tenga dos turnos seguidos; que el reparto de turnos sea parejo entre el equipo). Un CSP con restricciones blandas se convierte en un problema de <strong>optimización con restricciones</strong>: busca la asignación que viola la menor cantidad posible de preferencias, o la que maximiza una puntuación. Esto conecta con la siguiente sección, <a href="#optimizar">Optimizar</a>, y es justo lo que hacen las herramientas profesionales de scheduling.</p>
+  <p>El backtracking de este taller es para entender el mecanismo. Para sudokus gigantes, miles de turnos o restricciones blandas con prioridades, se usa software dedicado. <strong>CP-SAT</strong>, el resolutor de restricciones de <strong>Google OR-Tools</strong> (9.15), resuelve el sudoku difícil de 17 pistas en unos 0,01 s:</p>
+  <pre><code class="language-python">from ortools.sat.python import cp_model
+
+modelo = cp_model.CpModel()
+celdas = {(f, c): modelo.new_int_var(1, 9, f"c{f}{c}") for f in range(9) for c in range(9)}
+
+for f in range(9):
+    modelo.add_all_different([celdas[f, c] for c in range(9)])
+for c in range(9):
+    modelo.add_all_different([celdas[f, c] for f in range(9)])
+for bf in range(3):
+    for bc in range(3):
+        modelo.add_all_different([celdas[bf * 3 + i, bc * 3 + j] for i in range(3) for j in range(3)])
+
+# … aquí se añaden las pistas con modelo.add(celdas[f, c] == valor) …
+
+solver = cp_model.CpSolver()
+estado = solver.solve(modelo)
+print(solver.status_name(estado), "en", solver.wall_time, "s")</code></pre>
+  <pre class="consola"><code><span class="prompt">$</span> python sudoku_cpsat.py
+<span class="salida">OPTIMAL en 0.0091 s</span></code></pre>
+  <p>Para problemas más parecidos al backtracking de este taller (sin modelar restricciones aritméticas, con un estilo más directo), está <strong>python-constraint2</strong> (2.7.3): se instala como <code>python-constraint2</code> pero se importa como <code>constraint</code>, y necesita Python 3.11 o superior.</p>
+  <pre><code class="language-python">from constraint import Problem
+
+p = Problem()
+paises = ["Argentina", "Bolivia", "Brasil", "Paraguay", "Chile", "Uruguay"]
+for pais in paises:
+    p.addVariable(pais, ["verde", "azul", "rojo", "amarillo"])
+vecinos = [("Argentina", "Bolivia"), ("Argentina", "Brasil"), ("Argentina", "Paraguay"),
+           ("Bolivia", "Brasil"), ("Bolivia", "Paraguay"), ("Brasil", "Paraguay"),
+           ("Argentina", "Chile"), ("Bolivia", "Chile"), ("Argentina", "Uruguay"), ("Brasil", "Uruguay")]
+for a, b in vecinos:
+    p.addConstraint(lambda x, y: x != y, (a, b))
+
+print(p.getSolution())</code></pre>
+  <pre class="consola"><code><span class="prompt">$</span> python mapa.py
+<span class="salida">{'Brasil': 'amarillo', 'Argentina': 'rojo', 'Bolivia': 'azul', 'Paraguay': 'verde', 'Chile': 'amarillo', 'Uruguay': 'azul'}</span></code></pre>
+  <p>Pasa a una de estas librerías cuando el problema crece (miles de variables), cuando necesitas optimizar además de satisfacer (minimizar costo, maximizar cobertura) o cuando el backtracking a mano tarda demasiado. Para entender qué está pasando por dentro, y para problemas pequeños dentro de un juego, el backtracking con MRV y forward checking de este taller suele bastar.</p>
+
+  <aside class="senal error" data-titulo="Errores típicos con restricciones">
+    <p><strong>No deshacer una asignación.</strong> Si olvidas el <code>pop()</code> o restaurar los dominios al volver atrás, la siguiente rama empieza con datos de la anterior y los resultados son absurdos.</p>
+    <p><strong>Comprobar solo al final.</strong> Si asignas las 81 casillas del sudoku y recién entonces revisas si es válido, no estás haciendo backtracking: es fuerza bruta, y con un sudoku es completamente inviable.</p>
+    <p><strong>Compartir dominios por referencia.</strong> Si guardas los dominios en un array y lo pasas sin copiar, dos ramas distintas de la recursión pueden terminar modificando el mismo array. Haz una copia, o (como en este taller) guarda qué cambió para deshacerlo exactamente.</p>
+    <p><strong>Olvidar que «no hay solución» es una respuesta válida.</strong> Un generador de mapas con 3 colores para Sudamérica no tiene ningún error: simplemente no existe una solución, y el código debe decirlo en vez de colgarse o devolver cualquier cosa.</p>
+  </aside>
+</section>

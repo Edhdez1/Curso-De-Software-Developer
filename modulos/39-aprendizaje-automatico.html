@@ -55,6 +55,8 @@
       <li><a href="#evaluar">Evaluar con honestidad</a></li>
       <li><a href="#herramientas">Herramientas reales</a></li>
       <li><a href="#juegos-apps">Del cuaderno al juego</a></li>
+      <li><a href="#resumen">Resumen</a></li>
+      <li><a href="#practica">Práctica</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -2668,6 +2670,685 @@ console.log(probabilities.data[1]);   // probabilidad de «abandona»</code></pr
     <li><div><p>¿Quién lo vigilará y lo reentrenará cuando los jugadores cambien?</p></div></li>
   </ol>
   <p>Si respondes con seguridad a las siete, adelante. Si no, empieza por la regla sencilla y por recoger datos.</p>
+</section>
+
+<section id="resumen" data-parada="Resumen">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Aprendizaje automático: a los datos se les suman las respuestas correctas, el <strong>entrenamiento</strong> busca los parámetros, y lo que sale es un <strong>modelo</strong> que nadie escribió a mano. Se evalúa con ejemplos que nunca vio.</li>
+    <li>Vocabulario de toda la estación: ejemplo, característica, etiqueta, modelo, <strong>parámetro</strong> (lo aprende el entrenamiento) frente a <strong>hiperparámetro</strong> (lo eliges tú), entrenamiento e inferencia.</li>
+    <li>Los datos importan más que el algoritmo: limpiar huecos, codificar categorías con one-hot, escalar (min-max o z-score) y dividir en entrenamiento, validación y prueba con semilla y estratificación, sin que la prueba se toque hasta el final.</li>
+    <li>La regresión lineal se entrena con <strong>descenso de gradiente</strong>: una tasa de aprendizaje y unas épocas. Es el mismo motor que entrena la regresión logística y, en la Estación 40, las redes neuronales.</li>
+    <li>k vecinos más cercanos compara con lo más parecido (sin aprender parámetros); la regresión logística aprende pesos y pasa la puntuación por la sigmoide. Las dos necesitan escalar.</li>
+    <li>Los árboles de decisión aprenden preguntas con la impureza de Gini, se pueden leer, se sobreajustan con facilidad y se combinan en bosques y en gradient boosting.</li>
+    <li>k-means agrupa sin etiquetas repitiendo «asignar» y «mover» hasta que nada cambia. Depende del punto de partida, y los nombres de los grupos los pones tú.</li>
+    <li>Evaluar con honestidad: compara siempre con una línea base, usa la matriz de confusión y elige entre precisión y exhaustividad según lo que cueste cada error. Vigila el sobreajuste, las fugas de datos y el sesgo por grupos.</li>
+    <li>scikit-learn, NumPy y pandas hacen en producción lo mismo que programaste a mano, con <code>Pipeline</code> evitando fugas de forma automática.</li>
+    <li>Un modelo llega a un juego o a una app como parámetros en JSON (ligero), como ONNX (modelos más grandes) o detrás de un servidor (privacidad y control). En las decisiones que afectan a una persona, la revisión humana no es opcional.</li>
+  </ul>
+</section>
+
+<section id="practica" data-parada="Práctica">
+  <h2>Práctica</h2>
+  <p>Diez ejercicios, de guiados a retos, en el mismo orden que la estación. Usa las pistas solo después de intentarlo: el esfuerzo de buscar la respuesta es lo que hace que se te quede. La solución está para comparar, no para copiar antes de probar.</p>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-estadistica"><header class="ejercicio-cabeza"><h3>Media, desviación y z-score</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>Implementa <code>media(xs)</code>, <code>desviacion(xs)</code> y <code>estandarizar(filas, stats)</code>. <code>estandarizar</code> recibe una lista de filas (cada una, un array de números) y un objeto <code>{ medias, desviaciones }</code> con un valor por columna, y devuelve una lista nueva con el z-score de cada número.</p>
+    <div class="taller" id="taller-ej-estadistica" data-titulo="Ejercicio 1" data-exponer="media, desviacion, estandarizar" data-exito="Las mismas cuentas que hiciste a mano en la sección de datos, ahora para una tabla entera.">
+      <textarea class="taller-codigo">// cuatro tiempos de reacción, como en la sección de datos
+console.log(media([200, 240, 260, 300]));
+
+function media(xs) {
+  // TODO: el promedio de xs.
+  return 0;
+}
+
+function desviacion(xs) {
+  // TODO: "a qué distancia, en promedio, están los valores de la media":
+  // resta la media a cada valor, eleva al cuadrado, promedia y saca la raíz.
+  return 0;
+}
+
+function estandarizar(filas, stats) {
+  // filas: lista de filas (arrays de números). stats: { medias, desviaciones }, un valor por columna.
+  // Devuelve una fila nueva por cada una: (valor - stats.medias[i]) / stats.desviaciones[i].
+  return filas;
+}
+
+// [sesiones_semana, dias_desde_ultima] de 5 jugadores de entrenamiento
+const entrenamiento = [[3, 2], [5, 1], [2, 8], [6, 0], [4, 3]];
+const statsEnt = {
+  medias: [0, 1].map((j) => media(entrenamiento.map((f) => f[j]))),
+  desviaciones: [0, 1].map((j) => desviacion(entrenamiento.map((f) => f[j]))),
+};
+console.log(estandarizar(entrenamiento, statsEnt));
+
+const prueba = [[10, 1]]; // un jugador nuevo, fuera del entrenamiento
+console.log("prueba con las stats del entrenamiento:", estandarizar(prueba, statsEnt));</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (typeof expuesto.media !== "function" || typeof expuesto.desviacion !== "function" || typeof expuesto.estandarizar !== "function") return "Necesito las tres funciones: media, desviacion y estandarizar.";
+var casosMedia = [[[200, 240, 260, 300], 250], [[1, 2, 3], 2], [[5], 5]];
+for (var i = 0; i < casosMedia.length; i++) {
+  var r = expuesto.media(casosMedia[i][0]);
+  if (typeof r !== "number" || Math.abs(r - casosMedia[i][1]) > 1e-6) return "media(" + JSON.stringify(casosMedia[i][0]) + ") debería dar " + casosMedia[i][1] + " y da " + r + ".";
+}
+var casosDesv = [[[200, 240, 260, 300], 36.05551275463989], [[5, 5, 5], 0], [[1, 2, 3, 4], 1.118033988749895]];
+for (var j = 0; j < casosDesv.length; j++) {
+  var rd = expuesto.desviacion(casosDesv[j][0]);
+  if (typeof rd !== "number" || Math.abs(rd - casosDesv[j][1]) > 1e-6) return "desviacion(" + JSON.stringify(casosDesv[j][0]) + ") debería dar " + casosDesv[j][1].toFixed(4) + " y da " + rd + ". ¿Divides entre xs.length (no entre xs.length - 1)?";
+}
+var stats = { medias: [4, 2.8], desviaciones: [1.4142135623730951, 2.7856776554368237] };
+var ent = [[3, 2], [5, 1], [2, 8], [6, 0], [4, 3]];
+var esperadoEnt = [[-0.7071067811865475, -0.2871832634470952], [0.7071067811865475, -0.6461623427559643], [-1.414213562373095, 1.8666912124061192], [1.414213562373095, -1.0051414220648334], [0, 0.07179581586177387]];
+var re = expuesto.estandarizar(ent, stats);
+if (!Array.isArray(re) || re.length !== 5) return "estandarizar(filas, stats) debería devolver una fila por cada una de las " + ent.length + " de entrada.";
+for (var k = 0; k < esperadoEnt.length; k++) {
+  for (var c = 0; c < 2; c++) {
+    if (typeof re[k][c] !== "number" || Math.abs(re[k][c] - esperadoEnt[k][c]) > 1e-6) return "estandarizar: la fila " + k + " debería dar [" + esperadoEnt[k].map(function (x) { return x.toFixed(3); }).join(", ") + "] y da " + JSON.stringify(re[k]) + ".";
+  }
+}
+var rp = expuesto.estandarizar([[10, 1]], stats);
+if (!rp || !rp[0] || Math.abs(rp[0][0] - 4.242640687119285) > 1e-6 || Math.abs(rp[0][1] - (-0.6461623427559643)) > 1e-6) return "Con un jugador de prueba [10, 1] y las stats del entrenamiento, debería salir [4.243, -0.646] y da " + JSON.stringify(rp) + ". Usa las MISMAS stats (del entrenamiento), no calcules unas nuevas con la fila de prueba.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>media</code>: suma todos los valores con <code>reduce</code> o un bucle, y divide entre <code>xs.length</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p><code>desviacion</code> necesita la media primero: <code>const m = media(xs);</code> y luego <code>Math.sqrt(media(xs.map((x) =&gt; (x - m) ** 2)))</code> reutiliza la misma función dos veces.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function media(xs) {
+  return xs.reduce((s, x) =&gt; s + x, 0) / xs.length;
+}
+
+function desviacion(xs) {
+  const m = media(xs);
+  return Math.sqrt(media(xs.map((x) =&gt; (x - m) ** 2)));
+}
+
+function estandarizar(filas, stats) {
+  return filas.map((fila) =&gt; fila.map((v, i) =&gt; (v - stats.medias[i]) / stats.desviaciones[i]));
+}</code></pre>
+      <p>Fíjate en la última línea del taller: la fila de prueba se transforma con las estadísticas del <em>entrenamiento</em>, no con las suyas propias. Si en vez de eso calcularas una media y una desviación nuevas solo con ese jugador, obtendrías 0 para las dos características (un único valor no se aleja de sí mismo), y perderías toda la información. Es la regla de la sección de datos: las estadísticas del escalado se calculan una sola vez, con el entrenamiento, y se aplican igual a todo lo demás.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="guiado" id="ej-dividir"><header class="ejercicio-cabeza"><h3>Divide sin trampas</h3><span class="nivel"><i class="on"></i><i></i><i></i>Guiado</span></header>
+    <p>Tienes 200 ejemplos y un 10&nbsp;% son de la clase rara (<code>rara: true</code>). Completa <code>dividir(datos, azar)</code> para que reparta cada clase por separado con Fisher-Yates y las junte en una división 70/15/15, manteniendo la proporción de la clase rara en las tres partes. <code>fisherYates</code> ya está escrita.</p>
+    <div class="taller" id="taller-ej-dividir" data-titulo="Ejercicio 2" data-exponer="dividir" data-exito="140 de entrenamiento, 30 de validación y 30 de prueba, cada una con un 10 % de la clase rara.">
+      <script type="text/plain" class="taller-preparacion">
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const datos = [];
+for (let i = 0; i < 200; i++) datos.push({ id: i, rara: i % 10 === 0 });
+      </script>
+      <textarea class="taller-codigo">// datos: 200 ejemplos, { id, rara }. Exactamente 20 (10 %) tienen rara === true.
+function fisherYates(lista, azar) {
+  const copia = lista.slice();
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(azar() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
+}
+
+function partir70_15_15(lista) {
+  const nEnt = Math.round(lista.length * 0.7);
+  const nVal = Math.round(lista.length * 0.15);
+  return {
+    entrenamiento: lista.slice(0, nEnt),
+    validacion: lista.slice(nEnt, nEnt + nVal),
+    prueba: lista.slice(nEnt + nVal),
+  };
+}
+
+function dividir(datos, azar) {
+  // 1. Separa datos en dos listas: la clase rara y la clase común.
+  // 2. Baraja cada lista por separado con fisherYates(lista, azar).
+  // 3. Parte cada una 70/15/15 con partir70_15_15.
+  // 4. Junta (concat) la parte de entrenamiento de ambas, la de validación de ambas
+  //    y la de prueba de ambas, y devuelve { entrenamiento, validacion, prueba }.
+  return { entrenamiento: datos, validacion: [], prueba: [] };
+}
+
+const azar = crearAzar(39);
+const r = dividir(datos, azar);
+console.log(r.entrenamiento.length, r.validacion.length, r.prueba.length);</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (typeof expuesto.dividir !== "function") return "No encuentro la función dividir. ¿Sigue llamándose así y el programa terminó sin errores?";
+var r = expuesto.dividir(datos, crearAzar(777));
+if (!r || !r.entrenamiento || !r.validacion || !r.prueba) return "dividir(datos, azar) debe devolver { entrenamiento, validacion, prueba }.";
+if (r.entrenamiento.length !== 140 || r.validacion.length !== 30 || r.prueba.length !== 30) return "Los tamaños deberían ser 140, 30 y 30 (70/15/15 de 200) y son " + r.entrenamiento.length + ", " + r.validacion.length + ", " + r.prueba.length + ".";
+var todas = r.entrenamiento.concat(r.validacion, r.prueba);
+if (todas.length !== 200) return "En total deberían quedar los 200 ejemplos y hay " + todas.length + ".";
+var vistos = {};
+for (var i = 0; i < todas.length; i++) {
+  if (vistos[todas[i].id]) return "El ejemplo " + todas[i].id + " aparece en más de una parte. Cada ejemplo va en una sola parte.";
+  vistos[todas[i].id] = true;
+}
+function prop(lista) { return lista.filter(function (d) { return d.rara; }).length / lista.length; }
+var partes = [["entrenamiento", r.entrenamiento], ["validación", r.validacion], ["prueba", r.prueba]];
+for (var k = 0; k < partes.length; k++) {
+  var p = prop(partes[k][1]);
+  if (p < 0.08 || p > 0.12) return "La parte de " + partes[k][0] + " tiene " + (p * 100).toFixed(1) + " % de la clase rara; con estratificación debería quedar entre 8 % y 12 %. ¿Separaste rara de común ANTES de barajar y partir?";
+}
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>const raros = datos.filter((d) =&gt; d.rara); const comunes = datos.filter((d) =&gt; !d.rara);</code> y a cada una le aplicas por separado <code>fisherYates</code> y <code>partir70_15_15</code>.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El resultado final es <code>{ entrenamiento: pr.entrenamiento.concat(pc.entrenamiento), … }</code>, donde <code>pr</code> es la partición de los raros y <code>pc</code> la de los comunes.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function dividir(datos, azar) {
+  const raros = fisherYates(datos.filter((d) =&gt; d.rara), azar);
+  const comunes = fisherYates(datos.filter((d) =&gt; !d.rara), azar);
+  const pr = partir70_15_15(raros);
+  const pc = partir70_15_15(comunes);
+  return {
+    entrenamiento: pr.entrenamiento.concat(pc.entrenamiento),
+    validacion: pr.validacion.concat(pc.validacion),
+    prueba: pr.prueba.concat(pc.prueba),
+  };
+}</code></pre>
+      <p>Barajar cada clase por separado y partir cada una 70/15/15 es lo que garantiza la proporción: 20 raros dan 14/3/3, y 180 comunes dan 126/27/27. Sumados, 140/30/30, y un 10&nbsp;% de clase rara en cada parte. Si hubieras barajado los 200 juntos sin separar, con suerte tocaría una proporción parecida, pero no lo garantiza nada: con una clase del 2&nbsp;% en vez del 10&nbsp;%, sería habitual que la prueba se quedara sin ningún ejemplo raro.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-vecinos"><header class="ejercicio-cabeza"><h3>Tu primer k vecinos</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Implementa <code>distancia(a, b)</code> (distancia euclídea entre dos puntos <code>[x, y]</code>) y <code>predecir(punto, datos, k)</code> con votación y desempate por el vecino más cercano. <code>datos</code> es una lista de <code>{ x: [precisión %, reacción ms], clase }</code>.</p>
+    <div class="taller" id="taller-ej-vecinos" data-titulo="Ejercicio 3" data-exponer="distancia, predecir" data-exito="Tu kNN acierta con los seis jugadores ocultos, incluido el empate con k = 2, y cambia al escalar.">
+      <textarea class="taller-codigo">const datos = [
+  { x: [68, 205], clase: "tramposo" }, { x: [72, 190], clase: "tramposo" },
+  { x: [65, 215], clase: "tramposo" }, { x: [75, 180], clase: "tramposo" },
+  { x: [40, 260], clase: "honrado" }, { x: [45, 250], clase: "honrado" },
+  { x: [38, 275], clase: "honrado" }, { x: [50, 240], clase: "honrado" },
+];
+
+function distancia(a, b) {
+  // TODO: la distancia euclídea entre a = [x, y] y b = [x, y].
+  return 0;
+}
+
+function predecir(punto, datos, k) {
+  // 1. Calcula la distancia de punto a cada ejemplo de datos.
+  // 2. Ordena de menor a mayor distancia y quédate con los k primeros.
+  // 3. Cuenta los votos por clase. En caso de empate, gana la clase del vecino más cercano
+  //    (empieza suponiendo que gana vecinos[0].clase, y solo cambia si otra clase tiene MÁS votos).
+  return "honrado";
+}
+
+console.log(predecir([60, 230], datos, 3));</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (typeof expuesto.distancia !== "function" || typeof expuesto.predecir !== "function") return "Necesito las dos funciones: distancia y predecir.";
+var casosDist = [[[0, 0], [3, 4], 5], [[1, 1], [1, 1], 0], [[68, 205], [65, 215], 10.44030650891055]];
+for (var i = 0; i < casosDist.length; i++) {
+  var rd = expuesto.distancia(casosDist[i][0], casosDist[i][1]);
+  if (typeof rd !== "number" || Math.abs(rd - casosDist[i][2]) > 1e-6) return "distancia(" + JSON.stringify(casosDist[i][0]) + ", " + JSON.stringify(casosDist[i][1]) + ") debería dar " + casosDist[i][2].toFixed(3) + " y da " + rd + ".";
+}
+var datos = [
+  { x: [68, 205], clase: "tramposo" }, { x: [72, 190], clase: "tramposo" },
+  { x: [65, 215], clase: "tramposo" }, { x: [75, 180], clase: "tramposo" },
+  { x: [40, 260], clase: "honrado" }, { x: [45, 250], clase: "honrado" },
+  { x: [38, 275], clase: "honrado" }, { x: [50, 240], clase: "honrado" },
+];
+var minimo = [0, 1].map(function (j) { return Math.min.apply(null, datos.map(function (d) { return d.x[j]; })); });
+var maximo = [0, 1].map(function (j) { return Math.max.apply(null, datos.map(function (d) { return d.x[j]; })); });
+function escalar(v) { return v.map(function (x, j) { return (x - minimo[j]) / (maximo[j] - minimo[j]); }); }
+var datosEsc = datos.map(function (d) { return { clase: d.clase, x: escalar(d.x) }; });
+var casos = [
+  [[70, 195], 3, "tramposo", "claro: muy cerca del grupo tramposo"],
+  [[42, 255], 3, "honrado", "claro: muy cerca del grupo honrado"],
+  [[58, 225], 2, "tramposo", "con k = 2 hay un empate 1 a 1: gana el vecino más cercano (tramposo)"],
+  [[48, 245], 3, "honrado", "claro: cerca del grupo honrado"],
+  [[63, 222], 3, "tramposo", "claro: cerca del grupo tramposo"],
+];
+for (var c = 0; c < casos.length; c++) {
+  var r = expuesto.predecir(casos[c][0], datos, casos[c][1]);
+  if (r !== casos[c][2]) return "predecir(" + JSON.stringify(casos[c][0]) + ", datos, " + casos[c][1] + ") debería dar \"" + casos[c][2] + "\" (" + casos[c][3] + ") y da \"" + r + "\".";
+}
+var sinEscalar = expuesto.predecir([60, 230], datos, 3);
+var conEscalar = expuesto.predecir(escalar([60, 230]), datosEsc, 3);
+if (sinEscalar === conEscalar) return "Para el jugador [60, 230], la predicción sin escalar y escalando debería ser DISTINTA (los milisegundos, en cientos, dominan la distancia sin escalar). Te dio \"" + sinEscalar + "\" en los dos casos. Revisa que normalizas bien con minimo/maximo antes de llamar a predecir.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>distancia</code> es <code>Math.hypot(a[0] - b[0], a[1] - b[1])</code>, igual que en la Estación 18.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para el desempate: <code>let ganador = vecinos[0].clase; for (const c in votos) if (votos[c] &gt; votos[ganador]) ganador = c;</code>. Con <code>&gt;</code> estricto, un empate deja el valor inicial (el más cercano).</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function distancia(a, b) {
+  return Math.hypot(a[0] - b[0], a[1] - b[1]);
+}
+
+function predecir(punto, datos, k) {
+  const vecinos = datos
+    .map((d) =&gt; ({ clase: d.clase, dist: distancia(punto, d.x) }))
+    .sort((a, b) =&gt; a.dist - b.dist)
+    .slice(0, k);
+  const votos = {};
+  for (const v of vecinos) votos[v.clase] = (votos[v.clase] || 0) + 1;
+  let ganador = vecinos[0].clase;
+  for (const c in votos) if (votos[c] &gt; votos[ganador]) ganador = c;
+  return ganador;
+}</code></pre>
+      <p>Con <code>[58, 225]</code> y <code>k = 2</code>, el más cercano es un tramposo (distancia 12.2) y el segundo un honrado (17.0): un voto para cada clase. Como el bucle solo cambia <code>ganador</code> cuando encuentra <strong>más</strong> votos, y ninguna clase supera a la otra, se queda con la del vecino más cercano. Y para <code>[60, 230]</code>, sin escalar domina la reacción (en cientos de ms) y sale «honrado»; al escalar, la precisión pesa lo mismo que la reacción y el resultado cambia a «tramposo». Es exactamente lo que viste en el mapa de decisión de la sección.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-sigmoide"><header class="ejercicio-cabeza"><h3>Sigmoide, probabilidad y umbral</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Implementa <code>sigmoide(z)</code> y completa <code>entrenar()</code>, una regresión logística por descenso de gradiente sobre datos (ya estandarizados) de abandono: sesiones por semana (<code>s</code>) y minutos promedio (<code>m</code>).</p>
+    <div class="taller" id="taller-ej-sigmoide" data-titulo="Ejercicio 4" data-exponer="sigmoide, entrenar" data-tiempo="10" data-exito="Tu modelo supera el 85 % de exactitud en la prueba, sin haberla visto durante el entrenamiento.">
+      <script type="text/plain" class="taller-preparacion">
+const entrenamiento = [{"s":0.007,"m":1.214,"abandona":0},{"s":1.361,"m":0.773,"abandona":0},{"s":0.462,"m":-1.894,"abandona":1},{"s":-0.938,"m":1.131,"abandona":1},{"s":1.628,"m":-2.15,"abandona":0},{"s":-1.777,"m":-0.182,"abandona":1},{"s":-0.334,"m":-0.047,"abandona":1},{"s":0.918,"m":0.826,"abandona":0},{"s":-0.284,"m":-0.816,"abandona":1},{"s":-0.496,"m":-0.953,"abandona":0},{"s":-0.191,"m":-1.732,"abandona":1},{"s":-3.981,"m":-1.362,"abandona":1},{"s":-0.515,"m":-1.234,"abandona":1},{"s":-0.965,"m":-1.157,"abandona":1},{"s":0.833,"m":-1.532,"abandona":1},{"s":2.022,"m":-0.607,"abandona":1},{"s":0.671,"m":-1.223,"abandona":1},{"s":-0.9,"m":-0.527,"abandona":0},{"s":-0.396,"m":-0.083,"abandona":1},{"s":-0.553,"m":2.106,"abandona":1},{"s":0.21,"m":0.091,"abandona":0},{"s":-0.084,"m":-1.29,"abandona":1},{"s":1.402,"m":1.091,"abandona":0},{"s":-0.07,"m":-0.401,"abandona":1},{"s":-2.07,"m":-0.34,"abandona":1},{"s":0.276,"m":-2.009,"abandona":1},{"s":-0.555,"m":0.938,"abandona":0},{"s":-0.301,"m":0.767,"abandona":1},{"s":-0.673,"m":2.7,"abandona":0},{"s":1.623,"m":0.381,"abandona":0},{"s":-1.199,"m":0.202,"abandona":1},{"s":-2.401,"m":0.783,"abandona":1},{"s":-0.384,"m":1.729,"abandona":0},{"s":-0.822,"m":-1.2,"abandona":1},{"s":0.728,"m":-0.252,"abandona":1},{"s":0.421,"m":1.291,"abandona":0},{"s":-0.178,"m":1.322,"abandona":1},{"s":-0.255,"m":-2.119,"abandona":1},{"s":-0.794,"m":1.911,"abandona":0},{"s":2.71,"m":-0.145,"abandona":0},{"s":0.437,"m":0.653,"abandona":1},{"s":-1.016,"m":0.92,"abandona":1},{"s":-0.706,"m":0.933,"abandona":0},{"s":-0.603,"m":0.207,"abandona":1},{"s":0.716,"m":0.482,"abandona":0},{"s":0.68,"m":-0.602,"abandona":1},{"s":1.204,"m":-0.454,"abandona":1},{"s":-0.267,"m":0.239,"abandona":0},{"s":0.235,"m":1.689,"abandona":0},{"s":-0.56,"m":0.673,"abandona":0},{"s":1.108,"m":-0.747,"abandona":0},{"s":0.1,"m":-2.008,"abandona":1},{"s":0.623,"m":0.97,"abandona":0},{"s":-2.475,"m":-0.546,"abandona":1},{"s":0.451,"m":-2.267,"abandona":1},{"s":-0.901,"m":-0.43,"abandona":1},{"s":-1.805,"m":0.605,"abandona":1},{"s":-0.276,"m":-1.761,"abandona":1},{"s":0.665,"m":0.291,"abandona":0},{"s":1.054,"m":-1.343,"abandona":0},{"s":-0.948,"m":-0.256,"abandona":1},{"s":-0.417,"m":-0.013,"abandona":1},{"s":0.124,"m":-0.824,"abandona":1},{"s":-0.738,"m":-0.318,"abandona":1},{"s":-0.218,"m":-0.03,"abandona":1},{"s":-0.439,"m":-0.831,"abandona":1},{"s":-0.695,"m":-0.523,"abandona":1},{"s":-0.005,"m":0.233,"abandona":1},{"s":1.517,"m":-0.245,"abandona":0},{"s":-1.094,"m":-0.022,"abandona":0},{"s":1.811,"m":3.181,"abandona":0},{"s":-0.594,"m":-1.597,"abandona":1},{"s":-0.422,"m":-0.94,"abandona":1},{"s":-1.784,"m":-0.262,"abandona":1},{"s":0.234,"m":0.501,"abandona":0},{"s":-0.607,"m":0.285,"abandona":1},{"s":0.988,"m":1.561,"abandona":0},{"s":0.745,"m":-0.44,"abandona":1},{"s":1.148,"m":0.492,"abandona":0},{"s":-2.709,"m":0.652,"abandona":1}];
+const prueba = [{"s":0.974,"m":0.623,"abandona":0},{"s":-0.237,"m":-0.996,"abandona":1},{"s":0.685,"m":0.759,"abandona":0},{"s":0.575,"m":0.615,"abandona":0},{"s":1.067,"m":0.506,"abandona":0},{"s":-1.374,"m":-1.257,"abandona":1},{"s":-1.76,"m":1.187,"abandona":1},{"s":0.677,"m":-0.065,"abandona":0},{"s":0.224,"m":-0.296,"abandona":1},{"s":-0.263,"m":-2.034,"abandona":1},{"s":-0.765,"m":0.683,"abandona":1},{"s":0.442,"m":-0.121,"abandona":0},{"s":-0.57,"m":-0.225,"abandona":1},{"s":-0.437,"m":-0.189,"abandona":0},{"s":-0.031,"m":-0.257,"abandona":1},{"s":-1.645,"m":-0.619,"abandona":1},{"s":1.164,"m":2.007,"abandona":0},{"s":-0.701,"m":1.872,"abandona":1},{"s":0.507,"m":0.885,"abandona":0},{"s":-1.455,"m":-0.8,"abandona":1}];
+      </script>
+      <textarea class="taller-codigo">// entrenamiento (80) y prueba (20): { s, m, abandona }, ya estandarizados.
+
+function sigmoide(z) {
+  // TODO: 1 / (1 + e^(-z)).
+  return 0;
+}
+
+function entrenar() {
+  let w = [0, 0], b = 0;
+  const TASA = 0.5, EPOCAS = 500;
+  for (let e = 0; e < EPOCAS; e++) {
+    let g0 = 0, g1 = 0, gb = 0;
+    for (const d of entrenamiento) {
+      const p = sigmoide(w[0] * d.s + w[1] * d.m + b);
+      const error = p - d.abandona;
+      g0 += error * d.s;
+      g1 += error * d.m;
+      gb += error;
+    }
+    // TODO: mueve w[0], w[1] y b en contra de su gradiente (promedio de g0, g1, gb entre entrenamiento.length).
+  }
+  return { w, b };
+}
+
+const modelo = entrenar();
+let correctos = 0;
+for (const d of prueba) {
+  const p = sigmoide(modelo.w[0] * d.s + modelo.w[1] * d.m + modelo.b);
+  if ((p >= 0.5 ? 1 : 0) === d.abandona) correctos++;
+}
+console.log("exactitud de prueba:", (correctos / prueba.length).toFixed(2));
+console.log("sigmoide(0) =", sigmoide(0));</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (typeof expuesto.sigmoide !== "function" || typeof expuesto.entrenar !== "function") return "Necesito las dos funciones: sigmoide y entrenar.";
+if (Math.abs(expuesto.sigmoide(0) - 0.5) > 1e-9) return "sigmoide(0) debería dar exactamente 0.5 y da " + expuesto.sigmoide(0) + ".";
+if (expuesto.sigmoide(50) <= 0.999) return "sigmoide(50) debería estar prácticamente en 1 (muy seguro de que sí) y da " + expuesto.sigmoide(50) + ".";
+var original = console.log, m;
+console.log = function () {};
+try { m = expuesto.entrenar(); } finally { console.log = original; }
+if (!m || !Array.isArray(m.w) || typeof m.b !== "number") return "entrenar() debe devolver { w, b } con w como un array de dos pesos.";
+if (m.w[0] === 0 && m.w[1] === 0 && m.b === 0) return "w y b siguen en 0: falta el paso del descenso de gradiente dentro del bucle de épocas.";
+function sig(z) { return 1 / (1 + Math.exp(-z)); }
+var correctos = 0;
+for (var i = 0; i < prueba.length; i++) {
+  var p = sig(m.w[0] * prueba[i].s + m.w[1] * prueba[i].m + m.b);
+  if ((p >= 0.5 ? 1 : 0) === prueba[i].abandona) correctos++;
+}
+var exactitud = correctos / prueba.length;
+if (exactitud < 0.85) return "La exactitud de prueba (" + exactitud.toFixed(2) + ") debería ser de al menos 0.85. ¿Entrenas suficientes épocas con una tasa razonable (ni tan grande que diverja, ni tan pequeña que no avance)?";
+var objetivo = prueba[6]; // s: -1.76, m: 1.187
+var pObjetivo = sig(m.w[0] * objetivo.s + m.w[1] * objetivo.m + m.b);
+if (pObjetivo < 0.7 || pObjetivo > 0.9) return "La probabilidad del jugador con s = -1.76 y m = 1.187 debería caer entre 0.7 y 0.9 y da " + pObjetivo.toFixed(3) + ".";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p><code>sigmoide(z)</code> es <code>1 / (1 + Math.exp(-z))</code>: la misma que ya usaste en la sección de clasificar.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>El paso es idéntico al de la regresión lineal: <code>w[0] -= TASA * g0 / entrenamiento.length;</code>, lo mismo para <code>w[1]</code> y <code>b</code>. Lo único nuevo es que la predicción pasa por la sigmoide antes de calcular el error.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function sigmoide(z) {
+  return 1 / (1 + Math.exp(-z));
+}
+
+function entrenar() {
+  let w = [0, 0], b = 0;
+  const TASA = 0.5, EPOCAS = 500;
+  for (let e = 0; e &lt; EPOCAS; e++) {
+    let g0 = 0, g1 = 0, gb = 0;
+    for (const d of entrenamiento) {
+      const p = sigmoide(w[0] * d.s + w[1] * d.m + b);
+      const error = p - d.abandona;
+      g0 += error * d.s;
+      g1 += error * d.m;
+      gb += error;
+    }
+    const n = entrenamiento.length;
+    w[0] -= TASA * g0 / n;
+    w[1] -= TASA * g1 / n;
+    b -= TASA * gb / n;
+  }
+  return { w, b };
+}</code></pre>
+      <p>El modelo converge a unos pesos cercanos a <code>w ≈ [-1.34, -1.23]</code> y <code>b ≈ 0.55</code>: más sesiones y más minutos bajan el riesgo de abandono, con un peso parecido entre las dos. En prueba acierta el 85&nbsp;% (17 de 20), bastante más que la línea base de «nadie abandona» en estos datos. Y como las características ya venían estandarizadas, no hizo falta escalar nada aquí: ese trabajo ya estaba hecho antes de entrenar.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="semi" id="ej-kmeans"><header class="ejercicio-cabeza"><h3>k-means paso a paso</h3><span class="nivel"><i class="on"></i><i class="on"></i><i></i>Semiguiado</span></header>
+    <p>Jugadores con dos características: porcentaje del tiempo explorando y combates por hora. Implementa <code>asignar(puntos, centroides)</code>, <code>mover(puntos, asignaciones, centroides)</code> y <code>kmeans(puntos, centroidesIniciales)</code>, que repite las dos anteriores hasta que ninguna asignación cambie.</p>
+    <div class="taller" id="taller-ej-kmeans" data-titulo="Ejercicio 5" data-exponer="asignar, mover, kmeans" data-exito="Tres grupos estables en dos iteraciones: combatientes, casuales y exploradores.">
+      <textarea class="taller-codigo">// [% tiempo explorando, combates por hora]
+const puntos = [
+  [80, 1], [75, 2], [85, 0.5], [70, 3], [90, 1.5],
+  [20, 8], [25, 9], [15, 10], [30, 7], [22, 8.5],
+  [50, 5], [55, 4], [45, 6], [48, 5.5],
+];
+
+function asignar(puntos, centroides) {
+  // Para cada punto, devuelve el ÍNDICE del centroide más cercano (distancia euclídea).
+  return puntos.map(() => 0);
+}
+
+function mover(puntos, asignaciones, centroides) {
+  // Para cada centroide j, calcula el promedio de los puntos cuya asignación es j.
+  // Si ningún punto le tocó, deja el centroide donde estaba.
+  return centroides;
+}
+
+function kmeans(puntos, centroidesIniciales) {
+  let centroides = centroidesIniciales.map((c) => c.slice());
+  let asignaciones = asignar(puntos, centroides);
+  let iteraciones = 0;
+  while (true) {
+    iteraciones++;
+    const nuevosCentroides = mover(puntos, asignaciones, centroides);
+    const nuevasAsignaciones = asignar(puntos, nuevosCentroides);
+    const cambio = nuevasAsignaciones.some((v, i) => v !== asignaciones[i]);
+    centroides = nuevosCentroides;
+    asignaciones = nuevasAsignaciones;
+    if (!cambio) break;
+  }
+  return { centroides, asignaciones, iteraciones };
+}
+
+const r = kmeans(puntos, [[50, 1], [50, 5], [50, 9]]);
+console.log("iteraciones:", r.iteraciones);
+console.log("centroides:", r.centroides.map((c) => c.map((x) => Math.round(x * 10) / 10)));</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (typeof expuesto.asignar !== "function" || typeof expuesto.mover !== "function" || typeof expuesto.kmeans !== "function") return "Necesito las tres funciones: asignar, mover y kmeans.";
+var pSimple = [[0, 0], [1, 0], [9, 0], [10, 0]];
+var cSimple = [[0, 0], [10, 0]];
+var aSimple = expuesto.asignar(pSimple, cSimple);
+if (JSON.stringify(aSimple) !== JSON.stringify([0, 0, 1, 1])) return "asignar([[0,0],[1,0],[9,0],[10,0]], [[0,0],[10,0]]) debería dar [0, 0, 1, 1] (cada punto, al centroide más cercano) y da " + JSON.stringify(aSimple) + ".";
+var mSimple = expuesto.mover(pSimple, [0, 0, 1, 1], cSimple);
+if (!mSimple[0] || Math.abs(mSimple[0][0] - 0.5) > 1e-9 || Math.abs(mSimple[1][0] - 9.5) > 1e-9) return "mover debería mover el primer centroide al promedio de [0,0] y [1,0] (es decir, [0.5, 0]) y el segundo a [9.5, 0]. Da " + JSON.stringify(mSimple) + ".";
+var puntos = [
+  [80, 1], [75, 2], [85, 0.5], [70, 3], [90, 1.5],
+  [20, 8], [25, 9], [15, 10], [30, 7], [22, 8.5],
+  [50, 5], [55, 4], [45, 6], [48, 5.5],
+];
+var r = expuesto.kmeans(puntos, [[50, 1], [50, 5], [50, 9]]);
+if (!r || !r.centroides || !r.asignaciones || typeof r.iteraciones !== "number") return "kmeans debe devolver { centroides, asignaciones, iteraciones }.";
+if (r.iteraciones !== 2) return "Con estos centroides iniciales deberían hacer falta exactamente 2 iteraciones (asignar-mover) hasta estabilizar, y tu código hizo " + r.iteraciones + ".";
+var esperados = [[80, 1.6], [49.5, 5.1], [22.4, 8.5]];
+for (var j = 0; j < 3; j++) {
+  if (Math.abs(r.centroides[j][0] - esperados[j][0]) > 0.15 || Math.abs(r.centroides[j][1] - esperados[j][1]) > 0.15) {
+    return "El centroide " + j + " debería acabar cerca de [" + esperados[j].join(", ") + "] y acabó en [" + r.centroides[j].map(function (x) { return x.toFixed(1); }).join(", ") + "].";
+  }
+}
+var tamEsperado = [5, 4, 5];
+var tam = [0, 1, 2].map(function (j) { return r.asignaciones.filter(function (v) { return v === j; }).length; });
+if (JSON.stringify(tam) !== JSON.stringify(tamEsperado)) return "Los tamaños de los tres grupos deberían ser " + tamEsperado.join("/") + " y son " + tam.join("/") + ".";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>En <code>asignar</code>, para cada punto compara su distancia a todos los centroides (como en <code>predecir</code> de kNN) y quédate con el índice del más cercano, no con la clase.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>En <code>mover</code>, filtra los puntos cuya asignación sea <code>j</code>, suma sus coordenadas y divide entre cuántos son. Si el grupo está vacío, devuelve <code>centroides[j]</code> tal cual.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function asignar(puntos, centroides) {
+  return puntos.map((p) =&gt; {
+    let mejor = 0, mejorDist = Math.hypot(p[0] - centroides[0][0], p[1] - centroides[0][1]);
+    for (let j = 1; j &lt; centroides.length; j++) {
+      const d = Math.hypot(p[0] - centroides[j][0], p[1] - centroides[j][1]);
+      if (d &lt; mejorDist) { mejorDist = d; mejor = j; }
+    }
+    return mejor;
+  });
+}
+
+function mover(puntos, asignaciones, centroides) {
+  return centroides.map((c, j) =&gt; {
+    const grupo = puntos.filter((_, i) =&gt; asignaciones[i] === j);
+    if (!grupo.length) return c;
+    return [
+      grupo.reduce((s, p) =&gt; s + p[0], 0) / grupo.length,
+      grupo.reduce((s, p) =&gt; s + p[1], 0) / grupo.length,
+    ];
+  });
+}</code></pre>
+      <p>Con esos tres centroides iniciales (todos en x&nbsp;=&nbsp;50, repartidos en y), la primera asignación ya separa bastante bien los tres grupos naturales, pero hace falta una segunda ronda para que se terminen de asentar: 5 combatientes, 4 casuales y 5 exploradores, sin que nadie vuelva a cambiar de grupo. Si empezaras con los tres centroides amontonados en la misma esquina, probablemente necesitarías más iteraciones, o incluso un resultado peor: por eso scikit-learn repite el proceso varias veces (<code>n_init</code>) desde comienzos distintos.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-umbral"><header class="ejercicio-cabeza"><h3>La trampa de la exactitud y el umbral de los baneos</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>Tienes 1000 partidas con la probabilidad que les dio un detector y el veredicto real (<code>tramposo</code>): un 2&nbsp;% son tramposos de verdad. Imprime, en este orden y con este formato exacto:</p>
+    <ol>
+      <li><code>"Línea base: " + (porcentaje con 1 decimal) + " %"</code>, la exactitud de predecir siempre «nadie hace trampa».</li>
+      <li><code>"VP=" + VP + " FP=" + FP + " FN=" + FN + " VN=" + VN</code>, la matriz de confusión con umbral 0.5.</li>
+      <li><code>"Precisión: " + (3 decimales)</code>, <code>"Exhaustividad: " + (3 decimales)</code> y <code>"F1: " + (3 decimales)</code>, también con umbral 0.5.</li>
+      <li><code>"Menor umbral con precisión >= 0.95: " + umbral</code>, probando los umbrales que de verdad aparecen entre las probabilidades (no hace falta inventar otros).</li>
+    </ol>
+    <div class="taller" id="taller-ej-umbral" data-titulo="Ejercicio 6" data-tiempo="10" data-exito="227 falsas alarmas con el umbral de siempre, y un umbral que las deja en cero sin dejar de ser útil.">
+      <script type="text/plain" class="taller-preparacion">
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const azar = crearAzar(39);
+const partidas = [];
+for (let i = 0; i < 1000; i++) {
+  const tramposo = i % 50 === 0 ? 1 : 0; // 20 de 1000 = 2 %
+  let p;
+  if (tramposo) p = 0.55 + azar() * 0.45;
+  else p = Math.pow(azar(), 2.2) * 0.85 + azar() * 0.03;
+  partidas.push({ p: Math.round(p * 1000) / 1000, tramposo });
+}
+      </script>
+      <textarea class="taller-codigo">// partidas: 1000 objetos { p: probabilidad del detector, tramposo: 0 o 1 }.
+
+function matriz(partidas, umbral) {
+  let VP = 0, FP = 0, FN = 0, VN = 0;
+  for (const partida of partidas) {
+    const predice = partida.p >= umbral ? 1 : 0;
+    // TODO: suma 1 a VP, FP, FN o VN según predice y partida.tramposo.
+  }
+  return { VP, FP, FN, VN };
+}
+
+// 1. Línea base: exactitud de predecir siempre "nadie hace trampa".
+// console.log("Línea base: " + ... + " %");
+
+// 2. Matriz con umbral 0.5.
+const m = matriz(partidas, 0.5);
+console.log("VP=" + m.VP + " FP=" + m.FP + " FN=" + m.FN + " VN=" + m.VN);
+
+// 3. Precisión, exhaustividad y F1 con esa matriz.
+
+// 4. El menor umbral (de los que aparecen en partidas) con precisión >= 0.95.</textarea>
+      <script type="text/plain" class="taller-verificar">
+function lineaQue(regex) { for (var i = 0; i < salida.length; i++) if (regex.test(salida[i])) return salida[i]; return null; }
+var lBase = lineaQue(/L.?nea base/);
+if (!lBase) return "Falta la línea «Línea base: X %».";
+var base = parseFloat((lBase.match(/(\d+(\.\d+)?)/) || [])[1]);
+if (isNaN(base) || Math.abs(base - 98) > 0.2) return "La línea base (siempre «nadie hace trampa») debería ser 98.0 %, y tu línea dice: " + lBase;
+var lMatriz = lineaQue(/VP=/);
+if (!lMatriz) return "Falta la línea «VP=.. FP=.. FN=.. VN=..» con el umbral 0.5.";
+var nums = lMatriz.match(/-?\d+/g) || [];
+if (nums.join(",") !== "20,227,0,753") return "Con umbral 0.5 la matriz debería ser VP=20 FP=227 FN=0 VN=753, y tu línea dice: " + lMatriz + ". (El detector encuentra a los 20 tramposos, pero acusa también a 227 inocentes: es la trampa de la exactitud.)";
+var lPrec = lineaQue(/Precisi/);
+if (!lPrec || Math.abs(parseFloat((lPrec.match(/(\d+\.\d+)/) || [])[1]) - 0.081) > 0.003) return "La precisión con umbral 0.5 debería ser 0.081 (20 / (20 + 227)). Tu línea: " + lPrec;
+var lExh = lineaQue(/Exhaustividad/);
+if (!lExh || Math.abs(parseFloat((lExh.match(/(\d+\.\d+)/) || [])[1]) - 1.0) > 0.003) return "La exhaustividad con umbral 0.5 debería ser 1.000 (encuentra a los 20 tramposos). Tu línea: " + lExh;
+var lF1 = lineaQue(/F1/);
+if (!lF1 || Math.abs(parseFloat((lF1.match(/(\d+\.\d+)/) || [])[1]) - 0.150) > 0.003) return "El F1 con umbral 0.5 debería ser 0.150. Tu línea: " + lF1;
+var lUmbral = lineaQue(/Menor umbral/);
+if (!lUmbral) return "Falta la línea «Menor umbral con precisión >= 0.95: X».";
+var umbral = parseFloat((lUmbral.match(/(\d+\.\d+)/) || [])[1]);
+if (isNaN(umbral) || Math.abs(umbral - 0.893) > 0.002) return "El menor umbral con precisión >= 0.95 debería ser 0.893. Tu línea dice: " + lUmbral;
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>La línea base compara la etiqueta «0» (nadie hace trampa) contra <code>partida.tramposo</code> para cada una de las 1000 filas, y cuenta cuántas veces acierta.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Para el umbral mínimo, recorre los umbrales candidatos de menor a mayor (por ejemplo, <code>[...new Set(partidas.map((p) =&gt; p.p))].sort((a, b) =&gt; a - b)</code>) y devuelve el primero cuya matriz dé precisión ≥ 0.95. Cuidado con dividir entre 0 si VP + FP es 0.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">function matriz(partidas, umbral) {
+  let VP = 0, FP = 0, FN = 0, VN = 0;
+  for (const partida of partidas) {
+    const predice = partida.p &gt;= umbral ? 1 : 0;
+    if (predice === 1 &amp;&amp; partida.tramposo === 1) VP++;
+    else if (predice === 1 &amp;&amp; partida.tramposo === 0) FP++;
+    else if (predice === 0 &amp;&amp; partida.tramposo === 1) FN++;
+    else VN++;
+  }
+  return { VP, FP, FN, VN };
+}
+
+const aciertosBase = partidas.filter((p) =&gt; p.tramposo === 0).length;
+console.log("Línea base: " + (100 * aciertosBase / partidas.length).toFixed(1) + " %");
+
+const m = matriz(partidas, 0.5);
+console.log("VP=" + m.VP + " FP=" + m.FP + " FN=" + m.FN + " VN=" + m.VN);
+
+const precision = m.VP / (m.VP + m.FP);
+const exhaustividad = m.VP / (m.VP + m.FN);
+const f1 = (2 * precision * exhaustividad) / (precision + exhaustividad);
+console.log("Precisión: " + precision.toFixed(3));
+console.log("Exhaustividad: " + exhaustividad.toFixed(3));
+console.log("F1: " + f1.toFixed(3));
+
+const candidatos = [...new Set(partidas.map((p) =&gt; p.p))].sort((a, b) =&gt; a - b);
+let menorUmbral = null;
+for (const u of candidatos) {
+  const mu = matriz(partidas, u);
+  if (mu.VP + mu.FP === 0) continue;
+  if (mu.VP / (mu.VP + mu.FP) &gt;= 0.95) { menorUmbral = u; break; }
+}
+console.log("Menor umbral con precisión >= 0.95: " + menorUmbral);</code></pre>
+      <p>Con el umbral de siempre, 0.5, el detector encuentra a los 20 tramposos (exhaustividad 1.0) pero acusa también a 227 personas honradas: solo 1 de cada 12 acusaciones es correcta (precisión 0.081). Para llegar a una precisión del 95&nbsp;%, el umbral sube hasta 0.893, y ahí el coste es el contrario: ya no hay falsas alarmas (FP = 0), pero solo se detecta a 7 de los 20 tramposos. No hay un umbral que gane en las dos: hay que decidir según lo que cuesta cada error, como viste en la sección de evaluación.</p>
+    </details>
+  </article>
+
+  <article class="ejercicio" data-nivel="reto" id="ej-fuga"><header class="ejercicio-cabeza"><h3>Caza la fuga</h3><span class="nivel"><i class="on"></i><i class="on"></i><i class="on"></i>Reto</span></header>
+    <p>Este programa, sin querer, hace trampa: escala con <strong>todos</strong> los datos antes de dividir, y usa <code>dias_hasta_abandono</code>, una característica que solo existe para quien ya abandonó. Por eso la exactitud de validación sale en 1.000, perfecta y sospechosa. Corrígelo: quita esa columna de <code>CARACTERISTICAS</code> y reordena <code>entrenarYEvaluar</code> para dividir primero y calcular las estadísticas del escalado solo con el entrenamiento.</p>
+    <div class="taller" id="taller-ej-fuga" data-titulo="Ejercicio 7" data-tiempo="10" data-exito="Sin la fuga, la exactitud deja de ser perfecta y pasa a un valor creíble.">
+      <script type="text/plain" class="taller-preparacion">
+function crearAzar(semilla) {
+  return function () {
+    semilla = (semilla + 0x6D2B79F5) | 0;
+    let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const azar = crearAzar(39);
+function normal(m, d) { return m + d * Math.sqrt(-2 * Math.log(1 - azar())) * Math.cos(2 * Math.PI * azar()); }
+const datos = [];
+for (let i = 0; i < 120; i++) {
+  const sesiones = Math.max(0, normal(4, 2.5));
+  const minutos = Math.max(5, normal(35, 12));
+  const diasUlt = Math.max(0, normal(6, 5));
+  const z = -0.45 * sesiones - 0.03 * (minutos - 35) + 0.3 * diasUlt - 1.1;
+  const p = 1 / (1 + Math.exp(-z));
+  const abandono = azar() < p ? 1 : 0;
+  const dias_hasta_abandono = abandono ? Math.round(1 + azar() * 9) : 500; // la fuga: solo existe si ya abandonó
+  datos.push({
+    sesiones_semana: Math.round(sesiones * 10) / 10,
+    minutos_promedio: Math.round(minutos * 10) / 10,
+    dias_desde_ultima: Math.round(diasUlt),
+    dias_hasta_abandono,
+    abandono,
+  });
+}
+function distancia(a, b) { let s = 0; for (let i = 0; i < a.length; i++) s += (a[i] - b[i]) ** 2; return Math.sqrt(s); }
+function predecir(punto, entrenamiento, k) {
+  const vecinos = entrenamiento.map((e) => ({ clase: e.clase, dist: distancia(punto, e.x) })).sort((a, b) => a.dist - b.dist).slice(0, k);
+  const votos = {};
+  for (const v of vecinos) votos[v.clase] = (votos[v.clase] || 0) + 1;
+  let ganador = vecinos[0].clase;
+  for (const c in votos) if (votos[c] > votos[ganador]) ganador = Number(c);
+  return ganador;
+}
+function media(xs) { return xs.reduce((a, b) => a + b, 0) / xs.length; }
+function desviacion(xs) { const m = media(xs); return Math.sqrt(media(xs.map((x) => (x - m) ** 2))); }
+function calcularStats(filas) {
+  const columnas = filas[0].map((_, j) => filas.map((f) => f[j]));
+  return { medias: columnas.map(media), desviaciones: columnas.map(desviacion) };
+}
+function escalar(fila, stats) { return fila.map((v, i) => (v - stats.medias[i]) / (stats.desviaciones[i] || 1e-9)); }
+function vectores(datos, columnas) { return datos.map((d) => columnas.map((c) => d[c])); }
+function dividir(datos) {
+  const corte = Math.floor(datos.length * 0.7);
+  return { entrenamiento: datos.slice(0, corte), validacion: datos.slice(corte) };
+}
+      </script>
+      <textarea class="taller-codigo">// datos: 120 jugadores. distancia, predecir, media, desviacion, calcularStats, escalar,
+// vectores y dividir ya están escritas (no hace falta tocarlas).
+
+const CARACTERISTICAS = ["sesiones_semana", "minutos_promedio", "dias_desde_ultima", "dias_hasta_abandono"];
+
+function entrenarYEvaluar(datos) {
+  // BUG: esto escala con TODOS los datos antes de dividir.
+  const stats = calcularStats(vectores(datos, CARACTERISTICAS));
+  const escalados = datos.map((d, i) => ({
+    x: escalar(vectores(datos, CARACTERISTICAS)[i], stats),
+    clase: d.abandono,
+  }));
+  const { entrenamiento, validacion } = dividir(escalados);
+
+  let aciertos = 0;
+  for (const v of validacion) if (predecir(v.x, entrenamiento, 5) === v.clase) aciertos++;
+  return aciertos / validacion.length;
+}
+
+console.log("Exactitud de validación:", entrenarYEvaluar(datos).toFixed(3));</textarea>
+      <script type="text/plain" class="taller-verificar">
+if (codigo.indexOf("dias_hasta_abandono") !== -1) return "Todavía usas dias_hasta_abandono: es una característica del futuro (solo existe para quien ya abandonó). Quítala de CARACTERISTICAS.";
+if (/calcularStats\(\s*vectores\(\s*datos\s*,/.test(codigo)) return "Las estadísticas se siguen calculando con TODOS los datos (la variable datos completa) antes de dividir. Divide primero con dividir(datos), y calcula calcularStats solo con la parte de entrenamiento.";
+var lineaExactitud = null;
+for (var i = 0; i < salida.length; i++) if (/[Ee]xactitud/.test(salida[i])) lineaExactitud = salida[i];
+if (!lineaExactitud) return "No encuentro una línea con la exactitud de validación impresa.";
+var ex = parseFloat((lineaExactitud.match(/(\d+\.\d+)/) || [])[1]);
+if (isNaN(ex)) return "No pude leer el número de la línea: " + lineaExactitud;
+if (ex >= 0.97) return "La exactitud sigue siendo sospechosamente perfecta (" + ex.toFixed(3) + "). ¿Quitaste de verdad dias_hasta_abandono de CARACTERISTICAS?";
+if (ex < 0.5 || ex > 0.9) return "La exactitud (" + ex.toFixed(3) + ") queda fuera de un rango creíble para este problema (entre 0.5 y 0.9). Revisa que sigues dividiendo y escalando en el orden correcto.";
+return true;
+      </script>
+    </div>
+    <details class="pista"><summary>Pista 1</summary><p>Quita el último elemento de <code>CARACTERISTICAS</code>. Esa sola columna ya basta para acertar siempre: vale un número pequeño cuando <code>abandono</code> es 1 y 500 cuando es 0, así que kNN la copia directamente.</p></details>
+    <details class="pista"><summary>Pista 2</summary><p>Llama primero a <code>dividir(datos)</code> para obtener los jugadores crudos de cada parte, calcula <code>calcularStats</code> solo con los de entrenamiento, y usa esas mismas <code>stats</code> para escalar tanto el entrenamiento como la validación.</p></details>
+    <details class="solucion"><summary>Ver una solución</summary>
+      <pre><code class="language-js">const CARACTERISTICAS = ["sesiones_semana", "minutos_promedio", "dias_desde_ultima"];
+
+function entrenarYEvaluar(datos) {
+  const { entrenamiento: crudoEnt, validacion: crudoVal } = dividir(datos);
+  const stats = calcularStats(vectores(crudoEnt, CARACTERISTICAS));
+  const entrenamiento = crudoEnt.map((d, i) =&gt; ({
+    x: escalar(vectores(crudoEnt, CARACTERISTICAS)[i], stats),
+    clase: d.abandono,
+  }));
+  const validacion = crudoVal.map((d, i) =&gt; ({
+    x: escalar(vectores(crudoVal, CARACTERISTICAS)[i], stats),
+    clase: d.abandono,
+  }));
+
+  let aciertos = 0;
+  for (const v of validacion) if (predecir(v.x, entrenamiento, 5) === v.clase) aciertos++;
+  return aciertos / validacion.length;
+}
+
+console.log("Exactitud de validación:", entrenarYEvaluar(datos).toFixed(3));</code></pre>
+      <p>Con las dos fugas arregladas, la exactitud baja de 1.000 a unos 0.694: un valor mucho más creíble, acorde con el ruido real del problema. La columna <code>dias_hasta_abandono</code> era la más grave con diferencia (fuga del objetivo: contenía la respuesta disfrazada). Escalar con todos los datos antes de dividir también infla la nota, aunque mucho menos; aun así, hay que evitarlo siempre, porque con otros datos (sobre todo con pocas filas) el efecto puede ser grande.</p>
+    </details>
+  </article>
 </section>
   </main>
 </div>

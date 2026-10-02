@@ -51,6 +51,8 @@
       <li><a href="#movimiento">Steering</a></li>
       <li><a href="#percepcion">Percepción</a></li>
       <li><a href="#caminos">A* a fondo</a></li>
+      <li><a href="#arboles">Árboles de comportamiento</a></li>
+      <li><a href="#utilidad">Utilidad y planes</a></li>
     </ol>
     <div class="paradas-tren" aria-hidden="true"><svg viewBox="0 0 24 30"><rect class="t-cuerpo" x="1" y="1" width="22" height="28" rx="7"/><rect class="t-vent" x="5" y="5" width="14" height="8" rx="2"/><circle class="t-vent" cx="8" cy="21" r="2"/><circle class="t-vent" cx="16" cy="21" r="2"/></svg></div>
   </nav>
@@ -2803,6 +2805,582 @@ console.log("Casillas exploradas con un A* por zombi y tick:", totalAEstrella);
     <figcaption>Tres representaciones del mismo nivel, con la salida en rojo y la meta en amarillo. La <strong>navmesh</strong> (<em>navigation mesh</em>, «malla de navegación») describe el suelo caminable con pocos polígonos convexos; A* busca sobre los polígonos y luego se tensa la cuerda dentro de ellos. Es lo que usan Godot, Unity y Unreal para mundos que no son de casillas.</figcaption>
   </figure>
   <p>Regla práctica: cuadrícula si tu juego ya es de casillas; puntos de ruta si el nivel es pequeño y los colocas a mano; navmesh para todo lo demás, generada por el motor. Cómo se hace en cada motor lo verás, junto con el resto de herramientas, al final de la <a href="#director">última sección</a>.</p>
+</section>
+
+<section id="arboles" data-parada="Árboles de comportamiento">
+  <h2>Árboles de comportamiento</h2>
+  <p>La sección de estados terminó con un problema sin resolver: las máquinas de estados se enredan al crecer, y reutilizar un trozo de comportamiento («investigar un ruido») en otro enemigo cuesta, porque está enredado con las flechas de ese enemigo concreto. Los <strong>árboles de comportamiento</strong> (en inglés, <em>behavior trees</em>, abreviado <strong>BT</strong>) resuelven justo eso: en vez de estados y transiciones, un árbol de piezas pequeñas que se combinan y se reutilizan.</p>
+  <p><em>Halo 2</em> (2004) popularizó la técnica en juegos comerciales. Damian Isla, su programador de IA, contó en la GDC de 2005 cómo el equipo sustituyó una maraña de máquinas de estados que nadie se atrevía a tocar por un árbol de piezas pequeñas. Hoy es, junto con la utilidad de la próxima sección, la técnica más usada para enemigos con muchas opciones, y es el modelo integrado por defecto en Unreal Engine.</p>
+
+  <h3>Hojas, secuencias y selectores</h3>
+  <p>Un árbol de comportamiento se recorre desde la raíz una vez por <strong>tick</strong>, igual que las máquinas de estados de la sección anterior: unas pocas veces por segundo, no en cada fotograma. Cada <strong>nodo</strong> del árbol, al evaluarse, devuelve uno de tres resultados:</p>
+  <ul>
+    <li><strong>EXITO</strong>: el nodo consiguió lo que hacía.</li>
+    <li><strong>FALLO</strong>: no lo consiguió.</li>
+    <li><strong>EN_CURSO</strong>: todavía está trabajando (por ejemplo, moviéndose hacia un punto). Al tick siguiente se le vuelve a preguntar, a veces retomando justo donde se quedó.</li>
+  </ul>
+  <p>Hay dos tipos de <strong>hoja</strong> (nodos sin hijos). Una <strong>acción</strong> hace algo en el mundo (moverse, atacar, esperar) y devuelve EXITO, FALLO o EN_CURSO según cómo le vaya. Una <strong>condición</strong> solo pregunta algo (¿tengo vida?, ¿la veo?) y devuelve EXITO o FALLO, sin tocar el mundo.</p>
+  <p>Y hay dos nodos <strong>compuestos</strong>, que combinan a sus hijos:</p>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Compuesto</th><th scope="col">Como un…</th><th scope="col">Se detiene en…</th><th scope="col">Uso típico</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Secuencia</strong></td><td>Y lógico</td><td>el primer hijo que NO es EXITO</td><td>pasos que deben darse todos, en orden: «¿te veo? → perseguir → atrapar»</td></tr>
+        <tr><td><strong>Selector</strong></td><td>O lógico</td><td>el primer hijo que NO es FALLO</td><td>opciones por prioridad: «¿huir? si no, ¿atacar? si no, patrullar»</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>La <strong>prioridad va de izquierda a derecha</strong>: un selector prueba a su primer hijo, y solo si falla prueba al segundo. Es la misma idea que el orden de las condiciones en una máquina de estados, pero ahora se anida: una secuencia dentro de un selector dentro de otra secuencia, tan profundo como haga falta, y cada rama se escribe y se prueba por separado.</p>
+
+  <figure class="capsula" data-titulo="Un tick del árbol del guardia">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Animación: el árbol de comportamiento del guardia. Un selector en la raíz con cuatro ramas: la secuencia huir (¿vida baja? y escapar), la secuencia atacar (¿te ve?, perseguir y atrapar), la secuencia investigar (¿oyó algo? y mirar) y, al final, la acción patrullar sin condición. En el primer tick, huir, atacar e investigar fallan y gana patrullar, que queda en curso. En el tick siguiente aparece la jugadora: te ve pasa a éxito, perseguir queda en curso y el selector se detiene ahí, interrumpiendo a patrullar sin que investigar ni patrullar lleguen a evaluarse.">
+        <text class="d-rotulo d-peq" x="700" y="16" text-anchor="end" data-texto="1:En reposo; 2:Tick 1 · ¿vida baja?; 3:Tick 1 · ¿te ve?; 4:Tick 1 · ¿oyó algo?; 5:Tick 1 · patrulla (EN_CURSO); 6:Tick 2 · ¡te ve! interrumpe"></text>
+        <path class="d-linea" d="M360 62L360 78L90 78L90 96"/>
+        <path class="d-linea" d="M360 62L360 78L275 78L275 96"/>
+        <path class="d-linea" d="M360 62L360 78L460 78L460 96"/>
+        <path class="d-linea" d="M360 62L360 78L625 78L625 96"/>
+        <path class="d-linea" d="M90 132L90 148L48 148L48 166"/>
+        <path class="d-linea" d="M90 132L90 148L132 148L132 166"/>
+        <path class="d-linea" d="M275 132L275 148L209 148L209 166"/>
+        <path class="d-linea" d="M275 132L275 148L275 148L275 166"/>
+        <path class="d-linea" d="M275 132L275 148L341 148L341 166"/>
+        <path class="d-linea" d="M460 132L460 148L418 148L418 166"/>
+        <path class="d-linea" d="M460 132L460 148L502 148L502 166"/>
+        <text class="d-peq d-tenue" x="360" y="20" text-anchor="middle">selector</text>
+        <rect class="d-caja" x="300" y="26" width="120" height="36" rx="8" data-clases="1:d-caja; 5:d-aviso"/>
+        <text class="d-rotulo" x="360" y="49" text-anchor="middle">raíz</text>
+        <text class="d-peq d-tenue" x="90" y="90" text-anchor="middle">secuencia</text>
+        <rect class="d-caja" x="10" y="96" width="160" height="36" rx="6" data-clases="1:d-caja-suave; 2:d-mal"/>
+        <text class="d-rotulo" x="90" y="119" text-anchor="middle">huir</text>
+        <text class="d-peq d-tenue" x="275" y="90" text-anchor="middle">secuencia</text>
+        <rect class="d-caja" x="180" y="96" width="190" height="36" rx="6" data-clases="1:d-caja-suave; 3:d-mal; 6:d-aviso"/>
+        <text class="d-rotulo" x="275" y="119" text-anchor="middle">atacar</text>
+        <text class="d-peq d-tenue" x="460" y="90" text-anchor="middle">secuencia</text>
+        <rect class="d-caja" x="380" y="96" width="160" height="36" rx="6" data-clases="1:d-caja-suave; 4:d-mal; 6:d-caja-suave"/>
+        <text class="d-rotulo" x="460" y="119" text-anchor="middle">investigar</text>
+        <rect class="d-caja" x="550" y="96" width="150" height="36" rx="6" data-clases="1:d-caja-suave; 5:d-aviso; 6:d-caja-suave"/>
+        <text class="d-rotulo" x="625" y="119" text-anchor="middle">patrullar</text>
+        <text class="d-peq d-tenue" x="625" y="144" text-anchor="middle">(sin condición: siempre disponible)</text>
+        <rect class="d-caja-suave" x="10" y="166" width="76" height="32" rx="5" data-clases="1:d-caja-suave; 2:d-mal"/>
+        <text class="d-peq" x="48" y="186" text-anchor="middle">¿vida baja?</text>
+        <rect class="d-caja-suave" x="94" y="166" width="76" height="32" rx="5"/>
+        <text class="d-peq" x="132" y="186" text-anchor="middle">escapar</text>
+        <rect class="d-caja-suave" x="180" y="166" width="58" height="32" rx="5" data-clases="1:d-caja-suave; 3:d-mal; 6:d-ok"/>
+        <text class="d-peq" x="209" y="186" text-anchor="middle">¿te ve?</text>
+        <rect class="d-caja-suave" x="246" y="166" width="58" height="32" rx="5" data-clases="1:d-caja-suave; 6:d-aviso"/>
+        <text class="d-peq" x="275" y="186" text-anchor="middle">perseguir</text>
+        <rect class="d-caja-suave" x="312" y="166" width="58" height="32" rx="5"/>
+        <text class="d-peq" x="341" y="186" text-anchor="middle">atrapar</text>
+        <rect class="d-caja-suave" x="380" y="166" width="76" height="32" rx="5" data-clases="1:d-caja-suave; 4:d-mal; 6:d-caja-suave"/>
+        <text class="d-peq" x="418" y="186" text-anchor="middle">¿oyó algo?</text>
+        <rect class="d-caja-suave" x="464" y="166" width="76" height="32" rx="5"/>
+        <text class="d-peq" x="502" y="186" text-anchor="middle">mirar</text>
+        <g class="d-peq" data-pasos="1-6">
+          <rect class="d-mal" x="20" y="252" width="14" height="14"/><text x="40" y="263">FALLO</text>
+          <rect class="d-ok" x="110" y="252" width="14" height="14"/><text x="130" y="263">EXITO</text>
+          <rect class="d-aviso" x="200" y="252" width="14" height="14"/><text x="220" y="263">EN_CURSO</text>
+          <rect class="d-caja-suave" x="320" y="252" width="14" height="14"/><text x="340" y="263">sin evaluar este tick</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>El árbol del guardia en reposo: un selector con cuatro ramas, en orden de prioridad: huir, atacar, investigar y, al final, patrullar, sin condición.</li>
+        <li>Primer hijo del selector: la secuencia <strong>huir</strong>. Pregunta «¿vida baja?»: FALLO. Como es una secuencia, el primer fallo la detiene entera: FALLO, sin llegar a probar «escapar» (se queda gris para siempre en este tick).</li>
+        <li>Segundo hijo: <strong>atacar</strong>. «¿te ve?» también FALLO, porque la jugadora está lejos. Se detiene ahí: ni «perseguir» ni «atrapar» se evalúan.</li>
+        <li>Tercer hijo: <strong>investigar</strong>. «¿oyó algo?»: FALLO. Tampoco mira.</li>
+        <li data-duracion="7">El selector llega a su último hijo, <strong>patrullar</strong>, que no tiene condición: devuelve EN_CURSO (sigue caminando su ruta). El selector propaga ese EN_CURSO hacia arriba y se detiene: ya tiene un hijo que no falló, así que no prueba ninguno más.</li>
+        <li data-duracion="8">Tick siguiente: la jugadora aparece. El selector vuelve a empezar desde el primer hijo. «huir» sigue fallando, pero ahora «¿te ve?» es EXITO y «perseguir» devuelve EN_CURSO: la secuencia atacar también EN_CURSO. El selector se detiene ahí. «investigar» y «patrullar» ni se miran este tick: patrullar queda interrumpido en seco, aunque el tick anterior estaba EN_CURSO.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Decoradores</h3>
+  <p>Un <strong>decorador</strong> es un nodo con un solo hijo que cambia su resultado o cómo se le llama. Se parece al patrón Decorator de la <a href="25-codigo-limpio.html#mas-patrones">Estación 25</a>: envuelve algo sin tocarlo por dentro. Tres habituales:</p>
+  <ul>
+    <li><strong>Inversor</strong>: convierte EXITO en FALLO y FALLO en EXITO (EN_CURSO pasa igual). Sirve para condiciones negativas: «¿NO me ve?» es un Inversor sobre «¿me ve?».</li>
+    <li><strong>Repetir(n)</strong>: ejecuta a su hijo n veces seguidas antes de devolver EXITO.</li>
+    <li><strong>Enfriamiento(segundos)</strong>: tras un EXITO, devuelve FALLO sin llamar siquiera a su hijo hasta que pase ese tiempo. Sirve para que un ataque especial no se repita sin parar.</li>
+  </ul>
+  <p>Los programarás en el ejercicio <a href="#ej-decoradores">Decoradores</a>.</p>
+
+  <h3>Reactivo frente a con memoria</h3>
+  <p>Hay dos formas de recorrer un selector en cada tick. <strong>Con memoria</strong>: si un hijo quedó EN_CURSO, el tick siguiente se retoma justo ahí, sin volver a mirar a los hermanos de más prioridad (más barato). <strong>Reactivo</strong>: cada tick se vuelve a empezar desde el primer hijo, aunque uno esté EN_CURSO. Si un hijo de más prioridad pasa a EXITO (por ejemplo, «¿vida baja?» ahora es verdad), el selector lo <strong>interrumpe</strong>: abandona la acción en marcha y cambia a la nueva. Unreal llama a esto un <em>abort</em>. Un selector puramente «con memoria» sería incapaz de reaccionar a una emergencia mientras patrulla o persigue, así que casi todos los selectores de un juego son reactivos, al menos en sus ramas de más prioridad. El del guardia que acabas de ver es reactivo: por eso «investigar» y «patrullar» se vuelven a comprobar desde cero en cada tick.</p>
+
+  <h3>La pizarra</h3>
+  <p>Los nodos de un agente necesitan compartir datos entre ellos: la última posición en la que vio a la jugadora, a qué objetivo persigue. Ese espacio común se llama <strong>pizarra</strong> (en inglés, <em>blackboard</em>), y suele ser un objeto por agente que se pasa a cada nodo en el tick, parecido a la <code>percepcion</code> que ya usabas en las máquinas de estados. Tiene un riesgo: si todo el equipo mete ahí cualquier dato «por si acaso», la pizarra se convierte en un cajón de sastre que nadie entiende del todo. Conviene documentar qué guarda cada campo y quién lo escribe, igual que documentarías los parámetros de una función.</p>
+
+  <h3>Tu propio intérprete</h3>
+  <p>Igual que hiciste con A*, vale la pena programar un árbol de comportamiento una vez, desde cero, para perderle el miedo. Con clases y composición (<a href="21-paradigmas.html#composicion">Estación 21</a>, repaso en <a href="36-python.html#clases">36</a>), caben en unas 50 líneas:</p>
+  <pre><code class="language-js">class Nodo {
+  constructor(tipo, nombre) { this.tipo = tipo; this.nombre = nombre; this.ultimo = null; }
+  tick(pizarra) { return (this.ultimo = this.evaluar(pizarra)); }   // guarda el resultado para depurar
+}
+class Condicion extends Nodo {
+  constructor(nombre, prueba) { super("condicion", nombre); this.prueba = prueba; }
+  evaluar(p) { return this.prueba(p) ? "EXITO" : "FALLO"; }
+}
+class Accion extends Nodo {
+  constructor(nombre, ejecutar) { super("accion", nombre); this.ejecutar = ejecutar; }
+  evaluar(p) { return this.ejecutar(p); }                           // la acción decide su propio resultado
+}
+class Secuencia extends Nodo {                                      // como un Y: para en el primer no-EXITO
+  constructor(nombre, hijos) { super("secuencia", nombre); this.hijos = hijos; }
+  evaluar(p) {
+    for (const hijo of this.hijos) {
+      const r = hijo.tick(p);
+      if (r !== "EXITO") return r;
+    }
+    return "EXITO";
+  }
+}
+class Selector extends Nodo {                                       // como un O: para en el primer no-FALLO
+  constructor(nombre, hijos) { super("selector", nombre); this.hijos = hijos; }
+  evaluar(p) {
+    for (const hijo of this.hijos) {
+      const r = hijo.tick(p);
+      if (r !== "FALLO") return r;
+    }
+    return "FALLO";
+  }
+}
+class Inversor extends Nodo {
+  constructor(nombre, hijo) { super("decorador", nombre); this.hijo = hijo; }
+  evaluar(p) {
+    const r = this.hijo.tick(p);
+    return r === "EXITO" ? "FALLO" : r === "FALLO" ? "EXITO" : r;
+  }
+}</code></pre>
+  <p>Cada clase hereda <code>tick</code> de <code>Nodo</code>, que guarda el último resultado en <code>ultimo</code> antes de devolverlo (de ahí sale el color de la cápsula anterior) y solo tiene que escribir <code>evaluar</code>. Fíjate en que ni <code>Secuencia</code> ni <code>Selector</code> saben nada de guardias, ovejas ni gemas: solo combinan resultados. Toda la lógica del juego vive en las condiciones y las acciones, que son las piezas que de verdad cambian de un enemigo a otro.</p>
+  <p>Sigue una <code>Secuencia</code> en marcha durante dos ticks, para ver dos detalles importantes: que <strong>recuerda por dónde iba</strong> cuando un hijo queda EN_CURSO, y que un FALLO corta en seco sin llegar a los hermanos siguientes.</p>
+  <div class="traza" data-titulo="Secuencia.tick a lo largo de dos ticks">
+    <pre><code class="language-js">class Secuencia {
+  constructor(hijos) { this.hijos = hijos; this.indice = 0; }
+  tick() {
+    while (this.indice &lt; this.hijos.length) {
+      const r = this.hijos[this.indice]();
+      if (r === "FALLO") { this.indice = 0; return "FALLO"; }
+      if (r === "EN_CURSO") return "EN_CURSO";
+      this.indice++;
+    }
+    this.indice = 0;
+    return "EXITO";
+  }
+}
+let intentos = 0;
+const rama = new Secuencia([() =&gt; "EXITO", () =&gt; (intentos++, intentos === 1 ? "EN_CURSO" : "FALLO"), () =&gt; "EXITO"]);
+console.log("tick 1:", rama.tick());
+console.log("tick 2:", rama.tick());</code></pre>
+    <script type="application/json">[
+      {"linea": 14, "vars": {"intentos": "0"}, "nota": "Un contador compartido por los tres hijos de la secuencia (aquí son funciones simples, no nodos Accion, para fijarse solo en el compuesto)."},
+      {"linea": 15, "vars": {"intentos": "0", "rama": "Secuencia{ indice: 0 }"}, "nota": "rama tiene tres hijos y empieza con indice en 0: por ahí se reanudará si algún día queda EN_CURSO."},
+      {"linea": 4, "vars": {"intentos": "0", "rama": "Secuencia{ indice: 0 }"}, "nota": "Primera llamada a tick() (línea 16). indice es 0: el bucle empieza por el primer hijo."},
+      {"linea": 5, "vars": {"intentos": "0", "rama": "Secuencia{ indice: 0 }", "r": "\"EXITO\""}, "nota": "Se llama al hijo 0, que devuelve EXITO sin tocar intentos."},
+      {"linea": 6, "vars": {"intentos": "0", "rama": "Secuencia{ indice: 0 }", "r": "\"EXITO\""}, "nota": "No es FALLO: sigue."},
+      {"linea": 7, "vars": {"intentos": "0", "rama": "Secuencia{ indice: 0 }", "r": "\"EXITO\""}, "nota": "Tampoco es EN_CURSO: sigue."},
+      {"linea": 8, "vars": {"intentos": "0", "rama": "Secuencia{ indice: 1 }", "r": "\"EXITO\""}, "nota": "indice pasa a 1."},
+      {"linea": 4, "vars": {"intentos": "0", "rama": "Secuencia{ indice: 1 }"}, "nota": "indice 1 es menor que 3: el bucle sigue con el segundo hijo."},
+      {"linea": 5, "vars": {"intentos": "1", "rama": "Secuencia{ indice: 1 }", "r": "\"EN_CURSO\""}, "nota": "El segundo hijo suma 1 a intentos y, como es el primero, devuelve EN_CURSO: todavía está trabajando."},
+      {"linea": 6, "vars": {"intentos": "1", "rama": "Secuencia{ indice: 1 }", "r": "\"EN_CURSO\""}, "nota": "No es FALLO."},
+      {"linea": 7, "vars": {"intentos": "1", "rama": "Secuencia{ indice: 1 }", "r": "\"EN_CURSO\""}, "salida": "tick 1: EN_CURSO", "nota": "Es EN_CURSO: se devuelve tal cual, SIN tocar indice. La secuencia completa queda EN_CURSO, y recuerda que se quedó en el hijo 1."},
+      {"linea": 4, "vars": {"intentos": "1", "rama": "Secuencia{ indice: 1 }"}, "nota": "Segunda llamada a tick() (línea 17). indice sigue en 1: NO se reinicia. Retoma justo donde se quedó, sin repetir el primer hijo."},
+      {"linea": 5, "vars": {"intentos": "2", "rama": "Secuencia{ indice: 1 }", "r": "\"FALLO\""}, "nota": "El mismo hijo 1, llamado otra vez: ahora intentos es 2, así que esta vez devuelve FALLO."},
+      {"linea": 6, "vars": {"intentos": "2", "rama": "Secuencia{ indice: 0 }", "r": "\"FALLO\""}, "salida": "tick 2: FALLO", "nota": "Es FALLO: indice vuelve a 0 (la próxima vez se empezará desde el principio) y se corta aquí. El tercer hijo nunca llega a llamarse."}
+    ]</script>
+  </div>
+
+  <h3>El árbol del guardia</h3>
+  <p>Con las piezas montadas, así queda el cerebro del guardia, usando condiciones y acciones de las secciones anteriores (<code>teVe</code> de la <a href="#percepcion">percepción</a>, el movimiento de <a href="#movimiento">steering</a>):</p>
+  <pre><code class="language-js">const arbolGuardia = new Selector("raíz", [
+  new Secuencia("huir", [
+    new Condicion("¿vida baja?", (p) =&gt; p.vida &lt; 0.3),
+    new Accion("escapar", huirDe),
+  ]),
+  new Secuencia("atacar", [
+    new Condicion("¿te ve?", (p) =&gt; p.teVe),
+    new Accion("perseguir", perseguir),
+    new Accion("atrapar", atrapar),
+  ]),
+  new Secuencia("investigar", [
+    new Condicion("¿oyó algo?", (p) =&gt; p.oyoAlgo),
+    new Accion("mirar", investigar),
+  ]),
+  new Accion("patrullar", patrullar),      // sin condición: la última opción, siempre disponible
+]);
+
+function actualizarGuardia() {
+  arbolGuardia.tick(percibir());           // un tick completo, de la raíz hacia abajo
+}</code></pre>
+  <p>Compáralo con la máquina de estados de la sección anterior: la prioridad (huir antes que atacar, atacar antes que investigar) ahora se lee de un vistazo en el orden de los hijos del selector, no está repartida entre varios <code>if</code>. Y «perseguir» se puede reutilizar tal cual en el árbol de otro enemigo, por ejemplo un lobo, sin copiar ni una línea: solo hay que colgarlo de otra rama.</p>
+  <p>Pruébalo tú. El árbol de abajo se dibuja en vivo, coloreado por el último resultado de cada nodo: verde EXITO, rojo FALLO, amarillo EN_CURSO, gris sin evaluar este tick. Acerca el puntero (o el dedo) al guardia para que te vea. <strong>Predice</strong>: cuando el guardia patrulla y de pronto te ve, ¿qué nodos cambian de color y cuáles se quedan grises?</p>
+  <div class="taller" data-modo="web" id="taller-arbol-vista" data-titulo="Predice y modifica: árbol a la vista" data-alto="30rem">
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;canvas width="480" height="200" tabindex="0"&gt;&lt;/canvas&gt;
+&lt;p&gt;&lt;button id="herir"&gt;Herir al guardia (−40)&lt;/button&gt; &lt;button id="ruido"&gt;Hacer ruido cerca&lt;/button&gt; &lt;span id="estado"&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;ul id="arbol" class="arbol"&gt;&lt;/ul&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; font-size: 14px; }
+canvas { display: block; width: 100%; max-width: 480px; background: #1d2433; border-radius: 8px; touch-action: none; outline: none; }
+p { margin: 6px 0; }
+button { font: inherit; padding: 4px 10px; }
+.arbol, .arbol ul { list-style: none; margin: 0; padding-left: 20px; border-left: 2px solid #3a4560; }
+.arbol { padding-left: 0; border-left: none; }
+.arbol li { margin: 4px 0; }
+.arbol li &gt; span { display: inline-block; padding: 2px 8px; border-radius: 6px; background: #2b3448; color: #c8d0e0; font-size: 12px; }
+.exito &gt; span { background: #2f6f4f; color: #d7ffe9; }
+.fallo &gt; span { background: #6b2b2b; color: #ffd0d0; }
+.encurso &gt; span { background: #7a6118; color: #ffe9a8; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const lienzo = document.querySelector("canvas");
+const ctx = lienzo.getContext("2d");
+const arbolEl = document.querySelector("#arbol");
+const estadoEl = document.querySelector("#estado");
+const DT = 0.15;   // el cerebro decide cada 0,15 s, como en las secciones anteriores
+
+// ===== El intérprete de árboles de comportamiento =====
+class Nodo {
+  constructor(tipo, nombre) { this.tipo = tipo; this.nombre = nombre; this.ultimo = null; }
+  tick(p) { return (this.ultimo = this.evaluar(p)); }
+}
+class Condicion extends Nodo {
+  constructor(nombre, prueba) { super("condicion", nombre); this.prueba = prueba; }
+  evaluar(p) { return this.prueba(p) ? "EXITO" : "FALLO"; }
+}
+class Accion extends Nodo {
+  constructor(nombre, ejecutar) { super("accion", nombre); this.ejecutar = ejecutar; }
+  evaluar(p) { return this.ejecutar(p); }
+}
+class Secuencia extends Nodo {
+  constructor(nombre, hijos) { super("secuencia", nombre); this.hijos = hijos; }
+  evaluar(p) { for (const h of this.hijos) { const r = h.tick(p); if (r !== "EXITO") return r; } return "EXITO"; }
+}
+class Selector extends Nodo {
+  constructor(nombre, hijos) { super("selector", nombre); this.hijos = hijos; }
+  evaluar(p) { for (const h of this.hijos) { const r = h.tick(p); if (r !== "FALLO") return r; } return "FALLO"; }
+}
+
+// ===== El mundo: guardia, jugadora y ruta =====
+const RUTA = [{ x: 60, y: 50 }, { x: 420, y: 50 }, { x: 420, y: 150 }, { x: 60, y: 150 }];
+const guardia = { x: 60, y: 50, punto: 1, vida: 1 };
+const puntero = { x: -1000, y: -1000 };
+let reloj = 0, ultimoRuido = -10, mensaje = "";
+
+function irHacia(destino, velocidad) {
+  const dx = destino.x - guardia.x, dy = destino.y - guardia.y;
+  const d = Math.hypot(dx, dy), paso = Math.min(d, velocidad * DT);
+  if (d &gt; 0) { guardia.x += dx / d * paso; guardia.y += dy / d * paso; }
+  return d;
+}
+function patrullar() {
+  if (irHacia(RUTA[guardia.punto], 70) &lt; 4) guardia.punto = (guardia.punto + 1) % RUTA.length;
+  return "EN_CURSO";
+}
+function perseguir() { return irHacia(puntero, 130) &lt; 16 ? "EXITO" : "EN_CURSO"; }
+function atrapar() { mensaje = "¡Atrapada! Reinicia al guardia."; return "EXITO"; }
+function huirDe() { const dx = guardia.x - puntero.x, dy = guardia.y - puntero.y, d = Math.hypot(dx, dy) || 1; irHacia({ x: guardia.x + dx / d * 60, y: guardia.y + dy / d * 60 }, 140); return "EN_CURSO"; }
+function investigar() { return irHacia({ x: 240, y: 100 }, 90) &lt; 10 ? "EXITO" : "EN_CURSO"; }
+
+// ===== El árbol del guardia =====
+const raiz = new Selector("raíz", [
+  new Secuencia("huir", [new Condicion("¿vida baja?", (p) =&gt; p.vida &lt; 0.3), new Accion("escapar", huirDe)]),
+  new Secuencia("atacar", [new Condicion("¿te ve?", (p) =&gt; p.teVe), new Accion("perseguir", perseguir), new Accion("atrapar", atrapar)]),
+  new Secuencia("investigar", [new Condicion("¿oyó algo?", (p) =&gt; p.oyoAlgo), new Accion("mirar", investigar)]),
+  new Accion("patrullar", patrullar),
+]);
+
+// Modifica: en el array de arriba, cambia el orden para que "investigar" vaya antes que "atacar".
+
+function percibir() {
+  const d = Math.hypot(puntero.x - guardia.x, puntero.y - guardia.y);
+  return { teVe: d &lt; 150, oyoAlgo: reloj - ultimoRuido &lt; 3, vida: guardia.vida };
+}
+function dibujarArbol(n) {
+  const clase = n.ultimo === "EXITO" ? "exito" : n.ultimo === "FALLO" ? "fallo" : n.ultimo === "EN_CURSO" ? "encurso" : "";
+  const hijos = n.hijos ? `&lt;ul&gt;${n.hijos.map(dibujarArbol).join("")}&lt;/ul&gt;` : "";
+  return `&lt;li class="${clase}"&gt;&lt;span&gt;${n.nombre}&lt;/span&gt;${hijos}&lt;/li&gt;`;
+}
+
+let anterior = null, relojTick = 0;
+function bucle(ahora) {
+  if (anterior === null) anterior = ahora;
+  const dt = Math.min((ahora - anterior) / 1000, 1 / 30);
+  anterior = ahora;
+  reloj += dt;
+  relojTick += dt;
+  guardia.vida = Math.min(1, guardia.vida + 0.05 * dt);
+  if (relojTick &gt;= DT) {
+    relojTick = 0;
+    raiz.tick(percibir());
+    arbolEl.innerHTML = dibujarArbol(raiz);
+    estadoEl.textContent = mensaje;
+  }
+  dibujar();
+  requestAnimationFrame(bucle);
+}
+function dibujar() {
+  ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+  ctx.setLineDash([6, 6]); ctx.strokeStyle = "#4a5875";
+  ctx.beginPath();
+  RUTA.forEach((p, i) =&gt; (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+  ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = guardia.vida &lt; 0.3 ? "#ffcc4d" : "#ff6b6b";
+  ctx.beginPath(); ctx.arc(guardia.x, guardia.y, 11, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#6fcf97";
+  ctx.beginPath(); ctx.arc(puntero.x, puntero.y, 7, 0, Math.PI * 2); ctx.fill();
+}
+function moverPuntero(e) {
+  const caja = lienzo.getBoundingClientRect();
+  puntero.x = (e.clientX - caja.left) * lienzo.width / caja.width;
+  puntero.y = (e.clientY - caja.top) * lienzo.height / caja.height;
+}
+lienzo.addEventListener("pointermove", moverPuntero);
+lienzo.addEventListener("pointerdown", (e) =&gt; { moverPuntero(e); lienzo.focus(); });
+lienzo.addEventListener("pointerleave", () =&gt; { puntero.x = -1000; puntero.y = -1000; });
+document.querySelector("#herir").addEventListener("click", () =&gt; { guardia.vida = Math.max(0, guardia.vida - 0.4); });
+document.querySelector("#ruido").addEventListener("click", () =&gt; { ultimoRuido = reloj; });
+requestAnimationFrame(bucle);</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (typeof raiz === "undefined") return "No encuentro la variable raiz (el nodo selector principal del árbol).";
+if (raiz.tipo !== "selector") return "raiz debe seguir siendo un Selector.";
+var nombres = raiz.hijos.map(function (h) { return h.nombre; });
+if (nombres.join(",") !== "huir,investigar,atacar,patrullar") return "Después de reordenar, los hijos de raiz deberían quedar así: huir, investigar, atacar, patrullar (ahora van: " + nombres.join(", ") + ").";
+var investigar = raiz.hijos[1];
+if (investigar.tipo !== "secuencia" || investigar.hijos.length !== 2 || investigar.hijos[0].tipo !== "condicion") return "La secuencia investigar debe conservar sus dos hijos: una condición y una acción.";
+return true;
+    </script>
+  </div>
+  <p>Patrullar pasa de amarillo a gris en el instante en que te ve: el selector lo interrumpió sin que «patrullar» llegara a enterarse de que había terminado. Para patrullar, ese tick simplemente no existió. <strong>Modifica</strong> el código: en el array de hijos de <code>raiz</code>, mueve <code>investigar</code> para que vaya antes que <code>atacar</code>. Haz ruido con el botón y, mientras el guardia va a mirar, ponte delante de él. ¿Te persigue al instante o termina de investigar primero? El orden de las ramas no es un detalle: es la política de prioridades del personaje.</p>
+
+  <h3>El árbol como datos</h3>
+  <p>Como cada nodo es, en el fondo, <code>{ tipo, nombre, hijos }</code>, un árbol entero se puede describir en JSON y construirse con una función que lo recorra, sin tocar las clases. Eso es justo lo que hacen los editores visuales de los motores (los verás al final de la próxima sección): el equipo de diseño arrastra cajas y las conecta con el ratón, y el juego carga ese árbol como datos, sin que nadie recompile nada. Depurar también se vuelve visual: como en la cápsula de arriba, basta con colorear cada nodo según su último resultado para ver, en tiempo real, qué está «pensando» cada enemigo del nivel mientras juegas.</p>
+  <aside class="senal error"><div class="senal-placa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg></div><div class="senal-cuerpo"><p class="senal-titulo">Error común</p><p>Un árbol de comportamiento no es un <strong>árbol de decisión</strong> (el de la <a href="39-aprendizaje-automatico.html#arboles">Estación 39</a>). Se parecen en el dibujo, pero uno se <em>escribe</em> a mano para decidir qué hacer y el otro se <em>aprende</em> de datos para clasificar algo. Tampoco es lo mismo que un <code>if</code>/<code>else</code> anidado gigante: la diferencia es que sus piezas (secuencias, selectores, decoradores, hojas) se combinan y se reutilizan como bloques entre personajes distintos, mientras que un <code>if</code> enorme solo crece y solo sirve ahí.</p></div></aside>
+  <p>Cómo se escriben estos árboles en un motor real, con editor visual y depurador incluidos, lo verás junto con el resto de herramientas al final de la sección de <a href="#director">dificultad y motores</a>.</p>
+</section>
+
+<section id="utilidad" data-parada="Utilidad y planes">
+  <h2>Utilidad, lugares y planes</h2>
+  <p>Hasta ahora el guardia elegía entre opciones que no competían de verdad: o huye, o ataca, o investiga, o patrulla, en un orden fijo de prioridad. Muchos personajes tienen que decidir entre opciones que sí compiten, con matices: un aldeano con hambre, sueño y ganas de socializar; un soldado con poca munición pero un enemigo débil delante. Un árbol con condiciones tajantes (¿hambre mayor que 0,7?) obliga a inventar umbrales para todo y produce decisiones a saltos. La <strong>IA por utilidad</strong> (en inglés, <em>utility AI</em>) responde con números en vez de condiciones: cada opción se puntúa, y gana la que más puntúa.</p>
+
+  <h3>Consideraciones y curvas de respuesta</h3>
+  <p>Cada ingrediente que importa para una decisión (la vida, la distancia al objetivo, la munición que queda, la hora del día) se llama <strong>consideración</strong>. Primero se <strong>normaliza</strong> a un número entre 0 y 1 (la vida al 40 % es 0,4; a 150 de 200 también es 0,75), y después se pasa por una <strong>curva de respuesta</strong> que decide cómo de urgente es: no siempre lo justo es que una consideración puntúe igual que su valor crudo.</p>
+  <pre><code class="language-js">const lineal    = (x) =&gt; x;                      // urgencia proporcional a la entrada
+const cuadratica = (x) =&gt; x * x;                  // casi no urgente hasta que la entrada es alta
+const escalon   = (x, umbral) =&gt; (x &gt;= umbral ? 1 : 0);   // todo o nada, con el salto brusco de un if
+const logistica = (x, centro = 0.5, pendiente = 10) =&gt;
+  1 / (1 + Math.exp(-pendiente * (x - centro)));  // una «S»: plana, sube rápido, plana otra vez</code></pre>
+  <p>La función exponencial <code>Math.exp</code> calcula e<sup>x</sup>, donde e ≈ 2,718 (la misma constante de la <a href="18-matematicas.html#crecimiento">Estación 18</a>). Aquí se usa al revés, para <em>frenar</em>: cuanto más negativo es el exponente, más se acerca e<sup>x</sup> a 0, así que <code>logistica</code> se aplana por debajo del centro y por encima de él, y solo sube deprisa en medio.</p>
+  <figure class="capsula" data-titulo="Curvas de respuesta">
+    <div class="capsula-escena">
+      <svg viewBox="0 0 720 280" role="img" aria-label="Animación: una gráfica de entrada (sed, de 0 a 1) contra puntuación (de 0 a 1), con tres curvas: lineal, una recta diagonal; cuadrática, que se queda baja y sube al final; y logística, una ese que se queda baja, sube deprisa en el centro y se aplana arriba. Con la entrada en 0,3, la lineal puntúa 0,30, la cuadrática 0,09 y la logística 0,12.">
+        <path class="d-linea" d="M40 30L40 230"/>
+        <path class="d-linea" d="M40 230L420 230"/>
+        <text class="d-peq d-tenue" x="40" y="20">puntuación</text>
+        <text class="d-peq d-tenue" x="420" y="246" text-anchor="end">entrada (sed)</text>
+        <text class="d-peq d-tenue" x="30" y="233" text-anchor="end">0</text>
+        <text class="d-peq d-tenue" x="30" y="37" text-anchor="end">1</text>
+        <text class="d-peq d-tenue" x="40" y="246">0</text>
+        <text class="d-peq d-tenue" x="420" y="246" text-anchor="end" data-pasos="1">1</text>
+        <g class="d-peq" data-pasos="1-5">
+          <path class="d-t1" d="M620 40h26"/><text x="650" y="44">lineal</text>
+          <path class="d-t2" d="M620 58h26"/><text x="650" y="62">cuadrática</text>
+          <path class="d-t3" d="M620 76h26"/><text x="650" y="80">logística</text>
+        </g>
+        <path class="d-punteada" d="M154 30L154 230" data-pasos="2-5"/>
+        <g data-pasos="2-5">
+          <path class="d-t1" fill="none" d="M40 230 L420 30"/>
+          <circle class="d-l1" cx="154" cy="170" r="5"/>
+          <text class="d-peq" x="165" y="167">0,30</text>
+        </g>
+        <g data-pasos="3-5">
+          <path class="d-t2" fill="none" d="M40 230 L116 222 L192 198 L268 158 L344 102 L420 30"/>
+          <circle class="d-l2" cx="154" cy="212" r="5"/>
+          <text class="d-peq" x="175" y="220">0,09</text>
+        </g>
+        <g data-pasos="4-5">
+          <path class="d-t3" fill="none" d="M40 229 L116 221 L154 206 L192 176 L230 130 L268 84 L306 54 L344 39 L420 31"/>
+          <circle class="d-l3" cx="154" cy="206" r="5"/>
+          <text class="d-peq" x="55" y="203" text-anchor="end">0,12</text>
+        </g>
+        <g data-pasos="1" class="d-peq"><text class="d-titulo" x="460" y="140">Curvas de respuesta</text><text x="460" y="166">Convierten una entrada entre 0</text><text x="460" y="184">y 1 en una puntuación entre 0</text><text x="460" y="202">y 1. La forma de la curva decide</text><text x="460" y="220">CUÁNDO algo se vuelve urgente.</text></g>
+        <g data-pasos="2" class="d-peq"><text class="d-titulo" x="460" y="140">Lineal</text><text x="460" y="166">La puntuación crece al mismo</text><text x="460" y="184">ritmo que la entrada: con sed</text><text x="460" y="202">al 30 %, ya puntúa 0,30.</text></g>
+        <g data-pasos="3" class="d-peq"><text class="d-titulo" x="460" y="140">Cuadrática</text><text x="460" y="166">Las entradas bajas casi no</text><text x="460" y="184">puntúan: con sed al 30 %, solo</text><text x="460" y="202">0,09. Tiene que subir mucho</text><text x="460" y="220">más para notarse.</text></g>
+        <g data-pasos="4" class="d-peq"><text class="d-titulo" x="460" y="140">Logística</text><text x="460" y="166">Plana por debajo de su centro</text><text x="460" y="184">(0,5): con sed al 30 %, apenas</text><text x="460" y="202">0,12. Útil para un umbral sin</text><text x="460" y="220">el salto brusco de un escalón.</text></g>
+        <g data-pasos="5" class="d-peq"><text class="d-titulo" x="460" y="140">Misma entrada, tres planes</text><text x="460" y="166">Multiplicada por otras</text><text x="460" y="184">consideraciones (por ejemplo,</text><text x="460" y="202">si hay agua cerca), la acción</text><text x="460" y="220">ganadora puede cambiar según</text><text x="460" y="238">qué curva uses para cada una.</text></g>
+      </svg>
+    </div>
+    <figcaption>
+      <ol class="capsula-pasos">
+        <li>Los ejes: entrada (de 0 a 1) y puntuación (de 0 a 1).</li>
+        <li>La curva lineal: proporcional. Con sed al 30 %, puntúa 0,30.</li>
+        <li>La cuadrática: casi no reacciona hasta que la sed aprieta de verdad. Con 30 %, solo 0,09.</li>
+        <li data-duracion="6">La logística: plana, sube deprisa cerca del centro, vuelve a aplanarse. Con 30 %, 0,12.</li>
+        <li data-duracion="7">Misma entrada, tres puntuaciones distintas. Elegir la curva es elegir cuándo un personaje empieza a preocuparse por algo.</li>
+      </ol>
+    </figcaption>
+  </figure>
+
+  <h3>Combinar, variar y no oscilar</h3>
+  <p>Con varias consideraciones por opción (comer: hambre × qué tan cerca hay comida), lo normal es <strong>multiplicarlas</strong>, no sumarlas: si cualquiera de ellas vale 0 («no hay comida cerca»), la opción entera debe valer 0, y una suma no lo garantiza. El riesgo es el opuesto: con muchas consideraciones, basta con que una esté mediocre (0,6) para que el producto se hunda (0,6 × 0,6 × 0,6 ≈ 0,22), así que conviene no abusar y dar más peso a las que de verdad importan.</p>
+  <p>Elegir siempre la opción de mayor puntuación produce personajes previsibles. Para dar variedad sin perder el criterio, se puede hacer un <strong>azar ponderado</strong> (<a href="18-matematicas.html#azar">Estación 18</a>) entre las dos o tres mejores, en vez de tomar siempre la número uno. Y para que un personaje no oscile entre dos opciones casi empatadas cambiando de idea cada tick, se añade <strong>inercia</strong>: una pequeña bonificación a la puntuación de la actividad que ya está haciendo, para que haga falta una ventaja clara antes de cambiar. Es la misma idea que la histéresis de las máquinas de estados, aplicada a números en vez de a un único umbral.</p>
+  <p><em>Los Sims</em> popularizó este enfoque para videojuegos: cada personaje tiene necesidades (hambre, higiene, diversión, socializar) que suben con el tiempo, y los objetos del mundo «anuncian» qué necesidades satisfacen y cuánto. El diseñador Dave Mark formalizó considerarciones por «ejes» en una charla de la GDC que se cita todavía hoy como introducción al tema.</p>
+  <p>Pruébalo con un aldeano que vive 48 horas de juego. <strong>Predice</strong>: con esta primera versión, que puntúa cada necesidad de forma lineal y sin inercia, ¿cuántas veces crees que cambiará de actividad en 48 horas?</p>
+  <div class="taller" id="taller-aldeano" data-titulo="Predice y modifica: el aldeano que se cuida">
+    <script type="text/plain" class="taller-preparacion">
+function simular(elegir) {
+  const estado = { hambre: 0.2, sueno: 0.2, diversion: 0.2, actividad: "trabajar" };
+  let cambios = 0, horasDurmiendo = 0, hambreMax = 0;
+  for (let hora = 0; hora < 48; hora++) {
+    const nueva = elegir(estado);
+    if (nueva !== estado.actividad) cambios++;
+    estado.actividad = nueva;
+    if (nueva === "comer") estado.hambre = Math.max(0, estado.hambre - 0.5);
+    else estado.hambre = Math.min(1, estado.hambre + 0.04);
+    if (nueva === "dormir") { estado.sueno = Math.max(0, estado.sueno - 0.3); horasDurmiendo++; }
+    else estado.sueno = Math.min(1, estado.sueno + 0.03);
+    if (nueva === "jugar") estado.diversion = Math.max(0, estado.diversion - 0.4);
+    else estado.diversion = Math.min(1, estado.diversion + 0.02);
+    hambreMax = Math.max(hambreMax, estado.hambre);
+  }
+  console.log(`Cambios de actividad: ${cambios}`);
+  console.log(`Horas durmiendo: ${horasDurmiendo}`);
+  console.log(`Hambre máxima: ${hambreMax.toFixed(2)}`);
+}
+    </script>
+    <textarea class="taller-codigo">// estado: { hambre, sueno, diversion, actividad }, cada uno entre 0 y 1.
+// Devuelve "comer", "dormir", "jugar" o "trabajar".
+function elegirActividad(estado) {
+  const puntuaciones = {
+    comer: estado.hambre,         // de momento, curva lineal
+    dormir: estado.sueno,
+    jugar: estado.diversion,
+    trabajar: 0.15,                // la opción por defecto: ganar algo mientras nada aprieta
+  };
+  let mejor = "trabajar";
+  for (const actividad in puntuaciones) {
+    if (puntuaciones[actividad] &gt; puntuaciones[mejor]) mejor = actividad;
+  }
+  return mejor;
+}
+
+simular(elegirActividad);
+
+// Modifica: usa curvas (por ejemplo, estado.hambre ** 2) para que las necesidades
+// bajas casi no puntúen, y añade una bonificación de inercia a estado.actividad
+// para que no cambie de opinión cada hora.</textarea>
+    <script type="text/plain" class="taller-verificar">
+var cambios = null, horas = null, hambreMax = null, m;
+for (var i = 0; i < salida.length; i++) {
+  if ((m = /^Cambios de actividad: (\d+)/.exec(salida[i]))) cambios = Number(m[1]);
+  if ((m = /^Horas durmiendo: (\d+)/.exec(salida[i]))) horas = Number(m[1]);
+  if ((m = /^Hambre máxima: ([\d.]+)/.exec(salida[i]))) hambreMax = Number(m[1]);
+}
+if (cambios === null || horas === null || hambreMax === null) return "No veo las tres líneas de resumen: deja la llamada a simular(elegirActividad) tal cual, al final.";
+if (hambreMax > 0.9) return "El aldeano llegó a pasar demasiada hambre (" + hambreMax.toFixed(2) + "): la curva de comer debe reaccionar antes de llegar tan lejos.";
+if (horas < 2) return "El aldeano debería dormir al menos 2 horas de las 48: solo durmió " + horas + ".";
+if (cambios >= 20) return "Todavía cambia de actividad demasiadas veces (" + cambios + "): añade una bonificación de inercia a la puntuación de estado.actividad.";
+return true;
+    </script>
+  </div>
+  <p>Con curvas lineales y sin inercia, el aldeano cambia de idea más de 30 veces en 48 horas: en cuanto una necesidad supera a «trabajar» por un pelo, se pone a atenderla, y un tick después puede volver atrás. Elevar al cuadrado las necesidades (<code>estado.hambre ** 2</code>) hace que no reaccione hasta que de verdad aprietan, y sumar una pequeña bonificación a la actividad actual (<code>puntuaciones[estado.actividad] += 0.1</code>) le da margen antes de cambiar de opinión. Practicarás lo mismo en Python, con la curva logística, en el ejercicio <a href="#ej-enemigo-elige">El enemigo que elige</a>.</p>
+
+  <h3>Puntuar lugares</h3>
+  <p>La utilidad no solo sirve para elegir una acción: también para elegir <strong>dónde</strong> hacerla. Un <strong>mapa de influencia</strong> es una rejilla donde cada unidad irradia un valor que decae con la distancia (parecido al mapa de distancias de la <a href="#caminos">sección anterior</a>, pero con varias fuentes a la vez). Sumando el mapa de peligro (de los enemigos) y uno de objetivo (de una meta), una unidad puede elegir la casilla con mejor puntuación: cerca de lo que busca, lejos de lo que la amenaza. Es la misma idea de las consideraciones, aplicada a posiciones en vez de a acciones. Unreal Engine formaliza esto con su <strong>EQS</strong> (<em>environment query system</em>, «sistema de consultas del entorno»): generas puntos candidatos alrededor de un personaje y los puntúas con varios criterios, exactamente como aquí.</p>
+  <p>En esta rejilla de 5×5, el objetivo (una gema) y dos enemigos irradian influencia con <code>propagar()</code>. La puntuación de cada casilla es cercanía al objetivo menos peligro, y la estrella marca la mejor. <strong>Predice</strong> antes de tocar nada: si acercas los dos enemigos a la gema, ¿puede quedar sin ninguna casilla seguramente buena cerca?</p>
+  <div class="taller" data-modo="web" id="taller-influencia" data-titulo="Predice y modifica: mapa de influencia" data-alto="24rem" data-auto>
+    <textarea class="taller-codigo" data-lenguaje="html">&lt;div id="rejilla" class="rejilla"&gt;&lt;/div&gt;
+&lt;p&gt;Clic en una casilla: mueve ahí al enemigo (!) más cercano. «obj» es la gema; la * marca la casilla que elegiría el explorador.&lt;/p&gt;</textarea>
+    <textarea class="taller-codigo" data-lenguaje="css">body { margin: 8px; font-family: system-ui, sans-serif; font-size: 13px; }
+.rejilla { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; max-width: 280px; }
+.celda { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-weight: bold; cursor: pointer; background: #2b3448; color: #0b0e16; }
+p { max-width: 320px; color: #c8d0e0; }</textarea>
+    <textarea class="taller-codigo" data-lenguaje="js">const N = 5;
+const objetivo = { x: 4, y: 4 };
+const enemigos = [{ x: 0, y: 2 }, { x: 2, y: 0 }];
+const rejillaEl = document.querySelector("#rejilla");
+const celdas = [];
+for (let y = 0; y &lt; N; y++) {
+  for (let x = 0; x &lt; N; x++) {
+    const d = document.createElement("div");
+    d.className = "celda";
+    d.addEventListener("click", () =&gt; mover(x, y));
+    rejillaEl.appendChild(d);
+    celdas.push(d);
+  }
+}
+
+function crearRejilla() { return Array.from({ length: N }, () =&gt; Array(N).fill(0)); }
+
+// Suma, en cada casilla, la intensidad menos la distancia Manhattan al origen.
+function propagar(rejilla, origen, intensidad) {
+  for (let y = 0; y &lt; N; y++) {
+    for (let x = 0; x &lt; N; x++) {
+      const d = Math.abs(x - origen.x) + Math.abs(y - origen.y);
+      rejilla[y][x] += intensidad - d;   // Modifica: evita que la influencia baje de 0
+    }
+  }
+  return rejilla;
+}
+
+function mover(x, y) {
+  let masCercano = enemigos[0];
+  for (const e of enemigos) {
+    if (Math.hypot(e.x - x, e.y - y) &lt; Math.hypot(masCercano.x - x, masCercano.y - y)) masCercano = e;
+  }
+  masCercano.x = x; masCercano.y = y;
+  dibujar();
+}
+
+function dibujar() {
+  const cercania = propagar(crearRejilla(), objetivo, 8);
+  const peligro = crearRejilla();
+  for (const e of enemigos) propagar(peligro, e, 4);
+  let mejor = { x: 0, y: 0, puntuacion: -Infinity };
+  for (let y = 0; y &lt; N; y++) {
+    for (let x = 0; x &lt; N; x++) {
+      const puntuacion = cercania[y][x] - peligro[y][x];
+      const celda = celdas[y * N + x];
+      celda.textContent = "";
+      celda.style.background = puntuacion &gt;= 0
+        ? `rgba(111, 207, 151, ${Math.min(1, puntuacion / 8)})`
+        : `rgba(255, 107, 107, ${Math.min(1, -puntuacion / 8)})`;
+      if (x === objetivo.x &amp;&amp; y === objetivo.y) celda.textContent = "obj";
+      if (enemigos.some((en) =&gt; en.x === x &amp;&amp; en.y === y)) celda.textContent = "!";
+      if (puntuacion &gt; mejor.puntuacion) mejor = { x, y, puntuacion };
+    }
+  }
+  celdas[mejor.y * N + mejor.x].textContent += " *";
+}
+dibujar();</textarea>
+    <script type="text/plain" class="taller-verificar">
+if (typeof propagar !== "function") return "No encuentro la función propagar.";
+var g = [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]];
+propagar(g, { x: 2, y: 2 }, 3);
+if (g[2][2] !== 3) return "En el origen, la influencia debería quedar igual a la intensidad (3); da " + g[2][2] + ".";
+if (g[2][3] !== 2) return "A una casilla del origen (distancia 1) debería quedar 2 (3 menos 1); da " + g[2][3] + ".";
+if (g[0][0] < 0) return "La influencia no debería bajar de 0 (usa Math.max(0, …)): en la esquina da " + g[0][0] + ".";
+if (g[0][0] !== 0) return "A 4 casillas de distancia (la esquina), con intensidad 3, debería quedar en 0; da " + g[0][0] + ".";
+return true;
+    </script>
+  </div>
+  <p>Sin el <code>Math.max</code>, la influencia sigue bajando de 0 lejos de cada fuente: dos esquinas opuestas «se restan» peligro entre sí aunque estén lejísimos de cualquier enemigo, y el mapa deja de tener sentido. Con el arreglo, una casilla fuera de alcance vale exactamente 0, ni ayuda ni estorba. Acerca los dos enemigos a la gema arrastrándolos con clics: puedes dejar sin ninguna casilla seguramente buena cerca del objetivo, y eso es justo lo que se siente injusto si pasa en un juego real: conviene que el diseño garantice siempre una vía razonable.</p>
+
+  <h3>Planes: GOAP como caja negra</h3>
+  <p><strong>GOAP</strong> (del inglés <em>goal-oriented action planning</em>, «planificación de acciones orientada a objetivos») cambia la pregunta una vez más: en vez de que alguien escriba el orden de las acciones, cada acción declara sus <strong>precondiciones</strong>, sus <strong>efectos</strong> y su <strong>coste</strong>; se fija un objetivo, y un <strong>planificador</strong> busca una cadena de acciones que lo cumpla al menor coste total. Es la idea detrás de los soldados de <em>F.E.A.R.</em> (2005): Jeff Orkin, su programador de IA, la resumió como «tres estados y un plan» (2006). Con solo tres estados de alto nivel y un puñado de acciones (ir a cubrirse, recargar, lanzar una granada, flanquear), el planificador combina secuencias que nadie escribió a mano, y eso es lo que hacía parecer que esos enemigos se coordinaban de verdad.</p>
+  <p>Aquí GOAP se trata como una caja negra: le das acciones y un objetivo, y confías en que el planificador encuentra el plan. Cómo busca ese plan (que es, otra vez, una búsqueda con una heurística, parecida a A*) lo programarás en la <a href="38-ia-busqueda.html#planes">Estación 38</a>. Existe una variante, <strong>HTN</strong> (<em>hierarchical task network</em>, «red jerárquica de tareas»), donde las tareas se descomponen en subtareas en vez de combinar acciones sueltas; la nombramos aquí porque aparece en la tabla de abajo, pero no la programarás en este curso.</p>
+
+  <h3>Cuándo usar cada técnica</h3>
+  <div class="tabla">
+    <table>
+      <thead><tr><th scope="col">Técnica</th><th scope="col">Control del diseño</th><th scope="col">Puede sorprender</th><th scope="col">Depurar</th><th scope="col">Coste de CPU</th><th scope="col">Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td>Máquina de estados</td><td>Muy alto</td><td>Baja</td><td>Fácil al empezar, se enreda al crecer</td><td>Muy bajo</td><td>Fantasmas de Pac-Man</td></tr>
+        <tr><td>HFSM</td><td>Muy alto</td><td>Baja</td><td>Fácil, mejor organizada al crecer</td><td>Muy bajo</td><td>El guardia de esta estación</td></tr>
+        <tr><td>Árbol de comportamiento</td><td>Alto</td><td>Media</td><td>Fácil, con colores por nodo</td><td>Bajo</td><td>Halo 2, la mayoría en Unreal</td></tr>
+        <tr><td>Utilidad</td><td>Medio</td><td>Alta</td><td>Más difícil: hay que mirar números, no solo flechas</td><td>Medio</td><td>Los Sims</td></tr>
+        <tr><td>GOAP / HTN</td><td>Bajo (el diseño pone piezas, no el orden)</td><td>Muy alta</td><td>Difícil: el plan cambia solo</td><td>Medio-alto</td><td>F.E.A.R.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>No son excluyentes. En la práctica se combinan: un árbol cuyo selector, en vez de probar hijos en un orden fijo, elige por utilidad cuál intentar primero (un «selector de utilidad»); o un modelo de lenguaje que elige <em>qué decir</em> mientras el árbol sigue decidiendo <em>qué hacer</em> (perseguir, atacar), la arquitectura híbrida que verás en la <a href="41-modelos-lenguaje.html#npc">Estación 41</a>.</p>
+  <p>Cómo se configuran EQS, los selectores de utilidad y GOAP en un motor real lo verás, con el resto de herramientas, al final de la sección de <a href="#director">dificultad y motores</a>.</p>
 </section>
   </main>
 </div>
