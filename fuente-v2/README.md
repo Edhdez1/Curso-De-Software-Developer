@@ -7,11 +7,12 @@ Aquí vive el contenido del plan nuevo (Python primero, luego JavaScript, C# y m
 | Estación | Lección | Video (HyperFrames) |
 |---|---|---|
 | 1. Tu primer programa en Python | `modulos/01-primer-programa.html` (escrita) | `animaciones/01-primer-programa/` → `../videos/01-primer-programa.mp4` |
-| 2 a 57 | pendientes | pendientes |
+| 2. Tipos de datos | `modulos/02-tipos-de-datos.html` (en revisión) | `animaciones/02-tipos-de-datos/` → `../videos/02-tipos-de-datos.mp4` |
+| 3 a 57 | pendientes | pendientes |
 
-## Ver la estación 1
+## Ver las estaciones
 
-Lo más seguro es un servidor web local: ejecuta `python3 -m http.server` en la raíz del repositorio y entra a `http://localhost:8000/modulos-v2/01-primer-programa.html`. Así se probó. Los ejercicios de Python descargan el intérprete (Brython) de internet, así que hace falta conexión.
+En línea: `https://edhdez1.github.io/Curso-De-Software-Developer/modulos-v2/01-primer-programa.html` (y la 02 con el mismo patrón, una vez fusionada). En tu computadora, lo más seguro es un servidor web local: ejecuta `python3 -m http.server` en la raíz del repositorio y entra a `http://localhost:8000/modulos-v2/01-primer-programa.html`. Así se probó. Los ejercicios de Python descargan el intérprete (Brython) de internet, así que hace falta conexión.
 
 ## Reconstruir la vista previa y probar los ejercicios
 
