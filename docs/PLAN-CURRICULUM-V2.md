@@ -4,7 +4,7 @@
 
 **Versión:** 2.0 Restructurado  
 **Proyecto Integrador:** Vault Académico + Portafolio Digital  
-**Duración Total:** 986 horas (obligatorias) + 250 horas (opcionales)  
+**Duración Total:** 980 horas (obligatorias) + 250 horas (opcionales)  
 **Ritmo de referencia:** 36 horas/semana = ~27 semanas (obligatorio); ~23 semanas hasta el primer nivel empleable (Línea 8)
 
 ---
@@ -13,7 +13,7 @@
 
 | Línea | Nombre | Horas | Descripción |
 |-------|--------|-------|-------------|
-| 1 | Python Fundamentos | 80 | Variables, tipos, control de flujo |
+| 1 | Python Fundamentos | 74 | Variables, tipos, control de flujo |
 | 2 | Python Intermedio | 100 | Funciones, POO, módulos |
 | 3 | Estructuras de Datos | 120 | Listas, dicts, conjuntos, algoritmos |
 | 4 | Bases de Datos | 100 | SQL, SQLite, ORM, queries avanzadas |
@@ -29,7 +29,7 @@
 
 ## 🎯 Hitos Importantes
 
-### Hito 1: Primer nivel empleable (Semana ~23, 842 horas)
+### Hito 1: Primer nivel empleable (Semana ~23, 836 horas)
 Completar hasta **Línea 8 (C# y .NET)**
 - Dominas Python completo
 - Entiendes estructuras de datos y algoritmos
@@ -37,7 +37,7 @@ Completar hasta **Línea 8 (C# y .NET)**
 - Conoces C# y .NET Core
 - **Listo para:** Junior Developer en startups
 
-### Hito 2: Nivel avanzado (Semana ~27, 986 horas)
+### Hito 2: Nivel avanzado (Semana ~27, 980 horas)
 Completar hasta **Línea 9 (MAUI y Vault v2)**
 - Tienes un portfolio con Vault Académico publicado
 - Puedes crear apps multiplataforma
@@ -140,36 +140,27 @@ Un **proyecto real** que evoluciona a través de 3 fases:
 
 ---
 
-## 🎬 Animaciones con HyperFrames
+## Animaciones con HyperFrames
 
-Cada estación incluye una **animación educativa** creada con [HyperFrames](https://hyperframes.heygen.com) (framework de HeyGen para convertir HTML en videos).
+[HyperFrames](https://github.com/heygen-com/hyperframes) (HeyGen, licencia Apache 2.0) convierte una página HTML con animaciones en un video MP4. Se usa desde la terminal y necesita Node.js 22 o posterior y FFmpeg.
 
-### ¿Qué es HyperFrames?
-- Convierte HTML/CSS + animaciones en videos MP4
-- Ideal para explicar conceptos de programación visualmente
-- Soporta GSAP, Lottie, Three.js, CSS animations
-- Determinístico: mismo HTML = mismo video siempre
+**Qué sí está hecho:** la Estación 1 tiene su video (45 s, sin voz, 833 KB) en `videos/01-primer-programa.mp4`, y su proyecto en `fuente-v2/animaciones/01-primer-programa/`. Pasó `hyperframes check` (sin errores de ejecución, 0 problemas de diseño, contraste AA 55/55).
 
-### Ejemplo: Estación 1 (Tu Primer Programa)
-- **Video animado:** 1 minuto explicando qué es Python
-- **Estructura:** Variables aparecen en pantalla, tipos de datos se transforman visualmente
-- **Código incluido:** Archivo `animaciones/estacion-01.html` que genera el video
+**Qué falta:** los videos de las otras 56 estaciones. No están hechos ni garantizados: cada uno es trabajo de diseño y revisión, no un paso automático.
 
-### Por qué animaciones
-1. **Visualización clara:** Ver cómo funciona un concepto es mejor que leerlo
-2. **Retención:** Video + audio + código = aprendizaje más profundo
-3. **Profesionalismo:** Tu portafolio con videos animados destaca
-4. **Automatizable:** Las animaciones se generan desde HTML, sin software costoso
+**Cómo se usa** (desde `fuente-v2/animaciones/01-primer-programa/`):
 
-### Estructura de cada estación
+```bash
+npx hyperframes check       # revisa errores, diseño y contraste
+npx hyperframes preview     # abre una vista previa en el navegador
+npx hyperframes render --output ../../../videos/01-primer-programa.mp4 --fps 30 --crf 24
 ```
-📁 Estación X
-├── 📄 Lección.md (explicación en texto)
-├── 🎬 animacion.html (HyperFrames)
-├── 📹 video.mp4 (generado)
-├── 💻 ejemplos.py / .js / .cs (código)
-└── 📋 herramientas.md (librerías y plugins)
-```
+
+**Decisiones y límites a tener en cuenta:**
+- El sitio ya tiene "cápsulas" interactivas (animaciones paso a paso dentro de la página). HyperFrames las complementa con un video corto para ver de corrido o compartir; no las reemplaza.
+- Los videos no llevan voz. Cada uno trae una descripción escrita en la página para quien no pueda verlos.
+- El archivo HTML carga GSAP desde el CDN oficial (como la plantilla de HyperFrames); para renderizar hace falta conexión a internet.
+- HyperFrames envía contadores de uso anónimos; se desactivan con la variable `HYPERFRAMES_NO_TELEMETRY=1`.
 
 ---
 
@@ -179,9 +170,7 @@ Cada estación incluye una **animación educativa** creada con [HyperFrames](htt
 - **VS Code** (editor principal)
 - **Git** (control de versiones)
 - **Terminal/PowerShell** (comandos)
-- **HyperFrames CLI** (para las animaciones)
-  - Instalación: `npm install -g hyperframes`
-  - Uso: `npx hyperframes preview animaciones/estacion-01.html`
+- **HyperFrames** (solo para quien crea las animaciones): Node.js 22 o posterior y FFmpeg; se ejecuta con `npx hyperframes`
 
 ### Líneas 1-5 (Python)
 - Python 3.11+
@@ -217,53 +206,27 @@ Cada estación incluye una **animación educativa** creada con [HyperFrames](htt
 
 ---
 
-## 📦 Estructura: Herramientas y Librerías por Estación
+## Herramientas y librerías por estación
 
-Cada estación ahora incluye una sección clara de:
+Cada estación declara qué se instala y qué se importa. **Estado real:** solo la Estación 1 está verificada contra documentación oficial. En las otras 56, el campo `herramientasEstado` dice «pendiente de verificar al redactar la estación». Una versión anterior de este plan traía listas para 10 estaciones que no estaban verificadas (por ejemplo, librerías de análisis de datos en una estación de listas y diccionarios); se retiraron.
 
-### 1. **Herramientas** (software que necesitas instalar)
-Ejemplo Estación 1:
-- Python 3.11+
-- VS Code
-- Git Bash/Terminal
+Ejemplo real (Estación 1, en `datos/plan-v2/estaciones-v2.json`):
 
-### 2. **Librerías** (paquetes que importas en tu código)
-Ejemplo Estación 3 (Estructuras de Datos):
-- `numpy` - para arreglos y operaciones matemáticas
-- `pandas` - para análisis de datos
-
-### 3. **Plugins Recomendados** (para VS Code/IDE)
-Ejemplo Estación 2:
-- Python Extension (Microsoft)
-- Better Comments - para comentarios más visuales
-
-### Estructura en JSON
 ```json
 {
-  "id": 1,
-  "nombre": "Tu Primer Programa",
-  "herramientas": ["Python 3.11+", "VS Code", "Git"],
+  "herramientas": ["Python (versión estable más reciente; sirve 3.12 o posterior)", "Visual Studio Code", "Terminal (PowerShell en Windows)"],
   "librerías": [],
-  "pluginsRecomendados": ["Python Extension", "Code Runner"],
-  "animacionHyperframes": {
-    "titulo": "Animación: Tu Primer Programa",
-    "archivo": "animaciones/estacion-01.html",
-    "duracion_segundos": 60
-  }
+  "pluginsRecomendados": ["Extensión «Python» de Microsoft (ms-python.python)"],
+  "animacionHyperframes": { "estado": "renderizada", "video": "videos/01-primer-programa.mp4" }
 }
 ```
-
-### Beneficio
-- **Sin sorpresas:** Sabes exactamente qué necesitas instalar antes de empezar
-- **Reutilizable:** Guardas el mismo archivo de herramientas para futuras referencias
-- **Escalable:** Fácil de actualizar si nuevas versiones salen
 
 ---
 
 ## 📊 Estimado de Horas por Línea
 
 ```
-Línea 1: Python Fundamentos        ████░░░░░░░░░░░░░░░ 80h
+Línea 1: Python Fundamentos        ████░░░░░░░░░░░░░░░ 74h
 Línea 2: Python Intermedio         █████░░░░░░░░░░░░░░ 100h
 Línea 3: Estructuras de Datos      ██████░░░░░░░░░░░░░ 120h
 Línea 4: Bases de Datos            █████░░░░░░░░░░░░░░ 100h
@@ -273,12 +236,12 @@ Línea 7: Backend (Node.js)         ██████░░░░░░░░�
 Línea 8: C# y .NET                 █████░░░░░░░░░░░░░░ 100h
 Línea 9: MAUI + Vault v2           ███████░░░░░░░░░░░░ 144h
 ─────────────────────────────────────────────────────
-TOTAL OBLIGATORIO:                 ████████████████░░░ 986h
+TOTAL OBLIGATORIO:                 ████████████████░░░ 980h
 
 Línea 10: Juegos (Opcional)        ███████░░░░░░░░░░░░ 150h
 Línea 11: Sistemas (Opcional)      █████░░░░░░░░░░░░░░ 100h
 ─────────────────────────────────────────────────────
-TOTAL CON OPCIONALES:              █████████████████░░ 1236h
+TOTAL CON OPCIONALES:              █████████████████░░ 1230h
 ```
 
 ---
