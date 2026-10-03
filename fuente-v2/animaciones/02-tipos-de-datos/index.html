@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>Tipos de datos en Python</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; background: #f3e7cc; }
+      body { font-family: sans-serif; color: #2b2118; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background-color: #f3e7cc;
+        background-image: linear-gradient(rgba(43, 33, 24, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(43, 33, 24, 0.05) 1px, transparent 1px);
+        background-size: 40px 40px; }
+      .escena { position: absolute; inset: 0; }
+      .mono { font-family: monospace; }
+
+      /* Piso, cinta y patas (siempre visibles) */
+      #suelo { position: absolute; left: 0; top: 560px; width: 1280px; height: 160px; background: #e3d0a2; border-top: 4px solid #2b2118; }
+      #cinta { position: absolute; left: 0; top: 430px; width: 1280px; height: 64px; border-top: 6px solid #2b2118;
+        background-image: linear-gradient(90deg, #6a5640 50%, #463726 50%); background-size: 48px 100%; background-repeat: repeat; background-position: 0px 0px; }
+      #cinta-base { position: absolute; left: 0; top: 494px; width: 1280px; height: 18px; background: #2b2118; }
+      .pata { position: absolute; top: 512px; width: 22px; height: 48px; background: #2b2118; }
+
+      /* Leyendas */
+      .caption-lugar { position: absolute; left: 110px; top: 582px; width: 1060px; height: 96px; }
+      .cap { position: absolute; left: 0; right: 0; top: 26px; text-align: center; font-size: 34px; line-height: 44px; font-weight: 800; color: #2b2118; }
+      .cap.arriba { top: 4px; }
+      .cap.abajo { top: 48px; }
+
+      /* Tickets de codigo */
+      .ticket-lugar { position: absolute; left: 330px; top: 64px; width: 620px; height: 78px; background: #fffaf0; border: 3px dashed #2b2118; border-radius: 10px; }
+      .tk { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 40px; font-weight: 800; color: #2b2118; }
+
+      /* Tarjetas de datos */
+      .card { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 110px; height: 110px; padding: 0 14px;
+        background: #fffaf0; border: 5px solid #2b2118; border-radius: 12px; font-family: monospace; font-weight: 800; color: #2b2118; box-shadow: 0 6px 0 rgba(43, 33, 24, 0.28); white-space: nowrap; }
+      .card .v { font-size: 46px; line-height: 1.05; }
+      .card .t { font-family: sans-serif; font-size: 20px; font-weight: 800; line-height: 1; margin-top: 6px; }
+      .abs { position: absolute; left: 0; top: 320px; z-index: 2; }
+      .w130 { width: 130px; }
+      .grupo { position: absolute; left: 0; top: 320px; display: flex; align-items: center; gap: 14px; z-index: 2; }
+      .op { width: 52px; height: 52px; border-radius: 26px; background: #2b2118; color: #fbf3e0; font-family: monospace; font-size: 34px; line-height: 52px; font-weight: 800; text-align: center; }
+      .c-int { border-color: #1d4ed8; } .c-float { border-color: #0f766e; } .c-str { border-color: #b45309; } .c-bool { border-color: #6d28d9; }
+      .t-int { color: #1d4ed8; } .t-float { color: #0f766e; } .t-str { color: #b45309; } .t-bool { color: #6d28d9; }
+
+      /* Sellos */
+      .sello { position: absolute; left: 50%; top: -56px; height: 50px; padding: 0 18px; line-height: 44px; border: 3px solid rgba(255, 255, 255, 0.55); border-radius: 8px;
+        color: #ffffff; font-family: monospace; font-size: 28px; font-weight: 800; white-space: nowrap; text-align: center; box-shadow: 0 4px 0 rgba(43, 33, 24, 0.3); }
+      .s-int { background: #1d4ed8; } .s-float { background: #0f766e; } .s-str { background: #b45309; } .s-bool { background: #6d28d9; }
+      .s-ok { background: #15803d; font-family: sans-serif; font-size: 26px; } .s-err { background: #b91c1c; font-size: 30px; }
+
+      /* Escena 1: titulo */
+      #t-kicker { position: absolute; left: 0; right: 0; top: 84px; text-align: center; font-size: 28px; font-weight: 800; letter-spacing: 8px; color: #7c2d12; }
+      #t-titulo { position: absolute; left: 0; right: 0; top: 128px; text-align: center; font-size: 112px; line-height: 124px; font-weight: 800; color: #2b2118; }
+      #t-sub { position: absolute; left: 0; right: 0; top: 604px; text-align: center; font-size: 34px; line-height: 44px; font-weight: 700; color: #2b2118; }
+      #t-sellos { position: absolute; inset: 0; }
+      .sello-gr { position: absolute; top: 346px; width: 200px; height: 84px; line-height: 76px; text-align: center; border: 4px solid rgba(255, 255, 255, 0.55); border-radius: 12px;
+        color: #ffffff; font-family: monospace; font-size: 48px; font-weight: 800; box-shadow: 0 6px 0 rgba(43, 33, 24, 0.3); }
+
+      /* Escena 2: escaner */
+      #a-arco { position: absolute; inset: 0; }
+      #a-rotulo { position: absolute; left: 390px; width: 260px; top: 150px; text-align: center; font-size: 22px; line-height: 30px; font-weight: 800; letter-spacing: 5px; color: #2b2118; }
+      #a-viga { position: absolute; left: 390px; top: 190px; width: 260px; height: 60px; background: #2b2118; border-radius: 10px; overflow: hidden; }
+      #a-franja { position: absolute; left: 0; right: 0; bottom: 0; height: 12px; background: repeating-linear-gradient(135deg, #e0a526 0 10px, #2b2118 10px 20px); }
+      .luz { position: absolute; right: 18px; top: 14px; width: 22px; height: 22px; border-radius: 11px; }
+      #a-luz { background: #6b5b48; }
+      #a-luz-on { background: #f59e0b; box-shadow: 0 0 12px 4px rgba(245, 158, 11, 0.7); }
+      .poste { position: absolute; top: 250px; width: 22px; height: 180px; background: repeating-linear-gradient(135deg, #e0a526 0 10px, #2b2118 10px 20px); border: 3px solid #2b2118; }
+      #a-poste1 { left: 410px; } #a-poste2 { left: 608px; }
+      #laser { position: absolute; left: 455px; top: 322px; width: 130px; height: 5px; border-radius: 3px; background: #f59e0b; box-shadow: 0 0 12px 3px rgba(245, 158, 11, 0.75); z-index: 3; }
+
+      /* Maquinas */
+      .maq { position: absolute; top: 190px; height: 304px; background: #3b2e22; border: 4px solid #2b2118; border-radius: 16px 16px 0 0; z-index: 5; }
+      .maq-cara { position: absolute; left: 0; right: 0; top: 16px; height: 100px; }
+      .maq-signo { position: absolute; left: 0; right: 0; top: 0; text-align: center; font-family: monospace; font-size: 72px; line-height: 90px; font-weight: 800; color: #fbf3e0; }
+      .maq-pie { position: absolute; left: 0; right: 0; top: 243px; text-align: center; font-size: 20px; line-height: 26px; font-weight: 800; letter-spacing: 4px; color: #fbf3e0; }
+      .flap { position: absolute; top: 122px; width: 16px; height: 116px; background: repeating-linear-gradient(90deg, #16100a 0 4px, #2b2118 4px 8px); }
+      .flap.izq { left: -4px; } .flap.der { right: -4px; }
+      .lampara { position: absolute; right: 16px; top: 14px; width: 26px; height: 26px; border-radius: 13px; }
+      .l-base { background: #6b5b48; }
+      .l-ok { background: #22c55e; box-shadow: 0 0 14px 5px rgba(34, 197, 94, 0.6); }
+      .l-err { background: #ef4444; box-shadow: 0 0 14px 5px rgba(239, 68, 68, 0.6); }
+      #m3 { left: 450px; width: 380px; }
+      #m4a { left: 180px; width: 240px; }
+      #m4b { left: 720px; width: 240px; }
+      .maq-cara.chica { top: 40px; }
+      .etq { position: absolute; left: 0; right: 0; top: 0; text-align: center; font-family: monospace; font-size: 54px; line-height: 70px; font-weight: 800; color: #fbf3e0; }
+
+      /* Escena 5 */
+      #c-titulo { position: absolute; left: 0; right: 0; top: 112px; text-align: center; font-size: 60px; line-height: 70px; font-weight: 800; color: #2b2118; }
+      .grande { top: 310px; height: 120px; min-width: 160px; }
+      .grande .v { font-size: 54px; }
+      .grande .sello { top: -58px; font-size: 30px; }
+      #c-frase { position: absolute; left: 0; right: 0; top: 600px; text-align: center; font-size: 42px; line-height: 52px; font-weight: 800; color: #2b2118; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="tipos-de-datos" data-start="0" data-duration="48.5" data-width="1280" data-height="720">
+
+      <div id="suelo"></div>
+      <div id="cinta-base"></div>
+      <div class="pata" style="left: 90px"></div>
+      <div class="pata" style="left: 470px"></div>
+      <div class="pata" style="left: 810px"></div>
+      <div class="pata" style="left: 1170px"></div>
+      <div id="cinta"></div>
+
+      <!-- Escena 1: titulo y cuatro sellos -->
+      <section id="escena-titulo" class="clip escena" data-start="0" data-duration="5" data-track-index="0">
+        <p id="t-kicker">ESTACIÓN 2</p>
+        <h1 id="t-titulo">Tipos de datos</h1>
+        <div id="t-sellos">
+          <div id="t-s1" class="sello-gr s-int" style="left: 270px">int</div>
+          <div id="t-s2" class="sello-gr s-float" style="left: 490px">float</div>
+          <div id="t-s3" class="sello-gr s-str" style="left: 710px">str</div>
+          <div id="t-s4" class="sello-gr s-bool" style="left: 930px">bool</div>
+        </div>
+        <p id="t-sub">Aprende qué es cada dato y qué puedes hacer con él</p>
+      </section>
+
+      <!-- Escena 2: el escaner sella cada dato -->
+      <section id="escena-escaner" class="clip escena" data-start="5" data-duration="12" data-track-index="0">
+        <div id="a-arco">
+          <p id="a-rotulo">ESCÁNER</p>
+          <div id="a-poste1" class="poste"></div>
+          <div id="a-poste2" class="poste"></div>
+          <div id="a-viga"><span id="a-luz" class="luz"></span><span id="a-luz-on" class="luz"></span><span id="a-franja"></span></div>
+        </div>
+        <div id="i0" class="card abs w130"><span class="v">42</span><span id="s-i0" class="sello s-int">int</span></div>
+        <div id="i1" class="card abs w130"><span class="v">"42"</span><span id="s-i1" class="sello s-str">str</span></div>
+        <div id="i2" class="card abs w130"><span class="v">4.2</span><span id="s-i2" class="sello s-float">float</span></div>
+        <div id="i3" class="card abs w130"><span class="v">True</span><span id="s-i3" class="sello s-bool">bool</span></div>
+        <span id="laser"></span>
+        <div class="caption-lugar">
+          <p id="a-cap1" class="cap arriba">Cada dato tiene un tipo.</p>
+          <p id="a-cap2" class="cap abajo">El tipo decide qué puedes hacer con él.</p>
+        </div>
+      </section>
+
+      <!-- Escena 3: mezclas -->
+      <section id="escena-mezclas" class="clip escena" data-start="17" data-duration="13" data-track-index="0">
+        <div class="ticket-lugar">
+          <p id="m-tk-a" class="tk" data-layout-allow-overlap>42 + 8</p>
+          <p id="m-tk-b" class="tk" data-layout-allow-overlap>"42" + 8</p>
+          <p id="m-tk-c" class="tk" data-layout-allow-overlap>"42" + "8"</p>
+        </div>
+        <div id="g-a" class="grupo" data-layout-allow-overlap>
+          <div class="card c-int"><span class="v">42</span><span class="t t-int">int</span></div>
+          <div class="op">+</div>
+          <div class="card c-int"><span class="v">8</span><span class="t t-int">int</span></div>
+        </div>
+        <div id="g-b" class="grupo" data-layout-allow-overlap>
+          <div class="card c-str"><span class="v">"42"</span><span class="t t-str">str</span></div>
+          <div class="op">+</div>
+          <div class="card c-int"><span class="v">8</span><span class="t t-int">int</span></div>
+          <span id="s-gb" class="sello s-err">TypeError</span>
+        </div>
+        <div id="g-c" class="grupo" data-layout-allow-overlap>
+          <div class="card c-str"><span class="v">"42"</span><span class="t t-str">str</span></div>
+          <div class="op">+</div>
+          <div class="card c-str"><span class="v">"8"</span><span class="t t-str">str</span></div>
+        </div>
+        <div id="r-a" class="card abs c-int" data-layout-allow-overlap><span class="v">50</span><span class="t t-int">int</span><span id="s-ra" class="sello s-ok">✓ Visto bueno</span></div>
+        <div id="r-c" class="card abs c-str" data-layout-allow-overlap><span class="v">"428"</span><span class="t t-str">str</span><span id="s-rc" class="sello s-str">str</span></div>
+        <div id="m3" class="maq" data-layout-allow-overlap>
+          <div class="maq-cara"><p class="maq-signo">+</p></div>
+          <p class="maq-pie">OPERADOR</p>
+          <span class="flap izq"></span><span class="flap der"></span>
+          <span class="lampara l-base"></span><span id="l3-ok" class="lampara l-ok"></span><span id="l3-err" class="lampara l-err"></span>
+        </div>
+        <div class="caption-lugar">
+          <p id="m-cap-a" class="cap" data-layout-allow-overlap>Dos números se suman: 42 + 8 da 50</p>
+          <p id="m-cap-b" class="cap" data-layout-allow-overlap>No se puede sumar texto con número</p>
+          <p id="m-cap-c" class="cap" data-layout-allow-overlap>Dos textos se pegan: "42" + "8" da "428"</p>
+        </div>
+      </section>
+
+      <!-- Escena 4: conversion -->
+      <section id="escena-conversion" class="clip escena" data-start="30" data-duration="11.5" data-track-index="0">
+        <div class="ticket-lugar">
+          <p id="k-tk1" class="tk" data-layout-allow-overlap>int("42") + 8</p>
+          <p id="k-tk2" class="tk" data-layout-allow-overlap>str(42) + "8"</p>
+          <p id="k-tk3" class="tk" data-layout-allow-overlap>float(3)</p>
+        </div>
+
+        <div id="p1a" class="card abs c-str" data-layout-allow-overlap><span class="v">"42"</span><span class="t t-str">str</span></div>
+        <div id="p1b" class="card abs c-int" data-layout-allow-overlap><span class="v">42</span><span class="t t-int">int</span></div>
+        <div id="p1c" class="card abs c-int" data-layout-allow-overlap><span class="v">50</span><span class="t t-int">int</span><span id="s-p1c" class="sello s-ok">✓ Visto bueno</span></div>
+
+        <div id="p2a" class="card abs c-int" data-layout-allow-overlap><span class="v">42</span><span class="t t-int">int</span></div>
+        <div id="p2b" class="card abs c-str" data-layout-allow-overlap><span class="v">"42"</span><span class="t t-str">str</span></div>
+        <div id="p2c" class="card abs c-str" data-layout-allow-overlap><span class="v">"428"</span><span class="t t-str">str</span><span id="s-p2c" class="sello s-str">str</span></div>
+
+        <div id="p3a" class="card abs c-int" data-layout-allow-overlap><span class="v">3</span><span class="t t-int">int</span></div>
+        <div id="p3b" class="card abs c-float" data-layout-allow-overlap><span class="v">3.0</span><span class="t t-float">float</span><span id="s-p3b" class="sello s-float">float</span></div>
+
+        <div id="m4a" class="maq" data-layout-allow-overlap>
+          <div class="maq-cara chica">
+            <p id="e-int" class="etq" data-layout-allow-overlap>int()</p>
+            <p id="e-str" class="etq" data-layout-allow-overlap>str()</p>
+            <p id="e-float" class="etq" data-layout-allow-overlap>float()</p>
+          </div>
+          <p class="maq-pie">CONVERTIR</p>
+          <span class="flap izq"></span><span class="flap der"></span>
+          <span class="lampara l-base"></span><span id="l4a" class="lampara l-ok"></span>
+        </div>
+        <div id="m4b" class="maq" data-layout-allow-overlap>
+          <div class="maq-cara chica">
+            <p id="e-mas8" class="etq" data-layout-allow-overlap>+ 8</p>
+            <p id="e-mas8s" class="etq" data-layout-allow-overlap>+ "8"</p>
+          </div>
+          <p class="maq-pie">OPERADOR</p>
+          <span class="flap izq"></span><span class="flap der"></span>
+          <span class="lampara l-base"></span><span id="l4b" class="lampara l-ok"></span>
+        </div>
+
+        <div class="caption-lugar">
+          <p id="k-cap1" class="cap" data-layout-allow-overlap>int() convierte un texto en número</p>
+          <p id="k-cap2" class="cap" data-layout-allow-overlap>str() convierte un número en texto</p>
+          <p id="k-cap3" class="cap" data-layout-allow-overlap>float() convierte un entero en decimal</p>
+        </div>
+      </section>
+
+      <!-- Escena 5: cierre -->
+      <section id="escena-cierre" class="clip escena" data-start="41.5" data-duration="7" data-track-index="0">
+        <p id="c-titulo">Cuatro tipos de datos</p>
+        <div id="j0" class="card abs grande c-int"><span class="v">42</span><span id="s-j0" class="sello s-int">int</span></div>
+        <div id="j1" class="card abs grande c-float"><span class="v">4.2</span><span id="s-j1" class="sello s-float">float</span></div>
+        <div id="j2" class="card abs grande c-str"><span class="v">"42"</span><span id="s-j2" class="sello s-str">str</span></div>
+        <div id="j3" class="card abs grande c-bool"><span class="v">True</span><span id="s-j3" class="sello s-bool">bool</span></div>
+        <p id="c-frase">Ahora explora las mezclas en el laboratorio</p>
+      </section>
+
+    </div>
+    <script>
+      var tl = gsap.timeline({ paused: true });
+      var beltPos = 0;
+
+      // Utilidades (todo con valores absolutos, nada depende de relojes)
+      function cinta(t, d, dur, ease) {
+        tl.fromTo("#cinta", { backgroundPositionX: beltPos + "px" }, { backgroundPositionX: (beltPos + d) + "px", duration: dur, ease: ease, immediateRender: false }, t);
+        beltPos += d;
+      }
+      function mover(sel, t, x0, x1, dur, ease) {
+        tl.fromTo(sel, { x: x0 }, { x: x1, duration: dur, ease: ease, immediateRender: false }, t);
+      }
+      function entra(sel, t, dur) {
+        tl.fromTo(sel, { opacity: 0 }, { opacity: 1, duration: dur || 0.4, ease: "power1.out", immediateRender: false }, t);
+      }
+      function sale(sel, t, dur) {
+        tl.fromTo(sel, { opacity: 1 }, { opacity: 0, duration: dur || 0.3, ease: "power1.in", immediateRender: false }, t);
+      }
+      function sello(sel, t) {
+        tl.fromTo(sel, { opacity: 0 }, { opacity: 1, duration: 0.08, immediateRender: false }, t);
+        tl.fromTo(sel, { y: -70, scale: 1.6, rotation: -12 }, { y: 0, scale: 1, rotation: -5, duration: 0.65, ease: "bounce.out", immediateRender: false }, t);
+      }
+      function lampara(sel, t) {
+        tl.fromTo(sel, { opacity: 0 }, { opacity: 1, duration: 0.08, immediateRender: false }, t);
+        tl.fromTo(sel, { opacity: 1 }, { opacity: 0, duration: 0.25, immediateRender: false }, t + 0.3);
+      }
+      function cierraEscena(id, fin) {
+        tl.fromTo(id, { opacity: 1 }, { opacity: 0, duration: 0.35, ease: "power1.in", immediateRender: false }, fin - 0.4);
+      }
+
+      // Estado inicial
+      gsap.set(".card.abs, .grupo, .sello", { xPercent: -50 });
+      gsap.set(".sello", { opacity: 0 });
+      gsap.set(["#t-kicker", "#t-titulo", "#t-sub", "#a-arco", "#a-cap1", "#a-cap2", "#laser", "#a-luz-on",
+        "#m3", "#m-tk-a", "#m-tk-b", "#m-tk-c", "#m-cap-a", "#m-cap-b", "#m-cap-c", "#l3-ok", "#l3-err",
+        "#m4a", "#m4b", "#k-tk1", "#k-tk2", "#k-tk3", "#k-cap1", "#k-cap2", "#k-cap3", "#l4a", "#l4b",
+        "#e-str", "#e-float", "#e-mas8s", "#c-titulo", "#c-frase"], { opacity: 0 });
+      gsap.set(".sello-gr", { opacity: 0 });
+
+      // ===== Escena 1: titulo (0 a 5 s) =====
+      tl.fromTo("#t-kicker", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out", immediateRender: false }, 0.3);
+      tl.fromTo("#t-titulo", { opacity: 0, y: 36 }, { opacity: 1, y: 0, duration: 0.9, ease: "power3.out", immediateRender: false }, 0.6);
+      var rot = [-4, 3, -3, 4], ts = [1.2, 1.55, 1.9, 2.25];
+      for (var s = 0; s < 4; s++) {
+        tl.fromTo("#t-s" + (s + 1), { opacity: 0 }, { opacity: 1, duration: 0.08, immediateRender: false }, ts[s]);
+        tl.fromTo("#t-s" + (s + 1), { y: -430, rotation: -14 }, { y: 0, rotation: rot[s], duration: 0.85, ease: "bounce.out", immediateRender: false }, ts[s]);
+      }
+      entra("#t-sub", 2.8, 0.6);
+      tl.fromTo("#t-sellos", { x: 0 }, { x: 1450, duration: 0.9, ease: "power2.in", immediateRender: false }, 3.9);
+      cinta(3.9, 1450, 0.9, "power2.in");
+      cierraEscena("#escena-titulo", 5);
+
+      // ===== Escena 2: el escaner (5 a 17 s) =====
+      var base = [-100, -300, -500, -700], pos = base.slice();
+      for (var q = 0; q < 4; q++) gsap.set("#i" + q, { x: base[q] });
+      function avanza(t, d, dur, ease) {
+        for (var i = 0; i < 4; i++) { mover("#i" + i, t, pos[i], pos[i] + d, dur, ease); pos[i] += d; }
+        cinta(t, d, dur, ease);
+      }
+      var tipoCol = ["#1d4ed8", "#b45309", "#0f766e", "#6d28d9"];
+      function escanea(k, tScan, tSello) {
+        tl.fromTo("#laser", { opacity: 0 }, { opacity: 1, duration: 0.05, immediateRender: false }, tScan);
+        tl.fromTo("#laser", { y: 0 }, { y: 98, duration: 0.4, ease: "none", immediateRender: false }, tScan);
+        tl.fromTo("#laser", { opacity: 1 }, { opacity: 0, duration: 0.1, immediateRender: false }, tScan + 0.4);
+        tl.fromTo("#a-luz-on", { opacity: 0 }, { opacity: 1, duration: 0.05, immediateRender: false }, tScan);
+        tl.fromTo("#a-luz-on", { opacity: 1 }, { opacity: 0, duration: 0.1, immediateRender: false }, tScan + 0.5);
+        sello("#s-i" + k, tSello);
+        tl.fromTo("#i" + k, { borderColor: "#2b2118" }, { borderColor: tipoCol[k], duration: 0.2, immediateRender: false }, tSello + 0.1);
+      }
+      entra("#a-arco", 5.2, 0.5);
+      entra("#a-cap1", 6.0, 0.6);
+      avanza(5.7, 620, 1.5, "power2.out");
+      escanea(0, 7.3, 7.45);
+      avanza(8.6, 200, 0.6, "power2.inOut");
+      escanea(1, 9.25, 9.4);
+      avanza(10.7, 200, 0.6, "power2.inOut");
+      escanea(2, 11.35, 11.5);
+      avanza(12.8, 200, 0.6, "power2.inOut");
+      escanea(3, 13.45, 13.6);
+      entra("#a-cap2", 14.5, 0.6);
+      cierraEscena("#escena-escaner", 17);
+
+      // ===== Escena 3: mezclas (17 a 30 s) =====
+      gsap.set("#g-a, #g-b, #g-c", { x: -190 });
+      gsap.set("#r-a, #r-c", { x: 640 });
+      entra("#m3", 17.1, 0.5);
+      // A: 42 + 8
+      entra("#m-tk-a", 17.4, 0.4); entra("#m-cap-a", 17.6, 0.5);
+      mover("#g-a", 17.6, -190, 640, 1.4, "power1.inOut"); cinta(17.6, 830, 1.4, "power1.inOut");
+      lampara("#l3-ok", 19.05);
+      mover("#r-a", 19.2, 640, 1010, 0.8, "power2.out"); cinta(19.2, 370, 0.8, "power2.out");
+      sello("#s-ra", 20.0);
+      sale("#m-tk-a", 21.0); sale("#m-cap-a", 21.0);
+      mover("#r-a", 21.0, 1010, 1500, 0.6, "power2.in"); cinta(21.0, 490, 0.6, "power2.in");
+      // B: "42" + 8
+      entra("#m-tk-b", 21.6, 0.4); entra("#m-cap-b", 21.7, 0.5);
+      mover("#g-b", 21.7, -190, 270, 1.2, "power2.out"); cinta(21.7, 460, 1.2, "power2.out");
+      sello("#s-gb", 23.0);
+      tl.fromTo("#l3-err", { opacity: 0 }, { opacity: 1, duration: 0.1, immediateRender: false }, 23.0);
+      mover("#g-b", 23.7, 270, 282, 0.06, "none");
+      mover("#g-b", 23.76, 282, 260, 0.09, "none");
+      mover("#g-b", 23.86, 260, 277, 0.08, "none");
+      mover("#g-b", 23.94, 277, 270, 0.06, "none");
+      tl.fromTo("#l3-err", { opacity: 1 }, { opacity: 0, duration: 0.2, immediateRender: false }, 25.0);
+      tl.fromTo("#g-b", { y: 0, rotation: 0, opacity: 1 }, { y: 300, rotation: 16, opacity: 0, duration: 0.6, ease: "power2.in", immediateRender: false }, 25.0);
+      sale("#m-tk-b", 25.2); sale("#m-cap-b", 25.2);
+      // C: "42" + "8"
+      entra("#m-tk-c", 25.5, 0.4); entra("#m-cap-c", 25.6, 0.5);
+      mover("#g-c", 25.6, -190, 640, 1.3, "power1.inOut"); cinta(25.6, 830, 1.3, "power1.inOut");
+      lampara("#l3-ok", 26.95);
+      mover("#r-c", 27.1, 640, 1010, 0.8, "power2.out"); cinta(27.1, 370, 0.8, "power2.out");
+      sello("#s-rc", 27.9);
+      cierraEscena("#escena-mezclas", 30);
+
+      // ===== Escena 4: conversion (30 a 41.5 s) =====
+      gsap.set(["#p1a", "#p2a", "#p3a"], { x: -100 });
+      gsap.set(["#p1b", "#p2b", "#p3b"], { x: 300 });
+      gsap.set(["#p1c", "#p2c"], { x: 840 });
+      entra("#m4a", 30.2, 0.5); entra("#m4b", 30.2, 0.5);
+      // P1: int("42") + 8
+      entra("#k-tk1", 30.3, 0.4); entra("#k-cap1", 30.4, 0.5);
+      mover("#p1a", 30.5, -100, 300, 0.6, "power2.out"); cinta(30.5, 400, 0.6, "power2.out");
+      tl.set("#p1a", { opacity: 0 }, 31.15);
+      lampara("#l4a", 31.1);
+      mover("#p1b", 31.2, 300, 570, 0.5, "power2.out"); cinta(31.2, 270, 0.5, "power2.out");
+      mover("#p1b", 32.0, 570, 840, 0.45, "power2.in"); cinta(32.0, 270, 0.45, "power2.in");
+      tl.set("#p1b", { opacity: 0 }, 32.5);
+      lampara("#l4b", 32.45);
+      mover("#p1c", 32.55, 840, 1100, 0.55, "power2.out"); cinta(32.55, 260, 0.55, "power2.out");
+      sello("#s-p1c", 33.1);
+      sale("#k-tk1", 34.0); sale("#k-cap1", 34.0);
+      mover("#p1c", 34.1, 1100, 1500, 0.45, "power2.in"); cinta(34.1, 400, 0.45, "power2.in");
+      // P2: str(42) + "8"
+      entra("#k-tk2", 34.3, 0.4); entra("#k-cap2", 34.4, 0.5);
+      sale("#e-int", 34.5); entra("#e-str", 34.5, 0.3);
+      sale("#e-mas8", 34.5); entra("#e-mas8s", 34.5, 0.3);
+      mover("#p2a", 34.6, -100, 300, 0.6, "power2.out"); cinta(34.6, 400, 0.6, "power2.out");
+      tl.set("#p2a", { opacity: 0 }, 35.25);
+      lampara("#l4a", 35.2);
+      mover("#p2b", 35.3, 300, 570, 0.5, "power2.out"); cinta(35.3, 270, 0.5, "power2.out");
+      mover("#p2b", 36.1, 570, 840, 0.45, "power2.in"); cinta(36.1, 270, 0.45, "power2.in");
+      tl.set("#p2b", { opacity: 0 }, 36.6);
+      lampara("#l4b", 36.55);
+      mover("#p2c", 36.65, 840, 1100, 0.55, "power2.out"); cinta(36.65, 260, 0.55, "power2.out");
+      sello("#s-p2c", 37.2);
+      sale("#k-tk2", 38.1); sale("#k-cap2", 38.1);
+      mover("#p2c", 38.2, 1100, 1500, 0.45, "power2.in"); cinta(38.2, 400, 0.45, "power2.in");
+      // P3: float(3)
+      entra("#k-tk3", 38.3, 0.4); entra("#k-cap3", 38.4, 0.5);
+      sale("#e-str", 38.5); entra("#e-float", 38.5, 0.3);
+      tl.fromTo("#m4b", { opacity: 1 }, { opacity: 0.3, duration: 0.4, immediateRender: false }, 38.5);
+      mover("#p3a", 38.7, -100, 300, 0.6, "power2.out"); cinta(38.7, 400, 0.6, "power2.out");
+      tl.set("#p3a", { opacity: 0 }, 39.35);
+      lampara("#l4a", 39.3);
+      mover("#p3b", 39.4, 300, 600, 0.55, "power2.out"); cinta(39.4, 300, 0.55, "power2.out");
+      sello("#s-p3b", 39.95);
+      cierraEscena("#escena-conversion", 41.5);
+
+      // ===== Escena 5: cierre (41.5 a 48.5 s) =====
+      var slots = [265, 515, 765, 1015];
+      for (var j = 0; j < 4; j++) {
+        gsap.set("#j" + j, { x: slots[j] - 1500 });
+        mover("#j" + j, 42.0, slots[j] - 1500, slots[j], 1.7, "power3.out");
+        sello("#s-j" + j, 43.8 + 0.4 * j);
+      }
+      cinta(42.0, 1500, 1.7, "power3.out");
+      entra("#c-titulo", 41.8, 0.6);
+      entra("#c-frase", 45.9, 0.7);
+
+      window.__timelines["tipos-de-datos"] = tl;
+    </script>
+  </body>
+</html>

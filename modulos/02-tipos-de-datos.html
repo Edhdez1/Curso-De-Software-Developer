@@ -499,7 +499,305 @@ print(bool(0), bool("0"), bool(""), bool("False"))</textarea>
   <h2>Laboratorio de mezclas</h2>
   <p>Ya conoces los tipos y los operadores. Ahora la pregunta práctica: <strong>¿qué pasa cuando mezclas tipos?</strong> Algunas mezclas funcionan, otras dan un resultado inesperado y otras provocan un error. La mejor manera de aprender cuáles es probarlas. Este laboratorio te deja combinar cualquier par de valores con cualquier operador, y te muestra lo que Python responde de verdad.</p>
   <p>Los resultados no los inventa la página: se calcularon antes con Python y se guardaron en una tabla. Eso permite probar al instante combinaciones que en tu computadora te tomarían un rato, incluso las que dan error. Empieza por las «combinaciones curiosas», y después intenta cumplir los retos.</p>
-  <p><em>[provisional: aquí va el laboratorio]</em></p>
+  <div class="widget" id="lab-mezclas" role="group" aria-labelledby="lab-titulo">
+  <!-- Laboratorio de mezclas (Estación 2). La tabla de resultados la genera gen_lab.py con CPython real: no se edita a mano. -->
+  <div class="tabla">
+    <div class="traza-cabeza">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6l-5.5 9.5A2 2 0 0 0 6.2 21h11.6a2 2 0 0 0 1.7-2.5L14 9V3"/><path d="M7.5 15h9"/></svg>
+      <span id="lab-titulo">Laboratorio de mezclas</span>
+    </div>
+
+    <div class="traza-panel">
+      <p>Elige un valor, un operador y otro valor. Debajo ves la mezcla escrita como en Python y lo que Python responde de verdad: el resultado o el error.</p>
+      <div class="comparar">
+        <div>
+          <label class="traza-rotulo" for="lab-izq">Valor izquierdo</label>
+          <select class="glosario-buscar" id="lab-izq"></select>
+        </div>
+        <div>
+          <label class="traza-rotulo" for="lab-op">Operador</label>
+          <select class="glosario-buscar" id="lab-op"></select>
+        </div>
+        <div>
+          <label class="traza-rotulo" for="lab-der">Valor derecho</label>
+          <select class="glosario-buscar" id="lab-der"></select>
+        </div>
+      </div>
+      <div class="traza-memoria" role="group" aria-label="Atajos">
+        <button type="button" class="boton boton-sec boton-mini" id="lab-intercambiar">Intercambiar lados</button>
+        <button type="button" class="boton boton-sec boton-mini" id="lab-azar">Combinación al azar</button>
+      </div>
+      <div role="group" aria-labelledby="lab-expr-rotulo">
+        <p class="traza-rotulo" id="lab-expr-rotulo">Así se escribe en Python</p>
+        <pre class="traza-salida" id="lab-expr"></pre>
+      </div>
+      <div id="lab-resultado" role="status" aria-live="polite" aria-atomic="true"></div>
+      <noscript><p>Este laboratorio necesita JavaScript para mostrar los resultados.</p></noscript>
+    </div>
+
+    <div class="traza-controles">
+      <p class="traza-rotulo" id="lab-cur-titulo">Combinaciones curiosas</p>
+      <span class="nota-margen">Pulsa una para cargarla arriba y leer por qué pasa.</span>
+    </div>
+    <div class="traza-panel">
+      <div class="traza-memoria" role="group" aria-labelledby="lab-cur-titulo" id="lab-curiosas"></div>
+    </div>
+
+    <div class="traza-controles">
+      <p class="traza-rotulo" id="lab-retos-titulo">Retos</p>
+      <span class="nota-margen">Cada casilla se marca sola cuando la combinación que estás viendo cumple el reto.</span>
+    </div>
+    <div class="traza-panel">
+      <div class="opciones" role="list" aria-labelledby="lab-retos-titulo">
+        <div role="listitem"><div class="opcion" disabled data-reto="typeerror"><span class="letra" aria-hidden="true">1</span><div><p><strong>Consigue un TypeError.</strong></p><p class="nota-margen" data-estado>Pendiente.</p></div></div></div>
+        <div role="listitem"><div class="opcion" disabled data-reto="floatenteros"><span class="letra" aria-hidden="true">2</span><div><p><strong>Consigue un float usando solo enteros (int).</strong></p><p class="nota-margen" data-estado>Pendiente.</p></div></div></div>
+        <div role="listitem"><div class="opcion" disabled data-reto="verdadero"><span class="letra" aria-hidden="true">3</span><div><p><strong>Consigue que el resultado sea True.</strong></p><p class="nota-margen" data-estado>Pendiente.</p></div></div></div>
+        <div role="listitem"><div class="opcion" disabled data-reto="casacasa"><span class="letra" aria-hidden="true">4</span><div><p><strong>Consigue el texto 'casacasa'.</strong></p><p class="nota-margen" data-estado>Pendiente.</p></div></div></div>
+      </div>
+      <details class="pista">
+        <summary>Necesito una pista</summary>
+        <p><strong>Reto 1.</strong> Mezcla un texto con un número, o usa None con un número.</p>
+        <p><strong>Reto 2.</strong> Uno de los operadores siempre devuelve un float, aunque los dos lados sean int. Cuidado con True: es un bool, no un int.</p>
+        <p><strong>Reto 3.</strong> Las comparaciones devuelven un bool. Prueba con == y con &lt;.</p>
+        <p><strong>Reto 4.</strong> Hay dos operadores que fabrican texto nuevo. Uno junta dos textos; el otro repite un texto.</p>
+      </details>
+    </div>
+
+    <div class="traza-controles">
+      <span class="traza-contador" id="lab-contador" role="status">0 de 4 retos resueltos.</span>
+      <button type="button" class="boton boton-sec boton-mini" id="lab-reiniciar">Reiniciar retos</button>
+    </div>
+    <div class="traza-panel">
+      <p class="nota-margen" id="lab-nota"></p>
+    </div>
+  </div>
+
+  <script type="application/json" id="lab-mezclas-datos">{"py":"3.14.7","nota":"Calculado con Python 3.14 (CPython 3.14.7); los mensajes de error pueden variar un poco entre versiones. Por ejemplo, antes de Python 3.14 la división entre cero tenía varios mensajes distintos.","v":["7","2","0","2.5","0.1","0.2","\"7\"","\"casa\"","True","None"],"vt":["int","int","int","float","float","float","str","str","bool","NoneType"],"o":["+","-","*","/","//","%","**","==","\u003c"],"on":["suma","resta","multiplicación","división","división entera","resto","potencia","igual a","menor que"],"t":["int","float","str","bool"],"e":[["TypeError","unsupported operand type(s) for +: 'int' and 'str'","Python no sabe usar + entre un int y un str."],["TypeError","unsupported operand type(s) for +: 'int' and 'NoneType'","Python no sabe usar + entre un int y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for -: 'int' and 'str'","Python no sabe usar - entre un int y un str."],["TypeError","unsupported operand type(s) for -: 'int' and 'NoneType'","Python no sabe usar - entre un int y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for *: 'int' and 'NoneType'","Python no sabe usar * entre un int y un NoneType. NoneType es el tipo del valor None."],["ZeroDivisionError","division by zero","Dividir entre cero no tiene resultado, ni con /, ni con //, ni con %."],["TypeError","unsupported operand type(s) for /: 'int' and 'str'","Python no sabe usar / entre un int y un str."],["TypeError","unsupported operand type(s) for /: 'int' and 'NoneType'","Python no sabe usar / entre un int y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for //: 'int' and 'str'","Python no sabe usar // entre un int y un str."],["TypeError","unsupported operand type(s) for //: 'int' and 'NoneType'","Python no sabe usar // entre un int y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for %: 'int' and 'str'","Python no sabe usar % entre un int y un str."],["TypeError","unsupported operand type(s) for %: 'int' and 'NoneType'","Python no sabe usar % entre un int y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for ** or pow(): 'int' and 'str'","Python no sabe usar ** entre un int y un str."],["TypeError","unsupported operand type(s) for ** or pow(): 'int' and 'NoneType'","Python no sabe usar ** entre un int y un NoneType. NoneType es el tipo del valor None."],["TypeError","'\u003c' not supported between instances of 'int' and 'str'","Python no sabe comparar con \u003c un int y un str."],["TypeError","'\u003c' not supported between instances of 'int' and 'NoneType'","Python no sabe comparar con \u003c un int y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for +: 'float' and 'str'","Python no sabe usar + entre un float y un str."],["TypeError","unsupported operand type(s) for +: 'float' and 'NoneType'","Python no sabe usar + entre un float y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for -: 'float' and 'str'","Python no sabe usar - entre un float y un str."],["TypeError","unsupported operand type(s) for -: 'float' and 'NoneType'","Python no sabe usar - entre un float y un NoneType. NoneType es el tipo del valor None."],["TypeError","can't multiply sequence by non-int of type 'float'","Un texto (str) solo se puede multiplicar por un entero (int), y aquí el otro lado es un float."],["TypeError","unsupported operand type(s) for *: 'float' and 'NoneType'","Python no sabe usar * entre un float y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for /: 'float' and 'str'","Python no sabe usar / entre un float y un str."],["TypeError","unsupported operand type(s) for /: 'float' and 'NoneType'","Python no sabe usar / entre un float y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for //: 'float' and 'str'","Python no sabe usar // entre un float y un str."],["TypeError","unsupported operand type(s) for //: 'float' and 'NoneType'","Python no sabe usar // entre un float y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for %: 'float' and 'str'","Python no sabe usar % entre un float y un str."],["TypeError","unsupported operand type(s) for %: 'float' and 'NoneType'","Python no sabe usar % entre un float y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for ** or pow(): 'float' and 'str'","Python no sabe usar ** entre un float y un str."],["TypeError","unsupported operand type(s) for ** or pow(): 'float' and 'NoneType'","Python no sabe usar ** entre un float y un NoneType. NoneType es el tipo del valor None."],["TypeError","'\u003c' not supported between instances of 'float' and 'str'","Python no sabe comparar con \u003c un float y un str."],["TypeError","'\u003c' not supported between instances of 'float' and 'NoneType'","Python no sabe comparar con \u003c un float y un NoneType. NoneType es el tipo del valor None."],["TypeError","can only concatenate str (not \"int\") to str","El + solo une texto con texto (str con str), pero aquí el lado derecho es un int."],["TypeError","can only concatenate str (not \"float\") to str","El + solo une texto con texto (str con str), pero aquí el lado derecho es un float."],["TypeError","can only concatenate str (not \"bool\") to str","El + solo une texto con texto (str con str), pero aquí el lado derecho es un bool."],["TypeError","can only concatenate str (not \"NoneType\") to str","El + solo une texto con texto (str con str), pero aquí el lado derecho es un NoneType."],["TypeError","unsupported operand type(s) for -: 'str' and 'int'","Python no sabe usar - entre un str y un int."],["TypeError","unsupported operand type(s) for -: 'str' and 'float'","Python no sabe usar - entre un str y un float."],["TypeError","unsupported operand type(s) for -: 'str' and 'str'","Python no sabe usar - entre un str y un str."],["TypeError","unsupported operand type(s) for -: 'str' and 'bool'","Python no sabe usar - entre un str y un bool."],["TypeError","unsupported operand type(s) for -: 'str' and 'NoneType'","Python no sabe usar - entre un str y un NoneType. NoneType es el tipo del valor None."],["TypeError","can't multiply sequence by non-int of type 'str'","Un texto (str) solo se puede multiplicar por un entero (int), y aquí el otro lado es un str."],["TypeError","can't multiply sequence by non-int of type 'NoneType'","Un texto (str) solo se puede multiplicar por un entero (int), y aquí el otro lado es un NoneType."],["TypeError","unsupported operand type(s) for /: 'str' and 'int'","Python no sabe usar / entre un str y un int."],["TypeError","unsupported operand type(s) for /: 'str' and 'float'","Python no sabe usar / entre un str y un float."],["TypeError","unsupported operand type(s) for /: 'str' and 'str'","Python no sabe usar / entre un str y un str."],["TypeError","unsupported operand type(s) for /: 'str' and 'bool'","Python no sabe usar / entre un str y un bool."],["TypeError","unsupported operand type(s) for /: 'str' and 'NoneType'","Python no sabe usar / entre un str y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for //: 'str' and 'int'","Python no sabe usar // entre un str y un int."],["TypeError","unsupported operand type(s) for //: 'str' and 'float'","Python no sabe usar // entre un str y un float."],["TypeError","unsupported operand type(s) for //: 'str' and 'str'","Python no sabe usar // entre un str y un str."],["TypeError","unsupported operand type(s) for //: 'str' and 'bool'","Python no sabe usar // entre un str y un bool."],["TypeError","unsupported operand type(s) for //: 'str' and 'NoneType'","Python no sabe usar // entre un str y un NoneType. NoneType es el tipo del valor None."],["TypeError","not all arguments converted during string formatting","Cuando % tiene un texto a la izquierda, Python lo usa para dar formato al texto, y este texto no tiene ningún hueco (como %s) donde meter el valor."],["TypeError","unsupported operand type(s) for ** or pow(): 'str' and 'int'","Python no sabe usar ** entre un str y un int."],["TypeError","unsupported operand type(s) for ** or pow(): 'str' and 'float'","Python no sabe usar ** entre un str y un float."],["TypeError","unsupported operand type(s) for ** or pow(): 'str' and 'str'","Python no sabe usar ** entre un str y un str."],["TypeError","unsupported operand type(s) for ** or pow(): 'str' and 'bool'","Python no sabe usar ** entre un str y un bool."],["TypeError","unsupported operand type(s) for ** or pow(): 'str' and 'NoneType'","Python no sabe usar ** entre un str y un NoneType. NoneType es el tipo del valor None."],["TypeError","'\u003c' not supported between instances of 'str' and 'int'","Python no sabe comparar con \u003c un str y un int."],["TypeError","'\u003c' not supported between instances of 'str' and 'float'","Python no sabe comparar con \u003c un str y un float."],["TypeError","'\u003c' not supported between instances of 'str' and 'bool'","Python no sabe comparar con \u003c un str y un bool."],["TypeError","'\u003c' not supported between instances of 'str' and 'NoneType'","Python no sabe comparar con \u003c un str y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for +: 'bool' and 'str'","Python no sabe usar + entre un bool y un str."],["TypeError","unsupported operand type(s) for +: 'bool' and 'NoneType'","Python no sabe usar + entre un bool y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for -: 'bool' and 'str'","Python no sabe usar - entre un bool y un str."],["TypeError","unsupported operand type(s) for -: 'bool' and 'NoneType'","Python no sabe usar - entre un bool y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for *: 'bool' and 'NoneType'","Python no sabe usar * entre un bool y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for /: 'bool' and 'str'","Python no sabe usar / entre un bool y un str."],["TypeError","unsupported operand type(s) for /: 'bool' and 'NoneType'","Python no sabe usar / entre un bool y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for //: 'bool' and 'str'","Python no sabe usar // entre un bool y un str."],["TypeError","unsupported operand type(s) for //: 'bool' and 'NoneType'","Python no sabe usar // entre un bool y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for %: 'bool' and 'str'","Python no sabe usar % entre un bool y un str."],["TypeError","unsupported operand type(s) for %: 'bool' and 'NoneType'","Python no sabe usar % entre un bool y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for ** or pow(): 'bool' and 'str'","Python no sabe usar ** entre un bool y un str."],["TypeError","unsupported operand type(s) for ** or pow(): 'bool' and 'NoneType'","Python no sabe usar ** entre un bool y un NoneType. NoneType es el tipo del valor None."],["TypeError","'\u003c' not supported between instances of 'bool' and 'str'","Python no sabe comparar con \u003c un bool y un str."],["TypeError","'\u003c' not supported between instances of 'bool' and 'NoneType'","Python no sabe comparar con \u003c un bool y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for +: 'NoneType' and 'int'","Python no sabe usar + entre un NoneType y un int. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for +: 'NoneType' and 'float'","Python no sabe usar + entre un NoneType y un float. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for +: 'NoneType' and 'str'","Python no sabe usar + entre un NoneType y un str. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for +: 'NoneType' and 'bool'","Python no sabe usar + entre un NoneType y un bool. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for +: 'NoneType' and 'NoneType'","Python no sabe usar + entre un NoneType y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for -: 'NoneType' and 'int'","Python no sabe usar - entre un NoneType y un int. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for -: 'NoneType' and 'float'","Python no sabe usar - entre un NoneType y un float. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for -: 'NoneType' and 'str'","Python no sabe usar - entre un NoneType y un str. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for -: 'NoneType' and 'bool'","Python no sabe usar - entre un NoneType y un bool. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for -: 'NoneType' and 'NoneType'","Python no sabe usar - entre un NoneType y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for *: 'NoneType' and 'int'","Python no sabe usar * entre un NoneType y un int. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for *: 'NoneType' and 'float'","Python no sabe usar * entre un NoneType y un float. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for *: 'NoneType' and 'bool'","Python no sabe usar * entre un NoneType y un bool. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for *: 'NoneType' and 'NoneType'","Python no sabe usar * entre un NoneType y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for /: 'NoneType' and 'int'","Python no sabe usar / entre un NoneType y un int. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for /: 'NoneType' and 'float'","Python no sabe usar / entre un NoneType y un float. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for /: 'NoneType' and 'str'","Python no sabe usar / entre un NoneType y un str. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for /: 'NoneType' and 'bool'","Python no sabe usar / entre un NoneType y un bool. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for /: 'NoneType' and 'NoneType'","Python no sabe usar / entre un NoneType y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for //: 'NoneType' and 'int'","Python no sabe usar // entre un NoneType y un int. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for //: 'NoneType' and 'float'","Python no sabe usar // entre un NoneType y un float. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for //: 'NoneType' and 'str'","Python no sabe usar // entre un NoneType y un str. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for //: 'NoneType' and 'bool'","Python no sabe usar // entre un NoneType y un bool. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for //: 'NoneType' and 'NoneType'","Python no sabe usar // entre un NoneType y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for %: 'NoneType' and 'int'","Python no sabe usar % entre un NoneType y un int. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for %: 'NoneType' and 'float'","Python no sabe usar % entre un NoneType y un float. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for %: 'NoneType' and 'str'","Python no sabe usar % entre un NoneType y un str. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for %: 'NoneType' and 'bool'","Python no sabe usar % entre un NoneType y un bool. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for %: 'NoneType' and 'NoneType'","Python no sabe usar % entre un NoneType y un NoneType. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for ** or pow(): 'NoneType' and 'int'","Python no sabe usar ** entre un NoneType y un int. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for ** or pow(): 'NoneType' and 'float'","Python no sabe usar ** entre un NoneType y un float. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for ** or pow(): 'NoneType' and 'str'","Python no sabe usar ** entre un NoneType y un str. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for ** or pow(): 'NoneType' and 'bool'","Python no sabe usar ** entre un NoneType y un bool. NoneType es el tipo del valor None."],["TypeError","unsupported operand type(s) for ** or pow(): 'NoneType' and 'NoneType'","Python no sabe usar ** entre un NoneType y un NoneType. NoneType es el tipo del valor None."],["TypeError","'\u003c' not supported between instances of 'NoneType' and 'int'","Python no sabe comparar con \u003c un NoneType y un int. NoneType es el tipo del valor None."],["TypeError","'\u003c' not supported between instances of 'NoneType' and 'float'","Python no sabe comparar con \u003c un NoneType y un float. NoneType es el tipo del valor None."],["TypeError","'\u003c' not supported between instances of 'NoneType' and 'str'","Python no sabe comparar con \u003c un NoneType y un str. NoneType es el tipo del valor None."],["TypeError","'\u003c' not supported between instances of 'NoneType' and 'bool'","Python no sabe comparar con \u003c un NoneType y un bool. NoneType es el tipo del valor None."],["TypeError","'\u003c' not supported between instances of 'NoneType' and 'NoneType'","Python no sabe comparar con \u003c un NoneType y un NoneType. NoneType es el tipo del valor None."]],"c":[[4,0,5,"Python guarda los decimales en binario y ni 0.1 ni 0.2 caben ahí con exactitud, así que la suma se desvía un poco del 0.3 que esperabas."],[8,0,0,"En las cuentas, True vale 1, así que True + 7 da 8, y ese 8 es un int, no un bool."],[6,2,1,"Con un texto, el * no multiplica: lo repite, así que \"7\" * 2 da el texto '77' y no el número 14."],[6,0,0,"Python no mezcla un texto con un número: no sabe si quieres unir \"77\" o sumar 14, así que se detiene con un TypeError."],[0,3,1,"La división con / siempre da un float, aunque los dos lados sean int."],[0,4,1,"La división entera // redondea hacia abajo el resultado de dividir, así que 7 // 2 da 3, un int."],[9,0,0,"None significa «sin valor», y a un «sin valor» no se le puede sumar nada, por eso Python lanza un TypeError."],[0,7,6,"Para ==, un número y un texto nunca son iguales aunque se vean parecidos, y la comparación da False sin ningún error."],[0,8,6,"A diferencia de ==, comparar con \u003c un número y un texto sí es un error, porque Python no sabe decidir cuál es el menor."]],"r":[["14",0],["9",0],["7",0],["9.5",1],["7.1",1],["7.2",1],0,0,["8",0],1,["0",0],["5",0],["7",0],["4.5",1],["6.9",1],["6.8",1],2,2,["6",0],3,["49",0],["14",0],["0",0],["17.5",1],["0.7000000000000001",1],["1.4000000000000001",1],["'7777777'",2],["'casacasacasacasacasacasacasa'",2],["7",0],4,["1.0",1],["3.5",1],5,["2.8",1],["70.0",1],["35.0",1],6,6,["7.0",1],7,["1",0],["3",0],5,["2.0",1],["69.0",1],["34.0",1],8,8,["7",0],9,["0",0],["1",0],5,["2.0",1],["0.09999999999999962",1],["0.19999999999999962",1],10,10,["0",0],11,["823543",0],["49",0],["1",0],["129.64181424216494",1],["1.214814044039067",1],["1.4757731615945522",1],12,12,["7",0],13,["True",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],14,14,["False",3],15,["9",0],["4",0],["2",0],["4.5",1],["2.1",1],["2.2",1],0,0,["3",0],1,["-5",0],["0",0],["2",0],["-0.5",1],["1.9",1],["1.8",1],2,2,["1",0],3,["14",0],["4",0],["0",0],["5.0",1],["0.2",1],["0.4",1],["'77'",2],["'casacasa'",2],["2",0],4,["0.2857142857142857",1],["1.0",1],5,["0.8",1],["20.0",1],["10.0",1],6,6,["2.0",1],7,["0",0],["1",0],5,["0.0",1],["19.0",1],["9.0",1],8,8,["2",0],9,["2",0],["0",0],5,["2.0",1],["0.0999999999999999",1],["0.1999999999999999",1],10,10,["0",0],11,["128",0],["4",0],["1",0],["5.656854249492381",1],["1.0717734625362931",1],["1.148698354997035",1],12,12,["2",0],13,["False",3],["True",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["True",3],["False",3],["False",3],["True",3],["False",3],["False",3],14,14,["False",3],15,["7",0],["2",0],["0",0],["2.5",1],["0.1",1],["0.2",1],0,0,["1",0],1,["-7",0],["-2",0],["0",0],["-2.5",1],["-0.1",1],["-0.2",1],2,2,["-1",0],3,["0",0],["0",0],["0",0],["0.0",1],["0.0",1],["0.0",1],["''",2],["''",2],["0",0],4,["0.0",1],["0.0",1],5,["0.0",1],["0.0",1],["0.0",1],6,6,["0.0",1],7,["0",0],["0",0],5,["0.0",1],["0.0",1],["0.0",1],8,8,["0",0],9,["0",0],["0",0],5,["0.0",1],["0.0",1],["0.0",1],10,10,["0",0],11,["0",0],["0",0],["1",0],["0.0",1],["0.0",1],["0.0",1],12,12,["0",0],13,["False",3],["False",3],["True",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["True",3],["True",3],["False",3],["True",3],["True",3],["True",3],14,14,["True",3],15,["9.5",1],["4.5",1],["2.5",1],["5.0",1],["2.6",1],["2.7",1],16,16,["3.5",1],17,["-4.5",1],["0.5",1],["2.5",1],["0.0",1],["2.4",1],["2.3",1],18,18,["1.5",1],19,["17.5",1],["5.0",1],["0.0",1],["6.25",1],["0.25",1],["0.5",1],20,20,["2.5",1],21,["0.35714285714285715",1],["1.25",1],5,["1.0",1],["25.0",1],["12.5",1],22,22,["2.5",1],23,["0.0",1],["1.0",1],5,["1.0",1],["24.0",1],["12.0",1],24,24,["2.0",1],25,["2.5",1],["0.5",1],5,["0.0",1],["0.09999999999999987",1],["0.09999999999999987",1],26,26,["0.5",1],27,["610.3515625",1],["6.25",1],["1.0",1],["9.882117688026186",1],["1.0959582263852172",1],["1.2011244339814313",1],28,28,["2.5",1],29,["False",3],["False",3],["False",3],["True",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["True",3],["False",3],["False",3],["False",3],["False",3],["False",3],30,30,["False",3],31,["7.1",1],["2.1",1],["0.1",1],["2.6",1],["0.2",1],["0.30000000000000004",1],16,16,["1.1",1],17,["-6.9",1],["-1.9",1],["0.1",1],["-2.4",1],["0.0",1],["-0.1",1],18,18,["-0.9",1],19,["0.7000000000000001",1],["0.2",1],["0.0",1],["0.25",1],["0.010000000000000002",1],["0.020000000000000004",1],20,20,["0.1",1],21,["0.014285714285714287",1],["0.05",1],5,["0.04",1],["1.0",1],["0.5",1],22,22,["0.1",1],23,["0.0",1],["0.0",1],5,["0.0",1],["1.0",1],["0.0",1],24,24,["0.0",1],25,["0.1",1],["0.1",1],5,["0.1",1],["0.0",1],["0.1",1],26,26,["0.1",1],27,["1.0000000000000004e-07",1],["0.010000000000000002",1],["1.0",1],["0.00316227766016838",1],["0.7943282347242815",1],["0.6309573444801932",1],28,28,["0.1",1],29,["False",3],["False",3],["False",3],["False",3],["True",3],["False",3],["False",3],["False",3],["False",3],["False",3],["True",3],["True",3],["False",3],["True",3],["False",3],["True",3],30,30,["True",3],31,["7.2",1],["2.2",1],["0.2",1],["2.7",1],["0.30000000000000004",1],["0.4",1],16,16,["1.2",1],17,["-6.8",1],["-1.8",1],["0.2",1],["-2.3",1],["0.1",1],["0.0",1],18,18,["-0.8",1],19,["1.4000000000000001",1],["0.4",1],["0.0",1],["0.5",1],["0.020000000000000004",1],["0.04000000000000001",1],20,20,["0.2",1],21,["0.028571428571428574",1],["0.1",1],5,["0.08",1],["2.0",1],["1.0",1],22,22,["0.2",1],23,["0.0",1],["0.0",1],5,["0.0",1],["2.0",1],["1.0",1],24,24,["0.0",1],25,["0.2",1],["0.2",1],5,["0.2",1],["0.0",1],["0.0",1],26,26,["0.2",1],27,["1.2800000000000005e-05",1],["0.04000000000000001",1],["1.0",1],["0.01788854381999832",1],["0.8513399225207846",1],["0.7247796636776955",1],28,28,["0.2",1],29,["False",3],["False",3],["False",3],["False",3],["False",3],["True",3],["False",3],["False",3],["False",3],["False",3],["True",3],["True",3],["False",3],["True",3],["False",3],["False",3],30,30,["True",3],31,32,32,32,33,33,33,["'77'",2],["'7casa'",2],34,35,36,36,36,37,37,37,38,38,39,40,["'7777777'",2],["'77'",2],["''",2],20,20,20,41,41,["'7'",2],42,43,43,43,44,44,44,45,45,46,47,48,48,48,49,49,49,50,50,51,52,53,53,53,53,53,53,53,53,53,53,54,54,54,55,55,55,56,56,57,58,["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["True",3],["False",3],["False",3],["False",3],59,59,59,60,60,60,["False",3],["True",3],61,62,32,32,32,33,33,33,["'casa7'",2],["'casacasa'",2],34,35,36,36,36,37,37,37,38,38,39,40,["'casacasacasacasacasacasacasa'",2],["'casacasa'",2],["''",2],20,20,20,41,41,["'casa'",2],42,43,43,43,44,44,44,45,45,46,47,48,48,48,49,49,49,50,50,51,52,53,53,53,53,53,53,53,53,53,53,54,54,54,55,55,55,56,56,57,58,["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["True",3],["False",3],["False",3],59,59,59,60,60,60,["False",3],["False",3],61,62,["8",0],["3",0],["1",0],["3.5",1],["1.1",1],["1.2",1],63,63,["2",0],64,["-6",0],["-1",0],["1",0],["-1.5",1],["0.9",1],["0.8",1],65,65,["0",0],66,["7",0],["2",0],["0",0],["2.5",1],["0.1",1],["0.2",1],["'7'",2],["'casa'",2],["1",0],67,["0.14285714285714285",1],["0.5",1],5,["0.4",1],["10.0",1],["5.0",1],68,68,["1.0",1],69,["0",0],["0",0],5,["0.0",1],["9.0",1],["4.0",1],70,70,["1",0],71,["1",0],["1",0],5,["1.0",1],["0.09999999999999995",1],["0.19999999999999996",1],72,72,["0",0],73,["1",0],["1",0],["1",0],["1.0",1],["1.0",1],["1.0",1],74,74,["1",0],75,["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["True",3],["False",3],["True",3],["True",3],["False",3],["True",3],["False",3],["False",3],76,76,["False",3],77,78,78,78,79,79,79,80,80,81,82,83,83,83,84,84,84,85,85,86,87,88,88,88,89,89,89,42,42,90,91,92,92,92,93,93,93,94,94,95,96,97,97,97,98,98,98,99,99,100,101,102,102,102,103,103,103,104,104,105,106,107,107,107,108,108,108,109,109,110,111,["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["False",3],["True",3],112,112,112,113,113,113,114,114,115,116]}</script>
+  <script>
+  (function () {
+    "use strict";
+    var raiz = document.getElementById("lab-mezclas");
+    var etiquetaDatos = document.getElementById("lab-mezclas-datos");
+    if (!raiz || !etiquetaDatos) return;
+    var D;
+    try { D = JSON.parse(etiquetaDatos.textContent); } catch (e) { return; }
+
+    /* D.r[(i * NO + o) * NV + k] es la respuesta de "valor i, operador o, valor k":
+       un numero = indice del error en D.e ([clase, mensaje, traduccion]);
+       un arreglo = [repr del resultado, indice de su tipo en D.t]. */
+    var NV = D.v.length, NO = D.o.length;
+    var selIzq = document.getElementById("lab-izq"), selOp = document.getElementById("lab-op"), selDer = document.getElementById("lab-der");
+    var expr = document.getElementById("lab-expr");
+    var resultado = document.getElementById("lab-resultado");
+    var cajaCuriosas = document.getElementById("lab-curiosas");
+    var contador = document.getElementById("lab-contador");
+
+    var ICONO_OK = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+    var ICONO_ERROR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2.6"/></svg>';
+    var ICONO_CHECK = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+    /* ---------- utilidades ---------- */
+    function nodo(etiqueta, clase, texto) {
+      var n = document.createElement(etiqueta);
+      if (clase) n.className = clase;
+      if (texto !== undefined && texto !== null) n.textContent = texto;
+      return n;
+    }
+    function parrafo(partes, clase) {
+      var p = nodo("p", clase);
+      partes.forEach(function (x) { p.appendChild(typeof x === "string" ? document.createTextNode(x) : x); });
+      return p;
+    }
+    function codigo(texto) { return nodo("code", "", texto); }
+    function negrita(texto) { return nodo("strong", "", texto); }
+    function llenar(sel, textos) {
+      textos.forEach(function (t, n) {
+        var op = nodo("option", "", t);
+        op.value = String(n);
+        sel.appendChild(op);
+      });
+    }
+    function claseValor(tipo) {
+      return tipo === "str" ? "token string" : (tipo === "bool" || tipo === "NoneType") ? "token boolean" : "token number";
+    }
+
+    /* ---------- datos ---------- */
+    function info(i, o, k) {
+      var c = D.r[(i * NO + o) * NV + k];
+      var x = { i: i, o: o, k: k, expr: D.v[i] + " " + D.o[o] + " " + D.v[k], ti: D.vt[i], tk: D.vt[k], err: null, rep: null, tipo: null };
+      if (typeof c === "number") x.err = D.e[c];
+      else { x.rep = c[0]; x.tipo = D.t[c[1]]; }
+      return x;
+    }
+    var curiosaPorClave = {};
+    D.c.forEach(function (c, n) { curiosaPorClave[c[0] + "," + c[1] + "," + c[2]] = n; });
+
+    /* Cada reto se evalua sobre la tabla de resultados precalculados. */
+    var RETOS = {
+      typeerror: function (x) { return !!x.err && x.err[0] === "TypeError"; },
+      floatenteros: function (x) { return !x.err && x.ti === "int" && x.tk === "int" && x.tipo === "float"; },
+      verdadero: function (x) { return !x.err && x.rep === "True"; },
+      casacasa: function (x) { return !x.err && x.rep === "'casacasa'"; }
+    };
+    var totales = {};
+    Object.keys(RETOS).forEach(function (id) {
+      var n = 0;
+      for (var i = 0; i < NV; i++) for (var o = 0; o < NO; o++) for (var k = 0; k < NV; k++) if (RETOS[id](info(i, o, k))) n++;
+      totales[id] = n;
+    });
+    var resueltos = {};
+    var tarjetas = {};
+    Array.prototype.slice.call(raiz.querySelectorAll("[data-reto]")).forEach(function (t) { tarjetas[t.getAttribute("data-reto")] = t; });
+    var nRetos = Object.keys(tarjetas).length;
+    var numeros = {};
+    Object.keys(tarjetas).forEach(function (id) { numeros[id] = tarjetas[id].querySelector(".letra").textContent; });
+
+    /* ---------- interfaz ---------- */
+    llenar(selIzq, D.v.map(function (v, n) { return v + " (" + D.vt[n] + ")"; }));
+    llenar(selDer, D.v.map(function (v, n) { return v + " (" + D.vt[n] + ")"; }));
+    llenar(selOp, D.o.map(function (s, n) { return s + " (" + D.on[n] + ")"; }));
+    document.getElementById("lab-nota").textContent = D.nota;
+
+    var botonesCuriosas = D.c.map(function (c, n) {
+      var b = nodo("button", "boton boton-sec boton-mini");
+      b.type = "button";
+      b.setAttribute("aria-pressed", "false");
+      b.setAttribute("data-curiosa", String(n));
+      b.appendChild(nodo("samp", "", D.v[c[0]] + " " + D.o[c[1]] + " " + D.v[c[2]]));
+      b.addEventListener("click", function () {
+        selIzq.value = String(c[0]); selOp.value = String(c[1]); selDer.value = String(c[2]);
+        pintar();
+        verResultado();
+      });
+      cajaCuriosas.appendChild(b);
+      return b;
+    });
+
+    function verResultado() {
+      if (resultado.scrollIntoView) resultado.scrollIntoView({ block: "nearest" });
+    }
+
+    function pintarExpresion(x) {
+      expr.textContent = "";
+      expr.appendChild(nodo("span", claseValor(x.ti), D.v[x.i]));
+      expr.appendChild(document.createTextNode(" "));
+      expr.appendChild(nodo("span", "token operator", D.o[x.o]));
+      expr.appendChild(document.createTextNode(" "));
+      expr.appendChild(nodo("span", claseValor(x.tk), D.v[x.k]));
+    }
+
+    function senal(clase, icono, titulo, hijos) {
+      var s = nodo("div", "senal " + clase);
+      var placa = nodo("div", "senal-placa");
+      placa.innerHTML = icono;
+      var cuerpo = nodo("div", "senal-cuerpo");
+      cuerpo.appendChild(nodo("p", "senal-titulo", titulo));
+      hijos.forEach(function (h) { cuerpo.appendChild(h); });
+      s.appendChild(placa); s.appendChild(cuerpo);
+      return s;
+    }
+
+    function pintarResultado(x) {
+      var hijos = [];
+      var porQue = curiosaPorClave[x.i + "," + x.o + "," + x.k];
+      var ladoTipos = parrafo(["Lado izquierdo: ", codigo(x.ti), ". Lado derecho: ", codigo(x.tk), "."], "nota-margen");
+      var bloque;
+      if (x.err) {
+        var p1 = parrafo(["Python responde: ", codigo(x.err[0] + ": " + x.err[1])]);
+        p1.setAttribute("data-lab", "error");
+        hijos.push(p1);
+        hijos.push(parrafo([negrita("En español: "), x.err[2]]));
+        if (porQue !== undefined) hijos.push(parrafo([negrita("Por qué: "), D.c[porQue][3]]));
+        hijos.push(ladoTipos);
+        hijos.push(nodo("p", "nota-margen", "Python se detiene y no calcula ningún valor."));
+        bloque = senal("error", ICONO_ERROR, "Error: " + x.err[0], hijos);
+      } else {
+        var p2 = parrafo([codigo(x.expr), " da ", codigo(x.rep), "."]);
+        p2.setAttribute("data-lab", "valor");
+        hijos.push(p2);
+        var p3 = parrafo(["Tipo del resultado: ", negrita(x.tipo), ". La función type() lo muestra así: ", codigo("<class '" + x.tipo + "'>"), "."]);
+        p3.setAttribute("data-lab", "tipo");
+        hijos.push(p3);
+        if (x.tipo === "str") {
+          var impreso = x.rep.slice(1, -1);
+          hijos.push(impreso === ""
+            ? parrafo(["Con print() verías una línea vacía: el texto no tiene ningún carácter."])
+            : parrafo(["Con print() verías ", codigo(impreso), ", sin las comillas."]));
+        }
+        if (porQue !== undefined) hijos.push(parrafo([negrita("Por qué: "), D.c[porQue][3]]));
+        hijos.push(ladoTipos);
+        bloque = senal("oficio", ICONO_OK, "Resultado", hijos);
+      }
+      resultado.textContent = "";
+      resultado.appendChild(bloque);
+    }
+
+    function pintarCuriosas(x) {
+      var activa = curiosaPorClave[x.i + "," + x.o + "," + x.k];
+      botonesCuriosas.forEach(function (b, n) {
+        var on = n === activa;
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+        b.className = "boton boton-mini" + (on ? "" : " boton-sec");
+      });
+    }
+
+    function pintarRetos(x) {
+      var nuevo = null;
+      Object.keys(RETOS).forEach(function (id) {
+        if (!resueltos[id] && RETOS[id](x)) { resueltos[id] = x.expr; nuevo = id; }
+      });
+      Object.keys(tarjetas).forEach(function (id) {
+        var t = tarjetas[id];
+        var hecho = !!resueltos[id];
+        t.className = "opcion" + (hecho ? " correcta" : "");
+        var letra = t.querySelector(".letra");
+        if (hecho) letra.innerHTML = ICONO_CHECK; else letra.textContent = numeros[id];
+        var estado = t.querySelector("[data-estado]");
+        estado.textContent = "";
+        if (hecho) {
+          estado.appendChild(document.createTextNode("Resuelto con "));
+          estado.appendChild(codigo(resueltos[id]));
+          estado.appendChild(document.createTextNode(". En total hay " + totales[id] + " combinaciones de las " + (NV * NO * NV) + " que lo cumplen."));
+        } else estado.textContent = "Pendiente.";
+      });
+      var n = Object.keys(resueltos).length;
+      contador.textContent = (nuevo ? "Reto resuelto. " : "") + n + " de " + nRetos + " retos resueltos.";
+    }
+
+    function pintar() {
+      var x = info(parseInt(selIzq.value, 10), parseInt(selOp.value, 10), parseInt(selDer.value, 10));
+      pintarExpresion(x);
+      pintarResultado(x);
+      pintarCuriosas(x);
+      pintarRetos(x);
+    }
+
+    [selIzq, selOp, selDer].forEach(function (s) { s.addEventListener("change", pintar); });
+    document.getElementById("lab-intercambiar").addEventListener("click", function () {
+      var a = selIzq.value; selIzq.value = selDer.value; selDer.value = a;
+      pintar();
+    });
+    document.getElementById("lab-azar").addEventListener("click", function () {
+      var i, o, k;
+      do {
+        i = Math.floor(Math.random() * NV); o = Math.floor(Math.random() * NO); k = Math.floor(Math.random() * NV);
+      } while (String(i) === selIzq.value && String(o) === selOp.value && String(k) === selDer.value);
+      selIzq.value = String(i); selOp.value = String(o); selDer.value = String(k);
+      pintar();
+      verResultado();
+    });
+    function inicial() { selIzq.value = "0"; selOp.value = "0"; selDer.value = "1"; }
+    document.getElementById("lab-reiniciar").addEventListener("click", function () {
+      resueltos = {};
+      inicial();
+      pintar();
+    });
+
+    inicial();
+    pintar();
+  })();
+  </script>
+</div>
   <h3>Qué reglas puedes sacar de lo que probaste</h3>
   <div class="tabla">
     <table>

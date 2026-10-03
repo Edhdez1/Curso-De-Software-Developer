@@ -1,10 +1,10 @@
-# Plan v2 (propuesta) - Curso de Desarrollo de Software
+# Plan del curso (v2) - Desarrollo de Software
 
-> Este plan es una propuesta. El sitio actual sigue usando `datos/curso.json`; el plan vive en `datos/plan-v2/`.
+> Este es el plan vigente del curso. El sitio se construye desde `datos/curso.json` (fuente de verdad: estaciones, títulos, horas); el detalle de cada estación (temas, ejercicios, proyecto) está en `datos/plan-v2/estaciones-v2.json`. El curso anterior se conserva en `anterior/`.
 
 **Versión:** 2.0 Restructurado  
 **Proyecto Integrador:** Vault Académico + Portafolio Digital  
-**Duración Total:** 980 horas (obligatorias) + 250 horas (opcionales)  
+**Duración Total:** 974 horas (obligatorias) + 250 horas (opcionales)  
 **Ritmo de referencia:** 36 horas/semana = ~27 semanas (obligatorio); ~23 semanas hasta el primer nivel empleable (Línea 8)
 
 ---
@@ -13,7 +13,7 @@
 
 | Línea | Nombre | Horas | Descripción |
 |-------|--------|-------|-------------|
-| 1 | Python Fundamentos | 74 | Variables, tipos, control de flujo |
+| 1 | Python Fundamentos | 68 | Variables, tipos, control de flujo |
 | 2 | Python Intermedio | 100 | Funciones, POO, módulos |
 | 3 | Estructuras de Datos | 120 | Listas, dicts, conjuntos, algoritmos |
 | 4 | Bases de Datos | 100 | SQL, SQLite, ORM, queries avanzadas |
@@ -29,15 +29,15 @@
 
 ## 🎯 Hitos Importantes
 
-### Hito 1: Primer nivel empleable (Semana ~23, 836 horas)
+### Hito 1: Primer nivel empleable (Semana ~23, 830 horas)
 Completar hasta **Línea 8 (C# y .NET)**
 - Dominas Python completo
 - Entiendes estructuras de datos y algoritmos
 - Puedes crear backends con Node.js
 - Conoces C# y .NET Core
-- **Listo para:** Junior Developer en startups
+- **Ojo:** terminar el curso no equivale a tener empleo. La portada del sitio estima además unas 450 horas de proyectos propios (consolidación) para llegar a nivel junior; ese cálculo y sus fuentes están en `datos/tiempo.json`.
 
-### Hito 2: Nivel avanzado (Semana ~27, 980 horas)
+### Hito 2: Nivel avanzado (Semana ~27, 974 horas)
 Completar hasta **Línea 9 (MAUI y Vault v2)**
 - Tienes un portfolio con Vault Académico publicado
 - Puedes crear apps multiplataforma
@@ -226,7 +226,7 @@ Ejemplo real (Estación 1, en `datos/plan-v2/estaciones-v2.json`):
 ## 📊 Estimado de Horas por Línea
 
 ```
-Línea 1: Python Fundamentos        ████░░░░░░░░░░░░░░░ 74h
+Línea 1: Python Fundamentos        ████░░░░░░░░░░░░░░░ 68h
 Línea 2: Python Intermedio         █████░░░░░░░░░░░░░░ 100h
 Línea 3: Estructuras de Datos      ██████░░░░░░░░░░░░░ 120h
 Línea 4: Bases de Datos            █████░░░░░░░░░░░░░░ 100h
@@ -236,12 +236,12 @@ Línea 7: Backend (Node.js)         ██████░░░░░░░░�
 Línea 8: C# y .NET                 █████░░░░░░░░░░░░░░ 100h
 Línea 9: MAUI + Vault v2           ███████░░░░░░░░░░░░ 144h
 ─────────────────────────────────────────────────────
-TOTAL OBLIGATORIO:                 ████████████████░░░ 980h
+TOTAL OBLIGATORIO:                 ████████████████░░░ 974h
 
 Línea 10: Juegos (Opcional)        ███████░░░░░░░░░░░░ 150h
 Línea 11: Sistemas (Opcional)      █████░░░░░░░░░░░░░░ 100h
 ─────────────────────────────────────────────────────
-TOTAL CON OPCIONALES:              █████████████████░░ 1230h
+TOTAL CON OPCIONALES:              █████████████████░░ 1224h
 ```
 
 ---
