@@ -1,7 +1,7 @@
 # Guía de redacción de estaciones
 
 Esta guía explica cómo se escribe una estación (módulo) del curso **Terminal**. La referencia viva es
-`fuente/modulos/07-variables.html`: léela entera antes de escribir y copia su nivel de detalle, su tono y su
+`fuente/modulos/01-primer-programa.html` (y la `02-tipos-de-datos.html`, que añade un laboratorio propio): léelas enteras antes de escribir y copia su nivel de detalle, su tono y su
 estructura.
 
 ## 1. Para quién escribimos

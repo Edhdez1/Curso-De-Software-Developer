@@ -29,6 +29,8 @@ const fuenteDe = (m) => {
   if (otro) { avisos.push(`fuente/modulos/${otro} debería llamarse ${archivoModulo(m)}`); return `fuente/modulos/${otro}`; }
   return ruta;
 };
+// Una estación está escrita si existe su fuente; si no, se publica como «próximamente» (página informativa).
+const escrita = (m) => existe(fuenteDe(m));
 // Los enlaces entre estaciones se corrigen por slug si el número cambió (las fuentes pueden quedar con números antiguos).
 const enlacesAlDia = (html) => html.replace(/href="(\d\d)-([a-z0-9-]+)\.html/g, (t, num, slug) => {
   const d = modulos.find((x) => x.slug === slug);
@@ -66,7 +68,8 @@ const SENALES = {
 
 const marca = (claseLinea = "var(--lc)") => `<svg viewBox="0 0 32 20" aria-hidden="true"><rect x="0" y="7" width="27" height="6" rx="3" fill="${claseLinea}"/><circle cx="10" cy="10" r="4.2" fill="var(--suelo)" stroke="var(--tinta)" stroke-width="2"/><rect x="25" y="1" width="6" height="18" rx="2" fill="var(--tinta)"/></svg>`;
 
-const pictoSvg = (slug) => `<svg viewBox="0 0 48 48" aria-hidden="true">${(pictos[slug] || "<circle cx='24' cy='24' r='14'/>").replace(/'/g, '"')}</svg>`;
+// Pictograma propio de la estación; si no tiene, el de su línea ("linea-N" en pictos.json); si no, un círculo.
+const pictoSvg = (slug, linea) => `<svg viewBox="0 0 48 48" aria-hidden="true">${(pictos[slug] || pictos[`linea-${linea}`] || "<circle cx='24' cy='24' r='14'/>").replace(/'/g, '"')}</svg>`;
 
 // ---------------------------------------------------------------------------
 // Transformaciones del contenido de los módulos
@@ -200,8 +203,9 @@ function paginaModulo(m, i) {
   let cuerpo;
   if (existe(ruta)) cuerpo = leer(ruta);
   else {
-    avisos.push(`Falta el contenido de ${ruta}`);
-    cuerpo = `<section id="ruta" data-parada="En construcción"><h2>Estación en construcción</h2><p class="entradilla">Este módulo todavía se está escribiendo.</p></section>`;
+    if (m.estado !== "pronto") avisos.push(`Falta el contenido de ${ruta}`);
+    const temas = (m.temas || []).map((t) => `<li>${esc(t)}</li>`).join("");
+    cuerpo = `<section id="ruta" data-parada="Próximamente"><h2>Esta estación se publica pronto</h2><p class="entradilla">${esc(m.promesa)}</p>${temas ? `<h3>Lo que verás</h3><ul>${temas}</ul>` : ""}${m.proyecto ? `<h3>Proyecto de la estación</h3><p>${esc(m.proyecto)}</p>` : ""}<aside class="senal nota" data-titulo="Estado"><p>Esta estación todavía no está escrita. Las estaciones se publican en orden y cada una usa lo que enseñaron las anteriores. Vuelve al <a href="../index.html#red">mapa del curso</a> para seguir con las estaciones disponibles.</p></aside></section>`;
   }
   // El JSON de una terminal simulada se corta sin avisar si contiene «</script>»: se comprueba aquí.
   for (const [, json] of cuerpo.matchAll(/<script type="application\/json" class="terminal-sistema">([\s\S]*?)<\/script>/g)) {
@@ -211,6 +215,7 @@ function paginaModulo(m, i) {
   // Chrome no aplica white-space:pre al texto SVG: el código dentro de diagramas conserva su sangría con xml:space.
   cuerpo = cuerpo.replace(/<text(?![^>]*xml:space)([^>]*class="[^"]*\b(?:d-mono|d-codigo-texto|d-codigo-tenue)\b[^"]*"[^>]*)>/g, '<text xml:space="preserve"$1>');
   const secciones = seccionesDe(cuerpo);
+  const disponible = existe(ruta);
   if (existe(ruta)) for (const id of OBLIGATORIAS) if (!secciones.some((s) => s.id === id)) avisos.push(`${m.slug}: falta la sección #${id}`);
   const linea = lineaDe(m.linea);
   const previo = modulos[i - 1], siguiente = modulos[i + 1];
@@ -245,7 +250,7 @@ ${FUENTES}
 <header class="cartel">
   <div class="cartel-interior">
     <div class="cartel-cabeza">
-      <div class="picto">${pictoSvg(m.slug)}</div>
+      <div class="picto">${pictoSvg(m.slug, m.linea)}</div>
       <div>
         <h1>${esc(m.titulo)}</h1>
       </div>
@@ -275,10 +280,10 @@ ${cuerpo.trim()}
 </div>
 
 <footer class="cierre">
-  <div class="completar" data-texto="¿Terminaste las prácticas y la autoevaluación?">
+  ${disponible ? `<div class="completar" data-texto="¿Terminaste las prácticas y la autoevaluación?">
     <p>¿Terminaste las prácticas y la autoevaluación?</p>
     <button class="boton" type="button">Marcar estación como completada</button>
-  </div>
+  </div>` : ""}
   <nav class="direcciones" aria-label="Estaciones vecinas">
     ${previo ? `<a class="direccion" href="${archivoModulo(previo)}" data-linea="${previo.linea}"><span class="flecha">${ICO.flechaIzq}</span><span><small>Estación anterior</small><strong><span class="roundel" aria-hidden="true">${previo.linea}</span>${esc(previo.estacion)}</strong></span></a>` : `<a class="direccion" href="../index.html"><span class="flecha">${ICO.flechaIzq}</span><span><small>Volver</small><strong>Mapa del curso</strong></span></a>`}
     ${siguiente ? `<a class="direccion siguiente" href="${archivoModulo(siguiente)}" data-linea="${siguiente.linea}"><span><small>Próxima estación${siguiente.linea !== m.linea ? ` · correspondencia con la Línea ${siguiente.linea}` : ""}</small><strong><span class="roundel" aria-hidden="true">${siguiente.linea}</span>${esc(siguiente.estacion)}</strong></span><span class="flecha">${ICO.flechaDer}</span></a>` : `<a class="direccion siguiente" href="../index.html"><span><small>Fin del recorrido</small><strong>Volver al mapa</strong></span><span class="flecha">${ICO.flechaDer}</span></a>`}
@@ -348,7 +353,7 @@ function mapaRed() {
     if ((e.x - cx) * nx + (e.y - cy) * ny < 0) { nx = -nx; ny = -ny; }
     const horizontal = Math.abs(e.dx) > 0.9, vertical = Math.abs(e.dy) > 0.9;
     let tx = e.x + nx * 22, ty = e.y + ny * 22, ancla = "middle";
-    const lineas = partirNombre(m.estacion, 13);
+    const lineas = partirNombre(m.estacion, 11);
     if (horizontal) { ty = ny < 0 ? e.y - 22 - (lineas.length - 1) * 17 : e.y + 33; }
     else if (vertical) { ancla = nx < 0 ? "end" : "start"; tx = e.x + nx * 20; ty = e.y + 5 - (lineas.length - 1) * 8.5; }
     else { ancla = nx < 0 ? "end" : "start"; tx = e.x + nx * 18; ty = e.y + ny * 18 + 5 - (ny < 0 ? (lineas.length - 1) * 17 : 0); }
@@ -362,8 +367,9 @@ function mapaRed() {
     const roundel = esInicioLinea || i === 0
       ? `<g class="mapa-roundel" transform="translate(${(e.x - nx * 34).toFixed(1)} ${(e.y - ny * 34).toFixed(1)})"><circle r="14" style="fill:var(--l${m.linea})"/><text y="6" text-anchor="middle" style="fill:var(--l${m.linea}-on)">${m.linea}</text></g>`
       : "";
-    const meta = `Línea ${m.linea} · Estación ${Number(m.num)} · ${horasTexto(m.horas)}`;
-    return `<a class="mapa-estacion" href="modulos/${archivoModulo(m)}" data-slug="${m.slug}" data-linea="${m.linea}" data-x="${e.x.toFixed(1)}" data-y="${e.y.toFixed(1)}" data-titulo="${esc(m.titulo)}" data-promesa="${esc(m.promesa)}" data-meta="${esc(meta)}" aria-label="Estación ${Number(m.num)}, ${esc(m.estacion)}: ${esc(m.titulo)}">${roundel}${marcaEst}<text class="mapa-nombre${esTerminal ? " mapa-nombre-terminal" : ""}" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${ancla}">${texto}</text></a>`;
+    const pronto = !escrita(m);
+    const meta = `Línea ${m.linea} · Estación ${Number(m.num)} · ${horasTexto(m.horas)}${pronto ? " · Próximamente" : ""}`;
+    return `<a class="mapa-estacion" href="modulos/${archivoModulo(m)}" data-slug="${m.slug}" data-linea="${m.linea}"${pronto ? ' data-estado="pronto"' : ""} data-x="${e.x.toFixed(1)}" data-y="${e.y.toFixed(1)}" data-titulo="${esc(m.titulo)}" data-promesa="${esc(m.promesa)}" data-meta="${esc(meta)}" aria-label="Estación ${Number(m.num)}, ${esc(m.estacion)}: ${esc(m.titulo)}${pronto ? " (próximamente)" : ""}">${roundel}${marcaEst}<text class="mapa-nombre${esTerminal ? " mapa-nombre-terminal" : ""}" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${ancla}">${texto}</text></a>`;
   });
   const inicio = est[0];
   const tren = `<g class="mapa-tren" transform="translate(${inicio.x} ${inicio.y})" aria-hidden="true"><g transform="translate(0 -26)"><rect x="-18" y="-10" width="36" height="18" rx="6" class="mapa-tren-cuerpo"/><rect x="-12" y="-5.5" width="7" height="7" rx="1.5" class="mapa-tren-vent"/><rect x="-2.5" y="-5.5" width="7" height="7" rx="1.5" class="mapa-tren-vent"/><rect x="7" y="-5.5" width="5" height="7" rx="1.5" class="mapa-tren-vent"/><path d="M0 8v8" class="mapa-tren-poste"/></g></g>`;
@@ -382,9 +388,9 @@ function indiceLineas() {
     const suyas = modulos.filter((m) => m.linea === l.n);
     const horas = suyas.reduce((a, m) => a + m.horas, 0);
     return `<li class="fila-linea" data-linea="${l.n}">
-  <div class="fila-cabeza"><span class="roundel" aria-hidden="true">${l.n}</span><div><h3>Línea ${l.n} · ${esc(l.nombre)}</h3><p>${esc(l.resumen)}</p></div><span class="fila-horas">${ICO.reloj}${horasTexto(horas)}</span></div>
+  <div class="fila-cabeza"><span class="roundel" aria-hidden="true">${l.n}</span><div><h3>Línea ${l.n} · ${esc(l.nombre)}${l.opcional ? " (opcional)" : ""}</h3><p>${esc(l.resumen)}</p></div><span class="fila-horas">${ICO.reloj}${horasTexto(horas)}</span></div>
   <ol class="fila-estaciones">
-${suyas.map((m) => `    <li><a href="modulos/${archivoModulo(m)}" data-slug="${m.slug}"><span class="fila-punto" aria-hidden="true"></span><span class="fila-picto">${pictoSvg(m.slug)}</span><span class="fila-nombre"><b>${esc(m.estacion)}</b><small>${esc(m.titulo)}</small></span></a></li>`).join("\n")}
+${suyas.map((m) => `    <li><a href="modulos/${archivoModulo(m)}" data-slug="${m.slug}"${escrita(m) ? "" : ' data-estado="pronto"'}><span class="fila-punto" aria-hidden="true"></span><span class="fila-picto">${pictoSvg(m.slug, m.linea)}</span><span class="fila-nombre"><b>${esc(m.estacion)}</b><small>${esc(m.titulo)}${escrita(m) ? "" : " (próximamente)"}</small></span></a></li>`).join("\n")}
   </ol>
 </li>`;
   }).join("\n");
@@ -418,12 +424,16 @@ function notasTiempo() {
 }
 
 function portada() {
-  const totalHoras = modulos.reduce((a, m) => a + m.horas, 0);
+  // El total del curso cuenta solo las líneas obligatorias; las opcionales (l.opcional) se muestran aparte.
+  const totalHoras = modulos.filter((m) => !lineaDe(m.linea).opcional).reduce((a, m) => a + m.horas, 0);
   const consolidacion = tiempo?.consolidacion ?? 300;
-  const datos = { modulos: modulos.map((m) => ({ slug: m.slug, estacion: m.estacion, url: `modulos/${archivoModulo(m)}` })) };
+  const disponibles = modulos.filter(escrita);
+  // El progreso («X de N») y el botón «Continuar» solo cuentan las estaciones ya escritas.
+  const datos = { modulos: disponibles.map((m) => ({ slug: m.slug, estacion: m.estacion, url: `modulos/${archivoModulo(m)}` })) };
+  const leyenda = curso.lineas.map((l) => `<li style="--c:var(--l${l.n})"><i></i>${l.n} ${esc(l.corto || l.nombre)}${l.opcional ? " (opcional)" : ""}</li>`).join("\n      ");
   const filasHorario = curso.lineas.map((l) => {
     const h = modulos.filter((m) => m.linea === l.n).reduce((a, m) => a + m.horas, 0);
-    return `<tr data-linea-horas="${h}" data-linea="${l.n}"><th scope="row"><span class="roundel" aria-hidden="true">${l.n}</span> ${esc(l.nombre)}</th><td>${h} h</td><td data-meses></td><td data-acumulado></td></tr>`;
+    return `<tr data-linea-horas="${h}" data-linea="${l.n}"><th scope="row"><span class="roundel" aria-hidden="true">${l.n}</span> ${esc(l.nombre)}${l.opcional ? " (opcional)" : ""}</th><td>${h} h</td><td data-meses></td><td data-acumulado></td></tr>`;
   }).join("\n");
   const plantilla = leer("fuente/portada.html");
   return plantilla
@@ -440,10 +450,13 @@ function portada() {
     .replaceAll("{{TOTAL_HORAS}}", String(totalHoras))
     .replaceAll("{{CONSOLIDACION}}", String(consolidacion))
     .replaceAll("{{NUM_MODULOS}}", String(modulos.length))
+    .replaceAll("{{NUM_DISPONIBLES}}", String(disponibles.length))
+    .replaceAll("{{NUM_LINEAS}}", String(curso.lineas.length))
+    .replaceAll("{{LEYENDA_LINEAS}}", leyenda)
     .replaceAll("{{PRIMER_MODULO}}", `modulos/${archivoModulo(modulos[0])}`)
     .replaceAll("{{DATOS_CURSO}}", JSON.stringify(datos).replace(/</g, "\\u003c"))
     .replaceAll("{{TIEMPO_NOTAS}}", notasTiempo())
-    .replaceAll("{{PRISM}}", scriptsPrism(new Set(["js"])));
+    .replaceAll("{{PRISM}}", scriptsPrism(new Set(["python"])));
 }
 
 // ---------------------------------------------------------------------------
