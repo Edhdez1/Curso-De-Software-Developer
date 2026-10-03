@@ -140,12 +140,48 @@ Un **proyecto real** que evoluciona a través de 3 fases:
 
 ---
 
+## 🎬 Animaciones con HyperFrames
+
+Cada estación incluye una **animación educativa** creada con [HyperFrames](https://hyperframes.heygen.com) (framework de HeyGen para convertir HTML en videos).
+
+### ¿Qué es HyperFrames?
+- Convierte HTML/CSS + animaciones en videos MP4
+- Ideal para explicar conceptos de programación visualmente
+- Soporta GSAP, Lottie, Three.js, CSS animations
+- Determinístico: mismo HTML = mismo video siempre
+
+### Ejemplo: Estación 1 (Tu Primer Programa)
+- **Video animado:** 1 minuto explicando qué es Python
+- **Estructura:** Variables aparecen en pantalla, tipos de datos se transforman visualmente
+- **Código incluido:** Archivo `animaciones/estacion-01.html` que genera el video
+
+### Por qué animaciones
+1. **Visualización clara:** Ver cómo funciona un concepto es mejor que leerlo
+2. **Retención:** Video + audio + código = aprendizaje más profundo
+3. **Profesionalismo:** Tu portafolio con videos animados destaca
+4. **Automatizable:** Las animaciones se generan desde HTML, sin software costoso
+
+### Estructura de cada estación
+```
+📁 Estación X
+├── 📄 Lección.md (explicación en texto)
+├── 🎬 animacion.html (HyperFrames)
+├── 📹 video.mp4 (generado)
+├── 💻 ejemplos.py / .js / .cs (código)
+└── 📋 herramientas.md (librerías y plugins)
+```
+
+---
+
 ## 🛠️ Herramientas Recomendadas
 
 ### Entorno Base
 - **VS Code** (editor principal)
 - **Git** (control de versiones)
 - **Terminal/PowerShell** (comandos)
+- **HyperFrames CLI** (para las animaciones)
+  - Instalación: `npm install -g hyperframes`
+  - Uso: `npx hyperframes preview animaciones/estacion-01.html`
 
 ### Líneas 1-5 (Python)
 - Python 3.11+
@@ -178,6 +214,49 @@ Un **proyecto real** que evoluciona a través de 3 fases:
 - GCC/Clang (C/C++)
 - Cargo (Rust)
 - Go compiler
+
+---
+
+## 📦 Estructura: Herramientas y Librerías por Estación
+
+Cada estación ahora incluye una sección clara de:
+
+### 1. **Herramientas** (software que necesitas instalar)
+Ejemplo Estación 1:
+- Python 3.11+
+- VS Code
+- Git Bash/Terminal
+
+### 2. **Librerías** (paquetes que importas en tu código)
+Ejemplo Estación 3 (Estructuras de Datos):
+- `numpy` - para arreglos y operaciones matemáticas
+- `pandas` - para análisis de datos
+
+### 3. **Plugins Recomendados** (para VS Code/IDE)
+Ejemplo Estación 2:
+- Python Extension (Microsoft)
+- Better Comments - para comentarios más visuales
+
+### Estructura en JSON
+```json
+{
+  "id": 1,
+  "nombre": "Tu Primer Programa",
+  "herramientas": ["Python 3.11+", "VS Code", "Git"],
+  "librerías": [],
+  "pluginsRecomendados": ["Python Extension", "Code Runner"],
+  "animacionHyperframes": {
+    "titulo": "Animación: Tu Primer Programa",
+    "archivo": "animaciones/estacion-01.html",
+    "duracion_segundos": 60
+  }
+}
+```
+
+### Beneficio
+- **Sin sorpresas:** Sabes exactamente qué necesitas instalar antes de empezar
+- **Reutilizable:** Guardas el mismo archivo de herramientas para futuras referencias
+- **Escalable:** Fácil de actualizar si nuevas versiones salen
 
 ---
 
