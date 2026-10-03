@@ -144,11 +144,11 @@ Un **proyecto real** que evoluciona a través de 3 fases:
 
 [HyperFrames](https://github.com/heygen-com/hyperframes) (HeyGen, licencia Apache 2.0) convierte una página HTML con animaciones en un video MP4. Se usa desde la terminal y necesita Node.js 22 o posterior y FFmpeg.
 
-**Qué sí está hecho:** la Estación 1 tiene su video (45 s, sin voz, 833 KB) en `videos/01-primer-programa.mp4`, y su proyecto en `fuente-v2/animaciones/01-primer-programa/`. Pasó `hyperframes check` (sin errores de ejecución, 0 problemas de diseño, contraste AA 55/55).
+**Qué sí está hecho:** las Estaciones 1 y 2 tienen su video (sin voz; 45 s y 48,5 s) en `videos/`, y su proyecto de HyperFrames en `fuente/animaciones/`. Cada uno tiene un estilo visual distinto a propósito. Pasó `hyperframes check` (sin errores de ejecución, 0 problemas de diseño, contraste AA 55/55).
 
-**Qué falta:** los videos de las otras 56 estaciones. No están hechos ni garantizados: cada uno es trabajo de diseño y revisión, no un paso automático.
+**Qué falta:** los videos de las otras 55 estaciones. No están hechos ni garantizados: cada uno es trabajo de diseño y revisión, no un paso automático.
 
-**Cómo se usa** (desde `fuente-v2/animaciones/01-primer-programa/`):
+**Cómo se usa** (desde `fuente/animaciones/01-primer-programa/`):
 
 ```bash
 npx hyperframes check       # revisa errores, diseño y contraste
