@@ -1,9 +1,11 @@
-# Curso de Desarrollo de Software - Programador Senior
+# Plan v2 (propuesta) - Curso de Desarrollo de Software
+
+> Este plan es una propuesta. El sitio actual sigue usando `datos/curso.json`; el plan vive en `datos/plan-v2/`.
 
 **Versión:** 2.0 Restructurado  
 **Proyecto Integrador:** Vault Académico + Portafolio Digital  
-**Duración Total:** 920 horas (obligatorias) + 250 horas (opcional)  
-**Ritmo Recomendado:** 36 horas/semana = 6 meses para nivel intermedio, 4.3 meses para job-ready
+**Duración Total:** 986 horas (obligatorias) + 250 horas (opcionales)  
+**Ritmo de referencia:** 36 horas/semana = ~27 semanas (obligatorio); ~23 semanas hasta el primer nivel empleable (Línea 8)
 
 ---
 
@@ -17,9 +19,9 @@
 | 4 | Bases de Datos | 100 | SQL, SQLite, ORM, queries avanzadas |
 | 5 | GUIs y Vault v1 | 120 | Tkinter, Jinja2, Proyecto Vault Python |
 | 6 | JavaScript/TypeScript | 90 | ES6+, async/await, eventos DOM |
-| 7 | Backend (Node.js) | 110 | Express, APIs REST, autenticación, testing |
+| 7 | Backend (Node.js) | 132 | Express, APIs REST, autenticación, testing |
 | 8 | C# y .NET | 100 | POO avanzado, LINQ, ASP.NET Core |
-| 9 | MAUI y Vault v2 | 120 | Apps multiplataforma, Vault Académico completo |
+| 9 | MAUI y Vault v2 | 144 | Apps multiplataforma, Vault Académico completo |
 | 10 | Juegos (Opcional) | 150 | Unity 6, C#, 2D/3D, publicación |
 | 11 | Sistemas Avanzados (Opcional) | 100 | C, Rust, Go, concurrencia |
 
@@ -27,7 +29,7 @@
 
 ## 🎯 Hitos Importantes
 
-### Hito 1: Job-Ready (Semana 17, ~660 horas)
+### Hito 1: Primer nivel empleable (Semana ~23, 842 horas)
 Completar hasta **Línea 8 (C# y .NET)**
 - Dominas Python completo
 - Entiendes estructuras de datos y algoritmos
@@ -35,12 +37,12 @@ Completar hasta **Línea 8 (C# y .NET)**
 - Conoces C# y .NET Core
 - **Listo para:** Junior Developer en startups
 
-### Hito 2: Profesional Senior (Semana 26, ~920 horas)
+### Hito 2: Nivel avanzado (Semana ~27, 986 horas)
 Completar hasta **Línea 9 (MAUI y Vault v2)**
 - Tienes un portfolio con Vault Académico publicado
 - Puedes crear apps multiplataforma
 - Entiendes arquitecturas completas
-- **Listo para:** Developer Senior, Arquitecto
+- **Nota honesta:** el título "senior" también exige años de experiencia real; el curso te da la base y el portafolio, no el título
 
 ### Hito 3: Completo (Semana 35+)
 Opcional: **Línea 10 (Juegos)** y **Línea 11 (Sistemas)**
@@ -188,16 +190,16 @@ Línea 3: Estructuras de Datos      ██████░░░░░░░░�
 Línea 4: Bases de Datos            █████░░░░░░░░░░░░░░ 100h
 Línea 5: GUIs + Vault v1           ██████░░░░░░░░░░░░░ 120h
 Línea 6: JavaScript/TypeScript     ████░░░░░░░░░░░░░░░ 90h
-Línea 7: Backend (Node.js)         █████░░░░░░░░░░░░░░ 110h
+Línea 7: Backend (Node.js)         ██████░░░░░░░░░░░░░ 132h
 Línea 8: C# y .NET                 █████░░░░░░░░░░░░░░ 100h
-Línea 9: MAUI + Vault v2           ██████░░░░░░░░░░░░░ 120h
+Línea 9: MAUI + Vault v2           ███████░░░░░░░░░░░░ 144h
 ─────────────────────────────────────────────────────
-TOTAL OBLIGATORIO:                 ████████████████░░░ 920h
+TOTAL OBLIGATORIO:                 ████████████████░░░ 986h
 
 Línea 10: Juegos (Opcional)        ███████░░░░░░░░░░░░ 150h
 Línea 11: Sistemas (Opcional)      █████░░░░░░░░░░░░░░ 100h
 ─────────────────────────────────────────────────────
-TOTAL CON OPCIONALES:              █████████████████░░ 1170h
+TOTAL CON OPCIONALES:              █████████████████░░ 1236h
 ```
 
 ---
