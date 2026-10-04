@@ -8,13 +8,13 @@ con JavaScript, C#, apps para celular y escritorio (y, opcionalmente, videojuego
 Cada estación explica un tema con animaciones paso a paso, ejemplos que puedes ejecutar, ejercicios que se
 corrigen solos, un proyecto, una autoevaluación, un glosario y videos recomendados.
 
-**Estado:** las estaciones en **negrita** ya están escritas (hoy, las 2 primeras); las demás se publican en orden y
+**Estado:** las estaciones en **negrita** ya están escritas (hoy, las 3 primeras); las demás se publican en orden y
 mientras tanto aparecen como «próximamente». El curso anterior (9 líneas, JavaScript primero, 44 estaciones) ya no
 se publica; quien quiera consultarlo puede verlo en el commit `56bbcc7` del historial de Git.
 
 | Línea | Tema | Estaciones |
 |---|---|---|
-| 1 | Python: primeros pasos | **Tu primer programa** · **Tipos de datos** · Decisiones · Bucles · Proyecto: tareas |
+| 1 | Python: primeros pasos | **Tu primer programa** · **Tipos de datos** · **Decisiones** · Bucles · Proyecto: tareas |
 | 2 | Python: funciones y objetos | Funciones · Módulos y librerías · Objetos y clases · Herencia · Proyecto: carrito |
 | 3 | Estructuras de datos y algoritmos | Listas y diccionarios · Conjuntos · Buscar y ordenar · Recursión · Proyecto: analizador |
 | 4 | Bases de datos | Bases de datos y SQL · Consultas SQL · SQLite y Python · ORM con SQLAlchemy · Proyecto: reportes |

@@ -1,7 +1,7 @@
 # Guía de redacción de estaciones
 
 Esta guía explica cómo se escribe una estación (módulo) del curso **Terminal**. La referencia viva es
-`fuente/modulos/01-primer-programa.html` (y la `02-tipos-de-datos.html`, que añade un laboratorio propio): léelas enteras antes de escribir y copia su nivel de detalle, su tono y su
+`fuente/modulos/01-primer-programa.html` (y la `02-tipos-de-datos.html` y la `03-control-de-flujo.html`, que añaden un laboratorio propio cada una): léelas enteras antes de escribir y copia su nivel de detalle, su tono y su
 estructura.
 
 ## 1. Para quién escribimos
@@ -246,6 +246,8 @@ Python (se ejecuta con Brython en el navegador; se verifica con Python real en l
   <script type="text/plain" class="taller-verificar">return salida[0] === "hola" || "…";</script>
 </div>
 ```
+
+La verificación de un taller de Python solo recibe `salida` y `codigo` y **no puede volver a ejecutar el programa con otros valores**: comprueba un solo caso. Si el ejercicio tiene varios casos, verifica además la estructura (por ejemplo, que cada resultado salga de una rama con sangría) y dilo con honestidad en la página, como hace el proyecto de la Estación 3. Una tabla de casos de prueba que la persona recorre a mano suple lo que la verificación no puede.
 
 No uses `input()` en talleres (no funciona en todos los visores). En Brython, `random` no reproduce las secuencias de
 CPython aunque uses la misma semilla (las pruebas se ejecutan con Python real): no verifiques números aleatorios exactos;

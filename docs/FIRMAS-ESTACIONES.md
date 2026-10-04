@@ -2,7 +2,7 @@
 
 Este documento responde a una petición concreta: que cada estación tenga algo propio, para que no parezca «la misma clase con otro contenido».
 
-**Estado honesto:** solo las estaciones 1 y 2 están construidas. Las otras 55 tienen aquí una *ficha de diseño* (una guía para cuando se escriban), no un contenido terminado. Los datos completos están en `datos/plan-v2/firmas.json`.
+**Estado honesto:** solo las estaciones 1, 2 y 3 están construidas. Las otras 54 tienen aquí una *ficha de diseño* (una guía para cuando se escriban), no un contenido terminado. Los datos completos están en `datos/plan-v2/firmas.json`.
 
 ## Qué es una «firma»
 
@@ -45,7 +45,7 @@ Estas son condiciones de la plataforma que hay que cumplir antes de redactar las
 |---|---|---|---|---|---|
 | 1 | **Tu primer programa** | Arranque en Terminal | crear desde cero | terminal guiada | paneles oscuros codigo a pantalla |
 | 2 | **Tipos de datos** | Aduana de Tipos | reparar codigo roto | laboratorio combinaciones | cinta transportadora aduana |
-| 3 | Decisiones | Duelo de dados | mini juego o simulacion | adversario de pruebas | pizarra a mano trazos |
+| 3 | **Decisiones** | Duelo de dados | mini juego o simulacion | adversario de pruebas | pizarra a mano trazos |
 | 4 | Bucles | Rompecabezas de salida | deducir programa desde su salida | ordenar bloques | cuaderno cuadriculado |
 | 5 | Proyecto: tareas | Ensamblaje de sesiones | integrar piezas existentes | constructor visual | plano azul arquitecto |
 | 6 | Funciones | Banco de Cajas Negras | refactorizar y mejorar | caja negra | laboratorio cientifico diagramas |
@@ -101,7 +101,7 @@ Estas son condiciones de la plataforma que hay que cumplir antes de redactar las
 | 56 | Go | Hora punta | medir y comparar | simulador de red o sistema | mapa de metro animado |
 | 57 | Proyecto final | Defensa del proyecto | crear desde cero | entrevista de codigo | linea de tiempo horizontal |
 
-Las estaciones en negrita (1 y 2) ya están construidas. La línea de cada estación está en `datos/curso.json`.
+Las estaciones en negrita (1, 2 y 3) ya están construidas. La línea de cada estación está en `datos/curso.json`.
 
 ## Cómo se usa al escribir una estación
 
