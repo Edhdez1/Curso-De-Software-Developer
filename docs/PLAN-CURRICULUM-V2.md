@@ -1,6 +1,6 @@
 # Plan del curso (v2) - Desarrollo de Software
 
-> Este es el plan vigente del curso. El sitio se construye desde `datos/curso.json` (fuente de verdad: estaciones, títulos, horas); el detalle de cada estación (temas, ejercicios, proyecto) está en `datos/plan-v2/estaciones-v2.json`. El curso anterior se conserva en `anterior/`.
+> Este es el plan vigente del curso. El sitio se construye desde `datos/curso.json` (fuente de verdad: estaciones, títulos, horas); el detalle de cada estación (temas, ejercicios, proyecto) está en `datos/plan-v2/estaciones-v2.json`. El curso anterior ya no se publica; queda en el historial de Git (commit `56bbcc7`).
 
 **Versión:** 2.0 Restructurado  
 **Proyecto Integrador:** Vault Académico + Portafolio Digital  

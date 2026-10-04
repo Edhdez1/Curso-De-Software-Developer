@@ -9,8 +9,8 @@ Cada estación explica un tema con animaciones paso a paso, ejemplos que puedes 
 corrigen solos, un proyecto, una autoevaluación, un glosario y videos recomendados.
 
 **Estado:** las estaciones en **negrita** ya están escritas (hoy, las 2 primeras); las demás se publican en orden y
-mientras tanto aparecen como «próximamente». El curso anterior (9 líneas, JavaScript primero, 44 estaciones) se
-conserva en [`anterior/`](anterior/index.html) y en el commit `56bbcc7` del historial.
+mientras tanto aparecen como «próximamente». El curso anterior (9 líneas, JavaScript primero, 44 estaciones) ya no
+se publica; quien quiera consultarlo puede verlo en el commit `56bbcc7` del historial de Git.
 
 | Línea | Tema | Estaciones |
 |---|---|---|
@@ -53,7 +53,6 @@ datos/curso.json        Líneas, estaciones, títulos y horas estimadas (fuente 
 datos/plan-v2/          Plan detallado de las 57 estaciones (temas, ejercicios, proyectos)
                         y firma única de cada una (firmas.json; resumen en docs/FIRMAS-ESTACIONES.md)
 videos/                 Un video corto por estación (HyperFrames)
-anterior/               Copia fija del curso anterior, solo lectura
 datos/pictos.json       Pictogramas de cada estación
 datos/tiempo.json       Estimación de tiempo con sus fuentes
 docs/GUIA-REDACCION.md  Cómo se escribe una estación (estilo, estructura y componentes)
