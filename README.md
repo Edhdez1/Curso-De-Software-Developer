@@ -51,6 +51,7 @@ fuente/modulos/         El contenido de cada estación (lo que se edita)
 fuente/portada.html     Plantilla de la portada
 datos/curso.json        Líneas, estaciones, títulos y horas estimadas (fuente de verdad del curso)
 datos/plan-v2/          Plan detallado de las 57 estaciones (temas, ejercicios, proyectos)
+                        y firma única de cada una (firmas.json; resumen en docs/FIRMAS-ESTACIONES.md)
 videos/                 Un video corto por estación (HyperFrames)
 anterior/               Copia fija del curso anterior, solo lectura
 datos/pictos.json       Pictogramas de cada estación

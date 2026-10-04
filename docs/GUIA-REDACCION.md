@@ -387,6 +387,10 @@ node herramientas/probar-talleres.mjs NN   # todo correcto
 Revisa además: HTML bien cerrado, ids únicos en la página, todos los `<` escapados dentro de `<pre>`,
 nada de colores literales, ningún emoji, y que cada término técnico esté explicado antes de usarse.
 
+## 8 bis. Firma única de la estación
+
+Cada estación tiene una firma propia (mecanismo interactivo, modo de proyecto y estilo de video) para que no se sienta como la misma clase con otro contenido. Antes de redactar una estación, lee su ficha en `datos/plan-v2/firmas.json` (resumen legible en `docs/FIRMAS-ESTACIONES.md`) y respétala; si necesitas cambiarla, comprueba que ni la estación anterior ni la siguiente repitan mecanismo, estilo de video o modo de proyecto, y actualiza el catálogo.
+
 ## 8. Qué no hacer
 
 - No repetir en detalle lo que es dueño de otra estación: enlázala (`mustNotReteach`).
