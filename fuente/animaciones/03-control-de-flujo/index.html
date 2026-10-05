@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>Decisiones con if y else en Python</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      /* Estilo "pizarra a mano": una sola toma; la camara recorre una pizarra larga.
+         Paleta de tiza: blanco, amarillo y celeste suaves sobre verde de pizarra. */
+      :root { --pizarra: #1f3d33; --tiza: #f3f1e8; --amarillo: #f2d675; --celeste: #8fd0e8; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; background: #1f3d33; }
+      body { font-family: sans-serif; color: var(--tiza); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #1f3d33; }
+      #pizarra { position: absolute; inset: 0; overflow: hidden; }
+
+      /* La pizarra larga: 5760 px de ancho, se desplaza con translateX */
+      #tablero { position: absolute; left: 0; top: 0; width: 5760px; height: 720px; background-color: #1f3d33;
+        background-image:
+          radial-gradient(circle at 18% 32%, rgba(255, 255, 255, 0.11) 0 1px, transparent 1.7px),
+          radial-gradient(circle at 67% 71%, rgba(255, 255, 255, 0.09) 0 1px, transparent 1.7px),
+          radial-gradient(circle at 41% 12%, rgba(255, 255, 255, 0.08) 0 1.3px, transparent 2.1px),
+          linear-gradient(180deg, #254a3d 0%, #1e3c32 55%, #1a342b 100%);
+        background-size: 61px 53px, 89px 97px, 127px 113px, 100% 100%; }
+      .mancha { position: absolute; border-radius: 50%; box-shadow: 0 0 110px 60px rgba(255, 255, 255, 0.04); }
+      .junta { position: absolute; top: 0; width: 7px; height: 720px;
+        background: linear-gradient(90deg, rgba(0, 0, 0, 0.38), rgba(0, 0, 0, 0.14) 45%, rgba(255, 255, 255, 0.07) 70%, transparent); }
+      #trazos { position: absolute; left: 0; top: 0; overflow: visible; z-index: 1; }
+      .tx, #bola { z-index: 2; }
+
+      /* Trazos de tiza (se dibujan con stroke-dashoffset) */
+      .d { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4.5; stroke-opacity: 0.95; stroke-dasharray: 1 2; stroke-dashoffset: 1; }
+      .tw, .tb { stroke: var(--tiza); } .ty { stroke: var(--amarillo); } .tc { stroke: var(--celeste); }
+      .pip { fill: var(--tiza); } .pun { fill: var(--celeste); }
+      .pt { fill: none; stroke: var(--amarillo); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+
+      /* Textos de tiza */
+      .tx { position: absolute; white-space: pre; font-family: sans-serif; font-weight: 700; color: var(--tiza);
+        text-shadow: 0 0 1px rgba(243, 241, 232, 0.5), 0 0 8px rgba(243, 241, 232, 0.13); }
+      .wr { position: absolute; overflow: hidden; box-sizing: content-box; z-index: 2; }
+      .wr .tx { position: relative; display: block; width: max-content; }
+      .cd { font-family: monospace; font-size: 34px; line-height: 60px; height: 60px; width: max-content; }
+      .k { font-family: monospace; color: var(--celeste); font-weight: 700; }
+      .s, .y { color: var(--amarillo); } .c { color: var(--celeste); }
+      .sub { position: absolute; left: 0; bottom: -8px; height: 16px; overflow: visible; }
+      .doce { position: relative; display: inline-block; }
+      .aro { position: absolute; left: -22px; top: -6px; overflow: visible; }
+
+      /* La bolita de tiza */
+      #bola { position: absolute; left: 0; top: 0; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; opacity: 0;
+        background: #f6e08a; box-shadow: inset -3px -3px 5px rgba(150, 120, 30, 0.35), 0 0 10px rgba(242, 214, 117, 0.55); }
+
+      /* El polvo de tiza viaja con la pizarra (si fuera fijo, cada paneo costaria mucho al comprimir). Vineta, marco y bandeja son fijos */
+      #grano { position: absolute; left: 0; top: 0; width: 5760px; height: 720px; pointer-events: none; z-index: 3;
+        background-image:
+          radial-gradient(circle at 30% 40%, rgba(26, 52, 43, 0.5) 0 1px, transparent 1.5px),
+          radial-gradient(circle at 70% 60%, rgba(26, 52, 43, 0.45) 0 1px, transparent 1.5px),
+          radial-gradient(circle at 50% 20%, rgba(26, 52, 43, 0.4) 0 1.2px, transparent 1.7px);
+        background-size: 13px 11px, 17px 19px, 23px 29px; }
+      #vineta { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 46%, transparent 52%, rgba(6, 18, 14, 0.42) 100%); }
+      #marco { position: absolute; left: 0; top: 0; width: 1280px; height: 12px; background: linear-gradient(180deg, #7a5736, #5a3d24); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45); }
+      #bandeja { position: absolute; left: 0; bottom: 0; width: 1280px; height: 58px; box-shadow: 0 -6px 14px rgba(0, 0, 0, 0.4);
+        background: linear-gradient(180deg, #92693f 0, #7d5a37 15px, #4a301c 16px, #5d3f26 18px, #4d3420 100%); }
+      .tiza { position: absolute; top: 3px; height: 11px; border-radius: 5px; }
+      #tz1 { left: 150px; width: 62px; background: linear-gradient(180deg, #ffffff, #d9d6c8); }
+      #tz2 { left: 236px; width: 52px; background: linear-gradient(180deg, #f8e28f, #d4b650); }
+      #tz3 { left: 312px; width: 46px; background: linear-gradient(180deg, #b6e4f4, #7fbbd2); }
+      #borrador { position: absolute; left: 1010px; top: -12px; width: 124px; height: 28px; border-radius: 4px; background: linear-gradient(180deg, #2d2f2c 0 58%, #b79c6b 58%); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="control-de-flujo" data-start="0" data-duration="48" data-width="1280" data-height="720">
+
+      <section id="pizarra" class="clip" data-start="0" data-duration="48" data-track-index="0">
+        <div id="tablero" data-layout-allow-overflow>
+          <div class="mancha" style="left:120px;top:90px;width:620px;height:170px;transform:rotate(-6deg)"></div>
+          <div class="mancha" style="left:760px;top:420px;width:700px;height:200px;transform:rotate(4deg)"></div>
+          <div class="mancha" style="left:1500px;top:40px;width:900px;height:200px;transform:rotate(-3deg)"></div>
+          <div class="mancha" style="left:2100px;top:430px;width:800px;height:230px;transform:rotate(5deg)"></div>
+          <div class="mancha" style="left:2950px;top:100px;width:760px;height:180px;transform:rotate(-5deg)"></div>
+          <div class="mancha" style="left:3600px;top:380px;width:900px;height:240px;transform:rotate(3deg)"></div>
+          <div class="mancha" style="left:4300px;top:60px;width:900px;height:200px;transform:rotate(-4deg)"></div>
+          <div class="mancha" style="left:4800px;top:420px;width:800px;height:220px;transform:rotate(6deg)"></div>
+          <div class="junta" style="left:1330px"></div>
+          <div class="junta" style="left:2790px"></div>
+          <div class="junta" style="left:4290px"></div>
+
+      <svg id="trazos" width="5760" height="720" viewBox="0 0 5760 720" aria-hidden="true">
+        <path id="rombo" class="d tb" pathLength="1" d="M 399.7 239.7 Q 494.2 300.3 589.3 360.1 Q 494.1 419.7 398.9 479.2 Q 306.1 417.3 210.2 360.3 Q 305.3 300.5 399.7 239.7 L 408.2 245.1" style="stroke-width:5" />
+        <path id="a-ent" class="d ty" pathLength="1" d="M 400 176 Q 397 206 400 236" />
+        <path id="a-ent-h" class="d ty" pathLength="1" d="M 392.2 223.2 L 400 236 L 405.1 221.9" />
+        <path id="a-si" class="d ty" pathLength="1" d="M 592 360 Q 692 364 792 360" />
+        <path id="a-si-h" class="d ty" pathLength="1" d="M 778.8 367.1 L 792 360 L 778.2 354" />
+        <path id="a-no" class="d tc" pathLength="1" d="M 400 482 Q 397 509 400 536" />
+        <path id="a-no-h" class="d tc" pathLength="1" d="M 392 523.3 L 400 536 L 405 521.9" />
+        <path id="b-si" class="d ty" pathLength="1" d="M 815.5 319.7 Q 949.5 320.6 1083.5 320.5 Q 1100 320 1099.8 336.7 Q 1098.4 360.1 1099.8 383.5 Q 1100 400 1083.8 399.1 Q 949.9 398.2 816.1 399.1 Q 800 400 800.2 383.8 Q 800.5 359.3 798.9 335 Q 800 320 825 320.9" />
+        <path id="b-no" class="d tc" pathLength="1" d="M 265.5 539.6 Q 399.9 539 534.2 540 Q 550 540 549.9 556.6 Q 550.1 580.3 548.9 603.9 Q 550 620 535 619.7 Q 400 619.1 265 619.9 Q 250 620 249.6 604.5 Q 249.8 580.8 251 557.1 Q 250 540 275 539.9" />
+        <path id="sub-si" class="d ty" pathLength="1" d="M 836 389.9 C 843.7 390.6 866.7 394.6 882 394.6 C 897.3 394.5 912.7 389.6 928 389.6 C 943.3 389.6 958.7 394.4 974 394.4 C 989.3 394.4 1004.7 389.7 1020 389.7 C 1035.3 389.7 1058.3 393.5 1066 394.3" style="stroke-width:4" />
+        <g id="ptr"><path class="pt" d="M -0.2 -0.8 Q 17.9 -0.9 36 -0.3" /><path class="pt" d="M 22 -12 L 36 0 L 22 12" /></g>
+        <path id="lg1-o" class="d ty" pathLength="1" d="M 2108.3 149.9 C 2108.9 149.4 2110.6 147.8 2111.9 147 C 2113.1 146.3 2114.5 145.7 2115.8 145.4 C 2117.2 145.1 2118.6 145.3 2119.9 145.4 C 2121.3 145.4 2122.7 145.3 2124 145.7 C 2125.3 146.1 2126.4 147.1 2127.6 147.9 C 2128.8 148.7 2130 149.5 2131 150.5 C 2132.1 151.5 2133.2 152.6 2134 154 C 2134.8 155.3 2135.5 156.8 2136.1 158.4 C 2136.7 159.9 2137.1 161.6 2137.4 163.3 C 2137.7 165 2138 166.8 2137.9 168.6 C 2137.9 170.4 2137.5 172.2 2137 173.9 C 2136.5 175.5 2135.8 177.2 2135 178.7 C 2134.2 180.1 2133.1 181.5 2132 182.6 C 2130.9 183.7 2129.6 184.6 2128.3 185.4 C 2127 186.1 2125.7 186.7 2124.3 187.1 C 2122.9 187.5 2121.5 187.7 2120.1 187.7 C 2118.7 187.6 2117.3 187.1 2116 186.6 C 2114.6 186.1 2113.4 185.4 2112.1 184.7 C 2110.9 183.9 2109.6 183.2 2108.5 182.2 C 2107.4 181.1 2106.6 179.7 2105.7 178.3 C 2104.8 177 2103.8 175.6 2103.2 174 C 2102.6 172.4 2102.3 170.5 2102.1 168.8 C 2101.9 167 2101.8 165.2 2101.9 163.4 C 2101.9 161.6 2102.1 159.7 2102.5 157.9 C 2103 156.2 2103.6 154.3 2104.4 152.8 C 2105.2 151.3 2106.3 149.9 2107.5 148.7 C 2108.6 147.5 2109.9 146.5 2111.3 145.7 C 2112.6 144.9 2114.1 144.4 2115.6 144.1 C 2117 143.8 2119.2 143.9 2119.9 143.9" style="stroke-width:3.5" />
+        <path id="lg2-o" class="d tc" pathLength="1" d="M 2108.8 220.5 C 2109.4 220.1 2111.1 218.7 2112.3 218 C 2113.5 217.4 2114.7 216.8 2116 216.4 C 2117.3 216 2118.6 215.9 2119.9 215.8 C 2121.2 215.7 2122.6 215.7 2123.9 216 C 2125.2 216.2 2126.6 216.7 2127.8 217.4 C 2129.1 218 2130.4 218.8 2131.5 219.9 C 2132.6 220.9 2133.6 222.2 2134.5 223.5 C 2135.3 224.9 2135.9 226.5 2136.5 228.2 C 2137.1 229.8 2137.8 231.5 2138.1 233.2 C 2138.3 234.9 2138.1 236.8 2137.9 238.6 C 2137.7 240.4 2137.4 242.2 2136.8 243.8 C 2136.3 245.4 2135.5 247 2134.6 248.3 C 2133.7 249.7 2132.7 251 2131.6 252 C 2130.5 253.1 2129.3 254 2128 254.7 C 2126.8 255.4 2125.5 255.9 2124.1 256.3 C 2122.8 256.8 2121.4 257.3 2120.1 257.4 C 2118.7 257.4 2117.3 257.1 2115.9 256.8 C 2114.6 256.4 2113.1 256.2 2111.8 255.4 C 2110.5 254.7 2109.4 253.6 2108.3 252.5 C 2107.1 251.4 2105.8 250.4 2104.9 249 C 2104 247.6 2103.3 245.9 2102.7 244.2 C 2102.2 242.5 2101.7 240.7 2101.6 238.9 C 2101.4 237.1 2101.5 235.2 2101.7 233.4 C 2101.9 231.6 2102.3 229.7 2102.9 228.1 C 2103.4 226.4 2104.3 224.9 2105.1 223.4 C 2106 222 2106.9 220.5 2108 219.4 C 2109.1 218.2 2110.4 217.4 2111.7 216.6 C 2113 215.8 2114.3 215 2115.7 214.6 C 2117 214.2 2119.2 214.3 2119.9 214.3" style="stroke-width:3.5" />
+        <path id="co1" class="d ty" pathLength="1" d="M 1731 189.5 C 1731.4 188.9 1732.6 187.1 1733.4 186.2 C 1734.2 185.3 1735 184.6 1735.9 184.2 C 1736.7 183.8 1737.6 183.9 1738.5 183.9 C 1739.3 184 1740.2 184 1741 184.4 C 1741.9 184.8 1742.7 185.4 1743.5 186.2 C 1744.3 187.1 1745.1 188.2 1745.8 189.5 C 1746.5 190.9 1747.1 192.6 1747.7 194.3 C 1748.2 196 1748.8 197.9 1749.2 199.9 C 1749.6 201.9 1749.8 204.2 1749.9 206.5 C 1750.1 208.7 1750.2 211.1 1750.1 213.3 C 1750 215.6 1749.7 217.9 1749.4 220 C 1749 222.1 1748.6 224.2 1748.1 226 C 1747.5 227.9 1746.8 229.5 1746.1 231 C 1745.4 232.4 1744.6 233.7 1743.8 234.6 C 1743 235.6 1742.1 236.2 1741.2 236.7 C 1740.3 237.1 1739.4 237.3 1738.5 237.2 C 1737.7 237.2 1736.8 236.9 1735.9 236.4 C 1735 235.9 1734.2 235.1 1733.4 234.2 C 1732.6 233.2 1731.8 232.2 1731 230.9 C 1730.3 229.6 1729.5 228.2 1728.9 226.4 C 1728.3 224.6 1728 222.4 1727.6 220.3 C 1727.3 218.1 1726.9 215.9 1726.7 213.6 C 1726.6 211.3 1726.6 208.9 1726.6 206.6 C 1726.7 204.3 1727 201.9 1727.3 199.7 C 1727.6 197.5 1728.1 195.4 1728.6 193.4 C 1729.2 191.5 1729.8 189.5 1730.5 188 C 1731.2 186.6 1732.1 185.5 1733 184.6 C 1733.9 183.6 1734.8 183 1735.7 182.5 C 1736.6 182 1738 181.8 1738.5 181.7" style="stroke-width:4" />
+        <path id="co2" class="d ty" pathLength="1" d="M 1773.5 303.6 C 1773.9 304.1 1775.2 305.1 1775.9 306.3 C 1776.7 307.4 1777.3 309.1 1777.9 310.6 C 1778.5 312.1 1779.2 313.7 1779.6 315.5 C 1780.1 317.3 1780.4 319.3 1780.7 321.3 C 1781 323.3 1781.3 325.4 1781.3 327.6 C 1781.4 329.7 1781.3 331.8 1781.2 334 C 1781.1 336.1 1780.9 338.2 1780.7 340.3 C 1780.4 342.4 1780.1 344.5 1779.6 346.4 C 1779.1 348.3 1778.5 350.1 1777.9 351.6 C 1777.2 353.2 1776.4 354.5 1775.6 355.5 C 1774.8 356.5 1773.8 357.3 1772.9 357.8 C 1772 358.4 1771.1 359 1770.2 358.9 C 1769.2 358.8 1768.3 358 1767.4 357.3 C 1766.5 356.6 1765.6 355.9 1764.8 354.7 C 1764.1 353.5 1763.4 351.8 1762.8 350.2 C 1762.2 348.6 1761.6 346.8 1761.1 345 C 1760.6 343.1 1760.1 341.1 1759.9 339.1 C 1759.6 337 1759.5 334.7 1759.4 332.5 C 1759.4 330.3 1759.3 328.1 1759.4 325.9 C 1759.5 323.7 1759.5 321.3 1759.8 319.2 C 1760.1 317.1 1760.6 315 1761.1 313.1 C 1761.7 311.2 1762.2 309.4 1762.9 307.7 C 1763.6 306.1 1764.4 304.5 1765.2 303.4 C 1766 302.3 1767 301.7 1768 301.1 C 1768.9 300.6 1769.9 300.1 1770.9 300.2 C 1771.8 300.2 1772.8 300.8 1773.7 301.5 C 1774.6 302.3 1775.5 303.4 1776.3 304.6 C 1777.1 305.9 1777.9 307.3 1778.6 308.9 C 1779.2 310.5 1780 313.5 1780.3 314.5" style="stroke-width:4" />
+        <path id="co3" class="d ty" pathLength="1" d="M 1614.8 442.2 C 1614.9 443.2 1615.2 446.3 1615.3 448.4 C 1615.5 450.6 1615.7 452.9 1615.6 455 C 1615.5 457.2 1615.2 459.4 1614.8 461.5 C 1614.5 463.6 1614 465.6 1613.5 467.4 C 1613 469.2 1612.4 471.1 1611.7 472.5 C 1610.9 473.9 1610.1 475 1609.2 475.8 C 1608.4 476.7 1607.4 477.2 1606.5 477.5 C 1605.6 477.8 1604.7 477.7 1603.8 477.4 C 1602.9 477.2 1602 476.8 1601.2 476.1 C 1600.3 475.4 1599.5 474.4 1598.8 473.2 C 1598 472 1597.3 470.6 1596.7 469.1 C 1596.1 467.5 1595.5 465.8 1595 464 C 1594.5 462.2 1594.1 460.2 1593.8 458.1 C 1593.5 456.1 1593.3 453.8 1593.2 451.6 C 1593.1 449.4 1593.1 447.1 1593.2 444.8 C 1593.3 442.6 1593.5 440.3 1593.8 438.1 C 1594.1 436 1594.6 433.9 1595.2 432 C 1595.8 430.2 1596.5 428.5 1597.2 427.1 C 1598 425.8 1598.9 424.7 1599.7 423.8 C 1600.6 422.8 1601.5 422.1 1602.4 421.7 C 1603.3 421.3 1604.3 421.3 1605.2 421.5 C 1606.1 421.8 1607.1 422.5 1607.9 423.2 C 1608.8 424 1609.6 424.9 1610.4 426.1 C 1611.2 427.2 1612 428.6 1612.6 430.2 C 1613.3 431.8 1613.8 433.7 1614.2 435.6 C 1614.7 437.5 1615.1 439.6 1615.5 441.7 C 1615.8 443.8 1616 446 1616.1 448.3 C 1616.3 450.6 1616.4 453.1 1616.3 455.4 C 1616.2 457.7 1615.7 461.1 1615.6 462.3" style="stroke-width:4" />
+        <path id="es1" class="d tc" pathLength="1" d="M 1542.5 257 C 1543.3 256.2 1545.5 253.7 1547.3 252.2 C 1549.1 250.8 1551.1 249.4 1553.3 248.3 C 1555.4 247.2 1557.9 246.4 1560.3 245.7 C 1562.7 244.9 1565.3 244.1 1567.9 243.8 C 1570.5 243.5 1573.3 243.7 1576 244 C 1578.6 244.3 1581.4 244.7 1583.9 245.5 C 1586.5 246.2 1589.2 247.1 1591.4 248.4 C 1593.7 249.6 1595.8 251.2 1597.5 252.9 C 1599.2 254.7 1600.5 256.7 1601.6 258.7 C 1602.7 260.7 1603.8 262.9 1604.2 265 C 1604.7 267.1 1604.4 269.4 1604.1 271.6 C 1603.8 273.7 1603.3 275.9 1602.4 277.9 C 1601.4 279.9 1599.8 281.7 1598.3 283.4 C 1596.8 285.2 1595.3 286.9 1593.4 288.4 C 1591.6 289.9 1589.5 291.3 1587.3 292.5 C 1585.1 293.7 1582.7 294.8 1580.2 295.5 C 1577.6 296.2 1574.8 296.4 1572.1 296.6 C 1569.4 296.8 1566.6 296.9 1563.9 296.7 C 1561.1 296.6 1558.1 296.4 1555.4 295.6 C 1552.8 294.9 1550.1 293.8 1547.8 292.4 C 1545.5 291.1 1543.5 289.3 1541.7 287.5 C 1539.9 285.8 1538.3 283.8 1537.2 281.7 C 1536.1 279.6 1535.4 277.3 1535.1 275.1 C 1534.7 272.9 1534.6 270.6 1534.9 268.4 C 1535.2 266.2 1535.7 263.9 1536.7 261.9 C 1537.7 259.8 1539.3 258 1540.8 256.2 C 1542.3 254.4 1544 252.6 1545.9 251.1 C 1547.7 249.5 1549.8 248 1552.1 246.8 C 1554.4 245.7 1558.4 244.5 1559.7 244.1" style="stroke-width:4" />
+        <circle id="pt10" class="pun" cx="1543.5" cy="280" r="0" />
+        <circle id="pt11" class="pun" cx="1561.2" cy="280" r="0" />
+        <circle id="pt12" class="pun" cx="1578.9" cy="280" r="0" />
+        <circle id="pt13" class="pun" cx="1596.6" cy="280" r="0" />
+        <path id="es2" class="d tc" pathLength="1" d="M 1559 364.6 C 1560.3 364.3 1564.3 363.1 1567 362.9 C 1569.7 362.7 1572.6 362.9 1575.3 363.3 C 1578 363.6 1580.8 364.1 1583.2 365.1 C 1585.6 366 1587.7 367.6 1589.7 369 C 1591.7 370.5 1593.6 371.9 1595.2 373.6 C 1596.8 375.2 1598.2 377 1599.3 378.9 C 1600.3 380.7 1600.9 382.8 1601.4 384.8 C 1602 386.8 1602.3 388.8 1602.4 390.8 C 1602.5 392.9 1602.5 395.1 1601.9 397.1 C 1601.4 399.1 1600.1 401 1598.9 403 C 1597.8 404.9 1596.7 407 1595 408.7 C 1593.3 410.3 1590.9 411.6 1588.6 412.8 C 1586.3 414 1583.9 415.2 1581.3 416 C 1578.7 416.9 1575.9 417.7 1573.1 417.9 C 1570.3 418.2 1567.4 418 1564.6 417.6 C 1561.8 417.2 1558.9 416.7 1556.4 415.7 C 1553.8 414.8 1551.4 413.4 1549.4 412 C 1547.3 410.5 1545.6 408.7 1544 407 C 1542.3 405.3 1540.6 403.5 1539.4 401.6 C 1538.3 399.7 1537.5 397.6 1537 395.5 C 1536.4 393.4 1536 391.2 1536 389.1 C 1536.1 387 1536.6 384.8 1537.3 382.7 C 1537.9 380.6 1538.7 378.5 1539.9 376.5 C 1541 374.5 1542.5 372.5 1544.2 370.8 C 1546 369 1548.1 367.3 1550.4 366 C 1552.8 364.6 1555.4 363.4 1558.1 362.7 C 1560.9 361.9 1563.9 361.6 1566.8 361.4 C 1569.7 361.2 1572.8 361 1575.6 361.4 C 1578.5 361.8 1582.5 363.4 1583.9 363.8" style="stroke-width:4" />
+        <circle id="pt20" class="pun" cx="1543.5" cy="400" r="0" />
+        <circle id="pt21" class="pun" cx="1561.2" cy="400" r="0" />
+        <circle id="pt22" class="pun" cx="1578.9" cy="400" r="0" />
+        <circle id="pt23" class="pun" cx="1596.6" cy="400" r="0" />
+        <path id="es3" class="d tc" pathLength="1" d="M 1582.3 485 C 1583.5 485.5 1587.3 486.8 1589.6 488 C 1591.9 489.2 1594.4 490.4 1596.1 492.1 C 1597.8 493.7 1598.9 495.9 1600 497.9 C 1601 499.8 1602 501.8 1602.5 503.9 C 1603.1 506 1603.6 508.1 1603.5 510.2 C 1603.3 512.3 1602.4 514.4 1601.7 516.4 C 1600.9 518.4 1600.2 520.4 1598.9 522.2 C 1597.6 524 1595.8 525.5 1594 527.1 C 1592.3 528.6 1590.5 530.1 1588.4 531.4 C 1586.3 532.7 1584.1 534 1581.7 534.9 C 1579.3 535.8 1576.5 536.5 1573.8 536.8 C 1571.2 537.2 1568.3 537.2 1565.6 537 C 1562.8 536.8 1560 536.3 1557.4 535.6 C 1554.8 534.8 1552.1 533.9 1549.7 532.7 C 1547.4 531.5 1545 530.1 1543.2 528.4 C 1541.4 526.7 1540.1 524.6 1538.9 522.6 C 1537.7 520.6 1536.7 518.5 1536.2 516.3 C 1535.7 514.2 1535.7 511.9 1535.9 509.8 C 1536.1 507.6 1536.5 505.5 1537.3 503.4 C 1538.1 501.4 1539.2 499.4 1540.5 497.5 C 1541.8 495.7 1543.3 493.9 1545.1 492.3 C 1546.8 490.7 1548.9 489.3 1551 487.9 C 1553.2 486.6 1555.5 485.3 1558 484.4 C 1560.5 483.4 1563.3 482.9 1566.1 482.5 C 1568.8 482.1 1571.8 481.6 1574.7 481.7 C 1577.5 481.8 1580.5 482.4 1583.2 483.3 C 1585.9 484.1 1588.4 485.4 1590.8 486.7 C 1593.2 487.9 1595.7 489.3 1597.7 491 C 1599.6 492.7 1601.8 495.8 1602.6 496.8" style="stroke-width:4" />
+        <circle id="pt30" class="pun" cx="1543.5" cy="520" r="0" />
+        <circle id="pt31" class="pun" cx="1561.2" cy="520" r="0" />
+        <circle id="pt32" class="pun" cx="1578.9" cy="520" r="0" />
+        <circle id="pt33" class="pun" cx="1596.6" cy="520" r="0" />
+        <path id="d0a-r" class="d tw" pathLength="1" d="M 2109.6 178.7 Q 2130.1 178.6 2150.5 179.9 Q 2160 179 2160.9 189.4 Q 2160 209.7 2159.8 230 Q 2160 239 2151.1 238.3 Q 2130.2 240.4 2109.2 239.9 Q 2100 239 2099.7 228.5 Q 2099.8 208.9 2098.9 189.3 Q 2100 179 2118.6 178.2" style="stroke-width:4.5" />
+        <circle id="d0a-p0" class="pip" cx="2116.2" cy="195.2" r="0" data-r="5.1" />
+        <circle id="d0a-p1" class="pip" cx="2130" cy="209" r="0" data-r="5.1" />
+        <circle id="d0a-p2" class="pip" cx="2143.8" cy="222.8" r="0" data-r="5.1" />
+        <path id="d0b-r" class="d tw" pathLength="1" d="M 2218.6 179 Q 2239.7 179.5 2260.8 178.5 Q 2270 179 2270.1 188 Q 2270.8 208.3 2269.2 228.6 Q 2270 239 2261.5 239.4 Q 2240.5 238.6 2219.6 239.1 Q 2210 239 2210.7 230.2 Q 2209.7 208.9 2210.5 187.6 Q 2210 179 2228.6 179.7" style="stroke-width:4.5" />
+        <circle id="d0b-p0" class="pip" cx="2226.2" cy="195.2" r="0" data-r="5.1" />
+        <circle id="d0b-p1" class="pip" cx="2253.8" cy="195.2" r="0" data-r="5.1" />
+        <circle id="d0b-p2" class="pip" cx="2226.2" cy="222.8" r="0" data-r="5.1" />
+        <circle id="d0b-p3" class="pip" cx="2253.8" cy="222.8" r="0" data-r="5.1" />
+        <path id="hl0" class="d ty" pathLength="1" d="M 1606.9 243.8 Q 1813.4 242.7 2020 244.8 Q 2029 244 2029.8 253.3 Q 2028.8 269.3 2028.3 285.3 Q 2029 296 2019.9 296.1 Q 1812.8 298 1605.6 296.2 Q 1596 296 1595.1 285.9 Q 1595 269.5 1595.6 253.1 Q 1596 244 1615 244.8" style="stroke-width:4" />
+        <path id="cn0" class="d ty" pathLength="1" d="M 2039 270 Q 2061.5 273 2084 270" style="stroke-width:3.5" />
+        <path id="cn0h" class="d ty" pathLength="1" d="M 2072.3 277.7 L 2084 270 L 2070.7 265.6" style="stroke-width:3.5" />
+        <path id="d1a-r" class="d tw" pathLength="1" d="M 2110.6 298.6 Q 2130 299 2149.5 298.1 Q 2160 299 2159.3 308.5 Q 2159.7 328.5 2160.6 348.4 Q 2160 359 2150.1 359.8 Q 2130.1 358.5 2110 358.4 Q 2100 359 2100.9 349.8 Q 2100.7 329.4 2101.1 309 Q 2100 299 2118.6 298.1" style="stroke-width:4.5" />
+        <circle id="d1a-p0" class="pip" cx="2130" cy="329" r="0" data-r="5.1" />
+        <path id="d1b-r" class="d tw" pathLength="1" d="M 2218.7 298 Q 2239.4 297.8 2260 299.4 Q 2270 299 2270.3 308.7 Q 2271.7 328.6 2270.6 348.5 Q 2270 359 2260.5 360.1 Q 2239.5 359 2218.6 358.1 Q 2210 359 2209.6 348.6 Q 2210.3 328.5 2209.8 308.3 Q 2210 299 2228.6 299.4" style="stroke-width:4.5" />
+        <circle id="d1b-p0" class="pip" cx="2240" cy="329" r="0" data-r="5.1" />
+        <path id="hl1" class="d ty" pathLength="1" d="M 1605.5 364.4 Q 1787.5 362.1 1969.5 364 Q 1979 364 1978.5 373.8 Q 1979.1 389.8 1978.8 405.7 Q 1979 416 1969.9 415.8 Q 1787.4 414.7 1605 417 Q 1596 416 1595 406.6 Q 1596.4 390.6 1595.7 374.5 Q 1596 364 1615 363.9" style="stroke-width:4" />
+        <path id="cn1" class="d ty" pathLength="1" d="M 1989 390 Q 2036.5 393 2084 390" style="stroke-width:3.5" />
+        <path id="cn1h" class="d ty" pathLength="1" d="M 2071.8 396.9 L 2084 390 L 2071 384.7" style="stroke-width:3.5" />
+        <path id="d2a-r" class="d tw" pathLength="1" d="M 2108.6 418.5 Q 2129 418 2149.4 417.9 Q 2160 419 2159.2 429.4 Q 2160.2 449.4 2159.3 469.4 Q 2160 479 2149.3 479.8 Q 2129.2 480 2109.1 478.4 Q 2100 479 2099.3 470.4 Q 2099 450 2100.2 429.6 Q 2100 419 2118.6 419.7" style="stroke-width:4.5" />
+        <circle id="d2a-p0" class="pip" cx="2116.2" cy="435.2" r="0" data-r="5.1" />
+        <circle id="d2a-p1" class="pip" cx="2143.8" cy="435.2" r="0" data-r="5.1" />
+        <circle id="d2a-p2" class="pip" cx="2116.2" cy="462.8" r="0" data-r="5.1" />
+        <circle id="d2a-p3" class="pip" cx="2143.8" cy="462.8" r="0" data-r="5.1" />
+        <path id="d2b-r" class="d tw" pathLength="1" d="M 2220.7 419.7 Q 2240.5 417.8 2260.5 418.5 Q 2270 419 2269.1 428.5 Q 2268.9 448.5 2269.7 468.5 Q 2270 479 2260.7 478.9 Q 2239.8 479.4 2218.9 479.6 Q 2210 479 2209.6 469.4 Q 2210.6 448.6 2209.8 427.8 Q 2210 419 2228.6 418.8" style="stroke-width:4.5" />
+        <circle id="d2b-p0" class="pip" cx="2226.2" cy="435.2" r="0" data-r="5.1" />
+        <circle id="d2b-p1" class="pip" cx="2253.8" cy="435.2" r="0" data-r="5.1" />
+        <circle id="d2b-p2" class="pip" cx="2240" cy="449" r="0" data-r="5.1" />
+        <circle id="d2b-p3" class="pip" cx="2226.2" cy="462.8" r="0" data-r="5.1" />
+        <circle id="d2b-p4" class="pip" cx="2253.8" cy="462.8" r="0" data-r="5.1" />
+        <path id="hl2" class="d ty" pathLength="1" d="M 1605.6 483.5 Q 1745.1 484.5 1884.6 484 Q 1894 484 1894.9 494 Q 1895.6 510.1 1894.8 526.2 Q 1894 536 1883.2 535.4 Q 1744.2 537.1 1605.1 536.6 Q 1596 536 1596.8 525.5 Q 1597.7 509.5 1596.8 493.5 Q 1596 484 1615 483.9" style="stroke-width:4" />
+        <path id="cn2" class="d ty" pathLength="1" d="M 1904 510 Q 1994 513 2084 510" style="stroke-width:3.5" />
+        <path id="cn2h" class="d ty" pathLength="1" d="M 2071.6 516.5 L 2084 510 L 2071.2 504.3" style="stroke-width:3.5" />
+        <g id="ptr4"><path class="pt" d="M -0.4 -0.5 Q 18 -0.5 36.4 -0.5" /><path class="pt" d="M 22 -12 L 36 0 L 22 12" /></g>
+        <path id="an4" class="d tc" pathLength="1" d="M 3582 355 Q 3491.5 359 3401 355" style="stroke-width:3.5" />
+        <path id="an4h" class="d tc" pathLength="1" d="M 3413.9 349.5 L 3401 355 L 3413.3 361.6" style="stroke-width:3.5" />
+        <path id="hl4" class="d ty" pathLength="1" d="M 3106.7 269.3 Q 3270.9 270.1 3435 269.1 Q 3445 269 3443.9 278.9 Q 3446 294.9 3445.6 311 Q 3445 321 3434.9 321.5 Q 3270 319.6 3105 321.8 Q 3096 321 3094.9 312.1 Q 3096.2 295.5 3095.9 278.9 Q 3096 269 3115 268.5" style="stroke-width:4" />
+        <path id="cn4" class="d ty" pathLength="1" d="M 3455 295 Q 3519.5 298 3584 295" style="stroke-width:3.5" />
+        <path id="cn4h" class="d ty" pathLength="1" d="M 3571.7 301.7 L 3584 295 L 3571.1 289.5" style="stroke-width:3.5" />
+        <path id="e0a-r" class="d tw" pathLength="1" d="M 5270.9 257.1 Q 5314.7 257.1 5358.5 255.3 Q 5380 256 5380.3 275.9 Q 5378.2 321.1 5379.8 366.2 Q 5380 386 5359.2 387.1 Q 5315.3 385.8 5271.3 385.4 Q 5250 386 5251.1 364.8 Q 5252.4 321.1 5250 277.5 Q 5250 256 5279.8 254.9" style="stroke-width:6" />
+        <circle id="e0a-p0" class="pip" cx="5285.1" cy="291.1" r="0" data-r="11.1" />
+        <circle id="e0a-p1" class="pip" cx="5344.9" cy="291.1" r="0" data-r="11.1" />
+        <circle id="e0a-p2" class="pip" cx="5285.1" cy="321" r="0" data-r="11.1" />
+        <circle id="e0a-p3" class="pip" cx="5344.9" cy="321" r="0" data-r="11.1" />
+        <circle id="e0a-p4" class="pip" cx="5285.1" cy="350.9" r="0" data-r="11.1" />
+        <circle id="e0a-p5" class="pip" cx="5344.9" cy="350.9" r="0" data-r="11.1" />
+        <path id="e0b-r" class="d tw" pathLength="1" d="M 5479.8 255.8 Q 5524.7 258.5 5569.5 256.8 Q 5590 256 5590 277.9 Q 5588.8 321.5 5589.9 365.1 Q 5590 386 5570.3 387 Q 5525.2 388.2 5480.1 386.6 Q 5460 386 5459.2 365.8 Q 5460.4 320.8 5459.3 275.8 Q 5460 256 5489.8 256.3" style="stroke-width:6" />
+        <circle id="e0b-p0" class="pip" cx="5495.1" cy="291.1" r="0" data-r="11.1" />
+        <circle id="e0b-p1" class="pip" cx="5554.9" cy="291.1" r="0" data-r="11.1" />
+        <circle id="e0b-p2" class="pip" cx="5495.1" cy="321" r="0" data-r="11.1" />
+        <circle id="e0b-p3" class="pip" cx="5554.9" cy="321" r="0" data-r="11.1" />
+        <circle id="e0b-p4" class="pip" cx="5495.1" cy="350.9" r="0" data-r="11.1" />
+        <circle id="e0b-p5" class="pip" cx="5554.9" cy="350.9" r="0" data-r="11.1" />
+      </svg>
+
+        <div id="titulo" class="wr" data-w="770" data-layout-allow-overflow style="left:260px;top:36px;padding:10px 0 18px 0px;width:0px;"><p class="tx " data-layout-allow-occlusion style="font-size:78px;line-height:100px;">Decisiones: <span class="k" data-layout-allow-occlusion>if</span> y <span class="k" data-layout-allow-occlusion>else</span><svg class="sub" viewBox="0 0 760 16" style="width:760px"><path id="sub1" class="d ty" pathLength="1" style="stroke-width:5" d="M 4 4.3 C 24.9 5.5 87.6 11.9 129.3 11.8 C 171.1 11.8 212.9 4.2 254.7 4.1 C 296.4 3.9 338.2 10.9 380 11 C 421.8 11.2 463.6 4.8 505.3 4.9 C 547.1 4.9 588.9 11.2 630.7 11.1 C 672.4 11 735.1 5.4 756 4.3" /></svg></p></div>
+        <div id="q-dados" class="wr" data-w="266" data-layout-allow-overflow style="left:272px;top:320px;padding:10px 0 18px 0px;width:0px;"><p class="tx " data-layout-allow-occlusion style="font-size:32px;line-height:60px;">¿Dados iguales?</p></div>
+        <div id="t-si" class="wr" data-w="42" data-layout-allow-overflow style="left:650px;top:296px;padding:10px 0 18px 0px;width:0px;"><p class="tx y" data-layout-allow-occlusion style="font-size:38px;line-height:44px;">sí</p></div>
+        <div id="t-no" class="wr" data-w="57" data-layout-allow-overflow style="left:426px;top:482px;padding:10px 0 18px 0px;width:0px;"><p class="tx c" data-layout-allow-occlusion style="font-size:38px;line-height:44px;">no</p></div>
+        <div id="t-bsi" class="wr" data-w="232" data-layout-allow-overflow style="left:839px;top:310px;padding:10px 0 18px 0px;width:0px;"><p class="tx " data-layout-allow-occlusion style="font-size:34px;line-height:80px;">Repites turno</p></div>
+        <div id="t-bno" class="wr" data-w="225" data-layout-allow-overflow style="left:292.5px;top:530px;padding:10px 0 18px 0px;width:0px;"><p class="tx " data-layout-allow-occlusion style="font-size:34px;line-height:80px;">Pasa el turno</p></div>
+        <div id="bola"></div>
+        <div id="l1" class="wr" data-w="421" data-layout-allow-overflow style="left:1530px;top:110px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style="">suma = dado_a + dado_b</p></div>
+        <div id="l2" class="wr" data-w="224" data-layout-allow-overflow style="left:1530px;top:170px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style=""><span class="k" data-layout-allow-occlusion>if</span> suma == 7<span class="dp" data-layout-allow-occlusion>:</span></p></div>
+        <div id="l3" class="wr" data-w="411" data-layout-allow-overflow style="left:1612px;top:230px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style="">print(<span class="s" data-layout-allow-occlusion>"Gana el jugador"</span>)</p></div>
+        <div id="l4" class="wr" data-w="256" data-layout-allow-overflow style="left:1530px;top:290px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style=""><span class="k" data-layout-allow-occlusion>elif</span> suma == 2<span class="dp" data-layout-allow-occlusion>:</span></p></div>
+        <div id="l5" class="wr" data-w="361" data-layout-allow-overflow style="left:1612px;top:350px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style="">print(<span class="s" data-layout-allow-occlusion>"Gana la casa"</span>)</p></div>
+        <div id="l6" class="wr" data-w="90" data-layout-allow-overflow style="left:1530px;top:410px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style=""><span class="k" data-layout-allow-occlusion>else</span><span class="dp" data-layout-allow-occlusion>:</span></p></div>
+        <div id="l7" class="wr" data-w="276" data-layout-allow-overflow style="left:1612px;top:470px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style="">print(<span class="s" data-layout-allow-occlusion>"Empate"</span>)</p></div>
+        <p id="tv2" class="tx cd y" data-layout-allow-occlusion style="left:1820px;top:180px;font-size:30px;opacity:0;">True</p>
+        <p id="fv2" class="tx cd c" data-layout-allow-occlusion style="left:1820px;top:180px;font-size:30px;opacity:0;">False</p>
+        <p id="tv4" class="tx cd y" data-layout-allow-occlusion style="left:1820px;top:300px;font-size:30px;opacity:0;">True</p>
+        <p id="fv4" class="tx cd c" data-layout-allow-occlusion style="left:1820px;top:300px;font-size:30px;opacity:0;">False</p>
+        <div id="nb1" class="wr" data-w="107" data-layout-allow-overflow style="left:1985px;top:110px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd c" data-layout-allow-occlusion style="font-size:30px;">(3 + 4)</p></div>
+        <div id="n2a" class="wr" data-w="401" data-layout-allow-overflow style="left:2100px;top:234px;padding:10px 0 18px 0px;width:0px;"><p class="tx c" data-layout-allow-occlusion style="font-size:28px;line-height:36px;">Si se cumple, entra al bloque</p></div>
+        <div id="n2b" class="wr" data-w="338" data-layout-allow-overflow style="left:2100px;top:274px;padding:10px 0 18px 0px;width:0px;"><p class="tx c" data-layout-allow-occlusion style="font-size:28px;line-height:36px;">y se salta todo lo demás</p></div>
+        <div id="lg1" class="wr" data-w="224" data-layout-allow-overflow style="left:2154px;top:138px;padding:10px 0 18px 0px;width:0px;"><p class="tx y" data-layout-allow-occlusion style="font-size:30px;line-height:36px;">los dos puntos</p></div>
+        <div id="lg2" class="wr" data-w="330" data-layout-allow-overflow style="left:2154px;top:208px;padding:10px 0 18px 0px;width:0px;"><p class="tx c" data-layout-allow-occlusion style="font-size:30px;line-height:36px;">4 espacios de sangría</p></div>
+        <div id="mas0" class="wr" data-w="37" data-layout-allow-overflow style="left:2178px;top:177px;padding:10px 0 18px 0px;width:0px;"><p class="tx " data-layout-allow-occlusion style="font-size:40px;line-height:44px;">+</p></div>
+        <div id="ig0" class="wr" data-w="73" data-layout-allow-overflow style="left:2295px;top:177px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd y" data-layout-allow-occlusion style="font-size:42px;line-height:44px;height:44px;">= 7</p></div>
+        <div id="rs0" class="wr" data-w="269" data-layout-allow-overflow style="left:2100px;top:230px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style="">Gana el jugador</p></div>
+        <div id="mas1" class="wr" data-w="37" data-layout-allow-overflow style="left:2178px;top:297px;padding:10px 0 18px 0px;width:0px;"><p class="tx " data-layout-allow-occlusion style="font-size:40px;line-height:44px;">+</p></div>
+        <div id="ig1" class="wr" data-w="75" data-layout-allow-overflow style="left:2295px;top:297px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd y" data-layout-allow-occlusion style="font-size:42px;line-height:44px;height:44px;">= 2</p></div>
+        <div id="rs1" class="wr" data-w="220" data-layout-allow-overflow style="left:2100px;top:350px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style="">Gana la casa</p></div>
+        <div id="mas2" class="wr" data-w="37" data-layout-allow-overflow style="left:2178px;top:417px;padding:10px 0 18px 0px;width:0px;"><p class="tx " data-layout-allow-occlusion style="font-size:40px;line-height:44px;">+</p></div>
+        <div id="ig2" class="wr" data-w="76" data-layout-allow-overflow style="left:2295px;top:417px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd y" data-layout-allow-occlusion style="font-size:42px;line-height:44px;height:44px;">= 9</p></div>
+        <div id="rs2" class="wr" data-w="136" data-layout-allow-overflow style="left:2100px;top:470px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style="">Empate</p></div>
+        <div id="h4" class="wr" data-w="567" data-layout-allow-overflow style="left:3030px;top:28px;padding:10px 0 18px 0px;width:0px;"><p class="tx " data-layout-allow-occlusion style="font-size:44px;line-height:60px;">Dos ramas ciertas a la vez<svg class="sub" viewBox="0 0 557 16" style="width:557px"><path id="sub4" class="d tc" pathLength="1" style="stroke-width:4.5" d="M 4 4.1 C 19.3 5.3 65 11.6 95.5 11.6 C 126 11.7 156.5 4.5 187 4.4 C 217.5 4.4 248 11.4 278.5 11.3 C 309 11.3 339.5 4.2 370 4.2 C 400.5 4.1 431 10.9 461.5 10.9 C 492 10.9 537.8 5.2 553 4.1" /></svg></p></div>
+        <div id="m1" class="wr" data-w="160" data-layout-allow-overflow style="left:3030px;top:135px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style="">suma = 7</p></div>
+        <div id="m2" class="wr" data-w="227" data-layout-allow-overflow style="left:3030px;top:195px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style=""><span class="k" data-layout-allow-occlusion>if</span> suma &gt;= 5:</p></div>
+        <div id="m3" class="wr" data-w="327" data-layout-allow-overflow style="left:3112px;top:255px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style="">print(<span class="s" data-layout-allow-occlusion>"Tirada alta"</span>)</p></div>
+        <div id="m4" class="wr" data-w="254" data-layout-allow-overflow style="left:3030px;top:315px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style=""><span class="k" data-layout-allow-occlusion>elif</span> suma == 7:</p></div>
+        <div id="m5" class="wr" data-w="235" data-layout-allow-overflow style="left:3112px;top:375px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style="">print(<span class="s" data-layout-allow-occlusion>"Siete"</span>)</p></div>
+        <p id="tvd2" class="tx cd y" data-layout-allow-occlusion style="left:3318px;top:205px;font-size:30px;opacity:0;">True</p>
+        <p id="tvd4" class="tx cd c" data-layout-allow-occlusion style="left:3318px;top:325px;font-size:30px;opacity:0;">True</p>
+        <div id="n4a" class="wr" data-w="297" data-layout-allow-overflow style="left:3600px;top:307px;padding:10px 0 18px 0px;width:0px;"><p class="tx c" data-layout-allow-occlusion style="font-size:28px;line-height:36px;">También sería cierta,</p></div>
+        <div id="n4b" class="wr" data-w="282" data-layout-allow-overflow style="left:3600px;top:343px;padding:10px 0 18px 0px;width:0px;"><p class="tx c" data-layout-allow-occlusion style="font-size:28px;line-height:36px;">pero ya no se revisa</p></div>
+        <div id="o4" class="wr" data-w="186" data-layout-allow-overflow style="left:3600px;top:255px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd" data-layout-allow-occlusion style="">Tirada alta</p></div>
+        <div id="msg1" class="wr" data-w="746" data-layout-allow-overflow style="left:3172px;top:484px;padding:10px 0 18px 0px;width:0px;"><p class="tx y" data-layout-allow-occlusion style="font-size:48px;line-height:64px;">Gana la primera que se cumple.<svg class="sub" viewBox="0 0 736 16" style="width:736px"><path id="sub-m1" class="d ty" pathLength="1" style="stroke-width:5" d="M 4 4.6 C 19.2 5.8 64.7 11.7 95 11.7 C 125.3 11.7 155.7 4.7 186 4.7 C 216.3 4.7 246.7 11.8 277 11.8 C 307.3 11.8 337.7 5 368 5 C 398.3 4.9 428.7 11.5 459 11.4 C 489.3 11.2 519.7 4.2 550 4.2 C 580.3 4.3 610.7 11.5 641 11.6 C 671.3 11.6 716.8 5.8 732 4.6" /></svg></p></div>
+        <div id="msg2" class="wr" data-w="410" data-layout-allow-overflow style="left:3340px;top:558px;padding:10px 0 18px 0px;width:0px;"><p class="tx " data-layout-allow-occlusion style="font-size:48px;line-height:64px;">El orden importa.</p></div>
+        <div id="q1" class="wr" data-w="578" data-layout-allow-overflow style="left:4500px;top:160px;padding:10px 0 18px 0px;width:0px;"><p class="tx " data-layout-allow-occlusion style="font-size:108px;line-height:124px;">¿Qué rama</p></div>
+        <div id="q2" class="wr" data-w="591" data-layout-allow-overflow style="left:4470px;top:288px;padding:10px 0 18px 30px;width:0px;"><p class="tx " data-layout-allow-occlusion style="font-size:108px;line-height:124px;">pisa un <span class="doce" id="doce" data-layout-allow-occlusion>12<svg class="aro" viewBox="-22 -6 159 136" style="width:159px;height:136px"><path id="aro12" class="d ty" pathLength="1" style="stroke-width:5" d="M 8.4 23.4 C 10.4 22.1 16.2 17.7 20.4 15.2 C 24.6 12.8 28.8 10.1 33.4 8.5 C 38 7 43.1 6.4 48.1 5.8 C 53 5.2 58.1 4.7 63.1 4.9 C 68.2 5.2 73.4 6 78.3 7.4 C 83.3 8.7 88.4 10.6 92.8 13.1 C 97.1 15.7 100.9 19.3 104.6 22.8 C 108.3 26.3 112.4 29.9 114.9 34.2 C 117.4 38.5 118.5 43.6 119.7 48.4 C 120.8 53.2 122.1 58.2 121.8 63 C 121.5 67.8 119.6 72.7 117.9 77.3 C 116.2 81.9 114.2 86.4 111.5 90.4 C 108.8 94.5 105.4 98.2 101.7 101.5 C 98.1 104.8 94 107.7 89.7 110.3 C 85.5 112.9 81 115.5 76.3 117.1 C 71.5 118.8 66.3 119.6 61.2 120.3 C 56.1 121 50.7 121.7 45.5 121.3 C 40.3 121 35.1 119.6 30 118.1 C 25 116.6 19.8 114.8 15.1 112.3 C 10.5 109.8 6 106.5 2.2 102.9 C -1.5 99.2 -4.5 94.8 -7.2 90.4 C -9.8 85.9 -12.3 81.2 -13.6 76.2 C -14.9 71.3 -15.3 66 -15 60.9 C -14.6 55.9 -13.1 50.8 -11.5 46.1 C -9.8 41.3 -7.6 36.6 -4.8 32.4 C -2.1 28.2 1.5 24.3 5.3 20.8 C 9 17.3 13.2 14 17.7 11.5 C 22.2 9 27.3 7.5 32.3 5.8 C 37.3 4 45 1.6 47.5 0.8" /></svg></span>?</p></div>
+        <div id="emas" class="wr" data-w="53" data-layout-allow-overflow style="left:5402px;top:279px;padding:10px 0 18px 0px;width:0px;"><p class="tx " data-layout-allow-occlusion style="font-size:64px;line-height:64px;">+</p></div>
+        <div id="esum" class="wr" data-w="235" data-layout-allow-overflow style="left:5307.5px;top:406px;padding:10px 0 18px 0px;width:0px;"><p class="tx cd c" data-layout-allow-occlusion style="font-size:46px;line-height:60px;">suma = 12</p></div>
+          <div id="grano"></div>
+        </div>
+      </section>
+
+      <div id="vineta"></div>
+      <div id="marco"></div>
+      <div id="bandeja"><span id="tz1" class="tiza"></span><span id="tz2" class="tiza"></span><span id="tz3" class="tiza"></span><span id="borrador"></span></div>
+    </div>
+    <script>
+      var tl = gsap.timeline({ paused: true });
+
+      // Utilidades (todo con valores absolutos; nada depende de relojes)
+      function dibuja(sel, t, dur, ease) {
+        tl.fromTo(sel, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: dur, ease: ease || "power1.inOut", immediateRender: false }, t);
+      }
+      function escribe(sel, t, dur, ease) {
+        var w = parseFloat(document.querySelector(sel).getAttribute("data-w"));
+        tl.fromTo(sel, { width: 0 }, { width: w, duration: dur, ease: ease || "none", immediateRender: false }, t);
+      }
+      function entra(sel, t, dur) {
+        tl.fromTo(sel, { opacity: 0 }, { opacity: 1, duration: dur || 0.2, ease: "power1.out", immediateRender: false }, t);
+      }
+      function sale(sel, t, dur) {
+        tl.fromTo(sel, { opacity: 1 }, { opacity: 0, duration: dur || 0.3, ease: "power1.in", immediateRender: false }, t);
+      }
+      function atenua(sel, t, dur, a) {
+        tl.fromTo(sel, { opacity: 1 }, { opacity: a, duration: dur, ease: "power1.inOut", immediateRender: false }, t);
+      }
+      function restaura(sel, t, dur, a) {
+        tl.fromTo(sel, { opacity: a }, { opacity: 1, duration: dur, ease: "power1.inOut", immediateRender: false }, t);
+      }
+      function pip(sel, t) {
+        var r = parseFloat(document.querySelector(sel).getAttribute("data-r"));
+        tl.fromTo(sel, { attr: { r: 0 } }, { attr: { r: r }, duration: 0.2, ease: "back.out(2.2)", immediateRender: false }, t);
+      }
+      function punto(sel, t) {
+        tl.fromTo(sel, { attr: { r: 0 } }, { attr: { r: 3.4 }, duration: 0.15, ease: "back.out(2)", immediateRender: false }, t);
+      }
+      function mueve(sel, t, dur, x0, y0, x1, y1, ease) {
+        tl.fromTo(sel, { x: x0, y: y0 }, { x: x1, y: y1, duration: dur, ease: ease, immediateRender: false }, t);
+      }
+      function mueveG(sel, t, dur, y0, y1) {
+        tl.fromTo(sel, { y: y0 }, { y: y1, duration: dur, ease: "power2.inOut", immediateRender: false }, t);
+      }
+      function camara(t0, t1, de, a, ease) {
+        tl.fromTo("#tablero", { x: -de }, { x: -a, duration: t1 - t0, ease: ease, immediateRender: false }, t0);
+      }
+
+      gsap.set("#tablero", { x: 0 });
+      gsap.set("#ptr", { x: 1460, y: 150, opacity: 0 });
+      gsap.set("#ptr4", { x: 2960, y: 175, opacity: 0 });
+      gsap.set("#bola", { x: 400, y: 176, opacity: 0 });
+      camara(5.1, 6.7, 0, 1400, "power2.inOut");
+      camara(27.76, 29.36, 1400, 2900, "power2.inOut");
+      camara(39.4, 41, 2900, 4400, "power2.inOut");
+      escribe("#titulo", 0.2, 1.1, "power1.inOut");
+      dibuja("#sub1", 1.0, 0.5);
+      dibuja("#a-ent", 1.3, 0.3);
+      dibuja("#a-ent-h", 1.55, 0.15);
+      dibuja("#rombo", 1.4, 1);
+      escribe("#q-dados", 2.2, 0.55, "power1.inOut");
+      dibuja("#a-si", 2.4, 0.5);
+      dibuja("#a-si-h", 2.85, 0.15);
+      escribe("#t-si", 2.95, 0.25);
+      dibuja("#a-no", 2.55, 0.4);
+      dibuja("#a-no-h", 2.9, 0.15);
+      escribe("#t-no", 3, 0.25);
+      dibuja("#b-si", 2.9, 0.6);
+      dibuja("#b-no", 3.1, 0.6);
+      escribe("#t-bsi", 3.45, 0.5, "power1.inOut");
+      escribe("#t-bno", 3.65, 0.5, "power1.inOut");
+      entra("#bola", 3.35, 0.15);
+      mueve("#bola", 3.5, 0.3, 400, 176, 400, 240, "power1.in");
+      mueve("#bola", 3.8, 0.5, 400, 240, 590, 360, "none");
+      mueve("#bola", 4.3, 0.45, 590, 360, 800, 360, "none");
+      dibuja("#sub-si", 4.65, 0.35);
+      sale("#bola", 4.7, 0.25);
+      escribe("#l1", 6.6, 0.5, "steps(22)");
+      escribe("#l2", 7.17, 0.3, "steps(13)");
+      escribe("#l3", 7.54, 0.55, "steps(24)");
+      escribe("#l4", 8.15, 0.34, "steps(15)");
+      escribe("#l5", 8.56, 0.48, "steps(21)");
+      escribe("#l6", 9.11, 0.11, "steps(5)");
+      escribe("#l7", 9.29, 0.34, "steps(15)");
+      escribe("#nb1", 9.72, 0.35);
+      entra("#ptr", 10, 0.2);
+      mueveG("#ptr", 10.45, 0.35, 150, 210);
+      entra("#tv2", 10.85, 0.15);
+      mueveG("#ptr", 11.3, 0.3, 210, 270);
+      atenua("#l4,#l5,#l6,#l7", 11.4, 0.4, 0.58);
+      escribe("#n2a", 11.5, 0.55);
+      escribe("#n2b", 11.95, 0.5);
+      restaura("#l4,#l5,#l6,#l7", 13, 0.4, 0.58);
+      sale("#n2a", 13, 0.35);
+      sale("#n2b", 13, 0.35);
+      sale("#nb1", 13, 0.35);
+      sale("#ptr", 13, 0.3);
+      sale("#tv2", 13, 0.3);
+      dibuja("#lg1-o", 13.45, 0.3);
+      escribe("#lg1", 13.55, 0.35);
+      dibuja("#co1", 13.45, 0.3);
+      dibuja("#co2", 13.81, 0.3);
+      dibuja("#co3", 14.17, 0.3);
+      dibuja("#lg2-o", 14.65, 0.3);
+      escribe("#lg2", 14.75, 0.4);
+      dibuja("#es1", 14.65, 0.32);
+      punto("#pt10", 14.93);
+      punto("#pt11", 14.98);
+      punto("#pt12", 15.03);
+      punto("#pt13", 15.08);
+      dibuja("#es2", 15.05, 0.32);
+      punto("#pt20", 15.33);
+      punto("#pt21", 15.38);
+      punto("#pt22", 15.43);
+      punto("#pt23", 15.48);
+      dibuja("#es3", 15.45, 0.32);
+      punto("#pt30", 15.73);
+      punto("#pt31", 15.78);
+      punto("#pt32", 15.83);
+      punto("#pt33", 15.88);
+      sale("#lg1-o", 16.55, 0.35);
+      sale("#lg1", 16.55, 0.35);
+      sale("#lg2-o", 16.55, 0.35);
+      sale("#lg2", 16.55, 0.35);
+      sale("#co1", 16.55, 0.35);
+      sale("#co2", 16.55, 0.35);
+      sale("#co3", 16.55, 0.35);
+      sale("#es1", 16.55, 0.35);
+      sale("#es2", 16.55, 0.35);
+      sale("#es3", 16.55, 0.35);
+      sale("#pt10", 16.55, 0.35);
+      sale("#pt11", 16.55, 0.35);
+      sale("#pt12", 16.55, 0.35);
+      sale("#pt13", 16.55, 0.35);
+      sale("#pt20", 16.55, 0.35);
+      sale("#pt21", 16.55, 0.35);
+      sale("#pt22", 16.55, 0.35);
+      sale("#pt23", 16.55, 0.35);
+      sale("#pt30", 16.55, 0.35);
+      sale("#pt31", 16.55, 0.35);
+      sale("#pt32", 16.55, 0.35);
+      sale("#pt33", 16.55, 0.35);
+      dibuja("#d0a-r", 16.65, 0.45);
+      pip("#d0a-p0", 17.05);
+      pip("#d0a-p1", 17.11);
+      pip("#d0a-p2", 17.17);
+      escribe("#mas0", 16.95, 0.15);
+      dibuja("#d0b-r", 16.95, 0.45);
+      pip("#d0b-p0", 17.35);
+      pip("#d0b-p1", 17.41);
+      pip("#d0b-p2", 17.47);
+      pip("#d0b-p3", 17.53);
+      escribe("#ig0", 17.6, 0.3);
+      tl.set("#ptr", { y: 150 }, 17.6);
+      entra("#ptr", 17.65, 0.15);
+      mueveG("#ptr", 17.9, 0.3, 150, 210);
+      entra("#tv2", 18.22, 0.12);
+      mueveG("#ptr", 18.55, 0.3, 210, 270);
+      dibuja("#hl0", 18.87, 0.35);
+      dibuja("#cn0", 19.07, 0.22);
+      dibuja("#cn0h", 19.27, 0.12);
+      escribe("#rs0", 19.32, 0.5, "power1.inOut");
+      sale("#tv2", 19.97, 0.3);
+      sale("#ptr", 19.97, 0.3);
+      sale("#hl0", 19.97, 0.3);
+      sale("#cn0", 19.97, 0.3);
+      sale("#cn0h", 19.97, 0.3);
+      dibuja("#d1a-r", 19.37, 0.45);
+      pip("#d1a-p0", 19.77);
+      escribe("#mas1", 19.67, 0.15);
+      dibuja("#d1b-r", 19.67, 0.45);
+      pip("#d1b-p0", 20.07);
+      escribe("#ig1", 20.32, 0.3);
+      tl.set("#ptr", { y: 150 }, 20.32);
+      entra("#ptr", 20.37, 0.15);
+      mueveG("#ptr", 20.62, 0.3, 150, 210);
+      entra("#fv2", 20.94, 0.12);
+      mueveG("#ptr", 21.27, 0.4, 210, 330);
+      entra("#tv4", 21.69, 0.12);
+      mueveG("#ptr", 22.02, 0.3, 330, 390);
+      dibuja("#hl1", 22.34, 0.35);
+      dibuja("#cn1", 22.54, 0.22);
+      dibuja("#cn1h", 22.74, 0.12);
+      escribe("#rs1", 22.79, 0.5, "power1.inOut");
+      sale("#fv2", 23.44, 0.3);
+      sale("#tv4", 23.44, 0.3);
+      sale("#ptr", 23.44, 0.3);
+      sale("#hl1", 23.44, 0.3);
+      sale("#cn1", 23.44, 0.3);
+      sale("#cn1h", 23.44, 0.3);
+      dibuja("#d2a-r", 22.84, 0.45);
+      pip("#d2a-p0", 23.24);
+      pip("#d2a-p1", 23.3);
+      pip("#d2a-p2", 23.36);
+      pip("#d2a-p3", 23.42);
+      escribe("#mas2", 23.14, 0.15);
+      dibuja("#d2b-r", 23.14, 0.45);
+      pip("#d2b-p0", 23.54);
+      pip("#d2b-p1", 23.6);
+      pip("#d2b-p2", 23.66);
+      pip("#d2b-p3", 23.72);
+      pip("#d2b-p4", 23.78);
+      escribe("#ig2", 23.79, 0.3);
+      tl.set("#ptr", { y: 150 }, 23.79);
+      entra("#ptr", 23.84, 0.15);
+      mueveG("#ptr", 24.09, 0.3, 150, 210);
+      entra("#fv2", 24.41, 0.12);
+      mueveG("#ptr", 24.74, 0.4, 210, 330);
+      entra("#fv4", 25.16, 0.12);
+      mueveG("#ptr", 25.49, 0.35, 330, 450);
+      mueveG("#ptr", 25.89, 0.3, 450, 510);
+      dibuja("#hl2", 26.21, 0.35);
+      dibuja("#cn2", 26.41, 0.22);
+      dibuja("#cn2h", 26.61, 0.12);
+      escribe("#rs2", 26.66, 0.5, "power1.inOut");
+      sale("#fv2", 27.31, 0.3);
+      sale("#fv4", 27.31, 0.3);
+      sale("#ptr", 27.31, 0.3);
+      sale("#hl2", 27.31, 0.3);
+      sale("#cn2", 27.31, 0.3);
+      sale("#cn2h", 27.31, 0.3);
+      escribe("#h4", 28.86, 0.55, "power1.inOut");
+      dibuja("#sub4", 29.36, 0.4);
+      escribe("#m1", 29.51, 0.18, "steps(8)");
+      escribe("#m2", 29.77, 0.3, "steps(13)");
+      escribe("#m3", 30.13, 0.45, "steps(20)");
+      escribe("#m4", 30.66, 0.34, "steps(15)");
+      escribe("#m5", 31.07, 0.32, "steps(14)");
+      entra("#ptr4", 31.55, 0.2);
+      mueveG("#ptr4", 31.95, 0.3, 175, 235);
+      entra("#tvd2", 32.3, 0.15);
+      entra("#tvd4", 32.75, 0.15);
+      dibuja("#an4", 32.8, 0.35);
+      dibuja("#an4h", 33.1, 0.12);
+      escribe("#n4a", 32.9, 0.5);
+      escribe("#n4b", 33.3, 0.5);
+      mueveG("#ptr4", 33.95, 0.3, 235, 295);
+      atenua("#m4,#m5,#tvd4,#n4a,#n4b,#an4,#an4h", 34.05, 0.4, 0.58);
+      dibuja("#hl4", 34.3, 0.35);
+      dibuja("#cn4", 34.55, 0.22);
+      dibuja("#cn4h", 34.75, 0.12);
+      escribe("#o4", 34.8, 0.5, "power1.inOut");
+      sale("#ptr4", 35.3, 0.25);
+      escribe("#msg1", 35.5, 1, "power1.inOut");
+      dibuja("#sub-m1", 36.5, 0.45);
+      escribe("#msg2", 37, 0.8, "power1.inOut");
+      escribe("#q1", 40.8, 0.9, "power1.inOut");
+      escribe("#q2", 41.7, 1, "power1.inOut");
+      dibuja("#e0a-r", 42.9, 0.55);
+      pip("#e0a-p0", 43.4);
+      pip("#e0a-p1", 43.45);
+      pip("#e0a-p2", 43.5);
+      pip("#e0a-p3", 43.55);
+      pip("#e0a-p4", 43.6);
+      pip("#e0a-p5", 43.65);
+      escribe("#emas", 43.4, 0.2);
+      dibuja("#e0b-r", 43.6, 0.55);
+      pip("#e0b-p0", 44.1);
+      pip("#e0b-p1", 44.15);
+      pip("#e0b-p2", 44.2);
+      pip("#e0b-p3", 44.25);
+      pip("#e0b-p4", 44.3);
+      pip("#e0b-p5", 44.35);
+      escribe("#esum", 44.5, 0.5, "power1.inOut");
+      dibuja("#aro12", 45.2, 0.6);
+
+      window.__timelines["control-de-flujo"] = tl;
+    </script>
+  </body>
+</html>

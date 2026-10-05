@@ -388,13 +388,15 @@
     }
     area.addEventListener("input", actualizar);
     area.addEventListener("scroll", function () { pre.scrollLeft = area.scrollLeft; numeros.scrollTop = area.scrollTop; pre.scrollTop = area.scrollTop; });
+    // La convención de Python (PEP 8) es de cuatro espacios por nivel; en los demás lenguajes, dos.
+    var paso = lenguaje === "python" ? "    " : "  ";
     area.addEventListener("keydown", function (e) {
       if (e.key === "Tab" && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
-        // Tab inserta dos espacios; Escape y luego Tab permite salir del editor.
+        // Tab inserta un nivel de sangría; Escape y luego Tab permite salir del editor.
         if (area.dataset.salir === "1") { area.dataset.salir = ""; return; }
         e.preventDefault();
         var ini = area.selectionStart, fin = area.selectionEnd;
-        area.setRangeText("  ", ini, fin, "end");
+        area.setRangeText(paso, ini, fin, "end");
         actualizar();
       } else if (e.key === "Escape") {
         area.dataset.salir = "1";
@@ -402,7 +404,8 @@
         var antes = area.value.slice(0, area.selectionStart);
         var lineaActual = antes.slice(antes.lastIndexOf("\n") + 1);
         var sangria = (lineaActual.match(/^\s*/) || [""])[0];
-        if (/[{[(]\s*$/.test(lineaActual)) sangria += "  ";
+        if (/[{[(]\s*$/.test(lineaActual)) sangria += paso;
+        else if (lenguaje === "python" && /:\s*(#.*)?$/.test(lineaActual)) sangria += paso;
         e.preventDefault();
         area.setRangeText("\n" + sangria, area.selectionStart, area.selectionEnd, "end");
         actualizar();
