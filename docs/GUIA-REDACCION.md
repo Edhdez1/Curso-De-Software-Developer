@@ -42,7 +42,7 @@ estructura.
   el generador (`node herramientas/construir.mjs`) añade la cabecera, el cartel de la estación, el riel de paradas,
   la navegación y los scripts.
 - Cada sección: `<section id="id-corto" data-parada="Nombre corto">` y su primer hijo es un `<h2>`.
-  `data-parada` es el texto del índice lateral (1–4 palabras).
+  `data-parada` es el texto del índice lateral (1–4 palabras; la sección `ruta` usa «Lo que vas a lograr» en todas las estaciones).
 - Enlaces a otras estaciones: `href="NN-slug.html"` (misma carpeta). A secciones: `href="NN-slug.html#id"`.
 
 ### Orden obligatorio de secciones
@@ -50,7 +50,7 @@ estructura.
 | id | Contenido |
 |---|---|
 | `ruta` | «Lo que vas a lograr»: entradilla (`<p class="entradilla">`), objetivos (`<ul class="objetivos">`, 6–10) y una señal `nota` «Antes de empezar» con los requisitos enlazados. |
-| (5–9 secciones de contenido) | La enseñanza. Ids cortos en minúsculas sin acentos. |
+| (5–10 secciones de contenido) | La enseñanza. Ids cortos en minúsculas sin acentos. |
 | `resumen` | Lista de 6–10 ideas clave. |
 | `practica` | 6–10 ejercicios `article.ejercicio` (≥2 guiados, ≥2 semiguiados, ≥2 retos). |
 | `proyecto` | Proyecto de la estación con pasos (`ol.pasos`), taller o instrucciones y solución de referencia. |
@@ -247,11 +247,12 @@ Python (se ejecuta con Brython en el navegador; se verifica con Python real en l
 </div>
 ```
 
-La verificación de un taller de Python solo recibe `salida` y `codigo` y **no puede volver a ejecutar el programa con otros valores**: comprueba un solo caso. Si el ejercicio tiene varios casos, verifica además la estructura (por ejemplo, que cada resultado salga de una rama con sangría) y dilo con honestidad en la página, como hace el proyecto de la Estación 3. Una tabla de casos de prueba que la persona recorre a mano suple lo que la verificación no puede.
+La verificación de un taller de Python solo recibe `salida` y `codigo` y **no puede volver a ejecutar el programa con otros valores**: comprueba un solo caso. Si el ejercicio tiene varios casos, elige como dato del editor el caso que delate el error que el ejercicio enseña (el valor del borde, o el que activa la rama que suele ponerse en mal orden), pide que se prueben los demás a mano y dilo con honestidad en la página, como hace el proyecto de la Estación 3. Verifica la estructura solo si el enunciado la pide («resuélvelo con if, elif y else»): una exigencia que el enunciado no menciona rechaza soluciones correctas y frustra a quien las escribió bien. Quita los comentarios del código antes de aplicar expresiones regulares.
 
-No uses `input()` en talleres (no funciona en todos los visores). En Brython, `random` no reproduce las secuencias de
-CPython aunque uses la misma semilla (las pruebas se ejecutan con Python real): no verifiques números aleatorios exactos;
-si necesitas azar reproducible, escribe un generador de pocas líneas en el propio taller. La biblioteca estándar (`random`, `math`, `json`,
+No uses `input()` en talleres (no funciona en todos los visores). En las pruebas de la Estación 3, `random` de Brython 3.14.3 con semillas enteras dio las mismas secuencias que
+CPython 3.11 y 3.14, pero Python no lo garantiza entre versiones y con semillas de texto o decimales sí difieren
+(las pruebas se ejecutan con Python real): no verifiques números aleatorios exactos; si necesitas datos fijos, calcúlalos
+antes con CPython y déjalos escritos en la página, o escribe un generador de pocas líneas en el propio taller. La biblioteca estándar (`random`, `math`, `json`,
 `datetime`…) funciona; paquetes externos (`requests`, `pandas`…) no.
 
 JavaScript con código de preparación oculto: `<script type="text/plain" class="taller-preparacion">…</script>` dentro
@@ -359,6 +360,7 @@ ejemplo, «Token de un modelo de lenguaje» (no «Token», que ya es el del anal
 <ul class="videos">
   <li><a class="video" href="https://www.youtube.com/watch?v=ID11CARACT" data-canal="Nombre exacto del canal"
      data-idioma="es" data-nivel="intro|profundo|curso" data-duracion="12 min" data-por-que="Una frase.">Título</a></li>
+<!-- data-duracion es opcional: si no se pudo verificar la duración, omítelo y dilo en la introducción de la sección. -->
 </ul>
 
 <ul class="recursos">
